@@ -164,8 +164,6 @@ export default function CreateResourceForm({
     }, [open]);
 
     async function onSubmit(data: CreateResourceFormValues) {
-        console.log(data);
-
         const res = await api
             .put<AxiosResponse<Resource>>(
                 `/org/${orgId}/site/${data.siteId}/resource/`,
@@ -194,16 +192,16 @@ export default function CreateResourceForm({
             setResourceId(id);
 
             if (data.http) {
-                goToResource();
+                goToResource(id);
             } else {
                 setShowSnippets(true);
             }
         }
     }
 
-    function goToResource() {
+    function goToResource(id?: number) {
         // navigate to the resource page
-        router.push(`/${orgId}/settings/resources/${resourceId}`);
+        router.push(`/${orgId}/settings/resources/${id || resourceId}`);
     }
 
     return (

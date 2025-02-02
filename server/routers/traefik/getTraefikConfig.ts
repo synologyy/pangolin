@@ -118,14 +118,6 @@ export async function traefikConfigProvider(
                     continue;
                 }
 
-                if (
-                    targets.filter(
-                        (target: Target) => target.internalPort != null
-                    ).length == 0
-                ) {
-                    continue;
-                }
-
                 // add routers and services empty objects if they don't exist
                 if (!config_output.http.routers) {
                     config_output.http.routers = {};
@@ -156,7 +148,8 @@ export async function traefikConfigProvider(
                         : {})
                 };
 
-                const additionalMiddlewares = config.getRawConfig().traefik.additional_middlewares || [];
+                const additionalMiddlewares =
+                    config.getRawConfig().traefik.additional_middlewares || [];
 
                 config_output.http.routers![routerName] = {
                     entryPoints: [
@@ -164,7 +157,10 @@ export async function traefikConfigProvider(
                             ? config.getRawConfig().traefik.https_entrypoint
                             : config.getRawConfig().traefik.http_entrypoint
                     ],
-                    middlewares: [badgerMiddlewareName, ...additionalMiddlewares],
+                    middlewares: [
+                        badgerMiddlewareName,
+                        ...additionalMiddlewares
+                    ],
                     service: serviceName,
                     rule: `Host(\`${fullDomain}\`)`,
                     ...(resource.ssl ? { tls } : {})
@@ -184,9 +180,31 @@ export async function traefikConfigProvider(
                 config_output.http.services![serviceName] = {
                     loadBalancer: {
                         servers: targets
-                            .filter(
-                                (target: Target) => target.internalPort != null
-                            )
+                            .filter((target: Target) => {
+                                if (!target.enabled) {
+                                    return false;
+                                }
+                                if (
+                                    site.type === "local" ||
+                                    site.type === "wireguard"
+                                ) {
+                                    if (
+                                        !target.ip ||
+                                        !target.port ||
+                                        !target.method
+                                    ) {
+                                        return false;
+                                    }
+                                } else if (site.type === "newt") {
+                                    if (
+                                        !target.internalPort ||
+                                        !target.method
+                                    ) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            })
                             .map((target: Target) => {
                                 if (
                                     site.type === "local" ||
@@ -213,14 +231,6 @@ export async function traefikConfigProvider(
                     continue;
                 }
 
-                if (
-                    targets.filter(
-                        (target: Target) => target.internalPort != null
-                    ).length == 0
-                ) {
-                    continue;
-                }
-
                 if (!config_output[protocol]) {
                     config_output[protocol] = {
                         routers: {},
@@ -237,9 +247,24 @@ export async function traefikConfigProvider(
                 config_output[protocol].services[serviceName] = {
                     loadBalancer: {
                         servers: targets
-                            .filter(
-                                (target: Target) => target.internalPort != null
-                            )
+                            .filter((target: Target) => {
+                                if (!target.enabled) {
+                                    return false;
+                                }
+                                if (
+                                    site.type === "local" ||
+                                    site.type === "wireguard"
+                                ) {
+                                    if (!target.ip || !target.port) {
+                                        return false;
+                                    }
+                                } else if (site.type === "newt") {
+                                    if (!target.internalPort) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            })
                             .map((target: Target) => {
                                 if (
                                     site.type === "local" ||
@@ -261,9 +286,9 @@ export async function traefikConfigProvider(
         }
         return res.status(HttpCode.OK).json(config_output);
     } catch (e) {
-        logger.error(`Failed to build traefik config: ${e}`);
+        logger.error(`Failed to build Traefik config: ${e}`);
         return res.status(HttpCode.INTERNAL_SERVER_ERROR).json({
-            error: "Failed to build traefik config"
+            error: "Failed to build Traefik config"
         });
     }
 }
