@@ -2,7 +2,7 @@
 # https://docs.fossorial.io/Pangolin/Configuration/config
 
 app:
-    dashboard_url: "http://localhost:3002"
+    dashboard_url: "http://localhost:3002" # Use https and correct domain for passkeys
     log_level: "info"
     save_logs: false
 
