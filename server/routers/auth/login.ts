@@ -1,7 +1,9 @@
 import {
     createSession,
     generateSessionToken,
-    serializeSessionCookie
+    serializeSessionCookie,
+    generateCsrfToken,
+    serializeCsrfCookie
 } from "@server/auth/sessions/app";
 import { db } from "@server/db";
 import { users } from "@server/db";
@@ -142,6 +144,7 @@ export async function login(
         }
 
         const token = generateSessionToken();
+        const csrfToken = generateCsrfToken();
         const sess = await createSession(token, existingUser.userId);
         const isSecure = req.protocol === "https";
         const cookie = serializeSessionCookie(
@@ -149,8 +152,14 @@ export async function login(
             isSecure,
             new Date(sess.expiresAt)
         );
+        const csrfCookie = serializeCsrfCookie(
+            csrfToken,
+            isSecure,
+            new Date(sess.expiresAt)
+        );
 
         res.appendHeader("Set-Cookie", cookie);
+        res.appendHeader("Set-Cookie", csrfCookie);
 
         if (
             !existingUser.emailVerified &&
