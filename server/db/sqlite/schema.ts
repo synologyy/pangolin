@@ -168,6 +168,18 @@ export const newtSessions = sqliteTable("newtSession", {
     expiresAt: integer("expiresAt").notNull()
 });
 
+export const webAuthnCredentials = sqliteTable("webAuthnCredentials", {
+    credentialId: text("credentialId").primaryKey(),
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    publicKey: text("publicKey").notNull(),
+    counter: integer("counter").notNull(),
+    transports: text("transports"),
+    deviceType: text("deviceType"),
+    backedUp: integer("backedUp", { mode: "boolean" })
+});
+
 export const userOrgs = sqliteTable("userOrgs", {
     userId: text("userId")
         .notNull()
@@ -551,3 +563,4 @@ export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
+export type WebAuthnCredential = InferSelectModel<typeof webAuthnCredentials>;

@@ -10,3 +10,7 @@ export * from "./changePassword";
 export * from "./requestPasswordReset";
 export * from "./resetPassword";
 export * from "./checkResourceSession";
+export * from "./passkeyRegisterChallenge";
+export * from "./passkeyRegisterVerify";
+export * from "./passkeyLoginChallenge";
+export * from "./passkeyLoginVerify";

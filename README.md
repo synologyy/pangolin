@@ -58,6 +58,7 @@ _Resources page of Pangolin dashboard (dark mode) showing multiple resources ava
 - Centralized authentication system using platform SSO. **Users will only have to manage one login.**
 - **Define access control rules for IPs, IP ranges, and URL paths per resource.**
 - TOTP with backup codes for two-factor authentication.
+- Passkey authentication via WebAuthn.
 - Create organizations, each with multiple sites, users, and roles.
 - **Role-based access control** to manage resource access permissions.
 - Additional authentication options include:
@@ -106,6 +107,7 @@ _Resources page of Pangolin dashboard (dark mode) showing multiple resources ava
 1. **Domain Configuration**:
 
     - Point your domain name to the VPS and configure Pangolin with your preferred settings.
+    - Passkey login requires that `app.dashboard_url` in the config matches the domain users access and is served over HTTPS.
 
 2. **Connect Private Sites**:
 

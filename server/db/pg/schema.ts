@@ -160,6 +160,18 @@ export const newtSessions = pgTable("newtSession", {
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull()
 });
 
+export const webAuthnCredentials = pgTable("webAuthnCredentials", {
+    credentialId: varchar("credentialId").primaryKey(),
+    userId: varchar("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    publicKey: varchar("publicKey").notNull(),
+    counter: integer("counter").notNull(),
+    transports: varchar("transports"),
+    deviceType: varchar("deviceType"),
+    backedUp: boolean("backedUp")
+});
+
 export const userOrgs = pgTable("userOrgs", {
     userId: varchar("userId")
         .notNull()
@@ -530,3 +542,4 @@ export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
+export type WebAuthnCredential = InferSelectModel<typeof webAuthnCredentials>;
