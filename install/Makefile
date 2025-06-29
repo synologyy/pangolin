@@ -3,7 +3,6 @@ all: update-versions go-build-release put-back
 go-build-release:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/installer_linux_amd64
 	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o bin/installer_linux_arm64
-
 clean:
 	rm -f bin/installer_linux_amd64
 	rm -f bin/installer_linux_arm64
@@ -22,3 +21,10 @@ update-versions:
 
 put-back:
 	mv main.go.bak main.go
+
+
+	gui-build-release:
+	GOOS=linux GOARCH=amd64 go build -o bin/gui_installer_linux_amd64 ./gui
+	GOOS=windows GOARCH=amd64 go build -o bin/gui_installer_windows_amd64.exe ./gui
+	GOOS=darwin GOARCH=amd64 go build -o bin/gui_installer_darwin_amd64 ./gui
+	GOOS=darwin GOARCH=arm64 go build -o bin/gui_installer_darwin_arm64 ./gui
