@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useUserContext } from "@app/hooks/useUserContext";
 import Disable2FaForm from "./Disable2FaForm";
 import Enable2FaForm from "./Enable2FaForm";
+import RegisterPasskeyButton from "./RegisterPasskeyButton";
 import SupporterStatus from "./SupporterStatus";
 import { UserType } from "@server/types/UserTypes";
 
@@ -125,6 +126,9 @@ export default function ProfileIcon() {
                                         <span>Disable Two-factor</span>
                                     </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem>
+                                    <RegisterPasskeyButton />
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                             </>
                         )}
