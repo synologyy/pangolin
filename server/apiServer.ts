@@ -25,15 +25,10 @@ export function createApiServer() {
     }
 
     const corsConfig = config.getRawConfig().server.cors;
+    const fallbackOrigin = config.getRawConfig().app.dashboard_url;
 
     const options = {
-        ...(corsConfig?.origins
-            ? { origin: corsConfig.origins }
-            : {
-                  origin: (origin: any, callback: any) => {
-                      callback(null, true);
-                  }
-              }),
+        origin: corsConfig?.origins ?? (fallbackOrigin ? [fallbackOrigin] : false),
         ...(corsConfig?.methods && { methods: corsConfig.methods }),
         ...(corsConfig?.allowed_headers && {
             allowedHeaders: corsConfig.allowed_headers

@@ -23,6 +23,13 @@ server:
         id: "P-Access-Token-Id"
         token: "P-Access-Token"
     resource_session_request_param: "p_session_request"
+    # Allowed origins for CORS requests. If not set, defaults to the
+    # dashboard_url above.
+    cors:
+        origins: ["http://localhost:3002"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        allowed_headers: ["X-CSRF-Token", "Content-Type"]
+        credentials: false
 
 traefik:
     http_entrypoint: "web"
