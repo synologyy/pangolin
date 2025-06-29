@@ -59,7 +59,12 @@ export async function signup(
 
     const { email, password, inviteToken, inviteId } = parsedBody.data;
 
-    logger.debug("signup", { email, password, inviteToken, inviteId });
+    // Avoid logging sensitive information such as passwords or tokens
+    logger.debug("signup request", {
+        email,
+        hasInviteToken: !!inviteToken,
+        hasInviteId: !!inviteId
+    });
 
     const passwordHash = await hashPassword(password);
     const userId = generateId(15);
