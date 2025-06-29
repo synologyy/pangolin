@@ -5,7 +5,8 @@ import response from "@server/lib/response";
 import logger from "@server/logger";
 import {
     createBlankSessionTokenCookie,
-    invalidateSession
+    invalidateSession,
+    createBlankCsrfCookie
 } from "@server/auth/sessions/app";
 import { verifySession } from "@server/auth/sessions/verifySession";
 import config from "@server/lib/config";
@@ -39,6 +40,7 @@ export async function logout(
 
         const isSecure = req.protocol === "https";
         res.setHeader("Set-Cookie", createBlankSessionTokenCookie(isSecure));
+        res.appendHeader("Set-Cookie", createBlankCsrfCookie(isSecure));
 
         return response<null>(res, {
             data: null,

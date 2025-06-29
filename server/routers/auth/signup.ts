@@ -14,7 +14,9 @@ import {
     createSession,
     generateId,
     generateSessionToken,
-    serializeSessionCookie
+    serializeSessionCookie,
+    generateCsrfToken,
+    serializeCsrfCookie
 } from "@server/auth/sessions/app";
 import config from "@server/lib/config";
 import logger from "@server/logger";
@@ -175,6 +177,7 @@ export async function signup(
         // });
 
         const token = generateSessionToken();
+        const csrfToken = generateCsrfToken();
         const sess = await createSession(token, userId);
         const isSecure = req.protocol === "https";
         const cookie = serializeSessionCookie(
@@ -182,7 +185,13 @@ export async function signup(
             isSecure,
             new Date(sess.expiresAt)
         );
+        const csrfCookie = serializeCsrfCookie(
+            csrfToken,
+            isSecure,
+            new Date(sess.expiresAt)
+        );
         res.appendHeader("Set-Cookie", cookie);
+        res.appendHeader("Set-Cookie", csrfCookie);
 
         if (config.getRawConfig().flags?.require_email_verification) {
             sendEmailVerificationCode(email, userId);

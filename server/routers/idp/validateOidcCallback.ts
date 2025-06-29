@@ -25,7 +25,9 @@ import {
     createSession,
     generateId,
     generateSessionToken,
-    serializeSessionCookie
+    serializeSessionCookie,
+    generateCsrfToken,
+    serializeCsrfCookie
 } from "@server/auth/sessions/app";
 import { decrypt } from "@server/lib/crypto";
 import { UserType } from "@server/types/UserTypes";
@@ -407,6 +409,7 @@ export async function validateOidcCallback(
             });
 
             const token = generateSessionToken();
+            const csrfToken = generateCsrfToken();
             const sess = await createSession(token, existingUserId!);
             const isSecure = req.protocol === "https";
             const cookie = serializeSessionCookie(
@@ -414,8 +417,14 @@ export async function validateOidcCallback(
                 isSecure,
                 new Date(sess.expiresAt)
             );
+            const csrfCookie = serializeCsrfCookie(
+                csrfToken,
+                isSecure,
+                new Date(sess.expiresAt)
+            );
 
             res.appendHeader("Set-Cookie", cookie);
+            res.appendHeader("Set-Cookie", csrfCookie);
 
             return response<ValidateOidcUrlCallbackResponse>(res, {
                 data: {
@@ -437,6 +446,7 @@ export async function validateOidcCallback(
             }
 
             const token = generateSessionToken();
+            const csrfToken = generateCsrfToken();
             const sess = await createSession(token, existingUser.userId);
             const isSecure = req.protocol === "https";
             const cookie = serializeSessionCookie(
@@ -444,8 +454,14 @@ export async function validateOidcCallback(
                 isSecure,
                 new Date(sess.expiresAt)
             );
+            const csrfCookie = serializeCsrfCookie(
+                csrfToken,
+                isSecure,
+                new Date(sess.expiresAt)
+            );
 
             res.appendHeader("Set-Cookie", cookie);
+            res.appendHeader("Set-Cookie", csrfCookie);
 
             return response<ValidateOidcUrlCallbackResponse>(res, {
                 data: {

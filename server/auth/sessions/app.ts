@@ -27,6 +27,12 @@ export const SESSION_COOKIE_EXPIRES =
 export const COOKIE_DOMAIN =
     "." + new URL(config.getRawConfig().app.dashboard_url).hostname;
 
+export const CSRF_COOKIE_NAME = "p_csrf";
+
+export function generateCsrfToken(): string {
+    return generateSessionToken();
+}
+
 export function generateSessionToken(): string {
     const bytes = new Uint8Array(20);
     crypto.getRandomValues(bytes);
@@ -144,6 +150,26 @@ export function createBlankSessionTokenCookie(isSecure: boolean): string {
         return `${SESSION_COOKIE_NAME}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/; Secure; Domain=${COOKIE_DOMAIN}`;
     } else {
         return `${SESSION_COOKIE_NAME}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/;`;
+    }
+}
+
+export function serializeCsrfCookie(
+    token: string,
+    isSecure: boolean,
+    expiresAt: Date
+): string {
+    if (isSecure) {
+        return `${CSRF_COOKIE_NAME}=${token}; SameSite=Lax; Expires=${expiresAt.toUTCString()}; Path=/; Secure; Domain=${COOKIE_DOMAIN}`;
+    } else {
+        return `${CSRF_COOKIE_NAME}=${token}; SameSite=Lax; Expires=${expiresAt.toUTCString()}; Path=/;`;
+    }
+}
+
+export function createBlankCsrfCookie(isSecure: boolean): string {
+    if (isSecure) {
+        return `${CSRF_COOKIE_NAME}=; SameSite=Lax; Max-Age=0; Path=/; Secure; Domain=${COOKIE_DOMAIN}`;
+    } else {
+        return `${CSRF_COOKIE_NAME}=; SameSite=Lax; Max-Age=0; Path=/;`;
     }
 }
 
