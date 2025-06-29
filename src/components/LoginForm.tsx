@@ -28,6 +28,7 @@ import { AxiosResponse } from "axios";
 import { formatAxiosError } from "@app/lib/api";
 import { LockIcon } from "lucide-react";
 import { createApiClient } from "@app/lib/api";
+import LoginPasskeyButton from "./LoginPasskeyButton";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
     InputOTP,
@@ -318,6 +319,10 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                             <LockIcon className="w-4 h-4 mr-2" />
                             Log In
                         </Button>
+                        <LoginPasskeyButton
+                            email={form.getValues().email}
+                            redirect={redirect}
+                        />
 
                         {hasIdp && (
                             <>

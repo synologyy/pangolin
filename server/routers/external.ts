@@ -709,6 +709,8 @@ authRouter.use(
 
 authRouter.put("/signup", auth.signup);
 authRouter.post("/login", auth.login);
+authRouter.post("/passkey/login-challenge", auth.passkeyLoginChallenge);
+authRouter.post("/passkey/login-verify", auth.passkeyLoginVerify);
 authRouter.post("/logout", auth.logout);
 authRouter.post("/newt/get-token", getToken);
 
@@ -719,6 +721,16 @@ authRouter.post(
     auth.requestTotpSecret
 );
 authRouter.post("/2fa/disable", verifySessionUserMiddleware, auth.disable2fa);
+authRouter.post(
+    "/passkey/register-challenge",
+    verifySessionUserMiddleware,
+    auth.passkeyRegisterChallenge
+);
+authRouter.post(
+    "/passkey/register-verify",
+    verifySessionUserMiddleware,
+    auth.passkeyRegisterVerify
+);
 authRouter.post("/verify-email", verifySessionMiddleware, auth.verifyEmail);
 
 authRouter.post(
