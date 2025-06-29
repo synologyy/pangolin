@@ -14,6 +14,7 @@ import cookie from "cookie";
 import jsonwebtoken from "jsonwebtoken";
 import config from "@server/lib/config";
 import { decrypt } from "@server/lib/crypto";
+import { cleanRedirect } from "@server/lib/cleanRedirect";
 
 const paramsSchema = z
     .object({
@@ -64,6 +65,7 @@ export async function generateOidcUrl(
         }
 
         const { redirectUrl: postAuthRedirectUrl } = parsedBody.data;
+        const safeRedirectUrl = cleanRedirect(postAuthRedirectUrl);
 
         const [existingIdp] = await db
             .select()
@@ -120,7 +122,7 @@ export async function generateOidcUrl(
 
         const stateJwt = jsonwebtoken.sign(
             {
-                redirectUrl: postAuthRedirectUrl, // TODO: validate that this is safe
+                redirectUrl: safeRedirectUrl,
                 state,
                 codeVerifier
             },
