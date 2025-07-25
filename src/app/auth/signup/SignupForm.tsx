@@ -75,6 +75,7 @@ type SignupFormProps = {
     redirect?: string;
     inviteId?: string;
     inviteToken?: string;
+    emailParam?: string;
 };
 
 const formSchema = z
@@ -103,7 +104,8 @@ const formSchema = z
 export default function SignupForm({
     redirect,
     inviteId,
-    inviteToken
+    inviteToken,
+    emailParam
 }: SignupFormProps) {
     const router = useRouter();
     const api = createApiClient(useEnvContext());
@@ -118,7 +120,7 @@ export default function SignupForm({
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
+            email: emailParam || "",
             password: "",
             confirmPassword: "",
             agreeToTerms: false
@@ -209,7 +211,10 @@ export default function SignupForm({
                                 <FormItem>
                                     <FormLabel>{t("email")}</FormLabel>
                                     <FormControl>
-                                        <Input {...field} />
+                                        <Input 
+                                            {...field} 
+                                            disabled={!!emailParam}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
