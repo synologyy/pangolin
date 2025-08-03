@@ -1,7 +1,7 @@
 'use server';
 
-import {cookies, headers} from 'next/headers';
-import {Locale, defaultLocale, locales} from '@/i18n/config';
+import { cookies, headers } from 'next/headers';
+import { Locale, defaultLocale, locales } from '@/i18n/config';
 
 // In this example the locale is read from a cookie. You could alternatively
 // also read it from a database, backend service, or any other source.
@@ -14,7 +14,7 @@ export async function getUserLocale(): Promise<Locale> {
     return cookieLocale as Locale;
   }
 
-  const headerList = await headers(); 
+  const headerList = await headers();
   const acceptLang = headerList.get('accept-language');
 
   if (acceptLang) {
