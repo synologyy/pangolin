@@ -592,6 +592,14 @@ export const webauthnChallenge = pgTable("webauthnChallenge", {
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull() // Unix timestamp
 });
 
+export const setupTokens = pgTable("setupTokens", {
+    tokenId: varchar("tokenId").primaryKey(),
+    token: varchar("token").notNull(),
+    used: boolean("used").notNull().default(false),
+    dateCreated: varchar("dateCreated").notNull(),
+    dateUsed: varchar("dateUsed")
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -637,3 +645,4 @@ export type OlmSession = InferSelectModel<typeof olmSessions>;
 export type UserClient = InferSelectModel<typeof userClients>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
+export type SetupToken = InferSelectModel<typeof setupTokens>;

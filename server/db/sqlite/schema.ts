@@ -187,6 +187,14 @@ export const webauthnChallenge = sqliteTable("webauthnChallenge", {
     expiresAt: integer("expiresAt").notNull() // Unix timestamp
 });
 
+export const setupTokens = sqliteTable("setupTokens", {
+    tokenId: text("tokenId").primaryKey(),
+    token: text("token").notNull(),
+    used: integer("used", { mode: "boolean" }).notNull().default(false),
+    dateCreated: text("dateCreated").notNull(),
+    dateUsed: text("dateUsed")
+});
+
 export const newts = sqliteTable("newt", {
     newtId: text("id").primaryKey(),
     secretHash: text("secretHash").notNull(),
@@ -679,3 +687,4 @@ export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
+export type SetupToken = InferSelectModel<typeof setupTokens>;

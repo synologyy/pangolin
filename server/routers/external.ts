@@ -1033,6 +1033,7 @@ authRouter.post("/idp/:idpId/oidc/validate-callback", idp.validateOidcCallback);
 
 authRouter.put("/set-server-admin", auth.setServerAdmin);
 authRouter.get("/initial-setup-complete", auth.initialSetupComplete);
+authRouter.post("/validate-setup-token", auth.validateSetupToken);
 
 // Security Key routes
 authRouter.post(
