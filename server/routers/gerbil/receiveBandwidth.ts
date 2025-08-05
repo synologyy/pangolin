@@ -31,7 +31,7 @@ export const receiveBandwidth = async (
         const currentTime = new Date();
         const oneMinuteAgo = new Date(currentTime.getTime() - 60000); // 1 minute ago
 
-        logger.debug(`Received data: ${JSON.stringify(bandwidthData)}`);
+        // logger.debug(`Received data: ${JSON.stringify(bandwidthData)}`);
 
         await db.transaction(async (trx) => {
             // First, handle sites that are actively reporting bandwidth

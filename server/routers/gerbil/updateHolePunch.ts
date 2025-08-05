@@ -111,59 +111,59 @@ export async function updateHolePunch(
                 .where(eq(clients.clientId, olm.clientId))
                 .returning();
 
-                let exitNode: ExitNode | undefined;
+            let exitNode: ExitNode | undefined;
             if (publicKey) {
-            // Get the exit node by public key
-             [exitNode] = await db
-                .select()
-                .from(exitNodes)
-                .where(eq(exitNodes.publicKey, publicKey));
-            } else {
-                // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
+                // Get the exit node by public key
                 [exitNode] = await db
                     .select()
                     .from(exitNodes)
-                    .limit(1)
+                    .where(eq(exitNodes.publicKey, publicKey));
+            } else {
+                // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
+                [exitNode] = await db.select().from(exitNodes).limit(1);
             }
 
-            if (exitNode) {
-                // Get sites that are on this specific exit node and connected to this client
-                const sitesOnExitNode = await db
-                    .select({ siteId: sites.siteId })
-                    .from(sites)
-                    .innerJoin(
-                        clientSites,
-                        eq(sites.siteId, clientSites.siteId)
+            if (!exitNode) {
+                logger.warn(`Exit node not found for publicKey: ${publicKey}`);
+                return next(
+                    createHttpError(HttpCode.NOT_FOUND, "Exit node not found")
+                );
+            }
+
+            // Get sites that are on this specific exit node and connected to this client
+            const sitesOnExitNode = await db
+                .select({ siteId: sites.siteId, subnet: sites.subnet, listenPort: sites.listenPort })
+                .from(sites)
+                .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+                .where(
+                    and(
+                        eq(sites.exitNodeId, exitNode.exitNodeId),
+                        eq(clientSites.clientId, olm.clientId)
                     )
+                );
+
+            // Update clientSites for each site on this exit node
+            for (const site of sitesOnExitNode) {
+                logger.debug(
+                    `Updating site ${site.siteId} on exit node with publicKey: ${publicKey}`
+                );
+
+                await db
+                    .update(clientSites)
+                    .set({
+                        endpoint: `${ip}:${port}`
+                    })
                     .where(
                         and(
-                            eq(sites.exitNodeId, exitNode.exitNodeId),
-                            eq(clientSites.clientId, olm.clientId)
+                            eq(clientSites.clientId, olm.clientId),
+                            eq(clientSites.siteId, site.siteId)
                         )
                     );
-
-                // Update clientSites for each site on this exit node
-                for (const site of sitesOnExitNode) {
-                    await db
-                        .update(clientSites)
-                        .set({
-                            endpoint: `${ip}:${port}`
-                        })
-                        .where(
-                            and(
-                                eq(clientSites.clientId, olm.clientId),
-                                eq(clientSites.siteId, site.siteId)
-                            )
-                        );
-                }
-
-                logger.debug(
-                    `Updated ${sitesOnExitNode.length} sites on exit node with publicKey: ${publicKey}`
-                );
-            } else {
-                logger.warn(`Exit node not found for publicKey: ${publicKey}`);
             }
 
+            logger.debug(
+                `Updated ${sitesOnExitNode.length} sites on exit node with publicKey: ${publicKey}`
+            );
             if (!client) {
                 logger.warn(`Client not found for olm: ${olmId}`);
                 return next(
@@ -171,133 +171,16 @@ export async function updateHolePunch(
                 );
             }
 
-            // // Get all sites that this client is connected to
-            // const clientSitePairs = await db
-            //     .select()
-            //     .from(clientSites)
-            //     .where(eq(clientSites.clientId, client.clientId));
-
-            // if (clientSitePairs.length === 0) {
-            //     logger.warn(`No sites found for client: ${client.clientId}`);
-            //     return next(
-            //         createHttpError(HttpCode.NOT_FOUND, "No sites found for client")
-            //     );
-            // }
-
-            // // Get all sites details
-            // const siteIds = clientSitePairs.map(pair => pair.siteId);
-
-            // for (const siteId of siteIds) {
-            //     const [site] = await db
-            //         .select()
-            //         .from(sites)
-            //         .where(eq(sites.siteId, siteId));
-
-            //     if (site && site.subnet && site.listenPort) {
-            //         destinations.push({
-            //             destinationIP: site.subnet.split("/")[0],
-            //             destinationPort: site.listenPort
-            //         });
-            //     }
-            // }
-
-            // get all sites for this client and join with exit nodes with site.exitNodeId
-            const sitesData = await db
-                .select()
-                .from(sites)
-                .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
-                .leftJoin(exitNodes, eq(sites.exitNodeId, exitNodes.exitNodeId))
-                .where(eq(clientSites.clientId, client.clientId));
-
-            let exitNodeDestinations: {
-                reachableAt: string;
-                destinations: PeerDestination[];
-            }[] = [];
-
-            for (const site of sitesData) {
-                if (!site.sites.subnet) {
-                    logger.warn(
-                        `Site ${site.sites.siteId} has no subnet, skipping`
-                    );
-                    continue;
-                }
-                // find the destinations in the array
-                let destinations = exitNodeDestinations.find(
-                    (d) => d.reachableAt === site.exitNodes?.reachableAt
-                );
-
-                if (!destinations) {
-                    destinations = {
-                        reachableAt: site.exitNodes?.reachableAt || "",
-                        destinations: [
-                            {
-                                destinationIP: site.sites.subnet.split("/")[0],
-                                destinationPort: site.sites.listenPort || 0
-                            }
-                        ]
-                    };
-                } else {
-                    // add to the existing destinations
-                    destinations.destinations.push({
-                        destinationIP: site.sites.subnet.split("/")[0],
-                        destinationPort: site.sites.listenPort || 0
+            // Create a list of the destinations from the sites 
+            for (const site of sitesOnExitNode) {
+                if (site.subnet && site.listenPort) {
+                    destinations.push({
+                        destinationIP: ip,
+                        destinationPort: site.listenPort
                     });
                 }
-
-                // update it in the array
-                exitNodeDestinations = exitNodeDestinations.filter(
-                    (d) => d.reachableAt !== site.exitNodes?.reachableAt
-                );
-                exitNodeDestinations.push(destinations);
             }
 
-            logger.debug(JSON.stringify(exitNodeDestinations, null, 2));
-
-            // BECAUSE OF HARD NAT YOU DONT WANT TO SEND THE OLM IP AND PORT TO THE ALL THE OTHER EXIT NODES
-            // BECAUSE THEY WILL GET A DIFFERENT IP AND PORT
-
-            // for (const destination of exitNodeDestinations) {
-            //     // if its the current exit node skip it because it is replying with the same data
-            //     if (reachableAt && destination.reachableAt == reachableAt) {
-            //         logger.debug(`Skipping update for reachableAt: ${reachableAt}`);
-            //         continue;
-            //     }
-
-            //     try {
-            //         const response = await axios.post(
-            //             `${destination.reachableAt}/update-destinations`,
-            //             {
-            //                 sourceIp: client.endpoint?.split(":")[0] || "",
-            //                 sourcePort: parseInt(client.endpoint?.split(":")[1] || "0"),
-            //                 destinations: destination.destinations
-            //             },
-            //             {
-            //                 headers: {
-            //                     "Content-Type": "application/json"
-            //                 }
-            //             }
-            //         );
-
-            //         logger.info("Destinations updated:", {
-            //             peer: response.data.status
-            //         });
-            //     } catch (error) {
-            //         if (axios.isAxiosError(error)) {
-            //             logger.error(
-            //                 `Error updating destinations (can Pangolin see Gerbil HTTP API?) for exit node at ${destination.reachableAt} (status: ${error.response?.status}): ${JSON.stringify(error.response?.data, null, 2)}`
-            //             );
-            //         } else {
-            //             logger.error(
-            //                 `Error updating destinations for exit node at ${destination.reachableAt}: ${error}`
-            //             );
-            //         }
-            //     }
-            // }
-
-            // Send the desinations back to the origin
-            destinations =
-                exitNodeDestinations.find((d) => d.reachableAt === reachableAt)
-                    ?.destinations || [];
         } else if (newtId) {
             logger.debug(
                 `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
@@ -405,6 +288,10 @@ export async function updateHolePunch(
         //     );
         //     return next(createHttpError(HttpCode.NOT_FOUND, "No peer destinations found"));
         // }
+
+        logger.debug(
+            `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
+        );
 
         // Return the new multi-peer structure
         return res.status(HttpCode.OK).send({
