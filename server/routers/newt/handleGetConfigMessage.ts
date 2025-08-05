@@ -157,9 +157,6 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                 if (!client.clients.subnet) {
                     return false;
                 }
-                if (!client.clients.endpoint) {
-                    return false;
-                }
                 return true;
             })
             .map(async (client) => {
@@ -215,7 +212,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                     allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
                     endpoint: client.clientSites.isRelayed
                         ? ""
-                        : client.clients.endpoint! // if its relayed it should be localhost
+                        : client.clientSites.endpoint! // if its relayed it should be localhost
                 };
             })
     );

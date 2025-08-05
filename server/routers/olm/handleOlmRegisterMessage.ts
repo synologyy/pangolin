@@ -8,7 +8,7 @@ import {
     olms,
     sites
 } from "@server/db";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 
@@ -147,15 +147,24 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             continue;
         }
 
+        const [clientSite] = await db
+            .select()
+            .from(clientSites)
+            .where(and(
+                eq(clientSites.clientId, client.clientId),
+                eq(clientSites.siteId, site.siteId)
+            ))
+            .limit(1);
+
         // Add the peer to the exit node for this site
-        if (client.endpoint) {
+        if (clientSite.endpoint) {
             logger.info(
-                `Adding peer ${publicKey} to site ${site.siteId} with endpoint ${client.endpoint}`
+                `Adding peer ${publicKey} to site ${site.siteId} with endpoint ${clientSite.endpoint}`
             );
             await addPeer(site.siteId, {
                 publicKey: publicKey,
                 allowedIps: [`${client.subnet.split('/')[0]}/32`], // we want to only allow from that client
-                endpoint: relay ? "" : client.endpoint
+                endpoint: relay ? "" : clientSite.endpoint
             });
         } else {
             logger.warn(

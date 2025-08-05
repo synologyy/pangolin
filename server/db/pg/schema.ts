@@ -516,7 +516,7 @@ export const clients = pgTable("clients", {
     lastPing: varchar("lastPing"),
     type: varchar("type").notNull(), // "olm"
     online: boolean("online").notNull().default(false),
-    endpoint: varchar("endpoint"),
+    // endpoint: varchar("endpoint"),
     lastHolePunch: integer("lastHolePunch"),
     maxConnections: integer("maxConnections")
 });
@@ -528,7 +528,8 @@ export const clientSites = pgTable("clientSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: boolean("isRelayed").notNull().default(false)
+    isRelayed: boolean("isRelayed").notNull().default(false),
+    endpoint: varchar("endpoint")
 });
 
 export const olms = pgTable("olms", {

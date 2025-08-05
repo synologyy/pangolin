@@ -78,19 +78,13 @@ export async function getAllRelays(
                 .where(eq(clientSites.siteId, site.siteId));
             
             for (const clientSite of clientSitesRes) {
-                // Get client information
-                const [client] = await db
-                    .select()
-                    .from(clients)
-                    .where(eq(clients.clientId, clientSite.clientId));
-
-                if (!client || !client.endpoint) {
+                if (!clientSite.endpoint) {
                     continue;
                 }
 
                 // Add this site as a destination for the client
-                if (!mappings[client.endpoint]) {
-                    mappings[client.endpoint] = { destinations: [] };
+                if (!mappings[clientSite.endpoint]) {
+                    mappings[clientSite.endpoint] = { destinations: [] };
                 }
 
                 // Add site as a destination for this client
@@ -100,13 +94,13 @@ export async function getAllRelays(
                 };
 
                 // Check if this destination is already in the array to avoid duplicates
-                const isDuplicate = mappings[client.endpoint].destinations.some(
+                const isDuplicate = mappings[clientSite.endpoint].destinations.some(
                     dest => dest.destinationIP === destination.destinationIP && 
                             dest.destinationPort === destination.destinationPort
                 );
 
                 if (!isDuplicate) {
-                    mappings[client.endpoint].destinations.push(destination);
+                    mappings[clientSite.endpoint].destinations.push(destination);
                 }
             }
 

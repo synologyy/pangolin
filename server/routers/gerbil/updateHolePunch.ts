@@ -1,8 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { clients, newts, olms, Site, sites, clientSites, exitNodes } from "@server/db";
+import {
+    clients,
+    newts,
+    olms,
+    Site,
+    sites,
+    clientSites,
+    exitNodes
+} from "@server/db";
 import { db } from "@server/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
@@ -19,7 +27,8 @@ const updateHolePunchSchema = z.object({
     ip: z.string(),
     port: z.number(),
     timestamp: z.number(),
-    reachableAt: z.string().optional()
+    reachableAt: z.string().optional(),
+    publicKey: z.string()
 });
 
 // New response type with multi-peer destination support
@@ -45,13 +54,24 @@ export async function updateHolePunch(
             );
         }
 
-        const { olmId, newtId, ip, port, timestamp, token, reachableAt } = parsedParams.data;
+        const {
+            olmId,
+            newtId,
+            ip,
+            port,
+            timestamp,
+            token,
+            reachableAt,
+            publicKey
+        } = parsedParams.data;
 
         let currentSiteId: number | undefined;
         let destinations: PeerDestination[] = [];
-        
+
         if (olmId) {
-            logger.debug(`Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`);
+            logger.debug(
+                `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}${publicKey ? ` with exit node publicKey: ${publicKey}` : ""}`
+            );
 
             const { session, olm: olmSession } =
                 await validateOlmSessionToken(token);
@@ -62,7 +82,9 @@ export async function updateHolePunch(
             }
 
             if (olmId !== olmSession.olmId) {
-                logger.warn(`Olm ID mismatch: ${olmId} !== ${olmSession.olmId}`);
+                logger.warn(
+                    `Olm ID mismatch: ${olmId} !== ${olmSession.olmId}`
+                );
                 return next(
                     createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
                 );
@@ -83,12 +105,55 @@ export async function updateHolePunch(
             const [client] = await db
                 .update(clients)
                 .set({
-                    endpoint: `${ip}:${port}`,
                     lastHolePunch: timestamp
                 })
                 .where(eq(clients.clientId, olm.clientId))
                 .returning();
-            
+
+            // Get the exit node by public key
+            const [exitNode] = await db
+                .select()
+                .from(exitNodes)
+                .where(eq(exitNodes.publicKey, publicKey));
+
+            if (exitNode) {
+                // Get sites that are on this specific exit node and connected to this client
+                const sitesOnExitNode = await db
+                    .select({ siteId: sites.siteId })
+                    .from(sites)
+                    .innerJoin(
+                        clientSites,
+                        eq(sites.siteId, clientSites.siteId)
+                    )
+                    .where(
+                        and(
+                            eq(sites.exitNodeId, exitNode.exitNodeId),
+                            eq(clientSites.clientId, olm.clientId)
+                        )
+                    );
+
+                // Update clientSites for each site on this exit node
+                for (const site of sitesOnExitNode) {
+                    await db
+                        .update(clientSites)
+                        .set({
+                            endpoint: `${ip}:${port}`
+                        })
+                        .where(
+                            and(
+                                eq(clientSites.clientId, olm.clientId),
+                                eq(clientSites.siteId, site.siteId)
+                            )
+                        );
+                }
+
+                logger.debug(
+                    `Updated ${sitesOnExitNode.length} sites on exit node with publicKey: ${publicKey}`
+                );
+            } else {
+                logger.warn(`Exit node not found for publicKey: ${publicKey}`);
+            }
+
             if (!client) {
                 logger.warn(`Client not found for olm: ${olmId}`);
                 return next(
@@ -101,23 +166,23 @@ export async function updateHolePunch(
             //     .select()
             //     .from(clientSites)
             //     .where(eq(clientSites.clientId, client.clientId));
-            
+
             // if (clientSitePairs.length === 0) {
             //     logger.warn(`No sites found for client: ${client.clientId}`);
             //     return next(
             //         createHttpError(HttpCode.NOT_FOUND, "No sites found for client")
             //     );
             // }
-            
+
             // // Get all sites details
             // const siteIds = clientSitePairs.map(pair => pair.siteId);
-            
+
             // for (const siteId of siteIds) {
             //     const [site] = await db
             //         .select()
             //         .from(sites)
             //         .where(eq(sites.siteId, siteId));
-                
+
             //     if (site && site.subnet && site.listenPort) {
             //         destinations.push({
             //             destinationIP: site.subnet.split("/")[0],
@@ -141,7 +206,9 @@ export async function updateHolePunch(
 
             for (const site of sitesData) {
                 if (!site.sites.subnet) {
-                    logger.warn(`Site ${site.sites.siteId} has no subnet, skipping`);
+                    logger.warn(
+                        `Site ${site.sites.siteId} has no subnet, skipping`
+                    );
                     continue;
                 }
                 // find the destinations in the array
@@ -176,51 +243,55 @@ export async function updateHolePunch(
 
             logger.debug(JSON.stringify(exitNodeDestinations, null, 2));
 
-            for (const destination of exitNodeDestinations) {
-                // if its the current exit node skip it because it is replying with the same data
-                if (reachableAt && destination.reachableAt == reachableAt) {
-                    logger.debug(`Skipping update for reachableAt: ${reachableAt}`);
-                    continue;
-                }
+            // BECAUSE OF HARD NAT YOU DONT WANT TO SEND THE OLM IP AND PORT TO THE ALL THE OTHER EXIT NODES
+            // BECAUSE THEY WILL GET A DIFFERENT IP AND PORT
 
-                try {
-                    const response = await axios.post(
-                        `${destination.reachableAt}/update-destinations`,
-                        {
-                            sourceIp: client.endpoint?.split(":")[0] || "",
-                            sourcePort: parseInt(client.endpoint?.split(":")[1] || "0"),
-                            destinations: destination.destinations
-                        },
-                        {
-                            headers: {
-                                "Content-Type": "application/json"
-                            }
-                        }
-                    );
+            // for (const destination of exitNodeDestinations) {
+            //     // if its the current exit node skip it because it is replying with the same data
+            //     if (reachableAt && destination.reachableAt == reachableAt) {
+            //         logger.debug(`Skipping update for reachableAt: ${reachableAt}`);
+            //         continue;
+            //     }
 
-                    logger.info("Destinations updated:", {
-                        peer: response.data.status
-                    });
-                } catch (error) {
-                    if (axios.isAxiosError(error)) {
-                        logger.error(
-                            `Error updating destinations (can Pangolin see Gerbil HTTP API?) for exit node at ${destination.reachableAt} (status: ${error.response?.status}): ${JSON.stringify(error.response?.data, null, 2)}`
-                        );
-                    } else {
-                        logger.error(
-                            `Error updating destinations for exit node at ${destination.reachableAt}: ${error}`
-                        );
-                    }
-                }
-            }
+            //     try {
+            //         const response = await axios.post(
+            //             `${destination.reachableAt}/update-destinations`,
+            //             {
+            //                 sourceIp: client.endpoint?.split(":")[0] || "",
+            //                 sourcePort: parseInt(client.endpoint?.split(":")[1] || "0"),
+            //                 destinations: destination.destinations
+            //             },
+            //             {
+            //                 headers: {
+            //                     "Content-Type": "application/json"
+            //                 }
+            //             }
+            //         );
+
+            //         logger.info("Destinations updated:", {
+            //             peer: response.data.status
+            //         });
+            //     } catch (error) {
+            //         if (axios.isAxiosError(error)) {
+            //             logger.error(
+            //                 `Error updating destinations (can Pangolin see Gerbil HTTP API?) for exit node at ${destination.reachableAt} (status: ${error.response?.status}): ${JSON.stringify(error.response?.data, null, 2)}`
+            //             );
+            //         } else {
+            //             logger.error(
+            //                 `Error updating destinations for exit node at ${destination.reachableAt}: ${error}`
+            //             );
+            //         }
+            //     }
+            // }
 
             // Send the desinations back to the origin
-            destinations = exitNodeDestinations.find(
-                (d) => d.reachableAt === reachableAt
-            )?.destinations || [];
-
+            destinations =
+                exitNodeDestinations.find((d) => d.reachableAt === reachableAt)
+                    ?.destinations || [];
         } else if (newtId) {
-            logger.debug(`Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`);
+            logger.debug(
+                `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
+            );
 
             const { session, newt: newtSession } =
                 await validateNewtSessionToken(token);
@@ -232,7 +303,9 @@ export async function updateHolePunch(
             }
 
             if (newtId !== newtSession.newtId) {
-                logger.warn(`Newt ID mismatch: ${newtId} !== ${newtSession.newtId}`);
+                logger.warn(
+                    `Newt ID mismatch: ${newtId} !== ${newtSession.newtId}`
+                );
                 return next(
                     createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
                 );
@@ -261,7 +334,7 @@ export async function updateHolePunch(
                 })
                 .where(eq(sites.siteId, newt.siteId))
                 .returning();
-            
+
             if (!updatedSite || !updatedSite.subnet) {
                 logger.warn(`Site not found: ${newt.siteId}`);
                 return next(
@@ -274,7 +347,7 @@ export async function updateHolePunch(
             //     .select()
             //     .from(clientSites)
             //     .where(eq(clientSites.siteId, newt.siteId));
-            
+
             // THE NEWT IS NOT SENDING RAW WG TO THE GERBIL SO IDK IF WE REALLY NEED THIS - REMOVING
             // Get client details for each client
             // for (const pair of sitesClientPairs) {
@@ -282,7 +355,7 @@ export async function updateHolePunch(
             //         .select()
             //         .from(clients)
             //         .where(eq(clients.clientId, pair.clientId));
-                
+
             //     if (client && client.endpoint) {
             //         const [host, portStr] = client.endpoint.split(':');
             //         if (host && portStr) {
@@ -293,27 +366,27 @@ export async function updateHolePunch(
             //         }
             //     }
             // }
-            
+
             // If this is a newt/site, also add other sites in the same org
-        //     if (updatedSite.orgId) {
-        //         const orgSites = await db
-        //             .select()
-        //             .from(sites)
-        //             .where(eq(sites.orgId, updatedSite.orgId));
-                
-        //         for (const site of orgSites) {
-        //             // Don't add the current site to the destinations
-        //             if (site.siteId !== currentSiteId && site.subnet && site.endpoint && site.listenPort) {
-        //                 const [host, portStr] = site.endpoint.split(':');
-        //                 if (host && portStr) {
-        //                     destinations.push({
-        //                         destinationIP: host,
-        //                         destinationPort: site.listenPort
-        //                     });
-        //                 }
-        //             }
-        //         }
-        //     }
+            //     if (updatedSite.orgId) {
+            //         const orgSites = await db
+            //             .select()
+            //             .from(sites)
+            //             .where(eq(sites.orgId, updatedSite.orgId));
+
+            //         for (const site of orgSites) {
+            //             // Don't add the current site to the destinations
+            //             if (site.siteId !== currentSiteId && site.subnet && site.endpoint && site.listenPort) {
+            //                 const [host, portStr] = site.endpoint.split(':');
+            //                 if (host && portStr) {
+            //                     destinations.push({
+            //                         destinationIP: host,
+            //                         destinationPort: site.listenPort
+            //                     });
+            //                 }
+            //             }
+            //         }
+            //     }
         }
 
         // if (destinations.length === 0) {

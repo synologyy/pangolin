@@ -129,7 +129,7 @@ export async function updateClient(
                 `Adding ${sitesAdded.length} new sites to client ${client.clientId}`
             );
             for (const siteId of sitesAdded) {
-                if (!client.subnet || !client.pubKey || !client.endpoint) {
+                if (!client.subnet || !client.pubKey) {
                     logger.debug(
                         "Client subnet, pubKey or endpoint is not set"
                     );
@@ -140,10 +140,25 @@ export async function updateClient(
                 // BUT REALLY WE NEED TO TRACK THE USERS PREFERENCE THAT THEY CHOSE IN THE CLIENTS
                 const isRelayed = true;
 
+                // get the clientsite
+                const [clientSite]  = await db
+                    .select()
+                    .from(clientSites)
+                    .where(and(
+                        eq(clientSites.clientId, client.clientId),
+                        eq(clientSites.siteId, siteId)
+                    ))
+                    .limit(1);
+
+                if (!clientSite || !clientSite.endpoint) {
+                    logger.debug("Client site is missing or has no endpoint");
+                    continue;
+                }
+
                 const site = await newtAddPeer(siteId, {
                     publicKey: client.pubKey,
                     allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                    endpoint: isRelayed ? "" : client.endpoint
+                    endpoint: isRelayed ? "" : clientSite.endpoint 
                 });
 
                 if (!site) {
@@ -255,7 +270,6 @@ export async function updateClient(
                 }
             }
 
-            if (client.endpoint) {
                 // get all sites for this client and join with exit nodes with site.exitNodeId
                 const sitesData = await db
                     .select()
@@ -272,6 +286,8 @@ export async function updateClient(
 
                 let exitNodeDestinations: {
                     reachableAt: string;
+                    sourceIp: string;
+                    sourcePort: number;
                     destinations: PeerDestination[];
                 }[] = [];
 
@@ -282,6 +298,14 @@ export async function updateClient(
                         );
                         continue;
                     }
+
+                    if (!site.clientSites.endpoint) {
+                        logger.warn(
+                            `Site ${site.sites.siteId} has no endpoint, skipping`
+                        );
+                        continue;
+                    }
+
                     // find the destinations in the array
                     let destinations = exitNodeDestinations.find(
                         (d) => d.reachableAt === site.exitNodes?.reachableAt
@@ -290,6 +314,8 @@ export async function updateClient(
                     if (!destinations) {
                         destinations = {
                             reachableAt: site.exitNodes?.reachableAt || "",
+                            sourceIp: site.clientSites.endpoint.split(":")[0] || "",
+                            sourcePort: parseInt(site.clientSites.endpoint.split(":")[1]) || 0,
                             destinations: [
                                 {
                                     destinationIP:
@@ -319,8 +345,8 @@ export async function updateClient(
                             `Updating destinations for exit node at ${destination.reachableAt}`
                         );
                         const payload = {
-                            sourceIp: client.endpoint?.split(":")[0] || "",
-                            sourcePort: parseInt(client.endpoint?.split(":")[1]) || 0,
+                            sourceIp: destination.sourceIp,
+                            sourcePort: destination.sourcePort,
                             destinations: destination.destinations
                         };
                         logger.info(
@@ -351,7 +377,6 @@ export async function updateClient(
                         }
                     }
                 }
-            }
 
             // Fetch the updated client
             const [updatedClient] = await trx
