@@ -78,7 +78,7 @@ export default async function migration() {
             fs.writeFileSync(filePath, updatedYaml, "utf8");
         } catch (e) {
             console.log(
-                `Failed to add resource_session_request_param to config. Please add it manually. https://docs.fossorial.io/Pangolin/Configuration/config`
+                `Failed to add resource_session_request_param to config. Please add it manually. https://docs.digpangolin.com/self-host/advanced/config-file`
             );
             trx.rollback();
             return;

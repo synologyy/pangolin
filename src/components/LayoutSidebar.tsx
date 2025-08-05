@@ -126,7 +126,7 @@ export function LayoutSidebar({
                         </div>
                         <div className="text-xs text-muted-foreground ">
                             <Link
-                                href="https://docs.fossorial.io/"
+                                href="https://docs.digpangolin.com/"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center justify-center gap-1"

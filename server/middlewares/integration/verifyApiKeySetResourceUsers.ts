@@ -32,6 +32,11 @@ export async function verifyApiKeySetResourceUsers(
         return next(createHttpError(HttpCode.BAD_REQUEST, "Invalid user IDs"));
     }
 
+    if (apiKey.isRoot) {
+        // Root keys can access any key in any org
+        return next();
+    }
+
     if (userIds.length === 0) {
         return next();
     }

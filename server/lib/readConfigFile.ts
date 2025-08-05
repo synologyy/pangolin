@@ -287,7 +287,7 @@ export function readConfigFile() {
 
     if (!environment) {
         throw new Error(
-            "No configuration file found. Please create one. https://docs.fossorial.io/"
+            "No configuration file found. Please create one. https://docs.digpangolin.com/self-host/advanced/config-file"
         );
     }
 

@@ -65,7 +65,7 @@ export default function GeneralPage() {
         defaultValues: {
             name: site?.name,
             dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
-            remoteSubnets: site?.remoteSubnets 
+            remoteSubnets: site?.remoteSubnets
                 ? site.remoteSubnets.split(',').map((subnet, index) => ({
                     id: subnet.trim(),
                     text: subnet.trim()
@@ -144,7 +144,7 @@ export default function GeneralPage() {
                                         </FormItem>
                                     )}
                                 />
-                                
+
                                 <FormField
                                     control={form.control}
                                     name="remoteSubnets"
@@ -208,7 +208,7 @@ export default function GeneralPage() {
                                                         "enableDockerSocketDescription"
                                                     )}{" "}
                                                     <Link
-                                                        href="https://docs.fossorial.io/Newt/overview#docker-socket-integration"
+                                                        href="https://docs.digpangolin.com/manage/sites/configure-site#docker-socket-integration"
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-primary hover:underline inline-flex items-center"

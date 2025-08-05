@@ -30,12 +30,6 @@ export class Config {
             throw new Error(`Invalid configuration file: ${errors}`);
         }
 
-        if (process.env.APP_BASE_DOMAIN) {
-            console.log(
-                "WARNING: You're using deprecated environment variables. Transition to the configuration file. https://docs.fossorial.io/"
-            );
-        }
-
         if (
             // @ts-ignore
             parsedConfig.users ||

@@ -28,6 +28,11 @@ export async function verifyApiKeyClientAccess(
             );
         }
 
+        if (apiKey.isRoot) {
+            // Root keys can access any key in any org
+            return next();
+        }
+
         const client = await db
             .select()
             .from(clients)

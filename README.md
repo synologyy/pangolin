@@ -20,7 +20,7 @@ _Pangolin tunnels your services to the internet so you can access anything from 
         Website
       </a>
       <span> | </span>
-      <a href="https://docs.fossorial.io/Getting%20Started/quick-install">
+      <a href="https://docs.digpangolin.com/self-host/quick-install">
         Install Guide
       </a>
       <span> | </span>
@@ -104,7 +104,7 @@ Pangolin is a self-hosted tunneled reverse proxy server with identity and access
 
 ### Fully Self Hosted
 
-Host the full application on your own server or on the cloud with a VPS. Take a look at the [documentation](https://docs.fossorial.io/Getting%20Started/quick-install) to get started.
+Host the full application on your own server or on the cloud with a VPS. Take a look at the [documentation](https://docs.digpangolin.com/self-host/quick-install) to get started.
 
 > Many of our users have had a great experience with [RackNerd](https://my.racknerd.com/aff.php?aff=13788). Depending on promotions, you can get a [**VPS with 1 vCPU, 1GB RAM, and ~20GB SSD for just around $12/year**](https://my.racknerd.com/aff.php?aff=13788&pid=912). That's a great deal!
 

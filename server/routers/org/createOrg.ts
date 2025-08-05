@@ -215,7 +215,7 @@ export async function createOrg(
                     orgId: newOrg[0].orgId,
                     roleId: roleId,
                     isOwner: true
-                }); 
+                });
             }
 
             const memberRole = await trx
@@ -234,18 +234,6 @@ export async function createOrg(
                     orgId
                 }))
             );
-
-            const rootApiKeys = await trx
-                .select()
-                .from(apiKeys)
-                .where(eq(apiKeys.isRoot, true));
-
-            for (const apiKey of rootApiKeys) {
-                await trx.insert(apiKeyOrg).values({
-                    apiKeyId: apiKey.apiKeyId,
-                    orgId: newOrg[0].orgId
-                });
-            }
         });
 
         if (!org) {

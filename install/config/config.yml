@@ -1,5 +1,5 @@
 # To see all available options, please visit the docs:
-# https://docs.fossorial.io/Pangolin/Configuration/config
+# https://docs.digpangolin.com/self-host/dns-and-networking
 
 app:
     dashboard_url: "https://{{.DashboardDomain}}"

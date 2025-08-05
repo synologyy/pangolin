@@ -70,7 +70,7 @@ func main() {
 	fmt.Println("- Open TCP ports 80 and 443 and UDP ports 51820 and 21820 on your VPS and firewall.")
 	fmt.Println("- Point your domain to the VPS IP with A records.")
 	fmt.Println("")
-	fmt.Println("http://docs.fossorial.io/Getting%20Started/dns-networking")
+	fmt.Println("https://docs.digpangolin.com/self-host/dns-and-networking")
 	fmt.Println("")
 	fmt.Println("Lets get started!")
 	fmt.Println("")
