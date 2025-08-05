@@ -52,16 +52,25 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
             return {
-                serverPubKey: exitNode.publicKey,
+                publicKey: exitNode.publicKey,
                 endpoint: exitNode.endpoint
             };
         });
 
         // Send holepunch message
         await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch",
+            type: "olm/wg/holepunch/all",
             data: {
-                exitNodes: exitNodesHpData,
+                exitNodes: exitNodesHpData
+            }
+        });
+
+        // THIS IS FOR BACKWARDS COMPATIBILITY
+        await sendToClient(olm.olmId, {
+            type: "olm/wg/holepunch/all",
+            data: {
+                serverPubKey: allExitNodes[0].publicKey,
+                endpoint: allExitNodes[0].endpoint
             }
         });
     }
