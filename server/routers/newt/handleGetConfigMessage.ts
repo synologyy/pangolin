@@ -102,7 +102,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             .from(exitNodes)
             .where(eq(exitNodes.exitNodeId, site.exitNodeId))
             .limit(1);
-        if (exitNode.reachableAt) {
+        if (exitNode.reachableAt && existingSite.subnet && existingSite.listenPort) {
             try {
                 const response = await axios.post(
                     `${exitNode.reachableAt}/update-proxy-mapping`,
