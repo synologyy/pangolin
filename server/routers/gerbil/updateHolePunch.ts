@@ -29,7 +29,7 @@ const updateHolePunchSchema = z.object({
     port: z.number(),
     timestamp: z.number(),
     reachableAt: z.string().optional(),
-    publicKey: z.string()
+    publicKey: z.string().optional()
 });
 
 // New response type with multi-peer destination support
