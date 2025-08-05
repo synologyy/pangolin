@@ -7,7 +7,8 @@ import {
     Site,
     sites,
     clientSites,
-    exitNodes
+    exitNodes,
+    ExitNode
 } from "@server/db";
 import { db } from "@server/db";
 import { eq, and } from "drizzle-orm";
@@ -110,11 +111,20 @@ export async function updateHolePunch(
                 .where(eq(clients.clientId, olm.clientId))
                 .returning();
 
+                let exitNode: ExitNode | undefined;
+            if (publicKey) {
             // Get the exit node by public key
-            const [exitNode] = await db
+             [exitNode] = await db
                 .select()
                 .from(exitNodes)
                 .where(eq(exitNodes.publicKey, publicKey));
+            } else {
+                // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
+                [exitNode] = await db
+                    .select()
+                    .from(exitNodes)
+                    .limit(1)
+            }
 
             if (exitNode) {
                 // Get sites that are on this specific exit node and connected to this client
