@@ -175,7 +175,7 @@ export async function updateHolePunch(
             for (const site of sitesOnExitNode) {
                 if (site.subnet && site.listenPort) {
                     destinations.push({
-                        destinationIP: ip,
+                        destinationIP: site.subnet.split("/")[0],
                         destinationPort: site.listenPort
                     });
                 }
