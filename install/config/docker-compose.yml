@@ -60,4 +60,4 @@ networks:
   default:
     driver: bridge
     name: pangolin
-    enable_ipv6: true
+{{if .EnableIPv6}}    enable_ipv6: true{{end}}

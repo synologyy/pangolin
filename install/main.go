@@ -39,6 +39,7 @@ type Config struct {
 	BadgerVersion             string
 	BaseDomain                string
 	DashboardDomain           string
+	EnableIPv6                bool
 	LetsEncryptEmail          string
 	EnableEmail               bool
 	EmailSMTPHost             string
@@ -303,6 +304,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 	fmt.Println("\n=== Basic Configuration ===")
 	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
 	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", "pangolin."+config.BaseDomain)
+	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
 	config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
 	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
 
