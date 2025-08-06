@@ -291,10 +291,10 @@ WantedBy=default.target`
             },
             nixos: {
                 x86_64: [
-                    `nix run 'nixpkgs#fosrl-newt' --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 aarch64: [
-                    `nix run 'nixpkgs#fosrl-newt' --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             }
         };
