@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "Beim Abrufen der neuesten Olm-Veröffentlichung ist ein Fehler aufgetreten.",
     "remoteSubnets": "Remote-Subnetze",
     "enterCidrRange": "Geben Sie den CIDR-Bereich ein",
-    "remoteSubnetsDescription": "Fügen Sie CIDR-Bereiche hinzu, die aus der Ferne auf diesen Standort zugreifen können. Verwenden Sie das Format wie 10.0.0.0/24 oder 192.168.1.0/24.",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "Öffentlichen Proxy aktivieren",
     "resourceEnableProxyDescription": "Ermöglichen Sie öffentliches Proxieren zu dieser Ressource. Dies ermöglicht den Zugriff auf die Ressource von außerhalb des Netzwerks durch die Cloud über einen offenen Port. Erfordert Traefik-Config.",
     "externalProxyEnabled": "Externer Proxy aktiviert"
