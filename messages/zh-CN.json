@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "获取最新 Olm 发布版本时出错。",
     "remoteSubnets": "远程子网",
     "enterCidrRange": "输入 CIDR 范围",
-    "remoteSubnetsDescription": "添加能远程访问此站点的 CIDR 范围。使用格式如 10.0.0.0/24 或 192.168.1.0/24。",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "启用公共代理",
     "resourceEnableProxyDescription": "启用到此资源的公共代理。这允许外部网络通过开放端口访问资源。需要 Traefik 配置。",
     "externalProxyEnabled": "外部代理已启用"
