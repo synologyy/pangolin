@@ -139,7 +139,7 @@ Pangolin is dual licensed under the AGPL-3 and the Fossorial Commercial license.
 
 ## Contributions
 
-Looking for something to contribute? Take a look at issues marked with [help wanted](https://github.com/fosrl/pangolin/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22).
+Looking for something to contribute? Take a look at issues marked with [help wanted](https://github.com/fosrl/pangolin/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22). Also take a look through the freature requests in Discussions - any are available and some are marked as a good first issue.
 
 Please see [CONTRIBUTING](./CONTRIBUTING.md) in the repository for guidelines and best practices.
 
