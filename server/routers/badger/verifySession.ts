@@ -121,11 +121,10 @@ export async function verifyResourceSession(
         logger.debug("Client IP:", { clientIp });
 
         let cleanHost = host;
-        // if the host ends with :443 or :80 remove it
-        if (cleanHost.endsWith(":443")) {
-            cleanHost = cleanHost.slice(0, -4);
-        } else if (cleanHost.endsWith(":80")) {
-            cleanHost = cleanHost.slice(0, -3);
+        // if the host ends with :port, strip it
+        if (cleanHost.match(/:[0-9]{1,5}$/)) {
+            let matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1*matched.length);
         }
 
         const resourceCacheKey = `resource:${cleanHost}`;

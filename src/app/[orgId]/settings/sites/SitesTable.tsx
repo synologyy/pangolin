@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { Column, ColumnDef } from "@tanstack/react-table";
 import { SitesDataTable } from "./SitesDataTable";
 import {
     DropdownMenu,
@@ -19,16 +19,16 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AxiosResponse } from "axios";
-import { useState } from "react";
-import CreateSiteForm from "./CreateSiteForm";
+import { useState, useEffect } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import CreateSiteFormModal from "./CreateSiteModal";
 import { useTranslations } from "next-intl";
-import { parseDataSize } from '@app/lib/dataSize';
+import { parseDataSize } from "@app/lib/dataSize";
+import { Badge } from "@app/components/ui/badge";
+import { InfoPopup } from "@app/components/ui/info-popup";
 
 export type SiteRow = {
     id: number;
@@ -38,7 +38,10 @@ export type SiteRow = {
     mbOut: string;
     orgId: string;
     type: "newt" | "wireguard";
+    newtVersion?: string;
+    newtUpdateAvailable?: boolean;
     online: boolean;
+    address?: string;
 };
 
 type SitesTableProps = {
@@ -52,18 +55,42 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedSite, setSelectedSite] = useState<SiteRow | null>(null);
     const [rows, setRows] = useState<SiteRow[]>(sites);
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
+    const { env } = useEnvContext();
+
+    // Update local state when props change (e.g., after refresh)
+    useEffect(() => {
+        setRows(sites);
+    }, [sites]);
+
+    const refreshData = async () => {
+        console.log("Data refreshed");
+        setIsRefreshing(true);
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            router.refresh();
+        } catch (error) {
+            toast({
+                title: t("error"),
+                description: t("refreshError"),
+                variant: "destructive"
+            });
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
 
     const deleteSite = (siteId: number) => {
         api.delete(`/site/${siteId}`)
             .catch((e) => {
-                console.error(t('siteErrorDelete'), e);
+                console.error(t("siteErrorDelete"), e);
                 toast({
                     variant: "destructive",
-                    title: t('siteErrorDelete'),
-                    description: formatAxiosError(e, t('siteErrorDelete'))
+                    title: t("siteErrorDelete"),
+                    description: formatAxiosError(e, t("siteErrorDelete"))
                 });
             })
             .then(() => {
@@ -78,42 +105,6 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
 
     const columns: ColumnDef<SiteRow>[] = [
         {
-            id: "dots",
-            cell: ({ row }) => {
-                const siteRow = row.original;
-                const router = useRouter();
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <Link
-                                className="block w-full"
-                                href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
-                            >
-                                <DropdownMenuItem>
-                                    {t('viewSettings')}
-                                </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelectedSite(siteRow);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            >
-                                <span className="text-red-500">{t('delete')}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
-        {
             accessorKey: "name",
             header: ({ column }) => {
                 return (
@@ -123,7 +114,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('name')}
+                        {t("name")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -139,7 +130,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('online')}
+                        {t("online")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -154,14 +145,14 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                         return (
                             <span className="text-green-500 flex items-center space-x-2">
                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span>{t('online')}</span>
+                                <span>{t("online")}</span>
                             </span>
                         );
                     } else {
                         return (
                             <span className="text-neutral-500 flex items-center space-x-2">
                                 <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                                <span>{t('offline')}</span>
+                                <span>{t("offline")}</span>
                             </span>
                         );
                     }
@@ -179,10 +170,18 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                         onClick={() =>
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
+                        className="hidden md:flex whitespace-nowrap"
                     >
-                        {t('site')}
+                        {t("site")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return (
+                    <div className="hidden md:block whitespace-nowrap">
+                        {row.original.nice}
+                    </div>
                 );
             }
         },
@@ -196,13 +195,14 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('dataIn')}
+                        {t("dataIn")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
             },
-            sortingFn: (rowA, rowB) => 
-                parseDataSize(rowA.original.mbIn) - parseDataSize(rowB.original.mbIn)
+            sortingFn: (rowA, rowB) =>
+                parseDataSize(rowA.original.mbIn) -
+                parseDataSize(rowB.original.mbIn)
         },
         {
             accessorKey: "mbOut",
@@ -214,13 +214,14 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('dataOut')}
+                        {t("dataOut")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
             },
             sortingFn: (rowA, rowB) =>
-                parseDataSize(rowA.original.mbOut) - parseDataSize(rowB.original.mbOut),
+                parseDataSize(rowA.original.mbOut) -
+                parseDataSize(rowB.original.mbOut)
         },
         {
             accessorKey: "type",
@@ -232,7 +233,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('connectionType')}
+                        {t("connectionType")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -242,8 +243,22 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
 
                 if (originalRow.type === "newt") {
                     return (
-                        <div className="flex items-center space-x-2">
-                            <span>Newt</span>
+                        <div className="flex items-center space-x-1">
+                            <Badge variant="secondary">
+                                <div className="flex items-center space-x-2">
+                                    <span>Newt</span>
+                                    {originalRow.newtVersion && (
+                                        <span className="text-xs text-gray-500">
+                                            v{originalRow.newtVersion}
+                                        </span>
+                                    )}
+                                </div>
+                            </Badge>
+                            {originalRow.newtUpdateAvailable && (
+                                <InfoPopup
+                                    info={t("newtUpdateAvailableInfo")}
+                                />
+                            )}
                         </div>
                     );
                 }
@@ -259,23 +274,68 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 if (originalRow.type === "local") {
                     return (
                         <div className="flex items-center space-x-2">
-                            <span>{t('local')}</span>
+                            <span>{t("local")}</span>
                         </div>
                     );
                 }
             }
         },
+        ...(env.flags.enableClients ? [{
+            accessorKey: "address",
+            header: ({ column }: { column: Column<SiteRow, unknown> }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        Address
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            }
+        }] : []),
         {
             id: "actions",
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center justify-end gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <Link
+                                    className="block w-full"
+                                    href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
+                                >
+                                    <DropdownMenuItem>
+                                        {t("viewSettings")}
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelectedSite(siteRow);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("delete")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Link
                             href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
                         >
-                            <Button variant={"outlinePrimary"} className="ml-2">
-                                {t('edit')}
+                            <Button variant={"secondary"} size="sm">
+                                {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
@@ -297,22 +357,21 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                     dialog={
                         <div className="space-y-4">
                             <p>
-                                {t('siteQuestionRemove', {selectedSite: selectedSite?.name || selectedSite?.id})}
+                                {t("siteQuestionRemove", {
+                                    selectedSite:
+                                        selectedSite?.name || selectedSite?.id
+                                })}
                             </p>
 
-                            <p>  
-                                {t('siteMessageRemove')}
-                            </p>
+                            <p>{t("siteMessageRemove")}</p>
 
-                            <p>
-                                {t('siteMessageConfirm')}
-                            </p>
+                            <p>{t("siteMessageConfirm")}</p>
                         </div>
                     }
-                    buttonText={t('siteConfirmDelete')}
+                    buttonText={t("siteConfirmDelete")}
                     onConfirm={async () => deleteSite(selectedSite!.id)}
                     string={selectedSite.name}
-                    title={t('siteDelete')}
+                    title={t("siteDelete")}
                 />
             )}
 
@@ -322,6 +381,8 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 createSite={() =>
                     router.push(`/${orgId}/settings/sites/create`)
                 }
+                onRefresh={refreshData}
+                isRefreshing={isRefreshing}
             />
         </>
     );

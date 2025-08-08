@@ -6,35 +6,35 @@ import { cn } from "@app/lib/cn";
 import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
-    "cursor-pointer inline-flex items-center justify-center rounded-full whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+    "cursor-pointer inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50",
     {
         variants: {
             variant: {
                 default:
-                    "bg-primary text-primary-foreground hover:bg-primary/90",
+                    "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
                 destructive:
-                    "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                    "bg-destructive text-white dark:text-destructive-foreground hover:bg-destructive/90 shadow-2xs",
                 outline:
-                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground",
+                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground shadow-2xs",
                 outlinePrimary:
-                    "border border-primary bg-card hover:bg-primary/10 text-primary",
+                    "border border-primary bg-card hover:bg-primary/10 text-primary shadow-2xs",
                 secondary:
-                    "bg-secondary border border-input border text-secondary-foreground hover:bg-secondary/80",
+                    "bg-secondary border border-input border text-secondary-foreground hover:bg-secondary/80 shadow-2xs",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 squareOutlinePrimary:
-                    "border border-primary bg-card hover:bg-primary/10 text-primary rounded-md",
+                    "border border-primary bg-card hover:bg-primary/10 text-primary rounded-md shadow-2xs",
                 squareOutline:
-                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground rounded-md",
+                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground rounded-md shadow-2xs",
                 squareDefault:
-                    "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                    "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-2xs",
                 text: "",
                 link: "text-primary underline-offset-4 hover:underline"
             },
             size: {
-                default: "h-9 px-4 py-2",
+                default: "h-9 rounded-md px-3",
                 sm: "h-8 rounded-md px-3",
                 lg: "h-10 rounded-md px-8",
-                icon: "h-9 w-9"
+                icon: "h-9 w-9 rounded-md"
             }
         },
         defaultVariants: {

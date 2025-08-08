@@ -4,17 +4,7 @@ import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
-import { ProfessionalContentOverlay } from "@app/components/ProfessionalContentOverlay";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator
-} from "@app/components/ui/breadcrumb";
 import { getTranslations } from "next-intl/server";
 
 interface SettingsLayoutProps {

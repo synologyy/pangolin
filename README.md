@@ -7,20 +7,20 @@
     </h2>
 </div>
 
-<h4 align="center">Tunneled Reverse Proxy Server with Access Control</h4>
+<h4 align="center">Secure gateway to your private networks</h4>
 <div align="center">
 
-_Your own self-hosted zero trust tunnel._
+_Pangolin tunnels your services to the internet so you can access anything from anywhere._
 
 </div>
 
 <div align="center">
   <h5>
-      <a href="https://fossorial.io">
+      <a href="https://digpangolin.com">
         Website
       </a>
       <span> | </span>
-      <a href="https://docs.fossorial.io/Getting%20Started/quick-install">
+      <a href="https://docs.digpangolin.com/self-host/quick-install">
         Install Guide
       </a>
       <span> | </span>
@@ -36,22 +36,31 @@ _Your own self-hosted zero trust tunnel._
 
 </div>
 
+<p align="center">
+    <strong>
+        Start testing Pangolin at <a href="https://pangolin.fossorial.io/auth/signup">pangolin.fossorial.io</a>
+    </strong>
+</p>
+
 Pangolin is a self-hosted tunneled reverse proxy server with identity and access control, designed to securely expose private resources on distributed networks. Acting as a central hub, it connects isolated networks — even those behind restrictive firewalls — through encrypted tunnels, enabling easy access to remote services without opening ports.
 
 <img src="public/screenshots/hero.png" alt="Preview"/>
 
-_Resources page of Pangolin dashboard (dark mode) showing multiple resources available to connect._
+![gif](public/clip.gif)
 
 ## Key Features
 
 ### Reverse Proxy Through WireGuard Tunnel
 
 - Expose private resources on your network **without opening ports** (firewall punching).
-- Secure and easy to configure site-to-site connectivity via a custom **user space WireGuard client**, [Newt](https://github.com/fosrl/newt).
+- Secure and easy to configure private connectivity via a custom **user space WireGuard client**, [Newt](https://github.com/fosrl/newt).
 - Built-in support for any WireGuard client.
 - Automated **SSL certificates** (https) via [LetsEncrypt](https://letsencrypt.org/).
 - Support for HTTP/HTTPS and **raw TCP/UDP services**.
 - Load balancing.
+- Extend functionality with existing [Traefik](https://github.com/traefik/traefik) plugins, such as [CrowdSec](https://plugins.traefik.io/plugins/6335346ca4caa9ddeffda116/crowdsec-bouncer-traefik-plugin) and [Geoblock](https://github.com/PascalMinder/geoblock).
+    - **Automatically install and configure Crowdsec via Pangolin's installer script.**
+- Attach as many sites to the central server as you wish.
 
 ### Identity & Access Management
 
@@ -65,89 +74,73 @@ _Resources page of Pangolin dashboard (dark mode) showing multiple resources ava
     - **Temporary, self-destructing share links.**
     - Resource specific pin codes.
     - Resource specific passwords.
+    - Passkeys
 - External identity provider (IdP) support with OAuth2/OIDC, such as Authentik, Keycloak, Okta, and others.
     - Auto-provision users and roles from your IdP.
 
-### Simple Dashboard UI
+<img src="public/auth-diagram1.png" alt="Auth and diagram"/>
 
-- Manage sites, users, and roles with a clean and intuitive UI.
-- Monitor site usage and connectivity.
-- Light and dark mode options.
-- Mobile friendly.
+## Use Cases
 
-### Easy Deployment
+### Manage Access to Internal Apps
 
-- Run on any cloud provider or on-premises.
-- **Docker Compose based setup** for simplified deployment.
-- Future-proof installation script for streamlined setup and feature additions.
-- Use any WireGuard client to connect, or use **Newt, our custom user space client** for the best experience.
-- Use the API to create custom integrations and scripts.
-    - Fine-grained access control to the API via scoped API keys.
-    - Comprehensive Swagger documentation for the API.
+- Grant users access to your apps from anywhere using just a web browser. No client software required.
 
-### Modular Design
+### Developers and DevOps
 
-- Extend functionality with existing [Traefik](https://github.com/traefik/traefik) plugins, such as [CrowdSec](https://plugins.traefik.io/plugins/6335346ca4caa9ddeffda116/crowdsec-bouncer-traefik-plugin) and [Geoblock](https://github.com/PascalMinder/geoblock).
-    - **Automatically install and configure Crowdsec via Pangolin's installer script.**
-- Attach as many sites to the central server as you wish.
+- Expose and test internal tools and dashboards like **Grafana**. Bring localhost or private IPs online for easy access.
 
-<img src="public/screenshots/collage.png" alt="Collage"/>
+### Secure API Gateway
 
-## Deployment and Usage Example
+- One application load balancer across multiple clouds and on-premises.
 
-1. **Deploy the Central Server**:
+### IoT and Edge Devices
 
-    - Deploy the Docker Compose stack onto a VPS hosted on a cloud platform like RackNerd, Amazon EC2, DigitalOcean Droplet, or similar. There are many cheap VPS hosting options available to suit your needs.
+- Easily expose **IoT devices**, **edge servers**, or **Raspberry Pi** to the internet for field equipment monitoring.
 
-> [!TIP]
+<img src="public/screenshots/sites.png" alt="Sites"/>
+
+## Deployment Options
+
+### Fully Self Hosted
+
+Host the full application on your own server or on the cloud with a VPS. Take a look at the [documentation](https://docs.digpangolin.com/self-host/quick-install) to get started.
+
 > Many of our users have had a great experience with [RackNerd](https://my.racknerd.com/aff.php?aff=13788). Depending on promotions, you can get a [**VPS with 1 vCPU, 1GB RAM, and ~20GB SSD for just around $12/year**](https://my.racknerd.com/aff.php?aff=13788&pid=912). That's a great deal!
-> We are part of the [RackNerd](https://my.racknerd.com/aff.php?aff=13788) affiliate program, so if you purchase through [our link](https://my.racknerd.com/aff.php?aff=13788), we receive a small commission which helps us maintain the project and keep it free for everyone.
 
-1. **Domain Configuration**:
+### Pangolin Cloud
 
-    - Point your domain name to the VPS and configure Pangolin with your preferred settings.
+Easy to use with simple [pay as you go pricing](https://digpangolin.com/pricing). [Check it out here](https://pangolin.fossorial.io/auth/signup). 
 
-2. **Connect Private Sites**:
+- Everything you get with self hosted Pangolin, but fully managed for you.
 
-    - Install Newt or use another WireGuard client on private sites.
-    - Automatically establish a connection from these sites to the central server.
+### Hybrid & High Availability
 
-3. **Expose Resources**:
+Managed control plane, your infrastructure
 
-    - Add resources to the central server and configure access control rules.
-    - Access these resources securely from anywhere.
+- We manage database and control plane.
+- You self-host lightweight exit-node.
+- Traffic flows through your infra.
+- We coordinate failover between your nodes or to Cloud when things go bad.
 
-**Use Case Example - Bypassing Port Restrictions in Home Lab**:  
- Imagine private sites where the ISP restricts port forwarding. By connecting these sites to Pangolin via WireGuard, you can securely expose HTTP and HTTPS resources on the private network without any networking complexity.
+If interested, [contact us](mailto:numbat@fossorial.io).
 
-**Use Case Example - Deploying Services For Your Business**:
-You can use Pangolin as an easy way to expose your business applications to your users behind a safe authentication portal you can integrate into your IdP solution. Expose resources on prem and on the cloud.
+### Full Enterprise On-Premises
 
-**Use Case Example - IoT Networks**:  
- IoT networks are often fragmented and difficult to manage. By deploying Pangolin on a central server, you can connect all your IoT sites via Newt or another WireGuard client. This creates a simple, secure, and centralized way to access IoT resources without the need for intricate networking setups.
-
-## Similar Projects and Inspirations
-
-**Cloudflare Tunnels**:  
- A similar approach to proxying private resources securely, but Pangolin is a self-hosted alternative, giving you full control over your infrastructure.
-
-**Authelia**:  
- This inspired Pangolin’s centralized authentication system for proxies, enabling robust user and role management.
+[Contact us](mailto:numbat@fossorial.io) for a full distributed and enterprise deployments on your infrastructure controlled by your team.
 
 ## Project Development / Roadmap
 
-> [!NOTE]
-> Pangolin is under heavy development. The roadmap is subject to change as we fix bugs, add new features, and make improvements.
-
-View the [project board](https://github.com/orgs/fosrl/projects/1) for more detailed info.
+We want to hear your feature requests! Add them to the [discussion board](https://github.com/orgs/fosrl/discussions/categories/feature-requests).
 
 ## Licensing
 
-Pangolin is dual licensed under the AGPL-3 and the Fossorial Commercial license. Please see the [LICENSE](./LICENSE) file in the repository for details. For inquiries about commercial licensing, please contact us at [numbat@fossorial.io](mailto:numbat@fossorial.io).
+Pangolin is dual licensed under the AGPL-3 and the Fossorial Commercial license. For inquiries about commercial licensing, please contact us at [numbat@fossorial.io](mailto:numbat@fossorial.io).
 
 ## Contributions
+
+Looking for something to contribute? Take a look at issues marked with [help wanted](https://github.com/fosrl/pangolin/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22). Also take a look through the freature requests in Discussions - any are available and some are marked as a good first issue.
 
 Please see [CONTRIBUTING](./CONTRIBUTING.md) in the repository for guidelines and best practices.
 
 Please post bug reports and other functional issues in the [Issues](https://github.com/fosrl/pangolin/issues) section of the repository.
-For all feature requests, or other ideas, please use the [Discussions](https://github.com/orgs/fosrl/discussions) section.

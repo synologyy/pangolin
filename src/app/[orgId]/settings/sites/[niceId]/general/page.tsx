@@ -24,8 +24,7 @@ import {
     SettingsSectionTitle,
     SettingsSectionDescription,
     SettingsSectionBody,
-    SettingsSectionForm,
-    SettingsSectionFooter
+    SettingsSectionForm
 } from "@app/components/Settings";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
@@ -34,10 +33,17 @@ import { useState } from "react";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
 
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
-    dockerSocketEnabled: z.boolean().optional()
+    dockerSocketEnabled: z.boolean().optional(),
+    remoteSubnets: z.array(
+        z.object({
+            id: z.string(),
+            text: z.string()
+        })
+    ).optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -45,9 +51,11 @@ type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 export default function GeneralPage() {
     const { site, updateSite } = useSiteContext();
 
+    const { env } = useEnvContext();
     const api = createApiClient(useEnvContext());
 
     const [loading, setLoading] = useState(false);
+    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(null);
 
     const router = useRouter();
     const t = useTranslations();
@@ -56,7 +64,13 @@ export default function GeneralPage() {
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: site?.name,
-            dockerSocketEnabled: site?.dockerSocketEnabled ?? false
+            dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
+            remoteSubnets: site?.remoteSubnets
+                ? site.remoteSubnets.split(',').map((subnet, index) => ({
+                    id: subnet.trim(),
+                    text: subnet.trim()
+                }))
+                : []
         },
         mode: "onChange"
     });
@@ -67,7 +81,8 @@ export default function GeneralPage() {
         await api
             .post(`/site/${site?.siteId}`, {
                 name: data.name,
-                dockerSocketEnabled: data.dockerSocketEnabled
+                dockerSocketEnabled: data.dockerSocketEnabled,
+                remoteSubnets: data.remoteSubnets?.map(subnet => subnet.text).join(',') || ''
             })
             .catch((e) => {
                 toast({
@@ -82,7 +97,8 @@ export default function GeneralPage() {
 
         updateSite({
             name: data.name,
-            dockerSocketEnabled: data.dockerSocketEnabled
+            dockerSocketEnabled: data.dockerSocketEnabled,
+            remoteSubnets: data.remoteSubnets?.map(subnet => subnet.text).join(',') || ''
         });
 
         toast({
@@ -125,12 +141,47 @@ export default function GeneralPage() {
                                                 <Input {...field} />
                                             </FormControl>
                                             <FormMessage />
-                                            <FormDescription>
-                                                {t("siteNameDescription")}
-                                            </FormDescription>
                                         </FormItem>
                                     )}
                                 />
+
+                                <FormField
+                                    control={form.control}
+                                    name="remoteSubnets"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t("remoteSubnets")}</FormLabel>
+                                            <FormControl>
+                                                <TagInput
+                                                    {...field}
+                                                    activeTagIndex={activeCidrTagIndex}
+                                                    setActiveTagIndex={setActiveCidrTagIndex}
+                                                    placeholder={t("enterCidrRange")}
+                                                    size="sm"
+                                                    tags={form.getValues().remoteSubnets || []}
+                                                    setTags={(newSubnets) => {
+                                                        form.setValue(
+                                                            "remoteSubnets",
+                                                            newSubnets as Tag[]
+                                                        );
+                                                    }}
+                                                    validateTag={(tag) => {
+                                                        // Basic CIDR validation regex
+                                                        const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+                                                        return cidrRegex.test(tag);
+                                                    }}
+                                                    allowDuplicates={false}
+                                                    sortTags={true}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                {t("remoteSubnetsDescription")}
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 {site && site.type === "newt" && (
                                     <FormField
                                         control={form.control}
@@ -157,7 +208,7 @@ export default function GeneralPage() {
                                                         "enableDockerSocketDescription"
                                                     )}{" "}
                                                     <Link
-                                                        href="https://docs.fossorial.io/Newt/overview#docker-socket-integration"
+                                                        href="https://docs.digpangolin.com/manage/sites/configure-site#docker-socket-integration"
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-primary hover:underline inline-flex items-center"
@@ -177,18 +228,18 @@ export default function GeneralPage() {
                         </Form>
                     </SettingsSectionForm>
                 </SettingsSectionBody>
-
-                <SettingsSectionFooter>
-                    <Button
-                        type="submit"
-                        form="general-settings-form"
-                        loading={loading}
-                        disabled={loading}
-                    >
-                        {t("saveGeneralSettings")}
-                    </Button>
-                </SettingsSectionFooter>
             </SettingsSection>
+
+            <div className="flex justify-end mt-6">
+                <Button
+                    type="submit"
+                    form="general-settings-form"
+                    loading={loading}
+                    disabled={loading}
+                >
+                    Save All Settings
+                </Button>
+            </div>
         </SettingsContainer>
     );
 }

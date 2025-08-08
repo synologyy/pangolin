@@ -62,6 +62,8 @@ export async function deleteSite(
             );
         }
 
+        let deletedNewtId: string | null = null;
+
         await db.transaction(async (trx) => {
             if (site.pubKey) {
                 if (site.type == "wireguard") {
@@ -73,11 +75,7 @@ export async function deleteSite(
                         .where(eq(newts.siteId, siteId))
                         .returning();
                     if (deletedNewt) {
-                        const payload = {
-                            type: `newt/terminate`,
-                            data: {}
-                        };
-                        sendToClient(deletedNewt.newtId, payload);
+                        deletedNewtId = deletedNewt.newtId;
 
                         // delete all of the sessions for the newt
                         await trx
@@ -89,6 +87,18 @@ export async function deleteSite(
 
             await trx.delete(sites).where(eq(sites.siteId, siteId));
         });
+
+        // Send termination message outside of transaction to prevent blocking
+        if (deletedNewtId) {
+            const payload = {
+                type: `newt/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(deletedNewtId, payload).catch(error => {
+                logger.error("Failed to send termination message to newt:", error);
+            });
+        }
 
         return response(res, {
             data: null,

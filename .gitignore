@@ -18,6 +18,7 @@ yarn-error.log*
 next-env.d.ts
 *.db
 *.sqlite
+!Dockerfile.sqlite
 *.sqlite3
 *.log
 .machinelogs*.json

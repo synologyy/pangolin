@@ -1,11 +1,5 @@
-import {
-    Body,
-    Head,
-    Html,
-    Preview,
-    Tailwind
-} from "@react-email/components";
-import * as React from "react";
+import React from "react";
+import { Body, Head, Html, Preview, Tailwind } from "@react-email/components";
 import { themeColors } from "./lib/theme";
 import {
     EmailContainer,
@@ -22,29 +16,29 @@ interface Props {
 }
 
 export const ConfirmPasswordReset = ({ email }: Props) => {
-    const previewText = `Your password has been reset`;
+    const previewText = `Your password has been successfully reset.`;
 
     return (
         <Html>
             <Head />
             <Preview>{previewText}</Preview>
             <Tailwind config={themeColors}>
-                <Body className="font-sans relative">
+                <Body className="font-sans bg-gray-50">
                     <EmailContainer>
                         <EmailLetterHead />
 
-                        <EmailHeading>Password Reset Confirmation</EmailHeading>
+                        {/* <EmailHeading>Password Successfully Reset</EmailHeading> */}
 
-                        <EmailGreeting>Hi {email || "there"},</EmailGreeting>
+                        <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            This email confirms that your password has just been
-                            reset. If you made this change, no further action is
-                            required.
+                            Your password has been successfully reset. You can
+                            now sign in to your account using your new password.
                         </EmailText>
 
                         <EmailText>
-                            Thank you for keeping your account secure.
+                            If you didn't make this change, please contact our
+                            support team immediately to secure your account.
                         </EmailText>
 
                         <EmailFooter>

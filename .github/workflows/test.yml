@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create database index.ts
+        run: echo 'export * from "./sqlite";' > server/db/index.ts
+
       - name: Generate database migrations
         run: npm run db:sqlite:generate
 
@@ -45,5 +48,8 @@ jobs:
           echo "App failed to start"
           exit 1
 
-      - name: Build Docker image
-        run: make build
+      - name: Build Docker image sqlite
+        run: make build-sqlite
+
+      - name: Build Docker image pg
+        run: make build-pg

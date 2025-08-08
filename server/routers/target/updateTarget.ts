@@ -157,7 +157,7 @@ export async function updateTarget(
                     .where(eq(newts.siteId, site.siteId))
                     .limit(1);
 
-                addTargets(newt.newtId, [updatedTarget], resource.protocol);
+                addTargets(newt.newtId, [updatedTarget], resource.protocol, resource.proxyPort);
             }
         }
         return response(res, {

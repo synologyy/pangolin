@@ -8,6 +8,7 @@ import * as target from "./target";
 import * as user from "./user";
 import * as auth from "./auth";
 import * as role from "./role";
+import * as client from "./client";
 import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
@@ -16,7 +17,6 @@ import * as apiKeys from "./apiKeys";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
-    rateLimitMiddleware,
     verifySessionMiddleware,
     verifySessionUserMiddleware,
     verifyOrgAccess,
@@ -29,14 +29,20 @@ import {
     getUserOrgs,
     verifyUserIsServerAdmin,
     verifyIsLoggedInUser,
-    verifyApiKeyAccess
+    verifyClientAccess,
+    verifyApiKeyAccess,
+    verifyDomainAccess,
+    verifyClientsEnabled,
+    verifyUserHasAction,
+    verifyUserIsOrgOwner
 } from "@server/middlewares";
-import { verifyUserHasAction } from "../middlewares/verifyUserHasAction";
+import { createStore } from "@server/lib/rateLimitStore";
 import { ActionsEnum } from "@server/auth/actions";
-import { verifyUserIsOrgOwner } from "../middlewares/verifyUserIsOrgOwner";
-import { createNewt, getToken } from "./newt";
+import { createNewt, getNewtToken } from "./newt";
+import { getOlmToken } from "./olm";
 import rateLimit from "express-rate-limit";
 import createHttpError from "http-errors";
+import { build } from "@server/build";
 
 // Root routes
 export const unauthenticated = Router();
@@ -49,8 +55,11 @@ unauthenticated.get("/", (_, res) => {
 export const authenticated = Router();
 authenticated.use(verifySessionUserMiddleware);
 
+authenticated.get("/pick-org-defaults", org.pickOrgDefaults);
 authenticated.get("/org/checkId", org.checkId);
-authenticated.put("/org", getUserOrgs, org.createOrg);
+if (build === "oss" || build === "enterprise") {
+    authenticated.put("/org", getUserOrgs, org.createOrg);
+}
 
 authenticated.get("/orgs", verifyUserIsServerAdmin, org.listOrgs);
 authenticated.get("/user/:userId/orgs", verifyIsLoggedInUser, org.listUserOrgs);
@@ -105,6 +114,55 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.getSite),
     site.getSite
 );
+
+authenticated.get(
+    "/org/:orgId/pick-client-defaults",
+    verifyClientsEnabled,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.createClient),
+    client.pickClientDefaults
+);
+
+authenticated.get(
+    "/org/:orgId/clients",
+    verifyClientsEnabled,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listClients),
+    client.listClients
+);
+
+authenticated.get(
+    "/org/:orgId/client/:clientId",
+    verifyClientsEnabled,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getClient),
+    client.getClient
+);
+
+authenticated.put(
+    "/org/:orgId/client",
+    verifyClientsEnabled,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.createClient),
+    client.createClient
+);
+
+authenticated.delete(
+    "/client/:clientId",
+    verifyClientsEnabled,
+    verifyClientAccess,
+    verifyUserHasAction(ActionsEnum.deleteClient),
+    client.deleteClient
+);
+
+authenticated.post(
+    "/client/:clientId",
+    verifyClientsEnabled,
+    verifyClientAccess, // this will check if the user has access to the client
+    verifyUserHasAction(ActionsEnum.updateClient), // this will check if the user has permission to update the client
+    client.updateClient
+);
+
 // authenticated.get(
 //     "/site/:siteId/roles",
 //     verifySiteAccess,
@@ -173,6 +231,12 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listResources),
     resource.listResources
+);
+
+authenticated.get(
+    "/org/:orgId/user-resources",
+    verifyOrgAccess,
+    resource.getUserResources
 );
 
 authenticated.get(
@@ -476,6 +540,7 @@ unauthenticated.get("/resource/:resourceId/auth", resource.getResourceAuthInfo);
 unauthenticated.get("/user", verifySessionMiddleware, user.getUser);
 
 authenticated.get("/users", verifyUserIsServerAdmin, user.adminListUsers);
+authenticated.get("/user/:userId", verifyUserIsServerAdmin, user.adminGetUser);
 authenticated.delete(
     "/user/:userId",
     verifyUserIsServerAdmin,
@@ -490,6 +555,12 @@ authenticated.put(
 );
 
 authenticated.get("/org/:orgId/user/:userId", verifyOrgAccess, user.getOrgUser);
+
+authenticated.post(
+    "/user/:userId/2fa",
+    verifyUserIsServerAdmin,
+    user.updateUser2FA
+);
 
 authenticated.get(
     "/org/:orgId/users",
@@ -554,8 +625,6 @@ authenticated.post(
 );
 
 authenticated.delete("/idp/:idpId", verifyUserIsServerAdmin, idp.deleteIdp);
-
-authenticated.get("/idp", verifyUserIsServerAdmin, idp.listIdps);
 
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
 
@@ -692,46 +761,178 @@ authenticated.get(
     apiKeys.getApiKey
 );
 
+authenticated.put(
+    `/org/:orgId/domain`,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.createOrgDomain),
+    domain.createOrgDomain
+);
+
+authenticated.post(
+    `/org/:orgId/domain/:domainId/restart`,
+    verifyOrgAccess,
+    verifyDomainAccess,
+    verifyUserHasAction(ActionsEnum.restartOrgDomain),
+    domain.restartOrgDomain
+);
+
+authenticated.delete(
+    `/org/:orgId/domain/:domainId`,
+    verifyOrgAccess,
+    verifyDomainAccess,
+    verifyUserHasAction(ActionsEnum.deleteOrgDomain),
+    domain.deleteAccountDomain
+);
+
 // Auth routes
 export const authRouter = Router();
 unauthenticated.use("/auth", authRouter);
 authRouter.use(
-    rateLimitMiddleware({
-        windowMin:
-            config.getRawConfig().rate_limits.auth?.window_minutes ||
-            config.getRawConfig().rate_limits.global.window_minutes,
-        max:
-            config.getRawConfig().rate_limits.auth?.max_requests ||
-            config.getRawConfig().rate_limits.global.max_requests,
-        type: "IP_AND_PATH"
+    rateLimit({
+        windowMs: config.getRawConfig().rate_limits.auth.window_minutes,
+        max: config.getRawConfig().rate_limits.auth.max_requests,
+        keyGenerator: (req) => `authRouterGlobal:${req.ip}:${req.path}`,
+        handler: (req, res, next) => {
+            const message = `Rate limit exceeded. You can make ${config.getRawConfig().rate_limits.auth.max_requests} requests every ${config.getRawConfig().rate_limits.auth.window_minutes} minute(s).`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
     })
 );
 
-authRouter.put("/signup", auth.signup);
-authRouter.post("/login", auth.login);
+authRouter.put(
+    "/signup",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => `signup:${req.ip}:${req.body.email}`,
+        handler: (req, res, next) => {
+            const message = `You can only sign up ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.signup
+);
+authRouter.post(
+    "/login",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => `login:${req.body.email || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only log in ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.login
+);
 authRouter.post("/logout", auth.logout);
-authRouter.post("/newt/get-token", getToken);
+authRouter.post(
+    "/newt/get-token",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 900,
+        keyGenerator: (req) => `newtGetToken:${req.body.newtId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only request a Newt token ${900} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    getNewtToken
+);
+authRouter.post(
+    "/olm/get-token",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 900,
+        keyGenerator: (req) => `newtGetToken:${req.body.newtId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only request an Olm token ${900} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    getOlmToken
+);
 
-authRouter.post("/2fa/enable", verifySessionUserMiddleware, auth.verifyTotp);
+authRouter.post(
+    "/2fa/enable",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => {
+            return `signup:${req.body.email || req.user?.userId || req.ip}`;
+        },
+        handler: (req, res, next) => {
+            const message = `You can only enable 2FA ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.verifyTotp
+);
 authRouter.post(
     "/2fa/request",
-    verifySessionUserMiddleware,
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => {
+            return `signup:${req.body.email || req.user?.userId || req.ip}`;
+        },
+        handler: (req, res, next) => {
+            const message = `You can only request a 2FA code ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
     auth.requestTotpSecret
 );
-authRouter.post("/2fa/disable", verifySessionUserMiddleware, auth.disable2fa);
-authRouter.post("/verify-email", verifySessionMiddleware, auth.verifyEmail);
+authRouter.post(
+    "/2fa/disable",
+    verifySessionUserMiddleware,
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => `signup:${req.user?.userId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only disable 2FA ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.disable2fa
+);
+authRouter.post(
+    "/verify-email",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => `signup:${req.body.email || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only sign up ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    verifySessionMiddleware,
+    auth.verifyEmail
+);
 
 authRouter.post(
     "/verify-email/request",
     verifySessionMiddleware,
     rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: 3,
-        keyGenerator: (req) => `requestEmailVerificationCode:${req.body.email}`,
+        max: 15,
+        keyGenerator: (req) => `requestEmailVerificationCode:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
-            const message = `You can only request an email verification code ${3} times every ${15} minutes. Please try again later.`;
+            const message = `You can only request an email verification code ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
-        }
+        },
+        store: createStore()
     }),
     auth.requestEmailVerificationCode
 );
@@ -746,31 +947,75 @@ authRouter.post(
     "/reset-password/request",
     rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: 3,
-        keyGenerator: (req) => `requestPasswordReset:${req.body.email}`,
+        max: 15,
+        keyGenerator: (req) => `requestPasswordReset:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
-            const message = `You can only request a password reset ${3} times every ${15} minutes. Please try again later.`;
+            const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
-        }
+        },
+        store: createStore()
     }),
     auth.requestPasswordReset
 );
 
-authRouter.post("/reset-password/", auth.resetPassword);
+authRouter.post(
+    "/reset-password/",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) => `resetPassword:${req.body.email || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.resetPassword
+);
 
-authRouter.post("/resource/:resourceId/password", resource.authWithPassword);
-authRouter.post("/resource/:resourceId/pincode", resource.authWithPincode);
+authRouter.post(
+    "/resource/:resourceId/password",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) =>
+            `authWithPassword:${req.ip}:${req.params.resourceId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only authenticate with password ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    resource.authWithPassword
+);
+authRouter.post(
+    "/resource/:resourceId/pincode",
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 15,
+        keyGenerator: (req) =>
+            `authWithPincode:${req.ip}:${req.params.resourceId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only authenticate with pincode ${15} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    resource.authWithPincode
+);
 
 authRouter.post(
     "/resource/:resourceId/whitelist",
     rateLimit({
         windowMs: 15 * 60 * 1000,
-        max: 10,
-        keyGenerator: (req) => `authWithWhitelist:${req.body.email}`,
+        max: 15,
+        keyGenerator: (req) =>
+            `authWithWhitelist:${req.ip}:${req.body.email}:${req.params.resourceId}`,
         handler: (req, res, next) => {
-            const message = `You can only request an email OTP ${10} times every ${15} minutes. Please try again later.`;
+            const message = `You can only request an email OTP ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
-        }
+        },
+        store: createStore()
     }),
     resource.authWithWhitelist
 );
@@ -788,3 +1033,62 @@ authRouter.post("/idp/:idpId/oidc/validate-callback", idp.validateOidcCallback);
 
 authRouter.put("/set-server-admin", auth.setServerAdmin);
 authRouter.get("/initial-setup-complete", auth.initialSetupComplete);
+
+// Security Key routes
+authRouter.post(
+    "/security-key/register/start",
+    verifySessionUserMiddleware,
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 5, // Allow 5 security key registrations per 15 minutes
+        keyGenerator: (req) => `securityKeyRegister:${req.user?.userId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only register a security key ${5} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.startRegistration
+);
+authRouter.post(
+    "/security-key/register/verify",
+    verifySessionUserMiddleware,
+    auth.verifyRegistration
+);
+authRouter.post(
+    "/security-key/authenticate/start",
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 10, // Allow 10 authentication attempts per 15 minutes per IP
+        keyGenerator: (req) => {
+            return `securityKeyAuth:${req.body.email || req.ip}`;
+        },
+        handler: (req, res, next) => {
+            const message = `You can only attempt security key authentication ${10} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.startAuthentication
+);
+authRouter.post("/security-key/authenticate/verify", auth.verifyAuthentication);
+authRouter.get(
+    "/security-key/list",
+    verifySessionUserMiddleware,
+    auth.listSecurityKeys
+);
+authRouter.delete(
+    "/security-key/:credentialId",
+    verifySessionUserMiddleware,
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 20, // Allow 10 authentication attempts per 15 minutes per IP
+        keyGenerator: (req) => `securityKeyAuth:${req.user?.userId || req.ip}`,
+        handler: (req, res, next) => {
+            const message = `You can only delete a security key ${10} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.deleteSecurityKey
+);

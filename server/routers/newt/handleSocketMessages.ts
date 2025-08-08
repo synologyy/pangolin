@@ -1,9 +1,11 @@
 import { MessageHandler } from "../ws";
 import logger from "@server/logger";
 import { dockerSocketCache } from "./dockerSocket";
+import { Newt } from "@server/db";
 
 export const handleDockerStatusMessage: MessageHandler = async (context) => {
-    const { message, newt } = context;
+    const { message, client, sendToClient } = context;
+    const newt = client as Newt;
 
     logger.info("Handling Docker socket check response");
 
@@ -33,7 +35,8 @@ export const handleDockerStatusMessage: MessageHandler = async (context) => {
 export const handleDockerContainersMessage: MessageHandler = async (
     context
 ) => {
-    const { message, newt } = context;
+    const { message, client, sendToClient } = context;
+    const newt = client as Newt;
 
     logger.info("Handling Docker containers response");
 

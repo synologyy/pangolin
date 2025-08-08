@@ -5,20 +5,25 @@ import config from "@server/lib/config";
 import logger from "@server/logger";
 import {
     errorHandlerMiddleware,
-    notFoundMiddleware,
-    rateLimitMiddleware
+    notFoundMiddleware
 } from "@server/middlewares";
 import { authenticated, unauthenticated } from "@server/routers/external";
 import { router as wsRouter, handleWSUpgrade } from "@server/routers/ws";
 import { logIncomingMiddleware } from "./middlewares/logIncoming";
 import { csrfProtectionMiddleware } from "./middlewares/csrfProtection";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import createHttpError from "http-errors";
+import HttpCode from "./types/HttpCode";
+import requestTimeoutMiddleware from "./middlewares/requestTimeout";
+import { createStore } from "./lib/rateLimitStore";
 
 const dev = config.isDev;
 const externalPort = config.getRawConfig().server.external_port;
 
 export function createApiServer() {
     const apiServer = express();
+    const prefix = `/api/v1`;
 
     const trustProxy = config.getRawConfig().server.trust_proxy;
     if (trustProxy) {
@@ -54,19 +59,30 @@ export function createApiServer() {
     apiServer.use(cookieParser());
     apiServer.use(express.json());
 
+    // Add request timeout middleware
+    apiServer.use(requestTimeoutMiddleware(60000)); // 60 second timeout
+
     if (!dev) {
         apiServer.use(
-            rateLimitMiddleware({
-                windowMin:
-                    config.getRawConfig().rate_limits.global.window_minutes,
+            rateLimit({
+                windowMs:
+                    config.getRawConfig().rate_limits.global.window_minutes *
+                    60 *
+                    1000,
                 max: config.getRawConfig().rate_limits.global.max_requests,
-                type: "IP_AND_PATH"
+                keyGenerator: (req) => `apiServerGlobal:${req.ip}:${req.path}`,
+                handler: (req, res, next) => {
+                    const message = `Rate limit exceeded. You can make ${config.getRawConfig().rate_limits.global.max_requests} requests every ${config.getRawConfig().rate_limits.global.window_minutes} minute(s).`;
+                    return next(
+                        createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
+                    );
+                },
+                store: createStore()
             })
         );
     }
 
     // API routes
-    const prefix = `/api/v1`;
     apiServer.use(logIncomingMiddleware);
     apiServer.use(prefix, unauthenticated);
     apiServer.use(prefix, authenticated);

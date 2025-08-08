@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { Users } from "lucide-react";
+import { TopbarNav } from "@app/components/TopbarNav";
+import { KeyRound, Users } from "lucide-react";
 import { verifySession } from "@app/lib/auth/verifySession";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -9,7 +10,7 @@ import { internal } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { Layout } from "@app/components/Layout";
-import { adminNavItems } from "../navigation";
+import { adminNavSections } from "../navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function AdminLayout(props: LayoutProps) {
 
     return (
         <UserProvider user={user}>
-            <Layout orgs={orgs} navItems={adminNavItems}>
+            <Layout orgs={orgs} navItems={adminNavSections}>
                 {props.children}
             </Layout>
         </UserProvider>

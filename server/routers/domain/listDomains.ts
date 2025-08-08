@@ -37,7 +37,12 @@ async function queryDomains(orgId: string, limit: number, offset: number) {
     const res = await db
         .select({
             domainId: domains.domainId,
-            baseDomain: domains.baseDomain
+            baseDomain: domains.baseDomain,
+            verified: domains.verified,
+            type: domains.type,
+            failed: domains.failed,
+            tries: domains.tries,
+            configManaged: domains.configManaged
         })
         .from(orgDomains)
         .where(eq(orgDomains.orgId, orgId))
@@ -112,7 +117,7 @@ export async function listDomains(
             },
             success: true,
             error: false,
-            message: "Users retrieved successfully",
+            message: "Domains retrieved successfully",
             status: HttpCode.OK
         });
     } catch (error) {

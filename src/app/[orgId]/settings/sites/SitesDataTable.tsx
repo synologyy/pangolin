@@ -8,12 +8,16 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
     createSite?: () => void;
+    onRefresh?: () => void;
+    isRefreshing?: boolean;
 }
 
 export function SitesDataTable<TData, TValue>({
     columns,
     data,
-    createSite
+    createSite,
+    onRefresh,
+    isRefreshing
 }: DataTableProps<TData, TValue>) {
 
     const t = useTranslations();
@@ -27,6 +31,8 @@ export function SitesDataTable<TData, TValue>({
             searchColumn="name"
             onAdd={createSite}
             addButtonText={t('siteAdd')}
+            onRefresh={onRefresh}
+            isRefreshing={isRefreshing}
             defaultSort={{
                 id: "name",
                 desc: false

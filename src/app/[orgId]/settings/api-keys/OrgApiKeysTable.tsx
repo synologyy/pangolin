@@ -50,11 +50,14 @@ export default function OrgApiKeysTable({
     const deleteSite = (apiKeyId: string) => {
         api.delete(`/org/${orgId}/api-key/${apiKeyId}`)
             .catch((e) => {
-                console.error(t('apiKeysErrorDelete'), e);
+                console.error(t("apiKeysErrorDelete"), e);
                 toast({
                     variant: "destructive",
-                    title: t('apiKeysErrorDelete'),
-                    description: formatAxiosError(e, t('apiKeysErrorDeleteMessage'))
+                    title: t("apiKeysErrorDelete"),
+                    description: formatAxiosError(
+                        e,
+                        t("apiKeysErrorDeleteMessage")
+                    )
                 });
             })
             .then(() => {
@@ -69,41 +72,6 @@ export default function OrgApiKeysTable({
 
     const columns: ColumnDef<OrgApiKeyRow>[] = [
         {
-            id: "dots",
-            cell: ({ row }) => {
-                const apiKeyROw = row.original;
-                const router = useRouter();
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelected(apiKeyROw);
-                                }}
-                            >
-                                <span>{t('viewSettings')}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelected(apiKeyROw);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            >
-                                <span className="text-red-500">{t('delete')}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
-        {
             accessorKey: "name",
             header: ({ column }) => {
                 return (
@@ -113,7 +81,7 @@ export default function OrgApiKeysTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('name')}
+                        {t("name")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -121,7 +89,7 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "key",
-            header: t('key'),
+            header: t("key"),
             cell: ({ row }) => {
                 const r = row.original;
                 return <span className="font-mono">{r.key}</span>;
@@ -129,10 +97,10 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "createdAt",
-            header: t('createdAt'),
+            header: t("createdAt"),
             cell: ({ row }) => {
                 const r = row.original;
-                return <span>{moment(r.createdAt).format("lll")} </span>;
+                return <span>{moment(r.createdAt).format("lll")}</span>;
             }
         },
         {
@@ -141,9 +109,43 @@ export default function OrgApiKeysTable({
                 const r = row.original;
                 return (
                     <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">
+                                        {t("openMenu")}
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelected(r);
+                                    }}
+                                >
+                                    <span>{t("viewSettings")}</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelected(r);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("delete")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
                         <Link href={`/${orgId}/settings/api-keys/${r.id}`}>
-                            <Button variant={"outlinePrimary"} className="ml-2">
-                                {t('edit')}
+                            <Button
+                                variant={"secondary"}
+                                className="ml-2"
+                                size="sm"
+                            >
+                                {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
@@ -165,24 +167,23 @@ export default function OrgApiKeysTable({
                     dialog={
                         <div className="space-y-4">
                             <p>
-                                {t('apiKeysQuestionRemove', {selectedApiKey: selected?.name || selected?.id})}
+                                {t("apiKeysQuestionRemove", {
+                                    selectedApiKey:
+                                        selected?.name || selected?.id
+                                })}
                             </p>
 
                             <p>
-                                <b>
-                                    {t('apiKeysMessageRemove')}
-                                </b>
+                                <b>{t("apiKeysMessageRemove")}</b>
                             </p>
 
-                            <p>
-                                {t('apiKeysMessageConfirm')}
-                            </p>
+                            <p>{t("apiKeysMessageConfirm")}</p>
                         </div>
                     }
-                    buttonText={t('apiKeysDeleteConfirm')}
+                    buttonText={t("apiKeysDeleteConfirm")}
                     onConfirm={async () => deleteSite(selected!.id)}
                     string={selected.name}
-                    title={t('apiKeysDelete')}
+                    title={t("apiKeysDelete")}
                 />
             )}
 

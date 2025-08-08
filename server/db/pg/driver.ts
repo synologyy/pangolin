@@ -1,4 +1,5 @@
 import { drizzle as DrizzlePostgres } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { readConfigFile } from "@server/lib/readConfigFile";
 import { withReplicas } from "drizzle-orm/pg-core";
 
@@ -20,19 +21,31 @@ function createDb() {
         );
     }
 
-    const primary = DrizzlePostgres(connectionString);
+    // Create connection pools instead of individual connections
+    const primaryPool = new Pool({
+        connectionString,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+    });
+
     const replicas = [];
 
     if (!replicaConnections.length) {
-        replicas.push(primary);
+        replicas.push(DrizzlePostgres(primaryPool));
     } else {
         for (const conn of replicaConnections) {
-            const replica = DrizzlePostgres(conn.connection_string);
-            replicas.push(replica);
+            const replicaPool = new Pool({
+                connectionString: conn.connection_string,
+                max: 10,
+                idleTimeoutMillis: 30000,
+                connectionTimeoutMillis: 2000,
+            });
+            replicas.push(DrizzlePostgres(replicaPool));
         }
     }
 
-    return withReplicas(primary, replicas as any);
+    return withReplicas(DrizzlePostgres(primaryPool), replicas as any);
 }
 
 export const db = createDb();

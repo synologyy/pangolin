@@ -69,7 +69,8 @@ function queryResources(
                 http: resources.http,
                 protocol: resources.protocol,
                 proxyPort: resources.proxyPort,
-                enabled: resources.enabled
+                enabled: resources.enabled,
+                domainId: resources.domainId
             })
             .from(resources)
             .leftJoin(sites, eq(resources.siteId, sites.siteId))
@@ -103,7 +104,8 @@ function queryResources(
                 http: resources.http,
                 protocol: resources.protocol,
                 proxyPort: resources.proxyPort,
-                enabled: resources.enabled
+                enabled: resources.enabled,
+                domainId: resources.domainId
             })
             .from(resources)
             .leftJoin(sites, eq(resources.siteId, sites.siteId))

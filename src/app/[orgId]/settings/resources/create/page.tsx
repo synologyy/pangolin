@@ -25,6 +25,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@app/components/ui/input";
 import { Button } from "@app/components/ui/button";
+import { Checkbox } from "@app/components/ui/checkbox";
 import { useParams, useRouter } from "next/navigation";
 import { ListSitesResponse } from "@server/routers/site";
 import { formatAxiosError } from "@app/lib/api";
@@ -63,6 +64,8 @@ import { SquareArrowOutUpRight } from "lucide-react";
 import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import DomainPicker from "@app/components/DomainPicker";
+import { build } from "@server/build";
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
@@ -70,21 +73,15 @@ const baseResourceFormSchema = z.object({
     http: z.boolean()
 });
 
-const httpResourceFormSchema = z.discriminatedUnion("isBaseDomain", [
-    z.object({
-        isBaseDomain: z.literal(true),
-        domainId: z.string().min(1)
-    }),
-    z.object({
-        isBaseDomain: z.literal(false),
-        domainId: z.string().min(1),
-        subdomain: z.string().pipe(subdomainSchema)
-    })
-]);
+const httpResourceFormSchema = z.object({
+    domainId: z.string().nonempty(),
+    subdomain: z.string().optional()
+});
 
 const tcpUdpResourceFormSchema = z.object({
     protocol: z.string(),
-    proxyPort: z.number().int().min(1).max(65535)
+    proxyPort: z.number().int().min(1).max(65535),
+    enableProxy: z.boolean().default(false)
 });
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
@@ -119,15 +116,18 @@ export default function Page() {
     const resourceTypes: ReadonlyArray<ResourceTypeOption> = [
         {
             id: "http",
-            title: t('resourceHTTP'),
-            description: t('resourceHTTPDescription')
+            title: t("resourceHTTP"),
+            description: t("resourceHTTPDescription")
         },
-        {
-            id: "raw",
-            title: t('resourceRaw'),
-            description: t('resourceRawDescription'),
-            disabled: !env.flags.allowRawResources
-        }
+        ...(!env.flags.allowRawResources
+            ? []
+            : [
+                  {
+                      id: "raw" as ResourceType,
+                      title: t("resourceRaw"),
+                      description: t("resourceRawDescription")
+                  }
+              ])
     ];
 
     const baseForm = useForm<BaseResourceFormValues>({
@@ -140,18 +140,15 @@ export default function Page() {
 
     const httpForm = useForm<HttpResourceFormValues>({
         resolver: zodResolver(httpResourceFormSchema),
-        defaultValues: {
-            subdomain: "",
-            domainId: "",
-            isBaseDomain: false
-        }
+        defaultValues: {}
     });
 
     const tcpUdpForm = useForm<TcpUdpResourceFormValues>({
         resolver: zodResolver(tcpUdpResourceFormSchema),
         defaultValues: {
             protocol: "tcp",
-            proxyPort: undefined
+            proxyPort: undefined,
+            enableProxy: false
         }
     });
 
@@ -170,25 +167,17 @@ export default function Page() {
 
             if (isHttp) {
                 const httpData = httpForm.getValues();
-                if (httpData.isBaseDomain) {
-                    Object.assign(payload, {
-                        domainId: httpData.domainId,
-                        isBaseDomain: true,
-                        protocol: "tcp"
-                    });
-                } else {
-                    Object.assign(payload, {
-                        subdomain: httpData.subdomain,
-                        domainId: httpData.domainId,
-                        isBaseDomain: false,
-                        protocol: "tcp"
-                    });
-                }
+                Object.assign(payload, {
+                    subdomain: httpData.subdomain,
+                    domainId: httpData.domainId,
+                    protocol: "tcp"
+                });
             } else {
                 const tcpUdpData = tcpUdpForm.getValues();
                 Object.assign(payload, {
                     protocol: tcpUdpData.protocol,
-                    proxyPort: tcpUdpData.proxyPort
+                    proxyPort: tcpUdpData.proxyPort,
+                    enableProxy: tcpUdpData.enableProxy
                 });
             }
 
@@ -199,10 +188,10 @@ export default function Page() {
                 .catch((e) => {
                     toast({
                         variant: "destructive",
-                        title: t('resourceErrorCreate'),
+                        title: t("resourceErrorCreate"),
                         description: formatAxiosError(
                             e,
-                            t('resourceErrorCreateDescription')
+                            t("resourceErrorCreateDescription")
                         )
                     });
                 });
@@ -214,16 +203,23 @@ export default function Page() {
                 if (isHttp) {
                     router.push(`/${orgId}/settings/resources/${id}`);
                 } else {
-                    setShowSnippets(true);
-                    router.refresh();
+                    const tcpUdpData = tcpUdpForm.getValues();
+                    // Only show config snippets if enableProxy is explicitly true
+                    if (tcpUdpData.enableProxy === true) {
+                        setShowSnippets(true);
+                        router.refresh();
+                    } else {
+                        // If enableProxy is false or undefined, go directly to resource page
+                        router.push(`/${orgId}/settings/resources/${id}`);
+                    }
                 }
             }
         } catch (e) {
-            console.error(t('resourceErrorCreateMessage'), e);
+            console.error(t("resourceErrorCreateMessage"), e);
             toast({
                 variant: "destructive",
-                title: t('resourceErrorCreate'),
-                description:t('resourceErrorCreateMessageDescription')
+                title: t("resourceErrorCreate"),
+                description: t("resourceErrorCreateMessageDescription")
             });
         }
 
@@ -242,10 +238,10 @@ export default function Page() {
                     .catch((e) => {
                         toast({
                             variant: "destructive",
-                            title: t('sitesErrorFetch'),
+                            title: t("sitesErrorFetch"),
                             description: formatAxiosError(
                                 e,
-                                t('sitesErrorFetchDescription')
+                                t("sitesErrorFetchDescription")
                             )
                         });
                     });
@@ -270,10 +266,10 @@ export default function Page() {
                     .catch((e) => {
                         toast({
                             variant: "destructive",
-                            title: t('domainsErrorFetch'),
+                            title: t("domainsErrorFetch"),
                             description: formatAxiosError(
                                 e,
-                                t('domainsErrorFetchDescription')
+                                t("domainsErrorFetchDescription")
                             )
                         });
                     });
@@ -281,9 +277,9 @@ export default function Page() {
                 if (res?.status === 200) {
                     const domains = res.data.data.domains;
                     setBaseDomains(domains);
-                    if (domains.length) {
-                        httpForm.setValue("domainId", domains[0].domainId);
-                    }
+                    // if (domains.length) {
+                    //     httpForm.setValue("domainId", domains[0].domainId);
+                    // }
                 }
             };
 
@@ -300,8 +296,8 @@ export default function Page() {
         <>
             <div className="flex justify-between">
                 <HeaderTitle
-                    title={t('resourceCreate')}
-                    description={t('resourceCreateDescription')}
+                    title={t("resourceCreate")}
+                    description={t("resourceCreateDescription")}
                 />
                 <Button
                     variant="outline"
@@ -309,7 +305,7 @@ export default function Page() {
                         router.push(`/${orgId}/settings/resources`);
                     }}
                 >
-                    {t('resourceSeeAll')}
+                    {t("resourceSeeAll")}
                 </Button>
             </div>
 
@@ -320,7 +316,7 @@ export default function Page() {
                             <SettingsSection>
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
-                                        {t('resourceInfo')}
+                                        {t("resourceInfo")}
                                     </SettingsSectionTitle>
                                 </SettingsSectionHeader>
                                 <SettingsSectionBody>
@@ -336,7 +332,7 @@ export default function Page() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel>
-                                                                {t('name')}
+                                                                {t("name")}
                                                             </FormLabel>
                                                             <FormControl>
                                                                 <Input
@@ -345,7 +341,9 @@ export default function Page() {
                                                             </FormControl>
                                                             <FormMessage />
                                                             <FormDescription>
-                                                                {t('resourceNameDescription')}
+                                                                {t(
+                                                                    "resourceNameDescription"
+                                                                )}
                                                             </FormDescription>
                                                         </FormItem>
                                                     )}
@@ -357,7 +355,7 @@ export default function Page() {
                                                     render={({ field }) => (
                                                         <FormItem className="flex flex-col">
                                                             <FormLabel>
-                                                                {t('site')}
+                                                                {t("site")}
                                                             </FormLabel>
                                                             <Popover>
                                                                 <PopoverTrigger
@@ -382,17 +380,25 @@ export default function Page() {
                                                                                           field.value
                                                                                   )
                                                                                       ?.name
-                                                                                : t('siteSelect')}
+                                                                                : t(
+                                                                                      "siteSelect"
+                                                                                  )}
                                                                             <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                         </Button>
                                                                     </FormControl>
                                                                 </PopoverTrigger>
                                                                 <PopoverContent className="p-0">
                                                                     <Command>
-                                                                        <CommandInput placeholder={t('siteSearch')} />
+                                                                        <CommandInput
+                                                                            placeholder={t(
+                                                                                "siteSearch"
+                                                                            )}
+                                                                        />
                                                                         <CommandList>
                                                                             <CommandEmpty>
-                                                                                {t('siteNotFound')}
+                                                                                {t(
+                                                                                    "siteNotFound"
+                                                                                )}
                                                                             </CommandEmpty>
                                                                             <CommandGroup>
                                                                                 {sites.map(
@@ -433,7 +439,9 @@ export default function Page() {
                                                             </Popover>
                                                             <FormMessage />
                                                             <FormDescription>
-                                                                {t('siteSelectionDescription')}
+                                                                {t(
+                                                                    "siteSelectionDescription"
+                                                                )}
                                                             </FormDescription>
                                                         </FormItem>
                                                     )}
@@ -444,253 +452,74 @@ export default function Page() {
                                 </SettingsSectionBody>
                             </SettingsSection>
 
-                            <SettingsSection>
-                                <SettingsSectionHeader>
-                                    <SettingsSectionTitle>
-                                        {t('resourceType')}
-                                    </SettingsSectionTitle>
-                                    <SettingsSectionDescription>
-                                        {t('resourceTypeDescription')}
-                                    </SettingsSectionDescription>
-                                </SettingsSectionHeader>
-                                <SettingsSectionBody>
-                                    <StrategySelect
-                                        options={resourceTypes}
-                                        defaultValue="http"
-                                        onChange={(value) => {
-                                            baseForm.setValue(
-                                                "http",
-                                                value === "http"
-                                            );
-                                        }}
-                                        cols={2}
-                                    />
-                                </SettingsSectionBody>
-                            </SettingsSection>
+                            {resourceTypes.length > 1 && (
+                                <SettingsSection>
+                                    <SettingsSectionHeader>
+                                        <SettingsSectionTitle>
+                                            {t("resourceType")}
+                                        </SettingsSectionTitle>
+                                        <SettingsSectionDescription>
+                                            {t("resourceTypeDescription")}
+                                        </SettingsSectionDescription>
+                                    </SettingsSectionHeader>
+                                    <SettingsSectionBody>
+                                        <StrategySelect
+                                            options={resourceTypes}
+                                            defaultValue="http"
+                                            onChange={(value) => {
+                                                baseForm.setValue(
+                                                    "http",
+                                                    value === "http"
+                                                );
+                                            }}
+                                            cols={2}
+                                        />
+                                    </SettingsSectionBody>
+                                </SettingsSection>
+                            )}
 
                             {baseForm.watch("http") ? (
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('resourceHTTPSSettings')}
+                                            {t("resourceHTTPSSettings")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('resourceHTTPSSettingsDescription')}
+                                            {t(
+                                                "resourceHTTPSSettingsDescription"
+                                            )}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
-                                        <SettingsSectionForm>
-                                            <Form {...httpForm}>
-                                                <form
-                                                    className="space-y-4"
-                                                    id="http-settings-form"
-                                                >
-                                                    {env.flags
-                                                        .allowBaseDomainResources && (
-                                                        <FormField
-                                                            control={
-                                                                httpForm.control
-                                                            }
-                                                            name="isBaseDomain"
-                                                            render={({
-                                                                field
-                                                            }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>
-                                                                        {t('domainType')}
-                                                                    </FormLabel>
-                                                                    <Select
-                                                                        value={
-                                                                            field.value
-                                                                                ? "basedomain"
-                                                                                : "subdomain"
-                                                                        }
-                                                                        onValueChange={(
-                                                                            value
-                                                                        ) => {
-                                                                            field.onChange(
-                                                                                value ===
-                                                                                    "basedomain"
-                                                                            );
-                                                                        }}
-                                                                    >
-                                                                        <FormControl>
-                                                                            <SelectTrigger>
-                                                                                <SelectValue />
-                                                                            </SelectTrigger>
-                                                                        </FormControl>
-                                                                        <SelectContent>
-                                                                            <SelectItem value="subdomain">
-                                                                                {t('subdomain')}
-                                                                            </SelectItem>
-                                                                            <SelectItem value="basedomain">
-                                                                                {t('baseDomain')}
-                                                                            </SelectItem>
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    )}
-
-                                                    {!httpForm.watch(
-                                                        "isBaseDomain"
-                                                    ) && (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                {t('subdomain')}
-                                                            </FormLabel>
-                                                            <div className="flex space-x-0">
-                                                                <div className="w-1/2">
-                                                                    <FormField
-                                                                        control={
-                                                                            httpForm.control
-                                                                        }
-                                                                        name="subdomain"
-                                                                        render={({
-                                                                            field
-                                                                        }) => (
-                                                                            <FormItem>
-                                                                                <FormControl>
-                                                                                    <Input
-                                                                                        {...field}
-                                                                                        className="border-r-0 rounded-r-none"
-                                                                                    />
-                                                                                </FormControl>
-                                                                                <FormMessage />
-                                                                            </FormItem>
-                                                                        )}
-                                                                    />
-                                                                </div>
-                                                                <div className="w-1/2">
-                                                                    <FormField
-                                                                        control={
-                                                                            httpForm.control
-                                                                        }
-                                                                        name="domainId"
-                                                                        render={({
-                                                                            field
-                                                                        }) => (
-                                                                            <FormItem>
-                                                                                <Select
-                                                                                    onValueChange={
-                                                                                        field.onChange
-                                                                                    }
-                                                                                    value={
-                                                                                        field.value
-                                                                                    }
-                                                                                    defaultValue={
-                                                                                        field.value
-                                                                                    }
-                                                                                >
-                                                                                    <FormControl>
-                                                                                        <SelectTrigger className="rounded-l-none">
-                                                                                            <SelectValue />
-                                                                                        </SelectTrigger>
-                                                                                    </FormControl>
-                                                                                    <SelectContent>
-                                                                                        {baseDomains.map(
-                                                                                            (
-                                                                                                option
-                                                                                            ) => (
-                                                                                                <SelectItem
-                                                                                                    key={
-                                                                                                        option.domainId
-                                                                                                    }
-                                                                                                    value={
-                                                                                                        option.domainId
-                                                                                                    }
-                                                                                                >
-                                                                                                    .
-                                                                                                    {
-                                                                                                        option.baseDomain
-                                                                                                    }
-                                                                                                </SelectItem>
-                                                                                            )
-                                                                                        )}
-                                                                                    </SelectContent>
-                                                                                </Select>
-                                                                                <FormMessage />
-                                                                            </FormItem>
-                                                                        )}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                            <FormDescription>
-                                                                {t('subdomnainDescription')}
-                                                            </FormDescription>
-                                                        </FormItem>
-                                                    )}
-
-                                                    {httpForm.watch(
-                                                        "isBaseDomain"
-                                                    ) && (
-                                                        <FormField
-                                                            control={
-                                                                httpForm.control
-                                                            }
-                                                            name="domainId"
-                                                            render={({
-                                                                field
-                                                            }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>
-                                                                        {t('baseDomain')}
-                                                                    </FormLabel>
-                                                                    <Select
-                                                                        onValueChange={
-                                                                            field.onChange
-                                                                        }
-                                                                        defaultValue={
-                                                                            field.value
-                                                                        }
-                                                                        {...field}
-                                                                    >
-                                                                        <FormControl>
-                                                                            <SelectTrigger>
-                                                                                <SelectValue />
-                                                                            </SelectTrigger>
-                                                                        </FormControl>
-                                                                        <SelectContent>
-                                                                            {baseDomains.map(
-                                                                                (
-                                                                                    option
-                                                                                ) => (
-                                                                                    <SelectItem
-                                                                                        key={
-                                                                                            option.domainId
-                                                                                        }
-                                                                                        value={
-                                                                                            option.domainId
-                                                                                        }
-                                                                                    >
-                                                                                        {
-                                                                                            option.baseDomain
-                                                                                        }
-                                                                                    </SelectItem>
-                                                                                )
-                                                                            )}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    )}
-                                                </form>
-                                            </Form>
-                                        </SettingsSectionForm>
+                                        <DomainPicker
+                                            orgId={orgId as string}
+                                            onDomainChange={(res) => {
+                                                httpForm.setValue(
+                                                    "subdomain",
+                                                    res.subdomain
+                                                );
+                                                httpForm.setValue(
+                                                    "domainId",
+                                                    res.domainId
+                                                );
+                                                console.log(
+                                                    "Domain changed:",
+                                                    res
+                                                );
+                                            }}
+                                        />
                                     </SettingsSectionBody>
                                 </SettingsSection>
                             ) : (
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('resourceRawSettings')}
+                                            {t("resourceRawSettings")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('resourceRawSettingsDescription')}
+                                            {t(
+                                                "resourceRawSettingsDescription"
+                                            )}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
@@ -708,7 +537,9 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('protocol')}
+                                                                    {t(
+                                                                        "protocol"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <Select
                                                                     onValueChange={
@@ -718,7 +549,11 @@ export default function Page() {
                                                                 >
                                                                     <FormControl>
                                                                         <SelectTrigger>
-                                                                            <SelectValue placeholder={t('protocolSelect')} />
+                                                                            <SelectValue
+                                                                                placeholder={t(
+                                                                                    "protocolSelect"
+                                                                                )}
+                                                                            />
                                                                         </SelectTrigger>
                                                                     </FormControl>
                                                                     <SelectContent>
@@ -743,7 +578,9 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('resourcePortNumber')}
+                                                                    {t(
+                                                                        "resourcePortNumber"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -771,11 +608,53 @@ export default function Page() {
                                                                 </FormControl>
                                                                 <FormMessage />
                                                                 <FormDescription>
-                                                                    {t('resourcePortNumberDescription')}
+                                                                    {t(
+                                                                        "resourcePortNumberDescription"
+                                                                    )}
                                                                 </FormDescription>
                                                             </FormItem>
                                                         )}
                                                     />
+
+                                                    {build == "oss" && (
+                                                        <FormField
+                                                            control={
+                                                                tcpUdpForm.control
+                                                            }
+                                                            name="enableProxy"
+                                                            render={({
+                                                                field
+                                                            }) => (
+                                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            variant={
+                                                                                "outlinePrimarySquare"
+                                                                            }
+                                                                            checked={
+                                                                                field.value
+                                                                            }
+                                                                            onCheckedChange={
+                                                                                field.onChange
+                                                                            }
+                                                                        />
+                                                                    </FormControl>
+                                                                    <div className="space-y-1 leading-none">
+                                                                        <FormLabel>
+                                                                            {t(
+                                                                                "resourceEnableProxy"
+                                                                            )}
+                                                                        </FormLabel>
+                                                                        <FormDescription>
+                                                                            {t(
+                                                                                "resourceEnableProxyDescription"
+                                                                            )}
+                                                                        </FormDescription>
+                                                                    </div>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    )}
                                                 </form>
                                             </Form>
                                         </SettingsSectionForm>
@@ -788,19 +667,24 @@ export default function Page() {
                                     type="button"
                                     variant="outline"
                                     onClick={() =>
-                                        router.push(`/${orgId}/settings/resources`)
+                                        router.push(
+                                            `/${orgId}/settings/resources`
+                                        )
                                     }
                                 >
-                                    {t('cancel')}
+                                    {t("cancel")}
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={async () => {
                                         const isHttp = baseForm.watch("http");
-                                        const baseValid = await baseForm.trigger();
+                                        const baseValid =
+                                            await baseForm.trigger();
                                         const settingsValid = isHttp
                                             ? await httpForm.trigger()
                                             : await tcpUdpForm.trigger();
+
+                                        console.log(httpForm.getValues());
 
                                         if (baseValid && settingsValid) {
                                             onSubmit();
@@ -808,7 +692,7 @@ export default function Page() {
                                     }}
                                     loading={createLoading}
                                 >
-                                    {t('resourceCreate')}
+                                    {t("resourceCreate")}
                                 </Button>
                             </div>
                         </SettingsContainer>
@@ -817,17 +701,17 @@ export default function Page() {
                             <SettingsSection>
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
-                                        {t('resourceConfig')}
+                                        {t("resourceConfig")}
                                     </SettingsSectionTitle>
                                     <SettingsSectionDescription>
-                                        {t('resourceConfigDescription')}
+                                        {t("resourceConfigDescription")}
                                     </SettingsSectionDescription>
                                 </SettingsSectionHeader>
                                 <SettingsSectionBody>
                                     <div className="space-y-6">
                                         <div className="space-y-4">
                                             <h3 className="text-lg font-semibold">
-                                                {t('resourceAddEntrypoints')}
+                                                {t("resourceAddEntrypoints")}
                                             </h3>
                                             <CopyTextBox
                                                 text={`entryPoints:
@@ -839,7 +723,7 @@ export default function Page() {
 
                                         <div className="space-y-4">
                                             <h3 className="text-lg font-semibold">
-                                                {t('resourceExposePorts')}
+                                                {t("resourceExposePorts")}
                                             </h3>
                                             <CopyTextBox
                                                 text={`ports:
@@ -850,13 +734,11 @@ export default function Page() {
 
                                         <Link
                                             className="text-sm text-primary flex items-center gap-1"
-                                            href="https://docs.fossorial.io/Pangolin/tcp-udp"
+                                            href="https://docs.digpangolin.com/manage/resources/tcp-udp-resources"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
-                                            <span>
-                                                {t('resourceLearnRaw')}
-                                            </span>
+                                            <span>{t("resourceLearnRaw")}</span>
                                             <SquareArrowOutUpRight size={14} />
                                         </Link>
                                     </div>
@@ -868,20 +750,22 @@ export default function Page() {
                                     type="button"
                                     variant="outline"
                                     onClick={() =>
-                                        router.push(`/${orgId}/settings/resources`)
+                                        router.push(
+                                            `/${orgId}/settings/resources`
+                                        )
                                     }
                                 >
-                                    {t('resourceBack')}
+                                    {t("resourceBack")}
                                 </Button>
                                 <Button
                                     type="button"
                                     onClick={() =>
                                         router.push(
-                                            `/${orgId}/settings/resources/${resourceId}`
+                                            `/${orgId}/settings/resources/${resourceId}/proxy`
                                         )
                                     }
                                 >
-                                    {t('resourceGoTo')}
+                                    {t("resourceGoTo")}
                                 </Button>
                             </div>
                         </SettingsContainer>

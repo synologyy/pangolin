@@ -45,6 +45,11 @@ export async function verifyApiKeyRoleAccess(
             );
         }
 
+        if (apiKey.isRoot) {
+            // Root keys can access any key in any org
+            return next();
+        }
+
         const orgIds = new Set(rolesData.map((role) => role.orgId));
 
         for (const role of rolesData) {

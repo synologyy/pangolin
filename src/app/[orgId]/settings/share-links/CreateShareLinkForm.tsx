@@ -392,7 +392,7 @@ export default function CreateShareLinkForm({
                                                                     defaultValue={field.value.toString()}
                                                                 >
                                                                     <FormControl>
-                                                                        <SelectTrigger>
+                                                                        <SelectTrigger className="w-full">
                                                                             <SelectValue placeholder={t('selectDuration')} />
                                                                         </SelectTrigger>
                                                                     </FormControl>

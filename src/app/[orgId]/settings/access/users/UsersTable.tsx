@@ -20,7 +20,7 @@ import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useUserContext } from "@app/hooks/useUserContext";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 export type UserRow = {
     id: string;
@@ -52,65 +52,6 @@ export default function UsersTable({ users: u }: UsersTableProps) {
 
     const columns: ColumnDef<UserRow>[] = [
         {
-            id: "dots",
-            cell: ({ row }) => {
-                const userRow = row.original;
-                return (
-                    <>
-                        <div>
-                            {userRow.isOwner && (
-                                <MoreHorizontal className="h-4 w-4 opacity-0" />
-                            )}
-                            {!userRow.isOwner && (
-                                <>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                className="h-8 w-8 p-0"
-                                            >
-                                                <span className="sr-only">
-                                                    {t('openMenu')}
-                                                </span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <Link
-                                                href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
-                                                className="block w-full"
-                                            >
-                                                <DropdownMenuItem>
-                                                    {t('accessUsersManage')}
-                                                </DropdownMenuItem>
-                                            </Link>
-                                            {`${userRow.username}-${userRow.idpId}` !==
-                                                `${user?.username}-${userRow.idpId}` && (
-                                                <DropdownMenuItem
-                                                    onClick={() => {
-                                                        setIsDeleteModalOpen(
-                                                            true
-                                                        );
-                                                        setSelectedUser(
-                                                            userRow
-                                                        );
-                                                    }}
-                                                >
-                                                    <span className="text-red-500">
-                                                        {t('accessUserRemove')}
-                                                    </span>
-                                                </DropdownMenuItem>
-                                            )}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </>
-                            )}
-                        </div>
-                    </>
-                );
-            }
-        },
-        {
             accessorKey: "displayUsername",
             header: ({ column }) => {
                 return (
@@ -120,7 +61,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('username')}
+                        {t("username")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -136,7 +77,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('identityProvider')}
+                        {t("identityProvider")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -152,7 +93,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('role')}
+                        {t("role")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -176,12 +117,68 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                 const userRow = row.original;
                 return (
                     <div className="flex items-center justify-end">
+                        <>
+                            <div>
+                                {userRow.isOwner && (
+                                    <MoreHorizontal className="h-4 w-4 opacity-0" />
+                                )}
+                                {!userRow.isOwner && (
+                                    <>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    <span className="sr-only">
+                                                        {t("openMenu")}
+                                                    </span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <Link
+                                                    href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
+                                                    className="block w-full"
+                                                >
+                                                    <DropdownMenuItem>
+                                                        {t("accessUsersManage")}
+                                                    </DropdownMenuItem>
+                                                </Link>
+                                                {`${userRow.username}-${userRow.idpId}` !==
+                                                    `${user?.username}-${userRow.idpId}` && (
+                                                    <DropdownMenuItem
+                                                        onClick={() => {
+                                                            setIsDeleteModalOpen(
+                                                                true
+                                                            );
+                                                            setSelectedUser(
+                                                                userRow
+                                                            );
+                                                        }}
+                                                    >
+                                                        <span className="text-red-500">
+                                                            {t(
+                                                                "accessUserRemove"
+                                                            )}
+                                                        </span>
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </>
+                                )}
+                            </div>
+                        </>
                         {userRow.isOwner && (
                             <Button
-                                variant="ghost"
-                                className="opacity-0 cursor-default"
+                                variant={"secondary"}
+                                className="ml-2"
+                                size="sm"
+                                disabled={true}
                             >
-                                {t('placeholder')}
+                                {t("manage")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         )}
                         {!userRow.isOwner && (
@@ -189,10 +186,12 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                                 href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
                             >
                                 <Button
-                                    variant={"outlinePrimary"}
+                                    variant={"secondary"}
                                     className="ml-2"
+                                    size="sm"
+                                    disabled={userRow.isOwner}
                                 >
-                                    {t('manage')}
+                                    {t("manage")}
                                     <ArrowRight className="ml-2 w-4 h-4" />
                                 </Button>
                             </Link>
@@ -210,10 +209,10 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                 .catch((e) => {
                     toast({
                         variant: "destructive",
-                        title: t('userErrorOrgRemove'),
+                        title: t("userErrorOrgRemove"),
                         description: formatAxiosError(
                             e,
-                            t('userErrorOrgRemoveDescription')
+                            t("userErrorOrgRemoveDescription")
                         )
                     });
                 });
@@ -221,8 +220,10 @@ export default function UsersTable({ users: u }: UsersTableProps) {
             if (res && res.status === 200) {
                 toast({
                     variant: "default",
-                    title: t('userOrgRemoved'),
-                    description: t('userOrgRemovedDescription', {email: selectedUser.email || ""})
+                    title: t("userOrgRemoved"),
+                    description: t("userOrgRemovedDescription", {
+                        email: selectedUser.email || ""
+                    })
                 });
 
                 setUsers((prev) =>
@@ -244,19 +245,21 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                 dialog={
                     <div className="space-y-4">
                         <p>
-                            {t('userQuestionOrgRemove', {email: selectedUser?.email || selectedUser?.name || selectedUser?.username || ""})}
+                            {t("userQuestionOrgRemove", {
+                                email:
+                                    selectedUser?.email ||
+                                    selectedUser?.name ||
+                                    selectedUser?.username ||
+                                    ""
+                            })}
                         </p>
 
-                        <p>
-                            {t('userMessageOrgRemove')}
-                        </p>
+                        <p>{t("userMessageOrgRemove")}</p>
 
-                        <p>
-                            {t('userMessageOrgConfirm')}
-                        </p>
+                        <p>{t("userMessageOrgConfirm")}</p>
                     </div>
                 }
-                buttonText={t('userRemoveOrgConfirm')}
+                buttonText={t("userRemoveOrgConfirm")}
                 onConfirm={removeUser}
                 string={
                     selectedUser?.email ||
@@ -264,14 +267,16 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                     selectedUser?.username ||
                     ""
                 }
-                title={t('userRemoveOrg')}
+                title={t("userRemoveOrg")}
             />
 
             <UsersDataTable
                 columns={columns}
                 data={users}
                 inviteUser={() => {
-                    router.push(`/${org?.org.orgId}/settings/access/users/create`);
+                    router.push(
+                        `/${org?.org.orgId}/settings/access/users/create`
+                    );
                 }}
             />
         </>

@@ -36,7 +36,6 @@ import {
     TableBody,
     TableCaption,
     TableCell,
-    TableContainer,
     TableHead,
     TableHeader,
     TableRow
@@ -234,35 +233,6 @@ export default function ResourceRules(props: {
         );
     }
 
-    async function saveApplyRules(val: boolean) {
-        const res = await api
-            .post(`/resource/${params.resourceId}`, {
-                applyRules: val
-            })
-            .catch((err) => {
-                console.error(err);
-                toast({
-                    variant: "destructive",
-                    title: t('rulesErrorUpdate'),
-                    description: formatAxiosError(
-                        err,
-                        t('rulesErrorUpdateDescription')
-                    )
-                });
-            });
-
-        if (res && res.status === 200) {
-            setRulesEnabled(val);
-            updateResource({ applyRules: val });
-
-            toast({
-                title: t('rulesUpdated'),
-                description: t('rulesUpdatedDescription')
-            });
-            router.refresh();
-        }
-    }
-
     function getValueHelpText(type: string) {
         switch (type) {
             case "CIDR":
@@ -274,9 +244,33 @@ export default function ResourceRules(props: {
         }
     }
 
-    async function saveRules() {
+    async function saveAllSettings() {
         try {
             setLoading(true);
+
+            // Save rules enabled state
+            const res = await api
+                .post(`/resource/${params.resourceId}`, {
+                    applyRules: rulesEnabled
+                })
+                .catch((err) => {
+                    console.error(err);
+                    toast({
+                        variant: "destructive",
+                        title: t('rulesErrorUpdate'),
+                        description: formatAxiosError(
+                            err,
+                            t('rulesErrorUpdateDescription')
+                        )
+                    });
+                    throw err;
+                });
+
+            if (res && res.status === 200) {
+                updateResource({ applyRules: rulesEnabled });
+            }
+
+            // Save rules
             for (let rule of rules) {
                 const data = {
                     action: rule.action,
@@ -543,67 +537,48 @@ export default function ResourceRules(props: {
 
     return (
         <SettingsContainer>
-            <Alert className="hidden md:block">
-                <InfoIcon className="h-4 w-4" />
-                <AlertTitle className="font-semibold">{t('rulesAbout')}</AlertTitle>
-                <AlertDescription className="mt-4">
-                    <div className="space-y-1 mb-4">
-                        <p>
-                            {t('rulesAboutDescription')}
-                        </p>
-                    </div>
-                    <InfoSections cols={2}>
-                        <InfoSection>
-                            <InfoSectionTitle>{t('rulesActions')}</InfoSectionTitle>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li className="flex items-center gap-2">
-                                    <Check className="text-green-500 w-4 h-4" />
-                                    {t('rulesActionAlwaysAllow')}
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <X className="text-red-500 w-4 h-4" />
-                                    {t('rulesActionAlwaysDeny')}
-                                </li>
-                            </ul>
-                        </InfoSection>
-                        <InfoSection>
-                            <InfoSectionTitle>
-                                {t('rulesMatchCriteria')}
-                            </InfoSectionTitle>
-                            <ul className="text-sm text-muted-foreground space-y-1">
-                                <li className="flex items-center gap-2">
-                                    {t('rulesMatchCriteriaIpAddress')}
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    {t('rulesMatchCriteriaIpAddressRange')}
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    {t('rulesMatchCriteriaUrl')}
-                                </li>
-                            </ul>
-                        </InfoSection>
-                    </InfoSections>
-                </AlertDescription>
-            </Alert>
-
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>{t('rulesEnable')}</SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t('rulesEnableDescription')}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
-                <SettingsSectionBody>
-                    <SwitchInput
-                        id="rules-toggle"
-                        label={t('rulesEnable')}
-                        defaultChecked={rulesEnabled}
-                        onCheckedChange={async (val) => {
-                            await saveApplyRules(val);
-                        }}
-                    />
-                </SettingsSectionBody>
-            </SettingsSection>
+            {/* <Alert className="hidden md:block"> */}
+            {/*     <InfoIcon className="h-4 w-4" /> */}
+            {/*     <AlertTitle className="font-semibold">{t('rulesAbout')}</AlertTitle> */}
+            {/*     <AlertDescription className="mt-4"> */}
+            {/*         <div className="space-y-1 mb-4"> */}
+            {/*             <p> */}
+            {/*                 {t('rulesAboutDescription')} */}
+            {/*             </p> */}
+            {/*         </div> */}
+            {/*         <InfoSections cols={2}> */}
+            {/*             <InfoSection> */}
+            {/*                 <InfoSectionTitle>{t('rulesActions')}</InfoSectionTitle> */}
+            {/*                 <ul className="text-sm text-muted-foreground space-y-1"> */}
+            {/*                     <li className="flex items-center gap-2"> */}
+            {/*                         <Check className="text-green-500 w-4 h-4" /> */}
+            {/*                         {t('rulesActionAlwaysAllow')} */}
+            {/*                     </li> */}
+            {/*                     <li className="flex items-center gap-2"> */}
+            {/*                         <X className="text-red-500 w-4 h-4" /> */}
+            {/*                         {t('rulesActionAlwaysDeny')} */}
+            {/*                     </li> */}
+            {/*                 </ul> */}
+            {/*             </InfoSection> */}
+            {/*             <InfoSection> */}
+            {/*                 <InfoSectionTitle> */}
+            {/*                     {t('rulesMatchCriteria')} */}
+            {/*                 </InfoSectionTitle> */}
+            {/*                 <ul className="text-sm text-muted-foreground space-y-1"> */}
+            {/*                     <li className="flex items-center gap-2"> */}
+            {/*                         {t('rulesMatchCriteriaIpAddress')} */}
+            {/*                     </li> */}
+            {/*                     <li className="flex items-center gap-2"> */}
+            {/*                         {t('rulesMatchCriteriaIpAddressRange')} */}
+            {/*                     </li> */}
+            {/*                     <li className="flex items-center gap-2"> */}
+            {/*                         {t('rulesMatchCriteriaUrl')} */}
+            {/*                     </li> */}
+            {/*                 </ul> */}
+            {/*             </InfoSection> */}
+            {/*         </InfoSections> */}
+            {/*     </AlertDescription> */}
+            {/* </Alert> */}
 
             <SettingsSection>
                 <SettingsSectionHeader>
@@ -615,168 +590,179 @@ export default function ResourceRules(props: {
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
-                    <Form {...addRuleForm}>
-                        <form
-                            onSubmit={addRuleForm.handleSubmit(addRule)}
-                            className="space-y-4"
-                        >
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
-                                <FormField
-                                    control={addRuleForm.control}
-                                    name="action"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('rulesAction')}</FormLabel>
-                                            <FormControl>
-                                                <Select
-                                                    value={field.value}
-                                                    onValueChange={
-                                                        field.onChange
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="ACCEPT">
-                                                            {RuleAction.ACCEPT}
-                                                        </SelectItem>
-                                                        <SelectItem value="DROP">
-                                                            {RuleAction.DROP}
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={addRuleForm.control}
-                                    name="match"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t('rulesMatchType')}</FormLabel>
-                                            <FormControl>
-                                                <Select
-                                                    value={field.value}
-                                                    onValueChange={
-                                                        field.onChange
-                                                    }
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {resource.http && (
-                                                            <SelectItem value="PATH">
-                                                                {RuleMatch.PATH}
+                    <div className="space-y-6">
+                        <div className="flex items-center space-x-2">
+                            <SwitchInput
+                                id="rules-toggle"
+                                label={t('rulesEnable')}
+                                defaultChecked={rulesEnabled}
+                                onCheckedChange={(val) => setRulesEnabled(val)}
+                            />
+                        </div>
+
+                        <Form {...addRuleForm}>
+                            <form
+                                onSubmit={addRuleForm.handleSubmit(addRule)}
+                                className="space-y-4"
+                            >
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
+                                    <FormField
+                                        control={addRuleForm.control}
+                                        name="action"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t('rulesAction')}</FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={
+                                                            field.onChange
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="ACCEPT">
+                                                                {RuleAction.ACCEPT}
                                                             </SelectItem>
-                                                        )}
-                                                        <SelectItem value="IP">
-                                                            {RuleMatch.IP}
-                                                        </SelectItem>
-                                                        <SelectItem value="CIDR">
-                                                            {RuleMatch.CIDR}
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={addRuleForm.control}
-                                    name="value"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-0 mb-2">
-                                            <InfoPopup
-                                                text={t('value')}
-                                                info={
-                                                    getValueHelpText(
-                                                        addRuleForm.watch(
-                                                            "match"
-                                                        )
-                                                    ) || ""
-                                                }
-                                            />
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button
-                                    type="submit"
-                                    variant="outlinePrimary"
-                                    className="mb-2"
-                                    disabled={!rulesEnabled}
-                                >
-                                    {t('ruleSubmit')}
-                                </Button>
-                            </div>
-                        </form>
-                    </Form>
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                      header.column.columnDef
-                                                          .header,
-                                                      header.getContext()
-                                                  )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow key={row.id}>
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext()
-                                                )}
-                                            </TableCell>
+                                                            <SelectItem value="DROP">
+                                                                {RuleAction.DROP}
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={addRuleForm.control}
+                                        name="match"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t('rulesMatchType')}</FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={field.value}
+                                                        onValueChange={
+                                                            field.onChange
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {resource.http && (
+                                                                <SelectItem value="PATH">
+                                                                    {RuleMatch.PATH}
+                                                                </SelectItem>
+                                                            )}
+                                                            <SelectItem value="IP">
+                                                                {RuleMatch.IP}
+                                                            </SelectItem>
+                                                            <SelectItem value="CIDR">
+                                                                {RuleMatch.CIDR}
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={addRuleForm.control}
+                                        name="value"
+                                        render={({ field }) => (
+                                            <FormItem className="gap-1">
+                                                <InfoPopup
+                                                    text={t('value')}
+                                                    info={
+                                                        getValueHelpText(
+                                                            addRuleForm.watch(
+                                                                "match"
+                                                            )
+                                                        ) || ""
+                                                    }
+                                                />
+                                                <FormControl>
+                                                    <Input {...field}/>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button
+                                        type="submit"
+                                        variant="secondary"
+                                        disabled={!rulesEnabled}
+                                    >
+                                        {t('ruleSubmit')}
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
+                        <Table>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id}>
+                                        {headerGroup.headers.map((header) => (
+                                            <TableHead key={header.id}>
+                                                {header.isPlaceholder
+                                                    ? null
+                                                    : flexRender(
+                                                          header.column.columnDef
+                                                              .header,
+                                                          header.getContext()
+                                                      )}
+                                            </TableHead>
                                         ))}
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={columns.length}
-                                        className="h-24 text-center"
-                                    >
-                                        {t('rulesNoOne')}
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                        <TableCaption>
-                            {t('rulesOrder')}
-                        </TableCaption>
-                    </Table>
+                                ))}
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                        <TableRow key={row.id}>
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell key={cell.id}>
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext()
+                                                    )}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="h-24 text-center"
+                                        >
+                                            {t('rulesNoOne')}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                            {/* <TableCaption> */}
+                            {/*     {t('rulesOrder')} */}
+                            {/* </TableCaption> */}
+                        </Table>
+                    </div>
                 </SettingsSectionBody>
-                <SettingsSectionFooter>
-                    <Button
-                        onClick={saveRules}
-                        loading={loading}
-                        disabled={loading}
-                    >
-                        {t('rulesSubmit')}
-                    </Button>
-                </SettingsSectionFooter>
             </SettingsSection>
+
+            <div className="flex justify-end">
+                <Button
+                    onClick={saveAllSettings}
+                    loading={loading}
+                    disabled={loading}
+                >
+                    {t('saveAllSettings')}
+                </Button>
+            </div>
         </SettingsContainer>
     );
 }

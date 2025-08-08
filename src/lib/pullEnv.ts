@@ -36,10 +36,16 @@ export function pullEnv(): Env {
                     : false,
             allowRawResources:
                 process.env.FLAGS_ALLOW_RAW_RESOURCES === "true" ? true : false,
-            allowBaseDomainResources:
-                process.env.FLAGS_ALLOW_BASE_DOMAIN_RESOURCES === "true"
+            disableLocalSites:
+                process.env.FLAGS_DISABLE_LOCAL_SITES === "true" ? true : false,
+            disableBasicWireguardSites:
+                process.env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES === "true"
                     ? true
-                    : false
-        }
+                    : false,
+            enableClients:
+                process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
+            hideSupporterKey:
+                process.env.HIDE_SUPPORTER_KEY === "true" ? true : false
+        },
     };
 }

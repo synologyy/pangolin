@@ -59,7 +59,7 @@ export async function getUniqueExitNodeEndpointName(): Promise<string> {
 
 
 export function generateName(): string {
-    return (
+    const name = (
         names.descriptors[
             Math.floor(Math.random() * names.descriptors.length)
         ] +
@@ -68,4 +68,7 @@ export function generateName(): string {
     )
         .toLowerCase()
         .replace(/\s/g, "-");
+
+    // clean out any non-alphanumeric characters except for dashes
+    return name.replace(/[^a-z0-9-]/g, "");
 }

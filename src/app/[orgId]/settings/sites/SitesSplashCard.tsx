@@ -5,10 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, DockIcon as Docker, Globe, Server, X } from "lucide-react";
 import Link from "next/link";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useTranslations } from 'next-intl';
 
 export const SitesSplashCard = () => {
     const [isDismissed, setIsDismissed] = useState(true);
+    const { env } = useEnvContext();
 
     const key = "sites-splash-card-dismissed";
     const t = useTranslations();
@@ -62,7 +64,7 @@ export const SitesSplashCard = () => {
 
                     <div className="mt-4">
                         <Link
-                            href="https://docs.fossorial.io/Newt/install"
+                            href="https://docs.digpangolin.com/manage/sites/install-site"
                             target="_blank"
                             rel="noopener noreferrer"
                         >

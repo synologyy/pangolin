@@ -140,7 +140,7 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
                 return (
                     <div className="flex items-center justify-end">
                         <Button
-                            variant={"outlinePrimary"}
+                            variant={"secondary"}
                             className="ml-2"
                             onClick={() => onEdit(policy)}
                         >

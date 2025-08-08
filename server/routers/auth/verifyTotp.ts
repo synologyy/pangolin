@@ -6,18 +6,22 @@ import HttpCode from "@server/types/HttpCode";
 import { response } from "@server/lib";
 import { db } from "@server/db";
 import { twoFactorBackupCodes, User, users } from "@server/db";
-import { eq } from "drizzle-orm";
-import { alphabet, generateRandomString } from "oslo/crypto";
-import { hashPassword } from "@server/auth/password";
+import { eq, and } from "drizzle-orm";
+import { hashPassword, verifyPassword } from "@server/auth/password";
 import { verifyTotpCode } from "@server/auth/totp";
 import logger from "@server/logger";
 import { sendEmail } from "@server/emails";
 import TwoFactorAuthNotification from "@server/emails/templates/TwoFactorAuthNotification";
 import config from "@server/lib/config";
 import { UserType } from "@server/types/UserTypes";
+import { generateBackupCodes } from "@server/lib/totp";
+import { verifySession } from "@server/auth/sessions/verifySession";
+import { unauthorized } from "@server/auth/unauthorizedResponse";
 
 export const verifyTotpBody = z
     .object({
+        email: z.string().email().optional(),
+        password: z.string().optional(),
         code: z.string()
     })
     .strict();
@@ -45,38 +49,83 @@ export async function verifyTotp(
         );
     }
 
-    const { code } = parsedBody.data;
-
-    const user = req.user as User;
-
-    if (user.type !== UserType.Internal) {
-        return next(
-            createHttpError(
-                HttpCode.BAD_REQUEST,
-                "Two-factor authentication is not supported for external users"
-            )
-        );
-    }
-
-    if (user.twoFactorEnabled) {
-        return next(
-            createHttpError(
-                HttpCode.BAD_REQUEST,
-                "Two-factor authentication is already enabled"
-            )
-        );
-    }
-
-    if (!user.twoFactorSecret) {
-        return next(
-            createHttpError(
-                HttpCode.BAD_REQUEST,
-                "User has not requested two-factor authentication"
-            )
-        );
-    }
+    const { code, email, password } = parsedBody.data;
 
     try {
+        const { user: sessionUser, session: existingSession } =
+            await verifySession(req);
+
+        let user: User | null = sessionUser;
+        if (!existingSession) {
+            if (!email || !password) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Email and password are required for two-factor authentication"
+                    )
+                );
+            }
+            const [res] = await db
+                .select()
+                .from(users)
+                .where(
+                    and(
+                        eq(users.type, UserType.Internal),
+                        eq(users.email, email)
+                    )
+                );
+            user = res;
+
+            const validPassword = await verifyPassword(
+                password,
+                user.passwordHash!
+            );
+            if (!validPassword) {
+                return next(unauthorized());
+            }
+        }
+
+        if (!user) {
+            if (config.getRawConfig().app.log_failed_attempts) {
+                logger.info(
+                    `Username or password incorrect. Email: ${email}. IP: ${req.ip}.`
+                );
+            }
+            return next(
+                createHttpError(
+                    HttpCode.UNAUTHORIZED,
+                    "Username or password is incorrect"
+                )
+            );
+        }
+
+        if (user.type !== UserType.Internal) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Two-factor authentication is not supported for external users"
+                )
+            );
+        }
+
+        if (user.twoFactorEnabled) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Two-factor authentication is already enabled"
+                )
+            );
+        }
+
+        if (!user.twoFactorSecret) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "User has not requested two-factor authentication"
+                )
+            );
+        }
+
         const valid = await verifyTotpCode(
             code,
             user.twoFactorSecret,
@@ -89,7 +138,9 @@ export async function verifyTotp(
             await db.transaction(async (trx) => {
                 await trx
                     .update(users)
-                    .set({ twoFactorEnabled: true })
+                    .set({
+                        twoFactorEnabled: true
+                    })
                     .where(eq(users.userId, user.userId));
 
                 const backupCodes = await generateBackupCodes();
@@ -152,13 +203,4 @@ export async function verifyTotp(
             )
         );
     }
-}
-
-async function generateBackupCodes(): Promise<string[]> {
-    const codes = [];
-    for (let i = 0; i < 10; i++) {
-        const code = generateRandomString(6, alphabet("0-9", "A-Z", "a-z"));
-        codes.push(code);
-    }
-    return codes;
 }

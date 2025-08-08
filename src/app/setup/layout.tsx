@@ -6,7 +6,6 @@ import UserProvider from "@app/providers/UserProvider";
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { rootNavItems } from "../navigation";
 import { ListUserOrgsResponse } from "@server/routers/org";
 import { internal } from "@app/lib/api";
 import { AxiosResponse } from "axios";
@@ -54,11 +53,7 @@ export default async function SetupLayout({
     return (
         <>
             <UserProvider user={user}>
-                <Layout
-                    navItems={rootNavItems}
-                    showBreadcrumbs={false}
-                    orgs={orgs}
-                >
+                <Layout navItems={[]} orgs={orgs}>
                     <div className="w-full max-w-2xl mx-auto md:mt-32 mt-4">
                         {children}
                     </div>

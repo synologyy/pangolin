@@ -4,7 +4,7 @@ import { cn } from "@app/lib/cn";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { useState } from "react";
 
-interface StrategyOption<TValue extends string> {
+export interface StrategyOption<TValue extends string> {
     id: TValue;
     title: string;
     description: string;

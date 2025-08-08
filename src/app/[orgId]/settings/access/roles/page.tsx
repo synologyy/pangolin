@@ -6,8 +6,6 @@ import { cache } from "react";
 import OrgProvider from "@app/providers/OrgProvider";
 import { ListRolesResponse } from "@server/routers/role";
 import RolesTable, { RoleRow } from "./RolesTable";
-import { SidebarSettings } from "@app/components/SidebarSettings";
-import AccessPageHeaderAndNav from "../AccessPageHeaderAndNav";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { getTranslations } from 'next-intl/server';
 

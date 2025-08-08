@@ -4,7 +4,7 @@ import {
     serializeSessionCookie
 } from "@server/auth/sessions/app";
 import { db } from "@server/db";
-import { users } from "@server/db";
+import { users, securityKeys } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
 import { eq, and } from "drizzle-orm";
@@ -21,10 +21,7 @@ import { UserType } from "@server/types/UserTypes";
 
 export const loginBodySchema = z
     .object({
-        email: z
-            .string()
-            .toLowerCase()
-            .email(),
+        email: z.string().toLowerCase().email(),
         password: z.string(),
         code: z.string().optional()
     })
@@ -35,9 +32,9 @@ export type LoginBody = z.infer<typeof loginBodySchema>;
 export type LoginResponse = {
     codeRequested?: boolean;
     emailVerificationRequired?: boolean;
+    useSecurityKey?: boolean;
+    twoFactorSetupRequired?: boolean;
 };
-
-export const dynamic = "force-dynamic";
 
 export async function login(
     req: Request,
@@ -107,6 +104,35 @@ export async function login(
                     "Username or password is incorrect"
                 )
             );
+        }
+
+        // // Check if user has security keys registered
+        // const userSecurityKeys = await db
+        //     .select()
+        //     .from(securityKeys)
+        //     .where(eq(securityKeys.userId, existingUser.userId));
+        //
+        // if (userSecurityKeys.length > 0) {
+        //     return response<LoginResponse>(res, {
+        //         data: { useSecurityKey: true },
+        //         success: true,
+        //         error: false,
+        //         message: "Security key authentication required",
+        //         status: HttpCode.OK
+        //     });
+        // }
+
+        if (
+            existingUser.twoFactorSetupRequested &&
+            !existingUser.twoFactorEnabled
+        ) {
+            return response<LoginResponse>(res, {
+                data: { twoFactorSetupRequired: true },
+                success: true,
+                error: false,
+                message: "Two-factor authentication setup required",
+                status: HttpCode.ACCEPTED
+            });
         }
 
         if (existingUser.twoFactorEnabled) {

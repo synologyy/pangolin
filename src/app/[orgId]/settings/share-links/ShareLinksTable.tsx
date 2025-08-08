@@ -69,11 +69,8 @@ export default function ShareLinksTable({
     async function deleteSharelink(id: string) {
         await api.delete(`/access-token/${id}`).catch((e) => {
             toast({
-                title: t('shareErrorDelete'),
-                description: formatAxiosError(
-                    e,
-                    t('shareErrorDeleteMessage')
-                )
+                title: t("shareErrorDelete"),
+                description: formatAxiosError(e, t("shareErrorDeleteMessage"))
             });
         });
 
@@ -81,53 +78,12 @@ export default function ShareLinksTable({
         setRows(newRows);
 
         toast({
-            title: t('shareDeleted'),
-            description: t('shareDeletedDescription')
+            title: t("shareDeleted"),
+            description: t("shareDeletedDescription")
         });
     }
 
     const columns: ColumnDef<ShareLinkRow>[] = [
-        {
-            id: "actions",
-            cell: ({ row }) => {
-                const router = useRouter();
-
-                const resourceRow = row.original;
-
-                return (
-                    <>
-                        <div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <span className="sr-only">
-                                            {t('openMenu')}
-                                        </span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            deleteSharelink(
-                                                resourceRow.accessTokenId
-                                            );
-                                        }}
-                                    >
-                                        <button className="text-red-500">
-                                            {t('delete')}
-                                        </button>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    </>
-                );
-            }
-        },
         {
             accessorKey: "resourceName",
             header: ({ column }) => {
@@ -138,7 +94,7 @@ export default function ShareLinksTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('resource')}
+                        {t("resource")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -147,7 +103,7 @@ export default function ShareLinksTable({
                 const r = row.original;
                 return (
                     <Link href={`/${orgId}/settings/resources/${r.resourceId}`}>
-                        <Button variant="outline">
+                        <Button variant="outline" size="sm">
                             {r.resourceName}{" "}
                             {r.siteName ? `(${r.siteName})` : ""}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
@@ -166,7 +122,7 @@ export default function ShareLinksTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('title')}
+                        {t("title")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -245,7 +201,7 @@ export default function ShareLinksTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('created')}
+                        {t("created")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -265,7 +221,7 @@ export default function ShareLinksTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('expires')}
+                        {t("expires")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -275,23 +231,50 @@ export default function ShareLinksTable({
                 if (r.expiresAt) {
                     return moment(r.expiresAt).format("lll");
                 }
-                return t('never');
+                return t("never");
             }
         },
         {
             id: "delete",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end space-x-2">
-                    <Button
-                        variant="outlinePrimary"
-                        onClick={() =>
-                            deleteSharelink(row.original.accessTokenId)
-                        }
-                    >
-                        {t('delete')}
-                    </Button>
-                </div>
-            )
+            cell: ({ row }) => {
+                const resourceRow = row.original;
+                return (
+                    <div className="flex items-center justify-end space-x-2">
+                        {/* <DropdownMenu> */}
+                        {/*     <DropdownMenuTrigger asChild> */}
+                        {/*         <Button variant="ghost" className="h-8 w-8 p-0"> */}
+                        {/*             <span className="sr-only"> */}
+                        {/*                 {t("openMenu")} */}
+                        {/*             </span> */}
+                        {/*             <MoreHorizontal className="h-4 w-4" /> */}
+                        {/*         </Button> */}
+                        {/*     </DropdownMenuTrigger> */}
+                        {/*     <DropdownMenuContent align="end"> */}
+                        {/*         <DropdownMenuItem */}
+                        {/*             onClick={() => { */}
+                        {/*                 deleteSharelink( */}
+                        {/*                     resourceRow.accessTokenId */}
+                        {/*                 ); */}
+                        {/*             }} */}
+                        {/*         > */}
+                        {/*             <button className="text-red-500"> */}
+                        {/*                 {t("delete")} */}
+                        {/*             </button> */}
+                        {/*         </DropdownMenuItem> */}
+                        {/*     </DropdownMenuContent> */}
+                        {/* </DropdownMenu> */}
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() =>
+                                deleteSharelink(row.original.accessTokenId)
+                            }
+                        >
+                            {t("delete")}
+                        </Button>
+                    </div>
+                );
+            }
         }
     ];
 

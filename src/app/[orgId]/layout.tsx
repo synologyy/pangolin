@@ -8,6 +8,7 @@ import { GetOrgUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import SetLastOrgCookie from "@app/components/SetLastOrgCookie";
 
 export default async function OrgLayout(props: {
     children: React.ReactNode;
@@ -52,6 +53,7 @@ export default async function OrgLayout(props: {
     return (
         <>
             {props.children}
+            <SetLastOrgCookie orgId={orgId} />
         </>
     );
 }

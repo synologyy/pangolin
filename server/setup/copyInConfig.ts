@@ -8,8 +8,31 @@ export async function copyInConfig() {
     const endpoint = config.getRawConfig().gerbil.base_endpoint;
     const listenPort = config.getRawConfig().gerbil.start_port;
 
+    if (!config.getRawConfig().flags?.disable_config_managed_domains) {
+        await copyInDomains();
+    }
+
+    const exitNodeName = config.getRawConfig().gerbil.exit_node_name;
+    if (exitNodeName) {
+        await db
+            .update(exitNodes)
+            .set({ endpoint, listenPort })
+            .where(eq(exitNodes.name, exitNodeName));
+    } else {
+        await db
+            .update(exitNodes)
+            .set({ endpoint })
+            .where(ne(exitNodes.endpoint, endpoint));
+        await db
+            .update(exitNodes)
+            .set({ listenPort })
+            .where(ne(exitNodes.listenPort, listenPort));
+    }
+}
+
+async function copyInDomains() {
     await db.transaction(async (trx) => {
-        const rawDomains = config.getRawConfig().domains;
+        const rawDomains = config.getRawConfig().domains!; // always defined if disable flag is not set
 
         const configDomains = Object.entries(rawDomains).map(
             ([key, value]) => ({
@@ -40,13 +63,19 @@ export async function copyInConfig() {
             if (existingDomainKeys.has(domainId)) {
                 await trx
                     .update(domains)
-                    .set({ baseDomain })
+                    .set({ baseDomain, verified: true, type: "wildcard" })
                     .where(eq(domains.domainId, domainId))
                     .execute();
             } else {
                 await trx
                     .insert(domains)
-                    .values({ domainId, baseDomain, configManaged: true })
+                    .values({
+                        domainId,
+                        baseDomain,
+                        configManaged: true,
+                        type: "wildcard",
+                        verified: true
+                    })
                     .execute();
             }
         }
@@ -92,7 +121,7 @@ export async function copyInConfig() {
             }
 
             let fullDomain = "";
-            if (resource.isBaseDomain) {
+            if (!resource.subdomain) {
                 fullDomain = domain.baseDomain;
             } else {
                 fullDomain = `${resource.subdomain}.${domain.baseDomain}`;
@@ -104,15 +133,4 @@ export async function copyInConfig() {
                 .where(eq(resources.resourceId, resource.resourceId));
         }
     });
-
-    // TODO: eventually each exit node could have a different endpoint
-    await db
-        .update(exitNodes)
-        .set({ endpoint })
-        .where(ne(exitNodes.endpoint, endpoint));
-    // TODO: eventually each exit node could have a different port
-    await db
-        .update(exitNodes)
-        .set({ listenPort })
-        .where(ne(exitNodes.listenPort, listenPort));
 }

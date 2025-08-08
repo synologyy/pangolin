@@ -32,7 +32,7 @@ const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) =>
                     href={text}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate hover:underline"
+                    className="truncate hover:underline text-sm"
                     style={{ maxWidth: "100%" }} // Ensures truncation works within parent
                     title={text} // Shows full text on hover
                 >
@@ -40,7 +40,7 @@ const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) =>
                 </Link>
             ) : (
                 <span
-                    className="truncate"
+                    className="truncate text-sm"
                     style={{
                         maxWidth: "100%",
                         display: "block",

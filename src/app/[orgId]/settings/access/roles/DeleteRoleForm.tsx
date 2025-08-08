@@ -159,7 +159,6 @@ export default function DeleteRoleForm({
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
-                        <div className="space-y-4">
                             <div className="space-y-4">
                                 <p>
                                     {t('accessRoleQuestionRemove', {name: roleToDelete.name})}
@@ -210,13 +209,13 @@ export default function DeleteRoleForm({
                                     />
                                 </form>
                             </Form>
-                        </div>
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
                             <Button variant="outline">{t('close')}</Button>
                         </CredenzaClose>
                         <Button
+                            variant="destructive"
                             type="submit"
                             form="remove-role-form"
                             loading={loading}

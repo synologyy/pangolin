@@ -72,7 +72,7 @@ export default function InviteUserForm({
 
     const formSchema = z.object({
         string: z.string().refine((val) => val === string, {
-            message: t('inviteErrorInvalidConfirmation')
+            message: t("inviteErrorInvalidConfirmation")
         })
     });
 
@@ -108,7 +108,9 @@ export default function InviteUserForm({
                         <CredenzaTitle>{title}</CredenzaTitle>
                     </CredenzaHeader>
                     <CredenzaBody>
-                        <div className="mb-4 break-all overflow-hidden">{dialog}</div>
+                        <div className="mb-4 break-all overflow-hidden">
+                            {dialog}
+                        </div>
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
@@ -132,9 +134,10 @@ export default function InviteUserForm({
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
+                            variant={"destructive"}
                             type="submit"
                             form="confirm-delete-form"
                             loading={loading}

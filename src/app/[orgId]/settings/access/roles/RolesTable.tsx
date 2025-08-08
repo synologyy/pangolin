@@ -19,7 +19,7 @@ import CreateRoleForm from "./CreateRoleForm";
 import DeleteRoleForm from "./DeleteRoleForm";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 export type RoleRow = Role;
 
@@ -43,49 +43,6 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
 
     const columns: ColumnDef<RoleRow>[] = [
         {
-            id: "actions",
-            cell: ({ row }) => {
-                const roleRow = row.original;
-
-                return (
-                    <>
-                        <div>
-                            {roleRow.isAdmin && (
-                                <MoreHorizontal className="h-4 w-4 opacity-0" />
-                            )}
-                            {!roleRow.isAdmin && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            className="h-8 w-8 p-0"
-                                        >
-                                            <span className="sr-only">
-                                                {t('openMenu')}
-                                            </span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
-                                            onClick={() => {
-                                                setIsDeleteModalOpen(true);
-                                                setUserToRemove(roleRow);
-                                            }}
-                                        >
-                                            <span className="text-red-500">
-                                                {t('accessRoleDelete')}
-                                            </span>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
-                        </div>
-                    </>
-                );
-            }
-        },
-        {
             accessorKey: "name",
             header: ({ column }) => {
                 return (
@@ -95,7 +52,7 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('name')}
+                        {t("name")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -103,7 +60,29 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         },
         {
             accessorKey: "description",
-            header: t('description')
+            header: t("description")
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => {
+                const roleRow = row.original;
+
+                return (
+                    <div className="flex items-center justify-end">
+                        <Button
+                            variant={"secondary"}
+                            size="sm"
+                            disabled={roleRow.isAdmin || false}
+                            onClick={() => {
+                                setIsDeleteModalOpen(true);
+                                setUserToRemove(roleRow);
+                            }}
+                        >
+                            {t("accessRoleDelete")}
+                        </Button>
+                    </div>
+                );
+            }
         }
     ];
 

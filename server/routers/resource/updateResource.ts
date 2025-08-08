@@ -20,6 +20,7 @@ import { tlsNameSchema } from "@server/lib/schemas";
 import { subdomainSchema } from "@server/lib/schemas";
 import { registry } from "@server/openApi";
 import { OpenAPITags } from "@server/openApi";
+import { build } from "@server/build";
 
 const updateResourceParamsSchema = z
     .object({
@@ -33,14 +34,11 @@ const updateResourceParamsSchema = z
 const updateHttpResourceBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
-        subdomain: subdomainSchema
-            .optional()
-            .transform((val) => val?.toLowerCase()),
+        subdomain: subdomainSchema.nullable().optional(),
         ssl: z.boolean().optional(),
         sso: z.boolean().optional(),
         blockAccess: z.boolean().optional(),
         emailWhitelistEnabled: z.boolean().optional(),
-        isBaseDomain: z.boolean().optional(),
         applyRules: z.boolean().optional(),
         domainId: z.string().optional(),
         enabled: z.boolean().optional(),
@@ -60,19 +58,6 @@ const updateHttpResourceBodySchema = z
             return true;
         },
         { message: "Invalid subdomain" }
-    )
-    .refine(
-        (data) => {
-            if (!config.getRawConfig().flags?.allow_base_domain_resources) {
-                if (data.isBaseDomain) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        {
-            message: "Base domain resources are not allowed"
-        }
     )
     .refine(
         (data) => {
@@ -106,7 +91,8 @@ const updateRawResourceBodySchema = z
         name: z.string().min(1).max(255).optional(),
         proxyPort: z.number().int().min(1).max(65535).optional(),
         stickySession: z.boolean().optional(),
-        enabled: z.boolean().optional()
+        enabled: z.boolean().optional(),
+        enableProxy: z.boolean().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -242,86 +228,118 @@ async function updateHttpResource(
     const updateData = parsedBody.data;
 
     if (updateData.domainId) {
-        const [existingDomain] = await db
-            .select()
-            .from(orgDomains)
-            .where(
-                and(
-                    eq(orgDomains.orgId, org.orgId),
-                    eq(orgDomains.domainId, updateData.domainId)
-                )
-            )
-            .leftJoin(domains, eq(orgDomains.domainId, domains.domainId));
+        const domainId = updateData.domainId;
 
-        if (!existingDomain) {
+        const [domainRes] = await db
+            .select()
+            .from(domains)
+            .where(eq(domains.domainId, domainId))
+            .leftJoin(
+                orgDomains,
+                and(
+                    eq(orgDomains.orgId, resource.orgId),
+                    eq(orgDomains.domainId, domainId)
+                )
+            );
+
+        if (!domainRes || !domainRes.domains) {
             return next(
-                createHttpError(HttpCode.NOT_FOUND, `Domain not found`)
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    `Domain with ID ${updateData.domainId} not found`
+                )
             );
         }
-    }
-
-    const domainId = updateData.domainId || resource.domainId!;
-    const subdomain = updateData.subdomain || resource.subdomain;
-
-    const [domain] = await db
-        .select()
-        .from(domains)
-        .where(eq(domains.domainId, domainId));
-
-    const isBaseDomain =
-        updateData.isBaseDomain !== undefined
-            ? updateData.isBaseDomain
-            : resource.isBaseDomain;
-
-    let fullDomain: string | null = null;
-    if (isBaseDomain) {
-        fullDomain = domain.baseDomain;
-    } else if (subdomain && domain) {
-        fullDomain = `${subdomain}.${domain.baseDomain}`;
-    }
-
-    if (fullDomain) {
-        const [existingDomain] = await db
-            .select()
-            .from(resources)
-            .where(eq(resources.fullDomain, fullDomain));
 
         if (
-            existingDomain &&
-            existingDomain.resourceId !== resource.resourceId
+            domainRes.orgDomains &&
+            domainRes.orgDomains.orgId !== resource.orgId
         ) {
             return next(
                 createHttpError(
-                    HttpCode.CONFLICT,
-                    "Resource with that domain already exists"
+                    HttpCode.FORBIDDEN,
+                    `You do not have permission to use domain with ID ${updateData.domainId}`
                 )
             );
         }
-    }
 
-    const updatePayload = {
-        ...updateData,
-        fullDomain
-    };
+        if (!domainRes.domains.verified) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Domain with ID ${updateData.domainId} is not verified`
+                )
+            );
+        }
+
+        let fullDomain = "";
+        if (domainRes.domains.type == "ns") {
+            if (updateData.subdomain) {
+                fullDomain = `${updateData.subdomain}.${domainRes.domains.baseDomain}`;
+            } else {
+                fullDomain = domainRes.domains.baseDomain;
+            }
+        } else if (domainRes.domains.type == "cname") {
+            fullDomain = domainRes.domains.baseDomain;
+        } else if (domainRes.domains.type == "wildcard") {
+            if (updateData.subdomain !== undefined) {
+                // the subdomain cant have a dot in it
+                const parsedSubdomain = subdomainSchema.safeParse(
+                    updateData.subdomain
+                );
+                if (!parsedSubdomain.success) {
+                    return next(
+                        createHttpError(
+                            HttpCode.BAD_REQUEST,
+                            fromError(parsedSubdomain.error).toString()
+                        )
+                    );
+                }
+                fullDomain = `${updateData.subdomain}.${domainRes.domains.baseDomain}`;
+            } else {
+                fullDomain = domainRes.domains.baseDomain;
+            }
+        }
+
+        fullDomain = fullDomain.toLowerCase();
+
+        logger.debug(`Full domain: ${fullDomain}`);
+
+        if (fullDomain) {
+            const [existingDomain] = await db
+                .select()
+                .from(resources)
+                .where(eq(resources.fullDomain, fullDomain));
+
+            if (
+                existingDomain &&
+                existingDomain.resourceId !== resource.resourceId
+            ) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        "Resource with that domain already exists"
+                    )
+                );
+            }
+        }
+
+        // update the full domain if it has changed
+        if (fullDomain && fullDomain !== resource.fullDomain) {
+            await db
+                .update(resources)
+                .set({ fullDomain })
+                .where(eq(resources.resourceId, resource.resourceId));
+        }
+
+        if (fullDomain === domainRes.domains.baseDomain) {
+            updateData.subdomain = null;
+        }
+    }
 
     const updatedResource = await db
         .update(resources)
-        .set({
-            name: updatePayload.name,
-            subdomain: updatePayload.subdomain,
-            ssl: updatePayload.ssl,
-            sso: updatePayload.sso,
-            blockAccess: updatePayload.blockAccess,
-            emailWhitelistEnabled: updatePayload.emailWhitelistEnabled,
-            isBaseDomain: updatePayload.isBaseDomain,
-            applyRules: updatePayload.applyRules,
-            domainId: updatePayload.domainId,
-            enabled: updatePayload.enabled,
-            stickySession: updatePayload.stickySession,
-            tlsServerName: updatePayload.tlsServerName,
-            setHostHeader: updatePayload.setHostHeader,
-            fullDomain: updatePayload.fullDomain
-        })
+        .set({ ...updateData })
         .where(eq(resources.resourceId, resource.resourceId))
         .returning();
 

@@ -43,14 +43,14 @@ export default function IdpTable({ idps }: Props) {
         try {
             await api.delete(`/idp/${idpId}`);
             toast({
-                title: t('success'),
-                description: t('idpDeletedDescription')
+                title: t("success"),
+                description: t("idpDeletedDescription")
             });
             setIsDeleteModalOpen(false);
             router.refresh();
         } catch (e) {
             toast({
-                title: t('error'),
+                title: t("error"),
                 description: formatAxiosError(e),
                 variant: "destructive"
             });
@@ -67,41 +67,6 @@ export default function IdpTable({ idps }: Props) {
     };
 
     const columns: ColumnDef<IdpRow>[] = [
-        {
-            id: "dots",
-            cell: ({ row }) => {
-                const r = row.original;
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <Link
-                                className="block w-full"
-                                href={`/admin/idp/${r.idpId}/general`}
-                            >
-                                <DropdownMenuItem>
-                                    {t('viewSettings')}
-                                </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelectedIdp(r);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            >
-                                <span className="text-red-500">{t('delete')}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
         {
             accessorKey: "idpId",
             header: ({ column }) => {
@@ -128,7 +93,7 @@ export default function IdpTable({ idps }: Props) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('name')}
+                        {t("name")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -144,7 +109,7 @@ export default function IdpTable({ idps }: Props) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('type')}
+                        {t("type")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -162,9 +127,43 @@ export default function IdpTable({ idps }: Props) {
                 const siteRow = row.original;
                 return (
                     <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">
+                                        {t("openMenu")}
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <Link
+                                    className="block w-full"
+                                    href={`/admin/idp/${siteRow.idpId}/general`}
+                                >
+                                    <DropdownMenuItem>
+                                        {t("viewSettings")}
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelectedIdp(siteRow);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("delete")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Link href={`/admin/idp/${siteRow.idpId}/general`}>
-                            <Button variant={"outlinePrimary"} className="ml-2">
-                                {t('edit')}
+                            <Button
+                                variant={"secondary"}
+                                className="ml-2"
+                                size="sm"
+                            >
+                                {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
@@ -186,22 +185,20 @@ export default function IdpTable({ idps }: Props) {
                     dialog={
                         <div className="space-y-4">
                             <p>
-                                {t('idpQuestionRemove', {name: selectedIdp.name})}
+                                {t("idpQuestionRemove", {
+                                    name: selectedIdp.name
+                                })}
                             </p>
                             <p>
-                                <b>
-                                    {t('idpMessageRemove')}
-                                </b>
+                                <b>{t("idpMessageRemove")}</b>
                             </p>
-                            <p>
-                                {t('idpMessageConfirm')}
-                            </p>
+                            <p>{t("idpMessageConfirm")}</p>
                         </div>
                     }
-                    buttonText={t('idpConfirmDelete')}
+                    buttonText={t("idpConfirmDelete")}
                     onConfirm={async () => deleteIdp(selectedIdp.idpId)}
                     string={selectedIdp.name}
-                    title={t('idpDelete')}
+                    title={t("idpDelete")}
                 />
             )}
 

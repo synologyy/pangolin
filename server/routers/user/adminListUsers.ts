@@ -37,7 +37,9 @@ async function queryUsers(limit: number, offset: number) {
             serverAdmin: users.serverAdmin,
             type: users.type,
             idpName: idp.name,
-            idpId: users.idpId
+            idpId: users.idpId,
+            twoFactorEnabled: users.twoFactorEnabled,
+            twoFactorSetupRequested: users.twoFactorSetupRequested
         })
         .from(users)
         .leftJoin(idp, eq(users.idpId, idp.idpId))

@@ -5,7 +5,7 @@ import { Org, orgs, userOrgs } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { sql, inArray, eq } from "drizzle-orm";
+import { sql, inArray, eq, and } from "drizzle-orm";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
@@ -40,8 +40,10 @@ const listOrgsSchema = z.object({
 //     responses: {}
 // });
 
+type ResponseOrg = Org & { isOwner?: boolean };
+
 export type ListUserOrgsResponse = {
-    orgs: Org[];
+    orgs: ResponseOrg[];
     pagination: { total: number; limit: number; offset: number };
 };
 
@@ -106,6 +108,10 @@ export async function listUserOrgs(
             .select()
             .from(orgs)
             .where(inArray(orgs.orgId, userOrgIds))
+            .leftJoin(
+                userOrgs,
+                and(eq(userOrgs.orgId, orgs.orgId), eq(userOrgs.userId, userId))
+            )
             .limit(limit)
             .offset(offset);
 
@@ -115,9 +121,19 @@ export async function listUserOrgs(
             .where(inArray(orgs.orgId, userOrgIds));
         const totalCount = totalCountResult[0].count;
 
+        const responseOrgs = organizations.map((val) => {
+            const res = {
+                ...val.orgs
+            } as ResponseOrg;
+            if (val.userOrgs && val.userOrgs.isOwner) {
+                res.isOwner = val.userOrgs.isOwner;
+            }
+            return res;
+        });
+
         return response<ListUserOrgsResponse>(res, {
             data: {
-                orgs: organizations,
+                orgs: responseOrgs,
                 pagination: {
                     total: totalCount,
                     limit,

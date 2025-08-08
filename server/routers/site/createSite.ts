@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { clients, db } from "@server/db";
 import { roles, userSites, sites, roleSites, Site, orgs } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -14,6 +14,9 @@ import { newts } from "@server/db";
 import moment from "moment";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
+import { isValidIP } from "@server/lib/validators";
+import { isIpInCidr } from "@server/lib/ip";
+import config from "@server/lib/config";
 
 const createSiteParamsSchema = z
     .object({
@@ -35,9 +38,18 @@ const createSiteSchema = z
         subnet: z.string().optional(),
         newtId: z.string().optional(),
         secret: z.string().optional(),
+        address: z.string().optional(),
         type: z.enum(["newt", "wireguard", "local"])
     })
-    .strict();
+    .strict()
+    .refine((data) => {
+        if (data.type === "local") {
+            return !config.getRawConfig().flags?.disable_local_sites;
+        } else if (data.type === "wireguard") {
+            return !config.getRawConfig().flags?.disable_basic_wireguard_sites;
+        }
+        return true;
+    });
 
 export type CreateSiteBody = z.infer<typeof createSiteSchema>;
 
@@ -84,7 +96,8 @@ export async function createSite(
             pubKey,
             subnet,
             newtId,
-            secret
+            secret,
+            address
         } = parsedBody.data;
 
         const parsedParams = createSiteParamsSchema.safeParse(req.params);
@@ -116,6 +129,78 @@ export async function createSite(
             );
         }
 
+        let updatedAddress = null;
+        if (address) {
+            if (!org.subnet) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        `Organization with ID ${orgId} has no subnet defined`
+                    )
+                );
+            }
+
+            if (!isValidIP(address)) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Invalid subnet format. Please provide a valid CIDR notation."
+                    )
+                );
+            }
+
+            if (!isIpInCidr(address, org.subnet)) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "IP is not in the CIDR range of the subnet."
+                    )
+                );
+            }
+
+            updatedAddress = `${address}/${org.subnet.split("/")[1]}`; // we want the block size of the whole org
+
+            // make sure the subnet is unique
+            const addressExistsSites = await db
+                .select()
+                .from(sites)
+                .where(
+                    and(
+                        eq(sites.address, updatedAddress),
+                        eq(sites.orgId, orgId)
+                    )
+                )
+                .limit(1);
+
+            if (addressExistsSites.length > 0) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        `Subnet ${updatedAddress} already exists in sites`
+                    )
+                );
+            }
+
+            const addressExistsClients = await db
+                .select()
+                .from(clients)
+                .where(
+                    and(
+                        eq(clients.subnet, updatedAddress),
+                        eq(clients.orgId, orgId)
+                    )
+                )
+                .limit(1);
+            if (addressExistsClients.length > 0) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        `Subnet ${updatedAddress} already exists in clients`
+                    )
+                );
+            }
+        }
+
         const niceId = await getUniqueSiteName(orgId);
 
         await db.transaction(async (trx) => {
@@ -139,6 +224,7 @@ export async function createSite(
                         exitNodeId,
                         name,
                         niceId,
+                        address: updatedAddress || null,
                         subnet,
                         type,
                         dockerSocketEnabled: type == "newt",
@@ -154,6 +240,7 @@ export async function createSite(
                         orgId,
                         name,
                         niceId,
+                        address: updatedAddress || null,
                         type,
                         dockerSocketEnabled: type == "newt",
                         subnet: "0.0.0.0/0"

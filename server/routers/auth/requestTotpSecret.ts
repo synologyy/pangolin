@@ -7,16 +7,19 @@ import HttpCode from "@server/types/HttpCode";
 import { response } from "@server/lib";
 import { db } from "@server/db";
 import { User, users } from "@server/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { createTOTPKeyURI } from "oslo/otp";
 import logger from "@server/logger";
 import { verifyPassword } from "@server/auth/password";
 import { unauthorized } from "@server/auth/unauthorizedResponse";
 import { UserType } from "@server/types/UserTypes";
+import { verifySession } from "@server/auth/sessions/verifySession";
+import config from "@server/lib/config";
 
 export const requestTotpSecretBody = z
     .object({
-        password: z.string()
+        password: z.string(),
+        email: z.string().email().optional()
     })
     .strict();
 
@@ -43,9 +46,42 @@ export async function requestTotpSecret(
         );
     }
 
-    const { password } = parsedBody.data;
+    const { password, email } = parsedBody.data;
 
-    const user = req.user as User;
+    const { user: sessionUser, session: existingSession } = await verifySession(req);
+
+    let user: User | null = sessionUser;
+    if (!existingSession) {
+        if (!email) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Email is required for two-factor authentication setup"
+                )
+            );
+        }
+        const [res] = await db
+            .select()
+            .from(users)
+            .where(
+                and(eq(users.type, UserType.Internal), eq(users.email, email))
+            );
+        user = res;
+    }
+
+    if (!user) {
+        if (config.getRawConfig().app.log_failed_attempts) {
+            logger.info(
+                `Username or password incorrect. Email: ${email}. IP: ${req.ip}.`
+            );
+        }
+        return next(
+            createHttpError(
+                HttpCode.UNAUTHORIZED,
+                "Username or password is incorrect"
+            )
+        );
+    }
 
     if (user.type !== UserType.Internal) {
         return next(
@@ -57,7 +93,10 @@ export async function requestTotpSecret(
     }
 
     try {
-        const validPassword = await verifyPassword(password, user.passwordHash!);
+        const validPassword = await verifyPassword(
+            password,
+            user.passwordHash!
+        );
         if (!validPassword) {
             return next(unauthorized());
         }
@@ -73,7 +112,11 @@ export async function requestTotpSecret(
 
         const hex = crypto.getRandomValues(new Uint8Array(20));
         const secret = encodeHex(hex);
-        const uri = createTOTPKeyURI("Pangolin", user.email!, hex);
+        const uri = createTOTPKeyURI(
+            "Pangolin",
+            user.email!,
+            hex
+        );
 
         await db
             .update(users)

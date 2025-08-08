@@ -1,35 +1,45 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@app/lib/cn";
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { Badge } from "@app/components/ui/badge";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useTranslations } from "next-intl";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@app/components/ui/tooltip";
 
-export interface SidebarNavItem {
+export type SidebarNavItem = {
     href: string;
     title: string;
     icon?: React.ReactNode;
-    children?: SidebarNavItem[];
-    autoExpand?: boolean;
     showProfessional?: boolean;
-}
+};
+
+export type SidebarNavSection = {
+    heading: string;
+    items: SidebarNavItem[];
+};
 
 export interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-    items: SidebarNavItem[];
+    sections: SidebarNavSection[];
     disabled?: boolean;
     onItemClick?: () => void;
+    isCollapsed?: boolean;
 }
 
 export function SidebarNav({
     className,
-    items,
+    sections,
     disabled = false,
     onItemClick,
+    isCollapsed = false,
     ...props
 }: SidebarNavProps) {
     const pathname = usePathname();
@@ -38,34 +48,10 @@ export function SidebarNav({
     const niceId = params.niceId as string;
     const resourceId = params.resourceId as string;
     const userId = params.userId as string;
-    const [expandedItems, setExpandedItems] = useState<Set<string>>(() => {
-        const autoExpanded = new Set<string>();
-
-        function findAutoExpandedAndActivePath(
-            items: SidebarNavItem[],
-            parentHrefs: string[] = []
-        ) {
-            items.forEach((item) => {
-                const hydratedHref = hydrateHref(item.href);
-                const currentPath = [...parentHrefs, hydratedHref];
-
-                if (item.autoExpand || pathname.startsWith(hydratedHref)) {
-                    currentPath.forEach((href) => autoExpanded.add(href));
-                }
-
-                if (item.children) {
-                    findAutoExpandedAndActivePath(item.children, currentPath);
-                }
-            });
-        }
-
-        findAutoExpandedAndActivePath(items);
-        return autoExpanded;
-    });
+    const apiKeyId = params.apiKeyId as string;
+    const clientId = params.clientId as string;
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
-
     const { user } = useUserContext();
-
     const t = useTranslations();
 
     function hydrateHref(val: string): string {
@@ -73,119 +59,114 @@ export function SidebarNav({
             .replace("{orgId}", orgId)
             .replace("{niceId}", niceId)
             .replace("{resourceId}", resourceId)
-            .replace("{userId}", userId);
+            .replace("{userId}", userId)
+            .replace("{apiKeyId}", apiKeyId)
+            .replace("{clientId}", clientId);
     }
 
-    function toggleItem(href: string) {
-        setExpandedItems((prev) => {
-            const newSet = new Set(prev);
-            if (newSet.has(href)) {
-                newSet.delete(href);
-            } else {
-                newSet.add(href);
-            }
-            return newSet;
-        });
-    }
+    const renderNavItem = (
+        item: SidebarNavItem,
+        hydratedHref: string,
+        isActive: boolean,
+        isDisabled: boolean
+    ) => {
+        const tooltipText =
+            item.showProfessional && !isUnlocked()
+                ? `${t(item.title)} (${t("licenseBadge")})`
+                : t(item.title);
 
-    function renderItems(items: SidebarNavItem[], level = 0) {
-        return items.map((item) => {
-            const hydratedHref = hydrateHref(item.href);
-            const isActive = pathname.startsWith(hydratedHref);
-            const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedItems.has(hydratedHref);
-            const indent = level * 28; // Base indent for each level
-            const isProfessional = item.showProfessional && !isUnlocked();
-            const isDisabled = disabled || isProfessional;
-
-            return (
-                <div key={hydratedHref}>
-                    <div
-                        className="flex items-center group"
-                        style={{ marginLeft: `${indent}px` }}
+        const itemContent = (
+            <Link
+                href={isDisabled ? "#" : hydratedHref}
+                className={cn(
+                    "flex items-center rounded transition-colors hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
+                    isCollapsed ? "px-2 py-2 justify-center" : "px-3 py-1.5",
+                    isActive
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground hover:text-foreground",
+                    isDisabled && "cursor-not-allowed opacity-60"
+                )}
+                onClick={(e) => {
+                    if (isDisabled) {
+                        e.preventDefault();
+                    } else if (onItemClick) {
+                        onItemClick();
+                    }
+                }}
+                tabIndex={isDisabled ? -1 : undefined}
+                aria-disabled={isDisabled}
+            >
+                {item.icon && (
+                    <span
+                        className={cn("flex-shrink-0", !isCollapsed && "mr-2")}
                     >
-                        <div
-                            className={cn(
-                                "flex items-center w-full transition-colors rounded-md",
-                                isActive && level === 0 && "bg-primary/10"
-                            )}
-                        >
-                            <Link
-                                href={isProfessional ? "#" : hydratedHref}
-                                className={cn(
-                                    "flex items-center w-full px-3 py-2",
-                                    isActive
-                                        ? "text-primary font-medium"
-                                        : "text-muted-foreground group-hover:text-foreground",
-                                    isDisabled && "cursor-not-allowed"
-                                )}
-                                onClick={(e) => {
-                                    if (isDisabled) {
-                                        e.preventDefault();
-                                    } else if (onItemClick) {
-                                        onItemClick();
-                                    }
-                                }}
-                                tabIndex={isDisabled ? -1 : undefined}
-                                aria-disabled={isDisabled}
-                            >
-                                <div
-                                    className={cn(
-                                        "flex items-center",
-                                        isDisabled && "opacity-60"
-                                    )}
-                                >
-                                    {item.icon && (
-                                        <span className="mr-3">
-                                            {item.icon}
-                                        </span>
-                                    )}
-                                    {t(item.title)}
-                                </div>
-                                {isProfessional && (
-                                    <Badge
-                                        variant="outlinePrimary"
-                                        className="ml-2"
-                                    >
-                                        {t('licenseBadge')}
-                                    </Badge>
-                                )}
-                            </Link>
-                            {hasChildren && (
-                                <button
-                                    onClick={() => toggleItem(hydratedHref)}
-                                    className="p-2 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
-                                    disabled={isDisabled}
-                                >
-                                    {isExpanded ? (
-                                        <ChevronDown className="h-5 w-5" />
-                                    ) : (
-                                        <ChevronRight className="h-5 w-5" />
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                    {hasChildren && isExpanded && (
-                        <div className="space-y-1 mt-1">
-                            {renderItems(item.children || [], level + 1)}
-                        </div>
-                    )}
-                </div>
+                        {item.icon}
+                    </span>
+                )}
+                {!isCollapsed && (
+                    <>
+                        <span>{t(item.title)}</span>
+                        {item.showProfessional && !isUnlocked() && (
+                            <Badge variant="outlinePrimary" className="ml-2">
+                                {t("licenseBadge")}
+                            </Badge>
+                        )}
+                    </>
+                )}
+            </Link>
+        );
+
+        if (isCollapsed) {
+            return (
+                <TooltipProvider key={hydratedHref}>
+                    <Tooltip>
+                        <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
+                        <TooltipContent side="right" sideOffset={8}>
+                            <p>{tooltipText}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             );
-        });
-    }
+        }
+
+        return (
+            <React.Fragment key={hydratedHref}>{itemContent}</React.Fragment>
+        );
+    };
 
     return (
         <nav
             className={cn(
-                "flex flex-col space-y-2",
+                "flex flex-col gap-2 text-sm",
                 disabled && "pointer-events-none opacity-60",
                 className
             )}
             {...props}
         >
-            {renderItems(items)}
+            {sections.map((section) => (
+                <div key={section.heading} className="mb-2">
+                    {!isCollapsed && (
+                        <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            {section.heading}
+                        </div>
+                    )}
+                    <div className="flex flex-col gap-1">
+                        {section.items.map((item) => {
+                            const hydratedHref = hydrateHref(item.href);
+                            const isActive = pathname.startsWith(hydratedHref);
+                            const isProfessional =
+                                item.showProfessional && !isUnlocked();
+                            const isDisabled = disabled || isProfessional;
+                            return renderNavItem(
+                                item,
+                                hydratedHref,
+                                isActive,
+                                isDisabled || false
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
         </nav>
     );
 }

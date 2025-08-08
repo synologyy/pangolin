@@ -9,6 +9,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { isValidCIDR } from "@server/lib/validators";
 
 const updateSiteParamsSchema = z
     .object({
@@ -20,6 +21,9 @@ const updateSiteBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
         dockerSocketEnabled: z.boolean().optional(),
+        remoteSubnets: z
+            .string()
+            .optional()
         // subdomain: z
         //     .string()
         //     .min(1)
@@ -84,6 +88,21 @@ export async function updateSite(
 
         const { siteId } = parsedParams.data;
         const updateData = parsedBody.data;
+
+        // if remoteSubnets is provided, ensure it's a valid comma-separated list of cidrs
+        if (updateData.remoteSubnets) {
+            const subnets = updateData.remoteSubnets.split(",").map((s) => s.trim());
+            for (const subnet of subnets) {
+                if (!isValidCIDR(subnet)) {
+                    return next(
+                        createHttpError(
+                            HttpCode.BAD_REQUEST,
+                            `Invalid CIDR format: ${subnet}`
+                        )
+                    );
+                }
+            }
+        }
 
         const updatedSite = await db
             .update(sites)

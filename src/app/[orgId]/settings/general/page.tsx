@@ -1,5 +1,4 @@
 "use client";
-
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { Button } from "@app/components/ui/button";
 import { useOrgContext } from "@app/hooks/useOrgContext";
@@ -22,17 +21,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { formatAxiosError } from "@app/lib/api";
-import { AlertTriangle, Trash2 } from "lucide-react";
-import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle
-} from "@/components/ui/card";
 import { AxiosResponse } from "axios";
 import { DeleteOrgResponse, ListUserOrgsResponse } from "@server/routers/org";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
     SettingsContainer,
     SettingsSection,
@@ -44,23 +35,26 @@ import {
     SettingsSectionFooter
 } from "@app/components/Settings";
 import { useUserContext } from "@app/hooks/useUserContext";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
+import { build } from "@server/build";
 
+// Updated schema to include subnet field
 const GeneralFormSchema = z.object({
-    name: z.string()
+    name: z.string(),
+    subnet: z.string().optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
     const { orgUser } = userOrgUserContext();
     const router = useRouter();
     const { org } = useOrgContext();
     const api = createApiClient(useEnvContext());
     const { user } = useUserContext();
     const t = useTranslations();
+    const { env } = useEnvContext();
 
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
@@ -68,7 +62,8 @@ export default function GeneralPage() {
     const form = useForm<GeneralFormValues>({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
-            name: org?.org.name
+            name: org?.org.name,
+            subnet: org?.org.subnet || "" // Add default value for subnet
         },
         mode: "onChange"
     });
@@ -79,12 +74,10 @@ export default function GeneralPage() {
             const res = await api.delete<AxiosResponse<DeleteOrgResponse>>(
                 `/org/${org?.org.orgId}`
             );
-
             toast({
-                title: t('orgDeleted'),
-                description: t('orgDeletedMessage')
+                title: t("orgDeleted"),
+                description: t("orgDeletedMessage")
             });
-
             if (res.status === 200) {
                 pickNewOrgAndNavigate();
             }
@@ -92,8 +85,8 @@ export default function GeneralPage() {
             console.error(err);
             toast({
                 variant: "destructive",
-                title: t('orgErrorDelete'),
-                description: formatAxiosError(err, t('orgErrorDeleteMessage'))
+                title: t("orgErrorDelete"),
+                description: formatAxiosError(err, t("orgErrorDeleteMessage"))
             });
         } finally {
             setLoadingDelete(false);
@@ -120,8 +113,8 @@ export default function GeneralPage() {
             console.error(err);
             toast({
                 variant: "destructive",
-                title: t('orgErrorFetch'),
-                description: formatAxiosError(err, t('orgErrorFetchMessage'))
+                title: t("orgErrorFetch"),
+                description: formatAxiosError(err, t("orgErrorFetchMessage"))
             });
         }
     }
@@ -130,21 +123,21 @@ export default function GeneralPage() {
         setLoadingSave(true);
         await api
             .post(`/org/${org?.org.orgId}`, {
-                name: data.name
+                name: data.name,
+                // subnet: data.subnet // Include subnet in the API request
             })
             .then(() => {
                 toast({
-                    title: t('orgUpdated'),
-                    description: t('orgUpdatedDescription')
+                    title: t("orgUpdated"),
+                    description: t("orgUpdatedDescription")
                 });
-
                 router.refresh();
             })
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('orgErrorUpdate'),
-                    description: formatAxiosError(e, t('orgErrorUpdateMessage'))
+                    title: t("orgErrorUpdate"),
+                    description: formatAxiosError(e, t("orgErrorUpdateMessage"))
                 });
             })
             .finally(() => {
@@ -162,32 +155,28 @@ export default function GeneralPage() {
                 dialog={
                     <div>
                         <p className="mb-2">
-                            {t('orgQuestionRemove', {selectedOrg: org?.org.name})}
+                            {t("orgQuestionRemove", {
+                                selectedOrg: org?.org.name
+                            })}
                         </p>
-                        <p className="mb-2">
-                            {t('orgMessageRemove')}
-                        </p>
-                        <p>
-                            {t('orgMessageConfirm')}
-                        </p>
+                        <p className="mb-2">{t("orgMessageRemove")}</p>
+                        <p>{t("orgMessageConfirm")}</p>
                     </div>
                 }
-                buttonText={t('orgDeleteConfirm')}
+                buttonText={t("orgDeleteConfirm")}
                 onConfirm={deleteOrg}
                 string={org?.org.name || ""}
-                title={t('orgDelete')}
+                title={t("orgDelete")}
             />
-
             <SettingsSection>
                 <SettingsSectionHeader>
                     <SettingsSectionTitle>
-                        {t('orgGeneralSettings')}
+                        {t("orgGeneralSettings")}
                     </SettingsSectionTitle>
                     <SettingsSectionDescription>
-                        {t('orgGeneralSettingsDescription')}
+                        {t("orgGeneralSettingsDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
-
                 <SettingsSectionBody>
                     <SettingsSectionForm>
                         <Form {...form}>
@@ -201,22 +190,44 @@ export default function GeneralPage() {
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('name')}</FormLabel>
+                                            <FormLabel>{t("name")}</FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
                                             <FormMessage />
                                             <FormDescription>
-                                                {t('orgDisplayName')}
+                                                {t("orgDisplayName")}
                                             </FormDescription>
                                         </FormItem>
                                     )}
                                 />
+                                {env.flags.enableClients && (
+                                    <FormField
+                                        control={form.control}
+                                        name="subnet"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Subnet</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        disabled={true}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    The subnet for this
+                                                    organization's network
+                                                    configuration.
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </form>
                         </Form>
                     </SettingsSectionForm>
                 </SettingsSectionBody>
-
                 <SettingsSectionFooter>
                     <Button
                         type="submit"
@@ -224,31 +235,33 @@ export default function GeneralPage() {
                         loading={loadingSave}
                         disabled={loadingSave}
                     >
-                        {t('saveGeneralSettings')}
+                        {t("saveGeneralSettings")}
                     </Button>
                 </SettingsSectionFooter>
             </SettingsSection>
-
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>{t('orgDangerZone')}</SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t('orgDangerZoneDescription')}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
-
-                <SettingsSectionFooter>
-                    <Button
-                        variant="destructive"
-                        onClick={() => setIsDeleteModalOpen(true)}
-                        className="flex items-center gap-2"
-                        loading={loadingDelete}
-                        disabled={loadingDelete}
-                    >
-                        {t('orgDelete')}
-                    </Button>
-                </SettingsSectionFooter>
-            </SettingsSection>
+            {build === "oss" && (
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("orgDangerZone")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("orgDangerZoneDescription")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <SettingsSectionFooter>
+                        <Button
+                            variant="destructive"
+                            onClick={() => setIsDeleteModalOpen(true)}
+                            className="flex items-center gap-2"
+                            loading={loadingDelete}
+                            disabled={loadingDelete}
+                        >
+                            {t("orgDelete")}
+                        </Button>
+                    </SettingsSectionFooter>
+                </SettingsSection>
+            )}
         </SettingsContainer>
     );
 }

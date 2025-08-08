@@ -6,12 +6,27 @@ export const domains = sqliteTable("domains", {
     baseDomain: text("baseDomain").notNull(),
     configManaged: integer("configManaged", { mode: "boolean" })
         .notNull()
-        .default(false)
+        .default(false),
+    type: text("type"), // "ns", "cname", "wildcard"
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    failed: integer("failed", { mode: "boolean" }).notNull().default(false),
+    tries: integer("tries").notNull().default(0)
 });
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
-    name: text("name").notNull()
+    name: text("name").notNull(),
+    subnet: text("subnet"),
+    createdAt: text("createdAt")
+});
+
+export const userDomains = sqliteTable("userDomains", {
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    domainId: text("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" })
 });
 
 export const orgDomains = sqliteTable("orgDomains", {
@@ -36,15 +51,23 @@ export const sites = sqliteTable("sites", {
     }),
     name: text("name").notNull(),
     pubKey: text("pubKey"),
-    subnet: text("subnet").notNull(),
-    megabytesIn: integer("bytesIn"),
-    megabytesOut: integer("bytesOut"),
+    subnet: text("subnet"),
+    megabytesIn: integer("bytesIn").default(0),
+    megabytesOut: integer("bytesOut").default(0),
     lastBandwidthUpdate: text("lastBandwidthUpdate"),
     type: text("type").notNull(), // "newt" or "wireguard"
     online: integer("online", { mode: "boolean" }).notNull().default(false),
+
+    // exit node stuff that is how to connect to the site when it has a wg server
+    address: text("address"), // this is the address of the wireguard interface in newt
+    endpoint: text("endpoint"), // this is how to reach gerbil externally - gets put into the wireguard config
+    publicKey: text("publicKey"), // TODO: Fix typo in publicKey
+    lastHolePunch: integer("lastHolePunch"),
+    listenPort: integer("listenPort"),
     dockerSocketEnabled: integer("dockerSocketEnabled", { mode: "boolean" })
         .notNull()
-        .default(true)
+        .default(true),
+    remoteSubnets: text("remoteSubnets"), // comma-separated list of subnets that this site can access
 });
 
 export const resources = sqliteTable("resources", {
@@ -76,7 +99,6 @@ export const resources = sqliteTable("resources", {
     emailWhitelistEnabled: integer("emailWhitelistEnabled", { mode: "boolean" })
         .notNull()
         .default(false),
-    isBaseDomain: integer("isBaseDomain", { mode: "boolean" }),
     applyRules: integer("applyRules", { mode: "boolean" })
         .notNull()
         .default(false),
@@ -85,7 +107,8 @@ export const resources = sqliteTable("resources", {
         .notNull()
         .default(false),
     tlsServerName: text("tlsServerName"),
-    setHostHeader: text("setHostHeader")
+    setHostHeader: text("setHostHeader"),
+    enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
 });
 
 export const targets = sqliteTable("targets", {
@@ -109,7 +132,8 @@ export const exitNodes = sqliteTable("exitNodes", {
     endpoint: text("endpoint").notNull(), // this is how to reach gerbil externally - gets put into the wireguard config
     publicKey: text("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
-    reachableAt: text("reachableAt") // this is the internal address of the gerbil http server for command control
+    reachableAt: text("reachableAt"), // this is the internal address of the gerbil http server for command control
+    maxConnections: integer("maxConnections")
 });
 
 export const users = sqliteTable("user", {
@@ -125,21 +149,92 @@ export const users = sqliteTable("user", {
     twoFactorEnabled: integer("twoFactorEnabled", { mode: "boolean" })
         .notNull()
         .default(false),
+    twoFactorSetupRequested: integer("twoFactorSetupRequested", {
+        mode: "boolean"
+    }).default(false),
     twoFactorSecret: text("twoFactorSecret"),
     emailVerified: integer("emailVerified", { mode: "boolean" })
         .notNull()
         .default(false),
     dateCreated: text("dateCreated").notNull(),
+    termsAcceptedTimestamp: text("termsAcceptedTimestamp"),
+    termsVersion: text("termsVersion"),
     serverAdmin: integer("serverAdmin", { mode: "boolean" })
         .notNull()
         .default(false)
+});
+
+export const securityKeys = sqliteTable("webauthnCredentials", {
+    credentialId: text("credentialId").primaryKey(),
+    userId: text("userId").notNull().references(() => users.userId, {
+        onDelete: "cascade"
+    }),
+    publicKey: text("publicKey").notNull(),
+    signCount: integer("signCount").notNull(),
+    transports: text("transports"),
+    name: text("name"),
+    lastUsed: text("lastUsed").notNull(),
+    dateCreated: text("dateCreated").notNull()
+});
+
+export const webauthnChallenge = sqliteTable("webauthnChallenge", {
+    sessionId: text("sessionId").primaryKey(),
+    challenge: text("challenge").notNull(),
+    securityKeyName: text("securityKeyName"),
+    userId: text("userId").references(() => users.userId, {
+        onDelete: "cascade"
+    }),
+    expiresAt: integer("expiresAt").notNull() // Unix timestamp
 });
 
 export const newts = sqliteTable("newt", {
     newtId: text("id").primaryKey(),
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
+    version: text("version"),
     siteId: integer("siteId").references(() => sites.siteId, {
+        onDelete: "cascade"
+    })
+});
+
+export const clients = sqliteTable("clients", {
+    clientId: integer("id").primaryKey({ autoIncrement: true }),
+    orgId: text("orgId")
+        .references(() => orgs.orgId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
+    exitNodeId: integer("exitNode").references(() => exitNodes.exitNodeId, {
+        onDelete: "set null"
+    }),
+    name: text("name").notNull(),
+    pubKey: text("pubKey"),
+    subnet: text("subnet").notNull(),
+    megabytesIn: integer("bytesIn"),
+    megabytesOut: integer("bytesOut"),
+    lastBandwidthUpdate: text("lastBandwidthUpdate"),
+    lastPing: text("lastPing"),
+    type: text("type").notNull(), // "olm"
+    online: integer("online", { mode: "boolean" }).notNull().default(false),
+    endpoint: text("endpoint"),
+    lastHolePunch: integer("lastHolePunch")
+});
+
+export const clientSites = sqliteTable("clientSites", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteId: integer("siteId")
+        .notNull()
+        .references(() => sites.siteId, { onDelete: "cascade" }),
+    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false)
+});
+
+export const olms = sqliteTable("olms", {
+    olmId: text("id").primaryKey(),
+    secretHash: text("secretHash").notNull(),
+    dateCreated: text("dateCreated").notNull(),
+    clientId: integer("clientId").references(() => clients.clientId, {
         onDelete: "cascade"
     })
 });
@@ -165,6 +260,14 @@ export const newtSessions = sqliteTable("newtSession", {
     newtId: text("newtId")
         .notNull()
         .references(() => newts.newtId, { onDelete: "cascade" }),
+    expiresAt: integer("expiresAt").notNull()
+});
+
+export const olmSessions = sqliteTable("clientSession", {
+    sessionId: text("id").primaryKey(),
+    olmId: text("olmId")
+        .notNull()
+        .references(() => olms.olmId, { onDelete: "cascade" }),
     expiresAt: integer("expiresAt").notNull()
 });
 
@@ -261,6 +364,24 @@ export const userSites = sqliteTable("userSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" })
+});
+
+export const userClients = sqliteTable("userClients", {
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" })
+});
+
+export const roleClients = sqliteTable("roleClients", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" })
 });
 
 export const roleResources = sqliteTable("roleResources", {
@@ -521,6 +642,8 @@ export type Target = InferSelectModel<typeof targets>;
 export type Session = InferSelectModel<typeof sessions>;
 export type Newt = InferSelectModel<typeof newts>;
 export type NewtSession = InferSelectModel<typeof newtSessions>;
+export type Olm = InferSelectModel<typeof olms>;
+export type OlmSession = InferSelectModel<typeof olmSessions>;
 export type EmailVerificationCode = InferSelectModel<
     typeof emailVerificationCodes
 >;
@@ -546,8 +669,13 @@ export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;
 export type VersionMigration = InferSelectModel<typeof versionMigrations>;
 export type ResourceRule = InferSelectModel<typeof resourceRules>;
 export type Domain = InferSelectModel<typeof domains>;
+export type Client = InferSelectModel<typeof clients>;
+export type ClientSite = InferSelectModel<typeof clientSites>;
+export type RoleClient = InferSelectModel<typeof roleClients>;
+export type UserClient = InferSelectModel<typeof userClients>;
 export type SupporterKey = InferSelectModel<typeof supporterKey>;
 export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
+export type OrgDomains = InferSelectModel<typeof orgDomains>;

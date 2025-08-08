@@ -18,10 +18,10 @@ function createEmailClient() {
         host: emailConfig.smtp_host,
         port: emailConfig.smtp_port,
         secure: emailConfig.smtp_secure || false,
-        auth: {
+        auth: (emailConfig.smtp_user && emailConfig.smtp_pass) ? {
             user: emailConfig.smtp_user,
             pass: emailConfig.smtp_pass
-        }
+        } : null
     } as SMTPTransport.Options;
 
     if (emailConfig.smtp_tls_reject_unauthorized !== undefined) {

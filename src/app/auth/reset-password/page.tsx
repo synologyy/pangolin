@@ -13,6 +13,7 @@ export default async function Page(props: {
         redirect: string | undefined;
         email: string | undefined;
         token: string | undefined;
+        quickstart?: string | undefined;
     }>;
 }) {
     const searchParams = await props.searchParams;
@@ -35,6 +36,9 @@ export default async function Page(props: {
                 redirect={searchParams.redirect}
                 tokenParam={searchParams.token}
                 emailParam={searchParams.email}
+                quickstart={
+                    searchParams.quickstart === "true" ? true : undefined
+                }
             />
 
             <p className="text-center text-muted-foreground mt-4">
@@ -46,7 +50,7 @@ export default async function Page(props: {
                     }
                     className="underline"
                 >
-                    {t('loginBack')}
+                    {t("loginBack")}
                 </Link>
             </p>
         </>

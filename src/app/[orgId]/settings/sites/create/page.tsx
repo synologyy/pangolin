@@ -21,7 +21,7 @@ import {
 } from "@app/components/ui/form";
 import HeaderTitle from "@app/components/SettingsSectionTitle";
 import { z } from "zod";
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@app/components/ui/input";
@@ -42,6 +42,7 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
+import { SiNixos } from "react-icons/si";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { generateKeypair } from "../[niceId]/wireguardConfig";
@@ -55,15 +56,8 @@ import {
 import { toast } from "@app/hooks/useToast";
 import { AxiosResponse } from "axios";
 import { useParams, useRouter } from "next/navigation";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator
-} from "@app/components/ui/breadcrumb";
-import Link from "next/link";
 import { QRCodeCanvas } from "qrcode.react";
+
 import { useTranslations } from "next-intl";
 
 type SiteType = "newt" | "wireguard" | "local";
@@ -81,6 +75,7 @@ type Commands = {
     windows: Record<string, string[]>;
     docker: Record<string, string[]>;
     podman: Record<string, string[]>;
+    nixos: Record<string, string[]>;
 };
 
 const platforms = [
@@ -89,7 +84,8 @@ const platforms = [
     "podman",
     "mac",
     "windows",
-    "freebsd"
+    "freebsd",
+    "nixos"
 ] as const;
 
 type Platform = (typeof platforms)[number];
@@ -105,22 +101,24 @@ export default function Page() {
         .object({
             name: z
                 .string()
-                .min(2, { message: t('nameMin', {len: 2}) })
+                .min(2, { message: t("nameMin", { len: 2 }) })
                 .max(30, {
-                    message: t('nameMax', {len: 30})
+                    message: t("nameMax", { len: 30 })
                 }),
             method: z.enum(["newt", "wireguard", "local"]),
-            copied: z.boolean()
+            copied: z.boolean(),
+            clientAddress: z.string().optional()
         })
         .refine(
             (data) => {
                 if (data.method !== "local") {
-                    return data.copied;
+                    // return data.copied;
+                    return true;
                 }
                 return true;
             },
             {
-                message: t('sitesConfirmCopy'),
+                message: t("sitesConfirmCopy"),
                 path: ["copied"]
             }
         );
@@ -132,21 +130,29 @@ export default function Page() {
     >([
         {
             id: "newt",
-            title: t('siteNewtTunnel'),
-            description: t('siteNewtTunnelDescription'),
+            title: t("siteNewtTunnel"),
+            description: t("siteNewtTunnelDescription"),
             disabled: true
         },
-        {
-            id: "wireguard",
-            title: t('siteWg'),
-            description: t('siteWgDescription'),
-            disabled: true
-        },
-        {
-            id: "local",
-            title: t('local'),
-            description: t('siteLocalDescription')
-        }
+        ...(env.flags.disableBasicWireguardSites
+            ? []
+            : [
+                  {
+                      id: "wireguard" as SiteType,
+                      title: t("siteWg"),
+                      description: t("siteWgDescription"),
+                      disabled: true
+                  }
+              ]),
+        ...(env.flags.disableLocalSites
+            ? []
+            : [
+                  {
+                      id: "local" as SiteType,
+                      title: t("local"),
+                      description: t("siteLocalDescription")
+                  }
+              ])
     ]);
 
     const [loadingPage, setLoadingPage] = useState(true);
@@ -158,7 +164,7 @@ export default function Page() {
     const [newtId, setNewtId] = useState("");
     const [newtSecret, setNewtSecret] = useState("");
     const [newtEndpoint, setNewtEndpoint] = useState("");
-
+    const [clientAddress, setClientAddress] = useState("");
     const [publicKey, setPublicKey] = useState("");
     const [privateKey, setPrivateKey] = useState("");
     const [wgConfig, setWgConfig] = useState("");
@@ -282,6 +288,14 @@ WantedBy=default.target`
                 "Podman Run": [
                     `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
+            },
+            nixos: {
+                x86_64: [
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                ],
+                aarch64: [
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                ]
             }
         };
         setCommands(commands);
@@ -301,6 +315,8 @@ WantedBy=default.target`
                 return ["Podman Quadlet", "Podman Run"];
             case "freebsd":
                 return ["amd64", "arm64"];
+            case "nixos":
+                return ["x86_64", "aarch64"];
             default:
                 return ["x64"];
         }
@@ -318,13 +334,15 @@ WantedBy=default.target`
                 return "Podman";
             case "freebsd":
                 return "FreeBSD";
+            case "nixos":
+                return "NixOS";
             default:
                 return "Linux";
         }
     };
 
     const getCommand = () => {
-        const placeholder = [t('unknownCommand')];
+        const placeholder = [t("unknownCommand")];
         if (!commands) {
             return placeholder;
         }
@@ -362,6 +380,8 @@ WantedBy=default.target`
                 return <FaCubes className="h-4 w-4 mr-2" />;
             case "freebsd":
                 return <FaFreebsd className="h-4 w-4 mr-2" />;
+            case "nixos":
+                return <SiNixos  className="h-4 w-4 mr-2" />;
             default:
                 return <Terminal className="h-4 w-4 mr-2" />;
         }
@@ -369,20 +389,28 @@ WantedBy=default.target`
 
     const form = useForm<CreateSiteFormValues>({
         resolver: zodResolver(createSiteFormSchema),
-        defaultValues: { name: "", copied: false, method: "newt" }
+        defaultValues: {
+            name: "",
+            copied: false,
+            method: "newt",
+            clientAddress: ""
+        }
     });
 
     async function onSubmit(data: CreateSiteFormValues) {
         setCreateLoading(true);
 
-        let payload: CreateSiteBody = { name: data.name, type: data.method };
+        let payload: CreateSiteBody = {
+            name: data.name,
+            type: data.method as "newt" | "wireguard" | "local"
+        };
 
         if (data.method == "wireguard") {
             if (!siteDefaults || !wgConfig) {
                 toast({
                     variant: "destructive",
-                    title: t('siteErrorCreate'),
-                    description: t('siteErrorCreateKeyPair')
+                    title: t("siteErrorCreate"),
+                    description: t("siteErrorCreateKeyPair")
                 });
                 setCreateLoading(false);
                 return;
@@ -399,8 +427,8 @@ WantedBy=default.target`
             if (!siteDefaults) {
                 toast({
                     variant: "destructive",
-                    title: t('siteErrorCreate'),
-                    description: t('siteErrorCreateDefaults')
+                    title: t("siteErrorCreate"),
+                    description: t("siteErrorCreateDefaults")
                 });
                 setCreateLoading(false);
                 return;
@@ -411,7 +439,8 @@ WantedBy=default.target`
                 subnet: siteDefaults.subnet,
                 exitNodeId: siteDefaults.exitNodeId,
                 secret: siteDefaults.newtSecret,
-                newtId: siteDefaults.newtId
+                newtId: siteDefaults.newtId,
+                address: clientAddress
             };
         }
 
@@ -422,7 +451,7 @@ WantedBy=default.target`
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('siteErrorCreate'),
+                    title: t("siteErrorCreate"),
                     description: formatAxiosError(e)
                 });
             });
@@ -448,14 +477,23 @@ WantedBy=default.target`
                 );
                 if (!response.ok) {
                     throw new Error(
-                        t('newtErrorFetchReleases', {err: response.statusText})
+                        t("newtErrorFetchReleases", {
+                            err: response.statusText
+                        })
                     );
                 }
                 const data = await response.json();
                 const latestVersion = data.tag_name;
                 newtVersion = latestVersion;
             } catch (error) {
-                console.error(t('newtErrorFetchLatest', {err: error instanceof Error ? error.message : String(error)}));
+                console.error(
+                    t("newtErrorFetchLatest", {
+                        err:
+                            error instanceof Error
+                                ? error.message
+                                : String(error)
+                    })
+                );
             }
 
             const generatedKeypair = generateKeypair();
@@ -481,10 +519,12 @@ WantedBy=default.target`
                         const newtId = data.newtId;
                         const newtSecret = data.newtSecret;
                         const newtEndpoint = data.endpoint;
+                        const clientAddress = data.clientAddress;
 
                         setNewtId(newtId);
                         setNewtSecret(newtSecret);
                         setNewtEndpoint(newtEndpoint);
+                        setClientAddress(clientAddress);
 
                         hydrateCommands(
                             newtId,
@@ -520,8 +560,8 @@ WantedBy=default.target`
         <>
             <div className="flex justify-between">
                 <HeaderTitle
-                    title={t('siteCreate')}
-                    description={t('siteCreateDescription2')}
+                    title={t("siteCreate")}
+                    description={t("siteCreateDescription2")}
                 />
                 <Button
                     variant="outline"
@@ -529,7 +569,7 @@ WantedBy=default.target`
                         router.push(`/${orgId}/settings/sites`);
                     }}
                 >
-                    {t('siteSeeAll')}
+                    {t("siteSeeAll")}
                 </Button>
             </div>
 
@@ -539,7 +579,7 @@ WantedBy=default.target`
                         <SettingsSection>
                             <SettingsSectionHeader>
                                 <SettingsSectionTitle>
-                                    {t('siteInfo')}
+                                    {t("siteInfo")}
                                 </SettingsSectionTitle>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
@@ -555,7 +595,7 @@ WantedBy=default.target`
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
-                                                            {t('name')}
+                                                            {t("name")}
                                                         </FormLabel>
                                                         <FormControl>
                                                             <Input
@@ -564,55 +604,102 @@ WantedBy=default.target`
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
-                                                        <FormDescription>
-                                                            {t('siteNameDescription')}
-                                                        </FormDescription>
                                                     </FormItem>
                                                 )}
                                             />
+                                            {env.flags.enableClients &&
+                                                form.watch("method") ===
+                                                    "newt" && (
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="clientAddress"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    Site Address
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        autoComplete="off"
+                                                                        value={
+                                                                            clientAddress
+                                                                        }
+                                                                        onChange={(
+                                                                            e
+                                                                        ) => {
+                                                                            setClientAddress(
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            );
+                                                                            field.onChange(
+                                                                                e
+                                                                                    .target
+                                                                                    .value
+                                                                            );
+                                                                        }}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                                <FormDescription>
+                                                                    Specify the
+                                                                    IP address
+                                                                    of the host
+                                                                    for clients
+                                                                    to connect
+                                                                    to.
+                                                                </FormDescription>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                )}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>
                             </SettingsSectionBody>
                         </SettingsSection>
 
-                        <SettingsSection>
-                            <SettingsSectionHeader>
-                                <SettingsSectionTitle>
-                                    {t('tunnelType')}
-                                </SettingsSectionTitle>
-                                <SettingsSectionDescription>
-                                    {t('siteTunnelDescription')}
-                                </SettingsSectionDescription>
-                            </SettingsSectionHeader>
-                            <SettingsSectionBody>
-                                <StrategySelect
-                                    options={tunnelTypes}
-                                    defaultValue={form.getValues("method")}
-                                    onChange={(value) => {
-                                        form.setValue("method", value);
-                                    }}
-                                    cols={3}
-                                />
-                            </SettingsSectionBody>
-                        </SettingsSection>
+                        {tunnelTypes.length > 1 && (
+                            <SettingsSection>
+                                <SettingsSectionHeader>
+                                    <SettingsSectionTitle>
+                                        {t("tunnelType")}
+                                    </SettingsSectionTitle>
+                                    <SettingsSectionDescription>
+                                        {t("siteTunnelDescription")}
+                                    </SettingsSectionDescription>
+                                </SettingsSectionHeader>
+                                <SettingsSectionBody>
+                                    <StrategySelect
+                                        options={tunnelTypes}
+                                        defaultValue={form.getValues("method")}
+                                        onChange={(value) => {
+                                            form.setValue("method", value);
+                                        }}
+                                        cols={3}
+                                    />
+                                </SettingsSectionBody>
+                            </SettingsSection>
+                        )}
 
                         {form.watch("method") === "newt" && (
                             <>
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('siteNewtCredentials')}
+                                            {t("siteNewtCredentials")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('siteNewtCredentialsDescription')}
+                                            {t(
+                                                "siteNewtCredentialsDescription"
+                                            )}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
                                         <InfoSections cols={3}>
                                             <InfoSection>
                                                 <InfoSectionTitle>
-                                                    {t('newtEndpoint')}
+                                                    {t("newtEndpoint")}
                                                 </InfoSectionTitle>
                                                 <InfoSectionContent>
                                                     <CopyToClipboard
@@ -624,7 +711,7 @@ WantedBy=default.target`
                                             </InfoSection>
                                             <InfoSection>
                                                 <InfoSectionTitle>
-                                                    {t('newtId')}
+                                                    {t("newtId")}
                                                 </InfoSectionTitle>
                                                 <InfoSectionContent>
                                                     <CopyToClipboard
@@ -634,7 +721,7 @@ WantedBy=default.target`
                                             </InfoSection>
                                             <InfoSection>
                                                 <InfoSectionTitle>
-                                                    {t('newtSecretKey')}
+                                                    {t("newtSecretKey")}
                                                 </InfoSectionTitle>
                                                 <InfoSectionContent>
                                                     <CopyToClipboard
@@ -647,69 +734,70 @@ WantedBy=default.target`
                                         <Alert variant="neutral" className="">
                                             <InfoIcon className="h-4 w-4" />
                                             <AlertTitle className="font-semibold">
-                                                {t('siteCredentialsSave')}
+                                                {t("siteCredentialsSave")}
                                             </AlertTitle>
                                             <AlertDescription>
-                                                {t('siteCredentialsSaveDescription')}
+                                                {t(
+                                                    "siteCredentialsSaveDescription"
+                                                )}
                                             </AlertDescription>
                                         </Alert>
 
-                                        <Form {...form}>
-                                            <form
-                                                className="space-y-4"
-                                                id="create-site-form"
-                                            >
-                                                <FormField
-                                                    control={form.control}
-                                                    name="copied"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <div className="flex items-center space-x-2">
-                                                                <Checkbox
-                                                                    id="terms"
-                                                                    defaultChecked={
-                                                                        form.getValues(
-                                                                            "copied"
-                                                                        ) as boolean
-                                                                    }
-                                                                    onCheckedChange={(
-                                                                        e
-                                                                    ) => {
-                                                                        form.setValue(
-                                                                            "copied",
-                                                                            e as boolean
-                                                                        );
-                                                                    }}
-                                                                />
-                                                                <label
-                                                                    htmlFor="terms"
-                                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                                >
-                                                                    {t('siteConfirmCopy')}
-                                                                </label>
-                                                            </div>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </form>
-                                        </Form>
+                                        {/* <Form {...form}> */}
+                                        {/*     <form */}
+                                        {/*         className="space-y-4" */}
+                                        {/*         id="create-site-form" */}
+                                        {/*     > */}
+                                        {/*         <FormField */}
+                                        {/*             control={form.control} */}
+                                        {/*             name="copied" */}
+                                        {/*             render={({ field }) => ( */}
+                                        {/*                 <FormItem> */}
+                                        {/*                     <div className="flex items-center space-x-2"> */}
+                                        {/*                         <Checkbox */}
+                                        {/*                             id="terms" */}
+                                        {/*                             defaultChecked={ */}
+                                        {/*                                 form.getValues( */}
+                                        {/*                                     "copied" */}
+                                        {/*                                 ) as boolean */}
+                                        {/*                             } */}
+                                        {/*                             onCheckedChange={( */}
+                                        {/*                                 e */}
+                                        {/*                             ) => { */}
+                                        {/*                                 form.setValue( */}
+                                        {/*                                     "copied", */}
+                                        {/*                                     e as boolean */}
+                                        {/*                                 ); */}
+                                        {/*                             }} */}
+                                        {/*                         /> */}
+                                        {/*                         <label */}
+                                        {/*                             htmlFor="terms" */}
+                                        {/*                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" */}
+                                        {/*                         > */}
+                                        {/*                             {t('siteConfirmCopy')} */}
+                                        {/*                         </label> */}
+                                        {/*                     </div> */}
+                                        {/*                     <FormMessage /> */}
+                                        {/*                 </FormItem> */}
+                                        {/*             )} */}
+                                        {/*         /> */}
+                                        {/*     </form> */}
+                                        {/* </Form> */}
                                     </SettingsSectionBody>
                                 </SettingsSection>
-
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('siteInstallNewt')}
+                                            {t("siteInstallNewt")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('siteInstallNewtDescription')}
+                                            {t("siteInstallNewtDescription")}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
                                         <div>
                                             <p className="font-bold mb-3">
-                                                {t('operatingSystem')}
+                                                {t("operatingSystem")}
                                             </p>
                                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                                 {platforms.map((os) => (
@@ -720,7 +808,7 @@ WantedBy=default.target`
                                                                 ? "squareOutlinePrimary"
                                                                 : "squareOutline"
                                                         }
-                                                        className={`flex-1 min-w-[120px] ${platform === os ? "bg-primary/10" : ""}`}
+                                                        className={`flex-1 min-w-[120px] ${platform === os ? "bg-primary/10" : ""} shadow-none`}
                                                         onClick={() => {
                                                             setPlatform(os);
                                                         }}
@@ -737,8 +825,8 @@ WantedBy=default.target`
                                                 {["docker", "podman"].includes(
                                                     platform
                                                 )
-                                                    ? t('method')
-                                                    : t('architecture')}
+                                                    ? t("method")
+                                                    : t("architecture")}
                                             </p>
                                             <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                                                 {getArchitectures().map(
@@ -751,7 +839,7 @@ WantedBy=default.target`
                                                                     ? "squareOutlinePrimary"
                                                                     : "squareOutline"
                                                             }
-                                                            className={`flex-1 min-w-[120px] ${architecture === arch ? "bg-primary/10" : ""}`}
+                                                            className={`flex-1 min-w-[120px] ${architecture === arch ? "bg-primary/10" : ""} shadow-none`}
                                                             onClick={() =>
                                                                 setArchitecture(
                                                                     arch
@@ -765,7 +853,7 @@ WantedBy=default.target`
                                             </div>
                                             <div className="pt-4">
                                                 <p className="font-bold mb-3">
-                                                    {t('commands')}
+                                                    {t("commands")}
                                                 </p>
                                                 <div className="mt-2">
                                                     <CopyTextBox
@@ -786,10 +874,10 @@ WantedBy=default.target`
                             <SettingsSection>
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
-                                        {t('WgConfiguration')}
+                                        {t("WgConfiguration")}
                                     </SettingsSectionTitle>
                                     <SettingsSectionDescription>
-                                        {t('WgConfigurationDescription')}
+                                        {t("WgConfigurationDescription")}
                                     </SettingsSectionDescription>
                                 </SettingsSectionHeader>
                                 <SettingsSectionBody>
@@ -810,53 +898,14 @@ WantedBy=default.target`
                                     <Alert variant="neutral">
                                         <InfoIcon className="h-4 w-4" />
                                         <AlertTitle className="font-semibold">
-                                            {t('siteCredentialsSave')}
+                                            {t("siteCredentialsSave")}
                                         </AlertTitle>
                                         <AlertDescription>
-                                            {t('siteCredentialsSaveDescription')}
+                                            {t(
+                                                "siteCredentialsSaveDescription"
+                                            )}
                                         </AlertDescription>
                                     </Alert>
-
-                                    <Form {...form}>
-                                        <form
-                                            className="space-y-4"
-                                            id="create-site-form"
-                                        >
-                                            <FormField
-                                                control={form.control}
-                                                name="copied"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <div className="flex items-center space-x-2">
-                                                            <Checkbox
-                                                                id="terms"
-                                                                defaultChecked={
-                                                                    form.getValues(
-                                                                        "copied"
-                                                                    ) as boolean
-                                                                }
-                                                                onCheckedChange={(
-                                                                    e
-                                                                ) => {
-                                                                    form.setValue(
-                                                                        "copied",
-                                                                        e as boolean
-                                                                    );
-                                                                }}
-                                                            />
-                                                            <label
-                                                                htmlFor="terms"
-                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                            >
-                                                                {t('siteConfirmCopy')}
-                                                            </label>
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </form>
-                                    </Form>
                                 </SettingsSectionBody>
                             </SettingsSection>
                         )}
@@ -870,15 +919,17 @@ WantedBy=default.target`
                                 router.push(`/${orgId}/settings/sites`);
                             }}
                         >
-                            {t('cancel')}
+                            {t("cancel")}
                         </Button>
                         <Button
                             type="button"
+                            loading={createLoading}
+                            disabled={createLoading}
                             onClick={() => {
                                 form.handleSubmit(onSubmit)();
                             }}
                         >
-                            {t('siteCreate')}
+                            {t("siteCreate")}
                         </Button>
                     </div>
                 </div>

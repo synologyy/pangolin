@@ -4,7 +4,7 @@ import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import HttpCode from "@server/types/HttpCode";
 import { response } from "@server/lib";
-import { db } from "@server/db";
+import { db, userOrgs } from "@server/db";
 import { User, emailVerificationCodes, users } from "@server/db";
 import { eq } from "drizzle-orm";
 import { isWithinExpirationDate } from "oslo";

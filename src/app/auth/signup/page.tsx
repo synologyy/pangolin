@@ -6,7 +6,7 @@ import { Mail } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export default async function Page(props: {
 }) {
     const searchParams = await props.searchParams;
     const getUser = cache(verifySession);
-    const user = await getUser();
+    const user = await getUser({ skipCheckVerifyEmail: true });
     const t = await getTranslations();
 
     const env = pullEnv();
@@ -56,10 +56,10 @@ export default async function Page(props: {
                     <div className="flex flex-col items-center">
                         <Mail className="w-12 h-12 mb-4 text-primary" />
                         <h2 className="text-2xl font-bold mb-2 text-center">
-                            {t('inviteAlready')}
+                            {t("inviteAlready")}
                         </h2>
                         <p className="text-center">
-                            {t('inviteAlreadyDescription')}
+                            {t("inviteAlreadyDescription")}
                         </p>
                     </div>
                 </div>
@@ -72,7 +72,7 @@ export default async function Page(props: {
             />
 
             <p className="text-center text-muted-foreground mt-4">
-                {t('signupQuestion')}{" "}
+                {t("signupQuestion")}{" "}
                 <Link
                     href={
                         !redirectUrl
@@ -81,7 +81,7 @@ export default async function Page(props: {
                     }
                     className="underline"
                 >
-                    {t('login')}
+                    {t("login")}
                 </Link>
             </p>
         </>

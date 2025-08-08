@@ -1,5 +1,5 @@
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import db from "./driver";
+import { db } from "./driver";
 import path from "path";
 
 const migrationsFolder = path.join("server/migrations");

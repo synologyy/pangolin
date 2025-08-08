@@ -18,6 +18,7 @@ import { toast } from "@app/hooks/useToast";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useTranslations } from "next-intl";
+import moment from "moment";
 
 export type InvitationRow = {
     id: string;
@@ -47,62 +48,68 @@ export default function InvitationsTable({
 
     const columns: ColumnDef<InvitationRow>[] = [
         {
-            id: "dots",
-            cell: ({ row }) => {
-                const invitation = row.original;
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setIsRegenerateModalOpen(true);
-                                    setSelectedInvitation(invitation);
-                                }}
-                            >
-                                <span>{t('inviteRegenerate')}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setIsDeleteModalOpen(true);
-                                    setSelectedInvitation(invitation);
-                                }}
-                            >
-                                <span className="text-red-500">
-                                    {t('inviteRemove')}
-                                </span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
-        {
             accessorKey: "email",
-            header: t('email')
+            header: t("email")
         },
         {
             accessorKey: "expiresAt",
-            header: t('expiresAt'),
+            header: t("expiresAt"),
             cell: ({ row }) => {
                 const expiresAt = new Date(row.original.expiresAt);
                 const isExpired = expiresAt < new Date();
 
                 return (
                     <span className={isExpired ? "text-red-500" : ""}>
-                        {expiresAt.toLocaleString()}
+                        {moment(expiresAt).format("lll")}
                     </span>
                 );
             }
         },
         {
             accessorKey: "role",
-            header: t('role')
+            header: t("role")
+        },
+        {
+            id: "dots",
+            cell: ({ row }) => {
+                const invitation = row.original;
+                return (
+                    <div className="flex items-center justify-end gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">
+                                        {t("openMenu")}
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setIsDeleteModalOpen(true);
+                                        setSelectedInvitation(invitation);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("inviteRemove")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button
+                            variant={"secondary"}
+                            onClick={() => {
+                                setIsRegenerateModalOpen(true);
+                                setSelectedInvitation(invitation);
+                            }}
+                        >
+                            <span>{t("inviteRegenerate")}</span>
+                        </Button>
+                    </div>
+                );
+            }
         }
     ];
 
@@ -115,16 +122,18 @@ export default function InvitationsTable({
                 .catch((e) => {
                     toast({
                         variant: "destructive",
-                        title: t('inviteRemoveError'),
-                        description: t('inviteRemoveErrorDescription')
+                        title: t("inviteRemoveError"),
+                        description: t("inviteRemoveErrorDescription")
                     });
                 });
 
             if (res && res.status === 200) {
                 toast({
                     variant: "default",
-                    title: t('inviteRemoved'),
-                    description: t('inviteRemovedDescription', {email: selectedInvitation.email})
+                    title: t("inviteRemoved"),
+                    description: t("inviteRemovedDescription", {
+                        email: selectedInvitation.email
+                    })
                 });
 
                 setInvitations((prev) =>
@@ -148,20 +157,18 @@ export default function InvitationsTable({
                 dialog={
                     <div className="space-y-4">
                         <p>
-                            {t('inviteQuestionRemove', {email: selectedInvitation?.email || ""})}
+                            {t("inviteQuestionRemove", {
+                                email: selectedInvitation?.email || ""
+                            })}
                         </p>
-                        <p>
-                            {t('inviteMessageRemove')}
-                        </p>
-                        <p>
-                            {t('inviteMessageConfirm')}
-                        </p>
+                        <p>{t("inviteMessageRemove")}</p>
+                        <p>{t("inviteMessageConfirm")}</p>
                     </div>
                 }
-                buttonText={t('inviteRemoveConfirm')}
+                buttonText={t("inviteRemoveConfirm")}
                 onConfirm={removeInvitation}
                 string={selectedInvitation?.email ?? ""}
-                title={t('inviteRemove')}
+                title={t("inviteRemove")}
             />
             <RegenerateInvitationForm
                 open={isRegenerateModalOpen}

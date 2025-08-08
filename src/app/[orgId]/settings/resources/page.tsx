@@ -67,7 +67,8 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                     resource.whitelist
                   ? "protected"
                   : "not_protected",
-            enabled: resource.enabled
+            enabled: resource.enabled,
+            domainId: resource.domainId || undefined
         };
     });
 

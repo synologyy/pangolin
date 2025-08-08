@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
+import BrandingLogo from "@app/components/BrandingLogo";
 import { useTranslations } from "next-intl";
 
 type DashboardLoginFormProps = {
@@ -26,42 +27,24 @@ export default function DashboardLoginForm({
     idps
 }: DashboardLoginFormProps) {
     const router = useRouter();
-    // const api = createApiClient(useEnvContext());
-    //
-    // useEffect(() => {
-    //     const logout = async () => {
-    //         try {
-    //             await api.post("/auth/logout");
-    //             console.log("user logged out");
-    //         } catch (e) {}
-    //     };
-    //
-    //     logout();
-    // });
-
+    const { env } = useEnvContext();
     const t = useTranslations();
 
+    function getSubtitle() {
+        return t("loginStart");
+    }
+
     return (
-        <Card className="w-full max-w-md">
-            <CardHeader>
+        <Card className="shadow-md w-full max-w-md">
+            <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
-                    <Image
-                        src={`/logo/pangolin_orange.svg`}
-                        alt={t('pangolinLogoAlt')}
-                        width={100}
-                        height={100}
-                    />
+                    <BrandingLogo height={58} width={175} />
                 </div>
-                <div className="text-center space-y-1">
-                    <h1 className="text-2xl font-bold mt-1">
-                        {t('welcome')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('loginStart')}
-                    </p>
+                <div className="text-center space-y-1 pt-3">
+                    <p className="text-muted-foreground">{getSubtitle()}</p>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
                 <LoginForm
                     redirect={redirect}
                     idps={idps}

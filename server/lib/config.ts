@@ -17,10 +17,6 @@ export class Config {
     isDev: boolean = process.env.ENVIRONMENT !== "prod";
 
     constructor() {
-        this.load();
-    }
-
-    public load() {
         const environment = readConfigFile();
 
         const {
@@ -32,12 +28,6 @@ export class Config {
         if (!success) {
             const errors = fromError(error);
             throw new Error(`Invalid configuration file: ${errors}`);
-        }
-
-        if (process.env.APP_BASE_DOMAIN) {
-            console.log(
-                "WARNING: You're using deprecated environment variables. Transition to the configuration file. https://docs.fossorial.io/"
-            );
         }
 
         if (
@@ -85,22 +75,37 @@ export class Config {
             parsedConfig.server.resource_access_token_headers.token;
         process.env.RESOURCE_SESSION_REQUEST_PARAM =
             parsedConfig.server.resource_session_request_param;
-        process.env.FLAGS_ALLOW_BASE_DOMAIN_RESOURCES = parsedConfig.flags
-            ?.allow_base_domain_resources
+        process.env.DASHBOARD_URL = parsedConfig.app.dashboard_url;
+        process.env.FLAGS_DISABLE_LOCAL_SITES = parsedConfig.flags
+            ?.disable_local_sites
             ? "true"
             : "false";
-        process.env.DASHBOARD_URL = parsedConfig.app.dashboard_url;
+        process.env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES = parsedConfig.flags
+            ?.disable_basic_wireguard_sites
+            ? "true"
+            : "false";
 
-        license.setServerSecret(parsedConfig.server.secret);
-
-        this.checkKeyStatus();
+        process.env.FLAGS_ENABLE_CLIENTS = parsedConfig.flags?.enable_clients
+            ? "true"
+            : "false";
 
         this.rawConfig = parsedConfig;
     }
 
+    public async initServer() {
+        if (!this.rawConfig) {
+            throw new Error("Config not loaded. Call load() first.");
+        }
+        license.setServerSecret(this.rawConfig.server.secret);
+
+        await this.checkKeyStatus();
+    }
+
     private async checkKeyStatus() {
         const licenseStatus = await license.check();
-        if (!licenseStatus.isHostLicensed) {
+        if (
+            !licenseStatus.isHostLicensed
+        ) {
             this.checkSupporterKey();
         }
     }
@@ -116,6 +121,9 @@ export class Config {
     }
 
     public getDomain(domainId: string) {
+        if (!this.rawConfig.domains || !this.rawConfig.domains[domainId]) {
+            return null;
+        }
         return this.rawConfig.domains[domainId];
     }
 

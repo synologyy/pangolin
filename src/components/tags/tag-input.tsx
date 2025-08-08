@@ -173,7 +173,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
             (maxTags !== undefined && maxTags < 0) ||
             (props.minTags !== undefined && props.minTags < 0)
         ) {
-            console.warn(t('tagsWarnCannotBeLessThanZero'));
+            console.warn(t("tagsWarnCannotBeLessThanZero"));
             // error
             return null;
         }
@@ -197,22 +197,28 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                             (option) => option.text === newTagText
                         )
                     ) {
-                        console.warn(t('tagsWarnNotAllowedAutocompleteOptions'));
+                        console.warn(
+                            t("tagsWarnNotAllowedAutocompleteOptions")
+                        );
                         return;
                     }
 
                     if (validateTag && !validateTag(newTagText)) {
-                        console.warn(t('tagsWarnInvalid'));
+                        console.warn(t("tagsWarnInvalid"));
                         return;
                     }
 
                     if (minLength && newTagText.length < minLength) {
-                        console.warn(t('tagWarnTooShort', {tagText: newTagText}));
+                        console.warn(
+                            t("tagWarnTooShort", { tagText: newTagText })
+                        );
                         return;
                     }
 
                     if (maxLength && newTagText.length > maxLength) {
-                        console.warn(t('tagWarnTooLong', {tagText: newTagText}));
+                        console.warn(
+                            t("tagWarnTooLong", { tagText: newTagText })
+                        );
                         return;
                     }
 
@@ -229,10 +235,12 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                             setTags((prevTags) => [...prevTags, newTag]);
                             onTagAdd?.(newTagText);
                         } else {
-                            console.warn(t('tagsWarnReachedMaxNumber'));
+                            console.warn(t("tagsWarnReachedMaxNumber"));
                         }
                     } else {
-                        console.warn(t('tagWarnDuplicate', {tagText: newTagText}));
+                        console.warn(
+                            t("tagWarnDuplicate", { tagText: newTagText })
+                        );
                     }
                 });
                 setInputValue("");
@@ -258,12 +266,12 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                 }
 
                 if (minLength && newTagText.length < minLength) {
-                    console.warn(t('tagWarnTooShort'));
+                    console.warn(t("tagWarnTooShort"));
                     return;
                 }
 
                 if (maxLength && newTagText.length > maxLength) {
-                    console.warn(t('tagWarnTooLong'));
+                    console.warn(t("tagWarnTooLong"));
                     return;
                 }
 
@@ -308,7 +316,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                 }
 
                 if (minLength && newTagText.length < minLength) {
-                    console.warn(t('tagWarnTooShort'));
+                    console.warn(t("tagWarnTooShort"));
                     // error
                     return;
                 }
@@ -316,7 +324,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                 // Validate maxLength
                 if (maxLength && newTagText.length > maxLength) {
                     // error
-                    console.warn(t('tagWarnTooLong'));
+                    console.warn(t("tagWarnTooLong"));
                     return;
                 }
 
@@ -489,7 +497,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                             <div className="w-full">
                                 <div
                                     className={cn(
-                                        `flex flex-row flex-wrap items-center gap-1.5 p-1.5 w-full rounded-md border border-input bg-background text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-transparent`,
+                                        `flex flex-row flex-wrap items-center gap-1.5 p-1.5 w-full rounded-md border border-input text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50`,
                                         styleClasses?.inlineTagsContainer
                                     )}
                                 >
@@ -536,7 +544,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                         onBlur={handleInputBlur}
                                         {...inputProps}
                                         className={cn(
-                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit",
+                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit shadow-none inset-shadow-none",
                                             // className,
                                             styleClasses?.input
                                         )}
@@ -622,7 +630,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                         onBlur={handleInputBlur}
                                         {...inputProps}
                                         className={cn(
-                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit",
+                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit shadow-none inset-shadow-none",
                                             // className,
                                             styleClasses?.input
                                         )}
@@ -643,7 +651,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                 ) : (
                                     <div
                                         className={cn(
-                                            `flex flex-row flex-wrap items-center p-1.5 gap-1.5 h-fit w-full bg-transparent text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`,
+                                            `flex flex-row flex-wrap items-center p-1.5 gap-1.5 h-fit w-full bg-transparent text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50`,
                                             styleClasses?.inlineTagsContainer
                                         )}
                                     >
@@ -710,7 +718,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                             onBlur={handleInputBlur}
                                             {...inputProps}
                                             className={cn(
-                                                "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit",
+                                                "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit shadow-none inset-shadow-none",
                                                 // className,
                                                 styleClasses?.input
                                             )}
@@ -791,7 +799,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                         onBlur={handleInputBlur}
                                         {...inputProps}
                                         className={cn(
-                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit",
+                                            "border-0 h-5 bg-transparent focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0 flex-1 w-fit shadow-none inset-shadow-none",
                                             // className,
                                             styleClasses?.input
                                         )}
@@ -834,7 +842,8 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                     onBlur={handleInputBlur}
                                     {...inputProps}
                                     className={cn(
-                                        styleClasses?.input
+                                        styleClasses?.input,
+                                        "shadow-none inset-shadow-none"
                                         // className
                                     )}
                                     autoComplete={
@@ -908,7 +917,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>(
                                             tags.length >= maxTags)
                                     }
                                     className={cn(
-                                        "border-0 w-full",
+                                        "border-0 w-full shadow-none inset-shadow-none",
                                         styleClasses?.input
                                         // className
                                     )}

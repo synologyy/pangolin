@@ -205,10 +205,10 @@ export default function ResourceAuthenticationPage() {
                 console.error(e);
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorAuthFetch'),
+                    title: t("resourceErrorAuthFetch"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorAuthFetchDescription')
+                        t("resourceErrorAuthFetchDescription")
                     )
                 });
             }
@@ -235,18 +235,18 @@ export default function ResourceAuthenticationPage() {
             });
 
             toast({
-                title: t('resourceWhitelistSave'),
-                description: t('resourceWhitelistSaveDescription')
+                title: t("resourceWhitelistSave"),
+                description: t("resourceWhitelistSaveDescription")
             });
             router.refresh();
         } catch (e) {
             console.error(e);
             toast({
                 variant: "destructive",
-                title: t('resourceErrorWhitelistSave'),
+                title: t("resourceErrorWhitelistSave"),
                 description: formatAxiosError(
                     e,
-                    t('resourceErrorWhitelistSaveDescription')
+                    t("resourceErrorWhitelistSaveDescription")
                 )
             });
         } finally {
@@ -283,18 +283,18 @@ export default function ResourceAuthenticationPage() {
             });
 
             toast({
-                title: t('resourceAuthSettingsSave'),
-                description: t('resourceAuthSettingsSaveDescription')
+                title: t("resourceAuthSettingsSave"),
+                description: t("resourceAuthSettingsSaveDescription")
             });
             router.refresh();
         } catch (e) {
             console.error(e);
             toast({
                 variant: "destructive",
-                title: t('resourceErrorUsersRolesSave'),
+                title: t("resourceErrorUsersRolesSave"),
                 description: formatAxiosError(
                     e,
-                    t('resourceErrorUsersRolesSaveDescription')
+                    t("resourceErrorUsersRolesSaveDescription")
                 )
             });
         } finally {
@@ -310,8 +310,8 @@ export default function ResourceAuthenticationPage() {
         })
             .then(() => {
                 toast({
-                    title: t('resourcePasswordRemove'),
-                    description: t('resourcePasswordRemoveDescription')
+                    title: t("resourcePasswordRemove"),
+                    description: t("resourcePasswordRemoveDescription")
                 });
 
                 updateAuthInfo({
@@ -322,10 +322,10 @@ export default function ResourceAuthenticationPage() {
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPasswordRemove'),
+                    title: t("resourceErrorPasswordRemove"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPasswordRemoveDescription')
+                        t("resourceErrorPasswordRemoveDescription")
                     )
                 });
             })
@@ -340,8 +340,8 @@ export default function ResourceAuthenticationPage() {
         })
             .then(() => {
                 toast({
-                    title: t('resourcePincodeRemove'),
-                    description: t('resourcePincodeRemoveDescription')
+                    title: t("resourcePincodeRemove"),
+                    description: t("resourcePincodeRemoveDescription")
                 });
 
                 updateAuthInfo({
@@ -352,10 +352,10 @@ export default function ResourceAuthenticationPage() {
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPincodeRemove'),
+                    title: t("resourceErrorPincodeRemove"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPincodeRemoveDescription')
+                        t("resourceErrorPincodeRemoveDescription")
                     )
                 });
             })
@@ -400,140 +400,151 @@ export default function ResourceAuthenticationPage() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t('resourceUsersRoles')}
+                            {t("resourceUsersRoles")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t('resourceUsersRolesDescription')}
+                            {t("resourceUsersRolesDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
-                        <SwitchInput
-                            id="sso-toggle"
-                            label={t('ssoUse')}
-                            description={t('ssoUseDescription')}
-                            defaultChecked={resource.sso}
-                            onCheckedChange={(val) => setSsoEnabled(val)}
-                        />
+                        <SettingsSectionForm>
+                            <SwitchInput
+                                id="sso-toggle"
+                                label={t("ssoUse")}
+                                defaultChecked={resource.sso}
+                                onCheckedChange={(val) => setSsoEnabled(val)}
+                            />
 
-                        <Form {...usersRolesForm}>
-                            <form
-                                onSubmit={usersRolesForm.handleSubmit(
-                                    onSubmitUsersRoles
-                                )}
-                                id="users-roles-form"
-                                className="space-y-4"
-                            >
-                                {ssoEnabled && (
-                                    <>
-                                        <FormField
-                                            control={usersRolesForm.control}
-                                            name="roles"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t('roles')}</FormLabel>
-                                                    <FormControl>
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={
-                                                                activeRolesTagIndex
-                                                            }
-                                                            setActiveTagIndex={
-                                                                setActiveRolesTagIndex
-                                                            }
-                                                            placeholder={t('accessRoleSelect2')}
-                                                            size="sm"
-                                                            tags={
-                                                                usersRolesForm.getValues()
-                                                                    .roles
-                                                            }
-                                                            setTags={(
-                                                                newRoles
-                                                            ) => {
-                                                                usersRolesForm.setValue(
-                                                                    "roles",
-                                                                    newRoles as [
-                                                                        Tag,
-                                                                        ...Tag[]
-                                                                    ]
-                                                                );
-                                                            }}
-                                                            enableAutocomplete={
-                                                                true
-                                                            }
-                                                            autocompleteOptions={
-                                                                allRoles
-                                                            }
-                                                            allowDuplicates={
-                                                                false
-                                                            }
-                                                            restrictTagsToAutocompleteOptions={
-                                                                true
-                                                            }
-                                                            sortTags={true}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        {t('resourceRoleDescription')}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={usersRolesForm.control}
-                                            name="users"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t('users')}</FormLabel>
-                                                    <FormControl>
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={
-                                                                activeUsersTagIndex
-                                                            }
-                                                            setActiveTagIndex={
-                                                                setActiveUsersTagIndex
-                                                            }
-                                                            placeholder={t('accessUserSelect')}
-                                                            tags={
-                                                                usersRolesForm.getValues()
-                                                                    .users
-                                                            }
-                                                            size="sm"
-                                                            setTags={(
-                                                                newUsers
-                                                            ) => {
-                                                                usersRolesForm.setValue(
-                                                                    "users",
-                                                                    newUsers as [
-                                                                        Tag,
-                                                                        ...Tag[]
-                                                                    ]
-                                                                );
-                                                            }}
-                                                            enableAutocomplete={
-                                                                true
-                                                            }
-                                                            autocompleteOptions={
-                                                                allUsers
-                                                            }
-                                                            allowDuplicates={
-                                                                false
-                                                            }
-                                                            restrictTagsToAutocompleteOptions={
-                                                                true
-                                                            }
-                                                            sortTags={true}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </>
-                                )}
-                            </form>
-                        </Form>
+                            <Form {...usersRolesForm}>
+                                <form
+                                    onSubmit={usersRolesForm.handleSubmit(
+                                        onSubmitUsersRoles
+                                    )}
+                                    id="users-roles-form"
+                                    className="space-y-4"
+                                >
+                                    {ssoEnabled && (
+                                        <>
+                                            <FormField
+                                                control={usersRolesForm.control}
+                                                name="roles"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col items-start">
+                                                        <FormLabel>
+                                                            {t("roles")}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <TagInput
+                                                                {...field}
+                                                                activeTagIndex={
+                                                                    activeRolesTagIndex
+                                                                }
+                                                                setActiveTagIndex={
+                                                                    setActiveRolesTagIndex
+                                                                }
+                                                                placeholder={t(
+                                                                    "accessRoleSelect2"
+                                                                )}
+                                                                size="sm"
+                                                                tags={
+                                                                    usersRolesForm.getValues()
+                                                                        .roles
+                                                                }
+                                                                setTags={(
+                                                                    newRoles
+                                                                ) => {
+                                                                    usersRolesForm.setValue(
+                                                                        "roles",
+                                                                        newRoles as [
+                                                                            Tag,
+                                                                            ...Tag[]
+                                                                        ]
+                                                                    );
+                                                                }}
+                                                                enableAutocomplete={
+                                                                    true
+                                                                }
+                                                                autocompleteOptions={
+                                                                    allRoles
+                                                                }
+                                                                allowDuplicates={
+                                                                    false
+                                                                }
+                                                                restrictTagsToAutocompleteOptions={
+                                                                    true
+                                                                }
+                                                                sortTags={true}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                        <FormDescription>
+                                                            {t(
+                                                                "resourceRoleDescription"
+                                                            )}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={usersRolesForm.control}
+                                                name="users"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col items-start">
+                                                        <FormLabel>
+                                                            {t("users")}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <TagInput
+                                                                {...field}
+                                                                activeTagIndex={
+                                                                    activeUsersTagIndex
+                                                                }
+                                                                setActiveTagIndex={
+                                                                    setActiveUsersTagIndex
+                                                                }
+                                                                placeholder={t(
+                                                                    "accessUserSelect"
+                                                                )}
+                                                                tags={
+                                                                    usersRolesForm.getValues()
+                                                                        .users
+                                                                }
+                                                                size="sm"
+                                                                setTags={(
+                                                                    newUsers
+                                                                ) => {
+                                                                    usersRolesForm.setValue(
+                                                                        "users",
+                                                                        newUsers as [
+                                                                            Tag,
+                                                                            ...Tag[]
+                                                                        ]
+                                                                    );
+                                                                }}
+                                                                enableAutocomplete={
+                                                                    true
+                                                                }
+                                                                autocompleteOptions={
+                                                                    allUsers
+                                                                }
+                                                                allowDuplicates={
+                                                                    false
+                                                                }
+                                                                restrictTagsToAutocompleteOptions={
+                                                                    true
+                                                                }
+                                                                sortTags={true}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </>
+                                    )}
+                                </form>
+                            </Form>
+                        </SettingsSectionForm>
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
                         <Button
@@ -542,7 +553,7 @@ export default function ResourceAuthenticationPage() {
                             disabled={loadingSaveUsersRoles}
                             form="users-roles-form"
                         >
-                            {t('resourceUsersRolesSubmit')}
+                            {t("resourceUsersRolesSubmit")}
                         </Button>
                     </SettingsSectionFooter>
                 </SettingsSection>
@@ -550,170 +561,195 @@ export default function ResourceAuthenticationPage() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t('resourceAuthMethods')}
+                            {t("resourceAuthMethods")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t('resourceAuthMethodsDescriptions')}
+                            {t("resourceAuthMethodsDescriptions")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
-                        {/* Password Protection */}
-                        <div className="flex items-center justify-between">
-                            <div
-                                className={`flex items-center text-${!authInfo.password ? "neutral" : "green"}-500 space-x-2`}
-                            >
-                                <Key />
-                                <span>
-                                    {t('resourcePasswordProtection', {status: authInfo.password? t('enabled') : t('disabled')})}
-                                </span>
+                        <SettingsSectionForm>
+                            {/* Password Protection */}
+                            <div className="flex items-center justify-between border rounded-md p-2 mb-4">
+                                <div
+                                    className={`flex items-center ${!authInfo.password ? "text-muted-foreground" : "text-green-500"} text-sm space-x-2`}
+                                >
+                                    <Key size="14" />
+                                    <span>
+                                        {t("resourcePasswordProtection", {
+                                            status: authInfo.password
+                                                ? t("enabled")
+                                                : t("disabled")
+                                        })}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={
+                                        authInfo.password
+                                            ? removeResourcePassword
+                                            : () => setIsSetPasswordOpen(true)
+                                    }
+                                    loading={loadingRemoveResourcePassword}
+                                >
+                                    {authInfo.password
+                                        ? t("passwordRemove")
+                                        : t("passwordAdd")}
+                                </Button>
                             </div>
-                            <Button
-                                variant="outlinePrimary"
-                                onClick={
-                                    authInfo.password
-                                        ? removeResourcePassword
-                                        : () => setIsSetPasswordOpen(true)
-                                }
-                                loading={loadingRemoveResourcePassword}
-                            >
-                                {authInfo.password
-                                    ? t('passwordRemove')
-                                    : t('passwordAdd')}
-                            </Button>
-                        </div>
 
-                        {/* PIN Code Protection */}
-                        <div className="flex items-center justify-between">
-                            <div
-                                className={`flex items-center text-${!authInfo.pincode ? "neutral" : "green"}-500 space-x-2`}
-                            >
-                                <Binary />
-                                <span>
-                                    {t('resourcePincodeProtection', {status: authInfo.pincode ? t('enabled') : t('disabled')})}
-                                </span>
+                            {/* PIN Code Protection */}
+                            <div className="flex items-center justify-between border rounded-md p-2">
+                                <div
+                                    className={`flex items-center ${!authInfo.pincode ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                >
+                                    <Binary size="14" />
+                                    <span>
+                                        {t("resourcePincodeProtection", {
+                                            status: authInfo.pincode
+                                                ? t("enabled")
+                                                : t("disabled")
+                                        })}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={
+                                        authInfo.pincode
+                                            ? removeResourcePincode
+                                            : () => setIsSetPincodeOpen(true)
+                                    }
+                                    loading={loadingRemoveResourcePincode}
+                                >
+                                    {authInfo.pincode
+                                        ? t("pincodeRemove")
+                                        : t("pincodeAdd")}
+                                </Button>
                             </div>
-                            <Button
-                                variant="outlinePrimary"
-                                onClick={
-                                    authInfo.pincode
-                                        ? removeResourcePincode
-                                        : () => setIsSetPincodeOpen(true)
-                                }
-                                loading={loadingRemoveResourcePincode}
-                            >
-                                {authInfo.pincode
-                                    ? t('pincodeRemove')
-                                    : t('pincodeAdd')}
-                            </Button>
-                        </div>
+                        </SettingsSectionForm>
                     </SettingsSectionBody>
                 </SettingsSection>
 
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t('otpEmailTitle')}
+                            {t("otpEmailTitle")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t('otpEmailTitleDescription')}
+                            {t("otpEmailTitleDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
-                        {!env.email.emailEnabled && (
-                            <Alert variant="neutral" className="mb-4">
-                                <InfoIcon className="h-4 w-4" />
-                                <AlertTitle className="font-semibold">
-                                    {t('otpEmailSmtpRequired')}
-                                </AlertTitle>
-                                <AlertDescription>
-                                    {t('otpEmailSmtpRequiredDescription')}
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                        <SwitchInput
-                            id="whitelist-toggle"
-                            label={t('otpEmailWhitelist')}
-                            defaultChecked={resource.emailWhitelistEnabled}
-                            onCheckedChange={setWhitelistEnabled}
-                            disabled={!env.email.emailEnabled}
-                        />
+                        <SettingsSectionForm>
+                            {!env.email.emailEnabled && (
+                                <Alert variant="neutral" className="mb-4">
+                                    <InfoIcon className="h-4 w-4" />
+                                    <AlertTitle className="font-semibold">
+                                        {t("otpEmailSmtpRequired")}
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {t("otpEmailSmtpRequiredDescription")}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                            <SwitchInput
+                                id="whitelist-toggle"
+                                label={t("otpEmailWhitelist")}
+                                defaultChecked={resource.emailWhitelistEnabled}
+                                onCheckedChange={setWhitelistEnabled}
+                                disabled={!env.email.emailEnabled}
+                            />
 
-                        {whitelistEnabled && env.email.emailEnabled && (
-                            <Form {...whitelistForm}>
-                                <form id="whitelist-form">
-                                    <FormField
-                                        control={whitelistForm.control}
-                                        name="emails"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    <InfoPopup
-                                                        text={t('otpEmailWhitelistList')}
-                                                        info={t('otpEmailWhitelistListDescription')}
-                                                    />
-                                                </FormLabel>
-                                                <FormControl>
-                                                    {/* @ts-ignore */}
-                                                    <TagInput
-                                                        {...field}
-                                                        activeTagIndex={
-                                                            activeEmailTagIndex
-                                                        }
-                                                        size={"sm"}
-                                                        validateTag={(
-                                                            tag
-                                                        ) => {
-                                                            return z
-                                                                .string()
-                                                                .email()
-                                                                .or(
-                                                                    z
-                                                                        .string()
-                                                                        .regex(
-                                                                            /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
-                                                                            {
-                                                                                message: t('otpEmailErrorInvalid')
-                                                                            }
-                                                                        )
-                                                                )
-                                                                .safeParse(
-                                                                    tag
-                                                                ).success;
-                                                        }}
-                                                        setActiveTagIndex={
-                                                            setActiveEmailTagIndex
-                                                        }
-                                                        placeholder={t('otpEmailEnter')}
-                                                        tags={
-                                                            whitelistForm.getValues()
-                                                                .emails
-                                                        }
-                                                        setTags={(
-                                                            newRoles
-                                                        ) => {
-                                                            whitelistForm.setValue(
-                                                                "emails",
-                                                                newRoles as [
-                                                                    Tag,
-                                                                    ...Tag[]
-                                                                ]
-                                                            );
-                                                        }}
-                                                        allowDuplicates={
-                                                            false
-                                                        }
-                                                        sortTags={true}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t('otpEmailEnterDescription')}
-                                                </FormDescription>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
-                        )}
+                            {whitelistEnabled && env.email.emailEnabled && (
+                                <Form {...whitelistForm}>
+                                    <form id="whitelist-form">
+                                        <FormField
+                                            control={whitelistForm.control}
+                                            name="emails"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        <InfoPopup
+                                                            text={t(
+                                                                "otpEmailWhitelistList"
+                                                            )}
+                                                            info={t(
+                                                                "otpEmailWhitelistListDescription"
+                                                            )}
+                                                        />
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        {/* @ts-ignore */}
+                                                        <TagInput
+                                                            {...field}
+                                                            activeTagIndex={
+                                                                activeEmailTagIndex
+                                                            }
+                                                            size={"sm"}
+                                                            validateTag={(
+                                                                tag
+                                                            ) => {
+                                                                return z
+                                                                    .string()
+                                                                    .email()
+                                                                    .or(
+                                                                        z
+                                                                            .string()
+                                                                            .regex(
+                                                                                /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
+                                                                                {
+                                                                                    message:
+                                                                                        t(
+                                                                                            "otpEmailErrorInvalid"
+                                                                                        )
+                                                                                }
+                                                                            )
+                                                                    )
+                                                                    .safeParse(
+                                                                        tag
+                                                                    ).success;
+                                                            }}
+                                                            setActiveTagIndex={
+                                                                setActiveEmailTagIndex
+                                                            }
+                                                            placeholder={t(
+                                                                "otpEmailEnter"
+                                                            )}
+                                                            tags={
+                                                                whitelistForm.getValues()
+                                                                    .emails
+                                                            }
+                                                            setTags={(
+                                                                newRoles
+                                                            ) => {
+                                                                whitelistForm.setValue(
+                                                                    "emails",
+                                                                    newRoles as [
+                                                                        Tag,
+                                                                        ...Tag[]
+                                                                    ]
+                                                                );
+                                                            }}
+                                                            allowDuplicates={
+                                                                false
+                                                            }
+                                                            sortTags={true}
+                                                        />
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {t(
+                                                            "otpEmailEnterDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </form>
+                                </Form>
+                            )}
+                        </SettingsSectionForm>
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
                         <Button
@@ -722,7 +758,7 @@ export default function ResourceAuthenticationPage() {
                             loading={loadingSaveWhitelist}
                             disabled={loadingSaveWhitelist}
                         >
-                            {t('otpEmailWhitelistSave')}
+                            {t("otpEmailWhitelistSave")}
                         </Button>
                     </SettingsSectionFooter>
                 </SettingsSection>

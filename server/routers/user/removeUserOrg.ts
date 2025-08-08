@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, resources, sites } from "@server/db";
+import { db, resources, sites, UserOrg } from "@server/db";
 import { userOrgs, userResources, users, userSites } from "@server/db";
 import { and, eq, exists } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -65,6 +65,8 @@ export async function removeUserOrg(
             );
         }
 
+        let userCount: UserOrg[] | undefined;
+
         await db.transaction(async (trx) => {
             await trx
                 .delete(userOrgs)
@@ -108,6 +110,11 @@ export async function removeUserOrg(
                     )
                 )
             );
+
+            userCount = await trx
+                .select()
+                .from(userOrgs)
+                .where(eq(userOrgs.orgId, orgId));
         });
 
         return response(res, {

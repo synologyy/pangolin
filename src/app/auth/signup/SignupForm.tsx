@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -32,6 +33,8 @@ import { useEnvContext } from "@app/hooks/useEnvContext";
 import Image from "next/image";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { useTranslations } from "next-intl";
+import BrandingLogo from "@app/components/BrandingLogo";
+import { build } from "@server/build";
 
 type SignupFormProps = {
     redirect?: string;
@@ -43,7 +46,19 @@ const formSchema = z
     .object({
         email: z.string().email({ message: "Invalid email address" }),
         password: passwordSchema,
-        confirmPassword: passwordSchema
+        confirmPassword: passwordSchema,
+        agreeToTerms: z.boolean().refine(
+            (val) => {
+                if (build === "saas") {
+                    val === true;
+                }
+                return true;
+            },
+            {
+                message:
+                    "You must agree to the terms of service and privacy policy"
+            }
+        )
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -57,17 +72,21 @@ export default function SignupForm({
 }: SignupFormProps) {
     const router = useRouter();
 
-    const api = createApiClient(useEnvContext());
+    const { env } = useEnvContext();
+
+    const api = createApiClient({ env });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [termsAgreedAt, setTermsAgreedAt] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: "",
             password: "",
-            confirmPassword: ""
+            confirmPassword: "",
+            agreeToTerms: false
         }
     });
 
@@ -82,13 +101,12 @@ export default function SignupForm({
                 email,
                 password,
                 inviteId,
-                inviteToken
+                inviteToken,
+                termsAcceptedTimestamp: termsAgreedAt
             })
             .catch((e) => {
                 console.error(e);
-                setError(
-                    formatAxiosError(e, t('signupError'))
-                );
+                setError(formatAxiosError(e, t("signupError")));
             });
 
         if (res && res.status === 200) {
@@ -115,27 +133,33 @@ export default function SignupForm({
         setLoading(false);
     }
 
+    function getSubtitle() {
+        return t("authCreateAccount");
+    }
+
+    const handleTermsChange = (checked: boolean) => {
+        if (checked) {
+            const isoNow = new Date().toISOString();
+            console.log("Terms agreed at:", isoNow);
+            setTermsAgreedAt(isoNow);
+            form.setValue("agreeToTerms", true);
+        } else {
+            form.setValue("agreeToTerms", false);
+            setTermsAgreedAt(null);
+        }
+    };
+
     return (
-        <Card className="w-full max-w-md">
-            <CardHeader>
+        <Card className="w-full max-w-md shadow-md">
+            <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
-                    <Image
-                        src={`/logo/pangolin_orange.svg`}
-                        alt={t('pangolinLogoAlt')}
-                        width="100"
-                        height="100"
-                    />
+                    <BrandingLogo height={58} width={175} />
                 </div>
-                <div className="text-center space-y-1">
-                    <h1 className="text-2xl font-bold mt-1">
-                        {t('welcome')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('authCreateAccount')}
-                    </p>
+                <div className="text-center space-y-1 pt-3">
+                    <p className="text-muted-foreground">{getSubtitle()}</p>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
@@ -146,7 +170,7 @@ export default function SignupForm({
                             name="email"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{t('email')}</FormLabel>
+                                    <FormLabel>{t("email")}</FormLabel>
                                     <FormControl>
                                         <Input {...field} />
                                     </FormControl>
@@ -159,12 +183,9 @@ export default function SignupForm({
                             name="password"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{t('password')}</FormLabel>
+                                    <FormLabel>{t("password")}</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="password"
-                                            {...field}
-                                        />
+                                        <Input type="password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -175,17 +196,64 @@ export default function SignupForm({
                             name="confirmPassword"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>{t('confirmPassword')}</FormLabel>
+                                    <FormLabel>
+                                        {t("confirmPassword")}
+                                    </FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="password"
-                                            {...field}
-                                        />
+                                        <Input type="password" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+                        {build === "saas" && (
+                            <FormField
+                                control={form.control}
+                                name="agreeToTerms"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    handleTermsChange(
+                                                        checked as boolean
+                                                    );
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <div className="leading-none">
+                                            <FormLabel className="text-sm font-normal">
+                                                {t("signUpTerms.IAgreeToThe")}
+                                                <a
+                                                    href="https://digpangolin.com/terms-of-service.html"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    {t(
+                                                        "signUpTerms.termsOfService"
+                                                    )}
+                                                </a>
+                                                {t("signUpTerms.and")}
+                                                <a
+                                                    href="https://digpangolin.com/privacy-policy.html"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    {t(
+                                                        "signUpTerms.privacyPolicy"
+                                                    )}
+                                                </a>
+                                            </FormLabel>
+                                            <FormMessage />
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         {error && (
                             <Alert variant="destructive">
@@ -194,7 +262,7 @@ export default function SignupForm({
                         )}
 
                         <Button type="submit" className="w-full">
-                            {t('createAccount')}
+                            {t("createAccount")}
                         </Button>
                     </form>
                 </Form>

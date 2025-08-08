@@ -9,7 +9,7 @@ import {
     SettingsSectionHeader,
     SettingsSectionTitle
 } from "@app/components/Settings";
-import { StrategySelect } from "@app/components/StrategySelect";
+import { StrategyOption, StrategySelect } from "@app/components/StrategySelect";
 import HeaderTitle from "@app/components/SettingsSectionTitle";
 import { Button } from "@app/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
@@ -45,14 +45,9 @@ import { createApiClient } from "@app/lib/api";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { ListIdpsResponse } from "@server/routers/idp";
 import { useTranslations } from "next-intl";
+import { build } from "@server/build";
 
 type UserType = "internal" | "oidc";
-
-interface UserTypeOption {
-    id: UserType;
-    title: string;
-    description: string;
-}
 
 interface IdpOption {
     idpId: number;
@@ -78,40 +73,42 @@ export default function Page() {
     const [dataLoaded, setDataLoaded] = useState(false);
 
     const internalFormSchema = z.object({
-        email: z.string().email({ message: t('emailInvalid') }),
-        validForHours: z.string().min(1, { message: t('inviteValidityDuration') }),
-        roleId: z.string().min(1, { message: t('accessRoleSelectPlease') })
+        email: z.string().email({ message: t("emailInvalid") }),
+        validForHours: z
+            .string()
+            .min(1, { message: t("inviteValidityDuration") }),
+        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") })
     });
 
     const externalFormSchema = z.object({
-        username: z.string().min(1, { message: t('usernameRequired') }),
+        username: z.string().min(1, { message: t("usernameRequired") }),
         email: z
             .string()
-            .email({ message: t('emailInvalid') })
+            .email({ message: t("emailInvalid") })
             .optional()
             .or(z.literal("")),
         name: z.string().optional(),
-        roleId: z.string().min(1, { message: t('accessRoleSelectPlease') }),
-        idpId: z.string().min(1, { message: t('idpSelectPlease') })
+        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") }),
+        idpId: z.string().min(1, { message: t("idpSelectPlease") })
     });
 
     const formatIdpType = (type: string) => {
         switch (type.toLowerCase()) {
             case "oidc":
-                return t('idpGenericOidc');
+                return t("idpGenericOidc");
             default:
                 return type;
         }
     };
 
     const validFor = [
-        { hours: 24, name: t('day', {count: 1}) },
-        { hours: 48, name: t('day', {count: 2}) },
-        { hours: 72, name: t('day', {count: 3}) },
-        { hours: 96, name: t('day', {count: 4}) },
-        { hours: 120, name: t('day', {count: 5}) },
-        { hours: 144, name: t('day', {count: 6}) },
-        { hours: 168, name: t('day', {count: 7}) }
+        { hours: 24, name: t("day", { count: 1 }) },
+        { hours: 48, name: t("day", { count: 2 }) },
+        { hours: 72, name: t("day", { count: 3 }) },
+        { hours: 96, name: t("day", { count: 4 }) },
+        { hours: 120, name: t("day", { count: 5 }) },
+        { hours: 144, name: t("day", { count: 6 }) },
+        { hours: 168, name: t("day", { count: 7 }) }
     ];
 
     const internalForm = useForm<z.infer<typeof internalFormSchema>>({
@@ -145,6 +142,21 @@ export default function Page() {
         }
     }, [userType, env.email.emailEnabled, internalForm, externalForm]);
 
+    const [userTypes, setUserTypes] = useState<StrategyOption<string>[]>([
+        {
+            id: "internal",
+            title: t("userTypeInternal"),
+            description: t("userTypeInternalDescription"),
+            disabled: false
+        },
+        {
+            id: "oidc",
+            title: t("userTypeExternal"),
+            description: t("userTypeExternalDescription"),
+            disabled: true
+        }
+    ]);
+
     useEffect(() => {
         if (!userType) {
             return;
@@ -157,19 +169,16 @@ export default function Page() {
                     console.error(e);
                     toast({
                         variant: "destructive",
-                        title: t('accessRoleErrorFetch'),
+                        title: t("accessRoleErrorFetch"),
                         description: formatAxiosError(
                             e,
-                            t('accessRoleErrorFetchDescription')
+                            t("accessRoleErrorFetchDescription")
                         )
                     });
                 });
 
             if (res?.status === 200) {
                 setRoles(res.data.data.roles);
-                if (userType === "internal") {
-                    setDataLoaded(true);
-                }
             }
         }
 
@@ -180,26 +189,42 @@ export default function Page() {
                     console.error(e);
                     toast({
                         variant: "destructive",
-                        title: t('idpErrorFetch'),
+                        title: t("idpErrorFetch"),
                         description: formatAxiosError(
                             e,
-                            t('idpErrorFetchDescription')
+                            t("idpErrorFetchDescription")
                         )
                     });
                 });
 
             if (res?.status === 200) {
                 setIdps(res.data.data.idps);
-                setDataLoaded(true);
+
+                if (res.data.data.idps.length) {
+                    setUserTypes((prev) =>
+                        prev.map((type) => {
+                            if (type.id === "oidc") {
+                                return {
+                                    ...type,
+                                    disabled: false
+                                };
+                            }
+                            return type;
+                        })
+                    );
+                }
             }
         }
 
-        setDataLoaded(false);
-        fetchRoles();
-        if (userType !== "internal") {
-            fetchIdps();
+        async function fetchInitialData() {
+            setDataLoaded(false);
+            await fetchRoles();
+            await fetchIdps();
+            setDataLoaded(true);
         }
-    }, [userType]);
+
+        fetchInitialData();
+    }, []);
 
     async function onSubmitInternal(
         values: z.infer<typeof internalFormSchema>
@@ -220,16 +245,16 @@ export default function Page() {
                 if (e.response?.status === 409) {
                     toast({
                         variant: "destructive",
-                        title: t('userErrorExists'),
-                        description: t('userErrorExistsDescription')
+                        title: t("userErrorExists"),
+                        description: t("userErrorExistsDescription")
                     });
                 } else {
                     toast({
                         variant: "destructive",
-                        title: t('inviteError'),
+                        title: t("inviteError"),
                         description: formatAxiosError(
                             e,
-                            t('inviteErrorDescription')
+                            t("inviteErrorDescription")
                         )
                     });
                 }
@@ -239,8 +264,8 @@ export default function Page() {
             setInviteLink(res.data.data.inviteLink);
             toast({
                 variant: "default",
-                title: t('userInvited'),
-                description: t('userInvitedDescription')
+                title: t("userInvited"),
+                description: t("userInvitedDescription")
             });
 
             setExpiresInDays(parseInt(values.validForHours) / 24);
@@ -266,10 +291,10 @@ export default function Page() {
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('userErrorCreate'),
+                    title: t("userErrorCreate"),
                     description: formatAxiosError(
                         e,
-                        t('userErrorCreateDescription')
+                        t("userErrorCreateDescription")
                     )
                 });
             });
@@ -277,8 +302,8 @@ export default function Page() {
         if (res && res.status === 201) {
             toast({
                 variant: "default",
-                title: t('userCreated'),
-                description: t('userCreatedDescription')
+                title: t("userCreated"),
+                description: t("userCreatedDescription")
             });
             router.push(`/${orgId}/settings/access/users`);
         }
@@ -286,25 +311,12 @@ export default function Page() {
         setLoading(false);
     }
 
-    const userTypes: ReadonlyArray<UserTypeOption> = [
-        {
-            id: "internal",
-            title: t('userTypeInternal'),
-            description: t('userTypeInternalDescription')
-        },
-        {
-            id: "oidc",
-            title: t('userTypeExternal'),
-            description: t('userTypeExternalDescription')
-        }
-    ];
-
     return (
         <>
             <div className="flex justify-between">
                 <HeaderTitle
-                    title={t('accessUserCreate')}
-                    description={t('accessUserCreateDescription')}
+                    title={t("accessUserCreate")}
+                    description={t("accessUserCreateDescription")}
                 />
                 <Button
                     variant="outline"
@@ -312,219 +324,243 @@ export default function Page() {
                         router.push(`/${orgId}/settings/access/users`);
                     }}
                 >
-                    {t('userSeeAll')}
+                    {t("userSeeAll")}
                 </Button>
             </div>
 
             <div>
                 <SettingsContainer>
-                    <SettingsSection>
-                        <SettingsSectionHeader>
-                            <SettingsSectionTitle>
-                                {t('userTypeTitle')}
-                            </SettingsSectionTitle>
-                            <SettingsSectionDescription>
-                                {t('userTypeDescription')}
-                            </SettingsSectionDescription>
-                        </SettingsSectionHeader>
-                        <SettingsSectionBody>
-                            <StrategySelect
-                                options={userTypes}
-                                defaultValue={userType || undefined}
-                                onChange={(value) => {
-                                    setUserType(value as UserType);
-                                    if (value === "internal") {
-                                        internalForm.reset();
-                                    } else if (value === "oidc") {
-                                        externalForm.reset();
-                                        setSelectedIdp(null);
-                                    }
-                                }}
-                                cols={2}
-                            />
-                        </SettingsSectionBody>
-                    </SettingsSection>
+                    {!inviteLink && build !== "saas" ? (
+                        <SettingsSection>
+                            <SettingsSectionHeader>
+                                <SettingsSectionTitle>
+                                    {t("userTypeTitle")}
+                                </SettingsSectionTitle>
+                                <SettingsSectionDescription>
+                                    {t("userTypeDescription")}
+                                </SettingsSectionDescription>
+                            </SettingsSectionHeader>
+                            <SettingsSectionBody>
+                                <StrategySelect
+                                    options={userTypes}
+                                    defaultValue={userType || undefined}
+                                    onChange={(value) => {
+                                        setUserType(value as UserType);
+                                        if (value === "internal") {
+                                            internalForm.reset();
+                                        } else if (value === "oidc") {
+                                            externalForm.reset();
+                                            setSelectedIdp(null);
+                                        }
+                                    }}
+                                    cols={2}
+                                />
+                            </SettingsSectionBody>
+                        </SettingsSection>
+                    ) : null}
 
                     {userType === "internal" && dataLoaded && (
                         <>
-                            <SettingsSection>
-                                <SettingsSectionHeader>
-                                    <SettingsSectionTitle>
-                                        {t('userSettings')}
-                                    </SettingsSectionTitle>
-                                    <SettingsSectionDescription>
-                                        {t('userSettingsDescription')}
-                                    </SettingsSectionDescription>
-                                </SettingsSectionHeader>
-                                <SettingsSectionBody>
-                                    <SettingsSectionForm>
-                                        <Form {...internalForm}>
-                                            <form
-                                                onSubmit={internalForm.handleSubmit(
-                                                    onSubmitInternal
-                                                )}
-                                                className="space-y-4"
-                                                id="create-user-form"
-                                            >
-                                                <FormField
-                                                    control={
-                                                        internalForm.control
-                                                    }
-                                                    name="email"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                {t('email')}
-                                                            </FormLabel>
-                                                            <FormControl>
-                                                                <Input
-                                                                    {...field}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
+                            {!inviteLink ? (
+                                <SettingsSection>
+                                    <SettingsSectionHeader>
+                                        <SettingsSectionTitle>
+                                            {t("userSettings")}
+                                        </SettingsSectionTitle>
+                                        <SettingsSectionDescription>
+                                            {t("userSettingsDescription")}
+                                        </SettingsSectionDescription>
+                                    </SettingsSectionHeader>
+                                    <SettingsSectionBody>
+                                        <SettingsSectionForm>
+                                            <Form {...internalForm}>
+                                                <form
+                                                    onSubmit={internalForm.handleSubmit(
+                                                        onSubmitInternal
                                                     )}
-                                                />
-
-                                                {env.email.emailEnabled && (
-                                                    <div className="flex items-center space-x-2">
-                                                        <Checkbox
-                                                            id="send-email"
-                                                            checked={sendEmail}
-                                                            onCheckedChange={(
-                                                                e
-                                                            ) =>
-                                                                setSendEmail(
-                                                                    e as boolean
-                                                                )
-                                                            }
-                                                        />
-                                                        <label
-                                                            htmlFor="send-email"
-                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                        >
-                                                            {t('inviteEmailSent')}
-                                                        </label>
-                                                    </div>
-                                                )}
-
-                                                <FormField
-                                                    control={
-                                                        internalForm.control
-                                                    }
-                                                    name="validForHours"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                {t('inviteValid')}
-                                                            </FormLabel>
-                                                            <Select
-                                                                onValueChange={
-                                                                    field.onChange
-                                                                }
-                                                                defaultValue={
-                                                                    field.value
-                                                                }
-                                                            >
+                                                    className="space-y-4"
+                                                    id="create-user-form"
+                                                >
+                                                    <FormField
+                                                        control={
+                                                            internalForm.control
+                                                        }
+                                                        name="email"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t("email")}
+                                                                </FormLabel>
                                                                 <FormControl>
-                                                                    <SelectTrigger>
-                                                                        <SelectValue placeholder={t('selectDuration')} />
-                                                                    </SelectTrigger>
+                                                                    <Input
+                                                                        {...field}
+                                                                    />
                                                                 </FormControl>
-                                                                <SelectContent>
-                                                                    {validFor.map(
-                                                                        (
-                                                                            option
-                                                                        ) => (
-                                                                            <SelectItem
-                                                                                key={
-                                                                                    option.hours
-                                                                                }
-                                                                                value={option.hours.toString()}
-                                                                            >
-                                                                                {
-                                                                                    option.name
-                                                                                }
-                                                                            </SelectItem>
-                                                                        )
-                                                                    )}
-                                                                </SelectContent>
-                                                            </Select>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
 
-                                                <FormField
-                                                    control={
-                                                        internalForm.control
-                                                    }
-                                                    name="roleId"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                {t('role')}
-                                                            </FormLabel>
-                                                            <Select
-                                                                onValueChange={
-                                                                    field.onChange
+                                                    <FormField
+                                                        control={
+                                                            internalForm.control
+                                                        }
+                                                        name="validForHours"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "inviteValid"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <Select
+                                                                    onValueChange={
+                                                                        field.onChange
+                                                                    }
+                                                                    defaultValue={
+                                                                        field.value
+                                                                    }
+                                                                >
+                                                                    <FormControl>
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue
+                                                                                placeholder={t(
+                                                                                    "selectDuration"
+                                                                                )}
+                                                                            />
+                                                                        </SelectTrigger>
+                                                                    </FormControl>
+                                                                    <SelectContent>
+                                                                        {validFor.map(
+                                                                            (
+                                                                                option
+                                                                            ) => (
+                                                                                <SelectItem
+                                                                                    key={
+                                                                                        option.hours
+                                                                                    }
+                                                                                    value={option.hours.toString()}
+                                                                                >
+                                                                                    {
+                                                                                        option.name
+                                                                                    }
+                                                                                </SelectItem>
+                                                                            )
+                                                                        )}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    <FormField
+                                                        control={
+                                                            internalForm.control
+                                                        }
+                                                        name="roleId"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t("role")}
+                                                                </FormLabel>
+                                                                <Select
+                                                                    onValueChange={
+                                                                        field.onChange
+                                                                    }
+                                                                >
+                                                                    <FormControl>
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue
+                                                                                placeholder={t(
+                                                                                    "accessRoleSelect"
+                                                                                )}
+                                                                            />
+                                                                        </SelectTrigger>
+                                                                    </FormControl>
+                                                                    <SelectContent>
+                                                                        {roles.map(
+                                                                            (
+                                                                                role
+                                                                            ) => (
+                                                                                <SelectItem
+                                                                                    key={
+                                                                                        role.roleId
+                                                                                    }
+                                                                                    value={role.roleId.toString()}
+                                                                                >
+                                                                                    {
+                                                                                        role.name
+                                                                                    }
+                                                                                </SelectItem>
+                                                                            )
+                                                                        )}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    {env.email.emailEnabled && (
+                                                        <div className="flex items-center space-x-2">
+                                                            <Checkbox
+                                                                id="send-email"
+                                                                checked={
+                                                                    sendEmail
                                                                 }
+                                                                onCheckedChange={(
+                                                                    e
+                                                                ) =>
+                                                                    setSendEmail(
+                                                                        e as boolean
+                                                                    )
+                                                                }
+                                                            />
+                                                            <label
+                                                                htmlFor="send-email"
+                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                                             >
-                                                                <FormControl>
-                                                                    <SelectTrigger>
-                                                                        <SelectValue placeholder={t('accessRoleSelect')} />
-                                                                    </SelectTrigger>
-                                                                </FormControl>
-                                                                <SelectContent>
-                                                                    {roles.map(
-                                                                        (
-                                                                            role
-                                                                        ) => (
-                                                                            <SelectItem
-                                                                                key={
-                                                                                    role.roleId
-                                                                                }
-                                                                                value={role.roleId.toString()}
-                                                                            >
-                                                                                {
-                                                                                    role.name
-                                                                                }
-                                                                            </SelectItem>
-                                                                        )
-                                                                    )}
-                                                                </SelectContent>
-                                                            </Select>
-                                                            <FormMessage />
-                                                        </FormItem>
+                                                                {t(
+                                                                    "inviteEmailSent"
+                                                                )}
+                                                            </label>
+                                                        </div>
                                                     )}
-                                                />
-
-                                                {inviteLink && (
-                                                    <div className="max-w-md space-y-4">
-                                                        {sendEmail && (
-                                                            <p>
-                                                                {t('inviteEmailSentDescription')}
-                                                            </p>
-                                                        )}
-                                                        {!sendEmail && (
-                                                            <p>
-                                                                {t('inviteSentDescription')}
-                                                            </p>
-                                                        )}
-                                                        <p>
-                                                            {t('inviteExpiresIn', {days: expiresInDays})}
-                                                        </p>
-                                                        <CopyTextBox
-                                                            text={inviteLink}
-                                                            wrapText={false}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </form>
-                                        </Form>
-                                    </SettingsSectionForm>
-                                </SettingsSectionBody>
-                            </SettingsSection>
+                                                </form>
+                                            </Form>
+                                        </SettingsSectionForm>
+                                    </SettingsSectionBody>
+                                </SettingsSection>
+                            ) : (
+                                <SettingsSection>
+                                    <SettingsSectionHeader>
+                                        <SettingsSectionTitle>
+                                            {t("userInvited")}
+                                        </SettingsSectionTitle>
+                                        <SettingsSectionDescription>
+                                            {sendEmail
+                                                ? t(
+                                                      "inviteEmailSentDescription"
+                                                  )
+                                                : t("inviteSentDescription")}
+                                        </SettingsSectionDescription>
+                                    </SettingsSectionHeader>
+                                    <SettingsSectionBody>
+                                        <div className="space-y-4">
+                                            <p>
+                                                {t("inviteExpiresIn", {
+                                                    days: expiresInDays
+                                                })}
+                                            </p>
+                                            <CopyTextBox
+                                                text={inviteLink}
+                                                wrapText={false}
+                                            />
+                                        </div>
+                                    </SettingsSectionBody>
+                                </SettingsSection>
+                            )}
                         </>
                     )}
 
@@ -533,16 +569,16 @@ export default function Page() {
                             <SettingsSection>
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
-                                        {t('idpTitle')}
+                                        {t("idpTitle")}
                                     </SettingsSectionTitle>
                                     <SettingsSectionDescription>
-                                        {t('idpSelect')}
+                                        {t("idpSelect")}
                                     </SettingsSectionDescription>
                                 </SettingsSectionHeader>
                                 <SettingsSectionBody>
                                     {idps.length === 0 ? (
                                         <p className="text-muted-foreground">
-                                            {t('idpNotConfigured')}
+                                            {t("idpNotConfigured")}
                                         </p>
                                     ) : (
                                         <Form {...externalForm}>
@@ -581,7 +617,7 @@ export default function Page() {
                                                                     idp || null
                                                                 );
                                                             }}
-                                                            cols={3}
+                                                            cols={2}
                                                         />
                                                         <FormMessage />
                                                     </FormItem>
@@ -596,10 +632,10 @@ export default function Page() {
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('userSettings')}
+                                            {t("userSettings")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('userSettingsDescription')}
+                                            {t("userSettingsDescription")}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
@@ -620,7 +656,9 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('username')}
+                                                                    {t(
+                                                                        "username"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -628,7 +666,9 @@ export default function Page() {
                                                                     />
                                                                 </FormControl>
                                                                 <p className="text-sm text-muted-foreground mt-1">
-                                                                    {t('usernameUniq')}
+                                                                    {t(
+                                                                        "usernameUniq"
+                                                                    )}
                                                                 </p>
                                                                 <FormMessage />
                                                             </FormItem>
@@ -643,7 +683,9 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('emailOptional')}
+                                                                    {t(
+                                                                        "emailOptional"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -663,7 +705,9 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('nameOptional')}
+                                                                    {t(
+                                                                        "nameOptional"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -683,7 +727,7 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('role')}
+                                                                    {t("role")}
                                                                 </FormLabel>
                                                                 <Select
                                                                     onValueChange={
@@ -691,8 +735,12 @@ export default function Page() {
                                                                     }
                                                                 >
                                                                     <FormControl>
-                                                                        <SelectTrigger>
-                                                                            <SelectValue placeholder={t('accessRoleSelect')} />
+                                                                        <SelectTrigger className="w-full">
+                                                                            <SelectValue
+                                                                                placeholder={t(
+                                                                                    "accessRoleSelect"
+                                                                                )}
+                                                                            />
                                                                         </SelectTrigger>
                                                                     </FormControl>
                                                                     <SelectContent>
@@ -736,19 +784,24 @@ export default function Page() {
                             router.push(`/${orgId}/settings/access/users`);
                         }}
                     >
-                        {t('cancel')}
+                        {t("cancel")}
                     </Button>
                     {userType && dataLoaded && (
                         <Button
-                            type="submit"
-                            form="create-user-form"
+                            type={inviteLink ? "button" : "submit"}
+                            form={inviteLink ? undefined : "create-user-form"}
                             loading={loading}
-                            disabled={
-                                loading ||
-                                (userType === "internal" && inviteLink !== null)
+                            disabled={loading}
+                            onClick={
+                                inviteLink
+                                    ? () =>
+                                          router.push(
+                                              `/${orgId}/settings/access/users`
+                                          )
+                                    : undefined
                             }
                         >
-                            {t('accessUserCreate')}
+                            {inviteLink ? t("done") : t("accessUserCreate")}
                         </Button>
                     )}
                 </div>

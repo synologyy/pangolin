@@ -5,7 +5,7 @@ import * as domain from "./domain";
 import * as target from "./target";
 import * as user from "./user";
 import * as role from "./role";
-// import * as client from "./client";
+import * as client from "./client";
 import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
@@ -20,7 +20,9 @@ import {
     verifyApiKeyUserAccess,
     verifyApiKeySetResourceUsers,
     verifyApiKeyAccessTokenAccess,
-    verifyApiKeyIsRoot
+    verifyApiKeyIsRoot,
+    verifyApiKeyClientAccess,
+    verifyClientsEnabled
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -381,6 +383,20 @@ authenticated.get(
     user.getOrgUser
 );
 
+authenticated.post(
+    "/user/:userId/2fa",
+    verifyApiKeyIsRoot,
+    verifyApiKeyHasAction(ActionsEnum.updateUser),
+    user.updateUser2FA
+);
+
+authenticated.get(
+    "/user/:userId",
+    verifyApiKeyIsRoot,
+    verifyApiKeyHasAction(ActionsEnum.getUser),
+    user.adminGetUser
+);
+
 authenticated.get(
     "/org/:orgId/users",
     verifyApiKeyOrgAccess,
@@ -498,4 +514,52 @@ authenticated.get(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.listIdpOrgs),
     idp.listIdpOrgPolicies
+);
+
+authenticated.get(
+    "/org/:orgId/pick-client-defaults",
+    verifyClientsEnabled,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.createClient),
+    client.pickClientDefaults
+);
+
+authenticated.get(
+    "/org/:orgId/clients",
+    verifyClientsEnabled,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listClients),
+    client.listClients
+);
+
+authenticated.get(
+    "/org/:orgId/client/:clientId",
+    verifyClientsEnabled,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.getClient),
+    client.getClient
+);
+
+authenticated.put(
+    "/org/:orgId/client",
+    verifyClientsEnabled,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.createClient),
+    client.createClient
+);
+
+authenticated.delete(
+    "/client/:clientId",
+    verifyClientsEnabled,
+    verifyApiKeyClientAccess,
+    verifyApiKeyHasAction(ActionsEnum.deleteClient),
+    client.deleteClient
+);
+
+authenticated.post(
+    "/client/:clientId",
+    verifyClientsEnabled,
+    verifyApiKeyClientAccess,
+    verifyApiKeyHasAction(ActionsEnum.updateClient),
+    client.updateClient
 );

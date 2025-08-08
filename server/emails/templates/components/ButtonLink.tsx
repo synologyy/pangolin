@@ -12,7 +12,11 @@ export default function ButtonLink({
     return (
         <a
             href={href}
-            className={`rounded-full bg-primary px-4 py-2 text-center font-semibold text-white text-xl no-underline inline-block ${className}`}
+            className={`inline-block bg-primary text-white font-semibold px-8 py-3 rounded-lg text-center no-underline ${className}`}
+            style={{
+                backgroundColor: "#F97316",
+                textDecoration: "none"
+            }}
         >
             {children}
         </a>

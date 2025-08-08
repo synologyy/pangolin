@@ -6,7 +6,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
-import { db } from "@server/db";
+import { db, UserOrg } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import { idp, idpOidcConfig, roles, userOrgs, users } from "@server/db";
 import { generateId } from "@server/auth/sessions/app";
@@ -135,65 +135,76 @@ export async function createOrgUser(
                 );
             }
 
-            const [existingUser] = await db
-                .select()
-                .from(users)
-                .where(eq(users.username, username));
+            let orgUsers: UserOrg[] | undefined;
 
-            if (existingUser) {
-                const [existingOrgUser] = await db
+            await db.transaction(async (trx) => {
+                const [existingUser] = await trx
                     .select()
-                    .from(userOrgs)
-                    .where(
-                        and(
-                            eq(userOrgs.orgId, orgId),
-                            eq(userOrgs.userId, existingUser.userId)
-                        )
-                    );
+                    .from(users)
+                    .where(eq(users.username, username));
 
-                if (existingOrgUser) {
-                    return next(
-                        createHttpError(
-                            HttpCode.BAD_REQUEST,
-                            "User already exists in this organization"
-                        )
-                    );
+                if (existingUser) {
+                    const [existingOrgUser] = await trx
+                        .select()
+                        .from(userOrgs)
+                        .where(
+                            and(
+                                eq(userOrgs.orgId, orgId),
+                                eq(userOrgs.userId, existingUser.userId)
+                            )
+                        );
+
+                    if (existingOrgUser) {
+                        return next(
+                            createHttpError(
+                                HttpCode.BAD_REQUEST,
+                                "User already exists in this organization"
+                            )
+                        );
+                    }
+
+                    await trx
+                        .insert(userOrgs)
+                        .values({
+                            orgId,
+                            userId: existingUser.userId,
+                            roleId: role.roleId
+                        })
+                        .returning();
+                } else {
+                    const userId = generateId(15);
+
+                    const [newUser] = await trx
+                        .insert(users)
+                        .values({
+                            userId: userId,
+                            email,
+                            username,
+                            name,
+                            type: "oidc",
+                            idpId,
+                            dateCreated: new Date().toISOString(),
+                            emailVerified: true
+                        })
+                        .returning();
+
+                    await trx
+                        .insert(userOrgs)
+                        .values({
+                            orgId,
+                            userId: newUser.userId,
+                            roleId: role.roleId
+                        })
+                        .returning();
                 }
 
-                await db
-                    .insert(userOrgs)
-                    .values({
-                        orgId,
-                        userId: existingUser.userId,
-                        roleId: role.roleId
-                    })
-                    .returning();
-            } else {
-                const userId = generateId(15);
+                // List all of the users in the org
+                orgUsers = await trx
+                    .select()
+                    .from(userOrgs)
+                    .where(eq(userOrgs.orgId, orgId));
+            });
 
-                const [newUser] = await db
-                    .insert(users)
-                    .values({
-                        userId: userId,
-                        email,
-                        username,
-                        name,
-                        type: "oidc",
-                        idpId,
-                        dateCreated: new Date().toISOString(),
-                        emailVerified: true
-                    })
-                    .returning();
-
-                await db
-                    .insert(userOrgs)
-                    .values({
-                        orgId,
-                        userId: newUser.userId,
-                        roleId: role.roleId
-                    })
-                    .returning();
-            }
         } else {
             return next(
                 createHttpError(HttpCode.BAD_REQUEST, "User type is required")

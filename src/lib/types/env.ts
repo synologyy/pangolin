@@ -21,6 +21,9 @@ export type Env = {
         disableUserCreateOrg: boolean;
         emailVerificationRequired: boolean;
         allowRawResources: boolean;
-        allowBaseDomainResources: boolean;
-    };
+        disableLocalSites: boolean;
+        disableBasicWireguardSites: boolean;
+        enableClients: boolean;
+        hideSupporterKey: boolean;
+    },
 };

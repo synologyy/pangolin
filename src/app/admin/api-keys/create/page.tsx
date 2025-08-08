@@ -25,21 +25,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@app/components/ui/input";
 import { InfoIcon } from "lucide-react";
 import { Button } from "@app/components/ui/button";
-import { Checkbox, CheckboxWithLabel } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { AxiosResponse } from "axios";
-import { useParams, useRouter } from "next/navigation";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator
-} from "@app/components/ui/breadcrumb";
-import Link from "next/link";
+import {  useRouter } from "next/navigation";
 import {
     CreateOrgApiKeyBody,
     CreateOrgApiKeyResponse
@@ -108,7 +99,7 @@ export default function Page() {
     const copiedForm = useForm<CopiedFormValues>({
         resolver: zodResolver(copiedFormSchema),
         defaultValues: {
-            copied: false
+            copied: true
         }
     });
 
@@ -299,54 +290,54 @@ export default function Page() {
                                         </AlertDescription>
                                     </Alert>
 
-                                    <h4 className="font-semibold">
-                                        {t('apiKeysInfo')}
-                                    </h4>
+                                    {/* <h4 className="font-semibold"> */}
+                                    {/*     {t('apiKeysInfo')} */}
+                                    {/* </h4> */}
 
                                     <CopyTextBox
                                         text={`${apiKey.apiKeyId}.${apiKey.apiKey}`}
                                     />
 
-                                    <Form {...copiedForm}>
-                                        <form
-                                            className="space-y-4"
-                                            id="copied-form"
-                                        >
-                                            <FormField
-                                                control={copiedForm.control}
-                                                name="copied"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <div className="flex items-center space-x-2">
-                                                            <Checkbox
-                                                                id="terms"
-                                                                defaultChecked={
-                                                                    copiedForm.getValues(
-                                                                        "copied"
-                                                                    ) as boolean
-                                                                }
-                                                                onCheckedChange={(
-                                                                    e
-                                                                ) => {
-                                                                    copiedForm.setValue(
-                                                                        "copied",
-                                                                        e as boolean
-                                                                    );
-                                                                }}
-                                                            />
-                                                            <label
-                                                                htmlFor="terms"
-                                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                            >
-                                                                {t('apiKeysConfirmCopy')}
-                                                            </label>
-                                                        </div>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </form>
-                                    </Form>
+                                    {/* <Form {...copiedForm}> */}
+                                    {/*     <form */}
+                                    {/*         className="space-y-4" */}
+                                    {/*         id="copied-form" */}
+                                    {/*     > */}
+                                    {/*         <FormField */}
+                                    {/*             control={copiedForm.control} */}
+                                    {/*             name="copied" */}
+                                    {/*             render={({ field }) => ( */}
+                                    {/*                 <FormItem> */}
+                                    {/*                     <div className="flex items-center space-x-2"> */}
+                                    {/*                         <Checkbox */}
+                                    {/*                             id="terms" */}
+                                    {/*                             defaultChecked={ */}
+                                    {/*                                 copiedForm.getValues( */}
+                                    {/*                                     "copied" */}
+                                    {/*                                 ) as boolean */}
+                                    {/*                             } */}
+                                    {/*                             onCheckedChange={( */}
+                                    {/*                                 e */}
+                                    {/*                             ) => { */}
+                                    {/*                                 copiedForm.setValue( */}
+                                    {/*                                     "copied", */}
+                                    {/*                                     e as boolean */}
+                                    {/*                                 ); */}
+                                    {/*                             }} */}
+                                    {/*                         /> */}
+                                    {/*                         <label */}
+                                    {/*                             htmlFor="terms" */}
+                                    {/*                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" */}
+                                    {/*                         > */}
+                                    {/*                             {t('apiKeysConfirmCopy')} */}
+                                    {/*                         </label> */}
+                                    {/*                     </div> */}
+                                    {/*                     <FormMessage /> */}
+                                    {/*                 </FormItem> */}
+                                    {/*             )} */}
+                                    {/*         /> */}
+                                    {/*     </form> */}
+                                    {/* </Form> */}
                                 </SettingsSectionBody>
                             </SettingsSection>
                         )}

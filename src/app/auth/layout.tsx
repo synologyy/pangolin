@@ -1,4 +1,5 @@
 import ProfileIcon from "@app/components/ProfileIcon";
+import ThemeSwitcher from "@app/components/ThemeSwitcher";
 import { Separator } from "@app/components/ui/separator";
 import { priv } from "@app/lib/api";
 import { verifySession } from "@app/lib/auth/verifySession";
@@ -23,6 +24,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
     const getUser = cache(verifySession);
     const user = await getUser();
     const t = await getTranslations();
+    const hideFooter = true;
 
     const licenseStatusRes = await cache(
         async () =>
@@ -34,20 +36,18 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
 
     return (
         <div className="h-full flex flex-col">
-            {user && (
-                <UserProvider user={user}>
-                    <div className="p-3 ml-auto">
-                        <ProfileIcon />
-                    </div>
-                </UserProvider>
-            )}
+            <div className="flex justify-end items-center p-3 space-x-2">
+                <ThemeSwitcher />
+            </div>
 
             <div className="flex-1 flex items-center justify-center">
                 <div className="w-full max-w-md p-3">{children}</div>
             </div>
 
             {!(
-                licenseStatus.isHostLicensed && licenseStatus.isLicenseValid
+                hideFooter || (
+                licenseStatus.isHostLicensed &&
+                licenseStatus.isLicenseValid)
             ) && (
                 <footer className="hidden md:block w-full mt-12 py-3 mb-6 px-4">
                     <div className="container mx-auto flex flex-wrap justify-center items-center h-3 space-x-4 text-sm text-neutral-400 dark:text-neutral-600">
@@ -73,7 +73,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                             aria-label="GitHub"
                             className="flex items-center space-x-2 whitespace-nowrap"
                         >
-                            <span>{t('communityEdition')}</span>
+                            <span>{t("communityEdition")}</span>
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"

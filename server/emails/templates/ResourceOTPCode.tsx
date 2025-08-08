@@ -1,11 +1,5 @@
-import {
-    Body,
-    Head,
-    Html,
-    Preview,
-    Tailwind
-} from "@react-email/components";
-import * as React from "react";
+import React from "react";
+import { Body, Head, Html, Preview, Tailwind } from "@react-email/components";
 import {
     EmailContainer,
     EmailLetterHead,
@@ -32,33 +26,39 @@ export const ResourceOTPCode = ({
     orgName: organizationName,
     otp
 }: ResourceOTPCodeProps) => {
-    const previewText = `Your one-time password for ${resourceName} is ${otp}`;
+    const previewText = `Your access code for ${resourceName}: ${otp}`;
 
     return (
         <Html>
             <Head />
             <Preview>{previewText}</Preview>
             <Tailwind config={themeColors}>
-                <Body className="font-sans">
+                <Body className="font-sans bg-gray-50">
                     <EmailContainer>
                         <EmailLetterHead />
 
-                        <EmailHeading>
-                            Your One-Time Code for {resourceName}
-                        </EmailHeading>
+                        {/* <EmailHeading> */}
+                        {/*     Access Code for {resourceName} */}
+                        {/* </EmailHeading> */}
 
-                        <EmailGreeting>Hi {email || "there"},</EmailGreeting>
+                        <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            You’ve requested a one-time password to access{" "}
+                            You've requested access to{" "}
                             <strong>{resourceName}</strong> in{" "}
-                            <strong>{organizationName}</strong>. Use the code
-                            below to complete your authentication:
+                            <strong>{organizationName}</strong>. Use the
+                            verification code below to complete your
+                            authentication.
                         </EmailText>
 
                         <EmailSection>
                             <CopyCodeBox text={otp} />
                         </EmailSection>
+
+                        <EmailText>
+                            This code will expire in 15 minutes. If you didn't
+                            request this code, please ignore this email.
+                        </EmailText>
 
                         <EmailFooter>
                             <EmailSignature />

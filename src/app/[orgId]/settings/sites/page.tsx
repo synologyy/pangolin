@@ -44,11 +44,14 @@ export default async function SitesPage(props: SitesPageProps) {
             name: site.name,
             id: site.siteId,
             nice: site.niceId.toString(),
+            address: site.address?.split("/")[0],
             mbIn: formatSize(site.megabytesIn || 0, site.type),
             mbOut: formatSize(site.megabytesOut || 0, site.type),
             orgId: params.orgId,
             type: site.type as any,
-            online: site.online
+            online: site.online,
+            newtVersion: site.newtVersion || undefined,
+            newtUpdateAvailable: site.newtUpdateAvailable || false,
         };
     });
 

@@ -43,6 +43,7 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import Link from "next/link";
+import Image from "next/image";
 import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext";
 import { useTranslations } from "next-intl";
 
@@ -185,8 +186,8 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                     setOtpState("otp_sent");
                     submitOtpForm.setValue("email", values.email);
                     toast({
-                        title: t('otpEmailSent'),
-                        description: t('otpEmailSentDescription')
+                        title: t("otpEmailSent"),
+                        description: t("otpEmailSentDescription")
                     });
                     return;
                 }
@@ -202,7 +203,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             .catch((e) => {
                 console.error(e);
                 setWhitelistError(
-                    formatAxiosError(e, t('otpEmailErrorAuthenticate'))
+                    formatAxiosError(e, t("otpEmailErrorAuthenticate"))
                 );
             })
             .then(() => setLoadingLogin(false));
@@ -227,7 +228,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             .catch((e) => {
                 console.error(e);
                 setPincodeError(
-                    formatAxiosError(e, t('pincodeErrorAuthenticate'))
+                    formatAxiosError(e, t("pincodeErrorAuthenticate"))
                 );
             })
             .then(() => setLoadingLogin(false));
@@ -255,7 +256,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             .catch((e) => {
                 console.error(e);
                 setPasswordError(
-                    formatAxiosError(e, t('passwordErrorAuthenticate'))
+                    formatAxiosError(e, t("passwordErrorAuthenticate"))
                 );
             })
             .finally(() => setLoadingLogin(false));
@@ -276,13 +277,23 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         }
     }
 
+    function getTitle() {
+        return t("authenticationRequired");
+    }
+
+    function getSubtitle(resourceName: string) {
+        return numMethods > 1
+            ? t("authenticationMethodChoose", { name: props.resource.name })
+            : t("authenticationRequest", { name: props.resource.name });
+    }
+
     return (
         <div>
             {!accessDenied ? (
                 <div>
                     <div className="text-center mb-2">
                         <span className="text-sm text-muted-foreground">
-                            {t('poweredBy')}{" "}
+                            {t("poweredBy")}{" "}
                             <Link
                                 href="https://github.com/fosrl/pangolin"
                                 target="_blank"
@@ -295,11 +306,9 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                     </div>
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t('authenticationRequired')}</CardTitle>
+                            <CardTitle>{getTitle()}</CardTitle>
                             <CardDescription>
-                                {numMethods > 1
-                                    ? t('authenticationMethodChoose', {name: props.resource.name})
-                                    : t('authenticationRequest', {name: props.resource.name})}
+                                {getSubtitle(props.resource.name)}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -329,19 +338,19 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                         {props.methods.password && (
                                             <TabsTrigger value="password">
                                                 <Key className="w-4 h-4 mr-1" />{" "}
-                                                {t('password')}
+                                                {t("password")}
                                             </TabsTrigger>
                                         )}
                                         {props.methods.sso && (
                                             <TabsTrigger value="sso">
                                                 <User className="w-4 h-4 mr-1" />{" "}
-                                                {t('user')}
+                                                {t("user")}
                                             </TabsTrigger>
                                         )}
                                         {props.methods.whitelist && (
                                             <TabsTrigger value="whitelist">
                                                 <AtSign className="w-4 h-4 mr-1" />{" "}
-                                                {t('email')}
+                                                {t("email")}
                                             </TabsTrigger>
                                         )}
                                     </TabsList>
@@ -364,7 +373,9 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel>
-                                                                {t('pincodeInput')}
+                                                                {t(
+                                                                    "pincodeInput"
+                                                                )}
                                                             </FormLabel>
                                                             <FormControl>
                                                                 <div className="flex justify-center">
@@ -433,7 +444,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                     disabled={loadingLogin}
                                                 >
                                                     <LockIcon className="w-4 h-4 mr-2" />
-                                                    {t('pincodeSubmit')}
+                                                    {t("pincodeSubmit")}
                                                 </Button>
                                             </form>
                                         </Form>
@@ -459,7 +470,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel>
-                                                                {t('password')}
+                                                                {t("password")}
                                                             </FormLabel>
                                                             <FormControl>
                                                                 <Input
@@ -487,7 +498,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                     disabled={loadingLogin}
                                                 >
                                                     <LockIcon className="w-4 h-4 mr-2" />
-                                                    {t('passwordSubmit')}
+                                                    {t("passwordSubmit")}
                                                 </Button>
                                             </form>
                                         </Form>
@@ -528,7 +539,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('email')}
+                                                                    {t("email")}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -537,7 +548,9 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                                     />
                                                                 </FormControl>
                                                                 <FormDescription>
-                                                                    {t('otpEmailDescription')}
+                                                                    {t(
+                                                                        "otpEmailDescription"
+                                                                    )}
                                                                 </FormDescription>
                                                                 <FormMessage />
                                                             </FormItem>
@@ -559,7 +572,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                         disabled={loadingLogin}
                                                     >
                                                         <Send className="w-4 h-4 mr-2" />
-                                                        {t('otpEmailSend')}
+                                                        {t("otpEmailSend")}
                                                     </Button>
                                                 </form>
                                             </Form>
@@ -581,7 +594,9 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('otpEmail')}
+                                                                    {t(
+                                                                        "otpEmail"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -609,7 +624,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                         disabled={loadingLogin}
                                                     >
                                                         <LockIcon className="w-4 h-4 mr-2" />
-                                                        {t('otpEmailSubmit')}
+                                                        {t("otpEmailSubmit")}
                                                     </Button>
 
                                                     <Button
@@ -621,7 +636,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                                             submitOtpForm.reset();
                                                         }}
                                                     >
-                                                        {t('backToEmail')}
+                                                        {t("backToEmail")}
                                                     </Button>
                                                 </form>
                                             </Form>
@@ -634,7 +649,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                     {supporterStatus?.visible && (
                         <div className="text-center mt-2">
                             <span className="text-sm text-muted-foreground opacity-50">
-                                {t('noSupportKey')}
+                                {t("noSupportKey")}
                             </span>
                         </div>
                     )}

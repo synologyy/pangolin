@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { db } from "@server/db";
+import { db, users } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
-import { users } from "@server/db";
 import { fromError } from "zod-validation-error";
 import createHttpError from "http-errors";
 import response from "@server/lib/response";
@@ -22,15 +21,14 @@ import { hashPassword } from "@server/auth/password";
 import { checkValidInvite } from "@server/auth/checkValidInvite";
 import { passwordSchema } from "@server/auth/passwordSchema";
 import { UserType } from "@server/types/UserTypes";
+import { build } from "@server/build";
 
 export const signupBodySchema = z.object({
-    email: z
-        .string()
-        .toLowerCase()
-        .email(),
+    email: z.string().toLowerCase().email(),
     password: passwordSchema,
     inviteToken: z.string().optional(),
-    inviteId: z.string().optional()
+    inviteId: z.string().optional(),
+    termsAcceptedTimestamp: z.string().nullable().optional()
 });
 
 export type SignUpBody = z.infer<typeof signupBodySchema>;
@@ -55,9 +53,8 @@ export async function signup(
         );
     }
 
-    const { email, password, inviteToken, inviteId } = parsedBody.data;
-
-    logger.debug("signup", { email, password, inviteToken, inviteId });
+    const { email, password, inviteToken, inviteId, termsAcceptedTimestamp } =
+        parsedBody.data;
 
     const passwordHash = await hashPassword(password);
     const userId = generateId(15);
@@ -143,19 +140,34 @@ export async function signup(
 
             if (diff < 2) {
                 // If the user was created less than 2 hours ago, we don't want to create a new user
-                return response<SignUpResponse>(res, {
-                    data: {
-                        emailVerificationRequired: true
-                    },
-                    success: true,
-                    error: false,
-                    message: `A user with that email address already exists. We sent an email to ${email} with a verification code.`,
-                    status: HttpCode.OK
-                });
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "A user with that email address already exists"
+                    )
+                );
+                // return response<SignUpResponse>(res, {
+                //     data: {
+                //         emailVerificationRequired: true
+                //     },
+                //     success: true,
+                //     error: false,
+                //     message: `A user with that email address already exists. We sent an email to ${email} with a verification code.`,
+                //     status: HttpCode.OK
+                // });
             } else {
                 // If the user was created more than 2 hours ago, we want to delete the old user and create a new one
                 await db.delete(users).where(eq(users.userId, user.userId));
             }
+        }
+
+        if (build === "saas" && !termsAcceptedTimestamp) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "You must accept the terms of service and privacy policy"
+                )
+            );
         }
 
         await db.insert(users).values({
@@ -164,7 +176,9 @@ export async function signup(
             username: email,
             email: email,
             passwordHash,
-            dateCreated: moment().toISOString()
+            dateCreated: moment().toISOString(),
+            termsAcceptedTimestamp: termsAcceptedTimestamp || null,
+            termsVersion: "1"
         });
 
         // give the user their default permissions:

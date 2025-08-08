@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, UserOrg } from "@server/db";
 import { roles, userInvites, userOrgs, users } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -92,6 +92,7 @@ export async function acceptInvite(
         }
 
         let roleId: number;
+        let totalUsers: UserOrg[] | undefined;
         // get the role to make sure it exists
         const existingRole = await db
             .select()
@@ -122,6 +123,12 @@ export async function acceptInvite(
             await trx
                 .delete(userInvites)
                 .where(eq(userInvites.inviteId, inviteId));
+
+            // Get the total number of users in the org now
+            totalUsers = await db
+                .select()
+                .from(userOrgs)
+                .where(eq(userOrgs.orgId, existingInvite.orgId));
         });
 
         return response<AcceptInviteResponse>(res, {

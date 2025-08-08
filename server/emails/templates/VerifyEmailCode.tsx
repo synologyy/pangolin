@@ -1,5 +1,5 @@
+import React from "react";
 import { Body, Head, Html, Preview, Tailwind } from "@react-email/components";
-import * as React from "react";
 import { themeColors } from "./lib/theme";
 import {
     EmailContainer,
@@ -24,25 +24,24 @@ export const VerifyEmail = ({
     verificationCode,
     verifyLink
 }: VerifyEmailProps) => {
-    const previewText = `Your verification code is ${verificationCode}`;
+    const previewText = `Verify your email with code: ${verificationCode}`;
 
     return (
         <Html>
             <Head />
             <Preview>{previewText}</Preview>
             <Tailwind config={themeColors}>
-                <Body className="font-sans">
+                <Body className="font-sans bg-gray-50">
                     <EmailContainer>
                         <EmailLetterHead />
 
-                        <EmailHeading>Please Verify Your Email</EmailHeading>
+                        {/* <EmailHeading>Verify Your Email Address</EmailHeading> */}
 
-                        <EmailGreeting>Hi {username || "there"},</EmailGreeting>
+                        <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            You’ve requested to verify your email. Please use
-                            the code below to complete the verification process
-                            upon logging in.
+                            Welcome! To complete your account setup, please
+                            verify your email address using the code below.
                         </EmailText>
 
                         <EmailSection>
@@ -50,7 +49,8 @@ export const VerifyEmail = ({
                         </EmailSection>
 
                         <EmailText>
-                            If you didn’t request this, you can safely ignore
+                            This verification code will expire in 15 minutes. If
+                            you didn't create an account, you can safely ignore
                             this email.
                         </EmailText>
 

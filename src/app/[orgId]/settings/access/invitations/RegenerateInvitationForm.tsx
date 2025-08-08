@@ -201,7 +201,7 @@ export default function RegenerateInvitationForm({
                                         setValidHours(parseInt(value))
                                     }
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="w-full">
                                         <SelectValue placeholder={t('inviteValidityPeriodSelect')} />
                                     </SelectTrigger>
                                     <SelectContent>

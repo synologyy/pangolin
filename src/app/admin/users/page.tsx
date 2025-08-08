@@ -38,7 +38,9 @@ export default async function UsersPage(props: PageProps) {
             idpId: row.idpId,
             idpName: row.idpName || t('idpNameInternal'),
             dateCreated: row.dateCreated,
-            serverAdmin: row.serverAdmin
+            serverAdmin: row.serverAdmin,
+            twoFactorEnabled: row.twoFactorEnabled,
+            twoFactorSetupRequested: row.twoFactorSetupRequested
         };
     });
 

@@ -31,7 +31,9 @@ import CopyToClipboard from "@app/components/CopyToClipboard";
 import { Switch } from "@app/components/ui/switch";
 import { AxiosResponse } from "axios";
 import { UpdateResourceResponse } from "@server/routers/resource";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
+import { InfoPopup } from "@app/components/ui/info-popup";
+import { Badge } from "@app/components/ui/badge";
 
 export type ResourceRow = {
     id: number;
@@ -45,6 +47,7 @@ export type ResourceRow = {
     protocol: string;
     proxyPort: number | null;
     enabled: boolean;
+    domainId?: string;
 };
 
 type ResourcesTableProps = {
@@ -65,11 +68,11 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
     const deleteResource = (resourceId: number) => {
         api.delete(`/resource/${resourceId}`)
             .catch((e) => {
-                console.error(t('resourceErrorDelte'), e);
+                console.error(t("resourceErrorDelte"), e);
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorDelte'),
-                    description: formatAxiosError(e, t('resourceErrorDelte'))
+                    title: t("resourceErrorDelte"),
+                    description: formatAxiosError(e, t("resourceErrorDelte"))
                 });
             })
             .then(() => {
@@ -89,50 +92,16 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourcesErrorUpdate'),
-                    description: formatAxiosError(e, t('resourcesErrorUpdateDescription'))
+                    title: t("resourcesErrorUpdate"),
+                    description: formatAxiosError(
+                        e,
+                        t("resourcesErrorUpdateDescription")
+                    )
                 });
             });
     }
 
     const columns: ColumnDef<ResourceRow>[] = [
-        {
-            accessorKey: "dots",
-            header: "",
-            cell: ({ row }) => {
-                const resourceRow = row.original;
-                const router = useRouter();
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <Link
-                                className="block w-full"
-                                href={`/${resourceRow.orgId}/settings/resources/${resourceRow.id}`}
-                            >
-                                <DropdownMenuItem>
-                                    {t('viewSettings')}
-                                </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelectedResource(resourceRow);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            >
-                                <span className="text-red-500">{t('delete')}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
         {
             accessorKey: "name",
             header: ({ column }) => {
@@ -143,7 +112,7 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('name')}
+                        {t("name")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -159,7 +128,7 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('site')}
+                        {t("site")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -170,7 +139,7 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                     <Link
                         href={`/${resourceRow.orgId}/settings/sites/${resourceRow.siteId}`}
                     >
-                        <Button variant="outline">
+                        <Button variant="outline" size="sm">
                             {resourceRow.site}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -180,7 +149,7 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
         },
         {
             accessorKey: "protocol",
-            header: t('protocol'),
+            header: t("protocol"),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return <span>{resourceRow.protocol.toUpperCase()}</span>;
@@ -188,15 +157,20 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
         },
         {
             accessorKey: "domain",
-            header: t('access'),
+            header: t("access"),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div>
+                    <div className="flex items-center space-x-2">
                         {!resourceRow.http ? (
                             <CopyToClipboard
                                 text={resourceRow.proxyPort!.toString()}
                                 isLink={false}
+                            />
+                        ) : !resourceRow.domainId ? (
+                            <InfoPopup
+                                info={t("domainNotFoundDescription")}
+                                text={t("domainNotFound")}
                             />
                         ) : (
                             <CopyToClipboard
@@ -218,7 +192,7 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t('authentication')}
+                        {t("authentication")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -230,12 +204,12 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                         {resourceRow.authState === "protected" ? (
                             <span className="text-green-500 flex items-center space-x-2">
                                 <ShieldCheck className="w-4 h-4" />
-                                <span>{t('protected')}</span>
+                                <span>{t("protected")}</span>
                             </span>
                         ) : resourceRow.authState === "not_protected" ? (
                             <span className="text-yellow-500 flex items-center space-x-2">
                                 <ShieldOff className="w-4 h-4" />
-                                <span>{t('notProtected')}</span>
+                                <span>{t("notProtected")}</span>
                             </span>
                         ) : (
                             <span>-</span>
@@ -246,10 +220,15 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
         },
         {
             accessorKey: "enabled",
-            header: t('enabled'),
+            header: t("enabled"),
             cell: ({ row }) => (
                 <Switch
-                    defaultChecked={row.original.enabled}
+                    defaultChecked={
+                        row.original.http
+                            ? (!!row.original.domainId && row.original.enabled)
+                            : row.original.enabled
+                    }
+                    disabled={row.original.http ? !row.original.domainId : false}
                     onCheckedChange={(val) =>
                         toggleResourceEnabled(val, row.original.id)
                     }
@@ -262,11 +241,45 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                 const resourceRow = row.original;
                 return (
                     <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">
+                                        {t("openMenu")}
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <Link
+                                    className="block w-full"
+                                    href={`/${resourceRow.orgId}/settings/resources/${resourceRow.id}`}
+                                >
+                                    <DropdownMenuItem>
+                                        {t("viewSettings")}
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelectedResource(resourceRow);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("delete")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Link
                             href={`/${resourceRow.orgId}/settings/resources/${resourceRow.id}`}
                         >
-                            <Button variant={"outlinePrimary"} className="ml-2">
-                                {t('edit')}
+                            <Button
+                                variant={"secondary"}
+                                className="ml-2"
+                                size="sm"
+                            >
+                                {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
@@ -288,22 +301,22 @@ export default function SitesTable({ resources, orgId }: ResourcesTableProps) {
                     dialog={
                         <div>
                             <p className="mb-2">
-                                {t('resourceQuestionRemove', {selectedResource: selectedResource?.name || selectedResource?.id})}
+                                {t("resourceQuestionRemove", {
+                                    selectedResource:
+                                        selectedResource?.name ||
+                                        selectedResource?.id
+                                })}
                             </p>
 
-                            <p className="mb-2">
-                                {t('resourceMessageRemove')}
-                            </p>
+                            <p className="mb-2">{t("resourceMessageRemove")}</p>
 
-                            <p>
-                                {t('resourceMessageConfirm')}
-                            </p>
+                            <p>{t("resourceMessageConfirm")}</p>
                         </div>
                     }
-                    buttonText={t('resourceDeleteConfirm')}
+                    buttonText={t("resourceDeleteConfirm")}
                     onConfirm={async () => deleteResource(selectedResource!.id)}
                     string={selectedResource.name}
-                    title={t('resourceDelete')}
+                    title={t("resourceDelete")}
                 />
             )}
 

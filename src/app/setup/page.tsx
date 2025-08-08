@@ -2,8 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import Link from "next/link";
 import { toast } from "@app/hooks/useToast";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -13,8 +11,7 @@ import {
     CardHeader,
     CardTitle
 } from "@app/components/ui/card";
-import CopyTextBox from "@app/components/CopyTextBox";
-import { formatAxiosError } from "@app/lib/api";;
+import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { Separator } from "@/components/ui/separator";
@@ -32,7 +29,6 @@ import {
     FormMessage
 } from "@app/components/ui/form";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
-import CreateSiteForm from "../[orgId]/settings/sites/CreateSiteForm";
 import { useTranslations } from "next-intl";
 
 type Step = "org" | "site" | "resources";
@@ -41,6 +37,7 @@ export default function StepperForm() {
     const [currentStep, setCurrentStep] = useState<Step>("org");
     const [orgIdTaken, setOrgIdTaken] = useState(false);
     const t = useTranslations();
+    const { env } = useEnvContext();
 
     const [loading, setLoading] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
@@ -48,36 +45,62 @@ export default function StepperForm() {
     const [orgCreated, setOrgCreated] = useState(false);
 
     const orgSchema = z.object({
-        orgName: z.string().min(1, { message: t('orgNameRequired') }),
-        orgId: z.string().min(1, { message: t('orgIdRequired') })
+        orgName: z.string().min(1, { message: t("orgNameRequired") }),
+        orgId: z.string().min(1, { message: t("orgIdRequired") }),
+        subnet: z.string().min(1, { message: t("subnetRequired") })
     });
 
     const orgForm = useForm<z.infer<typeof orgSchema>>({
         resolver: zodResolver(orgSchema),
         defaultValues: {
             orgName: "",
-            orgId: ""
+            orgId: "",
+            subnet: ""
         }
     });
 
     const api = createApiClient(useEnvContext());
     const router = useRouter();
 
-    const checkOrgIdAvailability = useCallback(async (value: string) => {
-        if (loading || orgCreated) {
-            return;
-        }
+    // Fetch default subnet on component mount
+    useEffect(() => {
+        fetchDefaultSubnet();
+    }, []);
+
+    const fetchDefaultSubnet = async () => {
         try {
-            const res = await api.get(`/org/checkId`, {
-                params: {
-                    orgId: value
-                }
+            const res = await api.get(`/pick-org-defaults`);
+            if (res && res.data && res.data.data) {
+                orgForm.setValue("subnet", res.data.data.subnet);
+            }
+        } catch (e) {
+            console.error("Failed to fetch default subnet:", e);
+            toast({
+                title: "Error",
+                description: "Failed to fetch default subnet",
+                variant: "destructive"
             });
-            setOrgIdTaken(res.status !== 404);
-        } catch (error) {
-            setOrgIdTaken(false);
         }
-    }, [loading, orgCreated, api]);
+    };
+
+    const checkOrgIdAvailability = useCallback(
+        async (value: string) => {
+            if (loading || orgCreated) {
+                return;
+            }
+            try {
+                const res = await api.get(`/org/checkId`, {
+                    params: {
+                        orgId: value
+                    }
+                });
+                setOrgIdTaken(res.status !== 404);
+            } catch (error) {
+                setOrgIdTaken(false);
+            }
+        },
+        [loading, orgCreated, api]
+    );
 
     const debouncedCheckOrgIdAvailability = useCallback(
         debounce(checkOrgIdAvailability, 300),
@@ -105,7 +128,8 @@ export default function StepperForm() {
         try {
             const res = await api.put(`/org`, {
                 orgId: values.orgId,
-                name: values.orgName
+                name: values.orgName,
+                subnet: values.subnet
             });
 
             if (res && res.status === 201) {
@@ -114,9 +138,7 @@ export default function StepperForm() {
             }
         } catch (e) {
             console.error(e);
-            setError(
-                formatAxiosError(e, t('orgErrorCreate'))
-            );
+            setError(formatAxiosError(e, t("orgErrorCreate")));
         }
 
         setLoading(false);
@@ -126,10 +148,8 @@ export default function StepperForm() {
         <>
             <Card>
                 <CardHeader>
-                    <CardTitle>{t('setupNewOrg')}</CardTitle>
-                    <CardDescription>
-                        {t('setupCreate')}
-                    </CardDescription>
+                    <CardTitle>{t("setupNewOrg")}</CardTitle>
+                    <CardDescription>{t("setupCreate")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <section className="space-y-6">
@@ -151,7 +171,7 @@ export default function StepperForm() {
                                             : "text-muted-foreground"
                                     }`}
                                 >
-                                    {t('setupCreateOrg')}
+                                    {t("setupCreateOrg")}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center">
@@ -171,7 +191,7 @@ export default function StepperForm() {
                                             : "text-muted-foreground"
                                     }`}
                                 >
-                                    {t('siteCreate')}
+                                    {t("siteCreate")}
                                 </span>
                             </div>
                             <div className="flex flex-col items-center">
@@ -191,7 +211,7 @@ export default function StepperForm() {
                                             : "text-muted-foreground"
                                     }`}
                                 >
-                                    {t('setupCreateResources')}
+                                    {t("setupCreateResources")}
                                 </span>
                             </div>
                         </div>
@@ -210,7 +230,7 @@ export default function StepperForm() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('setupOrgName')}
+                                                    {t("setupOrgName")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -218,8 +238,15 @@ export default function StepperForm() {
                                                         {...field}
                                                         onChange={(e) => {
                                                             // Prevent "/" in orgName input
-                                                            const sanitizedValue = e.target.value.replace(/\//g, "-");
-                                                            const orgId = generateId(sanitizedValue);
+                                                            const sanitizedValue =
+                                                                e.target.value.replace(
+                                                                    /\//g,
+                                                                    "-"
+                                                                );
+                                                            const orgId =
+                                                                generateId(
+                                                                    sanitizedValue
+                                                                );
                                                             orgForm.setValue(
                                                                 "orgId",
                                                                 orgId
@@ -232,12 +259,15 @@ export default function StepperForm() {
                                                                 orgId
                                                             );
                                                         }}
-                                                        value={field.value.replace(/\//g, "-")}
+                                                        value={field.value.replace(
+                                                            /\//g,
+                                                            "-"
+                                                        )}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {t('orgDisplayName')}
+                                                    {t("orgDisplayName")}
                                                 </FormDescription>
                                             </FormItem>
                                         )}
@@ -248,7 +278,7 @@ export default function StepperForm() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('orgId')}
+                                                    {t("orgId")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -258,16 +288,44 @@ export default function StepperForm() {
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {t('setupIdentifierMessage')}
+                                                    {t(
+                                                        "setupIdentifierMessage"
+                                                    )}
                                                 </FormDescription>
                                             </FormItem>
                                         )}
                                     />
 
+                                    {env.flags.enableClients && (
+                                        <FormField
+                                            control={orgForm.control}
+                                            name="subnet"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        Subnet
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="text"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        Network subnet for this
+                                                        organization. A default
+                                                        value has been provided.
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
+
                                     {orgIdTaken && !orgCreated ? (
                                         <Alert variant="destructive">
                                             <AlertDescription>
-                                                {t('setupErrorIdentifier')}
+                                                {t("setupErrorIdentifier")}
                                             </AlertDescription>
                                         </Alert>
                                     ) : null}
@@ -290,7 +348,7 @@ export default function StepperForm() {
                                                 orgIdTaken
                                             }
                                         >
-                                            {t('setupCreateOrg')}
+                                            {t("setupCreateOrg")}
                                         </Button>
                                     </div>
                                 </form>

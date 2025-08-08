@@ -1,11 +1,5 @@
-import {
-    Body,
-    Head,
-    Html,
-    Preview,
-    Tailwind
-} from "@react-email/components";
-import * as React from "react";
+import React from "react";
+import { Body, Head, Html, Preview, Tailwind } from "@react-email/components";
 import { themeColors } from "./lib/theme";
 import {
     EmailContainer,
@@ -23,43 +17,51 @@ interface Props {
 }
 
 export const TwoFactorAuthNotification = ({ email, enabled }: Props) => {
-    const previewText = `Two-Factor Authentication has been ${enabled ? "enabled" : "disabled"}`;
+    const previewText = `Two-Factor Authentication ${enabled ? "enabled" : "disabled"} for your account`;
 
     return (
         <Html>
             <Head />
             <Preview>{previewText}</Preview>
             <Tailwind config={themeColors}>
-                <Body className="font-sans">
+                <Body className="font-sans bg-gray-50">
                     <EmailContainer>
                         <EmailLetterHead />
 
-                        <EmailHeading>
-                            Two-Factor Authentication{" "}
-                            {enabled ? "Enabled" : "Disabled"}
-                        </EmailHeading>
+                        {/* <EmailHeading> */}
+                        {/*     Security Update: 2FA{" "} */}
+                        {/*     {enabled ? "Enabled" : "Disabled"} */}
+                        {/* </EmailHeading> */}
 
-                        <EmailGreeting>Hi {email || "there"},</EmailGreeting>
+                        <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            This email confirms that Two-Factor Authentication
-                            has been successfully{" "}
-                            {enabled ? "enabled" : "disabled"} on your account.
+                            Two-factor authentication has been successfully{" "}
+                            <strong>{enabled ? "enabled" : "disabled"}</strong>{" "}
+                            on your account.
                         </EmailText>
 
                         {enabled ? (
-                            <EmailText>
-                                With Two-Factor Authentication enabled, your
-                                account is now more secure. Please ensure you
-                                keep your authentication method safe.
-                            </EmailText>
+                            <>
+                                <EmailText>
+                                    Your account is now protected with an
+                                    additional layer of security. Keep your
+                                    authentication method safe and accessible.
+                                </EmailText>
+                            </>
                         ) : (
-                            <EmailText>
-                                With Two-Factor Authentication disabled, your
-                                account may be less secure. We recommend
-                                enabling it to protect your account.
-                            </EmailText>
+                            <>
+                                <EmailText>
+                                    We recommend re-enabling two-factor
+                                    authentication to keep your account secure.
+                                </EmailText>
+                            </>
                         )}
+
+                        <EmailText>
+                            If you didn't make this change, please contact our
+                            support team immediately.
+                        </EmailText>
 
                         <EmailFooter>
                             <EmailSignature />

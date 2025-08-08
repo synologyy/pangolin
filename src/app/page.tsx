@@ -6,12 +6,13 @@ import { ListUserOrgsResponse } from "@server/routers/org";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import OrganizationLanding from "./components/OrganizationLanding";
+import OrganizationLanding from "@app/components/OrganizationLanding";
 import { pullEnv } from "@app/lib/pullEnv";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { Layout } from "@app/components/Layout";
-import { rootNavItems } from "./navigation";
 import { InitialSetupCompleteResponse } from "@server/routers/auth";
+import { cookies } from "next/headers";
+import { build } from "@server/build";
 
 export const dynamic = "force-dynamic";
 
@@ -72,9 +73,26 @@ export default async function Page(props: {
         }
     }
 
+    const allCookies = await cookies();
+    const lastOrgCookie = allCookies.get("pangolin-last-org")?.value;
+
+    const lastOrgExists = orgs.some((org) => org.orgId === lastOrgCookie);
+    if (lastOrgExists) {
+        redirect(`/${lastOrgCookie}`);
+    } else {
+        const ownedOrg = orgs.find((org) => org.isOwner);
+        if (ownedOrg) {
+            redirect(`/${ownedOrg.orgId}`);
+        } else {
+            if (!env.flags.disableUserCreateOrg || user.serverAdmin) {
+                redirect("/setup");
+            }
+        }
+    }
+
     return (
         <UserProvider user={user}>
-            <Layout orgs={orgs} navItems={rootNavItems} showBreadcrumbs={false}>
+            <Layout orgs={orgs} navItems={[]}>
                 <div className="w-full max-w-md mx-auto md:mt-32 mt-4">
                     <OrganizationLanding
                         disableCreateOrg={

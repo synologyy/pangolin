@@ -5,17 +5,9 @@ import { authCookieHeader } from "@app/lib/api/cookies";
 import { GetOrgUserResponse } from "@server/routers/user";
 import OrgUserProvider from "@app/providers/OrgUserProvider";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator
-} from "@app/components/ui/breadcrumb";
-import Link from "next/link";
 import { cache } from "react";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 interface UserLayoutProps {
     children: React.ReactNode;
@@ -45,7 +37,7 @@ export default async function UserLayoutProps(props: UserLayoutProps) {
 
     const navItems = [
         {
-            title: t('accessControls'),
+            title: t("accessControls"),
             href: "/{orgId}/settings/access/users/{userId}/access-controls"
         }
     ];
@@ -54,12 +46,10 @@ export default async function UserLayoutProps(props: UserLayoutProps) {
         <>
             <SettingsSectionTitle
                 title={`${user?.email}`}
-                description={t('userDescription2')}
+                description={t("userDescription2")}
             />
             <OrgUserProvider orgUser={user}>
-                <HorizontalTabs items={navItems}>
-                    {children}
-                </HorizontalTabs>
+                <HorizontalTabs items={navItems}>{children}</HorizontalTabs>
             </OrgUserProvider>
         </>
     );

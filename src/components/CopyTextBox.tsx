@@ -40,7 +40,7 @@ export default function CopyTextBox({
         >
             <pre
                 ref={textRef}
-                className={`p-2 pr-16 text-sm w-full ${
+                className={`p-4 pr-16 text-sm w-full ${
                     wrapText
                         ? "whitespace-pre-wrap break-words"
                         : "overflow-x-auto"

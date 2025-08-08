@@ -2,6 +2,7 @@ import { render } from "@react-email/render";
 import { ReactElement } from "react";
 import emailClient from "@server/emails";
 import logger from "@server/logger";
+import config from "@server/lib/config";
 
 export async function sendEmail(
     template: ReactElement,
@@ -24,9 +25,11 @@ export async function sendEmail(
 
     const emailHtml = await render(template);
 
+    const appName = "Pangolin";
+
     await emailClient.sendMail({
         from: {
-            name: opts.name || "Pangolin",
+            name: opts.name || appName,
             address: opts.from,
         },
         to: opts.to,

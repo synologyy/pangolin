@@ -105,7 +105,7 @@ export async function deleteTarget(
                     .where(eq(newts.siteId, site.siteId))
                     .limit(1);
 
-                removeTargets(newt.newtId, [deletedTarget], resource.protocol);
+                removeTargets(newt.newtId, [deletedTarget], resource.protocol, resource.proxyPort);
             }
         }
 

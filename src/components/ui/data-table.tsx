@@ -23,13 +23,14 @@ import { Button } from "@app/components/ui/button";
 import { useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, RefreshCw } from "lucide-react";
 import {
     Card,
     CardContent,
     CardHeader,
     CardTitle
 } from "@app/components/ui/card";
+import { useTranslations } from "next-intl";
 
 type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
@@ -37,6 +38,8 @@ type DataTableProps<TData, TValue> = {
     title?: string;
     addButtonText?: string;
     onAdd?: () => void;
+    onRefresh?: () => void;
+    isRefreshing?: boolean;
     searchPlaceholder?: string;
     searchColumn?: string;
     defaultSort?: {
@@ -51,6 +54,8 @@ export function DataTable<TData, TValue>({
     title,
     addButtonText,
     onAdd,
+    onRefresh,
+    isRefreshing,
     searchPlaceholder = "Search...",
     searchColumn = "name",
     defaultSort
@@ -60,6 +65,7 @@ export function DataTable<TData, TValue>({
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<any>([]);
+    const t = useTranslations();
 
     const table = useReactTable({
         data,
@@ -87,8 +93,8 @@ export function DataTable<TData, TValue>({
     return (
         <div className="container mx-auto max-w-12xl">
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <div className="flex items-center max-w-sm w-full relative mr-2">
+                <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-4">
+                    <div className="flex items-center w-full sm:max-w-sm sm:mr-2 relative">
                         <Input
                             placeholder={searchPlaceholder}
                             value={globalFilter ?? ""}
@@ -99,12 +105,26 @@ export function DataTable<TData, TValue>({
                         />
                         <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                     </div>
-                    {onAdd && addButtonText && (
-                        <Button onClick={onAdd}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            {addButtonText}
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2 sm:justify-end">
+                        {onRefresh && (
+                            <Button
+                                variant="outline"
+                                onClick={onRefresh}
+                                disabled={isRefreshing}
+                            >
+                                <RefreshCw
+                                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                                />
+                                {t("refresh")}
+                            </Button>
+                        )}
+                        {onAdd && addButtonText && (
+                            <Button onClick={onAdd}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                {addButtonText}
+                            </Button>
+                        )}
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>

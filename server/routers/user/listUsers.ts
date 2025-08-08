@@ -49,7 +49,8 @@ async function queryUsers(orgId: string, limit: number, offset: number) {
             roleName: roles.name,
             isOwner: userOrgs.isOwner,
             idpName: idp.name,
-            idpId: users.idpId
+            idpId: users.idpId,
+            twoFactorEnabled: users.twoFactorEnabled,
         })
         .from(users)
         .leftJoin(userOrgs, eq(users.userId, userOrgs.userId))

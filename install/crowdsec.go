@@ -13,7 +13,7 @@ import (
 
 func installCrowdsec(config Config) error {
 
-	if err := stopContainers(); err != nil {
+	if err := stopContainers(config.InstallationContainerType); err != nil {
 		return fmt.Errorf("failed to stop containers: %v", err)
 	}
 
@@ -72,12 +72,12 @@ func installCrowdsec(config Config) error {
 		os.Exit(1)
 	}
 
-	if err := startContainers(); err != nil {
+	if err := startContainers(config.InstallationContainerType); err != nil {
 		return fmt.Errorf("failed to start containers: %v", err)
 	}
 
 	// get API key
-	apiKey, err := GetCrowdSecAPIKey()
+	apiKey, err := GetCrowdSecAPIKey(config.InstallationContainerType)
 	if err != nil {
 		return fmt.Errorf("failed to get API key: %v", err)
 	}
@@ -87,7 +87,7 @@ func installCrowdsec(config Config) error {
 		return fmt.Errorf("failed to replace bouncer key: %v", err)
 	}
 
-	if err := restartContainer("traefik"); err != nil {
+	if err := restartContainer("traefik", config.InstallationContainerType); err != nil {
 		return fmt.Errorf("failed to restart containers: %v", err)
 	}
 
@@ -110,9 +110,9 @@ func checkIsCrowdsecInstalledInCompose() bool {
 	return bytes.Contains(content, []byte("crowdsec:"))
 }
 
-func GetCrowdSecAPIKey() (string, error) {
+func GetCrowdSecAPIKey(containerType SupportedContainer) (string, error) {
 	// First, ensure the container is running
-	if err := waitForContainer("crowdsec"); err != nil {
+	if err := waitForContainer("crowdsec", containerType); err != nil {
 		return "", fmt.Errorf("waiting for container: %w", err)
 	}
 

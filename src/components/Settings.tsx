@@ -19,7 +19,7 @@ export function SettingsSectionForm({
 }: {
     children: React.ReactNode;
 }) {
-    return <div className="max-w-xl">{children}</div>;
+    return <div className="max-w-xl space-y-4">{children}</div>;
 }
 
 export function SettingsSectionTitle({

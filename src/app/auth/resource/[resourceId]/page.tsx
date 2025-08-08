@@ -59,8 +59,13 @@ export default async function ResourceAuthPage(props: {
         try {
             const serverResourceHost = new URL(authInfo.url).host;
             const redirectHost = new URL(searchParams.redirect).host;
+            const redirectPort = new URL(searchParams.redirect).port;
+            const serverResourceHostWithPort = `${serverResourceHost}:${redirectPort}`;
+
 
             if (serverResourceHost === redirectHost) {
+                redirectUrl = searchParams.redirect;
+            } else if ( serverResourceHostWithPort === redirectHost ) {
                 redirectUrl = searchParams.redirect;
             }
         } catch (e) {}

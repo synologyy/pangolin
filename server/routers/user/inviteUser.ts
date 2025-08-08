@@ -99,6 +99,7 @@ export async function inviteUser(
             regenerate
         } = parsedBody.data;
 
+
         // Check if the organization exists
         const org = await db
             .select()

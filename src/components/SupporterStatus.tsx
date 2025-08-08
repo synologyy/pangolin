@@ -9,6 +9,12 @@ import {
     PopoverContent,
     PopoverTrigger
 } from "@app/components/ui/popover";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@app/components/ui/tooltip";
 import { Button } from "./ui/button";
 import {
     Credenza,
@@ -46,18 +52,23 @@ import {
     CardHeader,
     CardTitle
 } from "./ui/card";
-import { Check, ExternalLink } from "lucide-react";
+import { Check, ExternalLink, Heart } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
 
-export default function SupporterStatus() {
+interface SupporterStatusProps {
+    isCollapsed?: boolean;
+}
+
+export default function SupporterStatus({ isCollapsed = false }: SupporterStatusProps) {
     const { supporterStatus, updateSupporterStatus } =
         useSupporterStatusContext();
     const [supportOpen, setSupportOpen] = useState(false);
     const [keyOpen, setKeyOpen] = useState(false);
     const [purchaseOptionsOpen, setPurchaseOptionsOpen] = useState(false);
 
-    const api = createApiClient(useEnvContext());
+    const { env } = useEnvContext();
+    const api = createApiClient({ env });
     const t = useTranslations();
 
     const formSchema = z.object({
@@ -208,7 +219,7 @@ export default function SupporterStatus() {
                             </Link>{" "}
                             {t('supportKeyPurchase2')}{" "}
                             <Link
-                                href="https://docs.fossorial.io/supporter-program"
+                                href="https://docs.digpangolin.com/self-host/supporter-program"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline"
@@ -411,16 +422,36 @@ export default function SupporterStatus() {
             </Credenza>
 
             {supporterStatus?.visible ? (
-                <Button
-                    variant="outlinePrimary"
-                    size="sm"
-                    className="gap-2 w-full"
-                    onClick={() => {
-                        setPurchaseOptionsOpen(true);
-                    }}
-                >
-                    {t('supportKeyBuy')}
-                </Button>
+                isCollapsed ? (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    className="w-8 h-8"
+                                    onClick={() => {
+                                        setPurchaseOptionsOpen(true);
+                                    }}
+                                >
+                                    <Heart className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" sideOffset={8}>
+                                <p>{t('supportKeyBuy')}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ) : (
+                    <Button
+                        size="sm"
+                        className="gap-2 w-full"
+                        onClick={() => {
+                            setPurchaseOptionsOpen(true);
+                        }}
+                    >
+                        {t('supportKeyBuy')}
+                    </Button>
+                )
             ) : null}
         </>
     );

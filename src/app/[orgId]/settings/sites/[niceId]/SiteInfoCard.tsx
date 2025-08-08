@@ -10,12 +10,14 @@ import {
     InfoSectionTitle
 } from "@app/components/InfoSection";
 import { useTranslations } from "next-intl";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 
 type SiteInfoCardProps = {};
 
 export default function SiteInfoCard({}: SiteInfoCardProps) {
     const { site, updateSite } = useSiteContext();
     const t = useTranslations();
+    const { env } = useEnvContext();
 
     const getConnectionTypeString = (type: string) => {
         if (type === "newt") {
@@ -23,32 +25,34 @@ export default function SiteInfoCard({}: SiteInfoCardProps) {
         } else if (type === "wireguard") {
             return "WireGuard";
         } else if (type === "local") {
-            return t('local');
+            return t("local");
         } else {
-            return t('unknown');
+            return t("unknown");
         }
     };
 
     return (
         <Alert>
             <InfoIcon className="h-4 w-4" />
-            <AlertTitle className="font-semibold">{t('siteInfo')}</AlertTitle>
+            <AlertTitle className="font-semibold">{t("siteInfo")}</AlertTitle>
             <AlertDescription className="mt-4">
-                <InfoSections cols={2}>
+                <InfoSections cols={env.flags.enableClients ? 3 : 2}>
                     {(site.type == "newt" || site.type == "wireguard") && (
                         <>
                             <InfoSection>
-                                <InfoSectionTitle>{t('status')}</InfoSectionTitle>
+                                <InfoSectionTitle>
+                                    {t("status")}
+                                </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {site.online ? (
                                         <div className="text-green-500 flex items-center space-x-2">
                                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span>{t('online')}</span>
+                                            <span>{t("online")}</span>
                                         </div>
                                     ) : (
                                         <div className="text-neutral-500 flex items-center space-x-2">
                                             <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                                            <span>{t('offline')}</span>
+                                            <span>{t("offline")}</span>
                                         </div>
                                     )}
                                 </InfoSectionContent>
@@ -56,11 +60,22 @@ export default function SiteInfoCard({}: SiteInfoCardProps) {
                         </>
                     )}
                     <InfoSection>
-                        <InfoSectionTitle>{t('connectionType')}</InfoSectionTitle>
+                        <InfoSectionTitle>
+                            {t("connectionType")}
+                        </InfoSectionTitle>
                         <InfoSectionContent>
                             {getConnectionTypeString(site.type)}
                         </InfoSectionContent>
                     </InfoSection>
+
+                    {env.flags.enableClients && (
+                        <InfoSection>
+                            <InfoSectionTitle>Address</InfoSectionTitle>
+                            <InfoSectionContent>
+                                {site.address?.split("/")[0]}
+                            </InfoSectionContent>
+                        </InfoSection>
+                    )}
                 </InfoSections>
             </AlertDescription>
         </Alert>

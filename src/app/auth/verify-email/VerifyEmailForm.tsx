@@ -10,7 +10,7 @@ import {
     CardContent,
     CardDescription,
     CardHeader,
-    CardTitle,
+    CardTitle
 } from "@/components/ui/card";
 import {
     Form,
@@ -19,21 +19,21 @@ import {
     FormField,
     FormItem,
     FormLabel,
-    FormMessage,
+    FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
     InputOTP,
     InputOTPGroup,
-    InputOTPSlot,
+    InputOTPSlot
 } from "@/components/ui/input-otp";
 import { AxiosResponse } from "axios";
 import { VerifyEmailResponse } from "@server/routers/auth";
-import { Loader2 } from "lucide-react";
+import { ArrowRight, IdCard, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { toast } from "@app/hooks/useToast";
 import { useRouter } from "next/navigation";
-import { formatAxiosError } from "@app/lib/api";;
+import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
@@ -46,7 +46,7 @@ export type VerifyEmailFormProps = {
 
 export default function VerifyEmailForm({
     email,
-    redirect,
+    redirect
 }: VerifyEmailFormProps) {
     const router = useRouter();
     const t = useTranslations();
@@ -58,19 +58,34 @@ export default function VerifyEmailForm({
 
     const api = createApiClient(useEnvContext());
 
+    function logout() {
+        api.post("/auth/logout")
+            .catch((e) => {
+                console.error(t("logoutError"), e);
+                toast({
+                    title: t("logoutError"),
+                    description: formatAxiosError(e, t("logoutError"))
+                });
+            })
+            .then(() => {
+                router.push("/auth/login");
+                router.refresh();
+            });
+    }
+
     const FormSchema = z.object({
-        email: z.string().email({ message: t('emailInvalid') }),
+        email: z.string().email({ message: t("emailInvalid") }),
         pin: z.string().min(8, {
-            message: t('verificationCodeLengthRequirements'),
-        }),
+            message: t("verificationCodeLengthRequirements")
+        })
     });
 
     const form = useForm<z.infer<typeof FormSchema>>({
         resolver: zodResolver(FormSchema),
         defaultValues: {
             email: email,
-            pin: "",
-        },
+            pin: ""
+        }
     });
 
     async function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -78,19 +93,17 @@ export default function VerifyEmailForm({
 
         const res = await api
             .post<AxiosResponse<VerifyEmailResponse>>("/auth/verify-email", {
-                code: data.pin,
+                code: data.pin
             })
             .catch((e) => {
-                setError(formatAxiosError(e, t('errorOccurred')));
-                console.error(t('emailErrorVerify'), e);
+                setError(formatAxiosError(e, t("errorOccurred")));
+                console.error(t("emailErrorVerify"), e);
                 setIsSubmitting(false);
             });
 
         if (res && res.data?.data?.valid) {
             setError(null);
-            setSuccessMessage(
-                t('emailVerified')
-            );
+            setSuccessMessage(t("emailVerified"));
             setTimeout(() => {
                 if (redirect) {
                     const safe = cleanRedirect(redirect);
@@ -107,16 +120,16 @@ export default function VerifyEmailForm({
         setIsResending(true);
 
         const res = await api.post("/auth/verify-email/request").catch((e) => {
-            setError(formatAxiosError(e, t('errorOccurred')));
-            console.error(t('verificationCodeErrorResend'), e);
+            setError(formatAxiosError(e, t("errorOccurred")));
+            console.error(t("verificationCodeErrorResend"), e);
         });
 
         if (res) {
             setError(null);
             toast({
                 variant: "default",
-                title: t('verificationCodeResend'),
-                description: t('verificationCodeResendDescription'),
+                title: t("verificationCodeResend"),
+                description: t("verificationCodeResendDescription")
             });
         }
 
@@ -127,40 +140,26 @@ export default function VerifyEmailForm({
         <div>
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>{t('emailVerify')}</CardTitle>
+                    <CardTitle>{t("emailVerify")}</CardTitle>
                     <CardDescription>
-                        {t('emailVerifyDescription')}
+                        {t("emailVerifyDescription")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
+                    <p className="text-center text-muted-foreground mb-4">
+                        {email}
+                    </p>
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit(onSubmit)}
                             className="space-y-4"
+                            id="verify-email-form"
                         >
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>{t('email')}</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...field}
-                                                disabled
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
                             <FormField
                                 control={form.control}
                                 name="pin"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>{t('verificationCode')}</FormLabel>
                                         <FormControl>
                                             <div className="flex justify-center">
                                                 <InputOTP
@@ -197,12 +196,22 @@ export default function VerifyEmailForm({
                                             </div>
                                         </FormControl>
                                         <FormMessage />
-                                        <FormDescription>
-                                            {t('verificationCodeEmailSent')}
-                                        </FormDescription>
                                     </FormItem>
                                 )}
                             />
+
+                            <div className="text-center text-muted-foreground">
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    onClick={handleResendCode}
+                                    disabled={isResending}
+                                >
+                                    {isResending
+                                        ? t("emailVerifyResendProgress")
+                                        : t("emailVerifyResend")}
+                                </Button>
+                            </div>
 
                             {error && (
                                 <Alert variant="destructive">
@@ -222,29 +231,26 @@ export default function VerifyEmailForm({
                                 type="submit"
                                 className="w-full"
                                 disabled={isSubmitting}
+                                form="verify-email-form"
                             >
                                 {isSubmitting && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 )}
-                                {t('submit')}
+                                {t("submit")}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant={"secondary"}
+                                className="w-full"
+                                onClick={logout}
+                            >
+                                Log in with another account
                             </Button>
                         </form>
                     </Form>
                 </CardContent>
             </Card>
-
-            <div className="text-center text-muted-foreground mt-2">
-                <Button
-                    type="button"
-                    variant="link"
-                    onClick={handleResendCode}
-                    disabled={isResending}
-                >
-                    {isResending
-                        ? t('emailVerifyResendProgress')
-                        : t('emailVerifyResend')}
-                </Button>
-            </div>
         </div>
     );
 }

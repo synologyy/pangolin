@@ -1,4 +1,4 @@
-import { db } from "@server/db";
+import { db, newts } from "@server/db";
 import { orgs, roleSites, sites, userSites } from "@server/db";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
@@ -9,6 +9,42 @@ import createHttpError from "http-errors";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import NodeCache from "node-cache";
+import semver from "semver";
+
+const newtVersionCache = new NodeCache({ stdTTL: 3600 }); // 1 hours in seconds
+
+async function getLatestNewtVersion(): Promise<string | null> {
+    try {
+        const cachedVersion = newtVersionCache.get<string>("latestNewtVersion");
+        if (cachedVersion) {
+            return cachedVersion;
+        }
+
+        const response = await fetch(
+            "https://api.github.com/repos/fosrl/newt/tags"
+        );
+        if (!response.ok) {
+            logger.warn("Failed to fetch latest Newt version from GitHub");
+            return null;
+        }
+
+        const tags = await response.json();
+        if (!Array.isArray(tags) || tags.length === 0) {
+            logger.warn("No tags found for Newt repository");
+            return null;
+        }
+
+        const latestVersion = tags[0].name;
+
+        newtVersionCache.set("latestNewtVersion", latestVersion);
+
+        return latestVersion;
+    } catch (error) {
+        logger.error("Error fetching latest Newt version:", error);
+        return null;
+    }
+}
 
 const listSitesParamsSchema = z
     .object({
@@ -43,10 +79,13 @@ function querySites(orgId: string, accessibleSiteIds: number[]) {
             megabytesOut: sites.megabytesOut,
             orgName: orgs.name,
             type: sites.type,
-            online: sites.online
+            online: sites.online,
+            address: sites.address,
+            newtVersion: newts.version
         })
         .from(sites)
         .leftJoin(orgs, eq(sites.orgId, orgs.orgId))
+        .leftJoin(newts, eq(newts.siteId, sites.siteId))
         .where(
             and(
                 inArray(sites.siteId, accessibleSiteIds),
@@ -55,8 +94,12 @@ function querySites(orgId: string, accessibleSiteIds: number[]) {
         );
 }
 
+type SiteWithUpdateAvailable = Awaited<ReturnType<typeof querySites>>[0] & {
+    newtUpdateAvailable?: boolean;
+};
+
 export type ListSitesResponse = {
-    sites: Awaited<ReturnType<typeof querySites>>;
+    sites: SiteWithUpdateAvailable[];
     pagination: { total: number; limit: number; offset: number };
 };
 
@@ -147,9 +190,36 @@ export async function listSites(
         const totalCountResult = await countQuery;
         const totalCount = totalCountResult[0].count;
 
+        const latestNewtVersion = await getLatestNewtVersion();
+
+        const sitesWithUpdates: SiteWithUpdateAvailable[] = sitesList.map(
+            (site) => {
+                const siteWithUpdate: SiteWithUpdateAvailable = { ...site };
+
+                if (
+                    site.type === "newt" &&
+                    site.newtVersion &&
+                    latestNewtVersion
+                ) {
+                    try {
+                        siteWithUpdate.newtUpdateAvailable = semver.lt(
+                            site.newtVersion,
+                            latestNewtVersion
+                        );
+                    } catch (error) {
+                        siteWithUpdate.newtUpdateAvailable = false;
+                    }
+                } else {
+                    siteWithUpdate.newtUpdateAvailable = false;
+                }
+
+                return siteWithUpdate;
+            }
+        );
+
         return response<ListSitesResponse>(res, {
             data: {
-                sites: sitesList,
+                sites: sitesWithUpdates,
                 pagination: {
                     total: totalCount,
                     limit,
