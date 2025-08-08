@@ -48,6 +48,10 @@ export default function LocaleSwitcher() {
         {
             value: 'zh-CN',
             label: '简体中文'
+        },
+        {
+            value: 'nb-NO',
+            label: 'Norsk (Bokmål)'
         }
       ]}
     />
