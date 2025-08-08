@@ -54,6 +54,8 @@ import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
+import { DomainRow } from "../../../domains/DomainsTable";
+import { toUnicode } from "punycode";
 
 export default function GeneralForm() {
     const [formKey, setFormKey] = useState(0);
@@ -155,7 +157,11 @@ export default function GeneralForm() {
                 });
 
             if (res?.status === 200) {
-                const domains = res.data.data.domains;
+                const rawDomains = res.data.data.domains as DomainRow[];
+                const domains = rawDomains.map((domain) => ({
+                    ...domain,
+                    baseDomain: toUnicode(domain.baseDomain), 
+                }));
                 setBaseDomains(domains);
                 setFormKey((key) => key + 1);
             }
@@ -319,10 +325,10 @@ export default function GeneralForm() {
                                                                                 .target
                                                                                 .value
                                                                                 ? parseInt(
-                                                                                      e
-                                                                                          .target
-                                                                                          .value
-                                                                                  )
+                                                                                    e
+                                                                                        .target
+                                                                                        .value
+                                                                                )
                                                                                 : undefined
                                                                         )
                                                                     }

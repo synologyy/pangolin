@@ -1494,5 +1494,7 @@
             "documentation": "documentation"
         },
         "convertButton": "Convert This Node to Managed Self-Hosted"
-    }
+    },
+    "internationaldomaindetected": "International Domain Detected",
+    "willbestoredas": "Will be stored as:"
 }
