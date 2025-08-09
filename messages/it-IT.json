@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "Si è verificato un errore durante il recupero dell'ultima versione di Olm.",
     "remoteSubnets": "Sottoreti Remote",
     "enterCidrRange": "Inserisci l'intervallo CIDR",
-    "remoteSubnetsDescription": "Aggiungi intervalli CIDR che possono accedere a questo sito da remoto. Usa il formato come 10.0.0.0/24 o 192.168.1.0/24.",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "Abilita Proxy Pubblico",
     "resourceEnableProxyDescription": "Abilita il proxy pubblico a questa risorsa. Consente l'accesso alla risorsa dall'esterno della rete tramite il cloud su una porta aperta. Richiede la configurazione di Traefik.",
     "externalProxyEnabled": "Proxy Esterno Abilitato"
