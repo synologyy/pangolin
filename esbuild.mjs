@@ -64,7 +64,7 @@ esbuild
             }),
         ],
         sourcemap: true,
-        target: "node20",
+        target: "node22",
     })
     .then(() => {
         console.log("Build completed successfully");
