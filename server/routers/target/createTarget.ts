@@ -173,7 +173,7 @@ export async function createTarget(
                         .where(eq(newts.siteId, site.siteId))
                         .limit(1);
 
-                    addTargets(newt.newtId, newTarget, resource.protocol);
+                    addTargets(newt.newtId, newTarget, resource.protocol, resource.proxyPort);
                 }
             }
         }

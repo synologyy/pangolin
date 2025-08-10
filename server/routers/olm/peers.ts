@@ -12,6 +12,7 @@ export async function addPeer(
         endpoint: string;
         serverIP: string | null;
         serverPort: number | null;
+        remoteSubnets: string | null; // optional, comma-separated list of subnets that this site can access
     }
 ) {
     const [olm] = await db
@@ -30,7 +31,8 @@ export async function addPeer(
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
             serverIP: peer.serverIP,
-            serverPort: peer.serverPort
+            serverPort: peer.serverPort,
+            remoteSubnets: peer.remoteSubnets // optional, comma-separated list of subnets that this site can access
         }
     });
 
@@ -66,6 +68,7 @@ export async function updatePeer(
         endpoint: string;
         serverIP: string | null;
         serverPort: number | null;
+        remoteSubnets?: string | null; // optional, comma-separated list of subnets that
     }
 ) {
     const [olm] = await db
@@ -84,7 +87,8 @@ export async function updatePeer(
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
             serverIP: peer.serverIP,
-            serverPort: peer.serverPort
+            serverPort: peer.serverPort,
+            remoteSubnets: peer.remoteSubnets
         }
     });
 

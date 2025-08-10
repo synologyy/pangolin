@@ -66,6 +66,7 @@ import {
 } from "@server/routers/resource";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { useTranslations } from "next-intl";
+import { Checkbox } from "@app/components/ui/checkbox";
 import {
     Credenza,
     CredenzaBody,
@@ -78,6 +79,7 @@ import {
 } from "@app/components/Credenza";
 import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
+import { build } from "@server/build";
 
 const TransferFormSchema = z.object({
     siteId: z.number()
@@ -118,25 +120,31 @@ export default function GeneralForm() {
         fullDomain: string;
     } | null>(null);
 
-    const GeneralFormSchema = z.object({
-        enabled: z.boolean(),
-        subdomain: z.string().optional(),
-        name: z.string().min(1).max(255),
-        domainId: z.string().optional(),
-        proxyPort: z.number().int().min(1).max(65535).optional()
-    }).refine((data) => {
-        // For non-HTTP resources, proxyPort should be defined
-        if (!resource.http) {
-            return data.proxyPort !== undefined;
-        }
-        // For HTTP resources, proxyPort should be undefined
-        return data.proxyPort === undefined;
-    }, {
-        message: !resource.http 
-            ? "Port number is required for non-HTTP resources" 
-            : "Port number should not be set for HTTP resources",
-        path: ["proxyPort"]
-    });
+    const GeneralFormSchema = z
+        .object({
+            enabled: z.boolean(),
+            subdomain: z.string().optional(),
+            name: z.string().min(1).max(255),
+            domainId: z.string().optional(),
+            proxyPort: z.number().int().min(1).max(65535).optional(),
+            enableProxy: z.boolean().optional()
+        })
+        .refine(
+            (data) => {
+                // For non-HTTP resources, proxyPort should be defined
+                if (!resource.http) {
+                    return data.proxyPort !== undefined;
+                }
+                // For HTTP resources, proxyPort should be undefined
+                return data.proxyPort === undefined;
+            },
+            {
+                message: !resource.http
+                    ? "Port number is required for non-HTTP resources"
+                    : "Port number should not be set for HTTP resources",
+                path: ["proxyPort"]
+            }
+        );
 
     type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 
@@ -147,7 +155,8 @@ export default function GeneralForm() {
             name: resource.name,
             subdomain: resource.subdomain ? resource.subdomain : undefined,
             domainId: resource.domainId || undefined,
-            proxyPort: resource.proxyPort || undefined
+            proxyPort: resource.proxyPort || undefined,
+            enableProxy: resource.enableProxy || false
         },
         mode: "onChange"
     });
@@ -211,7 +220,10 @@ export default function GeneralForm() {
                     name: data.name,
                     subdomain: data.subdomain,
                     domainId: data.domainId,
-                    proxyPort: data.proxyPort
+                    proxyPort: data.proxyPort,
+                    ...(!resource.http && {
+                        enableProxy: data.enableProxy
+                    })
                 }
             )
             .catch((e) => {
@@ -238,7 +250,10 @@ export default function GeneralForm() {
                 name: data.name,
                 subdomain: data.subdomain,
                 fullDomain: resource.fullDomain,
-                proxyPort: data.proxyPort
+                proxyPort: data.proxyPort,
+                ...(!resource.http && {
+                    enableProxy: data.enableProxy
+                }),
             });
 
             router.refresh();
@@ -357,16 +372,29 @@ export default function GeneralForm() {
                                                     render={({ field }) => (
                                                         <FormItem>
                                                             <FormLabel>
-                                                                {t("resourcePortNumber")}
+                                                                {t(
+                                                                    "resourcePortNumber"
+                                                                )}
                                                             </FormLabel>
                                                             <FormControl>
                                                                 <Input
                                                                     type="number"
-                                                                    value={field.value ?? ""}
-                                                                    onChange={(e) =>
+                                                                    value={
+                                                                        field.value ??
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
                                                                         field.onChange(
-                                                                            e.target.value
-                                                                                ? parseInt(e.target.value)
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                                ? parseInt(
+                                                                                      e
+                                                                                          .target
+                                                                                          .value
+                                                                                  )
                                                                                 : undefined
                                                                         )
                                                                     }
@@ -374,11 +402,49 @@ export default function GeneralForm() {
                                                             </FormControl>
                                                             <FormMessage />
                                                             <FormDescription>
-                                                                {t("resourcePortNumberDescription")}
+                                                                {t(
+                                                                    "resourcePortNumberDescription"
+                                                                )}
                                                             </FormDescription>
                                                         </FormItem>
                                                     )}
                                                 />
+
+                                                {build == "oss" && (
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="enableProxy"
+                                                        render={({ field }) => (
+                                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                                <FormControl>
+                                                                    <Checkbox
+                                                                        variant={
+                                                                            "outlinePrimarySquare"
+                                                                        }
+                                                                        checked={
+                                                                            field.value
+                                                                        }
+                                                                        onCheckedChange={
+                                                                            field.onChange
+                                                                        }
+                                                                    />
+                                                                </FormControl>
+                                                                <div className="space-y-1 leading-none">
+                                                                    <FormLabel>
+                                                                        {t(
+                                                                            "resourceEnableProxy"
+                                                                        )}
+                                                                    </FormLabel>
+                                                                    <FormDescription>
+                                                                        {t(
+                                                                            "resourceEnableProxyDescription"
+                                                                        )}
+                                                                    </FormDescription>
+                                                                </div>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                )}
                                             </>
                                         )}
 
@@ -574,6 +640,7 @@ export default function GeneralForm() {
                         <CredenzaBody>
                             <DomainPicker
                                 orgId={orgId as string}
+                                cols={1}
                                 onDomainChange={(res) => {
                                     const selected = {
                                         domainId: res.domainId,

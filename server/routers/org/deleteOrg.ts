@@ -1,14 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
-import {
-    newts,
-    newtSessions,
-    orgs,
-    sites,
-    userActions
-} from "@server/db";
-import { eq } from "drizzle-orm";
+import { db, domains, orgDomains, resources } from "@server/db";
+import { newts, newtSessions, orgs, sites, userActions } from "@server/db";
+import { eq, and, inArray, sql } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -126,6 +120,44 @@ export async function deleteOrg(
                 }
             }
 
+            const allOrgDomains = await trx
+                .select()
+                .from(orgDomains)
+                .innerJoin(domains, eq(domains.domainId, orgDomains.domainId))
+                .where(
+                    and(
+                        eq(orgDomains.orgId, orgId),
+                        eq(domains.configManaged, false)
+                    )
+                );
+
+            // For each domain, check if it belongs to multiple organizations
+            const domainIdsToDelete: string[] = [];
+            for (const orgDomain of allOrgDomains) {
+                const domainId = orgDomain.domains.domainId;
+
+                // Count how many organizations this domain belongs to
+                const orgCount = await trx
+                    .select({ count: sql<number>`count(*)` })
+                    .from(orgDomains)
+                    .where(eq(orgDomains.domainId, domainId));
+
+                // Only delete the domain if it belongs to exactly 1 organization (the one being deleted)
+                if (orgCount[0].count === 1) {
+                    domainIdsToDelete.push(domainId);
+                }
+            }
+
+            // Delete domains that belong exclusively to this organization
+            if (domainIdsToDelete.length > 0) {
+                await trx
+                    .delete(domains)
+                    .where(inArray(domains.domainId, domainIdsToDelete));
+            }
+
+            // Delete resources
+            await trx.delete(resources).where(eq(resources.orgId, orgId));
+
             await trx.delete(orgs).where(eq(orgs.orgId, orgId));
         });
 
@@ -136,8 +168,11 @@ export async function deleteOrg(
                 data: {}
             };
             // Don't await this to prevent blocking the response
-            sendToClient(newtId, payload).catch(error => {
-                logger.error("Failed to send termination message to newt:", error);
+            sendToClient(newtId, payload).catch((error) => {
+                logger.error(
+                    "Failed to send termination message to newt:",
+                    error
+                );
             });
         }
 

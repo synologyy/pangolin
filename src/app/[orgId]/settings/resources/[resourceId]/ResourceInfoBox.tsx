@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RotateCw } from "lucide-react";
 import { createApiClient } from "@app/lib/api";
+import { build } from "@server/build";
 
 type ResourceInfoBoxType = {};
 
@@ -34,7 +35,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
         <Alert>
             <InfoIcon className="h-4 w-4" />
             <AlertTitle className="font-semibold">
-                {t('resourceInfo')}
+                {t("resourceInfo")}
             </AlertTitle>
             <AlertDescription className="mt-4">
                 <InfoSections cols={4}>
@@ -42,7 +43,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                         <>
                             <InfoSection>
                                 <InfoSectionTitle>
-                                    {t('authentication')}
+                                    {t("authentication")}
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {authInfo.password ||
@@ -51,12 +52,12 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                     authInfo.whitelist ? (
                                         <div className="flex items-start space-x-2 text-green-500">
                                             <ShieldCheck className="w-4 h-4 mt-0.5" />
-                                            <span>{t('protected')}</span>
+                                            <span>{t("protected")}</span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center space-x-2 text-yellow-500">
                                             <ShieldOff className="w-4 h-4" />
-                                            <span>{t('notProtected')}</span>
+                                            <span>{t("notProtected")}</span>
                                         </div>
                                     )}
                                 </InfoSectionContent>
@@ -71,7 +72,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                 </InfoSectionContent>
                             </InfoSection>
                             <InfoSection>
-                                <InfoSectionTitle>{t('site')}</InfoSectionTitle>
+                                <InfoSectionTitle>{t("site")}</InfoSectionTitle>
                                 <InfoSectionContent>
                                     {resource.siteName}
                                 </InfoSectionContent>
@@ -98,7 +99,9 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                     ) : (
                         <>
                             <InfoSection>
-                                <InfoSectionTitle>{t('protocol')}</InfoSectionTitle>
+                                <InfoSectionTitle>
+                                    {t("protocol")}
+                                </InfoSectionTitle>
                                 <InfoSectionContent>
                                     <span>
                                         {resource.protocol.toUpperCase()}
@@ -106,7 +109,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                 </InfoSectionContent>
                             </InfoSection>
                             <InfoSection>
-                                <InfoSectionTitle>{t('port')}</InfoSectionTitle>
+                                <InfoSectionTitle>{t("port")}</InfoSectionTitle>
                                 <InfoSectionContent>
                                     <CopyToClipboard
                                         text={resource.proxyPort!.toString()}
@@ -114,13 +117,29 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                     />
                                 </InfoSectionContent>
                             </InfoSection>
+                            {build == "oss" && (
+                                <InfoSection>
+                                    <InfoSectionTitle>
+                                        {t("externalProxyEnabled")}
+                                    </InfoSectionTitle>
+                                    <InfoSectionContent>
+                                        <span>
+                                            {resource.enableProxy
+                                                ? t("enabled")
+                                                : t("disabled")}
+                                        </span>
+                                    </InfoSectionContent>
+                                </InfoSection>
+                            )}
                         </>
                     )}
                     <InfoSection>
-                        <InfoSectionTitle>{t('visibility')}</InfoSectionTitle>
+                        <InfoSectionTitle>{t("visibility")}</InfoSectionTitle>
                         <InfoSectionContent>
                             <span>
-                                {resource.enabled ? t('enabled') : t('disabled')}
+                                {resource.enabled
+                                    ? t("enabled")
+                                    : t("disabled")}
                             </span>
                         </InfoSectionContent>
                     </InfoSection>

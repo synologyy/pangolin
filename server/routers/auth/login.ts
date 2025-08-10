@@ -106,21 +106,21 @@ export async function login(
             );
         }
 
-        // Check if user has security keys registered
-        const userSecurityKeys = await db
-            .select()
-            .from(securityKeys)
-            .where(eq(securityKeys.userId, existingUser.userId));
-
-        if (userSecurityKeys.length > 0) {
-            return response<LoginResponse>(res, {
-                data: { useSecurityKey: true },
-                success: true,
-                error: false,
-                message: "Security key authentication required",
-                status: HttpCode.OK
-            });
-        }
+        // // Check if user has security keys registered
+        // const userSecurityKeys = await db
+        //     .select()
+        //     .from(securityKeys)
+        //     .where(eq(securityKeys.userId, existingUser.userId));
+        //
+        // if (userSecurityKeys.length > 0) {
+        //     return response<LoginResponse>(res, {
+        //         data: { useSecurityKey: true },
+        //         success: true,
+        //         error: false,
+        //         message: "Security key authentication required",
+        //         status: HttpCode.OK
+        //     });
+        // }
 
         if (
             existingUser.twoFactorSetupRequested &&

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { clients, newts, olms, Site, sites, clientSites } from "@server/db";
+import { clients, newts, olms, Site, sites, clientSites, exitNodes } from "@server/db";
 import { db } from "@server/db";
 import { eq } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
@@ -9,6 +9,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { validateNewtSessionToken } from "@server/auth/sessions/newt";
 import { validateOlmSessionToken } from "@server/auth/sessions/olm";
+import axios from "axios";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({
@@ -17,7 +18,8 @@ const updateHolePunchSchema = z.object({
     token: z.string(),
     ip: z.string(),
     port: z.number(),
-    timestamp: z.number()
+    timestamp: z.number(),
+    reachableAt: z.string().optional()
 });
 
 // New response type with multi-peer destination support
@@ -43,9 +45,8 @@ export async function updateHolePunch(
             );
         }
 
-        const { olmId, newtId, ip, port, timestamp, token } = parsedParams.data;
+        const { olmId, newtId, ip, port, timestamp, token, reachableAt } = parsedParams.data;
 
-        
         let currentSiteId: number | undefined;
         let destinations: PeerDestination[] = [];
         
@@ -95,37 +96,129 @@ export async function updateHolePunch(
                 );
             }
 
-            // Get all sites that this client is connected to
-            const clientSitePairs = await db
-                .select()
-                .from(clientSites)
-                .where(eq(clientSites.clientId, client.clientId));
+            // // Get all sites that this client is connected to
+            // const clientSitePairs = await db
+            //     .select()
+            //     .from(clientSites)
+            //     .where(eq(clientSites.clientId, client.clientId));
             
-            if (clientSitePairs.length === 0) {
-                logger.warn(`No sites found for client: ${client.clientId}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "No sites found for client")
-                );
-            }
+            // if (clientSitePairs.length === 0) {
+            //     logger.warn(`No sites found for client: ${client.clientId}`);
+            //     return next(
+            //         createHttpError(HttpCode.NOT_FOUND, "No sites found for client")
+            //     );
+            // }
             
-            // Get all sites details
-            const siteIds = clientSitePairs.map(pair => pair.siteId);
+            // // Get all sites details
+            // const siteIds = clientSitePairs.map(pair => pair.siteId);
             
-            for (const siteId of siteIds) {
-                const [site] = await db
-                    .select()
-                    .from(sites)
-                    .where(eq(sites.siteId, siteId));
+            // for (const siteId of siteIds) {
+            //     const [site] = await db
+            //         .select()
+            //         .from(sites)
+            //         .where(eq(sites.siteId, siteId));
                 
-                if (site && site.subnet && site.listenPort) {
-                    destinations.push({
-                        destinationIP: site.subnet.split("/")[0],
-                        destinationPort: site.listenPort
+            //     if (site && site.subnet && site.listenPort) {
+            //         destinations.push({
+            //             destinationIP: site.subnet.split("/")[0],
+            //             destinationPort: site.listenPort
+            //         });
+            //     }
+            // }
+
+            // get all sites for this client and join with exit nodes with site.exitNodeId
+            const sitesData = await db
+                .select()
+                .from(sites)
+                .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+                .leftJoin(exitNodes, eq(sites.exitNodeId, exitNodes.exitNodeId))
+                .where(eq(clientSites.clientId, client.clientId));
+
+            let exitNodeDestinations: {
+                reachableAt: string;
+                destinations: PeerDestination[];
+            }[] = [];
+
+            for (const site of sitesData) {
+                if (!site.sites.subnet) {
+                    logger.warn(`Site ${site.sites.siteId} has no subnet, skipping`);
+                    continue;
+                }
+                // find the destinations in the array
+                let destinations = exitNodeDestinations.find(
+                    (d) => d.reachableAt === site.exitNodes?.reachableAt
+                );
+
+                if (!destinations) {
+                    destinations = {
+                        reachableAt: site.exitNodes?.reachableAt || "",
+                        destinations: [
+                            {
+                                destinationIP: site.sites.subnet.split("/")[0],
+                                destinationPort: site.sites.listenPort || 0
+                            }
+                        ]
+                    };
+                } else {
+                    // add to the existing destinations
+                    destinations.destinations.push({
+                        destinationIP: site.sites.subnet.split("/")[0],
+                        destinationPort: site.sites.listenPort || 0
                     });
+                }
+
+                // update it in the array
+                exitNodeDestinations = exitNodeDestinations.filter(
+                    (d) => d.reachableAt !== site.exitNodes?.reachableAt
+                );
+                exitNodeDestinations.push(destinations);
+            }
+
+            logger.debug(JSON.stringify(exitNodeDestinations, null, 2));
+
+            for (const destination of exitNodeDestinations) {
+                // if its the current exit node skip it because it is replying with the same data
+                if (reachableAt && destination.reachableAt == reachableAt) {
+                    logger.debug(`Skipping update for reachableAt: ${reachableAt}`);
+                    continue;
+                }
+
+                try {
+                    const response = await axios.post(
+                        `${destination.reachableAt}/update-destinations`,
+                        {
+                            sourceIp: client.endpoint?.split(":")[0] || "",
+                            sourcePort: client.endpoint?.split(":")[1] || 0,
+                            destinations: destination.destinations
+                        },
+                        {
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        }
+                    );
+
+                    logger.info("Destinations updated:", {
+                        peer: response.data.status
+                    });
+                } catch (error) {
+                    if (axios.isAxiosError(error)) {
+                        throw new Error(
+                            `Error communicating with Gerbil. Make sure Pangolin can reach the Gerbil HTTP API: ${error.response?.status}`
+                        );
+                    }
+                    throw error;
                 }
             }
 
+            // Send the desinations back to the origin
+            destinations = exitNodeDestinations.find(
+                (d) => d.reachableAt === reachableAt
+            )?.destinations || [];
+
         } else if (newtId) {
+            logger.debug(`Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`);
+
             const { session, newt: newtSession } =
                 await validateNewtSessionToken(token);
 
@@ -174,28 +267,29 @@ export async function updateHolePunch(
             }
 
             // Find all clients that connect to this site
-            const sitesClientPairs = await db
-                .select()
-                .from(clientSites)
-                .where(eq(clientSites.siteId, newt.siteId));
+            // const sitesClientPairs = await db
+            //     .select()
+            //     .from(clientSites)
+            //     .where(eq(clientSites.siteId, newt.siteId));
             
+            // THE NEWT IS NOT SENDING RAW WG TO THE GERBIL SO IDK IF WE REALLY NEED THIS - REMOVING
             // Get client details for each client
-            for (const pair of sitesClientPairs) {
-                const [client] = await db
-                    .select()
-                    .from(clients)
-                    .where(eq(clients.clientId, pair.clientId));
+            // for (const pair of sitesClientPairs) {
+            //     const [client] = await db
+            //         .select()
+            //         .from(clients)
+            //         .where(eq(clients.clientId, pair.clientId));
                 
-                if (client && client.endpoint) {
-                    const [host, portStr] = client.endpoint.split(':');
-                    if (host && portStr) {
-                        destinations.push({
-                            destinationIP: host,
-                            destinationPort: parseInt(portStr, 10)
-                        });
-                    }
-                }
-            }
+            //     if (client && client.endpoint) {
+            //         const [host, portStr] = client.endpoint.split(':');
+            //         if (host && portStr) {
+            //             destinations.push({
+            //                 destinationIP: host,
+            //                 destinationPort: parseInt(portStr, 10)
+            //             });
+            //         }
+            //     }
+            // }
             
             // If this is a newt/site, also add other sites in the same org
         //     if (updatedSite.orgId) {

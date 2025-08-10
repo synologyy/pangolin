@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math/rand"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"text/template"
 	"time"
-	"math/rand"
-	"strconv"
 
 	"golang.org/x/term"
 )
@@ -33,43 +33,114 @@ func loadVersions(config *Config) {
 var configFiles embed.FS
 
 type Config struct {
-	PangolinVersion            string
-	GerbilVersion              string
-	BadgerVersion              string
-	BaseDomain                 string
-	DashboardDomain            string
-	LetsEncryptEmail           string
-	EnableEmail                bool
-	EmailSMTPHost              string
-	EmailSMTPPort              int
-	EmailSMTPUser              string
-	EmailSMTPPass              string
-	EmailNoReply               string
-	InstallGerbil              bool
-	TraefikBouncerKey          string
-	DoCrowdsecInstall          bool
-	Secret                string
+	InstallationContainerType SupportedContainer
+	PangolinVersion           string
+	GerbilVersion             string
+	BadgerVersion             string
+	BaseDomain                string
+	DashboardDomain           string
+	LetsEncryptEmail          string
+	EnableEmail               bool
+	EmailSMTPHost             string
+	EmailSMTPPort             int
+	EmailSMTPUser             string
+	EmailSMTPPass             string
+	EmailNoReply              string
+	InstallGerbil             bool
+	TraefikBouncerKey         string
+	DoCrowdsecInstall         bool
+	Secret                    string
 }
 
-func main() {
-	reader := bufio.NewReader(os.Stdin)
+type SupportedContainer string
 
-	// check if docker is not installed and the user is root
-	if !isDockerInstalled() {
-		if os.Geteuid() != 0 {
-			fmt.Println("Docker is not installed. Please install Docker manually or run this installer as root.")
-			os.Exit(1)
-		}
+const (
+	Docker SupportedContainer = "docker"
+	Podman SupportedContainer = "podman"
+)
+
+func main() {
+
+	// print a banner about prerequisites - opening port 80, 443, 51820, and 21820 on the VPS and firewall and pointing your domain to the VPS IP with a records. Docs are at http://localhost:3000/Getting%20Started/dns-networking
+
+	fmt.Println("Welcome to the Pangolin installer!")
+	fmt.Println("This installer will help you set up Pangolin on your server.")
+	fmt.Println("")
+	fmt.Println("Please make sure you have the following prerequisites:")
+	fmt.Println("- Open TCP ports 80 and 443 and UDP ports 51820 and 21820 on your VPS and firewall.")
+	fmt.Println("- Point your domain to the VPS IP with A records.")
+	fmt.Println("")
+	fmt.Println("http://docs.fossorial.io/Getting%20Started/dns-networking")
+	fmt.Println("")
+	fmt.Println("Lets get started!")
+	fmt.Println("")
+
+	reader := bufio.NewReader(os.Stdin)
+	inputContainer := readString(reader, "Would you like to run Pangolin as Docker or Podman containers?", "docker")
+
+	chosenContainer := Docker
+	if strings.EqualFold(inputContainer, "docker") {
+		chosenContainer = Docker
+	} else if strings.EqualFold(inputContainer, "podman") {
+		chosenContainer = Podman
+	} else {
+		fmt.Printf("Unrecognized container type: %s. Valid options are 'docker' or 'podman'.\n", inputContainer)
+		os.Exit(1)
 	}
 
-	// check if the user is in the docker group (linux only)
-	if !isUserInDockerGroup() {
-		fmt.Println("You are not in the docker group.")
-		fmt.Println("The installer will not be able to run docker commands without running it as root.")
+	if chosenContainer == Podman {
+		if !isPodmanInstalled() {
+			fmt.Println("Podman or podman-compose is not installed. Please install both manually. Automated installation will be available in a later release.")
+			os.Exit(1)
+		}
+
+		if err := exec.Command("bash", "-c", "cat /etc/sysctl.conf | grep 'net.ipv4.ip_unprivileged_port_start='").Run(); err != nil {
+			fmt.Println("Would you like to configure ports >= 80 as unprivileged ports? This enables podman containers to listen on low-range ports.")
+			fmt.Println("Pangolin will experience startup issues if this is not configured, because it needs to listen on port 80/443 by default.")
+			approved := readBool(reader, "The installer is about to execute \"echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p\". Approve?", true)
+			if approved {
+				if os.Geteuid() != 0 {
+					fmt.Println("You need to run the installer as root for such a configuration.")
+					os.Exit(1)
+				}
+
+				// Podman containers are not able to listen on privileged ports. The official recommendation is to
+				// container low-range ports as unprivileged ports.
+				// Linux only.
+
+				if err := run("bash", "-c", "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p"); err != nil {
+					fmt.Sprintf("failed to configure unprivileged ports: %v.\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println("You need to configure port forwarding or adjust the listening ports before running pangolin.")
+			}
+		} else {
+			fmt.Println("Unprivileged ports have been configured.")
+		}
+
+	} else if chosenContainer == Docker {
+		// check if docker is not installed and the user is root
+		if !isDockerInstalled() {
+			if os.Geteuid() != 0 {
+				fmt.Println("Docker is not installed. Please install Docker manually or run this installer as root.")
+				os.Exit(1)
+			}
+		}
+
+		// check if the user is in the docker group (linux only)
+		if !isUserInDockerGroup() {
+			fmt.Println("You are not in the docker group.")
+			fmt.Println("The installer will not be able to run docker commands without running it as root.")
+			os.Exit(1)
+		}
+	} else {
+		// This shouldn't happen unless there's a third container runtime.
 		os.Exit(1)
 	}
 
 	var config Config
+	config.InstallationContainerType = chosenContainer
 
 	// check if there is already a config file
 	if _, err := os.Stat("config/config.yml"); err != nil {
@@ -86,7 +157,7 @@ func main() {
 
 		moveFile("config/docker-compose.yml", "docker-compose.yml")
 
-		if !isDockerInstalled() && runtime.GOOS == "linux" {
+		if !isDockerInstalled() && runtime.GOOS == "linux" && chosenContainer == Docker {
 			if readBool(reader, "Docker is not installed. Would you like to install it?", true) {
 				installDocker()
 				// try to start docker service but ignore errors
@@ -115,14 +186,15 @@ func main() {
 
 		fmt.Println("\n=== Starting installation ===")
 
-		if isDockerInstalled() {
+		if (isDockerInstalled() && chosenContainer == Docker) ||
+			(isPodmanInstalled() && chosenContainer == Podman) {
 			if readBool(reader, "Would you like to install and start the containers?", true) {
-				if err := pullContainers(); err != nil {
+				if err := pullContainers(chosenContainer); err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
 
-				if err := startContainers(); err != nil {
+				if err := startContainers(chosenContainer); err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
@@ -137,6 +209,8 @@ func main() {
 		// check if crowdsec is installed
 		if readBool(reader, "Would you like to install CrowdSec?", false) {
 			fmt.Println("This installer constitutes a minimal viable CrowdSec deployment. CrowdSec will add extra complexity to your Pangolin installation and may not work to the best of its abilities out of the box. Users are expected to implement configuration adjustments on their own to achieve the best security posture. Consult the CrowdSec documentation for detailed configuration instructions.")
+
+			// BUG: crowdsec installation will be skipped if the user chooses to install on the first installation.
 			if readBool(reader, "Are you willing to manage CrowdSec?", false) {
 				if config.DashboardDomain == "" {
 					traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml", "config/traefik/dynamic_config.yml")
@@ -240,7 +314,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 		config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
 		config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
 		config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
-		config.EmailSMTPPass = readString(reader, "Enter SMTP password", "")
+		config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
 		config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
 	}
 
@@ -330,7 +404,6 @@ func createConfigFiles(config Config) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("error walking config files: %v", err)
 	}
@@ -456,7 +529,15 @@ func startDockerService() error {
 }
 
 func isDockerInstalled() bool {
-	cmd := exec.Command("docker", "--version")
+	return isContainerInstalled("docker")
+}
+
+func isPodmanInstalled() bool {
+	return isContainerInstalled("podman") && isContainerInstalled("podman-compose")
+}
+
+func isContainerInstalled(container string) bool {
+	cmd := exec.Command(container, "--version")
 	if err := cmd.Run(); err != nil {
 		return false
 	}
@@ -527,52 +608,98 @@ func executeDockerComposeCommandWithArgs(args ...string) error {
 		cmd = exec.Command("docker-compose", args...)
 	}
 
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stderr
-    return cmd.Run()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 // pullContainers pulls the containers using the appropriate command.
-func pullContainers() error {
+func pullContainers(containerType SupportedContainer) error {
 	fmt.Println("Pulling the container images...")
+	if containerType == Podman {
+		if err := run("podman-compose", "-f", "docker-compose.yml", "pull"); err != nil {
+			return fmt.Errorf("failed to pull the containers: %v", err)
+		}
 
-	if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "pull", "--policy", "always"); err != nil {
-		return fmt.Errorf("failed to pull the containers: %v", err)
+		return nil
 	}
 
-	return nil
+	if containerType == Docker {
+		if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "pull", "--policy", "always"); err != nil {
+			return fmt.Errorf("failed to pull the containers: %v", err)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Unsupported container type: %s", containerType)
 }
 
 // startContainers starts the containers using the appropriate command.
-func startContainers() error {
+func startContainers(containerType SupportedContainer) error {
 	fmt.Println("Starting containers...")
-	if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "up", "-d", "--force-recreate"); err != nil {
-		return fmt.Errorf("failed to start containers: %v", err)
+
+	if containerType == Podman {
+		if err := run("podman-compose", "-f", "docker-compose.yml", "up", "-d", "--force-recreate"); err != nil {
+			return fmt.Errorf("failed start containers: %v", err)
+		}
+
+		return nil
 	}
 
-	return nil
+	if containerType == Docker {
+		if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "up", "-d", "--force-recreate"); err != nil {
+			return fmt.Errorf("failed to start containers: %v", err)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Unsupported container type: %s", containerType)
 }
 
 // stopContainers stops the containers using the appropriate command.
-func stopContainers() error {
+func stopContainers(containerType SupportedContainer) error {
 	fmt.Println("Stopping containers...")
+	if containerType == Podman {
+		if err := run("podman-compose", "-f", "docker-compose.yml", "down"); err != nil {
+			return fmt.Errorf("failed to stop containers: %v", err)
+		}
 
-	if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "down"); err != nil {
-		return fmt.Errorf("failed to stop containers: %v", err)
+		return nil
 	}
 
-	return nil
+	if containerType == Docker {
+		if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "down"); err != nil {
+			return fmt.Errorf("failed to stop containers: %v", err)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Unsupported container type: %s", containerType)
 }
 
 // restartContainer restarts a specific container using the appropriate command.
-func restartContainer(container string) error {
+func restartContainer(container string, containerType SupportedContainer) error {
 	fmt.Println("Restarting containers...")
+	if containerType == Podman {
+		if err := run("podman-compose", "-f", "docker-compose.yml", "restart"); err != nil {
+			return fmt.Errorf("failed to stop the container \"%s\": %v", container, err)
+		}
 
-	if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "restart", container); err != nil {
-		return fmt.Errorf("failed to stop the container \"%s\": %v", container, err)
+		return nil
 	}
 
-	return nil
+	if containerType == Docker {
+		if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "restart", container); err != nil {
+			return fmt.Errorf("failed to stop the container \"%s\": %v", container, err)
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("Unsupported container type: %s", containerType)
 }
 
 func copyFile(src, dst string) error {
@@ -600,13 +727,13 @@ func moveFile(src, dst string) error {
 	return os.Remove(src)
 }
 
-func waitForContainer(containerName string) error {
+func waitForContainer(containerName string, containerType SupportedContainer) error {
 	maxAttempts := 30
 	retryInterval := time.Second * 2
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		// Check if container is running
-		cmd := exec.Command("docker", "container", "inspect", "-f", "{{.State.Running}}", containerName)
+		cmd := exec.Command(string(containerType), "container", "inspect", "-f", "{{.State.Running}}", containerName)
 		var out bytes.Buffer
 		cmd.Stdout = &out
 
@@ -640,4 +767,12 @@ func generateRandomSecretKey() string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+// Run external commands with stdio/stderr attached.
+func run(name string, args ...string) error {
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

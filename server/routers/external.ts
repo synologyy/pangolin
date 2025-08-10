@@ -234,6 +234,12 @@ authenticated.get(
 );
 
 authenticated.get(
+    "/org/:orgId/user-resources",
+    verifyOrgAccess,
+    resource.getUserResources
+);
+
+authenticated.get(
     "/org/:orgId/domains",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listOrgDomains),

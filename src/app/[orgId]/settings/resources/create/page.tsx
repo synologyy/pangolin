@@ -25,6 +25,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@app/components/ui/input";
 import { Button } from "@app/components/ui/button";
+import { Checkbox } from "@app/components/ui/checkbox";
 import { useParams, useRouter } from "next/navigation";
 import { ListSitesResponse } from "@server/routers/site";
 import { formatAxiosError } from "@app/lib/api";
@@ -64,6 +65,7 @@ import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import DomainPicker from "@app/components/DomainPicker";
+import { build } from "@server/build";
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
@@ -72,13 +74,14 @@ const baseResourceFormSchema = z.object({
 });
 
 const httpResourceFormSchema = z.object({
-    domainId: z.string().optional(),
+    domainId: z.string().nonempty(),
     subdomain: z.string().optional()
 });
 
 const tcpUdpResourceFormSchema = z.object({
     protocol: z.string(),
-    proxyPort: z.number().int().min(1).max(65535)
+    proxyPort: z.number().int().min(1).max(65535),
+    enableProxy: z.boolean().default(false)
 });
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
@@ -144,7 +147,8 @@ export default function Page() {
         resolver: zodResolver(tcpUdpResourceFormSchema),
         defaultValues: {
             protocol: "tcp",
-            proxyPort: undefined
+            proxyPort: undefined,
+            enableProxy: false
         }
     });
 
@@ -163,16 +167,17 @@ export default function Page() {
 
             if (isHttp) {
                 const httpData = httpForm.getValues();
-                    Object.assign(payload, {
-                        subdomain: httpData.subdomain,
-                        domainId: httpData.domainId,
-                        protocol: "tcp",
-                    });
+                Object.assign(payload, {
+                    subdomain: httpData.subdomain,
+                    domainId: httpData.domainId,
+                    protocol: "tcp"
+                });
             } else {
                 const tcpUdpData = tcpUdpForm.getValues();
                 Object.assign(payload, {
                     protocol: tcpUdpData.protocol,
-                    proxyPort: tcpUdpData.proxyPort
+                    proxyPort: tcpUdpData.proxyPort,
+                    enableProxy: tcpUdpData.enableProxy
                 });
             }
 
@@ -198,8 +203,15 @@ export default function Page() {
                 if (isHttp) {
                     router.push(`/${orgId}/settings/resources/${id}`);
                 } else {
-                    setShowSnippets(true);
-                    router.refresh();
+                    const tcpUdpData = tcpUdpForm.getValues();
+                    // Only show config snippets if enableProxy is explicitly true
+                    if (tcpUdpData.enableProxy === true) {
+                        setShowSnippets(true);
+                        router.refresh();
+                    } else {
+                        // If enableProxy is false or undefined, go directly to resource page
+                        router.push(`/${orgId}/settings/resources/${id}`);
+                    }
                 }
             }
         } catch (e) {
@@ -265,9 +277,9 @@ export default function Page() {
                 if (res?.status === 200) {
                     const domains = res.data.data.domains;
                     setBaseDomains(domains);
-                    if (domains.length) {
-                        httpForm.setValue("domainId", domains[0].domainId);
-                    }
+                    // if (domains.length) {
+                    //     httpForm.setValue("domainId", domains[0].domainId);
+                    // }
                 }
             };
 
@@ -603,6 +615,46 @@ export default function Page() {
                                                             </FormItem>
                                                         )}
                                                     />
+
+                                                    {build == "oss" && (
+                                                        <FormField
+                                                            control={
+                                                                tcpUdpForm.control
+                                                            }
+                                                            name="enableProxy"
+                                                            render={({
+                                                                field
+                                                            }) => (
+                                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                                    <FormControl>
+                                                                        <Checkbox
+                                                                            variant={
+                                                                                "outlinePrimarySquare"
+                                                                            }
+                                                                            checked={
+                                                                                field.value
+                                                                            }
+                                                                            onCheckedChange={
+                                                                                field.onChange
+                                                                            }
+                                                                        />
+                                                                    </FormControl>
+                                                                    <div className="space-y-1 leading-none">
+                                                                        <FormLabel>
+                                                                            {t(
+                                                                                "resourceEnableProxy"
+                                                                            )}
+                                                                        </FormLabel>
+                                                                        <FormDescription>
+                                                                            {t(
+                                                                                "resourceEnableProxyDescription"
+                                                                            )}
+                                                                        </FormDescription>
+                                                                    </div>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    )}
                                                 </form>
                                             </Form>
                                         </SettingsSectionForm>
@@ -631,6 +683,8 @@ export default function Page() {
                                         const settingsValid = isHttp
                                             ? await httpForm.trigger()
                                             : await tcpUdpForm.trigger();
+
+                                        console.log(httpForm.getValues());
 
                                         if (baseValid && settingsValid) {
                                             onSubmit();

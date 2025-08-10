@@ -21,15 +21,14 @@ import { hashPassword } from "@server/auth/password";
 import { checkValidInvite } from "@server/auth/checkValidInvite";
 import { passwordSchema } from "@server/auth/passwordSchema";
 import { UserType } from "@server/types/UserTypes";
+import { build } from "@server/build";
 
 export const signupBodySchema = z.object({
-    email: z
-        .string()
-        .toLowerCase()
-        .email(),
+    email: z.string().toLowerCase().email(),
     password: passwordSchema,
     inviteToken: z.string().optional(),
-    inviteId: z.string().optional()
+    inviteId: z.string().optional(),
+    termsAcceptedTimestamp: z.string().nullable().optional()
 });
 
 export type SignUpBody = z.infer<typeof signupBodySchema>;
@@ -54,7 +53,8 @@ export async function signup(
         );
     }
 
-    const { email, password, inviteToken, inviteId } = parsedBody.data;
+    const { email, password, inviteToken, inviteId, termsAcceptedTimestamp } =
+        parsedBody.data;
 
     const passwordHash = await hashPassword(password);
     const userId = generateId(15);
@@ -161,13 +161,24 @@ export async function signup(
             }
         }
 
+        if (build === "saas" && !termsAcceptedTimestamp) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "You must accept the terms of service and privacy policy"
+                )
+            );
+        }
+
         await db.insert(users).values({
             userId: userId,
             type: UserType.Internal,
             username: email,
             email: email,
             passwordHash,
-            dateCreated: moment().toISOString()
+            dateCreated: moment().toISOString(),
+            termsAcceptedTimestamp: termsAcceptedTimestamp || null,
+            termsVersion: "1"
         });
 
         // give the user their default permissions:

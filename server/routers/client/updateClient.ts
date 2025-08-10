@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, exitNodes, sites } from "@server/db";
 import { clients, clientSites } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -17,6 +17,7 @@ import {
     addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "../olm/peers";
+import axios from "axios";
 
 const updateClientParamsSchema = z
     .object({
@@ -52,6 +53,11 @@ registry.registerPath({
     },
     responses: {}
 });
+
+interface PeerDestination {
+    destinationIP: string;
+    destinationPort: number;
+}
 
 export async function updateClient(
     req: Request,
@@ -124,15 +130,22 @@ export async function updateClient(
             );
             for (const siteId of sitesAdded) {
                 if (!client.subnet || !client.pubKey || !client.endpoint) {
-                    logger.debug("Client subnet, pubKey or endpoint is not set");
+                    logger.debug(
+                        "Client subnet, pubKey or endpoint is not set"
+                    );
                     continue;
                 }
+
+                // TODO: WE NEED TO HANDLE THIS BETTER. RIGHT NOW WE ARE JUST GUESSING BASED ON THE OTHER SITES
+                // BUT REALLY WE NEED TO TRACK THE USERS PREFERENCE THAT THEY CHOSE IN THE CLIENTS
+                const isRelayed = true;
 
                 const site = await newtAddPeer(siteId, {
                     publicKey: client.pubKey,
                     allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                    endpoint: client.endpoint
+                    endpoint: isRelayed ? "" : client.endpoint
                 });
+
                 if (!site) {
                     logger.debug("Failed to add peer to newt - missing site");
                     continue;
@@ -142,12 +155,49 @@ export async function updateClient(
                     logger.debug("Site endpoint or publicKey is not set");
                     continue;
                 }
+
+                let endpoint;
+
+                if (isRelayed) {
+                    if (!site.exitNodeId) {
+                        logger.warn(
+                            `Site ${site.siteId} has no exit node, skipping`
+                        );
+                        return null;
+                    }
+
+                    // get the exit node for the site
+                    const [exitNode] = await db
+                        .select()
+                        .from(exitNodes)
+                        .where(eq(exitNodes.exitNodeId, site.exitNodeId))
+                        .limit(1);
+
+                    if (!exitNode) {
+                        logger.warn(
+                            `Exit node not found for site ${site.siteId}`
+                        );
+                        return null;
+                    }
+
+                    endpoint = `${exitNode.endpoint}:21820`;
+                } else {
+                    if (!endpoint) {
+                        logger.warn(
+                            `Site ${site.siteId} has no endpoint, skipping`
+                        );
+                        return null;
+                    }
+                    endpoint = site.endpoint;
+                }
+
                 await olmAddPeer(client.clientId, {
-                    siteId: siteId,
-                    endpoint: site.endpoint,
+                    siteId: site.siteId,
+                    endpoint: endpoint,
                     publicKey: site.publicKey,
                     serverIP: site.address,
-                    serverPort: site.listenPort
+                    serverPort: site.listenPort,
+                    remoteSubnets: site.remoteSubnets
                 });
             }
 
@@ -170,7 +220,11 @@ export async function updateClient(
                     logger.debug("Site endpoint or publicKey is not set");
                     continue;
                 }
-                await olmDeletePeer(client.clientId, site.siteId, site.publicKey);
+                await olmDeletePeer(
+                    client.clientId,
+                    site.siteId,
+                    site.publicKey
+                );
             }
         }
 
@@ -198,6 +252,101 @@ export async function updateClient(
                             siteId
                         }))
                     );
+                }
+            }
+
+            if (client.endpoint) {
+                // get all sites for this client and join with exit nodes with site.exitNodeId
+                const sitesData = await db
+                    .select()
+                    .from(sites)
+                    .innerJoin(
+                        clientSites,
+                        eq(sites.siteId, clientSites.siteId)
+                    )
+                    .leftJoin(
+                        exitNodes,
+                        eq(sites.exitNodeId, exitNodes.exitNodeId)
+                    )
+                    .where(eq(clientSites.clientId, client.clientId));
+
+                let exitNodeDestinations: {
+                    reachableAt: string;
+                    destinations: PeerDestination[];
+                }[] = [];
+
+                for (const site of sitesData) {
+                    if (!site.sites.subnet) {
+                        logger.warn(
+                            `Site ${site.sites.siteId} has no subnet, skipping`
+                        );
+                        continue;
+                    }
+                    // find the destinations in the array
+                    let destinations = exitNodeDestinations.find(
+                        (d) => d.reachableAt === site.exitNodes?.reachableAt
+                    );
+
+                    if (!destinations) {
+                        destinations = {
+                            reachableAt: site.exitNodes?.reachableAt || "",
+                            destinations: [
+                                {
+                                    destinationIP:
+                                        site.sites.subnet.split("/")[0],
+                                    destinationPort: site.sites.listenPort || 0
+                                }
+                            ]
+                        };
+                    } else {
+                        // add to the existing destinations
+                        destinations.destinations.push({
+                            destinationIP: site.sites.subnet.split("/")[0],
+                            destinationPort: site.sites.listenPort || 0
+                        });
+                    }
+
+                    // update it in the array
+                    exitNodeDestinations = exitNodeDestinations.filter(
+                        (d) => d.reachableAt !== site.exitNodes?.reachableAt
+                    );
+                    exitNodeDestinations.push(destinations);
+                }
+
+                for (const destination of exitNodeDestinations) {
+                    try {
+                        logger.info(
+                            `Updating destinations for exit node at ${destination.reachableAt}`
+                        );
+                        const payload = {
+                            sourceIp: client.endpoint?.split(":")[0] || "",
+                            sourcePort: parseInt(client.endpoint?.split(":")[1]) || 0,
+                            destinations: destination.destinations
+                        };
+                        logger.info(
+                            `Payload for update-destinations: ${JSON.stringify(payload, null, 2)}`
+                        );
+                        const response = await axios.post(
+                            `${destination.reachableAt}/update-destinations`,
+                            payload,
+                            {
+                                headers: {
+                                    "Content-Type": "application/json"
+                                }
+                            }
+                        );
+
+                        logger.info("Destinations updated:", {
+                            peer: response.data.status
+                        });
+                    } catch (error) {
+                        if (axios.isAxiosError(error)) {
+                            throw new Error(
+                                `Error communicating with Gerbil. Make sure Pangolin can reach the Gerbil HTTP API: ${error.response?.status}`
+                            );
+                        }
+                        throw error;
+                    }
                 }
             }
 

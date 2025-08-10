@@ -14,7 +14,7 @@ import { OpenAPITags, registry } from "@server/openApi";
 const getClientSchema = z
     .object({
         clientId: z.string().transform(stoi).pipe(z.number().int().positive()),
-        orgId: z.string().optional()
+        orgId: z.string()
     })
     .strict();
 

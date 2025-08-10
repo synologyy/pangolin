@@ -11,11 +11,12 @@ import { Button } from "@/components/ui/button";
 
 interface InfoPopupProps {
     text?: string;
-    info: string;
+    info?: string;
     trigger?: React.ReactNode;
+    children?: React.ReactNode;
 }
 
-export function InfoPopup({ text, info, trigger }: InfoPopupProps) {
+export function InfoPopup({ text, info, trigger, children }: InfoPopupProps) {
     const defaultTrigger = (
         <Button
             variant="ghost"
@@ -35,7 +36,12 @@ export function InfoPopup({ text, info, trigger }: InfoPopupProps) {
                     {trigger ?? defaultTrigger}
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
-                    <p className="text-sm text-muted-foreground">{info}</p>
+                    {children ||
+                        (info && (
+                            <p className="text-sm text-muted-foreground">
+                                {info}
+                            </p>
+                        ))}
                 </PopoverContent>
             </Popover>
         </div>

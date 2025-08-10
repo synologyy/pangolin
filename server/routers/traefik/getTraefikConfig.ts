@@ -66,7 +66,8 @@ export async function traefikConfigProvider(
                     enabled: resources.enabled,
                     stickySession: resources.stickySession,
                     tlsServerName: resources.tlsServerName,
-                    setHostHeader: resources.setHostHeader
+                    setHostHeader: resources.setHostHeader,
+                    enableProxy: resources.enableProxy
                 })
                 .from(resources)
                 .innerJoin(sites, eq(sites.siteId, resources.siteId))
@@ -365,6 +366,10 @@ export async function traefikConfigProvider(
                 }
             } else {
                 // Non-HTTP (TCP/UDP) configuration
+                if (!resource.enableProxy) {
+                    continue;
+                }
+
                 const protocol = resource.protocol.toLowerCase();
                 const port = resource.proxyPort;
 

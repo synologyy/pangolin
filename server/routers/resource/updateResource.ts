@@ -34,9 +34,7 @@ const updateResourceParamsSchema = z
 const updateHttpResourceBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
-        subdomain: subdomainSchema
-            .nullable()
-            .optional(),
+        subdomain: subdomainSchema.nullable().optional(),
         ssl: z.boolean().optional(),
         sso: z.boolean().optional(),
         blockAccess: z.boolean().optional(),
@@ -93,7 +91,8 @@ const updateRawResourceBodySchema = z
         name: z.string().min(1).max(255).optional(),
         proxyPort: z.number().int().min(1).max(65535).optional(),
         stickySession: z.boolean().optional(),
-        enabled: z.boolean().optional()
+        enabled: z.boolean().optional(),
+        enableProxy: z.boolean().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -121,12 +120,9 @@ registry.registerPath({
         body: {
             content: {
                 "application/json": {
-                    schema:
-                        build == "oss"
-                            ? updateHttpResourceBodySchema.and(
-                                  updateRawResourceBodySchema
-                              )
-                            : updateHttpResourceBodySchema
+                    schema: updateHttpResourceBodySchema.and(
+                        updateRawResourceBodySchema
+                    )
                 }
             }
         }
@@ -288,7 +284,9 @@ async function updateHttpResource(
         } else if (domainRes.domains.type == "wildcard") {
             if (updateData.subdomain !== undefined) {
                 // the subdomain cant have a dot in it
-                const parsedSubdomain = subdomainSchema.safeParse(updateData.subdomain);
+                const parsedSubdomain = subdomainSchema.safeParse(
+                    updateData.subdomain
+                );
                 if (!parsedSubdomain.success) {
                     return next(
                         createHttpError(
@@ -341,7 +339,7 @@ async function updateHttpResource(
 
     const updatedResource = await db
         .update(resources)
-        .set({...updateData, })
+        .set({ ...updateData })
         .where(eq(resources.resourceId, resource.resourceId))
         .returning();
 

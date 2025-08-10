@@ -8,7 +8,7 @@ export async function addPeer(exitNodeId: number, peer: {
     publicKey: string;
     allowedIps: string[];
 }) {
-
+    logger.info(`Adding peer with public key ${peer.publicKey} to exit node ${exitNodeId}`);
     const [exitNode] = await db.select().from(exitNodes).where(eq(exitNodes.exitNodeId, exitNodeId)).limit(1);
     if (!exitNode) {
         throw new Error(`Exit node with ID ${exitNodeId} not found`);
@@ -35,6 +35,7 @@ export async function addPeer(exitNodeId: number, peer: {
 }
 
 export async function deletePeer(exitNodeId: number, publicKey: string) {
+    logger.info(`Deleting peer with public key ${publicKey} from exit node ${exitNodeId}`);
     const [exitNode] = await db.select().from(exitNodes).where(eq(exitNodes.exitNodeId, exitNodeId)).limit(1);
     if (!exitNode) {
         throw new Error(`Exit node with ID ${exitNodeId} not found`);

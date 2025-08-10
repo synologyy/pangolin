@@ -33,10 +33,7 @@ const createResourceParamsSchema = z
 const createHttpResourceSchema = z
     .object({
         name: z.string().min(1).max(255),
-        subdomain: z
-            .string()
-            .nullable()
-            .optional(),
+        subdomain: z.string().nullable().optional(),
         siteId: z.number(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
@@ -59,7 +56,8 @@ const createRawResourceSchema = z
         siteId: z.number(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.number().int().min(1).max(65535)
+        proxyPort: z.number().int().min(1).max(65535),
+        enableProxy: z.boolean().default(true)
     })
     .strict()
     .refine(
@@ -88,12 +86,7 @@ registry.registerPath({
         body: {
             content: {
                 "application/json": {
-                    schema:
-                        build == "oss"
-                            ? createHttpResourceSchema.or(
-                                  createRawResourceSchema
-                              )
-                            : createHttpResourceSchema
+                    schema: createHttpResourceSchema.or(createRawResourceSchema)
                 }
             }
         }
@@ -156,7 +149,10 @@ export async function createResource(
                 { siteId, orgId }
             );
         } else {
-            if (!config.getRawConfig().flags?.allow_raw_resources && build == "oss") {
+            if (
+                !config.getRawConfig().flags?.allow_raw_resources &&
+                build == "oss"
+            ) {
                 return next(
                     createHttpError(
                         HttpCode.BAD_REQUEST,
@@ -378,7 +374,7 @@ async function createRawResource(
         );
     }
 
-    const { name, http, protocol, proxyPort } = parsedBody.data;
+    const { name, http, protocol, proxyPort, enableProxy } = parsedBody.data;
 
     // if http is false check to see if there is already a resource with the same port and protocol
     const existingResource = await db
@@ -411,7 +407,8 @@ async function createRawResource(
                 name,
                 http,
                 protocol,
-                proxyPort
+                proxyPort,
+                enableProxy
             })
             .returning();
 

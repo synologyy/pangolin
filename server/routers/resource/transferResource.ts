@@ -168,7 +168,8 @@ export async function transferResource(
                     removeTargets(
                         newt.newtId,
                         resourceTargets,
-                        updatedResource.protocol
+                        updatedResource.protocol,
+                        updatedResource.proxyPort
                     );
                 }
             }
@@ -190,7 +191,8 @@ export async function transferResource(
                     addTargets(
                         newt.newtId,
                         resourceTargets,
-                        updatedResource.protocol
+                        updatedResource.protocol,
+                        updatedResource.proxyPort
                     );
                 }
             }

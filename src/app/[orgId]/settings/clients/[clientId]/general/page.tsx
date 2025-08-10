@@ -34,6 +34,7 @@ import { useEffect, useState } from "react";
 import { Tag, TagInput } from "@app/components/tags/tag-input";
 import { AxiosResponse } from "axios";
 import { ListSitesResponse } from "@server/routers/site";
+import { useTranslations } from "next-intl";
 
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
@@ -48,6 +49,7 @@ const GeneralFormSchema = z.object({
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 
 export default function GeneralPage() {
+    const t = useTranslations();
     const { client, updateClient } = useClientContext();
     const api = createApiClient(useEnvContext());
     const [loading, setLoading] = useState(false);
@@ -119,18 +121,18 @@ export default function GeneralPage() {
             updateClient({ name: data.name });
 
             toast({
-                title: "Client updated",
-                description: "The client has been updated."
+                title: t("clientUpdated"),
+                description: t("clientUpdatedDescription")
             });
 
             router.refresh();
         } catch (e) {
             toast({
                 variant: "destructive",
-                title: "Failed to update client",
+                title: t("clientUpdateFailed"),
                 description: formatAxiosError(
                     e,
-                    "An error occurred while updating the client."
+                    t("clientUpdateError")
                 )
             });
         } finally {
@@ -143,10 +145,10 @@ export default function GeneralPage() {
             <SettingsSection>
                 <SettingsSectionHeader>
                     <SettingsSectionTitle>
-                        General Settings
+                        {t("generalSettings")}
                     </SettingsSectionTitle>
                     <SettingsSectionDescription>
-                        Configure the general settings for this client
+                        {t("generalSettingsDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
 
@@ -163,15 +165,11 @@ export default function GeneralPage() {
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Name</FormLabel>
+                                            <FormLabel>{t("name")}</FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
                                             <FormMessage />
-                                            <FormDescription>
-                                                This is the display name of the
-                                                client.
-                                            </FormDescription>
                                         </FormItem>
                                     )}
                                 />
@@ -181,12 +179,12 @@ export default function GeneralPage() {
                                     name="siteIds"
                                     render={(field) => (
                                         <FormItem className="flex flex-col">
-                                            <FormLabel>Sites</FormLabel>
+                                            <FormLabel>{t("sites")}</FormLabel>
                                             <TagInput
                                                 {...field}
                                                 activeTagIndex={activeSitesTagIndex}
                                                 setActiveTagIndex={setActiveSitesTagIndex}
-                                                placeholder="Select sites"
+                                                placeholder={t("selectSites")}
                                                 size="sm"
                                                 tags={form.getValues().siteIds}
                                                 setTags={(newTags) => {
@@ -202,9 +200,7 @@ export default function GeneralPage() {
                                                 sortTags={true}
                                             />
                                             <FormDescription>
-                                                The client will have connectivity to the
-                                                selected sites. The sites must be configured
-                                                to accept client connections.
+                                                {t("sitesDescription")}
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -222,7 +218,7 @@ export default function GeneralPage() {
                         loading={loading}
                         disabled={loading}
                     >
-                        Save Settings
+                        {t("saveSettings")}
                     </Button>
                 </SettingsSectionFooter>
             </SettingsSection>

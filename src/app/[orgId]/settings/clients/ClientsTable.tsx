@@ -25,7 +25,6 @@ import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import CreateClientFormModal from "./CreateClientsModal";
 
 export type ClientRow = {
     id: number;
@@ -76,42 +75,6 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
     };
 
     const columns: ColumnDef<ClientRow>[] = [
-        {
-            id: "dots",
-            cell: ({ row }) => {
-                const clientRow = row.original;
-                const router = useRouter();
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {/* <Link */}
-                            {/*     className="block w-full" */}
-                            {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
-                            {/* > */}
-                            {/*     <DropdownMenuItem> */}
-                            {/*         View settings */}
-                            {/*     </DropdownMenuItem> */}
-                            {/* </Link> */}
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    setSelectedClient(clientRow);
-                                    setIsDeleteModalOpen(true);
-                                }}
-                            >
-                                <span className="text-red-500">Delete</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
         {
             accessorKey: "name",
             header: ({ column }) => {
@@ -243,6 +206,33 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                 const clientRow = row.original;
                 return (
                     <div className="flex items-center justify-end">
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {/* <Link */}
+                            {/*     className="block w-full" */}
+                            {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
+                            {/* > */}
+                            {/*     <DropdownMenuItem> */}
+                            {/*         View settings */}
+                            {/*     </DropdownMenuItem> */}
+                            {/* </Link> */}
+                            <DropdownMenuItem
+                                onClick={() => {
+                                    setSelectedClient(clientRow);
+                                    setIsDeleteModalOpen(true);
+                                }}
+                            >
+                                <span className="text-red-500">Delete</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                         <Link
                             href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
                         >
@@ -259,15 +249,6 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
 
     return (
         <>
-            <CreateClientFormModal
-                open={isCreateModalOpen}
-                setOpen={setIsCreateModalOpen}
-                onCreate={(val) => {
-                    setRows([val, ...rows]);
-                }}
-                orgId={orgId}
-            />
-
             {selectedClient && (
                 <ConfirmDeleteDialog
                     open={isDeleteModalOpen}
@@ -309,7 +290,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                 columns={columns}
                 data={rows}
                 addClient={() => {
-                    setIsCreateModalOpen(true);
+                    router.push(`/${orgId}/settings/clients/create`)
                 }}
             />
         </>

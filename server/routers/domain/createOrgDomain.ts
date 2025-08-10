@@ -11,6 +11,7 @@ import { generateId } from "@server/auth/sessions/app";
 import { eq, and } from "drizzle-orm";
 import { isValidDomain } from "@server/lib/validators";
 import { build } from "@server/build";
+import config from "@server/lib/config";
 
 const paramsSchema = z
     .object({
@@ -228,15 +229,15 @@ export async function createOrgDomain(
 
             // TODO: This needs to be cross region and not hardcoded
             if (type === "ns") {
-                nsRecords = ["ns-east.fossorial.io", "ns-west.fossorial.io"];
+                nsRecords = config.getRawConfig().dns.nameservers as string[];
             } else if (type === "cname") {
                 cnameRecords = [
                     {
-                        value: `${domainId}.cname.fossorial.io`,
+                        value: `${domainId}.${config.getRawConfig().dns.cname_extension}`,
                         baseDomain: baseDomain
                     },
                     {
-                        value: `_acme-challenge.${domainId}.cname.fossorial.io`,
+                        value: `_acme-challenge.${domainId}.${config.getRawConfig().dns.cname_extension}`,
                         baseDomain: `_acme-challenge.${baseDomain}`
                     }
                 ];

@@ -65,7 +65,8 @@ export const sites = sqliteTable("sites", {
     listenPort: integer("listenPort"),
     dockerSocketEnabled: integer("dockerSocketEnabled", { mode: "boolean" })
         .notNull()
-        .default(true)
+        .default(true),
+    remoteSubnets: text("remoteSubnets"), // comma-separated list of subnets that this site can access
 });
 
 export const resources = sqliteTable("resources", {
@@ -105,7 +106,8 @@ export const resources = sqliteTable("resources", {
         .notNull()
         .default(false),
     tlsServerName: text("tlsServerName"),
-    setHostHeader: text("setHostHeader")
+    setHostHeader: text("setHostHeader"),
+    enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
 });
 
 export const targets = sqliteTable("targets", {
@@ -154,6 +156,8 @@ export const users = sqliteTable("user", {
         .notNull()
         .default(false),
     dateCreated: text("dateCreated").notNull(),
+    termsAcceptedTimestamp: text("termsAcceptedTimestamp"),
+    termsVersion: text("termsVersion"),
     serverAdmin: integer("serverAdmin", { mode: "boolean" })
         .notNull()
         .default(false)

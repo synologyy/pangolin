@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -33,6 +34,7 @@ import Image from "next/image";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { useTranslations } from "next-intl";
 import BrandingLogo from "@app/components/BrandingLogo";
+import { build } from "@server/build";
 
 type SignupFormProps = {
     redirect?: string;
@@ -44,7 +46,19 @@ const formSchema = z
     .object({
         email: z.string().email({ message: "Invalid email address" }),
         password: passwordSchema,
-        confirmPassword: passwordSchema
+        confirmPassword: passwordSchema,
+        agreeToTerms: z.boolean().refine(
+            (val) => {
+                if (build === "saas") {
+                    val === true;
+                }
+                return true;
+            },
+            {
+                message:
+                    "You must agree to the terms of service and privacy policy"
+            }
+        )
     })
     .refine((data) => data.password === data.confirmPassword, {
         path: ["confirmPassword"],
@@ -64,13 +78,15 @@ export default function SignupForm({
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [termsAgreedAt, setTermsAgreedAt] = useState<string | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: "",
             password: "",
-            confirmPassword: ""
+            confirmPassword: "",
+            agreeToTerms: false
         }
     });
 
@@ -85,7 +101,8 @@ export default function SignupForm({
                 email,
                 password,
                 inviteId,
-                inviteToken
+                inviteToken,
+                termsAcceptedTimestamp: termsAgreedAt
             })
             .catch((e) => {
                 console.error(e);
@@ -120,14 +137,23 @@ export default function SignupForm({
         return t("authCreateAccount");
     }
 
+    const handleTermsChange = (checked: boolean) => {
+        if (checked) {
+            const isoNow = new Date().toISOString();
+            console.log("Terms agreed at:", isoNow);
+            setTermsAgreedAt(isoNow);
+            form.setValue("agreeToTerms", true);
+        } else {
+            form.setValue("agreeToTerms", false);
+            setTermsAgreedAt(null);
+        }
+    };
+
     return (
         <Card className="w-full max-w-md shadow-md">
             <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
-                    <BrandingLogo
-                        height={58}
-                        width={175}
-                    />
+                    <BrandingLogo height={58} width={175} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
                     <p className="text-muted-foreground">{getSubtitle()}</p>
@@ -180,6 +206,54 @@ export default function SignupForm({
                                 </FormItem>
                             )}
                         />
+                        {build === "saas" && (
+                            <FormField
+                                control={form.control}
+                                name="agreeToTerms"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-center">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value}
+                                                onCheckedChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    handleTermsChange(
+                                                        checked as boolean
+                                                    );
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <div className="leading-none">
+                                            <FormLabel className="text-sm font-normal">
+                                                {t("signUpTerms.IAgreeToThe")}
+                                                <a
+                                                    href="https://digpangolin.com/terms-of-service.html"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    {t(
+                                                        "signUpTerms.termsOfService"
+                                                    )}
+                                                </a>
+                                                {t("signUpTerms.and")}
+                                                <a
+                                                    href="https://digpangolin.com/privacy-policy.html"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-primary hover:underline"
+                                                >
+                                                    {t(
+                                                        "signUpTerms.privacyPolicy"
+                                                    )}
+                                                </a>
+                                            </FormLabel>
+                                            <FormMessage />
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         {error && (
                             <Alert variant="destructive">

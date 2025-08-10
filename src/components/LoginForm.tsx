@@ -63,7 +63,6 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [securityKeyLoading, setSecurityKeyLoading] = useState(false);
     const hasIdp = idps && idps.length > 0;
 
     const [mfaRequested, setMfaRequested] = useState(false);
@@ -72,14 +71,12 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
     const t = useTranslations();
 
     const formSchema = z.object({
-        email: z.string().email({ message: t('emailInvalid') }),
-        password: z
-            .string()
-            .min(8, { message: t('passwordRequirementsChars') })
+        email: z.string().email({ message: t("emailInvalid") }),
+        password: z.string().min(8, { message: t("passwordRequirementsChars") })
     });
 
     const mfaSchema = z.object({
-        code: z.string().length(6, { message: t('pincodeInvalid') })
+        code: z.string().length(6, { message: t("pincodeInvalid") })
     });
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -99,17 +96,23 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
 
     async function initiateSecurityKeyAuth() {
         setShowSecurityKeyPrompt(true);
-        setSecurityKeyLoading(true);
+        setLoading(true);
         setError(null);
 
         try {
             // Start WebAuthn authentication without email
-            const startRes = await api.post("/auth/security-key/authenticate/start", {});
+            const startRes = await api.post(
+                "/auth/security-key/authenticate/start",
+                {}
+            );
 
             if (!startRes) {
-                setError(t('securityKeyAuthError', {
-                    defaultValue: "Failed to start security key authentication"
-                }));
+                setError(
+                    t("securityKeyAuthError", {
+                        defaultValue:
+                            "Failed to start security key authentication"
+                    })
+                );
                 return;
             }
 
@@ -125,7 +128,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                     { credential },
                     {
                         headers: {
-                            'X-Temp-Session-Id': tempSessionId
+                            "X-Temp-Session-Id": tempSessionId
                         }
                     }
                 );
@@ -136,39 +139,61 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                     }
                 }
             } catch (error: any) {
-                if (error.name === 'NotAllowedError') {
-                    if (error.message.includes('denied permission')) {
-                        setError(t('securityKeyPermissionDenied', {
-                            defaultValue: "Please allow access to your security key to continue signing in."
-                        }));
+                if (error.name === "NotAllowedError") {
+                    if (error.message.includes("denied permission")) {
+                        setError(
+                            t("securityKeyPermissionDenied", {
+                                defaultValue:
+                                    "Please allow access to your security key to continue signing in."
+                            })
+                        );
                     } else {
-                        setError(t('securityKeyRemovedTooQuickly', {
-                            defaultValue: "Please keep your security key connected until the sign-in process completes."
-                        }));
+                        setError(
+                            t("securityKeyRemovedTooQuickly", {
+                                defaultValue:
+                                    "Please keep your security key connected until the sign-in process completes."
+                            })
+                        );
                     }
-                } else if (error.name === 'NotSupportedError') {
-                    setError(t('securityKeyNotSupported', {
-                        defaultValue: "Your security key may not be compatible. Please try a different security key."
-                    }));
+                } else if (error.name === "NotSupportedError") {
+                    setError(
+                        t("securityKeyNotSupported", {
+                            defaultValue:
+                                "Your security key may not be compatible. Please try a different security key."
+                        })
+                    );
                 } else {
-                    setError(t('securityKeyUnknownError', {
-                        defaultValue: "There was a problem using your security key. Please try again."
-                    }));
+                    setError(
+                        t("securityKeyUnknownError", {
+                            defaultValue:
+                                "There was a problem using your security key. Please try again."
+                        })
+                    );
                 }
             }
         } catch (e: any) {
             if (e.isAxiosError) {
-                setError(formatAxiosError(e, t('securityKeyAuthError', {
-                    defaultValue: "Failed to authenticate with security key"
-                })));
+                setError(
+                    formatAxiosError(
+                        e,
+                        t("securityKeyAuthError", {
+                            defaultValue:
+                                "Failed to authenticate with security key"
+                        })
+                    )
+                );
             } else {
                 console.error(e);
-                setError(e.message || t('securityKeyAuthError', {
-                    defaultValue: "Failed to authenticate with security key"
-                }));
+                setError(
+                    e.message ||
+                        t("securityKeyAuthError", {
+                            defaultValue:
+                                "Failed to authenticate with security key"
+                        })
+                );
             }
         } finally {
-            setSecurityKeyLoading(false);
+            setLoading(false);
             setShowSecurityKeyPrompt(false);
         }
     }
@@ -182,11 +207,14 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
         setShowSecurityKeyPrompt(false);
 
         try {
-            const res = await api.post<AxiosResponse<LoginResponse>>("/auth/login", {
-                email,
-                password,
-                code
-            });
+            const res = await api.post<AxiosResponse<LoginResponse>>(
+                "/auth/login",
+                {
+                    email,
+                    password,
+                    code
+                }
+            );
 
             const data = res.data.data;
 
@@ -212,7 +240,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
             }
 
             if (data?.twoFactorSetupRequired) {
-                const setupUrl = `/auth/2fa/setup?email=${encodeURIComponent(email)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ''}`;
+                const setupUrl = `/auth/2fa/setup?email=${encodeURIComponent(email)}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`;
                 router.push(setupUrl);
                 return;
             }
@@ -222,16 +250,22 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
             }
         } catch (e: any) {
             if (e.isAxiosError) {
-                const errorMessage = formatAxiosError(e, t('loginError', {
-                    defaultValue: "Failed to log in"
-                }));
+                const errorMessage = formatAxiosError(
+                    e,
+                    t("loginError", {
+                        defaultValue: "Failed to log in"
+                    })
+                );
                 setError(errorMessage);
                 return;
             } else {
                 console.error(e);
-                setError(e.message || t('loginError', {
-                    defaultValue: "Failed to log in"
-                }));
+                setError(
+                    e.message ||
+                        t("loginError", {
+                            defaultValue: "Failed to log in"
+                        })
+                );
                 return;
             }
         } finally {
@@ -251,7 +285,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
             console.log(res);
 
             if (!res) {
-                setError(t('loginError'));
+                setError(t("loginError"));
                 return;
             }
 
@@ -268,8 +302,9 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                 <Alert>
                     <FingerprintIcon className="w-5 h-5 mr-2" />
                     <AlertDescription>
-                        {t('securityKeyPrompt', {
-                            defaultValue: "Please verify your identity using your security key. Make sure your security key is connected and ready."
+                        {t("securityKeyPrompt", {
+                            defaultValue:
+                                "Please verify your identity using your security key. Make sure your security key is connected and ready."
                         })}
                     </AlertDescription>
                 </Alert>
@@ -288,7 +323,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>{t('email')}</FormLabel>
+                                        <FormLabel>{t("email")}</FormLabel>
                                         <FormControl>
                                             <Input {...field} />
                                         </FormControl>
@@ -303,7 +338,9 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('password')}</FormLabel>
+                                            <FormLabel>
+                                                {t("password")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="password"
@@ -320,18 +357,18 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                         href={`/auth/reset-password${form.getValues().email ? `?email=${form.getValues().email}` : ""}`}
                                         className="text-sm text-muted-foreground"
                                     >
-                                        {t('passwordForgot')}
+                                        {t("passwordForgot")}
                                     </Link>
                                 </div>
                             </div>
 
                             <div className="flex flex-col space-y-2">
-                                <Button type="submit" disabled={loading}>
-                                    {loading ? t('idpConnectingToProcess', {
-                                        defaultValue: "Connecting..."
-                                    }) : t('login', {
-                                        defaultValue: "Log in"
-                                    })}
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    loading={loading}
+                                >
+                                    {t("login")}
                                 </Button>
                             </div>
                         </form>
@@ -342,11 +379,9 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
             {mfaRequested && (
                 <>
                     <div className="text-center">
-                        <h3 className="text-lg font-medium">
-                            {t('otpAuth')}
-                        </h3>
+                        <h3 className="text-lg font-medium">{t("otpAuth")}</h3>
                         <p className="text-sm text-muted-foreground">
-                            {t('otpAuthDescription')}
+                            {t("otpAuthDescription")}
                         </p>
                     </div>
                     <Form {...mfaForm}>
@@ -368,10 +403,16 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                                     pattern={
                                                         REGEXP_ONLY_DIGITS_AND_CHARS
                                                     }
-                                                    onChange={(value: string) => {
+                                                    onChange={(
+                                                        value: string
+                                                    ) => {
                                                         field.onChange(value);
-                                                        if (value.length === 6) {
-                                                            mfaForm.handleSubmit(onSubmit)();
+                                                        if (
+                                                            value.length === 6
+                                                        ) {
+                                                            mfaForm.handleSubmit(
+                                                                onSubmit
+                                                            )();
                                                         }
                                                     }}
                                                 >
@@ -422,7 +463,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                         loading={loading}
                         disabled={loading}
                     >
-                        {t('otpAuthSubmit')}
+                        {t("otpAuthSubmit")}
                     </Button>
                 )}
 
@@ -433,11 +474,11 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                             variant="outline"
                             className="w-full"
                             onClick={initiateSecurityKeyAuth}
-                            loading={securityKeyLoading}
-                            disabled={securityKeyLoading || showSecurityKeyPrompt}
+                            loading={loading}
+                            disabled={loading || showSecurityKeyPrompt}
                         >
                             <FingerprintIcon className="w-4 h-4 mr-2" />
-                            {t('securityKeyLogin', {
+                            {t("securityKeyLogin", {
                                 defaultValue: "Sign in with security key"
                             })}
                         </Button>
@@ -450,7 +491,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                     </div>
                                     <div className="relative flex justify-center text-xs uppercase">
                                         <span className="px-2 bg-card text-muted-foreground">
-                                            {t('idpContinue')}
+                                            {t("idpContinue")}
                                         </span>
                                     </div>
                                 </div>
@@ -483,7 +524,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                             mfaForm.reset();
                         }}
                     >
-                        {t('otpAuthBack')}
+                        {t("otpAuthBack")}
                     </Button>
                 )}
             </div>

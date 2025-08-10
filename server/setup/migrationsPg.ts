@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db } from "../db/pg";
 import semver from "semver";
@@ -6,6 +7,7 @@ import { __DIRNAME, APP_VERSION } from "@server/lib/consts";
 import path from "path";
 import m1 from "./scriptsPg/1.6.0";
 import m2 from "./scriptsPg/1.7.0";
+import m3 from "./scriptsPg/1.8.0";
 
 // THIS CANNOT IMPORT ANYTHING FROM THE SERVER
 // EXCEPT FOR THE DATABASE AND THE SCHEMA
@@ -13,7 +15,8 @@ import m2 from "./scriptsPg/1.7.0";
 // Define the migration list with versions and their corresponding functions
 const migrations = [
     { version: "1.6.0", run: m1 },
-    { version: "1.7.0", run: m2 }
+    { version: "1.7.0", run: m2 },
+    { version: "1.8.0", run: m3 }
     // Add new migrations here as they are created
 ] as {
     version: string;

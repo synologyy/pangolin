@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import "./extendZod.ts";
 
 import { runSetupFunctions } from "./setup";

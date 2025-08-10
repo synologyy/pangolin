@@ -2,10 +2,18 @@ import { z } from "zod";
 import { MessageHandler } from "../ws";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
-import { db } from "@server/db";
+import {
+    db,
+    ExitNode,
+    exitNodes,
+    resources,
+    Target,
+    targets
+} from "@server/db";
 import { clients, clientSites, Newt, sites } from "@server/db";
-import { eq } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
+import axios from "axios";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -54,7 +62,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         logger.warn("handleGetConfigMessage: Site not found");
         return;
     }
-    
+
     // we need to wait for hole punch success
     if (!existingSite.endpoint) {
         logger.warn(`Site ${existingSite.siteId} has no endpoint, skipping`);
@@ -87,6 +95,48 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         return;
     }
 
+    let exitNode: ExitNode | undefined;
+    if (site.exitNodeId) {
+        [exitNode] = await db
+            .select()
+            .from(exitNodes)
+            .where(eq(exitNodes.exitNodeId, site.exitNodeId))
+            .limit(1);
+        if (exitNode.reachableAt) {
+            try {
+                const response = await axios.post(
+                    `${exitNode.reachableAt}/update-proxy-mapping`,
+                    {
+                        oldDestination: {
+                            destinationIP: existingSite.subnet?.split("/")[0],
+                            destinationPort: existingSite.listenPort
+                        },
+                        newDestination: {
+                            destinationIP: site.subnet?.split("/")[0],
+                            destinationPort: site.listenPort
+                        }
+                    },
+                    {
+                        headers: {
+                            "Content-Type": "application/json"
+                        }
+                    }
+                );
+
+                logger.info("Destinations updated:", {
+                    peer: response.data.status
+                });
+            } catch (error) {
+                if (axios.isAxiosError(error)) {
+                    throw new Error(
+                        `Error communicating with Gerbil. Make sure Pangolin can reach the Gerbil HTTP API: ${error.response?.status}`
+                    );
+                }
+                throw error;
+            }
+        }
+    }
+
     // Get all clients connected to this site
     const clientsRes = await db
         .select()
@@ -107,33 +157,59 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                 if (!client.clients.endpoint) {
                     return false;
                 }
-                if (!client.clients.online) {
-                    return false;
-                }
-
                 return true;
             })
             .map(async (client) => {
                 // Add or update this peer on the olm if it is connected
                 try {
-                    if (site.endpoint && site.publicKey) {
-                        await updatePeer(client.clients.clientId, {
-                            siteId: site.siteId,
-                            endpoint: site.endpoint,
-                            publicKey: site.publicKey,
-                            serverIP: site.address,
-                            serverPort: site.listenPort
-                        });
+                    if (!site.publicKey) {
+                        logger.warn(
+                            `Site ${site.siteId} has no public key, skipping`
+                        );
+                        return null;
                     }
+                    let endpoint = site.endpoint;
+                    if (client.clientSites.isRelayed) {
+                        if (!site.exitNodeId) {
+                            logger.warn(
+                                `Site ${site.siteId} has no exit node, skipping`
+                            );
+                            return null;
+                        }
+
+                        if (!exitNode) {
+                            logger.warn(
+                                `Exit node not found for site ${site.siteId}`
+                            );
+                            return null;
+                        }
+                        endpoint = `${exitNode.endpoint}:21820`;
+                    }
+
+                    if (!endpoint) {
+                        logger.warn(
+                            `Site ${site.siteId} has no endpoint, skipping`
+                        );
+                        return null;
+                    }
+
+                    await updatePeer(client.clients.clientId, {
+                        siteId: site.siteId,
+                        endpoint: endpoint,
+                        publicKey: site.publicKey,
+                        serverIP: site.address,
+                        serverPort: site.listenPort,
+                        remoteSubnets: site.remoteSubnets
+                    });
                 } catch (error) {
                     logger.error(
-                        `Failed to add/update peer ${client.clients.pubKey} to newt ${newt.newtId}: ${error}`
+                        `Failed to add/update peer ${client.clients.pubKey} to olm ${newt.newtId}: ${error}`
                     );
                 }
 
                 return {
                     publicKey: client.clients.pubKey!,
-                    allowedIps: [`${client.clients.subnet.split('/')[0]}/32`], // we want to only allow from that client
+                    allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
                     endpoint: client.clientSites.isRelayed
                         ? ""
                         : client.clients.endpoint! // if its relayed it should be localhost
@@ -144,14 +220,96 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     // Filter out any null values from peers that didn't have an olm
     const validPeers = peers.filter((peer) => peer !== null);
 
+    // Improved version
+    const allResources = await db.transaction(async (tx) => {
+        // First get all resources for the site
+        const resourcesList = await tx
+            .select({
+                resourceId: resources.resourceId,
+                subdomain: resources.subdomain,
+                fullDomain: resources.fullDomain,
+                ssl: resources.ssl,
+                blockAccess: resources.blockAccess,
+                sso: resources.sso,
+                emailWhitelistEnabled: resources.emailWhitelistEnabled,
+                http: resources.http,
+                proxyPort: resources.proxyPort,
+                protocol: resources.protocol
+            })
+            .from(resources)
+            .where(and(eq(resources.siteId, siteId), eq(resources.http, false)));
+
+        // Get all enabled targets for these resources in a single query
+        const resourceIds = resourcesList.map((r) => r.resourceId);
+        const allTargets =
+            resourceIds.length > 0
+                ? await tx
+                      .select({
+                          resourceId: targets.resourceId,
+                          targetId: targets.targetId,
+                          ip: targets.ip,
+                          method: targets.method,
+                          port: targets.port,
+                          internalPort: targets.internalPort,
+                          enabled: targets.enabled,
+                      })
+                      .from(targets)
+                      .where(
+                          and(
+                              inArray(targets.resourceId, resourceIds),
+                              eq(targets.enabled, true)
+                          )
+                      )
+                : [];
+
+        // Combine the data in JS instead of using SQL for the JSON
+        return resourcesList.map((resource) => ({
+            ...resource,
+            targets: allTargets.filter(
+                (target) => target.resourceId === resource.resourceId
+            )
+        }));
+    });
+
+    const { tcpTargets, udpTargets } = allResources.reduce(
+        (acc, resource) => {
+            // Skip resources with no targets
+            if (!resource.targets?.length) return acc;
+
+            // Format valid targets into strings
+            const formattedTargets = resource.targets
+                .filter(
+                    (target: Target) =>
+                        resource.proxyPort && target?.ip && target?.port
+                )
+                .map(
+                    (target: Target) =>
+                        `${resource.proxyPort}:${target.ip}:${target.port}`
+                );
+
+            // Add to the appropriate protocol array
+            if (resource.protocol === "tcp") {
+                acc.tcpTargets.push(...formattedTargets);
+            } else {
+                acc.udpTargets.push(...formattedTargets);
+            }
+
+            return acc;
+        },
+        { tcpTargets: [] as string[], udpTargets: [] as string[] }
+    );
+
     // Build the configuration response
     const configResponse = {
         ipAddress: site.address,
-        peers: validPeers
+        peers: validPeers,
+        targets: {
+            udp: udpTargets,
+            tcp: tcpTargets
+        }
     };
 
     logger.debug("Sending config: ", configResponse);
-
     return {
         message: {
             type: "newt/wg/receive-config",

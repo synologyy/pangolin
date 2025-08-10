@@ -1,3 +1,4 @@
+docker
 example.com
 pangolin.example.com
 admin@example.com

@@ -103,7 +103,8 @@ export async function deleteResource(
                 removeTargets(
                     newt.newtId,
                     targetsToBeRemoved,
-                    deletedResource.protocol
+                    deletedResource.protocol,
+                    deletedResource.proxyPort
                 );
             }
         }

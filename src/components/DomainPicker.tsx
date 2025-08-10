@@ -49,6 +49,7 @@ type DomainOption = {
 
 interface DomainPickerProps {
     orgId: string;
+    cols?: number;
     onDomainChange?: (domainInfo: {
         domainId: string;
         domainNamespaceId?: string;
@@ -61,6 +62,7 @@ interface DomainPickerProps {
 
 export default function DomainPicker({
     orgId,
+    cols,
     onDomainChange
 }: DomainPickerProps) {
     const { env } = useEnvContext();
@@ -126,9 +128,6 @@ export default function DomainPicker({
         const options: DomainOption[] = [];
 
         if (!userInput.trim()) return options;
-
-        // Check if input is more than one level deep (contains multiple dots)
-        const isMultiLevel = (userInput.match(/\./g) || []).length > 1;
 
         // Add organization domain options
         organizationDomains.forEach((orgDomain) => {
@@ -309,6 +308,7 @@ export default function DomainPicker({
                 <Input
                     id="domain-input"
                     value={userInput}
+                    className="max-w-xl"
                     onChange={(e) => {
                         // Only allow letters, numbers, hyphens, and periods
                         const validInput = e.target.value.replace(
@@ -316,6 +316,8 @@ export default function DomainPicker({
                             ""
                         );
                         setUserInput(validInput);
+                        // Clear selection when input changes
+                        setSelectedOption(null);
                     }}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -382,7 +384,7 @@ export default function DomainPicker({
                     <Alert>
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                            {t("domainPickerNoMatchingDomains", { userInput })}
+                            {t("domainPickerNoMatchingDomains")}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -393,23 +395,25 @@ export default function DomainPicker({
                     {/* Organization Domains */}
                     {organizationOptions.length > 0 && (
                         <div className="space-y-3">
-                            <div className="flex items-center space-x-2">
-                                <Building2 className="h-4 w-4" />
-                                <h4 className="text-sm font-medium">
-                                    {t("domainPickerOrganizationDomains")}
-                                </h4>
-                            </div>
-                            <div className="grid gap-2">
+                            {build !== "oss" && (
+                                <div className="flex items-center space-x-2">
+                                    <Building2 className="h-4 w-4" />
+                                    <h4 className="text-sm font-medium">
+                                        {t("domainPickerOrganizationDomains")}
+                                    </h4>
+                                </div>
+                            )}
+                            <div className={`grid gap-2 ${cols ? `grid-cols-${cols}` : 'grid-cols-1 sm:grid-cols-2'}`}>
                                 {organizationOptions.map((option) => (
                                     <div
                                         key={option.id}
                                         className={cn(
                                             "transition-all p-3 rounded-lg border",
                                             selectedOption?.id === option.id
-                                                ? "border-primary bg-primary/5"
-                                                : "border-input",
+                                                ? "border-primary bg-primary/10"
+                                                : "border-input hover:bg-accent",
                                             option.verified
-                                                ? "cursor-pointer hover:bg-accent"
+                                                ? "cursor-pointer"
                                                 : "cursor-not-allowed opacity-60"
                                         )}
                                         onClick={() =>
@@ -456,10 +460,6 @@ export default function DomainPicker({
                                                     </p>
                                                 )}
                                             </div>
-                                            {selectedOption?.id ===
-                                                option.id && (
-                                                <CheckCircle2 className="h-4 w-4 text-primary" />
-                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -476,14 +476,14 @@ export default function DomainPicker({
                                     {t("domainPickerProvidedDomains")}
                                 </div>
                             </div>
-                            <div className="grid gap-2">
+                            <div className={`grid gap-2 ${cols ? `grid-cols-${cols}` : 'grid-cols-1 sm:grid-cols-2'}`}>
                                 {providedOptions.map((option) => (
                                     <div
                                         key={option.id}
                                         className={cn(
                                             "transition-all p-3 rounded-lg border",
                                             selectedOption?.id === option.id
-                                                ? "border-primary bg-primary/5"
+                                                ? "border-primary bg-primary/10"
                                                 : "border-input",
                                             "cursor-pointer hover:bg-accent"
                                         )}

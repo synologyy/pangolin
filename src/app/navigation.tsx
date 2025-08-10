@@ -12,14 +12,23 @@ import {
     KeyRound,
     TicketCheck,
     User,
-    Globe,
-    MonitorUp
+    Globe, // Added from 'dev' branch
+    MonitorUp // Added from 'dev' branch
 } from "lucide-react";
 
-export type SidebarNavSection = {
+export type SidebarNavSection = { // Added from 'dev' branch
     heading: string;
     items: SidebarNavItem[];
 };
+
+// Merged from 'user-management-and-resources' branch
+export const orgLangingNavItems: SidebarNavItem[] = [
+    {
+        title: "sidebarAccount",
+        href: "/{orgId}",
+        icon: <User className="h-4 w-4" />
+    }
+];
 
 export const orgNavSections = (
     enableClients: boolean = true

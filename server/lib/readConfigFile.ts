@@ -213,7 +213,7 @@ export const configSchema = z
                 smtp_host: z.string().optional(),
                 smtp_port: portSchema.optional(),
                 smtp_user: z.string().optional(),
-                smtp_pass: z.string().optional(),
+                smtp_pass: z.string().optional().transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
                 smtp_secure: z.boolean().optional(),
                 smtp_tls_reject_unauthorized: z.boolean().optional(),
                 no_reply: z.string().email().optional()
@@ -229,9 +229,22 @@ export const configSchema = z
                 disable_local_sites: z.boolean().optional(),
                 disable_basic_wireguard_sites: z.boolean().optional(),
                 disable_config_managed_domains: z.boolean().optional(),
-                enable_clients: z.boolean().optional()
+                enable_clients: z.boolean().optional().default(true),
+            })
+            .optional(),
+        dns: z
+            .object({
+                nameservers: z
+                    .array(z.string().optional().optional())
+                    .optional()
+                    .default(["ns1.fossorial.io", "ns2.fossorial.io"]),
+                cname_extension: z.string().optional().default("fossorial.io")
             })
             .optional()
+            .default({
+                nameservers: ["ns1.fossorial.io", "ns2.fossorial.io"],
+                cname_extension: "fossorial.io"
+            })
     })
     .refine(
         (data) => {

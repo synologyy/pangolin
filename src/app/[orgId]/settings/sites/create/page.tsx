@@ -42,6 +42,7 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
+import { SiNixos } from "react-icons/si";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { generateKeypair } from "../[niceId]/wireguardConfig";
@@ -74,6 +75,7 @@ type Commands = {
     windows: Record<string, string[]>;
     docker: Record<string, string[]>;
     podman: Record<string, string[]>;
+    nixos: Record<string, string[]>;
 };
 
 const platforms = [
@@ -82,7 +84,8 @@ const platforms = [
     "podman",
     "mac",
     "windows",
-    "freebsd"
+    "freebsd",
+    "nixos"
 ] as const;
 
 type Platform = (typeof platforms)[number];
@@ -285,6 +288,14 @@ WantedBy=default.target`
                 "Podman Run": [
                     `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
+            },
+            nixos: {
+                x86_64: [
+                    `nix run 'nixpkgs#fosrl-newt' --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                ],
+                aarch64: [
+                    `nix run 'nixpkgs#fosrl-newt' --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                ]
             }
         };
         setCommands(commands);
@@ -304,6 +315,8 @@ WantedBy=default.target`
                 return ["Podman Quadlet", "Podman Run"];
             case "freebsd":
                 return ["amd64", "arm64"];
+            case "nixos":
+                return ["x86_64", "aarch64"];
             default:
                 return ["x64"];
         }
@@ -321,6 +334,8 @@ WantedBy=default.target`
                 return "Podman";
             case "freebsd":
                 return "FreeBSD";
+            case "nixos":
+                return "NixOS";
             default:
                 return "Linux";
         }
@@ -365,6 +380,8 @@ WantedBy=default.target`
                 return <FaCubes className="h-4 w-4 mr-2" />;
             case "freebsd":
                 return <FaFreebsd className="h-4 w-4 mr-2" />;
+            case "nixos":
+                return <SiNixos  className="h-4 w-4 mr-2" />;
             default:
                 return <Terminal className="h-4 w-4 mr-2" />;
         }
@@ -587,11 +604,6 @@ WantedBy=default.target`
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
-                                                        <FormDescription>
-                                                            {t(
-                                                                "siteNameDescription"
-                                                            )}
-                                                        </FormDescription>
                                                     </FormItem>
                                                 )}
                                             />

@@ -4,7 +4,8 @@ import { sendToClient } from "../ws";
 export function addTargets(
     newtId: string,
     targets: Target[],
-    protocol: string
+    protocol: string,
+    port: number | null = null
 ) {
     //create a list of udp and tcp targets
     const payloadTargets = targets.map((target) => {
@@ -13,19 +14,32 @@ export function addTargets(
         }:${target.port}`;
     });
 
-    const payload = {
+    sendToClient(newtId, {
         type: `newt/${protocol}/add`,
         data: {
             targets: payloadTargets
         }
-    };
-    sendToClient(newtId, payload);
+    });
+
+    const payloadTargetsResources = targets.map((target) => {
+        return `${port ? port + ":" : ""}${
+            target.ip
+        }:${target.port}`;
+    });
+
+    sendToClient(newtId, {
+        type: `newt/wg/${protocol}/add`,
+        data: {
+            targets: [payloadTargetsResources[0]] // We can only use one target for WireGuard right now
+        }
+    });
 }
 
 export function removeTargets(
     newtId: string,
     targets: Target[],
-    protocol: string
+    protocol: string,
+    port: number | null = null
 ) {
     //create a list of udp and tcp targets
     const payloadTargets = targets.map((target) => {
@@ -34,11 +48,23 @@ export function removeTargets(
         }:${target.port}`;
     });
 
-    const payload = {
+    sendToClient(newtId, {
         type: `newt/${protocol}/remove`,
         data: {
             targets: payloadTargets
         }
-    };
-    sendToClient(newtId, payload);
+    });
+
+    const payloadTargetsResources = targets.map((target) => {
+        return `${port ? port + ":" : ""}${
+            target.ip
+        }:${target.port}`;
+    });
+
+    sendToClient(newtId, {
+        type: `newt/wg/${protocol}/remove`,
+        data: {
+            targets: [payloadTargetsResources[0]] // We can only use one target for WireGuard right now
+        }
+    });
 }

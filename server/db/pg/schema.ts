@@ -5,7 +5,8 @@ import {
     boolean,
     integer,
     bigint,
-    real
+    real,
+    text
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 
@@ -58,7 +59,8 @@ export const sites = pgTable("sites", {
     publicKey: varchar("publicKey"),
     lastHolePunch: bigint("lastHolePunch", { mode: "number" }),
     listenPort: integer("listenPort"),
-    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true)
+    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true),
+    remoteSubnets: text("remoteSubnets") // comma-separated list of subnets that this site can access
 });
 
 export const resources = pgTable("resources", {
@@ -92,7 +94,8 @@ export const resources = pgTable("resources", {
     enabled: boolean("enabled").notNull().default(true),
     stickySession: boolean("stickySession").notNull().default(false),
     tlsServerName: varchar("tlsServerName"),
-    setHostHeader: varchar("setHostHeader")
+    setHostHeader: varchar("setHostHeader"),
+    enableProxy: boolean("enableProxy").default(true),
 });
 
 export const targets = pgTable("targets", {
@@ -135,6 +138,8 @@ export const users = pgTable("user", {
     twoFactorSecret: varchar("twoFactorSecret"),
     emailVerified: boolean("emailVerified").notNull().default(false),
     dateCreated: varchar("dateCreated").notNull(),
+    termsAcceptedTimestamp: varchar("termsAcceptedTimestamp"),
+    termsVersion: varchar("termsVersion"),
     serverAdmin: boolean("serverAdmin").notNull().default(false)
 });
 
@@ -504,8 +509,8 @@ export const clients = pgTable("clients", {
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
     subnet: varchar("subnet").notNull(),
-    megabytesIn: integer("bytesIn"),
-    megabytesOut: integer("bytesOut"),
+    megabytesIn: real("bytesIn"),
+    megabytesOut: real("bytesOut"),
     lastBandwidthUpdate: varchar("lastBandwidthUpdate"),
     lastPing: varchar("lastPing"),
     type: varchar("type").notNull(), // "olm"
@@ -539,7 +544,7 @@ export const olmSessions = pgTable("clientSession", {
     olmId: varchar("olmId")
         .notNull()
         .references(() => olms.olmId, { onDelete: "cascade" }),
-    expiresAt: integer("expiresAt").notNull()
+    expiresAt: bigint("expiresAt", { mode: "number" }).notNull()
 });
 
 export const userClients = pgTable("userClients", {
@@ -562,9 +567,11 @@ export const roleClients = pgTable("roleClients", {
 
 export const securityKeys = pgTable("webauthnCredentials", {
     credentialId: varchar("credentialId").primaryKey(),
-    userId: varchar("userId").notNull().references(() => users.userId, {
-        onDelete: "cascade"
-    }),
+    userId: varchar("userId")
+        .notNull()
+        .references(() => users.userId, {
+            onDelete: "cascade"
+        }),
     publicKey: varchar("publicKey").notNull(),
     signCount: integer("signCount").notNull(),
     transports: varchar("transports"),

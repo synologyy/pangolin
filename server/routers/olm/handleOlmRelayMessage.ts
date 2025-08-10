@@ -1,7 +1,7 @@
-import { db } from "@server/db";
+import { db, exitNodes, sites } from "@server/db";
 import { MessageHandler } from "../ws";
 import { clients, clientSites, Olm } from "@server/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { updatePeer } from "../newt/peers";
 import logger from "@server/logger";
 
@@ -30,28 +30,66 @@ export const handleOlmRelayMessage: MessageHandler = async (context) => {
         .limit(1);
 
     if (!client) {
-        logger.warn("Site not found or does not have exit node");
+        logger.warn("Client not found");
         return;
     }
 
     // make sure we hand endpoints for both the site and the client and the lastHolePunch is not too old
     if (!client.pubKey) {
-        logger.warn("Site or client has no endpoint or listen port");
+        logger.warn("Client has no endpoint or listen port");
         return;
     }
 
     const { siteId } = message.data;
+
+    // Get the site
+    const [site] = await db
+        .select()
+        .from(sites)
+        .where(eq(sites.siteId, siteId))
+        .limit(1);
+
+    if (!site || !site.exitNodeId) {
+        logger.warn("Site not found or has no exit node");
+        return;
+    }
+
+    // get the site's exit node
+    const [exitNode] = await db
+        .select()
+        .from(exitNodes)
+        .where(eq(exitNodes.exitNodeId, site.exitNodeId))
+        .limit(1);
+
+    if (!exitNode) {
+        logger.warn("Exit node not found for site");
+        return;
+    }
 
     await db
         .update(clientSites)
         .set({
             isRelayed: true
         })
-        .where(eq(clientSites.clientId, olm.clientId));
+        .where(
+            and(
+                eq(clientSites.clientId, olm.clientId),
+                eq(clientSites.siteId, siteId)
+            )
+        );
 
     // update the peer on the exit node
     await updatePeer(siteId, client.pubKey, {
         endpoint: "" // this removes the endpoint
+    });
+
+    sendToClient(olm.olmId, {
+        type: "olm/wg/peer/relay",
+        data: {
+            siteId: siteId,
+            endpoint: exitNode.endpoint,
+            publicKey: exitNode.publicKey
+        }
     });
 
     return;

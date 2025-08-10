@@ -48,7 +48,7 @@ export default async function ClientsPage(props: ClientsPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title="Manage Clients"
+                title="Manage Clients (beta)"
                 description="Clients are devices that can connect to your sites"
             />
 
