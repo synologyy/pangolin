@@ -271,7 +271,7 @@ export default function ResourceRules(props: {
             }
 
             // Save rules
-            for (let rule of rules) {
+            for (const rule of rules) {
                 const data = {
                     action: rule.action,
                     match: rule.match,
@@ -348,7 +348,7 @@ export default function ResourceRules(props: {
 
                 setRules([
                     ...rules.map((r) => {
-                        let res = {
+                        const res = {
                             ...r,
                             new: false,
                             updated: false

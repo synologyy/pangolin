@@ -68,7 +68,7 @@ export async function createOidcIdp(
             );
         }
 
-        let {
+        const {
             clientId,
             clientSecret,
             authUrl,

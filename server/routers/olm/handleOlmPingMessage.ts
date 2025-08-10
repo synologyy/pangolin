@@ -37,7 +37,7 @@ export const startOfflineChecker = (): void => {
     }, OFFLINE_CHECK_INTERVAL);
 
     logger.info("Started offline checker interval");
-}
+};
 
 /**
  * Stops the background interval that checks for offline clients
@@ -48,7 +48,7 @@ export const stopOfflineChecker = (): void => {
         offlineCheckerInterval = null;
         logger.info("Stopped offline checker interval");
     }
-}
+};
 
 /**
  * Handles ping messages from clients and responds with pong

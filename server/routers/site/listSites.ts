@@ -176,7 +176,7 @@ export async function listSites(
         const accessibleSiteIds = accessibleSites.map((site) => site.siteId);
         const baseQuery = querySites(orgId, accessibleSiteIds);
 
-        let countQuery = db
+        const countQuery = db
             .select({ count: count() })
             .from(sites)
             .where(

@@ -85,7 +85,7 @@ export async function updateOidcIdp(
         }
 
         const { idpId } = parsedParams.data;
-        let {
+        const {
             clientId,
             clientSecret,
             authUrl,

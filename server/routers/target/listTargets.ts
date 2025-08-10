@@ -35,7 +35,7 @@ const listTargetsSchema = z.object({
 });
 
 function queryTargets(resourceId: number) {
-    let baseQuery = db
+    const baseQuery = db
         .select({
             targetId: targets.targetId,
             ip: targets.ip,
@@ -99,7 +99,7 @@ export async function listTargets(
 
         const baseQuery = queryTargets(resourceId);
 
-        let countQuery = db
+        const countQuery = db
             .select({ count: sql<number>`cast(count(*) as integer)` })
             .from(targets)
             .where(eq(targets.resourceId, resourceId));

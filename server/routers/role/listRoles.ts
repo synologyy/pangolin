@@ -100,7 +100,7 @@ export async function listRoles(
 
         const { orgId } = parsedParams.data;
 
-        let countQuery: any = db
+        const countQuery: any = db
             .select({ count: sql<number>`cast(count(*) as integer)` })
             .from(roles)
             .where(eq(roles.orgId, orgId));

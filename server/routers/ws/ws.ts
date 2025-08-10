@@ -62,7 +62,7 @@ const wss: WebSocketServer = new WebSocketServer({ noServer: true });
 const NODE_ID = uuidv4();
 
 // Client tracking map (local to this node)
-let connectedClients: Map<string, AuthenticatedWebSocket[]> = new Map();
+const connectedClients: Map<string, AuthenticatedWebSocket[]> = new Map();
 // Helper to get map key
 const getClientMapKey = (clientId: string) => clientId;
 
