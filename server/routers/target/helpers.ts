@@ -15,8 +15,8 @@ export async function pickPort(siteId: number): Promise<{
 
     // TODO: is this all inefficient?
     // Fetch targets for all resources of this site
-    const targetIps: string[] = [];
-    const targetInternalPorts: number[] = [];
+    let targetIps: string[] = [];
+    let targetInternalPorts: number[] = [];
     await Promise.all(
         resourcesRes.map(async (resource) => {
             const targetsRes = await db

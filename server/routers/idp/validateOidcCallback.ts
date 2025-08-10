@@ -238,7 +238,7 @@ export async function validateOidcCallback(
             const defaultRoleMapping = existingIdp.idp.defaultRoleMapping;
             const defaultOrgMapping = existingIdp.idp.defaultOrgMapping;
 
-            const userOrgInfo: { orgId: string; roleId: number }[] = [];
+            let userOrgInfo: { orgId: string; roleId: number }[] = [];
             for (const org of allOrgs) {
                 const [idpOrgRes] = await db
                     .select()
@@ -314,7 +314,7 @@ export async function validateOidcCallback(
 
             let existingUserId = existingUser?.userId;
 
-            const orgUserCounts: { orgId: string; userCount: number }[] = [];
+            let orgUserCounts: { orgId: string; userCount: number }[] = [];
 
             // sync the user with the orgs and roles
             await db.transaction(async (trx) => {
