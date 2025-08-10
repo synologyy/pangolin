@@ -58,8 +58,8 @@ export default async function migration() {
             }
 
             // Read and parse the YAML file
-            let rawConfig: any;
             const fileContents = fs.readFileSync(filePath, "utf8");
+            let rawConfig: any;
             rawConfig = yaml.load(fileContents);
 
             rawConfig.server.resource_session_request_param =
@@ -122,7 +122,7 @@ export default async function migration() {
             const traefikFileContents = fs.readFileSync(traefikPath, "utf8");
             const traefikConfig = yaml.load(traefikFileContents) as any;
 
-            let parsedConfig: any = schema.safeParse(traefikConfig);
+            const parsedConfig: any = schema.safeParse(traefikConfig);
 
             if (parsedConfig.success) {
                 // Ensure websecure entrypoint exists
@@ -179,7 +179,7 @@ export default async function migration() {
             const traefikFileContents = fs.readFileSync(traefikPath, "utf8");
             const traefikConfig = yaml.load(traefikFileContents) as any;
 
-            let parsedConfig: any = schema.safeParse(traefikConfig);
+            const parsedConfig: any = schema.safeParse(traefikConfig);
 
             if (parsedConfig.success) {
                 // delete permanent from redirect-to-https middleware

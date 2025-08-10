@@ -222,7 +222,7 @@ export async function listAccessTokens(
             (resource) => resource.resourceId
         );
 
-        let countQuery: any = db
+        const countQuery: any = db
             .select({ count: count() })
             .from(resources)
             .where(inArray(resources.resourceId, accessibleResourceIds));

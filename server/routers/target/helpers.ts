@@ -2,7 +2,7 @@ import { db } from "@server/db";
 import { resources, targets } from "@server/db";
 import { eq } from "drizzle-orm";
 
-let currentBannedPorts: number[] = [];
+const currentBannedPorts: number[] = [];
 
 export async function pickPort(siteId: number): Promise<{
     internalPort: number;
@@ -15,8 +15,8 @@ export async function pickPort(siteId: number): Promise<{
 
     // TODO: is this all inefficient?
     // Fetch targets for all resources of this site
-    let targetIps: string[] = [];
-    let targetInternalPorts: number[] = [];
+    const targetIps: string[] = [];
+    const targetInternalPorts: number[] = [];
     await Promise.all(
         resourcesRes.map(async (resource) => {
             const targetsRes = await db

@@ -108,7 +108,7 @@ export default function Page() {
     async function onSubmit(data: CreateFormValues) {
         setCreateLoading(true);
 
-        let payload: CreateOrgApiKeyBody = {
+        const payload: CreateOrgApiKeyBody = {
             name: data.name
         };
 

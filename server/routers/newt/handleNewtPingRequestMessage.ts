@@ -55,7 +55,7 @@ export const handleNewtPingRequestMessage: MessageHandler = async (context) => {
                     );
 
                     if (currentConnections.count >= maxConnections) {
-                        return null
+                        return null;
                     }
 
                 weight =

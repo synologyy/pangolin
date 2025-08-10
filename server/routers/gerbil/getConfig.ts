@@ -112,7 +112,7 @@ export async function getConfig(
                 )
             );
 
-        let peers = await Promise.all(
+        const peers = await Promise.all(
             sitesRes.map(async (site) => {
                 if (site.type === "wireguard") {
                     return {

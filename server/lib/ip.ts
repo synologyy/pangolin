@@ -271,7 +271,7 @@ export async function getNextAvailableClientSubnet(
         )
     ].filter((address) => address !== null) as string[];
 
-    let subnet = findNextAvailableCidr(addresses, 32, org.subnet); // pick the sites address in the org
+    const subnet = findNextAvailableCidr(addresses, 32, org.subnet); // pick the sites address in the org
     if (!subnet) {
         throw new Error("No available subnets remaining in space");
     }
@@ -289,7 +289,7 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
 
     const addresses = existingAddresses.map((org) => org.subnet!);
 
-    let subnet = findNextAvailableCidr(
+    const subnet = findNextAvailableCidr(
         addresses,
         config.getRawConfig().orgs.block_size,
         config.getRawConfig().orgs.subnet_group

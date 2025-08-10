@@ -86,7 +86,7 @@ export async function pickSiteDefaults(
             .where(eq(sites.exitNodeId, exitNode.exitNodeId));
 
         // TODO: we need to lock this subnet for some time so someone else does not take it
-        let subnets = sitesQuery.map((site) => site.subnet).filter((subnet) => subnet !== null);
+        const subnets = sitesQuery.map((site) => site.subnet).filter((subnet) => subnet !== null);
         // exclude the exit node address by replacing after the / with a site block size
         subnets.push(
             exitNode.address.replace(

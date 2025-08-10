@@ -327,7 +327,7 @@ export default function ReverseProxyTargets(props: {
             setProxySettingsLoading(true);
 
             // Save targets
-            for (let target of targets) {
+            for (const target of targets) {
                 const data = {
                     ip: target.ip,
                     port: target.port,
