@@ -63,7 +63,7 @@ export async function getAllRelays(
         }
         
         // Initialize mappings object for multi-peer support
-        let mappings: { [key: string]: ProxyMapping } = {};
+        const mappings: { [key: string]: ProxyMapping } = {};
 
         // Process each site
         for (const site of sitesRes) {

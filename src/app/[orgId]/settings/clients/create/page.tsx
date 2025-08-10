@@ -280,7 +280,7 @@ export default function Page() {
             return;
         }
 
-        let payload: CreateClientBody = {
+        const payload: CreateClientBody = {
             name: data.name,
             type: data.method as "olm",
             siteIds: data.siteIds.map((site) => parseInt(site.id)),
