@@ -56,6 +56,7 @@ export default function LocaleSwitcher() {
                 {
                     value: "nb-NO",
                     label: "Norsk (Bokmål)"
+                }
             ]}
         />
     );
