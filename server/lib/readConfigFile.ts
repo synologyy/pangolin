@@ -26,13 +26,15 @@ export const configSchema = z
                 .optional()
                 .default("info"),
             save_logs: z.boolean().optional().default(false),
-            log_failed_attempts: z.boolean().optional().default(false),
+            log_failed_attempts: z.boolean().optional().default(false)
         }),
-        hybrid: z.object({
-            id: z.string().optional(),
-            secret: z.string().optional(),
-            endpoint: z.string().optional()
-        }).optional(),
+        hybrid: z
+            .object({
+                id: z.string().optional(),
+                secret: z.string().optional(),
+                endpoint: z.string().optional()
+            })
+            .optional(),
         domains: z
             .record(
                 z.string(),
@@ -136,7 +138,18 @@ export const configSchema = z
                 https_entrypoint: z.string().optional().default("websecure"),
                 additional_middlewares: z.array(z.string()).optional(),
                 cert_resolver: z.string().optional().default("letsencrypt"),
-                prefer_wildcard_cert: z.boolean().optional().default(false)
+                prefer_wildcard_cert: z.boolean().optional().default(false),
+                certificates_path: z.string().default("./certificates"),
+                monitor_interval: z.number().default(5000),
+                dynamic_cert_config_path: z
+                    .string()
+                    .optional()
+                    .default("./dynamic/cert_config.yml"),
+                dynamic_router_config_path: z
+                    .string()
+                    .optional()
+                    .default("./dynamic/router_config.yml"),
+                staticDomains: z.array(z.string()).optional().default([])
             })
             .optional()
             .default({}),
@@ -219,7 +232,10 @@ export const configSchema = z
                 smtp_host: z.string().optional(),
                 smtp_port: portSchema.optional(),
                 smtp_user: z.string().optional(),
-                smtp_pass: z.string().optional().transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
+                smtp_pass: z
+                    .string()
+                    .optional()
+                    .transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
                 smtp_secure: z.boolean().optional(),
                 smtp_tls_reject_unauthorized: z.boolean().optional(),
                 no_reply: z.string().email().optional()
@@ -235,7 +251,7 @@ export const configSchema = z
                 disable_local_sites: z.boolean().optional(),
                 disable_basic_wireguard_sites: z.boolean().optional(),
                 disable_config_managed_domains: z.boolean().optional(),
-                enable_clients: z.boolean().optional().default(true),
+                enable_clients: z.boolean().optional().default(true)
             })
             .optional(),
         dns: z
