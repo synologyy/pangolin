@@ -20,7 +20,7 @@ async function startServers() {
     const nextServer = await createNextServer();
 
     let hybridClientServer;
-    if (config.getRawConfig().hybrid) {
+    if (config.isHybridMode()) {
         hybridClientServer = createHybridClientServer();
     }
 

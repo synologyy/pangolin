@@ -17,20 +17,8 @@ export const proxyToRemote = async (
     endpoint: string
 ): Promise<any> => {
     try {
-        const remoteConfig = config.getRawConfig().hybrid;
-        
-        if (!remoteConfig?.endpoint) {
-            logger.error("Remote endpoint not configured in hybrid.endpoint config");
-            return next(
-                createHttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Remote endpoint not configured"
-                )
-            );
-        }
+        const remoteUrl = `${config.getRawConfig().hybrid?.endpoint?.replace(/\/$/, '')}/api/v1/${endpoint}`;
 
-        const remoteUrl = `${remoteConfig.endpoint.replace(/\/$/, '')}/api/v1/${endpoint}`;
-        
         logger.debug(`Proxying request to remote server: ${remoteUrl}`);
 
         // Forward the request to the remote server

@@ -16,6 +16,7 @@ import {
 } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import axios from "axios";
+import config from "@server/lib/config";
 
 export type ResourceWithAuth = {
     resource: Resource | null;
@@ -28,18 +29,15 @@ export type UserSessionWithUser = {
     user: any;
 };
 
-const MODE = "remote";
-const remoteEndpoint = "https://api.example.com";
-
 /**
  * Get resource by domain with pincode and password information
  */
 export async function getResourceByDomain(
     domain: string
 ): Promise<ResourceWithAuth | null> {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/resource/domain/${domain}`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/resource/domain/${domain}`);
             return response.data;
         } catch (error) {
             console.error("Error fetching resource by domain:", error);
@@ -78,9 +76,9 @@ export async function getResourceByDomain(
 export async function getUserSessionWithUser(
     userSessionId: string
 ): Promise<UserSessionWithUser | null> {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/session/${userSessionId}`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/session/${userSessionId}`);
             return response.data;
         } catch (error) {
             console.error("Error fetching user session:", error);
@@ -108,9 +106,9 @@ export async function getUserSessionWithUser(
  * Get user organization role
  */
 export async function getUserOrgRole(userId: string, orgId: string) {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/user/${userId}/org/${orgId}/role`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/user/${userId}/org/${orgId}/role`);
             return response.data;
         } catch (error) {
             console.error("Error fetching user org role:", error);
@@ -136,9 +134,9 @@ export async function getUserOrgRole(userId: string, orgId: string) {
  * Check if role has access to resource
  */
 export async function getRoleResourceAccess(resourceId: number, roleId: number) {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/role/${roleId}/resource/${resourceId}/access`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/role/${roleId}/resource/${resourceId}/access`);
             return response.data;
         } catch (error) {
             console.error("Error fetching role resource access:", error);
@@ -164,9 +162,9 @@ export async function getRoleResourceAccess(resourceId: number, roleId: number) 
  * Check if user has direct access to resource
  */
 export async function getUserResourceAccess(userId: string, resourceId: number) {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/user/${userId}/resource/${resourceId}/access`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/user/${userId}/resource/${resourceId}/access`);
             return response.data;
         } catch (error) {
             console.error("Error fetching user resource access:", error);
@@ -192,9 +190,9 @@ export async function getUserResourceAccess(userId: string, resourceId: number) 
  * Get resource rules for a given resource
  */
 export async function getResourceRules(resourceId: number): Promise<ResourceRule[]> {
-    if (MODE === "remote") {
+    if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${remoteEndpoint}/resource/${resourceId}/rules`);
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/resource/${resourceId}/rules`);
             return response.data;
         } catch (error) {
             console.error("Error fetching resource rules:", error);

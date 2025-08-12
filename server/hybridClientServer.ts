@@ -56,6 +56,10 @@ export async function createHybridClientServer() {
         await deletePeer(exitNode.exitNodeId, pubKey);
     });
 
+    client.registerHandler("remote/traefik/reload", async (message) => {
+        await monitor.HandleTraefikConfig();
+    });
+
     // Listen to connection events
     client.on("connect", () => {
         console.log("Connected to WebSocket server");

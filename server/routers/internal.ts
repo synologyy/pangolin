@@ -7,7 +7,7 @@ import * as auth from "@server/routers/auth";
 import * as supporterKey from "@server/routers/supporterKey";
 import * as license from "@server/routers/license";
 import * as idp from "@server/routers/idp";
-import { proxyToRemote } from "@server/remoteProxy";
+import { proxyToRemote } from "@server/lib/remoteProxy";
 import config from "@server/lib/config";
 import HttpCode from "@server/types/HttpCode";
 import {
@@ -51,7 +51,7 @@ internalRouter.get("/idp/:idpId", idp.getIdp);
 const gerbilRouter = Router();
 internalRouter.use("/gerbil", gerbilRouter);
 
-if (config.getRawConfig().hybrid) {
+if (config.isHybridMode()) {
     // Use proxy router to forward requests to remote cloud server
     // Proxy endpoints for each gerbil route
     gerbilRouter.post("/get-config", (req, res, next) =>
@@ -83,7 +83,7 @@ internalRouter.use("/badger", badgerRouter);
 
 badgerRouter.post("/verify-session", badger.verifyResourceSession);
 
-if (config.getRawConfig().hybrid) {
+if (config.isHybridMode()) {
     badgerRouter.post("/exchange-session", (req, res, next) =>
         proxyToRemote(req, res, next, "badger/exchange-session")
     );

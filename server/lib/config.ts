@@ -147,6 +147,10 @@ export class Config {
         return false;
     }
 
+    public isHybridMode() {
+        return this.rawConfig?.hybrid;
+    }
+
     public async checkSupporterKey() {
         const [key] = await db.select().from(supporterKey).limit(1);
 
