@@ -7,7 +7,7 @@ import * as auth from "@server/routers/auth";
 import * as supporterKey from "@server/routers/supporterKey";
 import * as license from "@server/routers/license";
 import * as idp from "@server/routers/idp";
-import proxyRouter from "@server/routers/gerbil/proxy";
+import { proxyToRemote } from "@server/remoteProxy";
 import config from "@server/lib/config";
 import HttpCode from "@server/types/HttpCode";
 import {
@@ -53,7 +53,22 @@ internalRouter.use("/gerbil", gerbilRouter);
 
 if (config.getRawConfig().hybrid) {
     // Use proxy router to forward requests to remote cloud server
-    gerbilRouter.use("/", proxyRouter);
+    // Proxy endpoints for each gerbil route
+    gerbilRouter.post("/get-config", (req, res, next) =>
+        proxyToRemote(req, res, next, "gerbil/get-config")
+    );
+
+    gerbilRouter.post("/receive-bandwidth", (req, res, next) =>
+        proxyToRemote(req, res, next, "gerbil/receive-bandwidth")
+    );
+
+    gerbilRouter.post("/update-hole-punch", (req, res, next) =>
+        proxyToRemote(req, res, next, "gerbil/update-hole-punch")
+    );
+
+    gerbilRouter.post("/get-all-relays", (req, res, next) =>
+        proxyToRemote(req, res, next, "gerbil/get-all-relays")
+    );
 } else {
     // Use local gerbil endpoints
     gerbilRouter.post("/get-config", gerbil.getConfig);
@@ -67,6 +82,13 @@ const badgerRouter = Router();
 internalRouter.use("/badger", badgerRouter);
 
 badgerRouter.post("/verify-session", badger.verifyResourceSession);
-badgerRouter.post("/exchange-session", badger.exchangeSession);
+
+if (config.getRawConfig().hybrid) {
+    badgerRouter.post("/exchange-session", (req, res, next) =>
+        proxyToRemote(req, res, next, "badger/exchange-session")
+    );
+} else {
+    badgerRouter.post("/exchange-session", badger.exchangeSession);
+}
 
 export default internalRouter;

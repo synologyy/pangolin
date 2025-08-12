@@ -6,17 +6,16 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import config from "@server/lib/config";
 
-const proxyRouter = Router();
-
 /**
  * Proxy function that forwards requests to the remote cloud server
  */
-async function proxyToRemote(
+
+export const proxyToRemote = async (
     req: Request,
     res: Response,
     next: NextFunction,
     endpoint: string
-): Promise<any> {
+): Promise<any> => {
     try {
         const remoteConfig = config.getRawConfig().hybrid;
         
@@ -30,7 +29,7 @@ async function proxyToRemote(
             );
         }
 
-        const remoteUrl = `${remoteConfig.endpoint.replace(/\/$/, '')}/api/v1/gerbil/${endpoint}`;
+        const remoteUrl = `${remoteConfig.endpoint.replace(/\/$/, '')}/api/v1/${endpoint}`;
         
         logger.debug(`Proxying request to remote server: ${remoteUrl}`);
 
@@ -80,22 +79,3 @@ async function proxyToRemote(
         );
     }
 }
-
-// Proxy endpoints for each gerbil route
-proxyRouter.post("/get-config", (req, res, next) => 
-    proxyToRemote(req, res, next, "get-config")
-);
-
-proxyRouter.post("/receive-bandwidth", (req, res, next) => 
-    proxyToRemote(req, res, next, "receive-bandwidth")
-);
-
-proxyRouter.post("/update-hole-punch", (req, res, next) => 
-    proxyToRemote(req, res, next, "update-hole-punch")
-);
-
-proxyRouter.post("/get-all-relays", (req, res, next) => 
-    proxyToRemote(req, res, next, "get-all-relays")
-);
-
-export default proxyRouter;
