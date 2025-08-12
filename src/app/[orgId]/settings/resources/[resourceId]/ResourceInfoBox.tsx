@@ -29,7 +29,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
     const { isEnabled, isAvailable } = useDockerSocket(site!);
     const t = useTranslations();
 
-    let fullUrl = `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`;
+    const fullUrl = `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`;
 
     return (
         <Alert>

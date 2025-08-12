@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "Er is een fout opgetreden bij het ophalen van de nieuwste Olm release.",
     "remoteSubnets": "Externe Subnets",
     "enterCidrRange": "Voer CIDR-bereik in",
-    "remoteSubnetsDescription": "Voeg CIDR-bereiken toe die deze site op afstand kunnen openen. Gebruik een format zoals 10.0.0.0/24 of 192.168.1.0/24.",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "Openbare proxy inschakelen",
     "resourceEnableProxyDescription": "Schakel publieke proxy in voor deze resource. Dit maakt toegang tot de resource mogelijk vanuit het netwerk via de cloud met een open poort. Vereist Traefik-configuratie.",
     "externalProxyEnabled": "Externe Proxy Ingeschakeld"

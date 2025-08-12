@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "En son Olm yayını alınırken bir hata oluştu.",
     "remoteSubnets": "Uzak Alt Ağlar",
     "enterCidrRange": "CIDR aralığını girin",
-    "remoteSubnetsDescription": "Bu siteye uzaktan erişebilecek CIDR aralıklarını ekleyin. 10.0.0.0/24 veya 192.168.1.0/24 gibi formatlar kullanın.",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "Genel Proxy'i Etkinleştir",
     "resourceEnableProxyDescription": "Bu kaynağa genel proxy erişimini etkinleştirin. Bu sayede ağ dışından açık bir port üzerinden kaynağa bulut aracılığıyla erişim sağlanır. Traefik yapılandırması gereklidir.",
     "externalProxyEnabled": "Dış Proxy Etkinleştirildi"

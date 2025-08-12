@@ -290,7 +290,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                 columns={columns}
                 data={rows}
                 addClient={() => {
-                    router.push(`/${orgId}/settings/clients/create`)
+                    router.push(`/${orgId}/settings/clients/create`);
                 }}
             />
         </>

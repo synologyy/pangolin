@@ -34,7 +34,7 @@ export default async function RootLayout({
     const env = pullEnv();
     const locale = await getLocale();
 
-    let supporterData = {
+    const supporterData = {
         visible: true
     } as any;
 

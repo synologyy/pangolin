@@ -1320,7 +1320,7 @@
     "olmErrorFetchLatest": "Wystąpił błąd podczas pobierania najnowszego wydania Olm.",
     "remoteSubnets": "Zdalne Podsieci",
     "enterCidrRange": "Wprowadź zakres CIDR",
-    "remoteSubnetsDescription": "Dodaj zakresy CIDR, które mogą uzyskać zdalny dostęp do tej witryny. Użyj formatu takiego jak 10.0.0.0/24 lub 192.168.1.0/24.",
+    "remoteSubnetsDescription": "Add CIDR ranges that can be accessed from this site remotely using clients. Use format like 10.0.0.0/24. This ONLY applies to VPN client connectivity.",
     "resourceEnableProxy": "Włącz publiczny proxy",
     "resourceEnableProxyDescription": "Włącz publiczne proxy dla tego zasobu. To umożliwia dostęp do zasobu spoza sieci przez chmurę na otwartym porcie. Wymaga konfiguracji Traefik.",
     "externalProxyEnabled": "Zewnętrzny Proxy Włączony"

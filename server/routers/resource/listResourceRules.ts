@@ -35,7 +35,7 @@ const listResourceRulesSchema = z.object({
 });
 
 function queryResourceRules(resourceId: number) {
-    let baseQuery = db
+    const baseQuery = db
         .select({
             ruleId: resourceRules.ruleId,
             resourceId: resourceRules.resourceId,
@@ -117,7 +117,7 @@ export async function listResourceRules(
 
         const baseQuery = queryResourceRules(resourceId);
 
-        let countQuery = db
+        const countQuery = db
             .select({ count: sql<number>`cast(count(*) as integer)` })
             .from(resourceRules)
             .where(eq(resourceRules.resourceId, resourceId));

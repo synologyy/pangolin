@@ -48,7 +48,7 @@ export async function getAllRelays(
         }
 
         // Fetch exit node
-        let [exitNode] = await db.select().from(exitNodes).where(eq(exitNodes.publicKey, publicKey));
+        const [exitNode] = await db.select().from(exitNodes).where(eq(exitNodes.publicKey, publicKey));
         if (!exitNode) {
             return next(createHttpError(HttpCode.NOT_FOUND, "Exit node not found"));
         }
@@ -63,7 +63,7 @@ export async function getAllRelays(
         }
         
         // Initialize mappings object for multi-peer support
-        let mappings: { [key: string]: ProxyMapping } = {};
+        const mappings: { [key: string]: ProxyMapping } = {};
 
         // Process each site
         for (const site of sitesRes) {

@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"text/template"
 	"time"
+    "net"
 
 	"golang.org/x/term"
 )
@@ -39,6 +40,7 @@ type Config struct {
 	BadgerVersion             string
 	BaseDomain                string
 	DashboardDomain           string
+	EnableIPv6                bool
 	LetsEncryptEmail          string
 	EnableEmail               bool
 	EmailSMTPHost             string
@@ -74,6 +76,17 @@ func main() {
 	fmt.Println("")
 	fmt.Println("Lets get started!")
 	fmt.Println("")
+
+
+    for _, p := range []int{80, 443} {
+        if err := checkPortsAvailable(p); err != nil {
+            fmt.Fprintln(os.Stderr, err)
+
+            fmt.Printf("Please close any services on ports 80/443 in order to run the installation smoothly")
+            os.Exit(1)
+        }
+    }
+
 
 	reader := bufio.NewReader(os.Stdin)
 	inputContainer := readString(reader, "Would you like to run Pangolin as Docker or Podman containers?", "docker")
@@ -303,6 +316,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 	fmt.Println("\n=== Basic Configuration ===")
 	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
 	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", "pangolin."+config.BaseDomain)
+	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
 	config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
 	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
 
@@ -775,4 +789,22 @@ func run(name string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func checkPortsAvailable(port int) error {
+    addr := fmt.Sprintf(":%d", port)
+    ln, err := net.Listen("tcp", addr)
+    if err != nil {
+        return fmt.Errorf(
+            "ERROR: port %d is occupied or cannot be bound: %w\n\n",
+            port, err,
+        )
+    }
+    if closeErr := ln.Close(); closeErr != nil {
+        fmt.Fprintf(os.Stderr,
+            "WARNING: failed to close test listener on port %d: %v\n",
+            port, closeErr,
+        )
+    }
+    return nil
 }
