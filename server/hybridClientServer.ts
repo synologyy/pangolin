@@ -6,8 +6,13 @@ import config from "@server/lib/config";
 import { WebSocketClient, createWebSocketClient } from "./routers/ws/client";
 import { addPeer, deletePeer } from "./routers/gerbil/peers";
 import { db, exitNodes } from "./db";
+import { TraefikConfigManager } from "./lib/remoteTraefikConfig";
 
 export async function createHybridClientServer() {
+    const monitor = new TraefikConfigManager();
+
+    await monitor.start();
+
     if (
         !config.getRawConfig().hybrid?.id ||
         !config.getRawConfig().hybrid?.secret ||
@@ -33,7 +38,7 @@ export async function createHybridClientServer() {
     client.registerHandler("remote/peers/add", async (message) => {
         const { pubKey, allowedIps } = message.data;
 
-        // TODO: we are getting the exit node twice here 
+        // TODO: we are getting the exit node twice here
         // NOTE: there should only be one gerbil registered so...
         const [exitNode] = await db.select().from(exitNodes).limit(1);
         await addPeer(exitNode.exitNodeId, {
@@ -45,7 +50,7 @@ export async function createHybridClientServer() {
     client.registerHandler("remote/peers/remove", async (message) => {
         const { pubKey } = message.data;
 
-        // TODO: we are getting the exit node twice here 
+        // TODO: we are getting the exit node twice here
         // NOTE: there should only be one gerbil registered so...
         const [exitNode] = await db.select().from(exitNodes).limit(1);
         await deletePeer(exitNode.exitNodeId, pubKey);
