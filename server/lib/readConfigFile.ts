@@ -4,6 +4,7 @@ import { configFilePath1, configFilePath2 } from "./consts";
 import { z } from "zod";
 import stoi from "./stoi";
 import { build } from "@server/build";
+import { setAdminCredentials } from "@cli/commands/setAdminCredentials";
 
 const portSchema = z.number().positive().gt(0).lte(65535);
 
@@ -25,8 +26,13 @@ export const configSchema = z
                 .optional()
                 .default("info"),
             save_logs: z.boolean().optional().default(false),
-            log_failed_attempts: z.boolean().optional().default(false)
+            log_failed_attempts: z.boolean().optional().default(false),
         }),
+        hybrid: z.object({
+            id: z.string().optional(),
+            secret: z.string().optional(),
+            endpoint: z.string().optional()
+        }).optional(),
         domains: z
             .record(
                 z.string(),

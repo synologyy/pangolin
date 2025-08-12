@@ -7,6 +7,7 @@ import { createNextServer } from "./nextServer";
 import { createInternalServer } from "./internalServer";
 import { ApiKey, ApiKeyOrg, Session, User, UserOrg } from "@server/db";
 import { createIntegrationApiServer } from "./integrationApiServer";
+import { createHybridClientServer } from "./hybridClientServer";
 import config from "@server/lib/config";
 
 async function startServers() {
@@ -18,6 +19,11 @@ async function startServers() {
     const internalServer = createInternalServer();
     const nextServer = await createNextServer();
 
+    let hybridClientServer;
+    if (config.getRawConfig().hybrid) {
+        hybridClientServer = createHybridClientServer();
+    }
+
     let integrationServer;
     if (config.getRawConfig().flags?.enable_integration_api) {
         integrationServer = createIntegrationApiServer();
@@ -27,7 +33,8 @@ async function startServers() {
         apiServer,
         nextServer,
         internalServer,
-        integrationServer
+        integrationServer,
+        hybridClientServer
     };
 }
 
