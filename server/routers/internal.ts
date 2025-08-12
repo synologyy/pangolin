@@ -7,6 +7,8 @@ import * as auth from "@server/routers/auth";
 import * as supporterKey from "@server/routers/supporterKey";
 import * as license from "@server/routers/license";
 import * as idp from "@server/routers/idp";
+import proxyRouter from "@server/routers/gerbil/proxy";
+import config from "@server/lib/config";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyResourceAccess,
@@ -49,10 +51,16 @@ internalRouter.get("/idp/:idpId", idp.getIdp);
 const gerbilRouter = Router();
 internalRouter.use("/gerbil", gerbilRouter);
 
-gerbilRouter.post("/get-config", gerbil.getConfig);
-gerbilRouter.post("/receive-bandwidth", gerbil.receiveBandwidth);
-gerbilRouter.post("/update-hole-punch", gerbil.updateHolePunch);
-gerbilRouter.post("/get-all-relays", gerbil.getAllRelays);
+if (config.getRawConfig().hybrid) {
+    // Use proxy router to forward requests to remote cloud server
+    gerbilRouter.use("/", proxyRouter);
+} else {
+    // Use local gerbil endpoints
+    gerbilRouter.post("/get-config", gerbil.getConfig);
+    gerbilRouter.post("/receive-bandwidth", gerbil.receiveBandwidth);
+    gerbilRouter.post("/update-hole-punch", gerbil.updateHolePunch);
+    gerbilRouter.post("/get-all-relays", gerbil.getAllRelays);
+}
 
 // Badger routes
 const badgerRouter = Router();
