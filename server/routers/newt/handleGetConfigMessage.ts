@@ -102,7 +102,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             .from(exitNodes)
             .where(eq(exitNodes.exitNodeId, site.exitNodeId))
             .limit(1);
-        if (exitNode.reachableAt) {
+        if (exitNode.reachableAt && existingSite.subnet && existingSite.listenPort) {
             try {
                 const response = await axios.post(
                     `${exitNode.reachableAt}/update-proxy-mapping`,
@@ -155,9 +155,6 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                     return false;
                 }
                 if (!client.clients.subnet) {
-                    return false;
-                }
-                if (!client.clients.endpoint) {
                     return false;
                 }
                 return true;
@@ -215,7 +212,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                     allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
                     endpoint: client.clientSites.isRelayed
                         ? ""
-                        : client.clients.endpoint! // if its relayed it should be localhost
+                        : client.clientSites.endpoint! // if its relayed it should be localhost
                 };
             })
     );

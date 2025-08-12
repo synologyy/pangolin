@@ -216,7 +216,7 @@ export const clients = sqliteTable("clients", {
     lastPing: text("lastPing"),
     type: text("type").notNull(), // "olm"
     online: integer("online", { mode: "boolean" }).notNull().default(false),
-    endpoint: text("endpoint"),
+    // endpoint: text("endpoint"),
     lastHolePunch: integer("lastHolePunch")
 });
 
@@ -227,7 +227,8 @@ export const clientSites = sqliteTable("clientSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false)
+    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false),
+    endpoint: text("endpoint")
 });
 
 export const olms = sqliteTable("olms", {
