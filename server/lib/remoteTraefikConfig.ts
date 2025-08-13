@@ -137,7 +137,7 @@ export class TraefikConfigManager {
                 if (exitNode) {
                     logger.error("No exit node found");
                     await axios.post(
-                        `${exitNode.reachableAt}/full-domains`,
+                        `${exitNode.reachableAt}/update-local-snis`,
                         { fullDomains: Array.from(domains) },
                         { headers: { "Content-Type": "application/json" } }
                     );
