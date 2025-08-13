@@ -1346,7 +1346,7 @@
     "resourceEnableProxyDescription": "Enable public proxying to this resource. This allows access to the resource from outside the network through the cloud on an open port. Requires Traefik config.",
     "externalProxyEnabled": "External Proxy Enabled",
     "siteConfiguration": "Configuration",
-    "siteAcceptClientConnections": "Accept client connections",
+    "siteAcceptClientConnections": "Accept Client Connections",
     "siteAcceptClientConnectionsDescription": "Allow other devices to connect through this Newt instance as a gateway using clients.",
     "siteAddress": "Site Address",
     "siteAddressDescription": "Specify the IP address of the host for clients to connect to."

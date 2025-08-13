@@ -43,7 +43,7 @@ import {
     FaWindows
 } from "react-icons/fa";
 import { SiNixos } from "react-icons/si";
-import { Checkbox } from "@app/components/ui/checkbox";
+import { Checkbox, CheckboxWithLabel } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { generateKeypair } from "../[niceId]/wireguardConfig";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
@@ -72,6 +72,7 @@ interface TunnelTypeOption {
 type Commands = {
     mac: Record<string, string[]>;
     linux: Record<string, string[]>;
+    freebsd: Record<string, string[]>;
     windows: Record<string, string[]>;
     docker: Record<string, string[]>;
     podman: Record<string, string[]>;
@@ -212,46 +213,46 @@ PersistentKeepalive = 5`;
 
         const commands = {
             mac: {
-                "Apple Silicon (arm64)": [
-                    `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                "Intel x64 (amd64)": [
-                    `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // "Intel x64 (amd64)": [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             linux: {
-                amd64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                arm64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                arm32: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                arm32v6: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32v6" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                riscv64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_riscv64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // arm64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // arm32: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // arm32v6: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // riscv64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             freebsd: {
-                amd64: [
-                    `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ],
-                arm64: [
-                    `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // arm64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             windows: {
                 x64: [
@@ -299,12 +300,12 @@ WantedBy=default.target`
                 ]
             },
             nixos: {
-                x86_64: [
+                All: [
                     `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
-                aarch64: [
-                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
-                ]
+                // aarch64: [
+                //     `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             }
         };
         setCommands(commands);
@@ -313,9 +314,11 @@ WantedBy=default.target`
     const getArchitectures = () => {
         switch (platform) {
             case "linux":
-                return ["amd64", "arm64", "arm32", "arm32v6", "riscv64"];
+                // return ["amd64", "arm64", "arm32", "arm32v6", "riscv64"];
+                return ["All"];
             case "mac":
-                return ["Apple Silicon (arm64)", "Intel x64 (amd64)"];
+                // return ["Apple Silicon (arm64)", "Intel x64 (amd64)"];
+                return ["All"];
             case "windows":
                 return ["x64"];
             case "docker":
@@ -323,9 +326,11 @@ WantedBy=default.target`
             case "podman":
                 return ["Podman Quadlet", "Podman Run"];
             case "freebsd":
-                return ["amd64", "arm64"];
+                // return ["amd64", "arm64"];
+                return ["All"];
             case "nixos":
-                return ["x86_64", "aarch64"];
+                // return ["x86_64", "aarch64"];
+                return ["All"];
             default:
                 return ["x64"];
         }
@@ -633,7 +638,9 @@ WantedBy=default.target`
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t("siteAddress")}
+                                                                    {t(
+                                                                        "siteAddress"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -659,7 +666,9 @@ WantedBy=default.target`
                                                                 </FormControl>
                                                                 <FormMessage />
                                                                 <FormDescription>
-                                                                    {t("siteAddressDescription")}
+                                                                    {t(
+                                                                        "siteAddressDescription"
+                                                                    )}
                                                                 </FormDescription>
                                                             </FormItem>
                                                         )}
@@ -869,7 +878,7 @@ WantedBy=default.target`
                                                     {t("siteConfiguration")}
                                                 </p>
                                                 <div className="flex items-center space-x-2 mb-4">
-                                                    <Checkbox
+                                                    <CheckboxWithLabel
                                                         id="acceptClients"
                                                         checked={acceptClients}
                                                         onCheckedChange={(
@@ -900,16 +909,21 @@ WantedBy=default.target`
                                                                 );
                                                             }
                                                         }}
+                                                        label={t(
+                                                            "siteAcceptClientConnections"
+                                                        )}
                                                     />
                                                     <label
                                                         htmlFor="acceptClients"
                                                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                                     >
-                                                        {t("siteAcceptClientConnections")}
+                                                        {}
                                                     </label>
                                                 </div>
                                                 <p className="text-sm text-muted-foreground mb-4">
-                                                    {t("siteAcceptClientConnectionsDescription")}
+                                                    {t(
+                                                        "siteAcceptClientConnectionsDescription"
+                                                    )}
                                                 </p>
                                             </div>
 
