@@ -5,6 +5,7 @@ import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
+import { build } from "@server/build";
 
 let currentExitNodeId: number;
 
@@ -52,12 +53,9 @@ export async function traefikConfigProvider(
     }
 }
 
-export async function getTraefikConfig(
-    exitNodeId: number
-): Promise<any> {
+export async function getTraefikConfig(exitNodeId: number): Promise<any> {
     // Get all resources with related data
     const allResources = await db.transaction(async (tx) => {
-
         // Get the site(s) on this exit node
         const resourcesWithRelations = await tx
             .select({
@@ -86,10 +84,7 @@ export async function getTraefikConfig(
             .from(resources)
             .innerJoin(sites, eq(sites.siteId, resources.siteId))
             .where(
-                or(
-                    eq(sites.exitNodeId, exitNodeId),
-                    isNull(sites.exitNodeId)
-                )
+                or(eq(sites.exitNodeId, exitNodeId), isNull(sites.exitNodeId))
             );
 
         // Get all resource IDs from the first query
@@ -134,7 +129,7 @@ export async function getTraefikConfig(
     });
 
     if (!allResources.length) {
-        return {}
+        return {};
     }
 
     const badgerMiddlewareName = "badger";
@@ -236,18 +231,21 @@ export async function getTraefikConfig(
                 preferWildcardCert = configDomain.prefer_wildcard_cert;
             }
 
-            const tls = {
-                certResolver: certResolver,
-                ...(preferWildcardCert
-                    ? {
-                          domains: [
-                              {
-                                  main: wildCard
-                              }
-                          ]
-                      }
-                    : {})
-            };
+            let tls = {};
+            if (build == "oss") {
+                tls = {
+                    certResolver: certResolver,
+                    ...(preferWildcardCert
+                        ? {
+                              domains: [
+                                  {
+                                      main: wildCard
+                                  }
+                              ]
+                          }
+                        : {})
+                };
+            }
 
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
