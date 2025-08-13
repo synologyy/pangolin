@@ -67,7 +67,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         // THIS IS FOR BACKWARDS COMPATIBILITY
         await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch/all",
+            type: "olm/wg/holepunch",
             data: {
                 serverPubKey: allExitNodes[0].publicKey,
                 endpoint: allExitNodes[0].endpoint
