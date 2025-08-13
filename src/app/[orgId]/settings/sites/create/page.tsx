@@ -880,6 +880,7 @@ WantedBy=default.target`
                                                 <div className="flex items-center space-x-2 mb-4">
                                                     <CheckboxWithLabel
                                                         id="acceptClients"
+                                                         aria-describedby="acceptClients-desc"
                                                         checked={acceptClients}
                                                         onCheckedChange={(
                                                             checked
@@ -913,14 +914,11 @@ WantedBy=default.target`
                                                             "siteAcceptClientConnections"
                                                         )}
                                                     />
-                                                    <label
-                                                        htmlFor="acceptClients"
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                    >
-                                                        {}
-                                                    </label>
                                                 </div>
-                                                <p className="text-sm text-muted-foreground mb-4">
+                                                <p
+                                                    id="acceptClients-desc"
+                                                    className="text-sm text-muted-foreground mb-4"
+                                                >
                                                     {t(
                                                         "siteAcceptClientConnectionsDescription"
                                                     )}
