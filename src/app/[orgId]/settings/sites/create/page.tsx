@@ -206,8 +206,10 @@ PersistentKeepalive = 5`;
         acceptClients: boolean = false
     ) => {
         const acceptClientsFlag = acceptClients ? " --accept-clients" : "";
-        const acceptClientsEnv = acceptClients ? "\n      - ACCEPT_CLIENTS=true" : "";
-        
+        const acceptClientsEnv = acceptClients
+            ? "\n      - ACCEPT_CLIENTS=true"
+            : "";
+
         const commands = {
             mac: {
                 "Apple Silicon (arm64)": [
@@ -388,7 +390,7 @@ WantedBy=default.target`
             case "freebsd":
                 return <FaFreebsd className="h-4 w-4 mr-2" />;
             case "nixos":
-                return <SiNixos  className="h-4 w-4 mr-2" />;
+                return <SiNixos className="h-4 w-4 mr-2" />;
             default:
                 return <Terminal className="h-4 w-4 mr-2" />;
         }
@@ -566,6 +568,11 @@ WantedBy=default.target`
         load();
     }, []);
 
+    // Sync form acceptClients value with local state
+    useEffect(() => {
+        form.setValue("acceptClients", acceptClients);
+    }, [acceptClients, form]);
+
     return (
         <>
             <div className="flex justify-between">
@@ -626,7 +633,7 @@ WantedBy=default.target`
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    Site Address
+                                                                    {t("siteAddress")}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -652,59 +659,12 @@ WantedBy=default.target`
                                                                 </FormControl>
                                                                 <FormMessage />
                                                                 <FormDescription>
-                                                                    Specify the
-                                                                    IP address
-                                                                    of the host
-                                                                    for clients
-                                                                    to connect
-                                                                    to.
+                                                                    {t("siteAddressDescription")}
                                                                 </FormDescription>
                                                             </FormItem>
                                                         )}
                                                     />
                                                 )}
-                                            {form.watch("method") ===
-                                                "newt" && (
-                                                <FormField
-                                                    control={form.control}
-                                                    name="acceptClients"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <div className="flex items-center space-x-2">
-                                                                <Checkbox
-                                                                    id="acceptClients"
-                                                                    checked={field.value}
-                                                                    onCheckedChange={(checked) => {
-                                                                        const value = checked as boolean;
-                                                                        field.onChange(value);
-                                                                        setAcceptClients(value);
-                                                                        // Re-hydrate commands with new acceptClients value
-                                                                        if (newtId && newtSecret) {
-                                                                            hydrateCommands(
-                                                                                newtId,
-                                                                                newtSecret,
-                                                                                env.app.dashboardUrl,
-                                                                                newtVersion,
-                                                                                value
-                                                                            );
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                <label
-                                                                    htmlFor="acceptClients"
-                                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                                                >
-                                                                    Accept client connections
-                                                                </label>
-                                                            </div>
-                                                            <FormDescription>
-                                                                Allow other devices to connect through this newt instance as a gateway.
-                                                            </FormDescription>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            )}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>
@@ -903,6 +863,56 @@ WantedBy=default.target`
                                                     )
                                                 )}
                                             </div>
+
+                                            <div className="pt-4">
+                                                <p className="font-bold mb-3">
+                                                    {t("siteConfiguration")}
+                                                </p>
+                                                <div className="flex items-center space-x-2 mb-4">
+                                                    <Checkbox
+                                                        id="acceptClients"
+                                                        checked={acceptClients}
+                                                        onCheckedChange={(
+                                                            checked
+                                                        ) => {
+                                                            const value =
+                                                                checked as boolean;
+                                                            setAcceptClients(
+                                                                value
+                                                            );
+                                                            form.setValue(
+                                                                "acceptClients",
+                                                                value
+                                                            );
+                                                            // Re-hydrate commands with new acceptClients value
+                                                            if (
+                                                                newtId &&
+                                                                newtSecret &&
+                                                                newtVersion
+                                                            ) {
+                                                                hydrateCommands(
+                                                                    newtId,
+                                                                    newtSecret,
+                                                                    env.app
+                                                                        .dashboardUrl,
+                                                                    newtVersion,
+                                                                    value
+                                                                );
+                                                            }
+                                                        }}
+                                                    />
+                                                    <label
+                                                        htmlFor="acceptClients"
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                    >
+                                                        {t("siteAcceptClientConnections")}
+                                                    </label>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground mb-4">
+                                                    {t("siteAcceptClientConnectionsDescription")}
+                                                </p>
+                                            </div>
+
                                             <div className="pt-4">
                                                 <p className="font-bold mb-3">
                                                     {t("commands")}
