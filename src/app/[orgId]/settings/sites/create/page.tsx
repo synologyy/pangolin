@@ -107,7 +107,8 @@ export default function Page() {
                 }),
             method: z.enum(["newt", "wireguard", "local"]),
             copied: z.boolean(),
-            clientAddress: z.string().optional()
+            clientAddress: z.string().optional(),
+            acceptClients: z.boolean()
         })
         .refine(
             (data) => {
@@ -170,6 +171,8 @@ export default function Page() {
     const [wgConfig, setWgConfig] = useState("");
 
     const [createLoading, setCreateLoading] = useState(false);
+    const [acceptClients, setAcceptClients] = useState(false);
+    const [newtVersion, setNewtVersion] = useState("latest");
 
     const [siteDefaults, setSiteDefaults] =
         useState<PickSiteDefaultsResponse | null>(null);
@@ -199,55 +202,59 @@ PersistentKeepalive = 5`;
         id: string,
         secret: string,
         endpoint: string,
-        version: string
+        version: string,
+        acceptClients: boolean = false
     ) => {
+        const acceptClientsFlag = acceptClients ? " --accept-clients" : "";
+        const acceptClientsEnv = acceptClients ? "\n      - ACCEPT_CLIENTS=true" : "";
+        
         const commands = {
             mac: {
                 "Apple Silicon (arm64)": [
                     `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 "Intel x64 (amd64)": [
                     `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             linux: {
                 amd64: [
                     `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 arm64: [
                     `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 arm32: [
                     `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 arm32v6: [
                     `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32v6" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 riscv64: [
                     `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_riscv64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             freebsd: {
                 amd64: [
                     `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 arm64: [
                     `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             windows: {
                 x64: [
                     `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`,
-                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             docker: {
@@ -260,10 +267,10 @@ PersistentKeepalive = 5`;
     environment:
       - PANGOLIN_ENDPOINT=${endpoint}
       - NEWT_ID=${id}
-      - NEWT_SECRET=${secret}`
+      - NEWT_SECRET=${secret}${acceptClientsEnv}`
                 ],
                 "Docker Run": [
-                    `docker run -dit fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `docker run -dit fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             podman: {
@@ -276,7 +283,7 @@ ContainerName=newt
 Image=docker.io/fosrl/newt
 Environment=PANGOLIN_ENDPOINT=${endpoint}
 Environment=NEWT_ID=${id}
-Environment=NEWT_SECRET=${secret}
+Environment=NEWT_SECRET=${secret}${acceptClients ? "\nEnvironment=ACCEPT_CLIENTS=true" : ""}
 # Secret=newt-secret,type=env,target=NEWT_SECRET
 
 [Service]
@@ -286,15 +293,15 @@ Restart=always
 WantedBy=default.target`
                 ],
                 "Podman Run": [
-                    `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             nixos: {
                 x86_64: [
-                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
                 aarch64: [
-                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             }
         };
@@ -393,7 +400,8 @@ WantedBy=default.target`
             name: "",
             copied: false,
             method: "newt",
-            clientAddress: ""
+            clientAddress: "",
+            acceptClients: false
         }
     });
 
@@ -469,7 +477,7 @@ WantedBy=default.target`
         const load = async () => {
             setLoadingPage(true);
 
-            let newtVersion = "latest";
+            let currentNewtVersion = "latest";
 
             try {
                 const response = await fetch(
@@ -484,7 +492,8 @@ WantedBy=default.target`
                 }
                 const data = await response.json();
                 const latestVersion = data.tag_name;
-                newtVersion = latestVersion;
+                currentNewtVersion = latestVersion;
+                setNewtVersion(latestVersion);
             } catch (error) {
                 console.error(
                     t("newtErrorFetchLatest", {
@@ -530,7 +539,8 @@ WantedBy=default.target`
                             newtId,
                             newtSecret,
                             env.app.dashboardUrl,
-                            newtVersion
+                            currentNewtVersion,
+                            acceptClients
                         );
 
                         hydrateWireGuardConfig(
@@ -653,6 +663,48 @@ WantedBy=default.target`
                                                         )}
                                                     />
                                                 )}
+                                            {form.watch("method") ===
+                                                "newt" && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="acceptClients"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <div className="flex items-center space-x-2">
+                                                                <Checkbox
+                                                                    id="acceptClients"
+                                                                    checked={field.value}
+                                                                    onCheckedChange={(checked) => {
+                                                                        const value = checked as boolean;
+                                                                        field.onChange(value);
+                                                                        setAcceptClients(value);
+                                                                        // Re-hydrate commands with new acceptClients value
+                                                                        if (newtId && newtSecret) {
+                                                                            hydrateCommands(
+                                                                                newtId,
+                                                                                newtSecret,
+                                                                                env.app.dashboardUrl,
+                                                                                newtVersion,
+                                                                                value
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <label
+                                                                    htmlFor="acceptClients"
+                                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                                                >
+                                                                    Accept client connections
+                                                                </label>
+                                                            </div>
+                                                            <FormDescription>
+                                                                Allow other devices to connect through this newt instance as a gateway.
+                                                            </FormDescription>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>
