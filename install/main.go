@@ -77,16 +77,16 @@ func main() {
 	fmt.Println("Lets get started!")
 	fmt.Println("")
 
+	if os.Geteuid() == 0 { // WE NEED TO BE SUDO TO CHECK THIS
+		for _, p := range []int{80, 443} {
+			if err := checkPortsAvailable(p); err != nil {
+				fmt.Fprintln(os.Stderr, err)
 
-    for _, p := range []int{80, 443} {
-        if err := checkPortsAvailable(p); err != nil {
-            fmt.Fprintln(os.Stderr, err)
-
-            fmt.Printf("Please close any services on ports 80/443 in order to run the installation smoothly")
-            os.Exit(1)
-        }
-    }
-
+				fmt.Printf("Please close any services on ports 80/443 in order to run the installation smoothly")
+				os.Exit(1)
+			}
+		}
+	}
 
 	reader := bufio.NewReader(os.Stdin)
 	inputContainer := readString(reader, "Would you like to run Pangolin as Docker or Podman containers?", "docker")
