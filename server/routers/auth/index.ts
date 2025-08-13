@@ -10,6 +10,7 @@ export * from "./resetPassword";
 export * from "./requestPasswordReset";
 export * from "./setServerAdmin";
 export * from "./initialSetupComplete";
+export * from "./validateSetupToken";
 export * from "./changePassword";
 export * from "./checkResourceSession";
 export * from "./securityKey";
