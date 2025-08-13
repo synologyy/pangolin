@@ -8,14 +8,15 @@ import logger from "@server/logger";
 import { hashPassword } from "@server/auth/password";
 import { passwordSchema } from "@server/auth/passwordSchema";
 import { response } from "@server/lib";
-import { db, users } from "@server/db";
-import { eq } from "drizzle-orm";
+import { db, users, setupTokens } from "@server/db";
+import { eq, and } from "drizzle-orm";
 import { UserType } from "@server/types/UserTypes";
 import moment from "moment";
 
 export const bodySchema = z.object({
     email: z.string().toLowerCase().email(),
-    password: passwordSchema
+    password: passwordSchema,
+    setupToken: z.string().min(1, "Setup token is required")
 });
 
 export type SetServerAdminBody = z.infer<typeof bodySchema>;
@@ -39,7 +40,27 @@ export async function setServerAdmin(
             );
         }
 
-        const { email, password } = parsedBody.data;
+        const { email, password, setupToken } = parsedBody.data;
+
+        // Validate setup token
+        const [validToken] = await db
+            .select()
+            .from(setupTokens)
+            .where(
+                and(
+                    eq(setupTokens.token, setupToken),
+                    eq(setupTokens.used, false)
+                )
+            );
+
+        if (!validToken) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Invalid or expired setup token"
+                )
+            );
+        }
 
         const [existing] = await db
             .select()
@@ -58,15 +79,27 @@ export async function setServerAdmin(
         const passwordHash = await hashPassword(password);
         const userId = generateId(15);
 
-        await db.insert(users).values({
-            userId: userId,
-            email: email,
-            type: UserType.Internal,
-            username: email,
-            passwordHash,
-            dateCreated: moment().toISOString(),
-            serverAdmin: true,
-            emailVerified: true
+        await db.transaction(async (trx) => {
+            // Mark the token as used
+            await trx
+                .update(setupTokens)
+                .set({
+                    used: true,
+                    dateUsed: moment().toISOString()
+                })
+                .where(eq(setupTokens.tokenId, validToken.tokenId));
+
+            // Create the server admin user
+            await trx.insert(users).values({
+                userId: userId,
+                email: email,
+                type: UserType.Internal,
+                username: email,
+                passwordHash,
+                dateCreated: moment().toISOString(),
+                serverAdmin: true,
+                emailVerified: true
+            });
         });
 
         return response<SetServerAdminResponse>(res, {

@@ -215,6 +215,28 @@ func main() {
 		}
 	} else {
 		fmt.Println("Looks like you already installed, so I am going to do the setup...")
+		
+		// Read existing config to get DashboardDomain
+		traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml", "config/traefik/dynamic_config.yml")
+		if err != nil {
+			fmt.Printf("Warning: Could not read existing config: %v\n", err)
+			fmt.Println("You may need to manually enter your domain information.")
+			config = collectUserInput(reader)
+		} else {
+			config.DashboardDomain = traefikConfig.DashboardDomain
+			config.LetsEncryptEmail = traefikConfig.LetsEncryptEmail
+			config.BadgerVersion = traefikConfig.BadgerVersion
+			
+			// Show detected values and allow user to confirm or re-enter
+			fmt.Println("Detected existing configuration:")
+			fmt.Printf("Dashboard Domain: %s\n", config.DashboardDomain)
+			fmt.Printf("Let's Encrypt Email: %s\n", config.LetsEncryptEmail)
+			fmt.Printf("Badger Version: %s\n", config.BadgerVersion)
+			
+			if !readBool(reader, "Are these values correct?", true) {
+				config = collectUserInput(reader)
+			}
+		}
 	}
 
 	if !checkIsCrowdsecInstalledInCompose() {
@@ -250,6 +272,23 @@ func main() {
 				installCrowdsec(config)
 			}
 		}
+	}
+
+	// Setup Token Section
+	fmt.Println("\n=== Setup Token ===")
+	
+	// Check if containers were started during this installation
+	containersStarted := false
+	if (isDockerInstalled() && chosenContainer == Docker) ||
+		(isPodmanInstalled() && chosenContainer == Podman) {
+		// Try to fetch and display the token if containers are running
+		containersStarted = true
+		printSetupToken(chosenContainer, config.DashboardDomain)
+	}
+	
+	// If containers weren't started or token wasn't found, show instructions
+	if !containersStarted {
+		showSetupTokenInstructions(chosenContainer, config.DashboardDomain)
 	}
 
 	fmt.Println("Installation complete!")
@@ -315,10 +354,16 @@ func collectUserInput(reader *bufio.Reader) Config {
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
 	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
-	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", "pangolin."+config.BaseDomain)
-	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
+	
+	// Set default dashboard domain after base domain is collected
+	defaultDashboardDomain := ""
+	if config.BaseDomain != "" {
+		defaultDashboardDomain = "pangolin." + config.BaseDomain
+	}
+	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
 	config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
 	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
+	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
 
 	// Email configuration
 	fmt.Println("\n=== Email Configuration ===")
@@ -639,8 +684,8 @@ func pullContainers(containerType SupportedContainer) error {
 	}
 
 	if containerType == Docker {
-		if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "pull", "--policy", "always"); err != nil {
-			return fmt.Errorf("failed to pull the containers: %v", err)
+			if err := executeDockerComposeCommandWithArgs("-f", "docker-compose.yml", "pull", "--policy", "always"); err != nil {
+				return fmt.Errorf("failed to pull the containers: %v", err)
 		}
 
 		return nil
@@ -767,6 +812,91 @@ func waitForContainer(containerName string, containerType SupportedContainer) er
 	}
 
 	return fmt.Errorf("container %s did not start within %v seconds", containerName, maxAttempts*int(retryInterval.Seconds()))
+}
+
+func printSetupToken(containerType SupportedContainer, dashboardDomain string) {
+	fmt.Println("Waiting for Pangolin to generate setup token...")
+	
+	// Wait for Pangolin to be healthy
+	if err := waitForContainer("pangolin", containerType); err != nil {
+		fmt.Println("Warning: Pangolin container did not become healthy in time.")
+		return
+	}
+
+	// Give a moment for the setup token to be generated
+	time.Sleep(2 * time.Second)
+
+	// Fetch logs
+	var cmd *exec.Cmd
+	if containerType == Docker {
+		cmd = exec.Command("docker", "logs", "pangolin")
+	} else {
+		cmd = exec.Command("podman", "logs", "pangolin")
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("Warning: Could not fetch Pangolin logs to find setup token.")
+		return
+	}
+
+	// Parse for setup token
+	lines := strings.Split(string(output), "\n")
+	for i, line := range lines {
+		if strings.Contains(line, "=== SETUP TOKEN GENERATED ===") || strings.Contains(line, "=== SETUP TOKEN EXISTS ===") {
+			// Look for "Token: ..." in the next few lines
+			for j := i + 1; j < i+5 && j < len(lines); j++ {
+				trimmedLine := strings.TrimSpace(lines[j])
+				if strings.Contains(trimmedLine, "Token:") {
+					// Extract token after "Token:"
+					tokenStart := strings.Index(trimmedLine, "Token:")
+					if tokenStart != -1 {
+						token := strings.TrimSpace(trimmedLine[tokenStart+6:])
+						       fmt.Printf("Setup token: %s\n", token)
+                               fmt.Println("")
+                               fmt.Println("This token is required to register the first admin account in the web UI at:")
+                               fmt.Printf("https://%s/auth/initial-setup\n", dashboardDomain)
+                               fmt.Println("")
+                               fmt.Println("Save this token securely. It will be invalid after the first admin is created.")
+						return
+					}
+				}
+			}
+		}
+	}
+	fmt.Println("Warning: Could not find a setup token in Pangolin logs.")
+}
+
+func showSetupTokenInstructions(containerType SupportedContainer, dashboardDomain string) {
+	fmt.Println("\n=== Setup Token Instructions ===")
+	fmt.Println("To get your setup token, you need to:")
+	fmt.Println("")
+	fmt.Println("1. Start the containers:")
+	if containerType == Docker {
+		fmt.Println("   docker-compose up -d")
+	} else {
+		fmt.Println("   podman-compose up -d")
+	}
+	fmt.Println("")
+	fmt.Println("2. Wait for the Pangolin container to start and generate the token")
+	fmt.Println("")
+	fmt.Println("3. Check the container logs for the setup token:")
+	if containerType == Docker {
+		fmt.Println("   docker logs pangolin | grep -A 2 -B 2 'SETUP TOKEN'")
+	} else {
+		fmt.Println("   podman logs pangolin | grep -A 2 -B 2 'SETUP TOKEN'")
+	}
+	fmt.Println("")
+	fmt.Println("4. Look for output like:")
+	fmt.Println("   === SETUP TOKEN GENERATED ===")
+	fmt.Println("   Token: [your-token-here]")
+	fmt.Println("   Use this token on the initial setup page")
+	fmt.Println("")
+	fmt.Println("5. Use the token to complete initial setup at:")
+	fmt.Printf("   https://%s/auth/initial-setup\n", dashboardDomain)
+	fmt.Println("")
+	fmt.Println("The setup token is required to register the first admin account.")
+	fmt.Println("Save it securely - it will be invalid after the first admin is created.")
+	fmt.Println("================================")
 }
 
 func generateRandomSecretKey() string {
