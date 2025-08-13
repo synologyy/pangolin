@@ -243,6 +243,7 @@ export const olms = sqliteTable("olms", {
     olmId: text("id").primaryKey(),
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
+    version: text("version").notNull(),
     clientId: integer("clientId").references(() => clients.clientId, {
         onDelete: "cascade"
     })

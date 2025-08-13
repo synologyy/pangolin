@@ -536,6 +536,7 @@ export const olms = pgTable("olms", {
     olmId: varchar("id").primaryKey(),
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
+    version: text("version").notNull(),
     clientId: integer("clientId").references(() => clients.clientId, {
         onDelete: "cascade"
     })
