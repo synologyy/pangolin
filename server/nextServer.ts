@@ -15,7 +15,7 @@ export async function createNextServer() {
 
     const nextServer = express();
 
-    nextServer.all("*", (req, res) => {
+    nextServer.all("/{*splat}", (req, res) => {
         const parsedUrl = parse(req.url!, true);
         return handle(req, res, parsedUrl);
     });
