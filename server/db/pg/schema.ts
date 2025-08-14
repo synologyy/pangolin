@@ -513,7 +513,7 @@ export const clients = pgTable("clients", {
     megabytesIn: real("bytesIn"),
     megabytesOut: real("bytesOut"),
     lastBandwidthUpdate: varchar("lastBandwidthUpdate"),
-    lastPing: varchar("lastPing"),
+    lastPing: integer("lastPing"),
     type: varchar("type").notNull(), // "olm"
     online: boolean("online").notNull().default(false),
     // endpoint: varchar("endpoint"),

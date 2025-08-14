@@ -28,7 +28,7 @@ export const startOfflineChecker = (): void => {
                 .set({ online: false })
                 .where(
                     eq(clients.online, true) &&
-                    (lt(clients.lastPing, twoMinutesAgo.toISOString()) || isNull(clients.lastPing))
+                    (lt(clients.lastPing, twoMinutesAgo.getTime() / 1000) || isNull(clients.lastPing))
                 );
 
         } catch (error) {
@@ -72,7 +72,7 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
         await db
             .update(clients)
             .set({
-                lastPing: new Date().toISOString(),
+                lastPing: new Date().getTime() / 1000,
                 online: true,
             })
             .where(eq(clients.clientId, olm.clientId));
