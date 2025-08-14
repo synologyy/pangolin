@@ -66,228 +66,34 @@ export async function updateHolePunch(
             publicKey
         } = parsedParams.data;
 
-        let currentSiteId: number | undefined;
-        let destinations: PeerDestination[] = [];
-
-        if (olmId) {
-            logger.debug(
-                `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}${publicKey ? ` with exit node publicKey: ${publicKey}` : ""}`
-            );
-
-            const { session, olm: olmSession } =
-                await validateOlmSessionToken(token);
-            if (!session || !olmSession) {
-                return next(
-                    createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
-                );
-            }
-
-            if (olmId !== olmSession.olmId) {
-                logger.warn(
-                    `Olm ID mismatch: ${olmId} !== ${olmSession.olmId}`
-                );
-                return next(
-                    createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
-                );
-            }
-
-            const [olm] = await db
+        let exitNode: ExitNode | undefined;
+        if (publicKey) {
+            // Get the exit node by public key
+            [exitNode] = await db
                 .select()
-                .from(olms)
-                .where(eq(olms.olmId, olmId));
-
-            if (!olm || !olm.clientId) {
-                logger.warn(`Olm not found: ${olmId}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Olm not found")
-                );
-            }
-
-            const [client] = await db
-                .update(clients)
-                .set({
-                    lastHolePunch: timestamp
-                })
-                .where(eq(clients.clientId, olm.clientId))
-                .returning();
-
-            let exitNode: ExitNode | undefined;
-            if (publicKey) {
-                // Get the exit node by public key
-                [exitNode] = await db
-                    .select()
-                    .from(exitNodes)
-                    .where(eq(exitNodes.publicKey, publicKey));
-            } else {
-                // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
-                [exitNode] = await db.select().from(exitNodes).limit(1);
-            }
-
-            if (!exitNode) {
-                logger.warn(`Exit node not found for publicKey: ${publicKey}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Exit node not found")
-                );
-            }
-
-            // Get sites that are on this specific exit node and connected to this client
-            const sitesOnExitNode = await db
-                .select({ siteId: sites.siteId, subnet: sites.subnet, listenPort: sites.listenPort })
-                .from(sites)
-                .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
-                .where(
-                    and(
-                        eq(sites.exitNodeId, exitNode.exitNodeId),
-                        eq(clientSites.clientId, olm.clientId)
-                    )
-                );
-
-            // Update clientSites for each site on this exit node
-            for (const site of sitesOnExitNode) {
-                logger.debug(
-                    `Updating site ${site.siteId} on exit node with publicKey: ${publicKey}`
-                );
-
-                await db
-                    .update(clientSites)
-                    .set({
-                        endpoint: `${ip}:${port}`
-                    })
-                    .where(
-                        and(
-                            eq(clientSites.clientId, olm.clientId),
-                            eq(clientSites.siteId, site.siteId)
-                        )
-                    );
-            }
-
-            logger.debug(
-                `Updated ${sitesOnExitNode.length} sites on exit node with publicKey: ${publicKey}`
-            );
-            if (!client) {
-                logger.warn(`Client not found for olm: ${olmId}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Client not found")
-                );
-            }
-
-            // Create a list of the destinations from the sites 
-            for (const site of sitesOnExitNode) {
-                if (site.subnet && site.listenPort) {
-                    destinations.push({
-                        destinationIP: site.subnet.split("/")[0],
-                        destinationPort: site.listenPort
-                    });
-                }
-            }
-
-        } else if (newtId) {
-            logger.debug(
-                `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
-            );
-
-            const { session, newt: newtSession } =
-                await validateNewtSessionToken(token);
-
-            if (!session || !newtSession) {
-                return next(
-                    createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
-                );
-            }
-
-            if (newtId !== newtSession.newtId) {
-                logger.warn(
-                    `Newt ID mismatch: ${newtId} !== ${newtSession.newtId}`
-                );
-                return next(
-                    createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized")
-                );
-            }
-
-            const [newt] = await db
-                .select()
-                .from(newts)
-                .where(eq(newts.newtId, newtId));
-
-            if (!newt || !newt.siteId) {
-                logger.warn(`Newt not found: ${newtId}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "New not found")
-                );
-            }
-
-            currentSiteId = newt.siteId;
-
-            // Update the current site with the new endpoint
-            const [updatedSite] = await db
-                .update(sites)
-                .set({
-                    endpoint: `${ip}:${port}`,
-                    lastHolePunch: timestamp
-                })
-                .where(eq(sites.siteId, newt.siteId))
-                .returning();
-
-            if (!updatedSite || !updatedSite.subnet) {
-                logger.warn(`Site not found: ${newt.siteId}`);
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Site not found")
-                );
-            }
-
-            // Find all clients that connect to this site
-            // const sitesClientPairs = await db
-            //     .select()
-            //     .from(clientSites)
-            //     .where(eq(clientSites.siteId, newt.siteId));
-
-            // THE NEWT IS NOT SENDING RAW WG TO THE GERBIL SO IDK IF WE REALLY NEED THIS - REMOVING
-            // Get client details for each client
-            // for (const pair of sitesClientPairs) {
-            //     const [client] = await db
-            //         .select()
-            //         .from(clients)
-            //         .where(eq(clients.clientId, pair.clientId));
-
-            //     if (client && client.endpoint) {
-            //         const [host, portStr] = client.endpoint.split(':');
-            //         if (host && portStr) {
-            //             destinations.push({
-            //                 destinationIP: host,
-            //                 destinationPort: parseInt(portStr, 10)
-            //             });
-            //         }
-            //     }
-            // }
-
-            // If this is a newt/site, also add other sites in the same org
-            //     if (updatedSite.orgId) {
-            //         const orgSites = await db
-            //             .select()
-            //             .from(sites)
-            //             .where(eq(sites.orgId, updatedSite.orgId));
-
-            //         for (const site of orgSites) {
-            //             // Don't add the current site to the destinations
-            //             if (site.siteId !== currentSiteId && site.subnet && site.endpoint && site.listenPort) {
-            //                 const [host, portStr] = site.endpoint.split(':');
-            //                 if (host && portStr) {
-            //                     destinations.push({
-            //                         destinationIP: host,
-            //                         destinationPort: site.listenPort
-            //                     });
-            //                 }
-            //             }
-            //         }
-            //     }
+                .from(exitNodes)
+                .where(eq(exitNodes.publicKey, publicKey));
+        } else {
+            // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
+            [exitNode] = await db.select().from(exitNodes).limit(1);
         }
 
-        // if (destinations.length === 0) {
-        //     logger.warn(
-        //         `No peer destinations found for olmId: ${olmId} or newtId: ${newtId}`
-        //     );
-        //     return next(createHttpError(HttpCode.NOT_FOUND, "No peer destinations found"));
-        // }
+        if (!exitNode) {
+            logger.warn(`Exit node not found for publicKey: ${publicKey}`);
+            return next(
+                createHttpError(HttpCode.NOT_FOUND, "Exit node not found")
+            );
+        }
+
+        const destinations = await updateAndGenerateEndpointDestinations(
+            olmId,
+            newtId,
+            ip,
+            port,
+            timestamp,
+            token,
+            exitNode
+        );
 
         logger.debug(
             `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
@@ -306,4 +112,196 @@ export async function updateHolePunch(
             )
         );
     }
+}
+
+export async function updateAndGenerateEndpointDestinations(
+    olmId: string | undefined,
+    newtId: string | undefined,
+    ip: string,
+    port: number,
+    timestamp: number,
+    token: string,
+    exitNode: ExitNode
+) {
+    let currentSiteId: number | undefined;
+    let destinations: PeerDestination[] = [];
+
+    if (olmId) {
+        logger.debug(
+            `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`
+        );
+
+        const { session, olm: olmSession } =
+            await validateOlmSessionToken(token);
+        if (!session || !olmSession) {
+            throw new Error("Unauthorized");
+        }
+
+        if (olmId !== olmSession.olmId) {
+            logger.warn(`Olm ID mismatch: ${olmId} !== ${olmSession.olmId}`);
+            throw new Error("Unauthorized");
+        }
+
+        const [olm] = await db.select().from(olms).where(eq(olms.olmId, olmId));
+
+        if (!olm || !olm.clientId) {
+            logger.warn(`Olm not found: ${olmId}`);
+            throw new Error("Olm not found");
+        }
+
+        const [client] = await db
+            .update(clients)
+            .set({
+                lastHolePunch: timestamp
+            })
+            .where(eq(clients.clientId, olm.clientId))
+            .returning();
+
+
+
+        // Get sites that are on this specific exit node and connected to this client
+        const sitesOnExitNode = await db
+            .select({
+                siteId: sites.siteId,
+                subnet: sites.subnet,
+                listenPort: sites.listenPort
+            })
+            .from(sites)
+            .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+            .where(
+                and(
+                    eq(sites.exitNodeId, exitNode.exitNodeId),
+                    eq(clientSites.clientId, olm.clientId)
+                )
+            );
+
+        // Update clientSites for each site on this exit node
+        for (const site of sitesOnExitNode) {
+            logger.debug(
+                `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
+            );
+
+            await db
+                .update(clientSites)
+                .set({
+                    endpoint: `${ip}:${port}`
+                })
+                .where(
+                    and(
+                        eq(clientSites.clientId, olm.clientId),
+                        eq(clientSites.siteId, site.siteId)
+                    )
+                );
+        }
+
+        logger.debug(
+            `Updated ${sitesOnExitNode.length} sites on exit node ${exitNode.exitNodeId}`
+        );
+        if (!client) {
+            logger.warn(`Client not found for olm: ${olmId}`);
+            throw new Error("Client not found");
+        }
+
+        // Create a list of the destinations from the sites
+        for (const site of sitesOnExitNode) {
+            if (site.subnet && site.listenPort) {
+                destinations.push({
+                    destinationIP: site.subnet.split("/")[0],
+                    destinationPort: site.listenPort
+                });
+            }
+        }
+    } else if (newtId) {
+        logger.debug(
+            `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
+        );
+
+        const { session, newt: newtSession } =
+            await validateNewtSessionToken(token);
+
+        if (!session || !newtSession) {
+            throw new Error("Unauthorized");
+        }
+
+        if (newtId !== newtSession.newtId) {
+            logger.warn(
+                `Newt ID mismatch: ${newtId} !== ${newtSession.newtId}`
+            );
+            throw new Error("Unauthorized");
+        }
+
+        const [newt] = await db
+            .select()
+            .from(newts)
+            .where(eq(newts.newtId, newtId));
+
+        if (!newt || !newt.siteId) {
+            logger.warn(`Newt not found: ${newtId}`);
+            throw new Error("Newt not found");
+        }
+
+        currentSiteId = newt.siteId;
+
+        // Update the current site with the new endpoint
+        const [updatedSite] = await db
+            .update(sites)
+            .set({
+                endpoint: `${ip}:${port}`,
+                lastHolePunch: timestamp
+            })
+            .where(eq(sites.siteId, newt.siteId))
+            .returning();
+
+        if (!updatedSite || !updatedSite.subnet) {
+            logger.warn(`Site not found: ${newt.siteId}`);
+            throw new Error("Site not found");
+        }
+
+        // Find all clients that connect to this site
+        // const sitesClientPairs = await db
+        //     .select()
+        //     .from(clientSites)
+        //     .where(eq(clientSites.siteId, newt.siteId));
+
+        // THE NEWT IS NOT SENDING RAW WG TO THE GERBIL SO IDK IF WE REALLY NEED THIS - REMOVING
+        // Get client details for each client
+        // for (const pair of sitesClientPairs) {
+        //     const [client] = await db
+        //         .select()
+        //         .from(clients)
+        //         .where(eq(clients.clientId, pair.clientId));
+
+        //     if (client && client.endpoint) {
+        //         const [host, portStr] = client.endpoint.split(':');
+        //         if (host && portStr) {
+        //             destinations.push({
+        //                 destinationIP: host,
+        //                 destinationPort: parseInt(portStr, 10)
+        //             });
+        //         }
+        //     }
+        // }
+
+        // If this is a newt/site, also add other sites in the same org
+        //     if (updatedSite.orgId) {
+        //         const orgSites = await db
+        //             .select()
+        //             .from(sites)
+        //             .where(eq(sites.orgId, updatedSite.orgId));
+
+        //         for (const site of orgSites) {
+        //             // Don't add the current site to the destinations
+        //             if (site.siteId !== currentSiteId && site.subnet && site.endpoint && site.listenPort) {
+        //                 const [host, portStr] = site.endpoint.split(':');
+        //                 if (host && portStr) {
+        //                     destinations.push({
+        //                         destinationIP: host,
+        //                         destinationPort: site.listenPort
+        //                     });
+        //                 }
+        //             }
+        //         }
+        //     }
+    }
+    return destinations;
 }
