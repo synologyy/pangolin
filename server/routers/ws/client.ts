@@ -36,6 +36,7 @@ export class WebSocketClient extends EventEmitter {
   private pingTimer: NodeJS.Timeout | null = null;
   private pingTimeoutTimer: NodeJS.Timeout | null = null;
   private token: string;
+  private isConnecting: boolean = false;
 
   constructor(
     token: string,
@@ -46,14 +47,16 @@ export class WebSocketClient extends EventEmitter {
     
     this.token = token;
     this.baseURL = options.baseURL || endpoint;
-    this.reconnectInterval = options.reconnectInterval || 3000;
+    this.reconnectInterval = options.reconnectInterval || 5000;
     this.pingInterval = options.pingInterval || 30000;
     this.pingTimeout = options.pingTimeout || 10000;
   }
 
   public async connect(): Promise<void> {
     this.shouldReconnect = true;
-    await this.connectWithRetry();
+    if (!this.isConnecting) {
+      await this.connectWithRetry();
+    }
   }
 
   public async close(): Promise<void> {
@@ -141,20 +144,30 @@ export class WebSocketClient extends EventEmitter {
   }
 
   private async connectWithRetry(): Promise<void> {
-    while (this.shouldReconnect) {
+    if (this.isConnecting) return;
+    
+    this.isConnecting = true;
+    
+    while (this.shouldReconnect && !this.isConnected) {
       try {
         await this.establishConnection();
+        this.isConnecting = false;
         return;
       } catch (error) {
         console.error(`Failed to connect: ${error}. Retrying in ${this.reconnectInterval}ms...`);
         
-        if (!this.shouldReconnect) return;
+        if (!this.shouldReconnect) {
+          this.isConnecting = false;
+          return;
+        }
         
         await new Promise(resolve => {
           this.reconnectTimer = setTimeout(resolve, this.reconnectInterval);
         });
       }
     }
+    
+    this.isConnecting = false;
   }
 
   private async establishConnection(): Promise<void> {
@@ -174,6 +187,7 @@ export class WebSocketClient extends EventEmitter {
         console.debug('WebSocket connection established');
         this.conn = conn;
         this.setConnected(true);
+        this.isConnecting = false;
         this.startPingMonitor();
         this.emit('connect');
         resolve();
@@ -232,6 +246,7 @@ export class WebSocketClient extends EventEmitter {
 
   private handleDisconnect(): void {
     this.setConnected(false);
+    this.isConnecting = false;
     
     // Clear ping timers
     if (this.pingTimer) {
@@ -252,7 +267,10 @@ export class WebSocketClient extends EventEmitter {
 
     // Reconnect if needed
     if (this.shouldReconnect) {
-      this.connectWithRetry();
+      // Add a small delay before starting reconnection to prevent immediate retry
+      setTimeout(() => {
+        this.connectWithRetry();
+      }, 1000);
     }
   }
 

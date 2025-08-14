@@ -17,11 +17,13 @@ async function startServers() {
     // Start all servers
     const apiServer = createApiServer();
     const internalServer = createInternalServer();
-    const nextServer = await createNextServer();
 
     let hybridClientServer;
+    let nextServer;
     if (config.isHybridMode()) {
-        hybridClientServer = createHybridClientServer();
+        hybridClientServer = await createHybridClientServer();
+    } else {
+        nextServer = await createNextServer();
     }
 
     let integrationServer;

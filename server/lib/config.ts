@@ -148,7 +148,7 @@ export class Config {
     }
 
     public isHybridMode() {
-        return this.rawConfig?.hybrid;
+        return typeof this.rawConfig?.hybrid === "object";
     }
 
     public async checkSupporterKey() {

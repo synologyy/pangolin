@@ -11,6 +11,13 @@ import { tokenManager } from "./lib/tokenManager";
 import { APP_VERSION } from "./lib/consts";
 
 export async function createHybridClientServer() {
+    logger.info("Starting hybrid client server...");
+
+    // Start the token manager
+    await tokenManager.start();
+
+    const token = await tokenManager.getToken();
+
     const monitor = new TraefikConfigManager();
 
     await monitor.start();
@@ -22,11 +29,6 @@ export async function createHybridClientServer() {
     ) {
         throw new Error("Hybrid configuration is not defined");
     }
-
-    // Start the token manager
-    await tokenManager.start();
-
-    const token = await tokenManager.getToken();
 
     // Create client
     const client = createWebSocketClient(

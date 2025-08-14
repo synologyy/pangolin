@@ -67,6 +67,8 @@ export class TokenManager {
     /**
      * Get the current valid token
      */
+
+    // TODO: WE SHOULD NOT BE GETTING A TOKEN EVERY TIME WE REQUEST IT
     async getToken(): Promise<string> {
         if (!this.token) {
             if (this.isRefreshing) {
