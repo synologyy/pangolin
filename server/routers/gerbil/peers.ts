@@ -1,8 +1,8 @@
-import axios from "axios";
 import logger from "@server/logger";
 import { db } from "@server/db";
 import { exitNodes } from "@server/db";
 import { eq } from "drizzle-orm";
+import { sendToExitNode } from "../../lib/exitNodeComms";
 
 export async function addPeer(
     exitNodeId: number,
@@ -22,34 +22,13 @@ export async function addPeer(
     if (!exitNode) {
         throw new Error(`Exit node with ID ${exitNodeId} not found`);
     }
-    if (!exitNode.reachableAt) {
-        throw new Error(`Exit node with ID ${exitNodeId} is not reachable`);
-    }
 
-    try {
-        const response = await axios.post(
-            `${exitNode.reachableAt}/peer`,
-            peer,
-            {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        );
-
-        logger.info("Peer added successfully:", { peer: response.data.status });
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            logger.error(
-                `Error adding peer (can Pangolin see Gerbil HTTP API?) for exit node at ${exitNode.reachableAt} (status: ${error.response?.status}): ${error.message}`
-            );
-        } else {
-            logger.error(
-                `Error adding peer for exit node at ${exitNode.reachableAt}: ${error}`
-            );
-        }
-    }
+    return await sendToExitNode(exitNode, {
+        remoteType: "remoteExitNode/peers/add",
+        localPath: "/peer",
+        method: "POST",
+        data: peer
+    });
 }
 
 export async function deletePeer(exitNodeId: number, publicKey: string) {
@@ -64,24 +43,16 @@ export async function deletePeer(exitNodeId: number, publicKey: string) {
     if (!exitNode) {
         throw new Error(`Exit node with ID ${exitNodeId} not found`);
     }
-    if (!exitNode.reachableAt) {
-        throw new Error(`Exit node with ID ${exitNodeId} is not reachable`);
-    }
-    try {
-        const response = await axios.delete(
-            `${exitNode.reachableAt}/peer?public_key=${encodeURIComponent(publicKey)}`
-        );
-        logger.info("Peer deleted successfully:", response.data.status);
-        return response.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            logger.error(
-                `Error deleting peer (can Pangolin see Gerbil HTTP API?) for exit node at ${exitNode.reachableAt} (status: ${error.response?.status}): ${error.message}`
-            );
-        } else {
-            logger.error(
-                `Error deleting peer for exit node at ${exitNode.reachableAt}: ${error}`
-            );
+
+    return await sendToExitNode(exitNode, {
+        remoteType: "remoteExitNode/peers/remove",
+        localPath: "/peer",
+        method: "DELETE",
+        data: {
+            publicKey: publicKey
+        },
+        queryParams: {
+            public_key: publicKey
         }
-    }
+    });
 }

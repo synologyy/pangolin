@@ -13,7 +13,7 @@ import {
 import { clients, clientSites, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
-import axios from "axios";
+import { sendToExitNode } from "../../lib/exitNodeComms";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -102,41 +102,28 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             .from(exitNodes)
             .where(eq(exitNodes.exitNodeId, site.exitNodeId))
             .limit(1);
-        if (exitNode.reachableAt && existingSite.subnet && existingSite.listenPort) {
-            try {
-                const response = await axios.post(
-                    `${exitNode.reachableAt}/update-proxy-mapping`,
-                    {
-                        oldDestination: {
-                            destinationIP: existingSite.subnet?.split("/")[0],
-                            destinationPort: existingSite.listenPort
-                        },
-                        newDestination: {
-                            destinationIP: site.subnet?.split("/")[0],
-                            destinationPort: site.listenPort
-                        }
-                    },
-                    {
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-
-                logger.info("Destinations updated:", {
-                    peer: response.data.status
-                });
-            } catch (error) {
-                if (axios.isAxiosError(error)) {
-                    logger.error(
-                        `Error updating proxy mapping (can Pangolin see Gerbil HTTP API?) for exit node at ${exitNode.reachableAt} (status: ${error.response?.status}): ${error.message}`
-                    );
-                } else {
-                    logger.error(
-                        `Error updating proxy mapping for exit node at ${exitNode.reachableAt}: ${error}`
-                    );
+        if (
+            exitNode.reachableAt &&
+            existingSite.subnet &&
+            existingSite.listenPort
+        ) {
+            const payload = {
+                oldDestination: {
+                    destinationIP: existingSite.subnet?.split("/")[0],
+                    destinationPort: existingSite.listenPort
+                },
+                newDestination: {
+                    destinationIP: site.subnet?.split("/")[0],
+                    destinationPort: site.listenPort
                 }
-            }
+            };
+
+            await sendToExitNode(exitNode, {
+                remoteType: "remoteExitNode/update-proxy-mapping",
+                localPath: "/update-proxy-mapping",
+                method: "POST",
+                data: payload
+            });
         }
     }
 
@@ -237,7 +224,9 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                 protocol: resources.protocol
             })
             .from(resources)
-            .where(and(eq(resources.siteId, siteId), eq(resources.http, false)));
+            .where(
+                and(eq(resources.siteId, siteId), eq(resources.http, false))
+            );
 
         // Get all enabled targets for these resources in a single query
         const resourceIds = resourcesList.map((r) => r.resourceId);
@@ -251,7 +240,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                           method: targets.method,
                           port: targets.port,
                           internalPort: targets.internalPort,
-                          enabled: targets.enabled,
+                          enabled: targets.enabled
                       })
                       .from(targets)
                       .where(
