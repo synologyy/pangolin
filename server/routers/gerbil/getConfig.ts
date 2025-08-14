@@ -104,7 +104,7 @@ export async function getConfig(
 
         // STOP HERE IN HYBRID MODE
         if (config.isHybridMode()) {
-            return proxyToRemote(req, res, next, "gerbil/get-config");
+            return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 
         const configResponse = await generateGerbilConfig(exitNode[0]);

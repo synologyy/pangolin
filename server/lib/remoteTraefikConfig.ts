@@ -120,6 +120,8 @@ export class TraefikConfigManager {
             const validCertificates =
                 await this.getValidCertificatesForDomains(domains);
 
+            // logger.debug(`Valid certs array: ${JSON.stringify(validCertificates)}`);
+
             // Download and decrypt new certificates
             await this.processValidCertificates(validCertificates);
 

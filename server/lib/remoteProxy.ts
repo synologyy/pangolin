@@ -36,6 +36,8 @@ export const proxyToRemote = async (
             validateStatus: () => true // Don't throw on non-2xx status codes
         });
 
+        logger.debug(`Proxy response: ${JSON.stringify(response.data)}`);
+
         // Forward the response status and data
         return res.status(response.status).json(response.data);
         

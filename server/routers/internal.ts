@@ -55,26 +55,29 @@ if (config.isHybridMode()) {
     // Use proxy router to forward requests to remote cloud server
     // Proxy endpoints for each gerbil route
     gerbilRouter.post("/receive-bandwidth", (req, res, next) =>
-        proxyToRemote(req, res, next, "gerbil/receive-bandwidth")
+        proxyToRemote(req, res, next, "hybrid/gerbil/receive-bandwidth")
     );
 
     gerbilRouter.post("/update-hole-punch", (req, res, next) =>
-        proxyToRemote(req, res, next, "gerbil/update-hole-punch")
+        proxyToRemote(req, res, next, "hybrid/gerbil/update-hole-punch")
     );
 
     gerbilRouter.post("/get-all-relays", (req, res, next) =>
-        proxyToRemote(req, res, next, "gerbil/get-all-relays")
+        proxyToRemote(req, res, next, "hybrid/gerbil/get-all-relays")
     );
 
     // GET CONFIG IS HANDLED IN THE ORIGINAL HANDLER
     // SO IT CAN REGISTER THE LOCAL EXIT NODE
 } else {
     // Use local gerbil endpoints
-    gerbilRouter.post("/get-config", gerbil.getConfig);
     gerbilRouter.post("/receive-bandwidth", gerbil.receiveBandwidth);
     gerbilRouter.post("/update-hole-punch", gerbil.updateHolePunch);
     gerbilRouter.post("/get-all-relays", gerbil.getAllRelays);
 }
+
+// WE HANDLE THE PROXY INSIDE OF THIS FUNCTION
+// SO IT REGISTERS THE EXIT NODE LOCALLY AS WELL
+gerbilRouter.post("/get-config", gerbil.getConfig);
 
 // Badger routes
 const badgerRouter = Router();

@@ -22,14 +22,6 @@ export async function createHybridClientServer() {
 
     await monitor.start();
 
-    if (
-        !config.getRawConfig().hybrid?.id ||
-        !config.getRawConfig().hybrid?.secret ||
-        !config.getRawConfig().hybrid?.endpoint
-    ) {
-        throw new Error("Hybrid configuration is not defined");
-    }
-
     // Create client
     const client = createWebSocketClient(
         token,
