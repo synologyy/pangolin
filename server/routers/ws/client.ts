@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import axios from 'axios';
 import { URL } from 'url';
 import { EventEmitter } from 'events';
+import logger from '@server/logger';
 
 export interface Config {
   id: string;
@@ -96,7 +97,7 @@ export class WebSocketClient extends EventEmitter {
         data: data
       };
 
-      console.debug(`Sending message: ${messageType}`, data);
+      logger.debug(`Sending message: ${messageType}`, data);
       
       this.conn.send(JSON.stringify(message), (error) => {
         if (error) {
@@ -115,13 +116,13 @@ export class WebSocketClient extends EventEmitter {
   ): () => void {
     // Send immediately
     this.sendMessage(messageType, data).catch(err => {
-      console.error('Failed to send initial message:', err);
+      logger.error('Failed to send initial message:', err);
     });
 
     // Set up interval
     const intervalId = setInterval(() => {
       this.sendMessage(messageType, data).catch(err => {
-        console.error('Failed to send message:', err);
+        logger.error('Failed to send message:', err);
       });
     }, interval);
 
@@ -154,7 +155,7 @@ export class WebSocketClient extends EventEmitter {
         this.isConnecting = false;
         return;
       } catch (error) {
-        console.error(`Failed to connect: ${error}. Retrying in ${this.reconnectInterval}ms...`);
+        logger.error(`Failed to connect: ${error}. Retrying in ${this.reconnectInterval}ms...`);
         
         if (!this.shouldReconnect) {
           this.isConnecting = false;
@@ -184,7 +185,7 @@ export class WebSocketClient extends EventEmitter {
       const conn = new WebSocket(wsURL.toString());
 
       conn.on('open', () => {
-        console.debug('WebSocket connection established');
+        logger.debug('WebSocket connection established');
         this.conn = conn;
         this.setConnected(true);
         this.isConnecting = false;
@@ -202,17 +203,17 @@ export class WebSocketClient extends EventEmitter {
           }
           this.emit('message', message);
         } catch (error) {
-          console.error('Failed to parse message:', error);
+          logger.error('Failed to parse message:', error);
         }
       });
 
       conn.on('close', (code, reason) => {
-        console.debug(`WebSocket connection closed: ${code} ${reason}`);
+        logger.debug(`WebSocket connection closed: ${code} ${reason}`);
         this.handleDisconnect();
       });
 
       conn.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        logger.error('WebSocket error:', error);
         if (this.conn === null) {
           // Connection failed during establishment
           reject(error);
@@ -237,7 +238,7 @@ export class WebSocketClient extends EventEmitter {
         
         // Set timeout for pong response
         this.pingTimeoutTimer = setTimeout(() => {
-          console.error('Ping timeout - no pong received');
+          logger.error('Ping timeout - no pong received');
           this.handleDisconnect();
         }, this.pingTimeout);
       }

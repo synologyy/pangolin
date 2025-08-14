@@ -69,26 +69,26 @@ export async function createHybridClientServer() {
 
     // Listen to connection events
     client.on("connect", () => {
-        console.log("Connected to WebSocket server");
+        logger.info("Connected to WebSocket server");
         client.sendMessage("remoteExitNode/register", {
             remoteExitNodeVersion: APP_VERSION
         });
     });
 
     client.on("disconnect", () => {
-        console.log("Disconnected from WebSocket server");
+        logger.info("Disconnected from WebSocket server");
     });
 
     client.on("message", (message) => {
-        console.log("Received message:", message.type, message.data);
+        logger.info("Received message:", message.type, message.data);
     });
 
     // Connect to the server
     try {
         await client.connect();
-        console.log("Connection initiated");
+        logger.info("Connection initiated");
     } catch (error) {
-        console.error("Failed to connect:", error);
+        logger.error("Failed to connect:", error);
     }
 
     client.sendMessageInterval(
