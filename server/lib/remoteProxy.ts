@@ -5,6 +5,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import config from "@server/lib/config";
+import { tokenManager } from "./tokenManager";
 
 /**
  * Proxy function that forwards requests to the remote cloud server
@@ -28,6 +29,7 @@ export const proxyToRemote = async (
             data: req.body,
             headers: {
                 'Content-Type': 'application/json',
+                ...(await tokenManager.getAuthHeader()).headers
             },
             params: req.query,
             timeout: 30000, // 30 second timeout

@@ -3,10 +3,11 @@ import express from "express";
 import { parse } from "url";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { WebSocketClient, createWebSocketClient } from "./routers/ws/client";
+import { createWebSocketClient } from "./routers/ws/client";
 import { addPeer, deletePeer } from "./routers/gerbil/peers";
 import { db, exitNodes } from "./db";
 import { TraefikConfigManager } from "./lib/remoteTraefikConfig";
+import { tokenManager } from "./lib/tokenManager";
 
 export async function createHybridClientServer() {
     const monitor = new TraefikConfigManager();
@@ -21,11 +22,14 @@ export async function createHybridClientServer() {
         throw new Error("Hybrid configuration is not defined");
     }
 
+    // Start the token manager
+    await tokenManager.start();
+
+    const token = await tokenManager.getToken();
+
     // Create client
     const client = createWebSocketClient(
-        "remoteExitNode", // or 'olm'
-        config.getRawConfig().hybrid!.id!,
-        config.getRawConfig().hybrid!.secret!,
+        token,
         config.getRawConfig().hybrid!.endpoint!,
         {
             reconnectInterval: 5000,

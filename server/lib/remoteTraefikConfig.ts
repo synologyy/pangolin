@@ -5,6 +5,7 @@ import logger from "@server/logger";
 import * as yaml from "js-yaml";
 import axios from "axios";
 import { db, exitNodes } from "@server/db";
+import { tokenManager } from "./tokenManager";
 
 export class TraefikConfigManager {
     private intervalId: NodeJS.Timeout | null = null;
@@ -162,7 +163,8 @@ export class TraefikConfigManager {
     } | null> {
         try {
             const resp = await axios.get(
-                `${config.getRawConfig().hybrid?.endpoint}/get-traefik-config`
+                `${config.getRawConfig().hybrid?.endpoint}/traefik-config`,
+                await tokenManager.getAuthHeader()
             );
 
             if (resp.status !== 200) {

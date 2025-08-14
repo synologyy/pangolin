@@ -7,7 +7,7 @@ import { createNextServer } from "./nextServer";
 import { createInternalServer } from "./internalServer";
 import { ApiKey, ApiKeyOrg, Session, User, UserOrg } from "@server/db";
 import { createIntegrationApiServer } from "./integrationApiServer";
-import { createHybridClientServer } from "./hybridClientServer";
+import { createHybridClientServer } from "./privateHybridServer.js";
 import config from "@server/lib/config";
 
 async function startServers() {

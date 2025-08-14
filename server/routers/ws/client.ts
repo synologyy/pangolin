@@ -14,14 +14,6 @@ export interface WSMessage {
   data: any;
 }
 
-export interface TokenResponse {
-  success: boolean;
-  message?: string;
-  data: {
-    token: string;
-  };
-}
-
 export type MessageHandler = (message: WSMessage) => void;
 
 export interface ClientOptions {
@@ -33,43 +25,30 @@ export interface ClientOptions {
 
 export class WebSocketClient extends EventEmitter {
   private conn: WebSocket | null = null;
-  private config: Config;
   private baseURL: string;
   private handlers: Map<string, MessageHandler> = new Map();
   private reconnectInterval: number;
   private isConnected: boolean = false;
   private pingInterval: number;
   private pingTimeout: number;
-  private clientType: string;
   private shouldReconnect: boolean = true;
   private reconnectTimer: NodeJS.Timeout | null = null;
   private pingTimer: NodeJS.Timeout | null = null;
   private pingTimeoutTimer: NodeJS.Timeout | null = null;
+  private token: string;
 
   constructor(
-    clientType: string,
-    id: string,
-    secret: string,
+    token: string,
     endpoint: string,
     options: ClientOptions = {}
   ) {
     super();
     
-    this.clientType = clientType;
-    this.config = {
-      id,
-      secret,
-      endpoint
-    };
-    
+    this.token = token;
     this.baseURL = options.baseURL || endpoint;
     this.reconnectInterval = options.reconnectInterval || 3000;
     this.pingInterval = options.pingInterval || 30000;
     this.pingTimeout = options.pingTimeout || 10000;
-  }
-
-  public getConfig(): Config {
-    return this.config;
   }
 
   public async connect(): Promise<void> {
@@ -161,48 +140,6 @@ export class WebSocketClient extends EventEmitter {
     return this.isConnected;
   }
 
-  private async getToken(): Promise<string> {
-    const baseURL = new URL(this.baseURL);
-    const tokenEndpoint = `${baseURL.origin}/api/v1/auth/${this.clientType}/get-token`;
-
-    const tokenData = this.clientType === 'newt' 
-      ? { newtId: this.config.id, secret: this.config.secret }
-      : { olmId: this.config.id, secret: this.config.secret };
-
-    try {
-      const response = await axios.post<TokenResponse>(tokenEndpoint, tokenData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': 'x-csrf-protection'
-        },
-        timeout: 10000 // 10 second timeout
-      });
-
-      if (!response.data.success) {
-        throw new Error(`Failed to get token: ${response.data.message}`);
-      }
-
-      if (!response.data.data.token) {
-        throw new Error('Received empty token from server');
-      }
-
-      console.debug(`Received token: ${response.data.data.token}`);
-      return response.data.data.token;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          throw new Error(`Failed to get token with status code: ${error.response.status}`);
-        } else if (error.request) {
-          throw new Error('Failed to request new token: No response received');
-        } else {
-          throw new Error(`Failed to request new token: ${error.message}`);
-        }
-      } else {
-        throw new Error(`Failed to get token: ${error}`);
-      }
-    }
-  }
-
   private async connectWithRetry(): Promise<void> {
     while (this.shouldReconnect) {
       try {
@@ -221,18 +158,14 @@ export class WebSocketClient extends EventEmitter {
   }
 
   private async establishConnection(): Promise<void> {
-    // Get token for authentication
-    const token = await this.getToken();
-    this.emit('tokenUpdate', token);
-
     // Parse the base URL to determine protocol and hostname
     const baseURL = new URL(this.baseURL);
     const wsProtocol = baseURL.protocol === 'https:' ? 'wss' : 'ws';
     const wsURL = new URL(`${wsProtocol}://${baseURL.host}/api/v1/ws`);
     
     // Add token and client type to query parameters
-    wsURL.searchParams.set('token', token);
-    wsURL.searchParams.set('clientType', this.clientType);
+    wsURL.searchParams.set('token', this.token);
+    wsURL.searchParams.set('clientType', "remoteExitNode");
 
     return new Promise((resolve, reject) => {
       const conn = new WebSocket(wsURL.toString());
@@ -330,13 +263,11 @@ export class WebSocketClient extends EventEmitter {
 
 // Factory function for easier instantiation
 export function createWebSocketClient(
-  clientType: string,
-  id: string,
-  secret: string,
-  endpoint: string,
+    token: string,
+    endpoint: string,
   options?: ClientOptions
 ): WebSocketClient {
-  return new WebSocketClient(clientType, id, secret, endpoint, options);
+  return new WebSocketClient(token, endpoint, options);
 }
 
 export default WebSocketClient;
