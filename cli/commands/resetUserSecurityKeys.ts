@@ -6,16 +6,19 @@ type ResetUserSecurityKeysArgs = {
     email: string;
 };
 
-export const resetUserSecurityKeys: CommandModule<{}, ResetUserSecurityKeysArgs> = {
+export const resetUserSecurityKeys: CommandModule<
+    {},
+    ResetUserSecurityKeysArgs
+> = {
     command: "reset-user-security-keys",
-    describe: "Reset a user's security keys (passkeys) by deleting all their webauthn credentials",
+    describe:
+        "Reset a user's security keys (passkeys) by deleting all their webauthn credentials",
     builder: (yargs) => {
-        return yargs
-            .option("email", {
-                type: "string",
-                demandOption: true,
-                describe: "User email address"
-            });
+        return yargs.option("email", {
+            type: "string",
+            demandOption: true,
+            describe: "User email address"
+        });
     },
     handler: async (argv: { email: string }) => {
         try {
@@ -48,7 +51,9 @@ export const resetUserSecurityKeys: CommandModule<{}, ResetUserSecurityKeysArgs>
                 process.exit(0);
             }
 
-            console.log(`Found ${userSecurityKeys.length} security key(s) for user '${email}'`);
+            console.log(
+                `Found ${userSecurityKeys.length} security key(s) for user '${email}'`
+            );
 
             // Delete all security keys for the user
             await db
@@ -64,4 +69,4 @@ export const resetUserSecurityKeys: CommandModule<{}, ResetUserSecurityKeysArgs>
             process.exit(1);
         }
     }
-}; 
+};
