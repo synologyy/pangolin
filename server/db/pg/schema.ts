@@ -96,7 +96,7 @@ export const resources = pgTable("resources", {
     stickySession: boolean("stickySession").notNull().default(false),
     tlsServerName: varchar("tlsServerName"),
     setHostHeader: varchar("setHostHeader"),
-    enableProxy: boolean("enableProxy").default(true),
+    enableProxy: boolean("enableProxy").default(true)
 });
 
 export const targets = pgTable("targets", {
@@ -121,7 +121,13 @@ export const exitNodes = pgTable("exitNodes", {
     publicKey: varchar("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
     reachableAt: varchar("reachableAt"),
-    maxConnections: integer("maxConnections")
+    maxConnections: integer("maxConnections"),
+    orgId: text("orgId").references(() => orgs.orgId, {
+        onDelete: "cascade"
+    }),
+    online: boolean("online").notNull().default(false),
+    lastPing: integer("lastPing"),
+    type: text("type").default("gerbil") // gerbil, remoteExitNode
 });
 
 export const users = pgTable("user", {
