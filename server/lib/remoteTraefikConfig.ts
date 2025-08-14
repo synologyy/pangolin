@@ -261,7 +261,8 @@ export class TraefikConfigManager {
                 {
                     params: {
                         domains: domainArray
-                    }
+                    },
+                    headers: (await tokenManager.getAuthHeader()).headers
                 }
             );
             return response.data;

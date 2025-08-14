@@ -122,9 +122,6 @@ export const exitNodes = pgTable("exitNodes", {
     listenPort: integer("listenPort").notNull(),
     reachableAt: varchar("reachableAt"),
     maxConnections: integer("maxConnections"),
-    orgId: text("orgId").references(() => orgs.orgId, {
-        onDelete: "cascade"
-    }),
     online: boolean("online").notNull().default(false),
     lastPing: integer("lastPing"),
     type: text("type").default("gerbil") // gerbil, remoteExitNode

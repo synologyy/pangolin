@@ -134,9 +134,6 @@ export const exitNodes = sqliteTable("exitNodes", {
     listenPort: integer("listenPort").notNull(),
     reachableAt: text("reachableAt"), // this is the internal address of the gerbil http server for command control
     maxConnections: integer("maxConnections"),
-    orgId: text("orgId").references(() => orgs.orgId, {
-        onDelete: "cascade"
-    }),
     online: integer("online", { mode: "boolean" }).notNull().default(false),
     lastPing: integer("lastPing"),
     type: text("type").default("gerbil") // gerbil, remoteExitNode
