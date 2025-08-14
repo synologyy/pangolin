@@ -87,17 +87,17 @@ export class TraefikConfigManager {
     public async HandleTraefikConfig(): Promise<void> {
         try {
             // Get all active domains for this exit node via HTTP call
-            const getActiveDomainsFromTraefik =
-                await this.getActiveDomainsFromTraefik();
+            const getTraefikConfig =
+                await this.getTraefikConfig();
 
-            if (!getActiveDomainsFromTraefik) {
+            if (!getTraefikConfig) {
                 logger.error(
                     "Failed to fetch active domains from traefik config"
                 );
                 return;
             }
 
-            const { domains, traefikConfig } = getActiveDomainsFromTraefik;
+            const { domains, traefikConfig } = getTraefikConfig;
 
             // Add static domains from config
             // const staticDomains = [config.getRawConfig().app.dashboard_url];
@@ -150,31 +150,32 @@ export class TraefikConfigManager {
             // Update active domains tracking
             this.activeDomains = domains;
         } catch (error) {
-            logger.error("Error in certificate monitoring cycle:", error);
+            logger.error("Error in traefik config monitoring cycle:", error);
         }
     }
 
     /**
      * Get all domains currently in use from traefik config API
      */
-    private async getActiveDomainsFromTraefik(): Promise<{
+    private async getTraefikConfig(): Promise<{
         domains: Set<string>;
         traefikConfig: any;
     } | null> {
         try {
             const resp = await axios.get(
-                `${config.getRawConfig().hybrid?.endpoint}/traefik-config`,
+                `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/traefik-config`,
                 await tokenManager.getAuthHeader()
             );
 
             if (resp.status !== 200) {
                 logger.error(
-                    `Failed to fetch traefik config: ${resp.status} ${resp.statusText}`
+                    `Failed to fetch traefik config: ${resp.status} ${resp.statusText}`,
+                    { responseData: resp.data }
                 );
                 return null;
             }
 
-            const traefikConfig = resp.data;
+            const traefikConfig = resp.data.data;
             const domains = new Set<string>();
 
             if (traefikConfig?.http?.routers) {
@@ -190,9 +191,29 @@ export class TraefikConfigManager {
                     }
                 }
             }
+
+            logger.debug(
+                `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
+            );
+
             return { domains, traefikConfig };
         } catch (err) {
-            logger.error("Failed to fetch traefik config:", err);
+            // Extract useful information from axios error without circular references
+            if (err && typeof err === 'object' && 'response' in err) {
+                const axiosError = err as any;
+                logger.error("Failed to fetch traefik config:", {
+                    status: axiosError.response?.status,
+                    statusText: axiosError.response?.statusText,
+                    data: axiosError.response?.data,
+                    message: axiosError.message,
+                    url: axiosError.config?.url
+                });
+            } else {
+                logger.error("Failed to fetch traefik config:", {
+                    message: err instanceof Error ? err.message : String(err),
+                    stack: err instanceof Error ? err.stack : undefined
+                });
+            }
             return null;
         }
     }
@@ -257,7 +278,7 @@ export class TraefikConfigManager {
 
         try {
             const response = await axios.get(
-                `${config.getRawConfig().hybrid?.endpoint}/certificates/domains`,
+                `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/certificates/domains`,
                 {
                     params: {
                         domains: domainArray
@@ -265,9 +286,39 @@ export class TraefikConfigManager {
                     headers: (await tokenManager.getAuthHeader()).headers
                 }
             );
-            return response.data;
+
+            if (response.status !== 200) {
+                logger.error(
+                    `Failed to fetch certificates for domains: ${response.status} ${response.statusText}`,
+                    { responseData: response.data, domains: domainArray }
+                );
+                return [];
+            }
+
+            logger.debug(
+                `Successfully retrieved ${response.data.data?.length || 0} certificates for ${domainArray.length} domains`
+            );
+
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching resource by domain:", error);
+            // Extract useful information from axios error without circular references
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                logger.error("Error fetching certificates for domains:", {
+                    status: axiosError.response?.status,
+                    statusText: axiosError.response?.statusText,
+                    data: axiosError.response?.data,
+                    message: axiosError.message,
+                    url: axiosError.config?.url,
+                    domains: domainArray
+                });
+            } else {
+                logger.error("Error fetching certificates for domains:", {
+                    message: error instanceof Error ? error.message : String(error),
+                    stack: error instanceof Error ? error.stack : undefined,
+                    domains: domainArray
+                });
+            }
             return [];
         }
     }

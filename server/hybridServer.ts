@@ -80,7 +80,7 @@ export async function createHybridClientServer() {
     });
 
     client.on("message", (message) => {
-        logger.info("Received message:", message.type, message.data);
+        logger.info(`Received message: ${message.type} ${JSON.stringify(message.data)}`);
     });
 
     // Connect to the server
