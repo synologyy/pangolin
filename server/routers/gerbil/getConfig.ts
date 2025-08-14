@@ -123,7 +123,7 @@ export async function getConfig(
     }
 }
 
-async function generateGerbilConfig(exitNode: ExitNode) {
+export async function generateGerbilConfig(exitNode: ExitNode) {
     const sitesRes = await db
         .select()
         .from(sites)
