@@ -54,10 +54,6 @@ internalRouter.use("/gerbil", gerbilRouter);
 if (config.isHybridMode()) {
     // Use proxy router to forward requests to remote cloud server
     // Proxy endpoints for each gerbil route
-    gerbilRouter.post("/get-config", (req, res, next) =>
-        proxyToRemote(req, res, next, "gerbil/get-config")
-    );
-
     gerbilRouter.post("/receive-bandwidth", (req, res, next) =>
         proxyToRemote(req, res, next, "gerbil/receive-bandwidth")
     );
@@ -69,6 +65,9 @@ if (config.isHybridMode()) {
     gerbilRouter.post("/get-all-relays", (req, res, next) =>
         proxyToRemote(req, res, next, "gerbil/get-all-relays")
     );
+
+    // GET CONFIG IS HANDLED IN THE ORIGINAL HANDLER
+    // SO IT CAN REGISTER THE LOCAL EXIT NODE
 } else {
     // Use local gerbil endpoints
     gerbilRouter.post("/get-config", gerbil.getConfig);

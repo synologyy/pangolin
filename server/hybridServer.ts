@@ -8,6 +8,7 @@ import { addPeer, deletePeer } from "./routers/gerbil/peers";
 import { db, exitNodes } from "./db";
 import { TraefikConfigManager } from "./lib/remoteTraefikConfig";
 import { tokenManager } from "./lib/tokenManager";
+import { APP_VERSION } from "./lib/consts";
 
 export async function createHybridClientServer() {
     const monitor = new TraefikConfigManager();
@@ -67,6 +68,9 @@ export async function createHybridClientServer() {
     // Listen to connection events
     client.on("connect", () => {
         console.log("Connected to WebSocket server");
+        client.sendMessage("remoteExitNode/register", {
+            remoteExitNodeVersion: APP_VERSION
+        });
     });
 
     client.on("disconnect", () => {
