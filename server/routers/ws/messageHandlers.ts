@@ -10,7 +10,7 @@ import {
     handleOlmRegisterMessage,
     handleOlmRelayMessage,
     handleOlmPingMessage,
-    startOfflineChecker
+    startOlmOfflineChecker
 } from "../olm";
 import { MessageHandler } from "./ws";
 
@@ -26,4 +26,4 @@ export const messageHandlers: Record<string, MessageHandler> = {
     "newt/ping/request": handleNewtPingRequestMessage,
 };
 
-startOfflineChecker(); // this is to handle the offline check for olms
+startOlmOfflineChecker(); // this is to handle the offline check for olms

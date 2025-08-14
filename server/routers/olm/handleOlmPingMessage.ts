@@ -13,7 +13,7 @@ const OFFLINE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
  * Starts the background interval that checks for clients that haven't pinged recently
  * and marks them as offline
  */
-export const startOfflineChecker = (): void => {
+export const startOlmOfflineChecker = (): void => {
     if (offlineCheckerInterval) {
         return; // Already running
     }
@@ -42,7 +42,7 @@ export const startOfflineChecker = (): void => {
 /**
  * Stops the background interval that checks for offline clients
  */
-export const stopOfflineChecker = (): void => {
+export const stopOlmOfflineChecker = (): void => {
     if (offlineCheckerInterval) {
         clearInterval(offlineCheckerInterval);
         offlineCheckerInterval = null;
