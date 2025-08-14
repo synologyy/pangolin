@@ -43,7 +43,7 @@ export const configSchema = z
         server: z.object({
             integration_port: portSchema
                 .optional()
-                .default(3003)
+                .default(3004)
                 .transform(stoi)
                 .pipe(portSchema.optional()),
             external_port: portSchema
