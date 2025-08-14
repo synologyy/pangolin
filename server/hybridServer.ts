@@ -89,5 +89,9 @@ export async function createHybridClientServer() {
         console.error("Failed to connect:", error);
     }
 
-    client.sendMessageInterval("heartbeat", { timestamp: Date.now() }, 10000);
+    client.sendMessageInterval(
+        "remoteExitNode/ping",
+        { timestamp: Date.now() / 1000 },
+        60000
+    ); // send every minute
 }
