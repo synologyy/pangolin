@@ -53,3 +53,10 @@ export function selectBestExitNode(
 
     return pingResults[0];
 }
+
+export async function checkExitNodeOrg(
+    exitNodeId: number,
+    orgId: string
+) {
+    return false;
+}

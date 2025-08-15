@@ -19,6 +19,7 @@ import { fromError } from "zod-validation-error";
 import { validateNewtSessionToken } from "@server/auth/sessions/newt";
 import { validateOlmSessionToken } from "@server/auth/sessions/olm";
 import axios from "axios";
+import { checkExitNodeOrg } from "@server/lib/exitNodes";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({
@@ -157,7 +158,13 @@ export async function updateAndGenerateEndpointDestinations(
             .where(eq(clients.clientId, olm.clientId))
             .returning();
 
-
+        if (await checkExitNodeOrg(exitNode.exitNodeId, client.orgId)) {
+            // not allowed
+            logger.warn(
+                `Exit node ${exitNode.exitNodeId} is not allowed for org ${client.orgId}`
+            );
+            throw new Error("Exit node not allowed");
+        }
 
         // Get sites that are on this specific exit node and connected to this client
         const sitesOnExitNode = await db
@@ -238,6 +245,20 @@ export async function updateAndGenerateEndpointDestinations(
         if (!newt || !newt.siteId) {
             logger.warn(`Newt not found: ${newtId}`);
             throw new Error("Newt not found");
+        }
+
+        const [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, newt.siteId))
+            .limit(1);
+
+        if (await checkExitNodeOrg(exitNode.exitNodeId, site.orgId)) {
+            // not allowed
+            logger.warn(
+                `Exit node ${exitNode.exitNodeId} is not allowed for org ${site.orgId}`
+            );
+            throw new Error("Exit node not allowed");
         }
 
         currentSiteId = newt.siteId;

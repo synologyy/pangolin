@@ -6,6 +6,7 @@ import logger from "@server/logger";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
+import { checkExitNodeOrg } from "@server/lib/exitNodes";
 
 // Track sites that are already offline to avoid unnecessary queries
 const offlineSites = new Set<string>();
@@ -48,7 +49,10 @@ export const receiveBandwidth = async (
     }
 };
 
-export async function updateSiteBandwidth(bandwidthData: PeerBandwidth[]) {
+export async function updateSiteBandwidth(
+    bandwidthData: PeerBandwidth[],
+    exitNodeId?: number
+) {
     const currentTime = new Date();
     const oneMinuteAgo = new Date(currentTime.getTime() - 60000); // 1 minute ago
 
@@ -69,7 +73,7 @@ export async function updateSiteBandwidth(bandwidthData: PeerBandwidth[]) {
             // Update all active sites with bandwidth data and get the site data in one operation
             const updatedSites = [];
             for (const peer of activePeers) {
-                const updatedSite = await trx
+                const [updatedSite] = await trx
                     .update(sites)
                     .set({
                         megabytesOut: sql`${sites.megabytesOut} + ${peer.bytesIn}`,
@@ -85,8 +89,19 @@ export async function updateSiteBandwidth(bandwidthData: PeerBandwidth[]) {
                         lastBandwidthUpdate: sites.lastBandwidthUpdate
                     });
 
-                if (updatedSite.length > 0) {
-                    updatedSites.push({ ...updatedSite[0], peer });
+                if (exitNodeId) {
+                    if (await checkExitNodeOrg(exitNodeId, updatedSite.orgId)) {
+                        // not allowed
+                        logger.warn(
+                            `Exit node ${exitNodeId} is not allowed for org ${updatedSite.orgId}`
+                        );
+                        // THIS SHOULD TRIGGER THE TRANSACTION TO FAIL?
+                        throw new Error("Exit node not allowed");
+                    }
+                }
+
+                if (updatedSite) {
+                    updatedSites.push({ ...updatedSite, peer });
                 }
             }
 
@@ -138,12 +153,29 @@ export async function updateSiteBandwidth(bandwidthData: PeerBandwidth[]) {
                 // Always update lastBandwidthUpdate to show this instance is receiving reports
                 // Only update online status if it changed
                 if (site.online !== newOnlineStatus) {
-                    await trx
+                    const [updatedSite] = await trx
                         .update(sites)
                         .set({
                             online: newOnlineStatus
                         })
-                        .where(eq(sites.siteId, site.siteId));
+                        .where(eq(sites.siteId, site.siteId))
+                        .returning();
+
+                    if (exitNodeId) {
+                        if (
+                            await checkExitNodeOrg(
+                                exitNodeId,
+                                updatedSite.orgId
+                            )
+                        ) {
+                            // not allowed
+                            logger.warn(
+                                `Exit node ${exitNodeId} is not allowed for org ${updatedSite.orgId}`
+                            );
+                            // THIS SHOULD TRIGGER THE TRANSACTION TO FAIL?
+                            throw new Error("Exit node not allowed");
+                        }
+                    }
 
                     // If site went offline, add it to our tracking set
                     if (!newOnlineStatus && site.pubKey) {
