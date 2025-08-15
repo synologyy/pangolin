@@ -213,9 +213,34 @@ export class TraefikConfigManager {
                 }
             }
 
-            logger.debug(
-                `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
-            );
+            const badgerMiddlewareName = "badger";
+            traefikConfig.http.middlewares[badgerMiddlewareName] = {
+                plugin: {
+                    [badgerMiddlewareName]: {
+                        apiBaseUrl: new URL(
+                            "/api/v0",
+                            `http://${
+                                config.getRawConfig().server.internal_hostname
+                            }:${config.getRawConfig().server.internal_port}`
+                        ).href,
+                        userSessionCookieName:
+                            config.getRawConfig().server.session_cookie_name,
+
+                        // deprecated
+                        accessTokenQueryParam:
+                            config.getRawConfig().server
+                                .resource_access_token_param,
+
+                        resourceSessionRequestParam:
+                            config.getRawConfig().server
+                                .resource_session_request_param
+                    }
+                }
+            };
+
+            // logger.debug(
+            //     `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
+            // );
 
             return { domains, traefikConfig };
         } catch (error) {
@@ -313,9 +338,9 @@ export class TraefikConfigManager {
                 return [];
             }
 
-            logger.debug(
-                `Successfully retrieved ${response.data.data?.length || 0} certificates for ${domainArray.length} domains`
-            );
+            // logger.debug(
+            //     `Successfully retrieved ${response.data.data?.length || 0} certificates for ${domainArray.length} domains`
+            // );
 
             return response.data.data;
         } catch (error) {

@@ -8,6 +8,8 @@ import { orgs, resources, sites, Target, targets } from "@server/db";
 import { build } from "@server/build";
 
 let currentExitNodeId: number;
+const redirectHttpsMiddlewareName = "redirect-to-https";
+const badgerMiddlewareName = "badger";
 
 export async function traefikConfigProvider(
     _: Request,
@@ -43,7 +45,32 @@ export async function traefikConfigProvider(
             }
         }
 
-        const traefikConfig = await getTraefikConfig(currentExitNodeId);
+        let traefikConfig = await getTraefikConfig(currentExitNodeId);
+
+        traefikConfig.http.middlewares[badgerMiddlewareName] = {
+            plugin: {
+                [badgerMiddlewareName]: {
+                    apiBaseUrl: new URL(
+                        "/api/v0",
+                        `http://${
+                            config.getRawConfig().server.internal_hostname
+                        }:${config.getRawConfig().server.internal_port}`
+                    ).href,
+                    userSessionCookieName:
+                        config.getRawConfig().server.session_cookie_name,
+
+                    // deprecated
+                    accessTokenQueryParam:
+                        config.getRawConfig().server
+                            .resource_access_token_param,
+
+                    resourceSessionRequestParam:
+                        config.getRawConfig().server
+                            .resource_session_request_param
+                }
+            }
+        };
+
         return res.status(HttpCode.OK).json(traefikConfig);
     } catch (e) {
         logger.error(`Failed to build Traefik config: ${e}`);
@@ -132,37 +159,9 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
         return {};
     }
 
-    const badgerMiddlewareName = "badger";
-    const redirectHttpsMiddlewareName = "redirect-to-https";
-
     const config_output: any = {
         http: {
             middlewares: {
-                [badgerMiddlewareName]: {
-                    plugin: {
-                        [badgerMiddlewareName]: {
-                            apiBaseUrl: new URL(
-                                "/api/v1",
-                                `http://${
-                                    config.getRawConfig().server
-                                        .internal_hostname
-                                }:${config.getRawConfig().server.internal_port}`
-                            ).href,
-                            userSessionCookieName:
-                                config.getRawConfig().server
-                                    .session_cookie_name,
-
-                            // deprecated
-                            accessTokenQueryParam:
-                                config.getRawConfig().server
-                                    .resource_access_token_param,
-
-                            resourceSessionRequestParam:
-                                config.getRawConfig().server
-                                    .resource_session_request_param
-                        }
-                    }
-                },
                 [redirectHttpsMiddlewareName]: {
                     redirectScheme: {
                         scheme: "https"
