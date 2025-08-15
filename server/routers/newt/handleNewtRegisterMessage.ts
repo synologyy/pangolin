@@ -9,7 +9,7 @@ import {
     findNextAvailableCidr,
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
-import { verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
+import { selectBestExitNode, verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -266,14 +266,3 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         excludeSender: false // Include sender in broadcast
     };
 };
-
-function selectBestExitNode(
-    pingResults: ExitNodePingResult[]
-): ExitNodePingResult | null {
-    if (!pingResults || pingResults.length === 0) {
-        logger.warn("No ping results provided");
-        return null;
-    }
-
-    return pingResults[0];
-}

@@ -1,5 +1,6 @@
 import { db, exitNodes } from "@server/db";
 import logger from "@server/logger";
+import { ExitNodePingResult } from "@server/routers/newt";
 import { eq, and, or } from "drizzle-orm";
 
 export async function verifyExitNodeOrgAccess(
@@ -40,4 +41,15 @@ export async function listExitNodes(orgId: string, filterOnline = false) {
     }
 
     return allExitNodes;
+}
+
+export function selectBestExitNode(
+    pingResults: ExitNodePingResult[]
+): ExitNodePingResult | null {
+    if (!pingResults || pingResults.length === 0) {
+        logger.warn("No ping results provided");
+        return null;
+    }
+
+    return pingResults[0];
 }
