@@ -1,25 +1,39 @@
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import ResourcesTable, { ResourceRow } from "./ResourcesTable";
+import ResourcesTable, {
+    ResourceRow,
+    InternalResourceRow
+} from "./ResourcesTable";
 import { AxiosResponse } from "axios";
 import { ListResourcesResponse } from "@server/routers/resource";
+import { ListAllSiteResourcesByOrgResponse } from "@server/routers/siteResource";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
-import ResourcesSplashCard from "./ResourcesSplashCard";
 import { getTranslations } from "next-intl/server";
+import { pullEnv } from "@app/lib/pullEnv";
 
 type ResourcesPageProps = {
     params: Promise<{ orgId: string }>;
+    searchParams: Promise<{ view?: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function ResourcesPage(props: ResourcesPageProps) {
     const params = await props.params;
+    const searchParams = await props.searchParams;
     const t = await getTranslations();
+
+    const env = pullEnv();
+
+    // Default to 'proxy' view, or use the query param if provided
+    let defaultView: "proxy" | "internal" = "proxy";
+    if (env.flags.enableClients) {
+        defaultView = searchParams.view === "internal" ? "internal" : "proxy";
+    }
 
     let resources: ListResourcesResponse["resources"] = [];
     try {
@@ -28,6 +42,14 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
             await authCookieHeader()
         );
         resources = res.data.data.resources;
+    } catch (e) {}
+
+    let siteResources: ListAllSiteResourcesByOrgResponse["siteResources"] = [];
+    try {
+        const res = await internal.get<
+            AxiosResponse<ListAllSiteResourcesByOrgResponse>
+        >(`/org/${params.orgId}/site-resources`, await authCookieHeader());
+        siteResources = res.data.data.siteResources;
     } catch (e) {}
 
     let org = null;
@@ -54,8 +76,6 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
             name: resource.name,
             orgId: params.orgId,
             domain: `${resource.ssl ? "https://" : "http://"}${resource.fullDomain}`,
-            site: resource.siteName || t('none'),
-            siteId: resource.siteId || t('unknown'),
             protocol: resource.protocol,
             proxyPort: resource.proxyPort,
             http: resource.http,
@@ -72,17 +92,39 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
         };
     });
 
+    const internalResourceRows: InternalResourceRow[] = siteResources.map(
+        (siteResource) => {
+            return {
+                id: siteResource.siteResourceId,
+                name: siteResource.name,
+                orgId: params.orgId,
+                siteName: siteResource.siteName,
+                protocol: siteResource.protocol,
+                proxyPort: siteResource.proxyPort,
+                siteId: siteResource.siteId,
+                destinationIp: siteResource.destinationIp,
+                destinationPort: siteResource.destinationPort,
+                siteNiceId: siteResource.siteNiceId
+            };
+        }
+    );
+
     return (
         <>
-            {/* <ResourcesSplashCard /> */}
-
             <SettingsSectionTitle
-                title={t('resourceTitle')}
-                description={t('resourceDescription')}
+                title={t("resourceTitle")}
+                description={t("resourceDescription")}
             />
 
             <OrgProvider org={org}>
-                <ResourcesTable resources={resourceRows} orgId={params.orgId} />
+                <ResourcesTable
+                    resources={resourceRows}
+                    internalResources={internalResourceRows}
+                    orgId={params.orgId}
+                    defaultView={
+                        env.flags.enableClients ? defaultView : "proxy"
+                    }
+                />
             </OrgProvider>
         </>
     );

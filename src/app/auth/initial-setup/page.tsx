@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -112,12 +113,11 @@ export default function InitialSetupPage() {
                                 <FormItem>
                                     <FormLabel>{t("setupToken")}</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            {...field}
-                                            placeholder={t("setupTokenPlaceholder")}
-                                            autoComplete="off"
-                                        />
+                                        <Input {...field} autoComplete="off" />
                                     </FormControl>
+                                    <FormDescription>
+                                        {t("setupTokenDescription")}
+                                    </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}

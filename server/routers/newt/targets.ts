@@ -1,7 +1,8 @@
 import { Target } from "@server/db";
 import { sendToClient } from "../ws";
+import logger from "@server/logger";
 
-export function addTargets(
+export async function addTargets(
     newtId: string,
     targets: Target[],
     protocol: string,
@@ -20,22 +21,9 @@ export function addTargets(
             targets: payloadTargets
         }
     });
-
-    const payloadTargetsResources = targets.map((target) => {
-        return `${port ? port + ":" : ""}${
-            target.ip
-        }:${target.port}`;
-    });
-
-    sendToClient(newtId, {
-        type: `newt/wg/${protocol}/add`,
-        data: {
-            targets: [payloadTargetsResources[0]] // We can only use one target for WireGuard right now
-        }
-    });
 }
 
-export function removeTargets(
+export async function removeTargets(
     newtId: string,
     targets: Target[],
     protocol: string,
@@ -48,23 +36,10 @@ export function removeTargets(
         }:${target.port}`;
     });
 
-    sendToClient(newtId, {
+    await sendToClient(newtId, {
         type: `newt/${protocol}/remove`,
         data: {
             targets: payloadTargets
-        }
-    });
-
-    const payloadTargetsResources = targets.map((target) => {
-        return `${port ? port + ":" : ""}${
-            target.ip
-        }:${target.port}`;
-    });
-
-    sendToClient(newtId, {
-        type: `newt/wg/${protocol}/remove`,
-        data: {
-            targets: [payloadTargetsResources[0]] // We can only use one target for WireGuard right now
         }
     });
 }

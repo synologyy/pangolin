@@ -1,10 +1,20 @@
 import { Request, Response } from "express";
 import { db, exitNodes } from "@server/db";
-import { and, eq, inArray, or, isNull } from "drizzle-orm";
+import { and, eq, inArray, or, isNull, ne } from "drizzle-orm";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
+
+// Extended Target interface that includes site information
+interface TargetWithSite extends Target {
+    site: {
+        siteId: number;
+        type: string;
+        subnet: string | null;
+        exitNodeId: number | null;
+    };
+}
 
 let currentExitNodeId: number;
 
@@ -44,8 +54,9 @@ export async function traefikConfigProvider(
                 }
             }
 
-            // Get the site(s) on this exit node
-            const resourcesWithRelations = await tx
+            // Get resources with their targets and sites in a single optimized query
+            // Start from sites on this exit node, then join to targets and resources
+            const resourcesWithTargetsAndSites = await tx
                 .select({
                     // Resource fields
                     resourceId: resources.resourceId,
@@ -56,67 +67,82 @@ export async function traefikConfigProvider(
                     protocol: resources.protocol,
                     subdomain: resources.subdomain,
                     domainId: resources.domainId,
-                    // Site fields
-                    site: {
-                        siteId: sites.siteId,
-                        type: sites.type,
-                        subnet: sites.subnet,
-                        exitNodeId: sites.exitNodeId
-                    },
                     enabled: resources.enabled,
                     stickySession: resources.stickySession,
                     tlsServerName: resources.tlsServerName,
                     setHostHeader: resources.setHostHeader,
-                    enableProxy: resources.enableProxy
+                    enableProxy: resources.enableProxy,
+                    // Target fields
+                    targetId: targets.targetId,
+                    targetEnabled: targets.enabled,
+                    ip: targets.ip,
+                    method: targets.method,
+                    port: targets.port,
+                    internalPort: targets.internalPort,
+                    // Site fields
+                    siteId: sites.siteId,
+                    siteType: sites.type,
+                    subnet: sites.subnet,
+                    exitNodeId: sites.exitNodeId
                 })
-                .from(resources)
-                .innerJoin(sites, eq(sites.siteId, resources.siteId))
+                .from(sites)
+                .innerJoin(targets, eq(targets.siteId, sites.siteId))
+                .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
                 .where(
-                    or(
-                        eq(sites.exitNodeId, currentExitNodeId),
-                        isNull(sites.exitNodeId)
+                    and(
+                        eq(targets.enabled, true),
+                        eq(resources.enabled, true),
+                        or(
+                            eq(sites.exitNodeId, currentExitNodeId),
+                            isNull(sites.exitNodeId)
+                        )
                     )
                 );
 
-            // Get all resource IDs from the first query
-            const resourceIds = resourcesWithRelations.map((r) => r.resourceId);
+            // Group by resource and include targets with their unique site data
+            const resourcesMap = new Map();
 
-            // Second query to get all enabled targets for these resources
-            const allTargets =
-                resourceIds.length > 0
-                    ? await tx
-                          .select({
-                              resourceId: targets.resourceId,
-                              targetId: targets.targetId,
-                              ip: targets.ip,
-                              method: targets.method,
-                              port: targets.port,
-                              internalPort: targets.internalPort,
-                              enabled: targets.enabled
-                          })
-                          .from(targets)
-                          .where(
-                              and(
-                                  inArray(targets.resourceId, resourceIds),
-                                  eq(targets.enabled, true)
-                              )
-                          )
-                    : [];
+            resourcesWithTargetsAndSites.forEach((row) => {
+                const resourceId = row.resourceId;
 
-            // Create a map for fast target lookup by resourceId
-            const targetsMap = allTargets.reduce((map, target) => {
-                if (!map.has(target.resourceId)) {
-                    map.set(target.resourceId, []);
+                if (!resourcesMap.has(resourceId)) {
+                    resourcesMap.set(resourceId, {
+                        resourceId: row.resourceId,
+                        fullDomain: row.fullDomain,
+                        ssl: row.ssl,
+                        http: row.http,
+                        proxyPort: row.proxyPort,
+                        protocol: row.protocol,
+                        subdomain: row.subdomain,
+                        domainId: row.domainId,
+                        enabled: row.enabled,
+                        stickySession: row.stickySession,
+                        tlsServerName: row.tlsServerName,
+                        setHostHeader: row.setHostHeader,
+                        enableProxy: row.enableProxy,
+                        targets: []
+                    });
                 }
-                map.get(target.resourceId).push(target);
-                return map;
-            }, new Map());
 
-            // Combine the data
-            return resourcesWithRelations.map((resource) => ({
-                ...resource,
-                targets: targetsMap.get(resource.resourceId) || []
-            }));
+                // Add target with its associated site data
+                resourcesMap.get(resourceId).targets.push({
+                    resourceId: row.resourceId,
+                    targetId: row.targetId,
+                    ip: row.ip,
+                    method: row.method,
+                    port: row.port,
+                    internalPort: row.internalPort,
+                    enabled: row.targetEnabled,
+                    site: {
+                        siteId: row.siteId,
+                        type: row.siteType,
+                        subnet: row.subnet,
+                        exitNodeId: row.exitNodeId
+                    }
+                });
+            });
+
+            return Array.from(resourcesMap.values());
         });
 
         if (!allResources.length) {
@@ -167,8 +193,7 @@ export async function traefikConfigProvider(
         };
 
         for (const resource of allResources) {
-            const targets = resource.targets as Target[];
-            const site = resource.site;
+            const targets = resource.targets as TargetWithSite[];
 
             const routerName = `${resource.resourceId}-router`;
             const serviceName = `${resource.resourceId}-service`;
@@ -272,13 +297,13 @@ export async function traefikConfigProvider(
                 config_output.http.services![serviceName] = {
                     loadBalancer: {
                         servers: targets
-                            .filter((target: Target) => {
+                            .filter((target: TargetWithSite) => {
                                 if (!target.enabled) {
                                     return false;
                                 }
                                 if (
-                                    site.type === "local" ||
-                                    site.type === "wireguard"
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
                                 ) {
                                     if (
                                         !target.ip ||
@@ -287,27 +312,27 @@ export async function traefikConfigProvider(
                                     ) {
                                         return false;
                                     }
-                                } else if (site.type === "newt") {
+                                } else if (target.site.type === "newt") {
                                     if (
                                         !target.internalPort ||
                                         !target.method ||
-                                        !site.subnet
+                                        !target.site.subnet
                                     ) {
                                         return false;
                                     }
                                 }
                                 return true;
                             })
-                            .map((target: Target) => {
+                            .map((target: TargetWithSite) => {
                                 if (
-                                    site.type === "local" ||
-                                    site.type === "wireguard"
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
                                 ) {
                                     return {
                                         url: `${target.method}://${target.ip}:${target.port}`
                                     };
-                                } else if (site.type === "newt") {
-                                    const ip = site.subnet!.split("/")[0];
+                                } else if (target.site.type === "newt") {
+                                    const ip = target.site.subnet!.split("/")[0];
                                     return {
                                         url: `${target.method}://${ip}:${target.internalPort}`
                                     };
@@ -393,34 +418,34 @@ export async function traefikConfigProvider(
                 config_output[protocol].services[serviceName] = {
                     loadBalancer: {
                         servers: targets
-                            .filter((target: Target) => {
+                            .filter((target: TargetWithSite) => {
                                 if (!target.enabled) {
                                     return false;
                                 }
                                 if (
-                                    site.type === "local" ||
-                                    site.type === "wireguard"
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
                                 ) {
                                     if (!target.ip || !target.port) {
                                         return false;
                                     }
-                                } else if (site.type === "newt") {
-                                    if (!target.internalPort || !site.subnet) {
+                                } else if (target.site.type === "newt") {
+                                    if (!target.internalPort || !target.site.subnet) {
                                         return false;
                                     }
                                 }
                                 return true;
                             })
-                            .map((target: Target) => {
+                            .map((target: TargetWithSite) => {
                                 if (
-                                    site.type === "local" ||
-                                    site.type === "wireguard"
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
                                 ) {
                                     return {
                                         address: `${target.ip}:${target.port}`
                                     };
-                                } else if (site.type === "newt") {
-                                    const ip = site.subnet!.split("/")[0];
+                                } else if (target.site.type === "newt") {
+                                    const ip = target.site.subnet!.split("/")[0];
                                     return {
                                         address: `${ip}:${target.internalPort}`
                                     };

@@ -8,29 +8,21 @@ export async function pickPort(siteId: number): Promise<{
     internalPort: number;
     targetIps: string[];
 }> {
-    const resourcesRes = await db
-        .select()
-        .from(resources)
-        .where(eq(resources.siteId, siteId));
-
-    // TODO: is this all inefficient?
     // Fetch targets for all resources of this site
     const targetIps: string[] = [];
     const targetInternalPorts: number[] = [];
-    await Promise.all(
-        resourcesRes.map(async (resource) => {
-            const targetsRes = await db
-                .select()
-                .from(targets)
-                .where(eq(targets.resourceId, resource.resourceId));
-            targetsRes.forEach((target) => {
-                targetIps.push(`${target.ip}/32`);
-                if (target.internalPort) {
-                    targetInternalPorts.push(target.internalPort);
-                }
-            });
-        })
-    );
+
+    const targetsRes = await db
+        .select()
+        .from(targets)
+        .where(eq(targets.siteId, siteId));
+
+    targetsRes.forEach((target) => {
+        targetIps.push(`${target.ip}/32`);
+        if (target.internalPort) {
+            targetInternalPorts.push(target.internalPort);
+        }
+    });
 
     let internalPort!: number;
     // pick a port random port from 40000 to 65535 that is not in use
@@ -43,28 +35,20 @@ export async function pickPort(siteId: number): Promise<{
             break;
         }
     }
+
     currentBannedPorts.push(internalPort);
 
     return { internalPort, targetIps };
 }
 
 export async function getAllowedIps(siteId: number) {
-    // TODO: is this all inefficient?
-
-    const resourcesRes = await db
-        .select()
-        .from(resources)
-        .where(eq(resources.siteId, siteId));
-
     // Fetch targets for all resources of this site
-    const targetIps = await Promise.all(
-        resourcesRes.map(async (resource) => {
-            const targetsRes = await db
-                .select()
-                .from(targets)
-                .where(eq(targets.resourceId, resource.resourceId));
-            return targetsRes.map((target) => `${target.ip}/32`);
-        })
-    );
+    const targetsRes = await db
+        .select()
+        .from(targets)
+        .where(eq(targets.siteId, siteId));
+
+    const targetIps = targetsRes.map((target) => `${target.ip}/32`);
+
     return targetIps.flat();
 }

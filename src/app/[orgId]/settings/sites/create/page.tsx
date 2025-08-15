@@ -877,7 +877,7 @@ WantedBy=default.target`
                                                 <p className="font-bold mb-3">
                                                     {t("siteConfiguration")}
                                                 </p>
-                                                <div className="flex items-center space-x-2 mb-4">
+                                                <div className="flex items-center space-x-2 mb-2">
                                                     <CheckboxWithLabel
                                                         id="acceptClients"
                                                          aria-describedby="acceptClients-desc"

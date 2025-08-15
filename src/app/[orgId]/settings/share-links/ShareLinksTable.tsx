@@ -42,7 +42,6 @@ export type ShareLinkRow = {
     title: string | null;
     createdAt: number;
     expiresAt: number | null;
-    siteName: string | null;
 };
 
 type ShareLinksTableProps = {
@@ -104,8 +103,7 @@ export default function ShareLinksTable({
                 return (
                     <Link href={`/${orgId}/settings/resources/${r.resourceId}`}>
                         <Button variant="outline" size="sm">
-                            {r.resourceName}{" "}
-                            {r.siteName ? `(${r.siteName})` : ""}
+                            {r.resourceName}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Link>

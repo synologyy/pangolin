@@ -15,6 +15,7 @@ import AccessToken from "./AccessToken";
 import { pullEnv } from "@app/lib/pullEnv";
 import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListIdpsResponse } from "@server/routers/idp";
+import AutoLoginHandler from "./AutoLoginHandler";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +31,13 @@ export default async function ResourceAuthPage(props: {
 
     const env = pullEnv();
 
+    const authHeader = await authCookieHeader();
+
     let authInfo: GetResourceAuthInfoResponse | undefined;
     try {
         const res = await internal.get<
             AxiosResponse<GetResourceAuthInfoResponse>
-        >(`/resource/${params.resourceId}/auth`, await authCookieHeader());
+        >(`/resource/${params.resourceId}/auth`, authHeader);
 
         if (res && res.status === 200) {
             authInfo = res.data.data;
@@ -62,10 +65,9 @@ export default async function ResourceAuthPage(props: {
             const redirectPort = new URL(searchParams.redirect).port;
             const serverResourceHostWithPort = `${serverResourceHost}:${redirectPort}`;
 
-
             if (serverResourceHost === redirectHost) {
                 redirectUrl = searchParams.redirect;
-            } else if ( serverResourceHostWithPort === redirectHost ) {
+            } else if (serverResourceHostWithPort === redirectHost) {
                 redirectUrl = searchParams.redirect;
             }
         } catch (e) {}
@@ -143,6 +145,19 @@ export default async function ResourceAuthPage(props: {
         idpId: idp.idpId,
         name: idp.name
     })) as LoginFormIDP[];
+
+    if (authInfo.skipToIdpId && authInfo.skipToIdpId !== null) {
+        const idp = loginIdps.find((idp) => idp.idpId === authInfo.skipToIdpId);
+        if (idp) {
+            return (
+                <AutoLoginHandler
+                    resourceId={authInfo.resourceId}
+                    skipToIdpId={authInfo.skipToIdpId}
+                    redirectUrl={redirectUrl}
+                />
+            );
+        }
+    }
 
     return (
         <>

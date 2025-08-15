@@ -32,4 +32,4 @@ export default async function migration() {
         console.log("Unable to add setupTokens table:", e);
         throw e;
     }
-} 
+}

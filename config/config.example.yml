@@ -2,47 +2,27 @@
 # https://docs.digpangolin.com/self-host/advanced/config-file
 
 app:
-    dashboard_url: "http://localhost:3002"
-    log_level: "info"
-    save_logs: false
+  dashboard_url: http://localhost:3002
+  log_level: debug
 
 domains:
-    domain1:
-        base_domain: "example.com"
-        cert_resolver: "letsencrypt"
+  domain1:
+    base_domain: example.com
 
 server:
-    external_port: 3000
-    internal_port: 3001
-    next_port: 3002
-    internal_hostname: "pangolin"
-    session_cookie_name: "p_session_token"
-    resource_access_token_param: "p_token"
-    secret: "your_secret_key_here"
-    resource_access_token_headers:
-        id: "P-Access-Token-Id"
-        token: "P-Access-Token"
-    resource_session_request_param: "p_session_request"
-
-traefik:
-    http_entrypoint: "web"
-    https_entrypoint: "websecure"
+  secret: my_secret_key
 
 gerbil:
-    start_port: 51820
-    base_endpoint: "localhost"
-    block_size: 24
-    site_block_size: 30
-    subnet_group: 100.89.137.0/20
-    use_subdomain: true
+  base_endpoint: example.com
 
-rate_limits:
-    global:
-        window_minutes: 1
-        max_requests: 500
+orgs:
+  block_size: 24
+  subnet_group: 100.90.137.0/20
 
 flags:
-    require_email_verification: false
-    disable_signup_without_invite: true
-    disable_user_create_org: true
-    allow_raw_resources: true
+  require_email_verification: false
+  disable_signup_without_invite: true
+  disable_user_create_org: true
+  allow_raw_resources: true
+  enable_integration_api: true
+  enable_clients: true
