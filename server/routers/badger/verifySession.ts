@@ -140,7 +140,7 @@ export async function verifyResourceSession(
             const result = await getResourceByDomain(cleanHost);
 
             if (!result) {
-                logger.debug("Resource not found", cleanHost);
+                logger.debug(`Resource not found ${cleanHost}`);
                 return notAllowed(res);
             }
 
@@ -151,7 +151,7 @@ export async function verifyResourceSession(
         const { resource, pincode, password } = resourceData;
 
         if (!resource) {
-            logger.debug("Resource not found", cleanHost);
+            logger.debug(`Resource not found ${cleanHost}`);
             return notAllowed(res);
         }
 
@@ -191,7 +191,13 @@ export async function verifyResourceSession(
             return allowed(res);
         }
 
-        const redirectUrl = `${config.getRawConfig().app.dashboard_url}/auth/resource/${encodeURIComponent(
+        let endpoint: string;
+        if (config.isHybridMode()) {
+            endpoint = config.getRawConfig().hybrid?.redirect_endpoint || config.getRawConfig().hybrid?.endpoint || "";
+        } else {
+            endpoint = config.getRawConfig().app.dashboard_url;
+        }
+        const redirectUrl = `${endpoint}/auth/resource/${encodeURIComponent(
             resource.resourceId
         )}?redirect=${encodeURIComponent(originalRequestURL)}`;
 

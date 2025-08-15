@@ -17,6 +17,8 @@ import {
 import { and, eq } from "drizzle-orm";
 import axios from "axios";
 import config from "@server/lib/config";
+import logger from "@server/logger";
+import { tokenManager } from "@server/lib/tokenManager";
 
 export type ResourceWithAuth = {
     resource: Resource | null;
@@ -37,10 +39,21 @@ export async function getResourceByDomain(
 ): Promise<ResourceWithAuth | null> {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/resource/domain/${domain}`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/resource/domain/${domain}`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching resource by domain:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return null;
         }
     }
@@ -78,10 +91,21 @@ export async function getUserSessionWithUser(
 ): Promise<UserSessionWithUser | null> {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/session/${userSessionId}`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/session/${userSessionId}`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching user session:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return null;
         }
     }
@@ -108,10 +132,21 @@ export async function getUserSessionWithUser(
 export async function getUserOrgRole(userId: string, orgId: string) {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/user/${userId}/org/${orgId}/role`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/user/${userId}/org/${orgId}/role`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching user org role:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return null;
         }
     }
@@ -136,10 +171,21 @@ export async function getUserOrgRole(userId: string, orgId: string) {
 export async function getRoleResourceAccess(resourceId: number, roleId: number) {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/role/${roleId}/resource/${resourceId}/access`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/role/${roleId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching role resource access:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return null;
         }
     }
@@ -164,10 +210,21 @@ export async function getRoleResourceAccess(resourceId: number, roleId: number) 
 export async function getUserResourceAccess(userId: string, resourceId: number) {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/user/${userId}/resource/${resourceId}/access`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/user/${userId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching user resource access:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return null;
         }
     }
@@ -192,10 +249,21 @@ export async function getUserResourceAccess(userId: string, resourceId: number) 
 export async function getResourceRules(resourceId: number): Promise<ResourceRule[]> {
     if (config.isHybridMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/resource/${resourceId}/rules`);
-            return response.data;
+            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/resource/${resourceId}/rules`, await tokenManager.getAuthHeader());
+            return response.data.data;
         } catch (error) {
-            console.error("Error fetching resource rules:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
             return [];
         }
     }

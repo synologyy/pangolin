@@ -218,7 +218,7 @@ export class TraefikConfigManager {
                 plugin: {
                     [badgerMiddlewareName]: {
                         apiBaseUrl: new URL(
-                            "/api/v0",
+                            "/api/v1",
                             `http://${
                                 config.getRawConfig().server.internal_hostname
                             }:${config.getRawConfig().server.internal_port}`

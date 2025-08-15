@@ -87,7 +87,7 @@ badgerRouter.post("/verify-session", badger.verifyResourceSession);
 
 if (config.isHybridMode()) {
     badgerRouter.post("/exchange-session", (req, res, next) =>
-        proxyToRemote(req, res, next, "badger/exchange-session")
+        proxyToRemote(req, res, next, "hybrid/badger/exchange-session")
     );
 } else {
     badgerRouter.post("/exchange-session", badger.exchangeSession);

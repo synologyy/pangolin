@@ -32,7 +32,8 @@ export const configSchema = z
             .object({
                 id: z.string().optional(),
                 secret: z.string().optional(),
-                endpoint: z.string().optional()
+                endpoint: z.string().optional(),
+                redirect_endpoint: z.string().optional()
             })
             .optional(),
         domains: z
