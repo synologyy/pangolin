@@ -87,8 +87,7 @@ export class TraefikConfigManager {
     public async HandleTraefikConfig(): Promise<void> {
         try {
             // Get all active domains for this exit node via HTTP call
-            const getTraefikConfig =
-                await this.getTraefikConfig();
+            const getTraefikConfig = await this.getTraefikConfig();
 
             if (!getTraefikConfig) {
                 logger.error(
@@ -138,12 +137,32 @@ export class TraefikConfigManager {
             try {
                 const [exitNode] = await db.select().from(exitNodes).limit(1);
                 if (exitNode) {
+                    try {
+                        await axios.post(
+                            `${exitNode.reachableAt}/update-local-snis`,
+                            { fullDomains: Array.from(domains) },
+                            { headers: { "Content-Type": "application/json" } }
+                        );
+                    } catch (error) {
+                        // pull data out of the axios error to log
+                        if (axios.isAxiosError(error)) {
+                            logger.error("Error updating local SNI:", {
+                                message: error.message,
+                                code: error.code,
+                                status: error.response?.status,
+                                statusText: error.response?.statusText,
+                                url: error.config?.url,
+                                method: error.config?.method
+                            });
+                        } else {
+                            logger.error(
+                                "Error updating local SNI:",
+                                error
+                            );
+                        }
+                    }
+                } else {
                     logger.error("No exit node found");
-                    await axios.post(
-                        `${exitNode.reachableAt}/update-local-snis`,
-                        { fullDomains: Array.from(domains) },
-                        { headers: { "Content-Type": "application/json" } }
-                    );
                 }
             } catch (err) {
                 logger.error("Failed to post domains to SNI proxy:", err);
@@ -199,22 +218,19 @@ export class TraefikConfigManager {
             );
 
             return { domains, traefikConfig };
-        } catch (err) {
-            // Extract useful information from axios error without circular references
-            if (err && typeof err === 'object' && 'response' in err) {
-                const axiosError = err as any;
-                logger.error("Failed to fetch traefik config:", {
-                    status: axiosError.response?.status,
-                    statusText: axiosError.response?.statusText,
-                    data: axiosError.response?.data,
-                    message: axiosError.message,
-                    url: axiosError.config?.url
+        } catch (error) {
+            // pull data out of the axios error to log
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching traefik config:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
                 });
             } else {
-                logger.error("Failed to fetch traefik config:", {
-                    message: err instanceof Error ? err.message : String(err),
-                    stack: err instanceof Error ? err.stack : undefined
-                });
+                logger.error("Error fetching traefik config:", error);
             }
             return null;
         }
@@ -303,23 +319,18 @@ export class TraefikConfigManager {
 
             return response.data.data;
         } catch (error) {
-            // Extract useful information from axios error without circular references
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as any;
-                logger.error("Error fetching certificates for domains:", {
-                    status: axiosError.response?.status,
-                    statusText: axiosError.response?.statusText,
-                    data: axiosError.response?.data,
-                    message: axiosError.message,
-                    url: axiosError.config?.url,
-                    domains: domainArray
+            // pull data out of the axios error to log
+            if (axios.isAxiosError(error)) {
+                logger.error("Error getting certificates:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
                 });
             } else {
-                logger.error("Error fetching certificates for domains:", {
-                    message: error instanceof Error ? error.message : String(error),
-                    stack: error instanceof Error ? error.stack : undefined,
-                    domains: domainArray
-                });
+                logger.error("Error getting certificates:", error);
             }
             return [];
         }

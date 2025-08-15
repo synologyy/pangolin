@@ -33,24 +33,24 @@ export async function createHybridClientServer() {
 
     // Register message handlers
     client.registerHandler("remoteExitNode/peers/add", async (message) => {
-        const { pubKey, allowedIps } = message.data;
+        const { publicKey, allowedIps } = message.data;
 
         // TODO: we are getting the exit node twice here
         // NOTE: there should only be one gerbil registered so...
         const [exitNode] = await db.select().from(exitNodes).limit(1);
         await addPeer(exitNode.exitNodeId, {
-            publicKey: pubKey,
+            publicKey: publicKey,
             allowedIps: allowedIps || []
         });
     });
 
     client.registerHandler("remoteExitNode/peers/remove", async (message) => {
-        const { pubKey } = message.data;
+        const { publicKey } = message.data;
 
         // TODO: we are getting the exit node twice here
         // NOTE: there should only be one gerbil registered so...
         const [exitNode] = await db.select().from(exitNodes).limit(1);
-        await deletePeer(exitNode.exitNodeId, pubKey);
+        await deletePeer(exitNode.exitNodeId, publicKey);
     });
 
     // /update-proxy-mapping
@@ -65,21 +65,18 @@ export async function createHybridClientServer() {
             const response = await axios.post(`${exitNode.endpoint}/update-proxy-mapping`, message.data);
             logger.info(`Successfully updated proxy mapping: ${response.status}`);
         } catch (error) {
-            // Extract useful information from axios error without circular references
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as any;
-                logger.error("Failed to update proxy mapping:", {
-                    status: axiosError.response?.status,
-                    statusText: axiosError.response?.statusText,
-                    data: axiosError.response?.data,
-                    message: axiosError.message,
-                    url: axiosError.config?.url
+            // pull data out of the axios error to log
+            if (axios.isAxiosError(error)) {
+                logger.error("Error updating proxy mapping:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
                 });
             } else {
-                logger.error("Failed to update proxy mapping:", {
-                    message: error instanceof Error ? error.message : String(error),
-                    stack: error instanceof Error ? error.stack : undefined
-                });
+                logger.error("Error updating proxy mapping:", error);
             }
         }
     });
@@ -96,21 +93,18 @@ export async function createHybridClientServer() {
             const response = await axios.post(`${exitNode.endpoint}/update-destinations`, message.data);
             logger.info(`Successfully updated destinations: ${response.status}`);
         } catch (error) {
-            // Extract useful information from axios error without circular references
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as any;
-                logger.error("Failed to update destinations:", {
-                    status: axiosError.response?.status,
-                    statusText: axiosError.response?.statusText,
-                    data: axiosError.response?.data,
-                    message: axiosError.message,
-                    url: axiosError.config?.url
+            // pull data out of the axios error to log
+            if (axios.isAxiosError(error)) {
+                logger.error("Error updating destinations:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
                 });
             } else {
-                logger.error("Failed to update proxy mapping:", {
-                    message: error instanceof Error ? error.message : String(error),
-                    stack: error instanceof Error ? error.stack : undefined
-                });
+                logger.error("Error updating destinations:", error);
             }
         }
     });
