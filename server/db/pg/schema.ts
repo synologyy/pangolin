@@ -648,3 +648,4 @@ export type UserClient = InferSelectModel<typeof userClients>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;
+export type HostMeta = InferSelectModel<typeof hostMeta>;
