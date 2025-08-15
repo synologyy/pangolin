@@ -24,6 +24,7 @@ import { hashPassword } from "@server/auth/password";
 import { isValidCIDR, isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import { OpenAPITags, registry } from "@server/openApi";
+import { listExitNodes } from "@server/lib/exitNodes";
 
 const createClientParamsSchema = z
     .object({
@@ -177,20 +178,9 @@ export async function createClient(
 
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
-
-            // make sure there is an exit node by counting the exit nodes table
-            const nodes = await db.select().from(exitNodes);
-            if (nodes.length === 0) {
-                return next(
-                    createHttpError(
-                        HttpCode.NOT_FOUND,
-                        "No exit nodes available"
-                    )
-                );
-            }
-
-            // get the first exit node
-            const exitNode = nodes[0];
+            const exitNodesList = await listExitNodes(orgId);
+            const randomExitNode =
+                exitNodesList[Math.floor(Math.random() * exitNodesList.length)];
 
             const adminRole = await trx
                 .select()
@@ -208,7 +198,7 @@ export async function createClient(
             const [newClient] = await trx
                 .insert(clients)
                 .values({
-                    exitNodeId: exitNode.exitNodeId,
+                    exitNodeId: randomExitNode.exitNodeId,
                     orgId,
                     name,
                     subnet: updatedSubnet,

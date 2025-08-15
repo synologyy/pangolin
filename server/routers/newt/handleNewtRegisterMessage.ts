@@ -9,6 +9,7 @@ import {
     findNextAvailableCidr,
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
+import { verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -24,7 +25,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
     const newt = client as Newt;
 
-    logger.info("Handling register newt message!");
+    logger.debug("Handling register newt message!");
 
     if (!newt) {
         logger.warn("Newt not found");
@@ -81,6 +82,18 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         // This effectively moves the exit node to the new one
         exitNodeIdToQuery = exitNodeId; // Use the provided exitNodeId if it differs from the site's exitNodeId
 
+        const { exitNode, hasAccess } = await verifyExitNodeOrgAccess(exitNodeIdToQuery, oldSite.orgId);
+
+        if (!exitNode) {
+            logger.warn("Exit node not found");
+            return;
+        }
+
+        if (!hasAccess) {
+            logger.warn("Not authorized to use this exit node");
+            return;
+        }
+
         const sitesQuery = await db
             .select({
                 subnet: sites.subnet
@@ -88,14 +101,10 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             .from(sites)
             .where(eq(sites.exitNodeId, exitNodeId));
 
-        const [exitNode] = await db
-            .select()
-            .from(exitNodes)
-            .where(eq(exitNodes.exitNodeId, exitNodeIdToQuery))
-            .limit(1);
-
         const blockSize = config.getRawConfig().gerbil.site_block_size;
-        const subnets = sitesQuery.map((site) => site.subnet).filter((subnet) => subnet !== null);
+        const subnets = sitesQuery
+            .map((site) => site.subnet)
+            .filter((subnet) => subnet !== null);
         subnets.push(exitNode.address.replace(/\/\d+$/, `/${blockSize}`));
         const newSubnet = findNextAvailableCidr(
             subnets,

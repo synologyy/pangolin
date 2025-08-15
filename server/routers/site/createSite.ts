@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { clients, db } from "@server/db";
+import { clients, db, exitNodes } from "@server/db";
 import { roles, userSites, sites, roleSites, Site, orgs } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -17,6 +17,7 @@ import { hashPassword } from "@server/auth/password";
 import { isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import config from "@server/lib/config";
+import { verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
 
 const createSiteParamsSchema = z
     .object({
@@ -213,6 +214,32 @@ export async function createSite(
                         createHttpError(
                             HttpCode.BAD_REQUEST,
                             "Subnet is required for tunneled sites"
+                        )
+                    );
+                }
+
+                const { exitNode, hasAccess } =
+                    await verifyExitNodeOrgAccess(
+                        exitNodeId,
+                        orgId
+                    );
+
+                if (!exitNode) {
+                    logger.warn("Exit node not found");
+                    return next(
+                        createHttpError(
+                            HttpCode.NOT_FOUND,
+                            "Exit node not found"
+                        )
+                    );
+                }
+
+                if (!hasAccess) {
+                    logger.warn("Not authorized to use this exit node");
+                    return next(
+                        createHttpError(
+                            HttpCode.FORBIDDEN,
+                            "Not authorized to use this exit node"
                         )
                     );
                 }

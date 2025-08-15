@@ -2,7 +2,7 @@ import { db, exitNodes } from "@server/db";
 import logger from "@server/logger";
 import { eq, and, or } from "drizzle-orm";
 
-export async function privateVerifyExitNodeOrgAccess(
+export async function verifyExitNodeOrgAccess(
     exitNodeId: number,
     orgId: string
 ) {
