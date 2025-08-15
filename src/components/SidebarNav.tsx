@@ -150,7 +150,7 @@ export function SidebarNav({
                             {section.heading}
                         </div>
                     )}
-                    <div className="flex flex-col gap-1 mt-1 pl-2">
+                    <div className="flex flex-col gap-1">
                         {section.items.map((item) => {
                             const hydratedHref = hydrateHref(item.href);
                             const isActive = pathname.startsWith(hydratedHref);
