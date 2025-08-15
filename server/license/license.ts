@@ -5,7 +5,7 @@ import NodeCache from "node-cache";
 import { validateJWT } from "./licenseJwt";
 import { count, eq } from "drizzle-orm";
 import moment from "moment";
-import { setHostMeta } from "@server/setup/setHostMeta";
+import { setHostMeta } from "@server/lib/hostMeta";
 import { encrypt, decrypt } from "@server/lib/crypto";
 
 const keyTypes = ["HOST", "SITES"] as const;

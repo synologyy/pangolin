@@ -50,7 +50,7 @@ const migrations = [
     { version: "1.6.0", run: m21 },
     { version: "1.7.0", run: m22 },
     { version: "1.8.0", run: m23 },
-    { version: "1.9.0", run: m24 },
+    // { version: "1.9.0", run: m24 },
     // Add new migrations here as they are created
 ] as const;
 

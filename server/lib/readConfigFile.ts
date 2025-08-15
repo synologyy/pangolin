@@ -3,7 +3,6 @@ import yaml from "js-yaml";
 import { configFilePath1, configFilePath2 } from "./consts";
 import { z } from "zod";
 import stoi from "./stoi";
-import { build } from "@server/build";
 
 const portSchema = z.number().positive().gt(0).lte(65535);
 
@@ -25,7 +24,13 @@ export const configSchema = z
                 .optional()
                 .default("info"),
             save_logs: z.boolean().optional().default(false),
-            log_failed_attempts: z.boolean().optional().default(false)
+            log_failed_attempts: z.boolean().optional().default(false),
+            telmetry: z
+                .object({
+                    anonymous_usage: z.boolean().optional().default(true)
+                })
+                .optional()
+                .default({})
         }),
         domains: z
             .record(
@@ -213,7 +218,10 @@ export const configSchema = z
                 smtp_host: z.string().optional(),
                 smtp_port: portSchema.optional(),
                 smtp_user: z.string().optional(),
-                smtp_pass: z.string().optional().transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
+                smtp_pass: z
+                    .string()
+                    .optional()
+                    .transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
                 smtp_secure: z.boolean().optional(),
                 smtp_tls_reject_unauthorized: z.boolean().optional(),
                 no_reply: z.string().email().optional()
@@ -229,7 +237,7 @@ export const configSchema = z
                 disable_local_sites: z.boolean().optional(),
                 disable_basic_wireguard_sites: z.boolean().optional(),
                 disable_config_managed_domains: z.boolean().optional(),
-                enable_clients: z.boolean().optional().default(true),
+                enable_clients: z.boolean().optional().default(true)
             })
             .optional(),
         dns: z
