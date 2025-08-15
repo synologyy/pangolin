@@ -38,12 +38,14 @@ import { Tag, TagInput } from "@app/components/tags/tag-input";
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
     dockerSocketEnabled: z.boolean().optional(),
-    remoteSubnets: z.array(
-        z.object({
-            id: z.string(),
-            text: z.string()
-        })
-    ).optional()
+    remoteSubnets: z
+        .array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
+        )
+        .optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -55,7 +57,9 @@ export default function GeneralPage() {
     const api = createApiClient(useEnvContext());
 
     const [loading, setLoading] = useState(false);
-    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(null);
+    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(
+        null
+    );
 
     const router = useRouter();
     const t = useTranslations();
@@ -66,10 +70,10 @@ export default function GeneralPage() {
             name: site?.name,
             dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
             remoteSubnets: site?.remoteSubnets
-                ? site.remoteSubnets.split(',').map((subnet, index) => ({
-                    id: subnet.trim(),
-                    text: subnet.trim()
-                }))
+                ? site.remoteSubnets.split(",").map((subnet, index) => ({
+                      id: subnet.trim(),
+                      text: subnet.trim()
+                  }))
                 : []
         },
         mode: "onChange"
@@ -82,7 +86,10 @@ export default function GeneralPage() {
             .post(`/site/${site?.siteId}`, {
                 name: data.name,
                 dockerSocketEnabled: data.dockerSocketEnabled,
-                remoteSubnets: data.remoteSubnets?.map(subnet => subnet.text).join(',') || ''
+                remoteSubnets:
+                    data.remoteSubnets
+                        ?.map((subnet) => subnet.text)
+                        .join(",") || ""
             })
             .catch((e) => {
                 toast({
@@ -98,7 +105,8 @@ export default function GeneralPage() {
         updateSite({
             name: data.name,
             dockerSocketEnabled: data.dockerSocketEnabled,
-            remoteSubnets: data.remoteSubnets?.map(subnet => subnet.text).join(',') || ''
+            remoteSubnets:
+                data.remoteSubnets?.map((subnet) => subnet.text).join(",") || ""
         });
 
         toast({
@@ -145,42 +153,64 @@ export default function GeneralPage() {
                                     )}
                                 />
 
-                                <FormField
-                                    control={form.control}
-                                    name="remoteSubnets"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t("remoteSubnets")}</FormLabel>
-                                            <FormControl>
-                                                <TagInput
-                                                    {...field}
-                                                    activeTagIndex={activeCidrTagIndex}
-                                                    setActiveTagIndex={setActiveCidrTagIndex}
-                                                    placeholder={t("enterCidrRange")}
-                                                    size="sm"
-                                                    tags={form.getValues().remoteSubnets || []}
-                                                    setTags={(newSubnets) => {
-                                                        form.setValue(
-                                                            "remoteSubnets",
-                                                            newSubnets as Tag[]
-                                                        );
-                                                    }}
-                                                    validateTag={(tag) => {
-                                                        // Basic CIDR validation regex
-                                                        const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
-                                                        return cidrRegex.test(tag);
-                                                    }}
-                                                    allowDuplicates={false}
-                                                    sortTags={true}
-                                                />
-                                            </FormControl>
-                                            <FormDescription>
-                                                {t("remoteSubnetsDescription")}
-                                            </FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                {env.flags.enableClients &&
+                                site.type === "newt" ? (
+                                    <FormField
+                                        control={form.control}
+                                        name="remoteSubnets"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("remoteSubnets")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <TagInput
+                                                        {...field}
+                                                        activeTagIndex={
+                                                            activeCidrTagIndex
+                                                        }
+                                                        setActiveTagIndex={
+                                                            setActiveCidrTagIndex
+                                                        }
+                                                        placeholder={t(
+                                                            "enterCidrRange"
+                                                        )}
+                                                        size="sm"
+                                                        tags={
+                                                            form.getValues()
+                                                                .remoteSubnets ||
+                                                            []
+                                                        }
+                                                        setTags={(
+                                                            newSubnets
+                                                        ) => {
+                                                            form.setValue(
+                                                                "remoteSubnets",
+                                                                newSubnets as Tag[]
+                                                            );
+                                                        }}
+                                                        validateTag={(tag) => {
+                                                            // Basic CIDR validation regex
+                                                            const cidrRegex =
+                                                                /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+                                                            return cidrRegex.test(
+                                                                tag
+                                                            );
+                                                        }}
+                                                        allowDuplicates={false}
+                                                        sortTags={true}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t(
+                                                        "remoteSubnetsDescription"
+                                                    )}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                ) : null}
 
                                 {site && site.type === "newt" && (
                                     <FormField

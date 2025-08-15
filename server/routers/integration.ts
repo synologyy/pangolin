@@ -342,13 +342,6 @@ authenticated.get(
 );
 
 authenticated.post(
-    `/resource/:resourceId/transfer`,
-    verifyApiKeyResourceAccess,
-    verifyApiKeyHasAction(ActionsEnum.updateResource),
-    resource.transferResource
-);
-
-authenticated.post(
     `/resource/:resourceId/access-token`,
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.generateAccessToken),

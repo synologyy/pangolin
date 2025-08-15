@@ -31,6 +31,7 @@ export type GetResourceAuthInfoResponse = {
     blockAccess: boolean;
     url: string;
     whitelist: boolean;
+    skipToIdpId: number | null;
 };
 
 export async function getResourceAuthInfo(
@@ -86,7 +87,8 @@ export async function getResourceAuthInfo(
                 sso: resource.sso,
                 blockAccess: resource.blockAccess,
                 url,
-                whitelist: resource.emailWhitelistEnabled
+                whitelist: resource.emailWhitelistEnabled,
+                skipToIdpId: resource.skipToIdpId
             },
             success: true,
             error: false,

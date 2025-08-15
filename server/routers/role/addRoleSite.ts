@@ -60,18 +60,18 @@ export async function addRoleSite(
                 })
                 .returning();
 
-            const siteResources = await db
-                .select()
-                .from(resources)
-                .where(eq(resources.siteId, siteId));
-
-            for (const resource of siteResources) {
-                await trx.insert(roleResources).values({
-                    roleId,
-                    resourceId: resource.resourceId
-                });
-            }
-
+            // const siteResources = await db
+            //     .select()
+            //     .from(resources)
+            //     .where(eq(resources.siteId, siteId));
+            //
+            // for (const resource of siteResources) {
+            //     await trx.insert(roleResources).values({
+            //         roleId,
+            //         resourceId: resource.resourceId
+            //     });
+            // }
+            //
             return response(res, {
                 data: newRoleSite[0],
                 success: true,

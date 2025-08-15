@@ -43,35 +43,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, RefreshCw, Filter, Columns } from "lucide-react";
-import { GetSiteResponse, Container } from "@server/routers/site";
-import { useDockerSocket } from "@app/hooks/useDockerSocket";
+import { Container } from "@server/routers/site";
 import { useTranslations } from "next-intl";
-
-// Type definitions based on the JSON structure
+import { FaDocker } from "react-icons/fa";
 
 interface ContainerSelectorProps {
-    site: GetSiteResponse;
+    site: { siteId: number; name: string; type: string };
+    containers: Container[];
+    isAvailable: boolean;
     onContainerSelect?: (hostname: string, port?: number) => void;
+    onRefresh?: () => void;
 }
 
 export const ContainersSelector: FC<ContainerSelectorProps> = ({
     site,
-    onContainerSelect
+    containers,
+    isAvailable,
+    onContainerSelect,
+    onRefresh
 }) => {
     const [open, setOpen] = useState(false);
 
     const t = useTranslations();
 
-    const { isAvailable, containers, fetchContainers } = useDockerSocket(site);
-
-    useEffect(() => {
-        console.log("DockerSocket isAvailable:", isAvailable);
-        if (isAvailable) {
-            fetchContainers();
-        }
-    }, [isAvailable]);
-
-    if (!site || !isAvailable) {
+    if (!site || !isAvailable || site.type !== "newt") {
         return null;
     }
 
@@ -84,13 +79,14 @@ export const ContainersSelector: FC<ContainerSelectorProps> = ({
 
     return (
         <>
-            <a
+            <Button
                 type="button"
-                className="text-sm text-primary hover:underline cursor-pointer"
+                variant="outline"
                 onClick={() => setOpen(true)}
+                title={t("viewDockerContainers")}
             >
-                {t("viewDockerContainers")}
-            </a>
+                <FaDocker size={15} />
+            </Button>
             <Credenza open={open} onOpenChange={setOpen}>
                 <CredenzaContent className="max-w-[75vw] max-h-[75vh] flex flex-col">
                     <CredenzaHeader>
@@ -106,7 +102,7 @@ export const ContainersSelector: FC<ContainerSelectorProps> = ({
                             <DockerContainersTable
                                 containers={containers}
                                 onContainerSelect={handleContainerSelect}
-                                onRefresh={() => fetchContainers()}
+                                onRefresh={onRefresh || (() => {})}
                             />
                         </div>
                     </CredenzaBody>
@@ -263,7 +259,9 @@ const DockerContainersTable: FC<{
                                 size="sm"
                                 className="h-6 px-2 text-xs hover:bg-muted"
                             >
-                                {t("containerLabelsCount", { count: labelEntries.length })}
+                                {t("containerLabelsCount", {
+                                    count: labelEntries.length
+                                })}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent side="top" align="start">
@@ -279,7 +277,10 @@ const DockerContainersTable: FC<{
                                                     {key}
                                                 </div>
                                                 <div className="font-mono text-muted-foreground pl-2 break-all">
-                                                    {value || t("containerLabelEmpty")}
+                                                    {value ||
+                                                        t(
+                                                            "containerLabelEmpty"
+                                                        )}
                                                 </div>
                                             </div>
                                         ))}
@@ -316,7 +317,9 @@ const DockerContainersTable: FC<{
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant="link" size="sm">
-                                        {t("containerPortsMore", { count: ports.length - 2 })}
+                                        {t("containerPortsMore", {
+                                            count: ports.length - 2
+                                        })}
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent
@@ -356,7 +359,9 @@ const DockerContainersTable: FC<{
                     <Button
                         variant="default"
                         size="sm"
-                        onClick={() => onContainerSelect(row.original, ports[0])}
+                        onClick={() =>
+                            onContainerSelect(row.original, ports[0])
+                        }
                         disabled={row.original.state !== "running"}
                     >
                         {t("select")}
@@ -415,9 +420,7 @@ const DockerContainersTable: FC<{
                             hideStoppedContainers) &&
                         containers.length > 0 ? (
                             <>
-                                <p>
-                                    {t("noContainersMatchingFilters")}
-                                </p>
+                                <p>{t("noContainersMatchingFilters")}</p>
                                 <div className="space-x-2">
                                     {hideContainersWithoutPorts && (
                                         <Button
@@ -446,9 +449,7 @@ const DockerContainersTable: FC<{
                                 </div>
                             </>
                         ) : (
-                            <p>
-                                {t("noContainersFound")}
-                            </p>
+                            <p>{t("noContainersFound")}</p>
                         )}
                     </div>
                 </div>
@@ -463,7 +464,9 @@ const DockerContainersTable: FC<{
                     <div className="relative flex-1">
                         <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            placeholder={t("searchContainersPlaceholder", { count: initialFilters.length })}
+                            placeholder={t("searchContainersPlaceholder", {
+                                count: initialFilters.length
+                            })}
                             value={searchInput}
                             onChange={(event) =>
                                 setSearchInput(event.target.value)
@@ -473,7 +476,10 @@ const DockerContainersTable: FC<{
                         {searchInput &&
                             table.getFilteredRowModel().rows.length > 0 && (
                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                    {t("searchResultsCount", { count: table.getFilteredRowModel().rows.length })}
+                                    {t("searchResultsCount", {
+                                        count: table.getFilteredRowModel().rows
+                                            .length
+                                    })}
                                 </div>
                             )}
                     </div>
@@ -644,7 +650,9 @@ const DockerContainersTable: FC<{
                                             {t("searching")}
                                         </div>
                                     ) : (
-                                        t("noContainersFoundMatching", { filter: globalFilter })
+                                        t("noContainersFoundMatching", {
+                                            filter: globalFilter
+                                        })
                                     )}
                                 </TableCell>
                             </TableRow>

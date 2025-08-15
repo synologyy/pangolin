@@ -43,17 +43,17 @@ export async function addUserSite(
                 })
                 .returning();
 
-            const siteResources = await trx
-                .select()
-                .from(resources)
-                .where(eq(resources.siteId, siteId));
-
-            for (const resource of siteResources) {
-                await trx.insert(userResources).values({
-                    userId,
-                    resourceId: resource.resourceId
-                });
-            }
+            // const siteResources = await trx
+            //     .select()
+            //     .from(resources)
+            //     .where(eq(resources.siteId, siteId));
+            //
+            // for (const resource of siteResources) {
+            //     await trx.insert(userResources).values({
+            //         userId,
+            //         resourceId: resource.resourceId
+            //     });
+            // }
 
             return response(res, {
                 data: newUserSite[0],

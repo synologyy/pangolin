@@ -49,6 +49,15 @@ import { UserType } from "@server/types/UserTypes";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { InfoIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { CheckboxWithLabel } from "@app/components/ui/checkbox";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@app/components/ui/select";
+import { Separator } from "@app/components/ui/separator";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -110,6 +119,14 @@ export default function ResourceAuthenticationPage() {
         resource.emailWhitelistEnabled
     );
 
+    const [autoLoginEnabled, setAutoLoginEnabled] = useState(
+        resource.skipToIdpId !== null && resource.skipToIdpId !== undefined
+    );
+    const [selectedIdpId, setSelectedIdpId] = useState<number | null>(
+        resource.skipToIdpId || null
+    );
+    const [allIdps, setAllIdps] = useState<{ id: number; text: string }[]>([]);
+
     const [loadingSaveUsersRoles, setLoadingSaveUsersRoles] = useState(false);
     const [loadingSaveWhitelist, setLoadingSaveWhitelist] = useState(false);
 
@@ -139,7 +156,8 @@ export default function ResourceAuthenticationPage() {
                     resourceRolesResponse,
                     usersResponse,
                     resourceUsersResponse,
-                    whitelist
+                    whitelist,
+                    idpsResponse
                 ] = await Promise.all([
                     api.get<AxiosResponse<ListRolesResponse>>(
                         `/org/${org?.org.orgId}/roles`
@@ -155,7 +173,12 @@ export default function ResourceAuthenticationPage() {
                     ),
                     api.get<AxiosResponse<GetResourceWhitelistResponse>>(
                         `/resource/${resource.resourceId}/whitelist`
-                    )
+                    ),
+                    api.get<
+                        AxiosResponse<{
+                            idps: { idpId: number; name: string }[];
+                        }>
+                    >("/idp")
                 ]);
 
                 setAllRoles(
@@ -199,6 +222,21 @@ export default function ResourceAuthenticationPage() {
                         text: w.email
                     }))
                 );
+
+                setAllIdps(
+                    idpsResponse.data.data.idps.map((idp) => ({
+                        id: idp.idpId,
+                        text: idp.name
+                    }))
+                );
+
+                if (
+                    autoLoginEnabled &&
+                    !selectedIdpId &&
+                    idpsResponse.data.data.idps.length > 0
+                ) {
+                    setSelectedIdpId(idpsResponse.data.data.idps[0].idpId);
+                }
 
                 setPageLoading(false);
             } catch (e) {
@@ -260,6 +298,16 @@ export default function ResourceAuthenticationPage() {
         try {
             setLoadingSaveUsersRoles(true);
 
+            // Validate that an IDP is selected if auto login is enabled
+            if (autoLoginEnabled && !selectedIdpId) {
+                toast({
+                    variant: "destructive",
+                    title: t("error"),
+                    description: t("selectIdpRequired")
+                });
+                return;
+            }
+
             const jobs = [
                 api.post(`/resource/${resource.resourceId}/roles`, {
                     roleIds: data.roles.map((i) => parseInt(i.id))
@@ -268,14 +316,16 @@ export default function ResourceAuthenticationPage() {
                     userIds: data.users.map((i) => i.id)
                 }),
                 api.post(`/resource/${resource.resourceId}`, {
-                    sso: ssoEnabled
+                    sso: ssoEnabled,
+                    skipToIdpId: autoLoginEnabled ? selectedIdpId : null
                 })
             ];
 
             await Promise.all(jobs);
 
             updateResource({
-                sso: ssoEnabled
+                sso: ssoEnabled,
+                skipToIdpId: autoLoginEnabled ? selectedIdpId : null
             });
 
             updateAuthInfo({
@@ -541,6 +591,89 @@ export default function ResourceAuthenticationPage() {
                                                 )}
                                             />
                                         </>
+                                    )}
+
+                                    {ssoEnabled && allIdps.length > 0 && (
+                                        <div className="mt-8">
+                                            <div className="space-y-2 mb-3">
+                                                <CheckboxWithLabel
+                                                    label={t(
+                                                        "autoLoginExternalIdp"
+                                                    )}
+                                                    checked={autoLoginEnabled}
+                                                    onCheckedChange={(
+                                                        checked
+                                                    ) => {
+                                                        setAutoLoginEnabled(
+                                                            checked as boolean
+                                                        );
+                                                        if (
+                                                            checked &&
+                                                            allIdps.length > 0
+                                                        ) {
+                                                            setSelectedIdpId(
+                                                                allIdps[0].id
+                                                            );
+                                                        } else {
+                                                            setSelectedIdpId(
+                                                                null
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                                <p className="text-sm text-muted-foreground">
+                                                    {t(
+                                                        "autoLoginExternalIdpDescription"
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                            {autoLoginEnabled && (
+                                                <div className="space-y-2">
+                                                    <label className="text-sm font-medium">
+                                                        {t("selectIdp")}
+                                                    </label>
+                                                    <Select
+                                                        onValueChange={(
+                                                            value
+                                                        ) =>
+                                                            setSelectedIdpId(
+                                                                parseInt(value)
+                                                            )
+                                                        }
+                                                        value={
+                                                            selectedIdpId
+                                                                ? selectedIdpId.toString()
+                                                                : undefined
+                                                        }
+                                                    >
+                                                        <SelectTrigger className="w-full">
+                                                            <SelectValue
+                                                                placeholder={t(
+                                                                    "selectIdpPlaceholder"
+                                                                )}
+                                                            />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {allIdps.map(
+                                                                (idp) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            idp.id
+                                                                        }
+                                                                        value={idp.id.toString()}
+                                                                    >
+                                                                        {
+                                                                            idp.text
+                                                                        }
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </form>
                             </Form>

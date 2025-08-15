@@ -15,7 +15,6 @@ import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import { eq, and } from "drizzle-orm";
-import stoi from "@server/lib/stoi";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { subdomainSchema } from "@server/lib/schemas";
@@ -25,7 +24,6 @@ import { build } from "@server/build";
 
 const createResourceParamsSchema = z
     .object({
-        siteId: z.string().transform(stoi).pipe(z.number().int().positive()),
         orgId: z.string()
     })
     .strict();
@@ -34,7 +32,6 @@ const createHttpResourceSchema = z
     .object({
         name: z.string().min(1).max(255),
         subdomain: z.string().nullable().optional(),
-        siteId: z.number(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
         domainId: z.string()
@@ -53,11 +50,10 @@ const createHttpResourceSchema = z
 const createRawResourceSchema = z
     .object({
         name: z.string().min(1).max(255),
-        siteId: z.number(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
         proxyPort: z.number().int().min(1).max(65535),
-        enableProxy: z.boolean().default(true)
+        // enableProxy: z.boolean().default(true) // always true now
     })
     .strict()
     .refine(
@@ -78,7 +74,7 @@ export type CreateResourceResponse = Resource;
 
 registry.registerPath({
     method: "put",
-    path: "/org/{orgId}/site/{siteId}/resource",
+    path: "/org/{orgId}/resource",
     description: "Create a resource.",
     tags: [OpenAPITags.Org, OpenAPITags.Resource],
     request: {
@@ -111,7 +107,7 @@ export async function createResource(
             );
         }
 
-        const { siteId, orgId } = parsedParams.data;
+        const { orgId } = parsedParams.data;
 
         if (req.user && !req.userOrgRoleId) {
             return next(
@@ -146,7 +142,7 @@ export async function createResource(
         if (http) {
             return await createHttpResource(
                 { req, res, next },
-                { siteId, orgId }
+                { orgId }
             );
         } else {
             if (
@@ -162,7 +158,7 @@ export async function createResource(
             }
             return await createRawResource(
                 { req, res, next },
-                { siteId, orgId }
+                { orgId }
             );
         }
     } catch (error) {
@@ -180,12 +176,11 @@ async function createHttpResource(
         next: NextFunction;
     },
     meta: {
-        siteId: number;
         orgId: string;
     }
 ) {
     const { req, res, next } = route;
-    const { siteId, orgId } = meta;
+    const { orgId } = meta;
 
     const parsedBody = createHttpResourceSchema.safeParse(req.body);
     if (!parsedBody.success) {
@@ -292,7 +287,6 @@ async function createHttpResource(
         const newResource = await trx
             .insert(resources)
             .values({
-                siteId,
                 fullDomain,
                 domainId,
                 orgId,
@@ -357,12 +351,11 @@ async function createRawResource(
         next: NextFunction;
     },
     meta: {
-        siteId: number;
         orgId: string;
     }
 ) {
     const { req, res, next } = route;
-    const { siteId, orgId } = meta;
+    const { orgId } = meta;
 
     const parsedBody = createRawResourceSchema.safeParse(req.body);
     if (!parsedBody.success) {
@@ -374,7 +367,7 @@ async function createRawResource(
         );
     }
 
-    const { name, http, protocol, proxyPort, enableProxy } = parsedBody.data;
+    const { name, http, protocol, proxyPort } = parsedBody.data;
 
     // if http is false check to see if there is already a resource with the same port and protocol
     const existingResource = await db
@@ -402,13 +395,12 @@ async function createRawResource(
         const newResource = await trx
             .insert(resources)
             .values({
-                siteId,
                 orgId,
                 name,
                 http,
                 protocol,
                 proxyPort,
-                enableProxy
+                // enableProxy
             })
             .returning();
 

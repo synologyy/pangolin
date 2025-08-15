@@ -1,16 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "@server/db";
 import { and, eq, or, inArray } from "drizzle-orm";
-import { 
-    resources, 
-    userResources, 
-    roleResources, 
-    userOrgs, 
-    roles,
+import {
+    resources,
+    userResources,
+    roleResources,
+    userOrgs,
     resourcePassword,
     resourcePincode,
-    resourceWhitelist,
-    sites
+    resourceWhitelist
 } from "@server/db";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
@@ -37,12 +35,7 @@ export async function getUserResources(
                 roleId: userOrgs.roleId
             })
             .from(userOrgs)
-            .where(
-                and(
-                    eq(userOrgs.userId, userId),
-                    eq(userOrgs.orgId, orgId)
-                )
-            )
+            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId)))
             .limit(1);
 
         if (userOrgResult.length === 0) {
@@ -71,8 +64,8 @@ export async function getUserResources(
 
         // Combine all accessible resource IDs
         const accessibleResourceIds = [
-            ...directResources.map(r => r.resourceId),
-            ...roleResourceResults.map(r => r.resourceId)
+            ...directResources.map((r) => r.resourceId),
+            ...roleResourceResults.map((r) => r.resourceId)
         ];
 
         if (accessibleResourceIds.length === 0) {
@@ -95,11 +88,9 @@ export async function getUserResources(
                 enabled: resources.enabled,
                 sso: resources.sso,
                 protocol: resources.protocol,
-                emailWhitelistEnabled: resources.emailWhitelistEnabled,
-                siteName: sites.name
+                emailWhitelistEnabled: resources.emailWhitelistEnabled
             })
             .from(resources)
-            .leftJoin(sites, eq(sites.siteId, resources.siteId))
             .where(
                 and(
                     inArray(resources.resourceId, accessibleResourceIds),
@@ -111,28 +102,61 @@ export async function getUserResources(
         // Check for password, pincode, and whitelist protection for each resource
         const resourcesWithAuth = await Promise.all(
             resourcesData.map(async (resource) => {
-                const [passwordCheck, pincodeCheck, whitelistCheck] = await Promise.all([
-                    db.select().from(resourcePassword).where(eq(resourcePassword.resourceId, resource.resourceId)).limit(1),
-                    db.select().from(resourcePincode).where(eq(resourcePincode.resourceId, resource.resourceId)).limit(1),
-                    db.select().from(resourceWhitelist).where(eq(resourceWhitelist.resourceId, resource.resourceId)).limit(1)
-                ]);
+                const [passwordCheck, pincodeCheck, whitelistCheck] =
+                    await Promise.all([
+                        db
+                            .select()
+                            .from(resourcePassword)
+                            .where(
+                                eq(
+                                    resourcePassword.resourceId,
+                                    resource.resourceId
+                                )
+                            )
+                            .limit(1),
+                        db
+                            .select()
+                            .from(resourcePincode)
+                            .where(
+                                eq(
+                                    resourcePincode.resourceId,
+                                    resource.resourceId
+                                )
+                            )
+                            .limit(1),
+                        db
+                            .select()
+                            .from(resourceWhitelist)
+                            .where(
+                                eq(
+                                    resourceWhitelist.resourceId,
+                                    resource.resourceId
+                                )
+                            )
+                            .limit(1)
+                    ]);
 
                 const hasPassword = passwordCheck.length > 0;
                 const hasPincode = pincodeCheck.length > 0;
-                const hasWhitelist = whitelistCheck.length > 0 || resource.emailWhitelistEnabled;
+                const hasWhitelist =
+                    whitelistCheck.length > 0 || resource.emailWhitelistEnabled;
 
                 return {
                     resourceId: resource.resourceId,
                     name: resource.name,
                     domain: `${resource.ssl ? "https://" : "http://"}${resource.fullDomain}`,
                     enabled: resource.enabled,
-                    protected: !!(resource.sso || hasPassword || hasPincode || hasWhitelist),
+                    protected: !!(
+                        resource.sso ||
+                        hasPassword ||
+                        hasPincode ||
+                        hasWhitelist
+                    ),
                     protocol: resource.protocol,
                     sso: resource.sso,
                     password: hasPassword,
                     pincode: hasPincode,
-                    whitelist: hasWhitelist,
-                    siteName: resource.siteName
+                    whitelist: hasWhitelist
                 };
             })
         );
@@ -144,11 +168,13 @@ export async function getUserResources(
             message: "User resources retrieved successfully",
             status: HttpCode.OK
         });
-
     } catch (error) {
         console.error("Error fetching user resources:", error);
         return next(
-            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "Internal server error")
+            createHttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "Internal server error"
+            )
         );
     }
 }
@@ -165,4 +191,4 @@ export type GetUserResourcesResponse = {
             protocol: string;
         }>;
     };
-}; 
+};

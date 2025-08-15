@@ -71,22 +71,22 @@ export async function removeRoleSite(
                 );
             }
 
-            const siteResources = await db
-                .select()
-                .from(resources)
-                .where(eq(resources.siteId, siteId));
-
-            for (const resource of siteResources) {
-                await trx
-                    .delete(roleResources)
-                    .where(
-                        and(
-                            eq(roleResources.roleId, roleId),
-                            eq(roleResources.resourceId, resource.resourceId)
-                        )
-                    )
-                    .returning();
-            }
+            // const siteResources = await db
+            //     .select()
+            //     .from(resources)
+            //     .where(eq(resources.siteId, siteId));
+            //
+            // for (const resource of siteResources) {
+            //     await trx
+            //         .delete(roleResources)
+            //         .where(
+            //             and(
+            //                 eq(roleResources.roleId, roleId),
+            //                 eq(roleResources.resourceId, resource.resourceId)
+            //             )
+            //         )
+            //         .returning();
+            // }
         });
 
         return response(res, {

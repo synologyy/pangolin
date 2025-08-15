@@ -33,9 +33,7 @@ export default function SiteInfoCard({}: SiteInfoCardProps) {
 
     return (
         <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle className="font-semibold">{t("siteInfo")}</AlertTitle>
-            <AlertDescription className="mt-4">
+            <AlertDescription>
                 <InfoSections cols={env.flags.enableClients ? 3 : 2}>
                     {(site.type == "newt" || site.type == "wireguard") && (
                         <>
