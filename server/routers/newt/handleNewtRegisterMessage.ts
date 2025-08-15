@@ -64,16 +64,6 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         exitNodeId = bestPingResult.exitNodeId;
     }
 
-    if (newtVersion) {
-        // update the newt version in the database
-        await db
-            .update(newts)
-            .set({
-                version: newtVersion as string
-            })
-            .where(eq(newts.newtId, newt.newtId));
-    }
-
     const [oldSite] = await db
         .select()
         .from(sites)
@@ -159,6 +149,16 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         publicKey: publicKey,
         allowedIps: [siteSubnet]
     });
+
+    if (newtVersion && newtVersion !== newt.version) {
+        // update the newt version in the database
+        await db
+            .update(newts)
+            .set({
+                version: newtVersion as string
+            })
+            .where(eq(newts.newtId, newt.newtId));
+    }
 
     // Improved version
     const allResources = await db.transaction(async (tx) => {
