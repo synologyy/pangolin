@@ -8,6 +8,7 @@ import { eq, count, notInArray } from "drizzle-orm";
 import { APP_VERSION } from "./consts";
 import crypto from "crypto";
 import { UserType } from "@server/types/UserTypes";
+import { build } from "@server/build";
 
 class TelemetryClient {
     private client: PostHog | null = null;
@@ -19,7 +20,15 @@ class TelemetryClient {
         this.enabled = enabled;
         const dev = process.env.ENVIRONMENT !== "prod";
 
-        if (this.enabled && !dev) {
+        if (dev) {
+            return;
+        }
+
+        if (build !== "oss") {
+            return;
+        }
+
+        if (this.enabled) {
             this.client = new PostHog(
                 "phc_QYuATSSZt6onzssWcYJbXLzQwnunIpdGGDTYhzK3VjX",
                 {
@@ -40,7 +49,7 @@ class TelemetryClient {
             logger.info(
                 "Pangolin now gathers anonymous usage data to help us better understand how the software is used and guide future improvements and feature development. You can find more details, including instructions for opting out of this anonymous data collection, at: https://docs.digpangolin.com/telemetry"
             );
-        } else if (!this.enabled && !dev) {
+        } else if (!this.enabled) {
             logger.info(
                 "Analytics usage statistics collection is disabled. If you enable this, you can help us make Pangolin better for everyone. Learn more at: https://docs.digpangolin.com/telemetry"
             );
