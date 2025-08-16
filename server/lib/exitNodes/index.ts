@@ -1,1 +1,1 @@
-export * from "./privateExitNodes";
+export * from "./exitNodes";
