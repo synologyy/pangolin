@@ -150,25 +150,20 @@ export class TokenManager {
             this.token = response.data.data.token;
             logger.debug("Token refreshed successfully");
         } catch (error) {
-            logger.error("Failed to refresh token:", error);
-
             if (axios.isAxiosError(error)) {
-                if (error.response) {
-                    throw new Error(
-                        `Failed to get token with status code: ${error.response.status}`
-                    );
-                } else if (error.request) {
-                    throw new Error(
-                        "Failed to request new token: No response received"
-                    );
-                } else {
-                    throw new Error(
-                        `Failed to request new token: ${error.message}`
-                    );
-                }
+                logger.error("Error updating proxy mapping:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
             } else {
-                throw new Error(`Failed to get token: ${error}`);
+                logger.error("Error updating proxy mapping:", error);
             }
+
+            throw new Error("Failed to refresh token");
         } finally {
             this.isRefreshing = false;
         }

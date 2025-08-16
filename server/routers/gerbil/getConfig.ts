@@ -12,6 +12,7 @@ import { findNextAvailableCidr } from "@server/lib/ip";
 import { fromError } from "zod-validation-error";
 import { getAllowedIps } from "../target/helpers";
 import { proxyToRemote } from "@server/lib/remoteProxy";
+import { getNextAvailableSubnet } from "@server/lib/exitNodes";
 // Define Zod schema for request validation
 const getConfigSchema = z.object({
     publicKey: z.string(),
@@ -104,6 +105,11 @@ export async function getConfig(
 
         // STOP HERE IN HYBRID MODE
         if (config.isHybridMode()) {
+            req.body = {
+                ...req.body,
+                endpoint: exitNode[0].endpoint,
+                listenPort: exitNode[0].listenPort
+            }
             return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 
@@ -162,33 +168,6 @@ export async function generateGerbilConfig(exitNode: ExitNode) {
     };
 
     return configResponse;
-}
-
-async function getNextAvailableSubnet(): Promise<string> {
-    // Get all existing subnets from routes table
-    const existingAddresses = await db
-        .select({
-            address: exitNodes.address
-        })
-        .from(exitNodes);
-
-    const addresses = existingAddresses.map((a) => a.address);
-    let subnet = findNextAvailableCidr(
-        addresses,
-        config.getRawConfig().gerbil.block_size,
-        config.getRawConfig().gerbil.subnet_group
-    );
-    if (!subnet) {
-        throw new Error("No available subnets remaining in space");
-    }
-
-    // replace the last octet with 1
-    subnet =
-        subnet.split(".").slice(0, 3).join(".") +
-        ".1" +
-        "/" +
-        subnet.split("/")[1];
-    return subnet;
 }
 
 async function getNextAvailablePort(): Promise<number> {

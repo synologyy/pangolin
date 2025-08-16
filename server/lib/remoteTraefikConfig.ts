@@ -155,14 +155,11 @@ export class TraefikConfigManager {
                                 method: error.config?.method
                             });
                         } else {
-                            logger.error(
-                                "Error updating local SNI:",
-                                error
-                            );
+                            logger.error("Error updating local SNI:", error);
                         }
                     }
                 } else {
-                    logger.error("No exit node found");
+                    logger.error("No exit node found. Has gerbil registered yet?");
                 }
             } catch (err) {
                 logger.error("Failed to post domains to SNI proxy:", err);
@@ -213,34 +210,38 @@ export class TraefikConfigManager {
                 }
             }
 
-            const badgerMiddlewareName = "badger";
-            traefikConfig.http.middlewares[badgerMiddlewareName] = {
-                plugin: {
-                    [badgerMiddlewareName]: {
-                        apiBaseUrl: new URL(
-                            "/api/v1",
-                            `http://${
-                                config.getRawConfig().server.internal_hostname
-                            }:${config.getRawConfig().server.internal_port}`
-                        ).href,
-                        userSessionCookieName:
-                            config.getRawConfig().server.session_cookie_name,
-
-                        // deprecated
-                        accessTokenQueryParam:
-                            config.getRawConfig().server
-                                .resource_access_token_param,
-
-                        resourceSessionRequestParam:
-                            config.getRawConfig().server
-                                .resource_session_request_param
-                    }
-                }
-            };
-
             // logger.debug(
             //     `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
             // );
+
+            const badgerMiddlewareName = "badger";
+            if (traefikConfig?.http?.middlewares) {
+                traefikConfig.http.middlewares[badgerMiddlewareName] = {
+                    plugin: {
+                        [badgerMiddlewareName]: {
+                            apiBaseUrl: new URL(
+                                "/api/v1",
+                                `http://${
+                                    config.getRawConfig().server
+                                        .internal_hostname
+                                }:${config.getRawConfig().server.internal_port}`
+                            ).href,
+                            userSessionCookieName:
+                                config.getRawConfig().server
+                                    .session_cookie_name,
+
+                            // deprecated
+                            accessTokenQueryParam:
+                                config.getRawConfig().server
+                                    .resource_access_token_param,
+
+                            resourceSessionRequestParam:
+                                config.getRawConfig().server
+                                    .resource_session_request_param
+                        }
+                    }
+                };
+            }
 
             return { domains, traefikConfig };
         } catch (error) {
