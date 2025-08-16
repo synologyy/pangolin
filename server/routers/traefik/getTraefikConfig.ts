@@ -1,11 +1,21 @@
 import { Request, Response } from "express";
 import { db, exitNodes } from "@server/db";
-import { and, eq, inArray, or, isNull } from "drizzle-orm";
+import { and, eq, inArray, or, isNull, ne } from "drizzle-orm";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
 import { build } from "@server/build";
+
+// Extended Target interface that includes site information
+interface TargetWithSite extends Target {
+    site: {
+        siteId: number;
+        type: string;
+        subnet: string | null;
+        exitNodeId: number | null;
+    };
+}
 
 let currentExitNodeId: number;
 const redirectHttpsMiddlewareName = "redirect-to-https";
@@ -83,76 +93,95 @@ export async function traefikConfigProvider(
 export async function getTraefikConfig(exitNodeId: number): Promise<any> {
     // Get all resources with related data
     const allResources = await db.transaction(async (tx) => {
-        // Get the site(s) on this exit node
-        const resourcesWithRelations = await tx
-            .select({
-                // Resource fields
-                resourceId: resources.resourceId,
-                fullDomain: resources.fullDomain,
-                ssl: resources.ssl,
-                http: resources.http,
-                proxyPort: resources.proxyPort,
-                protocol: resources.protocol,
-                subdomain: resources.subdomain,
-                domainId: resources.domainId,
-                // Site fields
-                site: {
+        // Get resources with their targets and sites in a single optimized query
+            // Start from sites on this exit node, then join to targets and resources
+            const resourcesWithTargetsAndSites = await tx
+                .select({
+                    // Resource fields
+                    resourceId: resources.resourceId,
+                    fullDomain: resources.fullDomain,
+                    ssl: resources.ssl,
+                    http: resources.http,
+                    proxyPort: resources.proxyPort,
+                    protocol: resources.protocol,
+                    subdomain: resources.subdomain,
+                    domainId: resources.domainId,
+                    enabled: resources.enabled,
+                    stickySession: resources.stickySession,
+                    tlsServerName: resources.tlsServerName,
+                    setHostHeader: resources.setHostHeader,
+                    enableProxy: resources.enableProxy,
+                    // Target fields
+                    targetId: targets.targetId,
+                    targetEnabled: targets.enabled,
+                    ip: targets.ip,
+                    method: targets.method,
+                    port: targets.port,
+                    internalPort: targets.internalPort,
+                    // Site fields
                     siteId: sites.siteId,
-                    type: sites.type,
+                    siteType: sites.type,
                     subnet: sites.subnet,
                     exitNodeId: sites.exitNodeId
-                },
-                enabled: resources.enabled,
-                stickySession: resources.stickySession,
-                tlsServerName: resources.tlsServerName,
-                setHostHeader: resources.setHostHeader,
-                enableProxy: resources.enableProxy
-            })
-            .from(resources)
-            .innerJoin(sites, eq(sites.siteId, resources.siteId))
-            .where(
-                or(eq(sites.exitNodeId, exitNodeId), isNull(sites.exitNodeId))
-            );
+                })
+                .from(sites)
+                .innerJoin(targets, eq(targets.siteId, sites.siteId))
+                .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
+                .where(
+                    and(
+                        eq(targets.enabled, true),
+                        eq(resources.enabled, true),
+                        or(
+                            eq(sites.exitNodeId, currentExitNodeId),
+                            isNull(sites.exitNodeId)
+                        )
+                    )
+                );
 
-        // Get all resource IDs from the first query
-        const resourceIds = resourcesWithRelations.map((r) => r.resourceId);
+            // Group by resource and include targets with their unique site data
+            const resourcesMap = new Map();
 
-        // Second query to get all enabled targets for these resources
-        const allTargets =
-            resourceIds.length > 0
-                ? await tx
-                      .select({
-                          resourceId: targets.resourceId,
-                          targetId: targets.targetId,
-                          ip: targets.ip,
-                          method: targets.method,
-                          port: targets.port,
-                          internalPort: targets.internalPort,
-                          enabled: targets.enabled
-                      })
-                      .from(targets)
-                      .where(
-                          and(
-                              inArray(targets.resourceId, resourceIds),
-                              eq(targets.enabled, true)
-                          )
-                      )
-                : [];
+            resourcesWithTargetsAndSites.forEach((row) => {
+                const resourceId = row.resourceId;
 
-        // Create a map for fast target lookup by resourceId
-        const targetsMap = allTargets.reduce((map, target) => {
-            if (!map.has(target.resourceId)) {
-                map.set(target.resourceId, []);
-            }
-            map.get(target.resourceId).push(target);
-            return map;
-        }, new Map());
+                if (!resourcesMap.has(resourceId)) {
+                    resourcesMap.set(resourceId, {
+                        resourceId: row.resourceId,
+                        fullDomain: row.fullDomain,
+                        ssl: row.ssl,
+                        http: row.http,
+                        proxyPort: row.proxyPort,
+                        protocol: row.protocol,
+                        subdomain: row.subdomain,
+                        domainId: row.domainId,
+                        enabled: row.enabled,
+                        stickySession: row.stickySession,
+                        tlsServerName: row.tlsServerName,
+                        setHostHeader: row.setHostHeader,
+                        enableProxy: row.enableProxy,
+                        targets: []
+                    });
+                }
 
-        // Combine the data
-        return resourcesWithRelations.map((resource) => ({
-            ...resource,
-            targets: targetsMap.get(resource.resourceId) || []
-        }));
+                // Add target with its associated site data
+                resourcesMap.get(resourceId).targets.push({
+                    resourceId: row.resourceId,
+                    targetId: row.targetId,
+                    ip: row.ip,
+                    method: row.method,
+                    port: row.port,
+                    internalPort: row.internalPort,
+                    enabled: row.targetEnabled,
+                    site: {
+                        siteId: row.siteId,
+                        type: row.siteType,
+                        subnet: row.subnet,
+                        exitNodeId: row.exitNodeId
+                    }
+                });
+            });
+
+            return Array.from(resourcesMap.values());
     });
 
     if (!allResources.length) {
@@ -270,7 +299,194 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                     middlewares: [redirectHttpsMiddlewareName],
                     service: serviceName,
                     rule: `Host(\`${fullDomain}\`)`,
+<<<<<<< HEAD
                     priority: 100
+=======
+                    priority: 100,
+                    ...(resource.ssl ? { tls } : {})
+                };
+
+                if (resource.ssl) {
+                    config_output.http.routers![routerName + "-redirect"] = {
+                        entryPoints: [
+                            config.getRawConfig().traefik.http_entrypoint
+                        ],
+                        middlewares: [redirectHttpsMiddlewareName],
+                        service: serviceName,
+                        rule: `Host(\`${fullDomain}\`)`,
+                        priority: 100
+                    };
+                }
+
+                config_output.http.services![serviceName] = {
+                    loadBalancer: {
+                        servers: targets
+                            .filter((target: TargetWithSite) => {
+                                if (!target.enabled) {
+                                    return false;
+                                }
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    if (
+                                        !target.ip ||
+                                        !target.port ||
+                                        !target.method
+                                    ) {
+                                        return false;
+                                    }
+                                } else if (target.site.type === "newt") {
+                                    if (
+                                        !target.internalPort ||
+                                        !target.method ||
+                                        !target.site.subnet
+                                    ) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            })
+                            .map((target: TargetWithSite) => {
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    return {
+                                        url: `${target.method}://${target.ip}:${target.port}`
+                                    };
+                                } else if (target.site.type === "newt") {
+                                    const ip = target.site.subnet!.split("/")[0];
+                                    return {
+                                        url: `${target.method}://${ip}:${target.internalPort}`
+                                    };
+                                }
+                            }),
+                        ...(resource.stickySession
+                            ? {
+                                  sticky: {
+                                      cookie: {
+                                          name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                          secure: resource.ssl,
+                                          httpOnly: true
+                                      }
+                                  }
+                              }
+                            : {})
+                    }
+                };
+
+                // Add the serversTransport if TLS server name is provided
+                if (resource.tlsServerName) {
+                    if (!config_output.http.serversTransports) {
+                        config_output.http.serversTransports = {};
+                    }
+                    config_output.http.serversTransports![transportName] = {
+                        serverName: resource.tlsServerName,
+                        //unfortunately the following needs to be set. traefik doesn't merge the default serverTransport settings
+                        // if defined in the static config and here. if not set, self-signed certs won't work
+                        insecureSkipVerify: true
+                    };
+                    config_output.http.services![
+                        serviceName
+                    ].loadBalancer.serversTransport = transportName;
+                }
+
+                // Add the host header middleware
+                if (resource.setHostHeader) {
+                    if (!config_output.http.middlewares) {
+                        config_output.http.middlewares = {};
+                    }
+                    config_output.http.middlewares[hostHeaderMiddlewareName] = {
+                        headers: {
+                            customRequestHeaders: {
+                                Host: resource.setHostHeader
+                            }
+                        }
+                    };
+                    if (!config_output.http.routers![routerName].middlewares) {
+                        config_output.http.routers![routerName].middlewares =
+                            [];
+                    }
+                    config_output.http.routers![routerName].middlewares = [
+                        ...config_output.http.routers![routerName].middlewares,
+                        hostHeaderMiddlewareName
+                    ];
+                }
+            } else {
+                // Non-HTTP (TCP/UDP) configuration
+                if (!resource.enableProxy) {
+                    continue;
+                }
+
+                const protocol = resource.protocol.toLowerCase();
+                const port = resource.proxyPort;
+
+                if (!port) {
+                    continue;
+                }
+
+                if (!config_output[protocol]) {
+                    config_output[protocol] = {
+                        routers: {},
+                        services: {}
+                    };
+                }
+
+                config_output[protocol].routers[routerName] = {
+                    entryPoints: [`${protocol}-${port}`],
+                    service: serviceName,
+                    ...(protocol === "tcp" ? { rule: "HostSNI(`*`)" } : {})
+                };
+
+                config_output[protocol].services[serviceName] = {
+                    loadBalancer: {
+                        servers: targets
+                            .filter((target: TargetWithSite) => {
+                                if (!target.enabled) {
+                                    return false;
+                                }
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    if (!target.ip || !target.port) {
+                                        return false;
+                                    }
+                                } else if (target.site.type === "newt") {
+                                    if (!target.internalPort || !target.site.subnet) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            })
+                            .map((target: TargetWithSite) => {
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    return {
+                                        address: `${target.ip}:${target.port}`
+                                    };
+                                } else if (target.site.type === "newt") {
+                                    const ip = target.site.subnet!.split("/")[0];
+                                    return {
+                                        address: `${ip}:${target.internalPort}`
+                                    };
+                                }
+                            }),
+                        ...(resource.stickySession
+                            ? {
+                                  sticky: {
+                                      ipStrategy: {
+                                          depth: 0,
+                                          sourcePort: true
+                                      }
+                                  }
+                              }
+                            : {})
+                    }
+>>>>>>> dev
                 };
             }
 

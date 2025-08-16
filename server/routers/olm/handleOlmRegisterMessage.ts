@@ -22,7 +22,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
     const clientId = olm.clientId;
-    const { publicKey, relay } = message.data;
+    const { publicKey, relay, olmVersion } = message.data;
 
     logger.debug(
         `Olm client ID: ${clientId}, Public Key: ${publicKey}, Relay: ${relay}`
@@ -66,14 +66,26 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             }
         });
 
-        // THIS IS FOR BACKWARDS COMPATIBILITY
-        await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch/all",
-            data: {
-                serverPubKey: allExitNodes[0].publicKey,
-                endpoint: allExitNodes[0].endpoint
-            }
-        });
+        if (!olmVersion) {
+            // THIS IS FOR BACKWARDS COMPATIBILITY
+            // THE OLDER CLIENTS DID NOT SEND THE VERSION
+            await sendToClient(olm.olmId, {
+                type: "olm/wg/holepunch",
+                data: {
+                    serverPubKey: allExitNodes[0].publicKey,
+                    endpoint: allExitNodes[0].endpoint
+                }
+            });
+        }
+    }
+
+    if (olmVersion) {
+        await db
+            .update(olms)
+            .set({
+                version: olmVersion
+            })
+            .where(eq(olms.olmId, olm.olmId));
     }
 
     if (now - (client.lastHolePunch || 0) > 6) {

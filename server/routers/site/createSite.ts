@@ -145,7 +145,7 @@ export async function createSite(
                 return next(
                     createHttpError(
                         HttpCode.BAD_REQUEST,
-                        "Invalid subnet format. Please provide a valid CIDR notation."
+                        "Invalid address format. Please provide a valid IP notation."
                     )
                 );
             }

@@ -98,7 +98,6 @@ export default function CreateShareLinkForm({
             resourceId: number;
             name: string;
             resourceUrl: string;
-            siteName: string | null;
         }[]
     >([]);
 
@@ -160,8 +159,7 @@ export default function CreateShareLinkForm({
                         .map((r) => ({
                             resourceId: r.resourceId,
                             name: r.name,
-                            resourceUrl: `${r.ssl ? "https://" : "http://"}${r.fullDomain}/`,
-                            siteName: r.siteName
+                            resourceUrl: `${r.ssl ? "https://" : "http://"}${r.fullDomain}/`
                         }))
                 );
             }
@@ -236,8 +234,7 @@ export default function CreateShareLinkForm({
                 resourceName: values.resourceName,
                 title: token.title,
                 createdAt: token.createdAt,
-                expiresAt: token.expiresAt,
-                siteName: resource?.siteName || null
+                expiresAt: token.expiresAt
             });
         }
 
@@ -246,7 +243,7 @@ export default function CreateShareLinkForm({
 
     function getSelectedResourceName(id: number) {
         const resource = resources.find((r) => r.resourceId === id);
-        return `${resource?.name} ${resource?.siteName ? `(${resource.siteName})` : ""}`;
+        return `${resource?.name}`;
     }
 
     return (
@@ -346,7 +343,7 @@ export default function CreateShareLinkForm({
                                                                                                 : "opacity-0"
                                                                                         )}
                                                                                     />
-                                                                                    {`${r.name} ${r.siteName ? `(${r.siteName})` : ""}`}
+                                                                                    {`${r.name}`}
                                                                                 </CommandItem>
                                                                             )
                                                                         )}

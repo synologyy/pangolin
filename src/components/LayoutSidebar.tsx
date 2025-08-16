@@ -70,7 +70,7 @@ export function LayoutSidebar({
                         isCollapsed={isSidebarCollapsed}
                     />
                 </div>
-                <div className="px-4 pt-1">
+                <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
                             <Link

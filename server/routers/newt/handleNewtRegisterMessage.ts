@@ -169,78 +169,37 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             .where(eq(newts.newtId, newt.newtId));
     }
 
-    // Improved version
-    const allResources = await db.transaction(async (tx) => {
-        // First get all resources for the site
-        const resourcesList = await tx
-            .select({
-                resourceId: resources.resourceId,
-                subdomain: resources.subdomain,
-                fullDomain: resources.fullDomain,
-                ssl: resources.ssl,
-                blockAccess: resources.blockAccess,
-                sso: resources.sso,
-                emailWhitelistEnabled: resources.emailWhitelistEnabled,
-                http: resources.http,
-                proxyPort: resources.proxyPort,
-                protocol: resources.protocol
-            })
-            .from(resources)
-            .where(eq(resources.siteId, siteId));
+    // Get all enabled targets with their resource protocol information
+    const allTargets = await db
+        .select({
+            resourceId: targets.resourceId,
+            targetId: targets.targetId,
+            ip: targets.ip,
+            method: targets.method,
+            port: targets.port,
+            internalPort: targets.internalPort,
+            enabled: targets.enabled,
+            protocol: resources.protocol
+        })
+        .from(targets)
+        .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
+        .where(and(eq(targets.siteId, siteId), eq(targets.enabled, true)));
 
-        // Get all enabled targets for these resources in a single query
-        const resourceIds = resourcesList.map((r) => r.resourceId);
-        const allTargets =
-            resourceIds.length > 0
-                ? await tx
-                      .select({
-                          resourceId: targets.resourceId,
-                          targetId: targets.targetId,
-                          ip: targets.ip,
-                          method: targets.method,
-                          port: targets.port,
-                          internalPort: targets.internalPort,
-                          enabled: targets.enabled
-                      })
-                      .from(targets)
-                      .where(
-                          and(
-                              inArray(targets.resourceId, resourceIds),
-                              eq(targets.enabled, true)
-                          )
-                      )
-                : [];
+    const { tcpTargets, udpTargets } = allTargets.reduce(
+        (acc, target) => {
+            // Filter out invalid targets
+            if (!target.internalPort || !target.ip || !target.port) {
+                return acc;
+            }
 
-        // Combine the data in JS instead of using SQL for the JSON
-        return resourcesList.map((resource) => ({
-            ...resource,
-            targets: allTargets.filter(
-                (target) => target.resourceId === resource.resourceId
-            )
-        }));
-    });
-
-    const { tcpTargets, udpTargets } = allResources.reduce(
-        (acc, resource) => {
-            // Skip resources with no targets
-            if (!resource.targets?.length) return acc;
-
-            // Format valid targets into strings
-            const formattedTargets = resource.targets
-                .filter(
-                    (target: Target) =>
-                        target?.internalPort && target?.ip && target?.port
-                )
-                .map(
-                    (target: Target) =>
-                        `${target.internalPort}:${target.ip}:${target.port}`
-                );
+            // Format target into string
+            const formattedTarget = `${target.internalPort}:${target.ip}:${target.port}`;
 
             // Add to the appropriate protocol array
-            if (resource.protocol === "tcp") {
-                acc.tcpTargets.push(...formattedTargets);
+            if (target.protocol === "tcp") {
+                acc.tcpTargets.push(formattedTarget);
             } else {
-                acc.udpTargets.push(...formattedTargets);
+                acc.udpTargets.push(formattedTarget);
             }
 
             return acc;

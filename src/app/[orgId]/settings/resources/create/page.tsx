@@ -42,9 +42,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
-import { subdomainSchema } from "@server/lib/schemas";
 import { ListDomainsResponse } from "@server/routers/domain";
-import LoaderPlaceholder from "@app/components/PlaceHolderLoader";
 import {
     Command,
     CommandEmpty,
@@ -66,10 +64,33 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import DomainPicker from "@app/components/DomainPicker";
 import { build } from "@server/build";
+import { ContainersSelector } from "@app/components/ContainersSelector";
+import {
+    ColumnDef,
+    getFilteredRowModel,
+    getSortedRowModel,
+    getPaginationRowModel,
+    getCoreRowModel,
+    useReactTable,
+    flexRender,
+    Row
+} from "@tanstack/react-table";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@app/components/ui/table";
+import { Switch } from "@app/components/ui/switch";
+import { ArrayElement } from "@server/types/ArrayElement";
+import { isTargetValid } from "@server/lib/validators";
+import { ListTargetsResponse } from "@server/routers/target";
+import { DockerManager, DockerState } from "@app/lib/docker";
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
-    siteId: z.number(),
     http: z.boolean()
 });
 
@@ -80,8 +101,15 @@ const httpResourceFormSchema = z.object({
 
 const tcpUdpResourceFormSchema = z.object({
     protocol: z.string(),
-    proxyPort: z.number().int().min(1).max(65535),
-    enableProxy: z.boolean().default(false)
+    proxyPort: z.number().int().min(1).max(65535)
+    // enableProxy: z.boolean().default(false)
+});
+
+const addTargetSchema = z.object({
+    ip: z.string().refine(isTargetValid),
+    method: z.string().nullable(),
+    port: z.coerce.number().int().positive(),
+    siteId: z.number().int().positive()
 });
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
@@ -96,6 +124,15 @@ interface ResourceTypeOption {
     description: string;
     disabled?: boolean;
 }
+
+type LocalTarget = Omit<
+    ArrayElement<ListTargetsResponse["targets"]> & {
+        new?: boolean;
+        updated?: boolean;
+        siteType: string | null;
+    },
+    "protocol"
+>;
 
 export default function Page() {
     const { env } = useEnvContext();
@@ -112,6 +149,11 @@ export default function Page() {
     const [createLoading, setCreateLoading] = useState(false);
     const [showSnippets, setShowSnippets] = useState(false);
     const [resourceId, setResourceId] = useState<number | null>(null);
+
+    // Target management state
+    const [targets, setTargets] = useState<LocalTarget[]>([]);
+    const [targetsToRemove, setTargetsToRemove] = useState<number[]>([]);
+    const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(new Map());
 
     const resourceTypes: ReadonlyArray<ResourceTypeOption> = [
         {
@@ -147,10 +189,127 @@ export default function Page() {
         resolver: zodResolver(tcpUdpResourceFormSchema),
         defaultValues: {
             protocol: "tcp",
-            proxyPort: undefined,
-            enableProxy: false
+            proxyPort: undefined
+            // enableProxy: false
         }
     });
+
+    const addTargetForm = useForm({
+        resolver: zodResolver(addTargetSchema),
+        defaultValues: {
+            ip: "",
+            method: baseForm.watch("http") ? "http" : null,
+            port: "" as any as number
+        } as z.infer<typeof addTargetSchema>
+    });
+
+    const watchedIp = addTargetForm.watch("ip");
+    const watchedPort = addTargetForm.watch("port");
+    const watchedSiteId = addTargetForm.watch("siteId");
+
+    const handleContainerSelect = (hostname: string, port?: number) => {
+        addTargetForm.setValue("ip", hostname);
+        if (port) {
+            addTargetForm.setValue("port", port);
+        }
+    };
+
+    const initializeDockerForSite = async (siteId: number) => {
+        if (dockerStates.has(siteId)) {
+            return; // Already initialized
+        }
+
+        const dockerManager = new DockerManager(api, siteId);
+        const dockerState = await dockerManager.initializeDocker();
+
+        setDockerStates(prev => new Map(prev.set(siteId, dockerState)));
+    };
+
+    const refreshContainersForSite = async (siteId: number) => {
+        const dockerManager = new DockerManager(api, siteId);
+        const containers = await dockerManager.fetchContainers();
+
+        setDockerStates(prev => {
+            const newMap = new Map(prev);
+            const existingState = newMap.get(siteId);
+            if (existingState) {
+                newMap.set(siteId, { ...existingState, containers });
+            }
+            return newMap;
+        });
+    };
+
+    const getDockerStateForSite = (siteId: number): DockerState => {
+        return dockerStates.get(siteId) || {
+            isEnabled: false,
+            isAvailable: false,
+            containers: []
+        };
+    };
+
+    async function addTarget(data: z.infer<typeof addTargetSchema>) {
+        // Check if target with same IP, port and method already exists
+        const isDuplicate = targets.some(
+            (target) =>
+                target.ip === data.ip &&
+                target.port === data.port &&
+                target.method === data.method &&
+                target.siteId === data.siteId
+        );
+
+        if (isDuplicate) {
+            toast({
+                variant: "destructive",
+                title: t("targetErrorDuplicate"),
+                description: t("targetErrorDuplicateDescription")
+            });
+            return;
+        }
+
+        const site = sites.find((site) => site.siteId === data.siteId);
+
+        const newTarget: LocalTarget = {
+            ...data,
+            siteType: site?.type || null,
+            enabled: true,
+            targetId: new Date().getTime(),
+            new: true,
+            resourceId: 0 // Will be set when resource is created
+        };
+
+        setTargets([...targets, newTarget]);
+        addTargetForm.reset({
+            ip: "",
+            method: baseForm.watch("http") ? "http" : null,
+            port: "" as any as number
+        });
+    }
+
+    const removeTarget = (targetId: number) => {
+        setTargets([
+            ...targets.filter((target) => target.targetId !== targetId)
+        ]);
+
+        if (!targets.find((target) => target.targetId === targetId)?.new) {
+            setTargetsToRemove([...targetsToRemove, targetId]);
+        }
+    };
+
+    async function updateTarget(targetId: number, data: Partial<LocalTarget>) {
+        const site = sites.find((site) => site.siteId === data.siteId);
+        setTargets(
+            targets.map((target) =>
+                target.targetId === targetId
+                    ? {
+                          ...target,
+                          ...data,
+                          updated: true,
+                          siteType: site?.type || null
+                      }
+                    : target
+            )
+        );
+    }
 
     async function onSubmit() {
         setCreateLoading(true);
@@ -161,7 +320,6 @@ export default function Page() {
         try {
             const payload = {
                 name: baseData.name,
-                siteId: baseData.siteId,
                 http: baseData.http
             };
 
@@ -176,15 +334,15 @@ export default function Page() {
                 const tcpUdpData = tcpUdpForm.getValues();
                 Object.assign(payload, {
                     protocol: tcpUdpData.protocol,
-                    proxyPort: tcpUdpData.proxyPort,
-                    enableProxy: tcpUdpData.enableProxy
+                    proxyPort: tcpUdpData.proxyPort
+                    // enableProxy: tcpUdpData.enableProxy
                 });
             }
 
             const res = await api
                 .put<
                     AxiosResponse<Resource>
-                >(`/org/${orgId}/site/${baseData.siteId}/resource/`, payload)
+                >(`/org/${orgId}/resource/`, payload)
                 .catch((e) => {
                     toast({
                         variant: "destructive",
@@ -200,18 +358,45 @@ export default function Page() {
                 const id = res.data.data.resourceId;
                 setResourceId(id);
 
+                // Create targets if any exist
+                if (targets.length > 0) {
+                    try {
+                        for (const target of targets) {
+                            const data = {
+                                ip: target.ip,
+                                port: target.port,
+                                method: target.method,
+                                enabled: target.enabled,
+                                siteId: target.siteId
+                            };
+
+                            await api.put(`/resource/${id}/target`, data);
+                        }
+                    } catch (targetError) {
+                        console.error("Error creating targets:", targetError);
+                        toast({
+                            variant: "destructive",
+                            title: t("targetErrorCreate"),
+                            description: formatAxiosError(
+                                targetError,
+                                t("targetErrorCreateDescription")
+                            )
+                        });
+                    }
+                }
+
                 if (isHttp) {
                     router.push(`/${orgId}/settings/resources/${id}`);
                 } else {
                     const tcpUdpData = tcpUdpForm.getValues();
                     // Only show config snippets if enableProxy is explicitly true
-                    if (tcpUdpData.enableProxy === true) {
-                        setShowSnippets(true);
-                        router.refresh();
-                    } else {
-                        // If enableProxy is false or undefined, go directly to resource page
-                        router.push(`/${orgId}/settings/resources/${id}`);
-                    }
+                    // if (tcpUdpData.enableProxy === true) {
+                    setShowSnippets(true);
+                    router.refresh();
+                    // } else {
+                    //     // If enableProxy is false or undefined, go directly to resource page
+                    //     router.push(`/${orgId}/settings/resources/${id}`);
+                    // }
                 }
             }
         } catch (e) {
@@ -249,8 +434,16 @@ export default function Page() {
                 if (res?.status === 200) {
                     setSites(res.data.data.sites);
 
-                    if (res.data.data.sites.length > 0) {
-                        baseForm.setValue(
+                    // Initialize Docker for newt sites
+                    for (const site of res.data.data.sites) {
+                        if (site.type === "newt") {
+                            initializeDockerForSite(site.siteId);
+                        }
+                    }
+
+                    // If there's only one site, set it as the default in the form
+                    if (res.data.data.sites.length) {
+                        addTargetForm.setValue(
                             "siteId",
                             res.data.data.sites[0].siteId
                         );
@@ -291,6 +484,216 @@ export default function Page() {
 
         load();
     }, []);
+
+    const columns: ColumnDef<LocalTarget>[] = [
+        {
+            accessorKey: "siteId",
+            header: t("site"),
+            cell: ({ row }) => {
+                const selectedSite = sites.find(
+                    (site) => site.siteId === row.original.siteId
+                );
+
+                const handleContainerSelectForTarget = (
+                    hostname: string,
+                    port?: number
+                ) => {
+                    updateTarget(row.original.targetId, {
+                        ...row.original,
+                        ip: hostname
+                    });
+                    if (port) {
+                        updateTarget(row.original.targetId, {
+                            ...row.original,
+                            port: port
+                        });
+                    }
+                };
+
+                return (
+                    <div className="flex gap-2 items-center">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                        "justify-between flex-1",
+                                        !row.original.siteId &&
+                                            "text-muted-foreground"
+                                    )}
+                                >
+                                    {row.original.siteId
+                                        ? selectedSite?.name
+                                        : t("siteSelect")}
+                                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="p-0">
+                                <Command>
+                                    <CommandInput
+                                        placeholder={t("siteSearch")}
+                                    />
+                                    <CommandList>
+                                        <CommandEmpty>
+                                            {t("siteNotFound")}
+                                        </CommandEmpty>
+                                        <CommandGroup>
+                                            {sites.map((site) => (
+                                                <CommandItem
+                                                    value={`${site.siteId}:${site.name}:${site.niceId}`}
+                                                    key={site.siteId}
+                                                    onSelect={() => {
+                                                        updateTarget(
+                                                            row.original
+                                                                .targetId,
+                                                            {
+                                                                siteId: site.siteId
+                                                            }
+                                                        );
+                                                    }}
+                                                >
+                                                    <CheckIcon
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            site.siteId ===
+                                                                row.original
+                                                                    .siteId
+                                                                ? "opacity-100"
+                                                                : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {site.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        {selectedSite && selectedSite.type === "newt" && (() => {
+                            const dockerState = getDockerStateForSite(selectedSite.siteId);
+                            return (
+                                <ContainersSelector
+                                    site={selectedSite}
+                                    containers={dockerState.containers}
+                                    isAvailable={dockerState.isAvailable}
+                                    onContainerSelect={handleContainerSelectForTarget}
+                                    onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
+                                />
+                            );
+                        })()}
+                    </div>
+                );
+            }
+        },
+        ...(baseForm.watch("http")
+            ? [
+                  {
+                      accessorKey: "method",
+                      header: t("method"),
+                      cell: ({ row }: { row: Row<LocalTarget> }) => (
+                          <Select
+                              defaultValue={row.original.method ?? ""}
+                              onValueChange={(value) =>
+                                  updateTarget(row.original.targetId, {
+                                      ...row.original,
+                                      method: value
+                                  })
+                              }
+                          >
+                              <SelectTrigger>
+                                  {row.original.method}
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="http">http</SelectItem>
+                                  <SelectItem value="https">https</SelectItem>
+                                  <SelectItem value="h2c">h2c</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      )
+                  }
+              ]
+            : []),
+        {
+            accessorKey: "ip",
+            header: t("targetAddr"),
+            cell: ({ row }) => (
+                <Input
+                    defaultValue={row.original.ip}
+                    className="min-w-[150px]"
+                    onBlur={(e) =>
+                        updateTarget(row.original.targetId, {
+                            ...row.original,
+                            ip: e.target.value
+                        })
+                    }
+                />
+            )
+        },
+        {
+            accessorKey: "port",
+            header: t("targetPort"),
+            cell: ({ row }) => (
+                <Input
+                    type="number"
+                    defaultValue={row.original.port}
+                    className="min-w-[100px]"
+                    onBlur={(e) =>
+                        updateTarget(row.original.targetId, {
+                            ...row.original,
+                            port: parseInt(e.target.value, 10)
+                        })
+                    }
+                />
+            )
+        },
+        {
+            accessorKey: "enabled",
+            header: t("enabled"),
+            cell: ({ row }) => (
+                <Switch
+                    defaultChecked={row.original.enabled}
+                    onCheckedChange={(val) =>
+                        updateTarget(row.original.targetId, {
+                            ...row.original,
+                            enabled: val
+                        })
+                    }
+                />
+            )
+        },
+        {
+            id: "actions",
+            cell: ({ row }) => (
+                <>
+                    <div className="flex items-center justify-end space-x-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => removeTarget(row.original.targetId)}
+                        >
+                            {t("delete")}
+                        </Button>
+                    </div>
+                </>
+            )
+        }
+    ];
+
+    const table = useReactTable({
+        data: targets,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        state: {
+            pagination: {
+                pageIndex: 0,
+                pageSize: 1000
+            }
+        }
+    });
 
     return (
         <>
@@ -348,104 +751,6 @@ export default function Page() {
                                                         </FormItem>
                                                     )}
                                                 />
-
-                                                <FormField
-                                                    control={baseForm.control}
-                                                    name="siteId"
-                                                    render={({ field }) => (
-                                                        <FormItem className="flex flex-col">
-                                                            <FormLabel>
-                                                                {t("site")}
-                                                            </FormLabel>
-                                                            <Popover>
-                                                                <PopoverTrigger
-                                                                    asChild
-                                                                >
-                                                                    <FormControl>
-                                                                        <Button
-                                                                            variant="outline"
-                                                                            role="combobox"
-                                                                            className={cn(
-                                                                                "justify-between",
-                                                                                !field.value &&
-                                                                                    "text-muted-foreground"
-                                                                            )}
-                                                                        >
-                                                                            {field.value
-                                                                                ? sites.find(
-                                                                                      (
-                                                                                          site
-                                                                                      ) =>
-                                                                                          site.siteId ===
-                                                                                          field.value
-                                                                                  )
-                                                                                      ?.name
-                                                                                : t(
-                                                                                      "siteSelect"
-                                                                                  )}
-                                                                            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                        </Button>
-                                                                    </FormControl>
-                                                                </PopoverTrigger>
-                                                                <PopoverContent className="p-0">
-                                                                    <Command>
-                                                                        <CommandInput
-                                                                            placeholder={t(
-                                                                                "siteSearch"
-                                                                            )}
-                                                                        />
-                                                                        <CommandList>
-                                                                            <CommandEmpty>
-                                                                                {t(
-                                                                                    "siteNotFound"
-                                                                                )}
-                                                                            </CommandEmpty>
-                                                                            <CommandGroup>
-                                                                                {sites.map(
-                                                                                    (
-                                                                                        site
-                                                                                    ) => (
-                                                                                        <CommandItem
-                                                                                            value={`${site.siteId}:${site.name}:${site.niceId}`}
-                                                                                            key={
-                                                                                                site.siteId
-                                                                                            }
-                                                                                            onSelect={() => {
-                                                                                                baseForm.setValue(
-                                                                                                    "siteId",
-                                                                                                    site.siteId
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            <CheckIcon
-                                                                                                className={cn(
-                                                                                                    "mr-2 h-4 w-4",
-                                                                                                    site.siteId ===
-                                                                                                        field.value
-                                                                                                        ? "opacity-100"
-                                                                                                        : "opacity-0"
-                                                                                                )}
-                                                                                            />
-                                                                                            {
-                                                                                                site.name
-                                                                                            }
-                                                                                        </CommandItem>
-                                                                                    )
-                                                                                )}
-                                                                            </CommandGroup>
-                                                                        </CommandList>
-                                                                    </Command>
-                                                                </PopoverContent>
-                                                            </Popover>
-                                                            <FormMessage />
-                                                            <FormDescription>
-                                                                {t(
-                                                                    "siteSelectionDescription"
-                                                                )}
-                                                            </FormDescription>
-                                                        </FormItem>
-                                                    )}
-                                                />
                                             </form>
                                         </Form>
                                     </SettingsSectionForm>
@@ -470,6 +775,13 @@ export default function Page() {
                                                 baseForm.setValue(
                                                     "http",
                                                     value === "http"
+                                                );
+                                                // Update method default when switching resource type
+                                                addTargetForm.setValue(
+                                                    "method",
+                                                    value === "http"
+                                                        ? "http"
+                                                        : null
                                                 );
                                             }}
                                             cols={2}
@@ -616,7 +928,7 @@ export default function Page() {
                                                         )}
                                                     />
 
-                                                    {build == "oss" && (
+                                                    {/* {build == "oss" && (
                                                         <FormField
                                                             control={
                                                                 tcpUdpForm.control
@@ -654,13 +966,386 @@ export default function Page() {
                                                                 </FormItem>
                                                             )}
                                                         />
-                                                    )}
+                                                    )} */}
                                                 </form>
                                             </Form>
                                         </SettingsSectionForm>
                                     </SettingsSectionBody>
                                 </SettingsSection>
                             )}
+
+                            <SettingsSection>
+                                <SettingsSectionHeader>
+                                    <SettingsSectionTitle>
+                                        {t("targets")}
+                                    </SettingsSectionTitle>
+                                    <SettingsSectionDescription>
+                                        {t("targetsDescription")}
+                                    </SettingsSectionDescription>
+                                </SettingsSectionHeader>
+                                <SettingsSectionBody>
+                                    <div className="p-4 border rounded-md">
+                                        <Form {...addTargetForm}>
+                                            <form
+                                                onSubmit={addTargetForm.handleSubmit(
+                                                    addTarget
+                                                )}
+                                                className="space-y-4"
+                                            >
+                                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-start">
+                                                    <FormField
+                                                        control={
+                                                            addTargetForm.control
+                                                        }
+                                                        name="siteId"
+                                                        render={({ field }) => (
+                                                            <FormItem className="flex flex-col">
+                                                                <FormLabel>
+                                                                    {t("site")}
+                                                                </FormLabel>
+                                                                <div className="flex gap-2">
+                                                                    <Popover>
+                                                                        <PopoverTrigger
+                                                                            asChild
+                                                                        >
+                                                                            <FormControl>
+                                                                                <Button
+                                                                                    variant="outline"
+                                                                                    role="combobox"
+                                                                                    className={cn(
+                                                                                        "justify-between flex-1",
+                                                                                        !field.value &&
+                                                                                            "text-muted-foreground"
+                                                                                    )}
+                                                                                >
+                                                                                    {field.value
+                                                                                        ? sites.find(
+                                                                                              (
+                                                                                                  site
+                                                                                              ) =>
+                                                                                                  site.siteId ===
+                                                                                                  field.value
+                                                                                          )
+                                                                                              ?.name
+                                                                                        : t(
+                                                                                              "siteSelect"
+                                                                                          )}
+                                                                                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                                </Button>
+                                                                            </FormControl>
+                                                                        </PopoverTrigger>
+                                                                        <PopoverContent className="p-0">
+                                                                            <Command>
+                                                                                <CommandInput
+                                                                                    placeholder={t(
+                                                                                        "siteSearch"
+                                                                                    )}
+                                                                                />
+                                                                                <CommandList>
+                                                                                    <CommandEmpty>
+                                                                                        {t(
+                                                                                            "siteNotFound"
+                                                                                        )}
+                                                                                    </CommandEmpty>
+                                                                                    <CommandGroup>
+                                                                                        {sites.map(
+                                                                                            (
+                                                                                                site
+                                                                                            ) => (
+                                                                                                <CommandItem
+                                                                                                    value={`${site.siteId}:${site.name}:${site.niceId}`}
+                                                                                                    key={
+                                                                                                        site.siteId
+                                                                                                    }
+                                                                                                    onSelect={() => {
+                                                                                                        addTargetForm.setValue(
+                                                                                                            "siteId",
+                                                                                                            site.siteId
+                                                                                                        );
+                                                                                                    }}
+                                                                                                >
+                                                                                                    <CheckIcon
+                                                                                                        className={cn(
+                                                                                                            "mr-2 h-4 w-4",
+                                                                                                            site.siteId ===
+                                                                                                                field.value
+                                                                                                                ? "opacity-100"
+                                                                                                                : "opacity-0"
+                                                                                                        )}
+                                                                                                    />
+                                                                                                    {
+                                                                                                        site.name
+                                                                                                    }
+                                                                                                </CommandItem>
+                                                                                            )
+                                                                                        )}
+                                                                                    </CommandGroup>
+                                                                                </CommandList>
+                                                                            </Command>
+                                                                        </PopoverContent>
+                                                                    </Popover>
+
+                                                                    {field.value &&
+                                                                        (() => {
+                                                                            const selectedSite =
+                                                                                sites.find(
+                                                                                    (
+                                                                                        site
+                                                                                    ) =>
+                                                                                        site.siteId ===
+                                                                                        field.value
+                                                                                );
+                                                                            return selectedSite &&
+                                                                                selectedSite.type ===
+                                                                                    "newt" ? (() => {
+                                                                                const dockerState = getDockerStateForSite(selectedSite.siteId);
+                                                                                return (
+                                                                                    <ContainersSelector
+                                                                                        site={selectedSite}
+                                                                                        containers={dockerState.containers}
+                                                                                        isAvailable={dockerState.isAvailable}
+                                                                                        onContainerSelect={handleContainerSelect}
+                                                                                        onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
+                                                                                    />
+                                                                                );
+                                                                            })() : null;
+                                                                        })()}
+                                                                </div>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    {baseForm.watch("http") && (
+                                                        <FormField
+                                                            control={
+                                                                addTargetForm.control
+                                                            }
+                                                            name="method"
+                                                            render={({
+                                                                field
+                                                            }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t(
+                                                                            "method"
+                                                                        )}
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Select
+                                                                            value={
+                                                                                field.value ||
+                                                                                undefined
+                                                                            }
+                                                                            onValueChange={(
+                                                                                value
+                                                                            ) => {
+                                                                                addTargetForm.setValue(
+                                                                                    "method",
+                                                                                    value
+                                                                                );
+                                                                            }}
+                                                                        >
+                                                                            <SelectTrigger
+                                                                                id="method"
+                                                                                className="w-full"
+                                                                            >
+                                                                                <SelectValue
+                                                                                    placeholder={t(
+                                                                                        "methodSelect"
+                                                                                    )}
+                                                                                />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                <SelectItem value="http">
+                                                                                    http
+                                                                                </SelectItem>
+                                                                                <SelectItem value="https">
+                                                                                    https
+                                                                                </SelectItem>
+                                                                                <SelectItem value="h2c">
+                                                                                    h2c
+                                                                                </SelectItem>
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    )}
+
+                                                    <FormField
+                                                        control={
+                                                            addTargetForm.control
+                                                        }
+                                                        name="ip"
+                                                        render={({ field }) => (
+                                                            <FormItem className="relative">
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "targetAddr"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        id="ip"
+                                                                        {...field}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={
+                                                            addTargetForm.control
+                                                        }
+                                                        name="port"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "targetPort"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        id="port"
+                                                                        type="number"
+                                                                        {...field}
+                                                                        required
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <Button
+                                                        type="submit"
+                                                        variant="secondary"
+                                                        className="mt-6"
+                                                        disabled={
+                                                            !(
+                                                                watchedIp &&
+                                                                watchedPort
+                                                            )
+                                                        }
+                                                    >
+                                                        {t("targetSubmit")}
+                                                    </Button>
+                                                </div>
+                                            </form>
+                                        </Form>
+                                    </div>
+
+                                    {targets.length > 0 ? (
+                                        <>
+                                            <h6 className="font-semibold">
+                                                {t("targetsList")}
+                                            </h6>
+                                            <div className="">
+                                                <Table>
+                                                    <TableHeader>
+                                                        {table
+                                                            .getHeaderGroups()
+                                                            .map(
+                                                                (
+                                                                    headerGroup
+                                                                ) => (
+                                                                    <TableRow
+                                                                        key={
+                                                                            headerGroup.id
+                                                                        }
+                                                                    >
+                                                                        {headerGroup.headers.map(
+                                                                            (
+                                                                                header
+                                                                            ) => (
+                                                                                <TableHead
+                                                                                    key={
+                                                                                        header.id
+                                                                                    }
+                                                                                >
+                                                                                    {header.isPlaceholder
+                                                                                        ? null
+                                                                                        : flexRender(
+                                                                                              header
+                                                                                                  .column
+                                                                                                  .columnDef
+                                                                                                  .header,
+                                                                                              header.getContext()
+                                                                                          )}
+                                                                                </TableHead>
+                                                                            )
+                                                                        )}
+                                                                    </TableRow>
+                                                                )
+                                                            )}
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {table.getRowModel()
+                                                            .rows?.length ? (
+                                                            table
+                                                                .getRowModel()
+                                                                .rows.map(
+                                                                    (row) => (
+                                                                        <TableRow
+                                                                            key={
+                                                                                row.id
+                                                                            }
+                                                                        >
+                                                                            {row
+                                                                                .getVisibleCells()
+                                                                                .map(
+                                                                                    (
+                                                                                        cell
+                                                                                    ) => (
+                                                                                        <TableCell
+                                                                                            key={
+                                                                                                cell.id
+                                                                                            }
+                                                                                        >
+                                                                                            {flexRender(
+                                                                                                cell
+                                                                                                    .column
+                                                                                                    .columnDef
+                                                                                                    .cell,
+                                                                                                cell.getContext()
+                                                                                            )}
+                                                                                        </TableCell>
+                                                                                    )
+                                                                                )}
+                                                                        </TableRow>
+                                                                    )
+                                                                )
+                                                        ) : (
+                                                            <TableRow>
+                                                                <TableCell
+                                                                    colSpan={
+                                                                        columns.length
+                                                                    }
+                                                                    className="h-24 text-center"
+                                                                >
+                                                                    {t(
+                                                                        "targetNoOne"
+                                                                    )}
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-center py-8">
+                                            <p className="text-muted-foreground">
+                                                {t("targetNoOne")}
+                                            </p>
+                                        </div>
+                                    )}
+                                </SettingsSectionBody>
+                            </SettingsSection>
 
                             <div className="flex justify-end space-x-2 mt-8">
                                 <Button

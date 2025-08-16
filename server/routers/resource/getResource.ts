@@ -19,9 +19,7 @@ const getResourceSchema = z
     })
     .strict();
 
-export type GetResourceResponse = Resource & {
-    siteName: string;
-};
+export type GetResourceResponse = Resource;
 
 registry.registerPath({
     method: "get",
@@ -56,11 +54,9 @@ export async function getResource(
             .select()
             .from(resources)
             .where(eq(resources.resourceId, resourceId))
-            .leftJoin(sites, eq(sites.siteId, resources.siteId))
             .limit(1);
 
-        const resource = resp.resources;
-        const site = resp.sites;
+        const resource = resp;
 
         if (!resource) {
             return next(
@@ -73,8 +69,7 @@ export async function getResource(
 
         return response(res, {
             data: {
-                ...resource,
-                siteName: site?.name
+                ...resource
             },
             success: true,
             error: false,

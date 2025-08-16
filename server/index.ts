@@ -9,10 +9,16 @@ import { ApiKey, ApiKeyOrg, Session, User, UserOrg } from "@server/db";
 import { createIntegrationApiServer } from "./integrationApiServer";
 import { createHybridClientServer } from "./hybridServer";
 import config from "@server/lib/config";
+import { setHostMeta } from "@server/lib/hostMeta";
+import { initTelemetryClient } from "./lib/telemetry.js";
 
 async function startServers() {
+    await setHostMeta();
+
     await config.initServer();
     await runSetupFunctions();
+
+    initTelemetryClient();
 
     // Start all servers
     const apiServer = createApiServer();

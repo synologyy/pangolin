@@ -32,7 +32,8 @@ export const setAdminCredentials: CommandModule<{}, SetAdminCredentialsArgs> = {
     },
     handler: async (argv: { email: string; password: string }) => {
         try {
-            const { email, password } = argv;
+            let { email, password } = argv;
+            email = email.trim().toLowerCase();
 
             const parsed = passwordSchema.safeParse(password);
 

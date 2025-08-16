@@ -1,4 +1,4 @@
-import { db } from "@server/db";
+import { db, sites } from "@server/db";
 import { targets } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
@@ -42,11 +42,12 @@ function queryTargets(resourceId: number) {
             method: targets.method,
             port: targets.port,
             enabled: targets.enabled,
-            resourceId: targets.resourceId
-            // resourceName: resources.name,
+            resourceId: targets.resourceId,
+            siteId: targets.siteId,
+            siteType: sites.type
         })
         .from(targets)
-        // .leftJoin(resources, eq(targets.resourceId, resources.resourceId))
+        .leftJoin(sites, eq(sites.siteId, targets.siteId))
         .where(eq(targets.resourceId, resourceId));
 
     return baseQuery;
