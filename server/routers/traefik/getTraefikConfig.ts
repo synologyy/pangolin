@@ -7,16 +7,6 @@ import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
 import { build } from "@server/build";
 
-// Extended Target interface that includes site information
-interface TargetWithSite extends Target {
-    site: {
-        siteId: number;
-        type: string;
-        subnet: string | null;
-        exitNodeId: number | null;
-    };
-}
-
 let currentExitNodeId: number;
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const badgerMiddlewareName = "badger";
@@ -134,7 +124,7 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                     or(
                         eq(sites.exitNodeId, currentExitNodeId),
                         isNull(sites.exitNodeId)
-                    )
+                    ),
                 )
             );
 
@@ -201,7 +191,7 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
     };
 
     for (const resource of allResources) {
-        const targets = resource.targets as Target[];
+        const targets = resource.targets;
         const site = resource.site;
 
         const routerName = `${resource.resourceId}-router`;
