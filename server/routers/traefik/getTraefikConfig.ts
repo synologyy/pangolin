@@ -135,7 +135,6 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
                     ),
-                    ne(targetHealthCheck.hcHealth, "unhealthy")
                 )
             );
 
