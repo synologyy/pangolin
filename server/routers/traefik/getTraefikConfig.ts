@@ -45,7 +45,7 @@ export async function traefikConfigProvider(
             }
         }
 
-        let traefikConfig = await getTraefikConfig(currentExitNodeId);
+        let traefikConfig = await getTraefikConfig(currentExitNodeId, ["newt", "local", "wireguard"]);
 
         traefikConfig.http.middlewares[badgerMiddlewareName] = {
             plugin: {
@@ -80,7 +80,7 @@ export async function traefikConfigProvider(
     }
 }
 
-export async function getTraefikConfig(exitNodeId: number): Promise<any> {
+export async function getTraefikConfig(exitNodeId: number, siteTypes: string[]): Promise<any> {
     // Define extended target type with site information
     type TargetWithSite = Target & {
         site: {
@@ -135,6 +135,7 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
                     ),
+                    inArray(sites.type, siteTypes),
                 )
             );
 

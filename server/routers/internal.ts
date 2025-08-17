@@ -66,6 +66,10 @@ if (config.isHybridMode()) {
         proxyToRemote(req, res, next, "hybrid/gerbil/get-all-relays")
     );
 
+    gerbilRouter.post("/get-resolved-hostname", (req, res, next) =>
+        proxyToRemote(req, res, next, `hybrid/gerbil/get-resolved-hostname`)
+    );
+
     // GET CONFIG IS HANDLED IN THE ORIGINAL HANDLER
     // SO IT CAN REGISTER THE LOCAL EXIT NODE
 } else {
@@ -73,6 +77,7 @@ if (config.isHybridMode()) {
     gerbilRouter.post("/receive-bandwidth", gerbil.receiveBandwidth);
     gerbilRouter.post("/update-hole-punch", gerbil.updateHolePunch);
     gerbilRouter.post("/get-all-relays", gerbil.getAllRelays);
+    gerbilRouter.post("/get-resolved-hostname", gerbil.getResolvedHostname);
 }
 
 // WE HANDLE THE PROXY INSIDE OF THIS FUNCTION
