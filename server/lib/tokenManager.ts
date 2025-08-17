@@ -33,34 +33,96 @@ export class TokenManager {
     private refreshInterval: NodeJS.Timeout | null = null;
     private isRefreshing: boolean = false;
     private refreshIntervalMs: number;
+    private retryInterval: NodeJS.Timeout | null = null;
+    private retryIntervalMs: number;
+    private tokenAvailablePromise: Promise<void> | null = null;
+    private tokenAvailableResolve: (() => void) | null = null;
 
-    constructor(refreshIntervalMs: number = 24 * 60 * 60 * 1000) {
-        // Default to 24 hours
+    constructor(refreshIntervalMs: number = 24 * 60 * 60 * 1000, retryIntervalMs: number = 5000) {
+        // Default to 24 hours for refresh, 5 seconds for retry
         this.refreshIntervalMs = refreshIntervalMs;
+        this.retryIntervalMs = retryIntervalMs;
+        this.setupTokenAvailablePromise();
     }
 
     /**
-     * Start the token manager - gets initial token and sets up refresh interval
+     * Set up promise that resolves when token becomes available
      */
-    async start(): Promise<void> {
-        try {
-            await this.refreshToken();
-            this.setupRefreshInterval();
-            logger.info("Token manager started successfully");
-        } catch (error) {
-            logger.error("Failed to start token manager:", error);
-            throw error;
+    private setupTokenAvailablePromise(): void {
+        this.tokenAvailablePromise = new Promise((resolve) => {
+            this.tokenAvailableResolve = resolve;
+        });
+    }
+
+    /**
+     * Resolve the token available promise
+     */
+    private resolveTokenAvailable(): void {
+        if (this.tokenAvailableResolve) {
+            this.tokenAvailableResolve();
+            this.tokenAvailableResolve = null;
         }
     }
 
     /**
-     * Stop the token manager and clear refresh interval
+     * Start the token manager - gets initial token and sets up refresh interval
+     * If initial token fetch fails, keeps retrying every few seconds until successful
+     */
+    async start(): Promise<void> {
+        logger.info("Starting token manager...");
+        
+        try {
+            await this.refreshToken();
+            this.setupRefreshInterval();
+            this.resolveTokenAvailable();
+            logger.info("Token manager started successfully");
+        } catch (error) {
+            logger.warn(`Failed to get initial token, will retry in ${this.retryIntervalMs / 1000} seconds:`, error);
+            this.setupRetryInterval();
+        }
+    }
+
+    /**
+     * Set up retry interval for initial token acquisition
+     */
+    private setupRetryInterval(): void {
+        if (this.retryInterval) {
+            clearInterval(this.retryInterval);
+        }
+
+        this.retryInterval = setInterval(async () => {
+            try {
+                logger.debug("Retrying initial token acquisition");
+                await this.refreshToken();
+                this.setupRefreshInterval();
+                this.clearRetryInterval();
+                this.resolveTokenAvailable();
+                logger.info("Token manager started successfully after retry");
+            } catch (error) {
+                logger.debug("Token acquisition retry failed, will try again");
+            }
+        }, this.retryIntervalMs);
+    }
+
+    /**
+     * Clear retry interval
+     */
+    private clearRetryInterval(): void {
+        if (this.retryInterval) {
+            clearInterval(this.retryInterval);
+            this.retryInterval = null;
+        }
+    }
+
+    /**
+     * Stop the token manager and clear all intervals
      */
     stop(): void {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
         }
+        this.clearRetryInterval();
         logger.info("Token manager stopped");
     }
 
@@ -70,12 +132,17 @@ export class TokenManager {
 
     // TODO: WE SHOULD NOT BE GETTING A TOKEN EVERY TIME WE REQUEST IT
     async getToken(): Promise<string> {
+        // If we don't have a token yet, wait for it to become available
+        if (!this.token && this.tokenAvailablePromise) {
+            await this.tokenAvailablePromise;
+        }
+
         if (!this.token) {
             if (this.isRefreshing) {
                 // Wait for current refresh to complete
                 await this.waitForRefresh();
             } else {
-                await this.refreshToken();
+                throw new Error("No valid token available");
             }
         }
 
