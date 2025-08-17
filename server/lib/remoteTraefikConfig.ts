@@ -210,9 +210,9 @@ export class TraefikConfigManager {
                 }
             }
 
-            // logger.debug(
-            //     `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
-            // );
+            logger.debug(
+                `Successfully retrieved traefik config: ${JSON.stringify(traefikConfig)}`
+            );
 
             const badgerMiddlewareName = "badger";
             if (traefikConfig?.http?.middlewares) {

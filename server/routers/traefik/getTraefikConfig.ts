@@ -81,6 +81,16 @@ export async function traefikConfigProvider(
 }
 
 export async function getTraefikConfig(exitNodeId: number): Promise<any> {
+    // Define extended target type with site information
+    type TargetWithSite = Target & {
+        site: {
+            siteId: number;
+            type: string;
+            subnet: string | null;
+            exitNodeId: number | null;
+        };
+    };
+
     // Get all resources with related data
     const allResources = await db.transaction(async (tx) => {
         // Get resources with their targets and sites in a single optimized query
@@ -122,9 +132,10 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                     eq(targets.enabled, true),
                     eq(resources.enabled, true),
                     or(
-                        eq(sites.exitNodeId, currentExitNodeId),
+                        eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
                     ),
+                    ne(targetHealthCheck.hcHealth, "unhealthy")
                 )
             );
 
@@ -192,7 +203,6 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
 
     for (const resource of allResources) {
         const targets = resource.targets;
-        const site = resource.site;
 
         const routerName = `${resource.resourceId}-router`;
         const serviceName = `${resource.resourceId}-service`;
@@ -295,14 +305,14 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
 
             config_output.http.services![serviceName] = {
                 loadBalancer: {
-                    servers: targets
-                        .filter((target: Target) => {
+                    servers: (targets as TargetWithSite[])
+                        .filter((target: TargetWithSite) => {
                             if (!target.enabled) {
                                 return false;
                             }
                             if (
-                                site.type === "local" ||
-                                site.type === "wireguard"
+                                target.site.type === "local" ||
+                                target.site.type === "wireguard"
                             ) {
                                 if (
                                     !target.ip ||
@@ -311,27 +321,27 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
                                 ) {
                                     return false;
                                 }
-                            } else if (site.type === "newt") {
+                            } else if (target.site.type === "newt") {
                                 if (
                                     !target.internalPort ||
                                     !target.method ||
-                                    !site.subnet
+                                    !target.site.subnet
                                 ) {
                                     return false;
                                 }
                             }
                             return true;
                         })
-                        .map((target: Target) => {
+                        .map((target: TargetWithSite) => {
                             if (
-                                site.type === "local" ||
-                                site.type === "wireguard"
+                                target.site.type === "local" ||
+                                target.site.type === "wireguard"
                             ) {
                                 return {
                                     url: `${target.method}://${target.ip}:${target.port}`
                                 };
-                            } else if (site.type === "newt") {
-                                const ip = site.subnet!.split("/")[0];
+                            } else if (target.site.type === "newt") {
+                                const ip = target.site.subnet!.split("/")[0];
                                 return {
                                     url: `${target.method}://${ip}:${target.internalPort}`
                                 };
@@ -415,35 +425,35 @@ export async function getTraefikConfig(exitNodeId: number): Promise<any> {
 
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
-                    servers: targets
-                        .filter((target: Target) => {
+                    servers: (targets as TargetWithSite[])
+                        .filter((target: TargetWithSite) => {
                             if (!target.enabled) {
                                 return false;
                             }
                             if (
-                                site.type === "local" ||
-                                site.type === "wireguard"
+                                target.site.type === "local" ||
+                                target.site.type === "wireguard"
                             ) {
                                 if (!target.ip || !target.port) {
                                     return false;
                                 }
-                            } else if (site.type === "newt") {
-                                if (!target.internalPort || !site.subnet) {
+                            } else if (target.site.type === "newt") {
+                                if (!target.internalPort || !target.site.subnet) {
                                     return false;
                                 }
                             }
                             return true;
                         })
-                        .map((target: Target) => {
+                        .map((target: TargetWithSite) => {
                             if (
-                                site.type === "local" ||
-                                site.type === "wireguard"
+                                target.site.type === "local" ||
+                                target.site.type === "wireguard"
                             ) {
                                 return {
                                     address: `${target.ip}:${target.port}`
                                 };
-                            } else if (site.type === "newt") {
-                                const ip = site.subnet!.split("/")[0];
+                            } else if (target.site.type === "newt") {
+                                const ip = target.site.subnet!.split("/")[0];
                                 return {
                                     address: `${ip}:${target.internalPort}`
                                 };
