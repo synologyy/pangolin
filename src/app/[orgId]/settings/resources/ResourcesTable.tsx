@@ -665,22 +665,21 @@ export default function SitesTable({
                         className="w-full"
                         onValueChange={handleTabChange}
                     >
-                        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-0">
-                            <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
-                                {getSearchInput()}
-
+                        <CardHeader className="flex flex-col items-center gap-4 md:items-stretch lg:flex-row lg:items-center lg:justify-between pb-0">
+                            <div className="flex flex-col items-center gap-3 w-full md:flex-row md:justify-center lg:justify-start lg:w-auto lg:mr-2">
+                                <div className="w-full md:w-auto lg:w-auto">{getSearchInput()}</div>
                                 {env.flags.enableClients && (
-                                    <TabsList className="grid grid-cols-2">
-                                        <TabsTrigger value="proxy">
+                                    <TabsList className="grid grid-cols-2 w-full md:w-auto">
+                                        <TabsTrigger value="proxy" className="w-full">
                                             {t("resourcesTableProxyResources")}
                                         </TabsTrigger>
-                                        <TabsTrigger value="internal">
+                                        <TabsTrigger value="internal" className="w-full">
                                             {t("resourcesTableClientResources")}
                                         </TabsTrigger>
                                     </TabsList>
                                 )}
                             </div>
-                            <div className="flex items-center gap-2 sm:justify-end">
+                            <div className="flex justify-center w-full md:justify-center lg:justify-end lg:w-auto">
                                 {getActionButton()}
                             </div>
                         </CardHeader>
@@ -700,12 +699,12 @@ export default function SitesTable({
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
+                                                                        header
+                                                                            .column
+                                                                            .columnDef
+                                                                            .header,
+                                                                        header.getContext()
+                                                                    )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -798,12 +797,12 @@ export default function SitesTable({
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
+                                                                        header
+                                                                            .column
+                                                                            .columnDef
+                                                                            .header,
+                                                                        header.getContext()
+                                                                    )}
                                                             </TableHead>
                                                         )
                                                     )}
