@@ -59,6 +59,7 @@ import { useParams, useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 
 import { useTranslations } from "next-intl";
+import { build } from "@server/build";
 
 type SiteType = "newt" | "wireguard" | "local";
 
@@ -142,7 +143,7 @@ export default function Page() {
                   {
                       id: "wireguard" as SiteType,
                       title: t("siteWg"),
-                      description: t("siteWgDescription"),
+                      description: build == "saas" ? t("siteWgDescriptionSaas") : t("siteWgDescription"),
                       disabled: true
                   }
               ]),
@@ -152,7 +153,7 @@ export default function Page() {
                   {
                       id: "local" as SiteType,
                       title: t("local"),
-                      description: t("siteLocalDescription")
+                      description: build == "saas" ? t("siteLocalDescriptionSaas") : t("siteLocalDescription")
                   }
               ])
     ]);

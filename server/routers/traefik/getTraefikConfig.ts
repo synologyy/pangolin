@@ -45,7 +45,7 @@ export async function traefikConfigProvider(
             }
         }
 
-        let traefikConfig = await getTraefikConfig(currentExitNodeId, ["newt", "local", "wireguard"]);
+        let traefikConfig = await getTraefikConfig(currentExitNodeId, config.getRawConfig().traefik.site_types);
 
         traefikConfig.http.middlewares[badgerMiddlewareName] = {
             plugin: {
