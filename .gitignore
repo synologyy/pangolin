@@ -26,6 +26,8 @@ next-env.d.ts
 migrations
 tsconfig.tsbuildinfo
 config/config.yml
+config/postgres
+config/postgres*
 dist
 .dist
 installer

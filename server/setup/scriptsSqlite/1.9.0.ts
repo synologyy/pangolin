@@ -100,7 +100,7 @@ CREATE TABLE '__new_clients' (
 	FOREIGN KEY ('exitNode') REFERENCES 'exitNodes'('exitNodeId') ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-INSERT INTO '__new_clients'("id", "orgId", "exitNode", "name", "pubKey", "subnet", "bytesIn", "bytesOut", "lastBandwidthUpdate", "lastPing", "type", "online", "lastHolePunch") SELECT "id", "orgId", "exitNode", "name", "pubKey", "subnet", "bytesIn", "bytesOut", "lastBandwidthUpdate", "lastPing", "type", "online", "lastHolePunch" FROM 'clients';--> statement-breakpoint
+INSERT INTO '__new_clients'("id", "orgId", "exitNode", "name", "pubKey", "subnet", "bytesIn", "bytesOut", "lastBandwidthUpdate", "lastPing", "type", "online", "lastHolePunch") SELECT "id", "orgId", "exitNode", "name", "pubKey", "subnet", "bytesIn", "bytesOut", "lastBandwidthUpdate", NULL, "type", "online", "lastHolePunch" FROM 'clients';--> statement-breakpoint
 DROP TABLE 'clients';--> statement-breakpoint
 ALTER TABLE '__new_clients' RENAME TO 'clients';--> statement-breakpoint
 ALTER TABLE 'clientSites' ADD 'endpoint' text;--> statement-breakpoint
