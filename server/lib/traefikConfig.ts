@@ -304,9 +304,10 @@ export class TraefikConfigManager {
                               (1000 * 60)
                       )
                     : 0;
-                logger.debug(
-                    `Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`
-                );
+
+                // logger.debug(
+                //     `Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`
+                // );
 
                 // Still need to ensure config is up to date with existing certificates
                 await this.updateDynamicConfigFromLocalCerts(domains);
@@ -554,8 +555,8 @@ export class TraefikConfigManager {
                 const keyPath = path.join(domainDir, "key.pem");
 
                 const certEntry = {
-                    certFile: `/var/${certPath}`,
-                    keyFile: `/var/${keyPath}`
+                    certFile: certPath,
+                    keyFile: keyPath
                 };
                 dynamicConfig.tls.certificates.push(certEntry);
             }
@@ -664,8 +665,8 @@ export class TraefikConfigManager {
 
                 // Always ensure the config entry exists and is up to date
                 const certEntry = {
-                    certFile: `/var/${certPath}`,
-                    keyFile: `/var/${keyPath}`
+                    certFile: certPath,
+                    keyFile: keyPath
                 };
                 // Remove any existing entry for this cert/key path
                 dynamicConfig.tls.certificates =
@@ -809,14 +810,14 @@ export class TraefikConfigManager {
                     this.lastLocalCertificateState.delete(dirName);
 
                     // Remove from dynamic config
-                    const certFilePath = `/var/${path.join(
+                    const certFilePath = path.join(
                         domainDir,
                         "cert.pem"
-                    )}`;
-                    const keyFilePath = `/var/${path.join(
+                    );
+                    const keyFilePath = path.join(
                         domainDir,
                         "key.pem"
-                    )}`;
+                    );
                     const before = dynamicConfig.tls.certificates.length;
                     dynamicConfig.tls.certificates =
                         dynamicConfig.tls.certificates.filter(
