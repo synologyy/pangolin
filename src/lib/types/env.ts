@@ -25,5 +25,5 @@ export type Env = {
         disableBasicWireguardSites: boolean;
         enableClients: boolean;
         hideSupporterKey: boolean;
-    },
+    }
 };

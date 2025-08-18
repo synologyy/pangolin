@@ -34,6 +34,7 @@ export const configSchema = z
         }),
         hybrid: z
             .object({
+                name: z.string().optional(),
                 id: z.string().optional(),
                 secret: z.string().optional(),
                 endpoint: z.string().optional(),

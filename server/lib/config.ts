@@ -103,9 +103,7 @@ export class Config {
 
     private async checkKeyStatus() {
         const licenseStatus = await license.check();
-        if (
-            !licenseStatus.isHostLicensed
-        ) {
+        if (!licenseStatus.isHostLicensed) {
             this.checkSupporterKey();
         }
     }

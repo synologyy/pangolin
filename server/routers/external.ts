@@ -15,6 +15,7 @@ import * as accessToken from "./accessToken";
 import * as idp from "./idp";
 import * as license from "./license";
 import * as apiKeys from "./apiKeys";
+import * as hybrid from "./hybrid";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
@@ -951,7 +952,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `requestEmailVerificationCode:${req.body.email || req.ip}`,
+        keyGenerator: (req) =>
+            `requestEmailVerificationCode:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only request an email verification code ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -972,7 +974,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `requestPasswordReset:${req.body.email || req.ip}`,
+        keyGenerator: (req) =>
+            `requestPasswordReset:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1066,7 +1069,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 5, // Allow 5 security key registrations per 15 minutes
-        keyGenerator: (req) => `securityKeyRegister:${req.user?.userId || req.ip}`,
+        keyGenerator: (req) =>
+            `securityKeyRegister:${req.user?.userId || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only register a security key ${5} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
