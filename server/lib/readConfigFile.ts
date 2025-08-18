@@ -145,16 +145,16 @@ export const configSchema = z
                 additional_middlewares: z.array(z.string()).optional(),
                 cert_resolver: z.string().optional().default("letsencrypt"),
                 prefer_wildcard_cert: z.boolean().optional().default(false),
-                certificates_path: z.string().default("./certificates"),
+                certificates_path: z.string().default("/var/certificates"),
                 monitor_interval: z.number().default(5000),
                 dynamic_cert_config_path: z
                     .string()
                     .optional()
-                    .default("./dynamic/cert_config.yml"),
+                    .default("/var/dynamic/cert_config.yml"),
                 dynamic_router_config_path: z
                     .string()
                     .optional()
-                    .default("./dynamic/router_config.yml"),
+                    .default("/var/dynamic/router_config.yml"),
                 static_domains: z.array(z.string()).optional().default([]),
                 site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"]),
                 file_mode: z.boolean().optional().default(false)
