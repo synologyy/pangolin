@@ -12,6 +12,13 @@ export class TraefikConfigManager {
     private isRunning = false;
     private activeDomains = new Set<string>();
     private timeoutId: NodeJS.Timeout | null = null;
+    private lastCertificateFetch: Date | null = null;
+    private lastKnownDomains = new Set<string>();
+    private lastLocalCertificateState = new Map<string, { 
+        exists: boolean; 
+        lastModified: Date | null; 
+        expiresAt: Date | null; 
+    }>();
 
     constructor() {}
 
@@ -50,6 +57,10 @@ export class TraefikConfigManager {
             config.getRawConfig().traefik.certificates_path
         );
 
+        // Initialize local certificate state
+        this.lastLocalCertificateState = await this.scanLocalCertificateState();
+        logger.info(`Found ${this.lastLocalCertificateState.size} existing certificate directories`);
+
         // Run initial check
         await this.HandleTraefikConfig();
 
@@ -78,6 +89,113 @@ export class TraefikConfigManager {
 
         this.isRunning = false;
         logger.info("Certificate monitor stopped");
+    }
+
+    /**
+     * Scan local certificate directories to build current state
+     */
+    private async scanLocalCertificateState(): Promise<Map<string, { 
+        exists: boolean; 
+        lastModified: Date | null; 
+        expiresAt: Date | null; 
+    }>> {
+        const state = new Map();
+        const certsPath = config.getRawConfig().traefik.certificates_path;
+        
+        try {
+            if (!fs.existsSync(certsPath)) {
+                return state;
+            }
+
+            const certDirs = fs.readdirSync(certsPath, { withFileTypes: true });
+            
+            for (const dirent of certDirs) {
+                if (!dirent.isDirectory()) continue;
+                
+                const domain = dirent.name;
+                const domainDir = path.join(certsPath, domain);
+                const certPath = path.join(domainDir, "cert.pem");
+                const keyPath = path.join(domainDir, "key.pem");
+                const lastUpdatePath = path.join(domainDir, ".last_update");
+                
+                const certExists = await this.fileExists(certPath);
+                const keyExists = await this.fileExists(keyPath);
+                const lastUpdateExists = await this.fileExists(lastUpdatePath);
+                
+                let lastModified: Date | null = null;
+                let expiresAt: Date | null = null;
+                
+                if (lastUpdateExists) {
+                    try {
+                        const lastUpdateStr = fs.readFileSync(lastUpdatePath, "utf8").trim();
+                        lastModified = new Date(lastUpdateStr);
+                    } catch {
+                        // If we can't read the last update, fall back to file stats
+                        try {
+                            const stats = fs.statSync(certPath);
+                            lastModified = stats.mtime;
+                        } catch {
+                            lastModified = null;
+                        }
+                    }
+                }
+                
+                state.set(domain, {
+                    exists: certExists && keyExists,
+                    lastModified,
+                    expiresAt
+                });
+            }
+        } catch (error) {
+            logger.error("Error scanning local certificate state:", error);
+        }
+        
+        return state;
+    }
+
+    /**
+     * Check if we need to fetch certificates from remote
+     */
+    private shouldFetchCertificates(currentDomains: Set<string>): boolean {
+        // Always fetch on first run
+        if (!this.lastCertificateFetch) {
+            return true;
+        }
+        
+        // Fetch if it's been more than 24 hours (for renewals)
+        const dayInMs = 24 * 60 * 60 * 1000;
+        const timeSinceLastFetch = Date.now() - this.lastCertificateFetch.getTime();
+        if (timeSinceLastFetch > dayInMs) {
+            logger.info("Fetching certificates due to 24-hour renewal check");
+            return true;
+        }
+        
+        // Fetch if domains have changed
+        if (this.lastKnownDomains.size !== currentDomains.size ||
+            !Array.from(this.lastKnownDomains).every(domain => currentDomains.has(domain))) {
+            logger.info("Fetching certificates due to domain changes");
+            return true;
+        }
+        
+        // Check if any local certificates are missing or appear to be outdated
+        for (const domain of currentDomains) {
+            const localState = this.lastLocalCertificateState.get(domain);
+            if (!localState || !localState.exists) {
+                logger.info(`Fetching certificates due to missing local cert for ${domain}`);
+                return true;
+            }
+            
+            // Check if certificate is expiring soon (within 30 days)
+            if (localState.expiresAt) {
+                const daysUntilExpiry = (localState.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+                if (daysUntilExpiry < 30) {
+                    logger.info(`Fetching certificates due to upcoming expiry for ${domain} (${Math.round(daysUntilExpiry)} days remaining)`);
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -115,14 +233,37 @@ export class TraefikConfigManager {
                 this.lastActiveDomains = new Set(domains);
             }
 
-            // Get valid certificates for active domains
-            const validCertificates =
-                await this.getValidCertificatesForDomains(domains);
+            // Scan current local certificate state
+            this.lastLocalCertificateState = await this.scanLocalCertificateState();
 
-            // logger.debug(`Valid certs array: ${JSON.stringify(validCertificates)}`);
+            // Only fetch certificates if needed (domain changes, missing certs, or daily renewal check)
+            let validCertificates: Array<{
+                id: number;
+                domain: string;
+                certFile: string | null;
+                keyFile: string | null;
+                expiresAt: Date | null;
+                updatedAt?: Date | null;
+            }> = [];
 
-            // Download and decrypt new certificates
-            await this.processValidCertificates(validCertificates);
+            if (this.shouldFetchCertificates(domains)) {
+                // Get valid certificates for active domains
+                validCertificates = await this.getValidCertificatesForDomains(domains);
+                this.lastCertificateFetch = new Date();
+                this.lastKnownDomains = new Set(domains);
+                
+                logger.info(`Fetched ${validCertificates.length} certificates from remote`);
+
+                // Download and decrypt new certificates
+                await this.processValidCertificates(validCertificates);
+            } else {
+                const timeSinceLastFetch = this.lastCertificateFetch ? 
+                    Math.round((Date.now() - this.lastCertificateFetch.getTime()) / (1000 * 60)) : 0;
+                logger.debug(`Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`);
+                
+                // Still need to ensure config is up to date with existing certificates
+                await this.updateDynamicConfigFromLocalCerts(domains);
+            }
 
             // Clean up certificates for domains no longer in use
             await this.cleanupUnusedCertificates(domains);
@@ -302,6 +443,59 @@ export class TraefikConfigManager {
     }
 
     /**
+     * Update dynamic config from existing local certificates without fetching from remote
+     */
+    private async updateDynamicConfigFromLocalCerts(domains: Set<string>): Promise<void> {
+        const dynamicConfigPath = config.getRawConfig().traefik.dynamic_cert_config_path;
+        
+        // Load existing dynamic config if it exists, otherwise initialize
+        let dynamicConfig: any = { tls: { certificates: [] } };
+        if (fs.existsSync(dynamicConfigPath)) {
+            try {
+                const fileContent = fs.readFileSync(dynamicConfigPath, "utf8");
+                dynamicConfig = yaml.load(fileContent) || dynamicConfig;
+                if (!dynamicConfig.tls) dynamicConfig.tls = { certificates: [] };
+                if (!Array.isArray(dynamicConfig.tls.certificates)) {
+                    dynamicConfig.tls.certificates = [];
+                }
+            } catch (err) {
+                logger.error("Failed to load existing dynamic config:", err);
+            }
+        }
+
+        // Keep a copy of the original config for comparison
+        const originalConfigYaml = yaml.dump(dynamicConfig, { noRefs: true });
+
+        // Clear existing certificates and rebuild from local state
+        dynamicConfig.tls.certificates = [];
+
+        for (const domain of domains) {
+            const localState = this.lastLocalCertificateState.get(domain);
+            if (localState && localState.exists) {
+                const domainDir = path.join(
+                    config.getRawConfig().traefik.certificates_path,
+                    domain
+                );
+                const certPath = path.join(domainDir, "cert.pem");
+                const keyPath = path.join(domainDir, "key.pem");
+
+                const certEntry = {
+                    certFile: `/var/${certPath}`,
+                    keyFile: `/var/${keyPath}`
+                };
+                dynamicConfig.tls.certificates.push(certEntry);
+            }
+        }
+
+        // Only write the config if it has changed
+        const newConfigYaml = yaml.dump(dynamicConfig, { noRefs: true });
+        if (newConfigYaml !== originalConfigYaml) {
+            fs.writeFileSync(dynamicConfigPath, newConfigYaml, "utf8");
+            logger.info("Dynamic cert config updated from local certificates");
+        }
+    }
+
+    /**
      * Get valid certificates for the specified domains
      */
     private async getValidCertificatesForDomains(domains: Set<string>): Promise<
@@ -446,6 +640,13 @@ export class TraefikConfigManager {
                     logger.info(
                         `Certificate updated for domain: ${cert.domain}`
                     );
+                    
+                    // Update local state tracking
+                    this.lastLocalCertificateState.set(cert.domain, {
+                        exists: true,
+                        lastModified: new Date(),
+                        expiresAt: cert.expiresAt
+                    });
                 }
 
                 // Always ensure the config entry exists and is up to date
@@ -591,6 +792,9 @@ export class TraefikConfigManager {
                     );
                     fs.rmSync(domainDir, { recursive: true, force: true });
 
+                    // Remove from local state tracking
+                    this.lastLocalCertificateState.delete(dirName);
+
                     // Remove from dynamic config
                     const certFilePath = `/var/${path.join(
                         domainDir,
@@ -658,18 +862,32 @@ export class TraefikConfigManager {
     }
 
     /**
+     * Force a certificate refresh regardless of cache state
+     */
+    public async forceCertificateRefresh(): Promise<void> {
+        logger.info("Forcing certificate refresh");
+        this.lastCertificateFetch = null;
+        this.lastKnownDomains = new Set();
+        await this.HandleTraefikConfig();
+    }
+
+    /**
      * Get current status
      */
     getStatus(): {
         isRunning: boolean;
         activeDomains: string[];
         monitorInterval: number;
+        lastCertificateFetch: Date | null;
+        localCertificateCount: number;
     } {
         return {
             isRunning: this.isRunning,
             activeDomains: Array.from(this.activeDomains),
             monitorInterval:
-                config.getRawConfig().traefik.monitor_interval || 5000
+                config.getRawConfig().traefik.monitor_interval || 5000,
+            lastCertificateFetch: this.lastCertificateFetch,
+            localCertificateCount: this.lastLocalCertificateState.size
         };
     }
 }
