@@ -17,7 +17,7 @@ RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
 RUN npx drizzle-kit generate --dialect sqlite --schema ./server/db/sqlite/schema.ts --out init
 
-RUN npm run build:sqlite
+RUN npm run build:$DATABASE
 RUN npm run build:cli
 
 FROM node:22-alpine AS runner
@@ -43,4 +43,4 @@ COPY server/db/names.json ./dist/names.json
 
 COPY public ./public
 
-CMD ["npm", "run", "start:sqlite"]
+CMD ["npm", "run", "start:$DATABASE"]
