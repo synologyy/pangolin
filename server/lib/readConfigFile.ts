@@ -32,6 +32,15 @@ export const configSchema = z
                 .optional()
                 .default({})
         }),
+        hybrid: z
+            .object({
+                name: z.string().optional(),
+                id: z.string().optional(),
+                secret: z.string().optional(),
+                endpoint: z.string().optional(),
+                redirect_endpoint: z.string().optional()
+            })
+            .optional(),
         domains: z
             .record(
                 z.string(),
@@ -135,7 +144,20 @@ export const configSchema = z
                 https_entrypoint: z.string().optional().default("websecure"),
                 additional_middlewares: z.array(z.string()).optional(),
                 cert_resolver: z.string().optional().default("letsencrypt"),
-                prefer_wildcard_cert: z.boolean().optional().default(false)
+                prefer_wildcard_cert: z.boolean().optional().default(false),
+                certificates_path: z.string().default("/var/certificates"),
+                monitor_interval: z.number().default(5000),
+                dynamic_cert_config_path: z
+                    .string()
+                    .optional()
+                    .default("/var/dynamic/cert_config.yml"),
+                dynamic_router_config_path: z
+                    .string()
+                    .optional()
+                    .default("/var/dynamic/router_config.yml"),
+                static_domains: z.array(z.string()).optional().default([]),
+                site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"]),
+                file_mode: z.boolean().optional().default(false)
             })
             .optional()
             .default({}),

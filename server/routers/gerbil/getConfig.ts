@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { sites, resources, targets, exitNodes } from "@server/db";
+import { sites, resources, targets, exitNodes, ExitNode } from "@server/db";
 import { db } from "@server/db";
 import { eq, isNotNull, and } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
@@ -11,6 +11,8 @@ import { getUniqueExitNodeEndpointName } from "../../db/names";
 import { findNextAvailableCidr } from "@server/lib/ip";
 import { fromError } from "zod-validation-error";
 import { getAllowedIps } from "../target/helpers";
+import { proxyToRemote } from "@server/lib/remoteProxy";
+import { getNextAvailableSubnet } from "@server/lib/exitNodes";
 // Define Zod schema for request validation
 const getConfigSchema = z.object({
     publicKey: z.string(),
@@ -101,42 +103,17 @@ export async function getConfig(
             );
         }
 
-        const sitesRes = await db
-            .select()
-            .from(sites)
-            .where(
-                and(
-                    eq(sites.exitNodeId, exitNode[0].exitNodeId),
-                    isNotNull(sites.pubKey),
-                    isNotNull(sites.subnet)
-                )
-            );
+        // STOP HERE IN HYBRID MODE
+        if (config.isHybridMode()) {
+            req.body = {
+                ...req.body,
+                endpoint: exitNode[0].endpoint,
+                listenPort: exitNode[0].listenPort
+            }
+            return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
+        }
 
-        const peers = await Promise.all(
-            sitesRes.map(async (site) => {
-                if (site.type === "wireguard") {
-                    return {
-                        publicKey: site.pubKey,
-                        allowedIps: await getAllowedIps(site.siteId)
-                    };
-                } else if (site.type === "newt") {
-                    return {
-                        publicKey: site.pubKey,
-                        allowedIps: [site.subnet!]
-                    };
-                }
-                return {
-                    publicKey: null,
-                    allowedIps: []
-                };
-            })
-        );
-
-        const configResponse: GetConfigResponse = {
-            listenPort: exitNode[0].listenPort || 51820,
-            ipAddress: exitNode[0].address,
-            peers
-        };
+        const configResponse = await generateGerbilConfig(exitNode[0]);
 
         logger.debug("Sending config: ", configResponse);
 
@@ -152,31 +129,45 @@ export async function getConfig(
     }
 }
 
-async function getNextAvailableSubnet(): Promise<string> {
-    // Get all existing subnets from routes table
-    const existingAddresses = await db
-        .select({
-            address: exitNodes.address
+export async function generateGerbilConfig(exitNode: ExitNode) {
+    const sitesRes = await db
+        .select()
+        .from(sites)
+        .where(
+            and(
+                eq(sites.exitNodeId, exitNode.exitNodeId),
+                isNotNull(sites.pubKey),
+                isNotNull(sites.subnet)
+            )
+        );
+
+    const peers = await Promise.all(
+        sitesRes.map(async (site) => {
+            if (site.type === "wireguard") {
+                return {
+                    publicKey: site.pubKey,
+                    allowedIps: await getAllowedIps(site.siteId)
+                };
+            } else if (site.type === "newt") {
+                return {
+                    publicKey: site.pubKey,
+                    allowedIps: [site.subnet!]
+                };
+            }
+            return {
+                publicKey: null,
+                allowedIps: []
+            };
         })
-        .from(exitNodes);
-
-    const addresses = existingAddresses.map((a) => a.address);
-    let subnet = findNextAvailableCidr(
-        addresses,
-        config.getRawConfig().gerbil.block_size,
-        config.getRawConfig().gerbil.subnet_group
     );
-    if (!subnet) {
-        throw new Error("No available subnets remaining in space");
-    }
 
-    // replace the last octet with 1
-    subnet =
-        subnet.split(".").slice(0, 3).join(".") +
-        ".1" +
-        "/" +
-        subnet.split("/")[1];
-    return subnet;
+    const configResponse: GetConfigResponse = {
+        listenPort: exitNode.listenPort || 51820,
+        ipAddress: exitNode.address,
+        peers
+    };
+
+    return configResponse;
 }
 
 async function getNextAvailablePort(): Promise<number> {

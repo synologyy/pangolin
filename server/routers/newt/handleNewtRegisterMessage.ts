@@ -9,6 +9,7 @@ import {
     findNextAvailableCidr,
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
+import { selectBestExitNode, verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -24,7 +25,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
     const newt = client as Newt;
 
-    logger.info("Handling register newt message!");
+    logger.debug("Handling register newt message!");
 
     if (!newt) {
         logger.warn("Newt not found");
@@ -64,16 +65,6 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         exitNodeId = bestPingResult.exitNodeId;
     }
 
-    if (newtVersion) {
-        // update the newt version in the database
-        await db
-            .update(newts)
-            .set({
-                version: newtVersion as string
-            })
-            .where(eq(newts.newtId, newt.newtId));
-    }
-
     const [oldSite] = await db
         .select()
         .from(sites)
@@ -91,18 +82,24 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         // This effectively moves the exit node to the new one
         exitNodeIdToQuery = exitNodeId; // Use the provided exitNodeId if it differs from the site's exitNodeId
 
+        const { exitNode, hasAccess } = await verifyExitNodeOrgAccess(exitNodeIdToQuery, oldSite.orgId);
+
+        if (!exitNode) {
+            logger.warn("Exit node not found");
+            return;
+        }
+
+        if (!hasAccess) {
+            logger.warn("Not authorized to use this exit node");
+            return;
+        }
+
         const sitesQuery = await db
             .select({
                 subnet: sites.subnet
             })
             .from(sites)
             .where(eq(sites.exitNodeId, exitNodeId));
-
-        const [exitNode] = await db
-            .select()
-            .from(exitNodes)
-            .where(eq(exitNodes.exitNodeId, exitNodeIdToQuery))
-            .limit(1);
 
         const blockSize = config.getRawConfig().gerbil.site_block_size;
         const subnets = sitesQuery
@@ -162,6 +159,16 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         allowedIps: [siteSubnet]
     });
 
+    if (newtVersion && newtVersion !== newt.version) {
+        // update the newt version in the database
+        await db
+            .update(newts)
+            .set({
+                version: newtVersion as string
+            })
+            .where(eq(newts.newtId, newt.newtId));
+    }
+
     // Get all enabled targets with their resource protocol information
     const allTargets = await db
         .select({
@@ -218,14 +225,3 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         excludeSender: false // Include sender in broadcast
     };
 };
-
-function selectBestExitNode(
-    pingResults: ExitNodePingResult[]
-): ExitNodePingResult | null {
-    if (!pingResults || pingResults.length === 0) {
-        logger.warn("No ping results provided");
-        return null;
-    }
-
-    return pingResults[0];
-}

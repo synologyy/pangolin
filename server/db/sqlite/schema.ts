@@ -136,7 +136,10 @@ export const exitNodes = sqliteTable("exitNodes", {
     publicKey: text("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
     reachableAt: text("reachableAt"), // this is the internal address of the gerbil http server for command control
-    maxConnections: integer("maxConnections")
+    maxConnections: integer("maxConnections"),
+    online: integer("online", { mode: "boolean" }).notNull().default(false),
+    lastPing: integer("lastPing"),
+    type: text("type").default("gerbil") // gerbil, remoteExitNode
 });
 
 export const siteResources = sqliteTable("siteResources", { // this is for the clients

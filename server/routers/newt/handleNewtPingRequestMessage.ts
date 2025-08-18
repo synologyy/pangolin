@@ -4,6 +4,7 @@ import { exitNodes, Newt } from "@server/db";
 import logger from "@server/logger";
 import config from "@server/lib/config";
 import { ne, eq, or, and, count } from "drizzle-orm";
+import { listExitNodes } from "@server/lib/exitNodes";
 
 export const handleNewtPingRequestMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
@@ -16,12 +17,19 @@ export const handleNewtPingRequestMessage: MessageHandler = async (context) => {
         return;
     }
 
-    // TODO: pick which nodes to send and ping better than just all of them
-    let exitNodesList = await db
-        .select()
-        .from(exitNodes);
+    // Get the newt's orgId through the site relationship
+    if (!newt.siteId) {
+        logger.warn("Newt siteId not found");
+        return;
+    }
 
-    exitNodesList = exitNodesList.filter((node) => node.maxConnections !== 0);
+    const [site] = await db
+        .select({ orgId: sites.orgId })
+        .from(sites)
+        .where(eq(sites.siteId, newt.siteId))
+        .limit(1);
+
+    const exitNodesList = await listExitNodes(site.orgId, true); // filter for only the online ones
 
     let lastExitNodeId = null;
     if (newt.siteId) {
@@ -54,9 +62,9 @@ export const handleNewtPingRequestMessage: MessageHandler = async (context) => {
                         )
                     );
 
-                    if (currentConnections.count >= maxConnections) {
-                        return null;
-                    }
+                if (currentConnections.count >= maxConnections) {
+                    return null;
+                }
 
                 weight =
                     (maxConnections - currentConnections.count) /

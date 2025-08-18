@@ -2,17 +2,22 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+ARG BUILD=oss
+ARG DATABASE=sqlite
+
 # COPY package.json package-lock.json ./
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
 
-RUN echo 'export * from "./sqlite";' > server/db/index.ts
+RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
 
-RUN npx drizzle-kit generate --dialect sqlite --schema ./server/db/sqlite/schema.ts --out init
+RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
-RUN npm run build:sqlite
+RUN if [ "$DATABASE" = "pg" ]; then npx drizzle-kit generate --dialect postgresql --schema ./server/db/pg/schema.ts --out init; else npx drizzle-kit generate --dialect $DATABASE --schema ./server/db/$DATABASE/schema.ts --out init; fi
+
+RUN npm run build:$DATABASE
 RUN npm run build:cli
 
 FROM node:22-alpine AS runner
@@ -38,4 +43,4 @@ COPY server/db/names.json ./dist/names.json
 
 COPY public ./public
 
-CMD ["npm", "run", "start:sqlite"]
+CMD ["npm", "run", "start"]

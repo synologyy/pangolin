@@ -36,4 +36,10 @@ bin
 .secrets
 test_event.json
 .idea/
+public/branding
 server/db/index.ts
+config/openapi.yaml
+server/build.ts
+postgres/
+dynamic/
+certificates/ 

@@ -124,7 +124,10 @@ export const exitNodes = pgTable("exitNodes", {
     publicKey: varchar("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
     reachableAt: varchar("reachableAt"),
-    maxConnections: integer("maxConnections")
+    maxConnections: integer("maxConnections"),
+    online: boolean("online").notNull().default(false),
+    lastPing: integer("lastPing"),
+    type: text("type").default("gerbil") // gerbil, remoteExitNode
 });
 
 export const siteResources = pgTable("siteResources", { // this is for the clients

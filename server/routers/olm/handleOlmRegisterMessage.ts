@@ -4,6 +4,7 @@ import { clients, clientSites, exitNodes, Olm, olms, sites } from "@server/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
+import { listExitNodes } from "@server/lib/exitNodes";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -48,7 +49,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // TODO: FOR NOW WE ARE JUST HOLEPUNCHING ALL EXIT NODES BUT IN THE FUTURE WE SHOULD HANDLE THIS BETTER
 
         // Get the exit node
-        const allExitNodes = await db.select().from(exitNodes);
+        const allExitNodes = await listExitNodes(client.orgId, true); // FILTER THE ONLINE ONES
 
         const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
             return {
