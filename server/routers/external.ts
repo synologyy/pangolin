@@ -15,7 +15,6 @@ import * as accessToken from "./accessToken";
 import * as idp from "./idp";
 import * as license from "./license";
 import * as apiKeys from "./apiKeys";
-import * as hybrid from "./hybrid";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
