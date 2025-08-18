@@ -11,19 +11,26 @@ export default async function migration() {
     const db = new Database(location);
 
     const resourceSiteMap = new Map<number, number>();
+	let firstSiteId: number = 1;
 
-    try {
-        const resources = db
-            .prepare(
-                "SELECT resourceId, siteId FROM resources WHERE siteId IS NOT NULL"
-            )
-            .all() as Array<{ resourceId: number; siteId: number }>;
-        for (const resource of resources) {
-            resourceSiteMap.set(resource.resourceId, resource.siteId);
-        }
-    } catch (e) {
-        console.log("Error getting resources:", e);
-    }
+	try {
+		// Get the first siteId to use as default
+		const firstSite = db.prepare("SELECT siteId FROM sites LIMIT 1").get() as { siteId: number } | undefined;
+		if (firstSite) {
+			firstSiteId = firstSite.siteId;
+		}
+
+		const resources = db
+			.prepare(
+				"SELECT resourceId, siteId FROM resources WHERE siteId IS NOT NULL"
+			)
+			.all() as Array<{ resourceId: number; siteId: number }>;
+		for (const resource of resources) {
+			resourceSiteMap.set(resource.resourceId, resource.siteId);
+		}
+	} catch (e) {
+		console.log("Error getting resources:", e);
+	}
 
     try {
         db.pragma("foreign_keys = OFF");
@@ -109,7 +116,7 @@ ALTER TABLE 'exitNodes' ADD 'lastPing' integer;--> statement-breakpoint
 ALTER TABLE 'exitNodes' ADD 'type' text DEFAULT 'gerbil';--> statement-breakpoint
 ALTER TABLE 'olms' ADD 'version' text;--> statement-breakpoint
 ALTER TABLE 'orgs' ADD 'createdAt' text;--> statement-breakpoint
-ALTER TABLE 'targets' ADD 'siteId' integer NOT NULL DEFAULT 1 REFERENCES sites(siteId);`);
+ALTER TABLE 'targets' ADD 'siteId' integer NOT NULL DEFAULT ${firstSiteId || 1} REFERENCES sites(siteId);`);
 
             // for each resource, get all of its targets, and update the siteId to be the previously stored siteId
             for (const [resourceId, siteId] of resourceSiteMap) {
