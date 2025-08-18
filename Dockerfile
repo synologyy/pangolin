@@ -11,7 +11,7 @@ RUN npm ci
 
 COPY . .
 
-RUN echo "export * from ./\"$DATABASE\";" > server/db/index.ts
+RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
 
 RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
