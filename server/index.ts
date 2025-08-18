@@ -11,6 +11,7 @@ import { createHybridClientServer } from "./hybridServer";
 import config from "@server/lib/config";
 import { setHostMeta } from "@server/lib/hostMeta";
 import { initTelemetryClient } from "./lib/telemetry.js";
+import { TraefikConfigManager } from "./lib/traefikConfig.js";
 
 async function startServers() {
     await setHostMeta();
@@ -30,6 +31,10 @@ async function startServers() {
         hybridClientServer = await createHybridClientServer();
     } else {
         nextServer = await createNextServer();
+        if (config.getRawConfig().traefik.file_mode) {
+            const monitor = new TraefikConfigManager();
+            await monitor.start();
+        }
     }
 
     let integrationServer;

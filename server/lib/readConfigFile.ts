@@ -156,7 +156,8 @@ export const configSchema = z
                     .optional()
                     .default("./dynamic/router_config.yml"),
                 static_domains: z.array(z.string()).optional().default([]),
-                site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"])
+                site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"]),
+                file_mode: z.boolean().optional().default(false)
             })
             .optional()
             .default({}),
