@@ -43,4 +43,4 @@ COPY server/db/names.json ./dist/names.json
 
 COPY public ./public
 
-CMD ["npm", "run", "start:$DATABASE"]
+CMD ["npm", "run", "start"]
