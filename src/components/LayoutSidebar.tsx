@@ -6,7 +6,7 @@ import { OrgSelector } from "@app/components/OrgSelector";
 import { cn } from "@app/lib/cn";
 import { ListUserOrgsResponse } from "@server/routers/org";
 import SupporterStatus from "@app/components/SupporterStatus";
-import { ExternalLink, Server, BookOpenText } from "lucide-react";
+import { ExternalLink, Server, BookOpenText, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserContext } from "@app/hooks/useUserContext";
@@ -20,6 +20,7 @@ import {
     TooltipProvider,
     TooltipTrigger
 } from "@app/components/ui/tooltip";
+import { build } from "@server/build";
 
 interface LayoutSidebarProps {
     orgId?: string;
@@ -73,6 +74,35 @@ export function LayoutSidebar({
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
+                            {build === "oss" && (
+                                <Link
+                                    href="/admin/managed"
+                                    className={cn(
+                                        "flex items-center rounded transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
+                                        isSidebarCollapsed
+                                            ? "px-2 py-2 justify-center"
+                                            : "px-3 py-1.5"
+                                    )}
+                                    title={
+                                        isSidebarCollapsed
+                                            ? t("managedSelfhosted")
+                                            : undefined
+                                    }
+                                >
+                                    <span
+                                        className={cn(
+                                            "flex-shrink-0",
+                                            !isSidebarCollapsed && "mr-2"
+                                        )}
+                                    >
+                                        <Zap className="h-4 w-4" />
+                                    </span>
+                                    {!isSidebarCollapsed && (
+                                        <span>{t("managedSelfhosted")}</span>
+                                    )}
+                                </Link>
+                            )}
+
                             <Link
                                 href="/admin"
                                 className={cn(

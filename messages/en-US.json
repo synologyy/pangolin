@@ -973,6 +973,7 @@
     "logoutError": "Error logging out",
     "signingAs": "Signed in as",
     "serverAdmin": "Server Admin",
+    "managedSelfhosted": "Managed Self-Hosted",
     "otpEnable": "Enable Two-factor",
     "otpDisable": "Disable Two-factor",
     "logout": "Log Out",
