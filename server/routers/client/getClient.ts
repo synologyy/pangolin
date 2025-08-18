@@ -13,17 +13,16 @@ import { OpenAPITags, registry } from "@server/openApi";
 
 const getClientSchema = z
     .object({
-        clientId: z.string().transform(stoi).pipe(z.number().int().positive()),
-        orgId: z.string()
+        clientId: z.string().transform(stoi).pipe(z.number().int().positive())
     })
     .strict();
 
-async function query(clientId: number, orgId: string) {
+async function query(clientId: number) {
     // Get the client
     const [client] = await db
         .select()
         .from(clients)
-        .where(and(eq(clients.clientId, clientId), eq(clients.orgId, orgId)))
+        .where(and(eq(clients.clientId, clientId)))
         .limit(1);
 
     if (!client) {
@@ -47,9 +46,9 @@ export type GetClientResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
 
 registry.registerPath({
     method: "get",
-    path: "/org/{orgId}/client/{clientId}",
+    path: "/client/{clientId}",
     description: "Get a client by its client ID.",
-    tags: [OpenAPITags.Client, OpenAPITags.Org],
+    tags: [OpenAPITags.Client],
     request: {
         params: getClientSchema
     },
@@ -75,9 +74,9 @@ export async function getClient(
             );
         }
 
-        const { clientId, orgId } = parsedParams.data;
+        const { clientId } = parsedParams.data;
 
-        const client = await query(clientId, orgId);
+        const client = await query(clientId);
 
         if (!client) {
             return next(

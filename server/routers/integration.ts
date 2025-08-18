@@ -526,9 +526,9 @@ authenticated.get(
 );
 
 authenticated.get(
-    "/org/:orgId/client/:clientId",
+    "/client/:clientId",
     verifyClientsEnabled,
-    verifyApiKeyOrgAccess,
+    verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.getClient),
     client.getClient
 );

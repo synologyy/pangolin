@@ -134,9 +134,9 @@ authenticated.get(
 );
 
 authenticated.get(
-    "/org/:orgId/client/:clientId",
+    "/client/:clientId",
     verifyClientsEnabled,
-    verifyOrgAccess,
+    verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
 );
