@@ -215,7 +215,7 @@ func main() {
 		}
 	} else {
 		fmt.Println("Looks like you already installed, so I am going to do the setup...")
-		
+
 		// Read existing config to get DashboardDomain
 		traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml", "config/traefik/dynamic_config.yml")
 		if err != nil {
@@ -226,16 +226,25 @@ func main() {
 			config.DashboardDomain = traefikConfig.DashboardDomain
 			config.LetsEncryptEmail = traefikConfig.LetsEncryptEmail
 			config.BadgerVersion = traefikConfig.BadgerVersion
-			
+
 			// Show detected values and allow user to confirm or re-enter
 			fmt.Println("Detected existing configuration:")
 			fmt.Printf("Dashboard Domain: %s\n", config.DashboardDomain)
 			fmt.Printf("Let's Encrypt Email: %s\n", config.LetsEncryptEmail)
 			fmt.Printf("Badger Version: %s\n", config.BadgerVersion)
-			
+
 			if !readBool(reader, "Are these values correct?", true) {
 				config = collectUserInput(reader)
 			}
+		}
+	}
+
+	// Check if Pangolin is already installed with hybrid section
+	if checkIsPangolinInstalledWithHybrid() {
+		fmt.Println("\n=== Convert to Self-Host Node ===")
+		if readBool(reader, "Do you want to convert this Pangolin instance into a manage self-host node?", true) {
+			fmt.Println("hello world")
+			return
 		}
 	}
 
@@ -276,7 +285,7 @@ func main() {
 
 	// Setup Token Section
 	fmt.Println("\n=== Setup Token ===")
-	
+
 	// Check if containers were started during this installation
 	containersStarted := false
 	if (isDockerInstalled() && chosenContainer == Docker) ||
@@ -285,7 +294,7 @@ func main() {
 		containersStarted = true
 		printSetupToken(chosenContainer, config.DashboardDomain)
 	}
-	
+
 	// If containers weren't started or token wasn't found, show instructions
 	if !containersStarted {
 		showSetupTokenInstructions(chosenContainer, config.DashboardDomain)
@@ -354,7 +363,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
 	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
-	
+
 	// Set default dashboard domain after base domain is collected
 	defaultDashboardDomain := ""
 	if config.BaseDomain != "" {
@@ -816,7 +825,7 @@ func waitForContainer(containerName string, containerType SupportedContainer) er
 
 func printSetupToken(containerType SupportedContainer, dashboardDomain string) {
 	fmt.Println("Waiting for Pangolin to generate setup token...")
-	
+
 	// Wait for Pangolin to be healthy
 	if err := waitForContainer("pangolin", containerType); err != nil {
 		fmt.Println("Warning: Pangolin container did not become healthy in time.")
@@ -937,4 +946,25 @@ func checkPortsAvailable(port int) error {
         )
     }
     return nil
+}
+
+func checkIsPangolinInstalledWithHybrid() bool {
+	// Check if docker-compose.yml exists (indicating Pangolin is installed)
+	if _, err := os.Stat("docker-compose.yml"); err != nil {
+		return false
+	}
+
+	// Check if config/config.yml exists and contains hybrid section
+	if _, err := os.Stat("config/config.yml"); err != nil {
+		return false
+	}
+
+	// Read config file to check for hybrid section
+	content, err := os.ReadFile("config/config.yml")
+	if err != nil {
+		return false
+	}
+
+	// Check for hybrid section
+	return bytes.Contains(content, []byte("hybrid:"))
 }
