@@ -116,7 +116,7 @@
     "devDependencies": {
         "@dotenvx/dotenvx": "1.48.4",
         "@esbuild-plugins/tsconfig-paths": "0.1.2",
-        "@tailwindcss/postcss": "^4.1.10",
+        "@tailwindcss/postcss": "^4.1.12",
         "@types/better-sqlite3": "7.6.12",
         "@types/cookie-parser": "1.4.9",
         "@types/cors": "2.8.19",
