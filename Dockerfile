@@ -11,11 +11,11 @@ RUN npm ci
 
 COPY . .
 
-RUN echo 'export * from "./\"$DATABASE\";' > server/db/index.ts
+RUN echo "export * from ./\"$DATABASE\";" > server/db/index.ts
 
 RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
-RUN npx drizzle-kit generate --dialect sqlite --schema ./server/db/sqlite/schema.ts --out init
+RUN if [ "$DATABASE" = "pg" ]; then npx drizzle-kit generate --dialect postgresql --schema ./server/db/pg/schema.ts --out init; else npx drizzle-kit generate --dialect $DATABASE --schema ./server/db/$DATABASE/schema.ts --out init; fi
 
 RUN npm run build:$DATABASE
 RUN npm run build:cli
