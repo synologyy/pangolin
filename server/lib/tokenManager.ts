@@ -156,7 +156,8 @@ export class TokenManager {
     async getAuthHeader() {
         return {
             headers: {
-                Authorization: `Bearer ${await this.getToken()}`
+                Authorization: `Bearer ${await this.getToken()}`,
+                "X-CSRF-Token": "x-csrf-protection",
             }
         };
     }
