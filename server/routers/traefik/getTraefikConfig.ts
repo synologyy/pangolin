@@ -11,6 +11,35 @@ let currentExitNodeId: number;
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const badgerMiddlewareName = "badger";
 
+export async function getCurrentExitNodeId(): Promise<number> {
+    if (!currentExitNodeId) {
+        if (config.getRawConfig().gerbil.exit_node_name) {
+            const exitNodeName = config.getRawConfig().gerbil.exit_node_name!;
+            const [exitNode] = await db
+                .select({
+                    exitNodeId: exitNodes.exitNodeId
+                })
+                .from(exitNodes)
+                .where(eq(exitNodes.name, exitNodeName));
+            if (exitNode) {
+                currentExitNodeId = exitNode.exitNodeId;
+            }
+        } else {
+            const [exitNode] = await db
+                .select({
+                    exitNodeId: exitNodes.exitNodeId
+                })
+                .from(exitNodes)
+                .limit(1);
+
+            if (exitNode) {
+                currentExitNodeId = exitNode.exitNodeId;
+            }
+        }
+    }
+    return currentExitNodeId;
+}
+
 export async function traefikConfigProvider(
     _: Request,
     res: Response
@@ -18,34 +47,12 @@ export async function traefikConfigProvider(
     try {
         // First query to get resources with site and org info
         // Get the current exit node name from config
-        if (!currentExitNodeId) {
-            if (config.getRawConfig().gerbil.exit_node_name) {
-                const exitNodeName =
-                    config.getRawConfig().gerbil.exit_node_name!;
-                const [exitNode] = await db
-                    .select({
-                        exitNodeId: exitNodes.exitNodeId
-                    })
-                    .from(exitNodes)
-                    .where(eq(exitNodes.name, exitNodeName));
-                if (exitNode) {
-                    currentExitNodeId = exitNode.exitNodeId;
-                }
-            } else {
-                const [exitNode] = await db
-                    .select({
-                        exitNodeId: exitNodes.exitNodeId
-                    })
-                    .from(exitNodes)
-                    .limit(1);
+        await getCurrentExitNodeId();
 
-                if (exitNode) {
-                    currentExitNodeId = exitNode.exitNodeId;
-                }
-            }
-        }
-
-        let traefikConfig = await getTraefikConfig(currentExitNodeId, config.getRawConfig().traefik.site_types);
+        let traefikConfig = await getTraefikConfig(
+            currentExitNodeId,
+            config.getRawConfig().traefik.site_types
+        );
 
         traefikConfig.http.middlewares[badgerMiddlewareName] = {
             plugin: {
@@ -80,7 +87,10 @@ export async function traefikConfigProvider(
     }
 }
 
-export async function getTraefikConfig(exitNodeId: number, siteTypes: string[]): Promise<any> {
+export async function getTraefikConfig(
+    exitNodeId: number,
+    siteTypes: string[]
+): Promise<any> {
     // Define extended target type with site information
     type TargetWithSite = Target & {
         site: {
@@ -135,7 +145,7 @@ export async function getTraefikConfig(exitNodeId: number, siteTypes: string[]):
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
                     ),
-                    inArray(sites.type, siteTypes),
+                    inArray(sites.type, siteTypes)
                 )
             );
 
@@ -438,7 +448,10 @@ export async function getTraefikConfig(exitNodeId: number, siteTypes: string[]):
                                     return false;
                                 }
                             } else if (target.site.type === "newt") {
-                                if (!target.internalPort || !target.site.subnet) {
+                                if (
+                                    !target.internalPort ||
+                                    !target.site.subnet
+                                ) {
                                     return false;
                                 }
                             }

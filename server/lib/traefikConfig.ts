@@ -5,7 +5,16 @@ import logger from "@server/logger";
 import * as yaml from "js-yaml";
 import axios from "axios";
 import { db, exitNodes } from "@server/db";
+import { eq } from "drizzle-orm";
 import { tokenManager } from "./tokenManager";
+import {
+    getCurrentExitNodeId,
+    getTraefikConfig
+} from "@server/routers/traefik";
+import {
+    getValidCertificatesForDomains,
+    getValidCertificatesForDomainsHybrid
+} from "./remoteCertificates";
 
 export class TraefikConfigManager {
     private intervalId: NodeJS.Timeout | null = null;
@@ -14,11 +23,14 @@ export class TraefikConfigManager {
     private timeoutId: NodeJS.Timeout | null = null;
     private lastCertificateFetch: Date | null = null;
     private lastKnownDomains = new Set<string>();
-    private lastLocalCertificateState = new Map<string, { 
-        exists: boolean; 
-        lastModified: Date | null; 
-        expiresAt: Date | null; 
-    }>();
+    private lastLocalCertificateState = new Map<
+        string,
+        {
+            exists: boolean;
+            lastModified: Date | null;
+            expiresAt: Date | null;
+        }
+    >();
 
     constructor() {}
 
@@ -59,7 +71,9 @@ export class TraefikConfigManager {
 
         // Initialize local certificate state
         this.lastLocalCertificateState = await this.scanLocalCertificateState();
-        logger.info(`Found ${this.lastLocalCertificateState.size} existing certificate directories`);
+        logger.info(
+            `Found ${this.lastLocalCertificateState.size} existing certificate directories`
+        );
 
         // Run initial check
         await this.HandleTraefikConfig();
@@ -94,40 +108,47 @@ export class TraefikConfigManager {
     /**
      * Scan local certificate directories to build current state
      */
-    private async scanLocalCertificateState(): Promise<Map<string, { 
-        exists: boolean; 
-        lastModified: Date | null; 
-        expiresAt: Date | null; 
-    }>> {
+    private async scanLocalCertificateState(): Promise<
+        Map<
+            string,
+            {
+                exists: boolean;
+                lastModified: Date | null;
+                expiresAt: Date | null;
+            }
+        >
+    > {
         const state = new Map();
         const certsPath = config.getRawConfig().traefik.certificates_path;
-        
+
         try {
             if (!fs.existsSync(certsPath)) {
                 return state;
             }
 
             const certDirs = fs.readdirSync(certsPath, { withFileTypes: true });
-            
+
             for (const dirent of certDirs) {
                 if (!dirent.isDirectory()) continue;
-                
+
                 const domain = dirent.name;
                 const domainDir = path.join(certsPath, domain);
                 const certPath = path.join(domainDir, "cert.pem");
                 const keyPath = path.join(domainDir, "key.pem");
                 const lastUpdatePath = path.join(domainDir, ".last_update");
-                
+
                 const certExists = await this.fileExists(certPath);
                 const keyExists = await this.fileExists(keyPath);
                 const lastUpdateExists = await this.fileExists(lastUpdatePath);
-                
+
                 let lastModified: Date | null = null;
                 let expiresAt: Date | null = null;
-                
+
                 if (lastUpdateExists) {
                     try {
-                        const lastUpdateStr = fs.readFileSync(lastUpdatePath, "utf8").trim();
+                        const lastUpdateStr = fs
+                            .readFileSync(lastUpdatePath, "utf8")
+                            .trim();
                         lastModified = new Date(lastUpdateStr);
                     } catch {
                         // If we can't read the last update, fall back to file stats
@@ -139,7 +160,7 @@ export class TraefikConfigManager {
                         }
                     }
                 }
-                
+
                 state.set(domain, {
                     exists: certExists && keyExists,
                     lastModified,
@@ -149,7 +170,7 @@ export class TraefikConfigManager {
         } catch (error) {
             logger.error("Error scanning local certificate state:", error);
         }
-        
+
         return state;
     }
 
@@ -161,40 +182,51 @@ export class TraefikConfigManager {
         if (!this.lastCertificateFetch) {
             return true;
         }
-        
+
         // Fetch if it's been more than 24 hours (for renewals)
         const dayInMs = 24 * 60 * 60 * 1000;
-        const timeSinceLastFetch = Date.now() - this.lastCertificateFetch.getTime();
+        const timeSinceLastFetch =
+            Date.now() - this.lastCertificateFetch.getTime();
         if (timeSinceLastFetch > dayInMs) {
             logger.info("Fetching certificates due to 24-hour renewal check");
             return true;
         }
-        
+
         // Fetch if domains have changed
-        if (this.lastKnownDomains.size !== currentDomains.size ||
-            !Array.from(this.lastKnownDomains).every(domain => currentDomains.has(domain))) {
+        if (
+            this.lastKnownDomains.size !== currentDomains.size ||
+            !Array.from(this.lastKnownDomains).every((domain) =>
+                currentDomains.has(domain)
+            )
+        ) {
             logger.info("Fetching certificates due to domain changes");
             return true;
         }
-        
+
         // Check if any local certificates are missing or appear to be outdated
         for (const domain of currentDomains) {
             const localState = this.lastLocalCertificateState.get(domain);
             if (!localState || !localState.exists) {
-                logger.info(`Fetching certificates due to missing local cert for ${domain}`);
+                logger.info(
+                    `Fetching certificates due to missing local cert for ${domain}`
+                );
                 return true;
             }
-            
+
             // Check if certificate is expiring soon (within 30 days)
             if (localState.expiresAt) {
-                const daysUntilExpiry = (localState.expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+                const daysUntilExpiry =
+                    (localState.expiresAt.getTime() - Date.now()) /
+                    (1000 * 60 * 60 * 24);
                 if (daysUntilExpiry < 30) {
-                    logger.info(`Fetching certificates due to upcoming expiry for ${domain} (${Math.round(daysUntilExpiry)} days remaining)`);
+                    logger.info(
+                        `Fetching certificates due to upcoming expiry for ${domain} (${Math.round(daysUntilExpiry)} days remaining)`
+                    );
                     return true;
                 }
             }
         }
-        
+
         return false;
     }
 
@@ -234,7 +266,8 @@ export class TraefikConfigManager {
             }
 
             // Scan current local certificate state
-            this.lastLocalCertificateState = await this.scanLocalCertificateState();
+            this.lastLocalCertificateState =
+                await this.scanLocalCertificateState();
 
             // Only fetch certificates if needed (domain changes, missing certs, or daily renewal check)
             let validCertificates: Array<{
@@ -248,19 +281,33 @@ export class TraefikConfigManager {
 
             if (this.shouldFetchCertificates(domains)) {
                 // Get valid certificates for active domains
-                validCertificates = await this.getValidCertificatesForDomains(domains);
+                if (config.isHybridMode()) {
+                    validCertificates =
+                        await getValidCertificatesForDomainsHybrid(domains);
+                } else {
+                    validCertificates =
+                        await getValidCertificatesForDomains(domains);
+                }
                 this.lastCertificateFetch = new Date();
                 this.lastKnownDomains = new Set(domains);
-                
-                logger.info(`Fetched ${validCertificates.length} certificates from remote`);
+
+                logger.info(
+                    `Fetched ${validCertificates.length} certificates from remote`
+                );
 
                 // Download and decrypt new certificates
                 await this.processValidCertificates(validCertificates);
             } else {
-                const timeSinceLastFetch = this.lastCertificateFetch ? 
-                    Math.round((Date.now() - this.lastCertificateFetch.getTime()) / (1000 * 60)) : 0;
-                logger.debug(`Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`);
-                
+                const timeSinceLastFetch = this.lastCertificateFetch
+                    ? Math.round(
+                          (Date.now() - this.lastCertificateFetch.getTime()) /
+                              (1000 * 60)
+                      )
+                    : 0;
+                logger.debug(
+                    `Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`
+                );
+
                 // Still need to ensure config is up to date with existing certificates
                 await this.updateDynamicConfigFromLocalCerts(domains);
             }
@@ -276,7 +323,18 @@ export class TraefikConfigManager {
 
             // Send domains to SNI proxy
             try {
-                const [exitNode] = await db.select().from(exitNodes).limit(1);
+                let exitNode;
+                if (config.getRawConfig().gerbil.exit_node_name) {
+                    const exitNodeName =
+                        config.getRawConfig().gerbil.exit_node_name!;
+                    [exitNode] = await db
+                        .select()
+                        .from(exitNodes)
+                        .where(eq(exitNodes.name, exitNodeName))
+                        .limit(1);
+                } else {
+                    [exitNode] = await db.select().from(exitNodes).limit(1);
+                }
                 if (exitNode) {
                     try {
                         await axios.post(
@@ -300,7 +358,9 @@ export class TraefikConfigManager {
                         }
                     }
                 } else {
-                    logger.error("No exit node found. Has gerbil registered yet?");
+                    logger.error(
+                        "No exit node found. Has gerbil registered yet?"
+                    );
                 }
             } catch (err) {
                 logger.error("Failed to post domains to SNI proxy:", err);
@@ -320,21 +380,31 @@ export class TraefikConfigManager {
         domains: Set<string>;
         traefikConfig: any;
     } | null> {
+        let traefikConfig;
         try {
-            const resp = await axios.get(
-                `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/traefik-config`,
-                await tokenManager.getAuthHeader()
-            );
-
-            if (resp.status !== 200) {
-                logger.error(
-                    `Failed to fetch traefik config: ${resp.status} ${resp.statusText}`,
-                    { responseData: resp.data }
+            if (config.isHybridMode()) {
+                const resp = await axios.get(
+                    `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/traefik-config`,
+                    await tokenManager.getAuthHeader()
                 );
-                return null;
+
+                if (resp.status !== 200) {
+                    logger.error(
+                        `Failed to fetch traefik config: ${resp.status} ${resp.statusText}`,
+                        { responseData: resp.data }
+                    );
+                    return null;
+                }
+
+                traefikConfig = resp.data.data;
+            } else {
+                const currentExitNode = await getCurrentExitNodeId();
+                traefikConfig = await getTraefikConfig(
+                    currentExitNode,
+                    config.getRawConfig().traefik.site_types
+                );
             }
 
-            const traefikConfig = resp.data.data;
             const domains = new Set<string>();
 
             if (traefikConfig?.http?.routers) {
@@ -445,16 +515,20 @@ export class TraefikConfigManager {
     /**
      * Update dynamic config from existing local certificates without fetching from remote
      */
-    private async updateDynamicConfigFromLocalCerts(domains: Set<string>): Promise<void> {
-        const dynamicConfigPath = config.getRawConfig().traefik.dynamic_cert_config_path;
-        
+    private async updateDynamicConfigFromLocalCerts(
+        domains: Set<string>
+    ): Promise<void> {
+        const dynamicConfigPath =
+            config.getRawConfig().traefik.dynamic_cert_config_path;
+
         // Load existing dynamic config if it exists, otherwise initialize
         let dynamicConfig: any = { tls: { certificates: [] } };
         if (fs.existsSync(dynamicConfigPath)) {
             try {
                 const fileContent = fs.readFileSync(dynamicConfigPath, "utf8");
                 dynamicConfig = yaml.load(fileContent) || dynamicConfig;
-                if (!dynamicConfig.tls) dynamicConfig.tls = { certificates: [] };
+                if (!dynamicConfig.tls)
+                    dynamicConfig.tls = { certificates: [] };
                 if (!Array.isArray(dynamicConfig.tls.certificates)) {
                     dynamicConfig.tls.certificates = [];
                 }
@@ -492,67 +566,6 @@ export class TraefikConfigManager {
         if (newConfigYaml !== originalConfigYaml) {
             fs.writeFileSync(dynamicConfigPath, newConfigYaml, "utf8");
             logger.info("Dynamic cert config updated from local certificates");
-        }
-    }
-
-    /**
-     * Get valid certificates for the specified domains
-     */
-    private async getValidCertificatesForDomains(domains: Set<string>): Promise<
-        Array<{
-            id: number;
-            domain: string;
-            certFile: string | null;
-            keyFile: string | null;
-            expiresAt: Date | null;
-            updatedAt?: Date | null;
-        }>
-    > {
-        if (domains.size === 0) {
-            return [];
-        }
-
-        const domainArray = Array.from(domains);
-
-        try {
-            const response = await axios.get(
-                `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/certificates/domains`,
-                {
-                    params: {
-                        domains: domainArray
-                    },
-                    headers: (await tokenManager.getAuthHeader()).headers
-                }
-            );
-
-            if (response.status !== 200) {
-                logger.error(
-                    `Failed to fetch certificates for domains: ${response.status} ${response.statusText}`,
-                    { responseData: response.data, domains: domainArray }
-                );
-                return [];
-            }
-
-            // logger.debug(
-            //     `Successfully retrieved ${response.data.data?.length || 0} certificates for ${domainArray.length} domains`
-            // );
-
-            return response.data.data;
-        } catch (error) {
-            // pull data out of the axios error to log
-            if (axios.isAxiosError(error)) {
-                logger.error("Error getting certificates:", {
-                    message: error.message,
-                    code: error.code,
-                    status: error.response?.status,
-                    statusText: error.response?.statusText,
-                    url: error.config?.url,
-                    method: error.config?.method
-                });
-            } else {
-                logger.error("Error getting certificates:", error);
-            }
-            return [];
         }
     }
 
@@ -640,7 +653,7 @@ export class TraefikConfigManager {
                     logger.info(
                         `Certificate updated for domain: ${cert.domain}`
                     );
-                    
+
                     // Update local state tracking
                     this.lastLocalCertificateState.set(cert.domain, {
                         exists: true,
