@@ -131,6 +131,7 @@ export async function getTraefikConfig(
                 // Site fields
                 siteId: sites.siteId,
                 siteType: sites.type,
+                siteOnline: sites.online,
                 subnet: sites.subnet,
                 exitNodeId: sites.exitNodeId
             })
@@ -141,6 +142,7 @@ export async function getTraefikConfig(
                 and(
                     eq(targets.enabled, true),
                     eq(resources.enabled, true),
+                    eq(sites.online, true),
                     or(
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
