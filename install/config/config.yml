@@ -1,5 +1,5 @@
 # To see all available options, please visit the docs:
-# https://docs.digpangolin.com/self-host/dns-and-networking
+# https://docs.digpangolin.com/self-host/advanced/config-file 
 
 app:
     dashboard_url: "https://{{.DashboardDomain}}"
@@ -36,3 +36,9 @@ flags:
     disable_signup_without_invite: true
     disable_user_create_org: false
     allow_raw_resources: true
+
+{{if and .HybridMode .HybridId .HybridSecret}}
+hybrid:
+    id: "{{.HybridId}}"
+    secret: "{{.HybridSecret}}"
+{{end}}
