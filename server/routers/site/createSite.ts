@@ -207,7 +207,7 @@ export async function createSite(
         await db.transaction(async (trx) => {
             let newSite: Site;
 
-            if (exitNodeId) {
+            if ((type == "wireguard" || type == "newt") && exitNodeId) {
                 // we are creating a site with an exit node (tunneled)
                 if (!subnet) {
                     return next(
@@ -264,12 +264,14 @@ export async function createSite(
                 [newSite] = await trx
                     .insert(sites)
                     .values({
+                        exitNodeId: exitNodeId,
                         orgId,
                         name,
                         niceId,
                         address: updatedAddress || null,
                         type,
-                        dockerSocketEnabled: type == "newt",
+                        dockerSocketEnabled: false,
+                        online: true,
                         subnet: "0.0.0.0/0"
                     })
                     .returning();

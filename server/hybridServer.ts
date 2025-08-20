@@ -139,9 +139,13 @@ export async function createHybridClientServer() {
         logger.error("Failed to connect:", error);
     }
 
-    client.sendMessageInterval(
+    // Store the ping interval stop function for cleanup if needed
+    const stopPingInterval = client.sendMessageInterval(
         "remoteExitNode/ping",
         { timestamp: Date.now() / 1000 },
         60000
     ); // send every minute
+
+    // Return client and cleanup function for potential use
+    return { client, stopPingInterval };
 }

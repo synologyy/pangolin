@@ -66,7 +66,7 @@ export default function SiteInfoCard({}: SiteInfoCardProps) {
                         </InfoSectionContent>
                     </InfoSection>
 
-                    {env.flags.enableClients && (
+                    {env.flags.enableClients && site.type == "newt" && (
                         <InfoSection>
                             <InfoSectionTitle>Address</InfoSectionTitle>
                             <InfoSectionContent>
