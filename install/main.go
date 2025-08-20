@@ -65,12 +65,9 @@ func main() {
 
 	fmt.Println("Welcome to the Pangolin installer!")
 	fmt.Println("This installer will help you set up Pangolin on your server.")
-	fmt.Println("")
-	fmt.Println("Please make sure you have the following prerequisites:")
+	fmt.Println("\nPlease make sure you have the following prerequisites:")
 	fmt.Println("- Open TCP ports 80 and 443 and UDP ports 51820 and 21820 on your VPS and firewall.")
-	fmt.Println("")
-	fmt.Println("Lets get started!")
-	fmt.Println("")
+	fmt.Println("\nLets get started!")
 
 	if os.Geteuid() == 0 { // WE NEED TO BE SUDO TO CHECK THIS
 		for _, p := range []int{80, 443} {
@@ -102,51 +99,52 @@ func main() {
 
 		moveFile("config/docker-compose.yml", "docker-compose.yml")
 
-		config.InstallationContainerType = podmanOrDocker(reader)
-		
-		if !isDockerInstalled() && runtime.GOOS == "linux" && config.InstallationContainerType == Docker {
-			if readBool(reader, "Docker is not installed. Would you like to install it?", true) {
-				installDocker()
-				// try to start docker service but ignore errors
-				if err := startDockerService(); err != nil {
-					fmt.Println("Error starting Docker service:", err)
-				} else {
-					fmt.Println("Docker service started successfully!")
-				}
-				// wait 10 seconds for docker to start checking if docker is running every 2 seconds
-				fmt.Println("Waiting for Docker to start...")
-				for i := 0; i < 5; i++ {
-					if isDockerRunning() {
-						fmt.Println("Docker is running!")
-						break
-					}
-					fmt.Println("Docker is not running yet, waiting...")
-					time.Sleep(2 * time.Second)
-				}
-				if !isDockerRunning() {
-					fmt.Println("Docker is still not running after 10 seconds. Please check the installation.")
-					os.Exit(1)
-				}
-				fmt.Println("Docker installed successfully!")
-			}
-		}
+		fmt.Println("\nConfiguration files created successfully!")
 
 		fmt.Println("\n=== Starting installation ===")
 
-		if (isDockerInstalled() && config.InstallationContainerType == Docker) ||
-			(isPodmanInstalled() && config.InstallationContainerType == Podman) {
-			if readBool(reader, "Would you like to install and start the containers?", true) {
-				if err := pullContainers(config.InstallationContainerType); err != nil {
-					fmt.Println("Error: ", err)
-					return
-				}
+		if readBool(reader, "Would you like to install and start the containers?", true) {
 
-				if err := startContainers(config.InstallationContainerType); err != nil {
-					fmt.Println("Error: ", err)
-					return
+			config.InstallationContainerType = podmanOrDocker(reader)
+			
+			if !isDockerInstalled() && runtime.GOOS == "linux" && config.InstallationContainerType == Docker {
+				if readBool(reader, "Docker is not installed. Would you like to install it?", true) {
+					installDocker()
+					// try to start docker service but ignore errors
+					if err := startDockerService(); err != nil {
+						fmt.Println("Error starting Docker service:", err)
+					} else {
+						fmt.Println("Docker service started successfully!")
+					}
+					// wait 10 seconds for docker to start checking if docker is running every 2 seconds
+					fmt.Println("Waiting for Docker to start...")
+					for i := 0; i < 5; i++ {
+						if isDockerRunning() {
+							fmt.Println("Docker is running!")
+							break
+						}
+						fmt.Println("Docker is not running yet, waiting...")
+						time.Sleep(2 * time.Second)
+					}
+					if !isDockerRunning() {
+						fmt.Println("Docker is still not running after 10 seconds. Please check the installation.")
+						os.Exit(1)
+					}
+					fmt.Println("Docker installed successfully!")
 				}
 			}
+
+			if err := pullContainers(config.InstallationContainerType); err != nil {
+				fmt.Println("Error: ", err)
+				return
+			}
+
+			if err := startContainers(config.InstallationContainerType); err != nil {
+				fmt.Println("Error: ", err)
+				return
+			}
 		}
+
 	} else {
 		fmt.Println("Looks like you already installed, so I am going to do the setup...")
 
@@ -171,15 +169,16 @@ func main() {
 				config = collectUserInput(reader)
 			}
 		}
-	}
 
-	// Check if Pangolin is already installed with hybrid section
-	if checkIsPangolinInstalledWithHybrid() {
-		fmt.Println("\n=== Convert to Self-Host Node ===")
-		if readBool(reader, "Do you want to convert this Pangolin instance into a manage self-host node?", true) {
-			fmt.Println("hello world")
-			return
-		}
+		// Check if Pangolin is already installed with hybrid section
+		// if checkIsPangolinInstalledWithHybrid() {
+		// 	fmt.Println("\n=== Convert to Self-Host Node ===")
+		// 	if readBool(reader, "Do you want to convert this Pangolin instance into a managed self-host node?", true) {
+		// 		fmt.Println("hello world")
+		// 		return
+		// 	}
+		// }
+
 	}
 
 	if !checkIsCrowdsecInstalledInCompose() {
@@ -217,25 +216,30 @@ func main() {
 		}
 	}
 
-	// Setup Token Section
-	fmt.Println("\n=== Setup Token ===")
+	if !config.HybridMode {
+		// Setup Token Section
+		fmt.Println("\n=== Setup Token ===")
 
-	// Check if containers were started during this installation
-	containersStarted := false
-	if (isDockerInstalled() && config.InstallationContainerType == Docker) ||
-		(isPodmanInstalled() && config.InstallationContainerType == Podman) {
-		// Try to fetch and display the token if containers are running
-		containersStarted = true
-		printSetupToken(config.InstallationContainerType, config.DashboardDomain)
+		// Check if containers were started during this installation
+		containersStarted := false
+		if (isDockerInstalled() && config.InstallationContainerType == Docker) ||
+			(isPodmanInstalled() && config.InstallationContainerType == Podman) {
+			// Try to fetch and display the token if containers are running
+			containersStarted = true
+			printSetupToken(config.InstallationContainerType, config.DashboardDomain)
+		}
+
+		// If containers weren't started or token wasn't found, show instructions
+		if !containersStarted {
+			showSetupTokenInstructions(config.InstallationContainerType, config.DashboardDomain)
+		}
 	}
 
-	// If containers weren't started or token wasn't found, show instructions
-	if !containersStarted {
-		showSetupTokenInstructions(config.InstallationContainerType, config.DashboardDomain)
-	}
+	fmt.Println("\nInstallation complete!")
 
-	fmt.Println("Installation complete!")
-	fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
+	if !config.HybridMode {
+		fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
+	}
 }
 
 func podmanOrDocker(reader *bufio.Reader) SupportedContainer {
@@ -310,18 +314,32 @@ func collectUserInput(reader *bufio.Reader) Config {
 
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
-	config.HybridMode = readBoolNoDefault(reader, "Do you want to use hybrid mode?")
+	for {
+		response := readString(reader, "Do you want to install Pangolin as a cloud-managed self-hosted node? (yes/no)", "")
+		if strings.EqualFold(response, "yes") || strings.EqualFold(response, "y") {
+			config.HybridMode = true
+			break
+		} else if strings.EqualFold(response, "no") || strings.EqualFold(response, "n") {
+			config.HybridMode = false
+			break
+		}
+		fmt.Println("Please answer 'yes' or 'no'")
+	}
 
 	if config.HybridMode {
 		alreadyHaveCreds := readBool(reader, "Do you already have credentials from the dashboard?", false)
-
+		
 		if alreadyHaveCreds {
 			config.HybridId = readString(reader, "Enter your hybrid ID", "")
 			config.HybridSecret = readString(reader, "Enter your hybrid secret", "")
+		} else {
+			// Just print instructions for right now
+			fmt.Println("Please visit https://pangolin.fossorial.io, create a self hosted node, and return with the credentials.")
 		}
-	}
 
-	if !config.HybridMode {
+		config.DashboardDomain = readString(reader, "The public addressable IP address for this node or a domain pointing to it", "")
+		config.InstallGerbil = true
+	} else {
 		config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
 
 		// Set default dashboard domain after base domain is collected
@@ -331,16 +349,12 @@ func collectUserInput(reader *bufio.Reader) Config {
 		}
 		config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
 		config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
-	}
+		config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
 
-	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
-	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
-
-	if !config.HybridMode {
 		// Email configuration
 		fmt.Println("\n=== Email Configuration ===")
 		config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
-
+		
 		if config.EnableEmail {
 			config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
 			config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
@@ -348,21 +362,27 @@ func collectUserInput(reader *bufio.Reader) Config {
 			config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
 			config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
 		}
-
-
+		
 		// Validate required fields
 		if config.BaseDomain == "" {
 			fmt.Println("Error: Domain name is required")
-			os.Exit(1)
-		}
-		if config.DashboardDomain == "" {
-			fmt.Println("Error: Dashboard Domain name is required")
 			os.Exit(1)
 		}
 		if config.LetsEncryptEmail == "" {
 			fmt.Println("Error: Let's Encrypt email is required")
 			os.Exit(1)
 		}
+	}
+
+	// Advanced configuration
+
+	fmt.Println("\n=== Advanced Configuration ===")
+
+	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
+
+	if config.DashboardDomain == "" {
+		fmt.Println("Error: Dashboard Domain name is required")
+		os.Exit(1)
 	}
 
 	return config
@@ -390,6 +410,11 @@ func createConfigFiles(config Config) error {
 		}
 
 		if config.DoCrowdsecInstall && !strings.Contains(path, "crowdsec") {
+			return nil
+		}
+
+		// the hybrid does not need the dynamic config
+		if config.HybridMode && strings.Contains(path, "dynamic_config.yml") {
 			return nil
 		}
 
@@ -443,6 +468,7 @@ func createConfigFiles(config Config) error {
 
 	return nil
 }
+
 func copyFile(src, dst string) error {
 	source, err := os.Open(src)
 	if err != nil {

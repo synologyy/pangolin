@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./config:/app/config
+      - pangolin-data:/var/certificates
+      - pangolin-data:/var/dynamic
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/"]
       interval: "10s"
@@ -31,8 +33,8 @@ services:
     ports:
       - 51820:51820/udp
       - 21820:21820/udp
-      - 443:443 # Port for traefik because of the network_mode
-      - 80:80 # Port for traefik because of the network_mode
+      - 443:{{if .HybridMode}}8443{{else}}443{{end}}
+      - 80:80
 {{end}}
   traefik:
     image: docker.io/traefik:v3.5
@@ -54,9 +56,15 @@ services:
       - ./config/traefik:/etc/traefik:ro # Volume to store the Traefik configuration
       - ./config/letsencrypt:/letsencrypt # Volume to store the Let's Encrypt certificates
       - ./config/traefik/logs:/var/log/traefik # Volume to store Traefik logs
+      # Shared volume for certificates and dynamic config in file mode 
+      - pangolin-data:/var/certificates:ro
+      - pangolin-data:/var/dynamic:ro
 
 networks:
   default:
     driver: bridge
     name: pangolin
 {{if .EnableIPv6}}    enable_ipv6: true{{end}}
+
+volumes:
+  pangolin-data:

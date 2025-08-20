@@ -1,6 +1,15 @@
 # To see all available options, please visit the docs:
 # https://docs.digpangolin.com/self-host/advanced/config-file 
 
+gerbil:
+    start_port: 51820
+    base_endpoint: "{{.DashboardDomain}}"
+{{if .HybridMode}}
+hybrid:
+    id: "{{.HybridId}}"
+    secret: "{{.HybridSecret}}"
+  
+{{else}}
 app:
     dashboard_url: "https://{{.DashboardDomain}}"
     log_level: "info"
@@ -17,11 +26,6 @@ server:
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
         allowed_headers: ["X-CSRF-Token", "Content-Type"]
         credentials: false
-
-gerbil:
-    start_port: 51820
-    base_endpoint: "{{.DashboardDomain}}"
-
 {{if .EnableEmail}}
 email:
     smtp_host: "{{.EmailSMTPHost}}"
@@ -30,15 +34,9 @@ email:
     smtp_pass: "{{.EmailSMTPPass}}"
     no_reply: "{{.EmailNoReply}}"
 {{end}}
-
 flags:
     require_email_verification: {{.EnableEmail}}
     disable_signup_without_invite: true
     disable_user_create_org: false
     allow_raw_resources: true
-
-{{if and .HybridMode .HybridId .HybridSecret}}
-hybrid:
-    id: "{{.HybridId}}"
-    secret: "{{.HybridSecret}}"
 {{end}}
