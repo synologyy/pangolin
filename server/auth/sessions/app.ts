@@ -24,8 +24,8 @@ export const SESSION_COOKIE_EXPIRES =
     60 *
     60 *
     config.getRawConfig().server.dashboard_session_length_hours;
-export const COOKIE_DOMAIN =
-    "." + new URL(config.getRawConfig().app.dashboard_url).hostname;
+export const COOKIE_DOMAIN = config.getRawConfig().app.dashboard_url ?
+    "." + new URL(config.getRawConfig().app.dashboard_url!).hostname : undefined;
 
 export function generateSessionToken(): string {
     const bytes = new Uint8Array(20);

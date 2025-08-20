@@ -96,7 +96,11 @@ export class Config {
         if (!this.rawConfig) {
             throw new Error("Config not loaded. Call load() first.");
         }
-        license.setServerSecret(this.rawConfig.server.secret);
+        if (this.rawConfig.hybrid) {
+            // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN HYBRID
+            return;
+        }
+        license.setServerSecret(this.rawConfig.server.secret!);
 
         await this.checkKeyStatus();
     }

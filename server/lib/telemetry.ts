@@ -16,7 +16,7 @@ class TelemetryClient {
     private intervalId: NodeJS.Timeout | null = null;
 
     constructor() {
-        const enabled = config.getRawConfig().app.telmetry.anonymous_usage;
+        const enabled = config.getRawConfig().app.telemetry.anonymous_usage;
         this.enabled = enabled;
         const dev = process.env.ENVIRONMENT !== "prod";
 

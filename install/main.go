@@ -52,6 +52,7 @@ type Config struct {
 	TraefikBouncerKey         string
 	DoCrowdsecInstall         bool
 	Secret                    string
+	HybridMode				bool
 }
 
 type SupportedContainer string
@@ -70,9 +71,6 @@ func main() {
 	fmt.Println("")
 	fmt.Println("Please make sure you have the following prerequisites:")
 	fmt.Println("- Open TCP ports 80 and 443 and UDP ports 51820 and 21820 on your VPS and firewall.")
-	fmt.Println("- Point your domain to the VPS IP with A records.")
-	fmt.Println("")
-	fmt.Println("https://docs.digpangolin.com/self-host/dns-and-networking")
 	fmt.Println("")
 	fmt.Println("Lets get started!")
 	fmt.Println("")
@@ -89,71 +87,8 @@ func main() {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
-	inputContainer := readString(reader, "Would you like to run Pangolin as Docker or Podman containers?", "docker")
-
-	chosenContainer := Docker
-	if strings.EqualFold(inputContainer, "docker") {
-		chosenContainer = Docker
-	} else if strings.EqualFold(inputContainer, "podman") {
-		chosenContainer = Podman
-	} else {
-		fmt.Printf("Unrecognized container type: %s. Valid options are 'docker' or 'podman'.\n", inputContainer)
-		os.Exit(1)
-	}
-
-	if chosenContainer == Podman {
-		if !isPodmanInstalled() {
-			fmt.Println("Podman or podman-compose is not installed. Please install both manually. Automated installation will be available in a later release.")
-			os.Exit(1)
-		}
-
-		if err := exec.Command("bash", "-c", "cat /etc/sysctl.conf | grep 'net.ipv4.ip_unprivileged_port_start='").Run(); err != nil {
-			fmt.Println("Would you like to configure ports >= 80 as unprivileged ports? This enables podman containers to listen on low-range ports.")
-			fmt.Println("Pangolin will experience startup issues if this is not configured, because it needs to listen on port 80/443 by default.")
-			approved := readBool(reader, "The installer is about to execute \"echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p\". Approve?", true)
-			if approved {
-				if os.Geteuid() != 0 {
-					fmt.Println("You need to run the installer as root for such a configuration.")
-					os.Exit(1)
-				}
-
-				// Podman containers are not able to listen on privileged ports. The official recommendation is to
-				// container low-range ports as unprivileged ports.
-				// Linux only.
-
-				if err := run("bash", "-c", "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p"); err != nil {
-					fmt.Sprintf("failed to configure unprivileged ports: %v.\n", err)
-					os.Exit(1)
-				}
-			} else {
-				fmt.Println("You need to configure port forwarding or adjust the listening ports before running pangolin.")
-			}
-		} else {
-			fmt.Println("Unprivileged ports have been configured.")
-		}
-
-	} else if chosenContainer == Docker {
-		// check if docker is not installed and the user is root
-		if !isDockerInstalled() {
-			if os.Geteuid() != 0 {
-				fmt.Println("Docker is not installed. Please install Docker manually or run this installer as root.")
-				os.Exit(1)
-			}
-		}
-
-		// check if the user is in the docker group (linux only)
-		if !isUserInDockerGroup() {
-			fmt.Println("You are not in the docker group.")
-			fmt.Println("The installer will not be able to run docker commands without running it as root.")
-			os.Exit(1)
-		}
-	} else {
-		// This shouldn't happen unless there's a third container runtime.
-		os.Exit(1)
-	}
 
 	var config Config
-	config.InstallationContainerType = chosenContainer
 
 	// check if there is already a config file
 	if _, err := os.Stat("config/config.yml"); err != nil {
@@ -170,7 +105,9 @@ func main() {
 
 		moveFile("config/docker-compose.yml", "docker-compose.yml")
 
-		if !isDockerInstalled() && runtime.GOOS == "linux" && chosenContainer == Docker {
+		config.InstallationContainerType = podmanOrDocker(reader)
+		
+		if !isDockerInstalled() && runtime.GOOS == "linux" && config.InstallationContainerType == Docker {
 			if readBool(reader, "Docker is not installed. Would you like to install it?", true) {
 				installDocker()
 				// try to start docker service but ignore errors
@@ -199,15 +136,15 @@ func main() {
 
 		fmt.Println("\n=== Starting installation ===")
 
-		if (isDockerInstalled() && chosenContainer == Docker) ||
-			(isPodmanInstalled() && chosenContainer == Podman) {
+		if (isDockerInstalled() && config.InstallationContainerType == Docker) ||
+			(isPodmanInstalled() && config.InstallationContainerType == Podman) {
 			if readBool(reader, "Would you like to install and start the containers?", true) {
-				if err := pullContainers(chosenContainer); err != nil {
+				if err := pullContainers(config.InstallationContainerType); err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
 
-				if err := startContainers(chosenContainer); err != nil {
+				if err := startContainers(config.InstallationContainerType); err != nil {
 					fmt.Println("Error: ", err)
 					return
 				}
@@ -288,20 +225,87 @@ func main() {
 
 	// Check if containers were started during this installation
 	containersStarted := false
-	if (isDockerInstalled() && chosenContainer == Docker) ||
-		(isPodmanInstalled() && chosenContainer == Podman) {
+	if (isDockerInstalled() && config.InstallationContainerType == Docker) ||
+		(isPodmanInstalled() && config.InstallationContainerType == Podman) {
 		// Try to fetch and display the token if containers are running
 		containersStarted = true
-		printSetupToken(chosenContainer, config.DashboardDomain)
+		printSetupToken(config.InstallationContainerType, config.DashboardDomain)
 	}
 
 	// If containers weren't started or token wasn't found, show instructions
 	if !containersStarted {
-		showSetupTokenInstructions(chosenContainer, config.DashboardDomain)
+		showSetupTokenInstructions(config.InstallationContainerType, config.DashboardDomain)
 	}
 
 	fmt.Println("Installation complete!")
 	fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
+}
+
+func podmanOrDocker(reader *bufio.Reader) SupportedContainer {
+	inputContainer := readString(reader, "Would you like to run Pangolin as Docker or Podman containers?", "docker")
+
+	chosenContainer := Docker
+	if strings.EqualFold(inputContainer, "docker") {
+		chosenContainer = Docker
+	} else if strings.EqualFold(inputContainer, "podman") {
+		chosenContainer = Podman
+	} else {
+		fmt.Printf("Unrecognized container type: %s. Valid options are 'docker' or 'podman'.\n", inputContainer)
+		os.Exit(1)
+	}
+
+	if chosenContainer == Podman {
+		if !isPodmanInstalled() {
+			fmt.Println("Podman or podman-compose is not installed. Please install both manually. Automated installation will be available in a later release.")
+			os.Exit(1)
+		}
+
+		if err := exec.Command("bash", "-c", "cat /etc/sysctl.conf | grep 'net.ipv4.ip_unprivileged_port_start='").Run(); err != nil {
+			fmt.Println("Would you like to configure ports >= 80 as unprivileged ports? This enables podman containers to listen on low-range ports.")
+			fmt.Println("Pangolin will experience startup issues if this is not configured, because it needs to listen on port 80/443 by default.")
+			approved := readBool(reader, "The installer is about to execute \"echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p\". Approve?", true)
+			if approved {
+				if os.Geteuid() != 0 {
+					fmt.Println("You need to run the installer as root for such a configuration.")
+					os.Exit(1)
+				}
+
+				// Podman containers are not able to listen on privileged ports. The official recommendation is to
+				// container low-range ports as unprivileged ports.
+				// Linux only.
+
+				if err := run("bash", "-c", "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p"); err != nil {
+					fmt.Sprintf("failed to configure unprivileged ports: %v.\n", err)
+					os.Exit(1)
+				}
+			} else {
+				fmt.Println("You need to configure port forwarding or adjust the listening ports before running pangolin.")
+			}
+		} else {
+			fmt.Println("Unprivileged ports have been configured.")
+		}
+
+	} else if chosenContainer == Docker {
+		// check if docker is not installed and the user is root
+		if !isDockerInstalled() {
+			if os.Geteuid() != 0 {
+				fmt.Println("Docker is not installed. Please install Docker manually or run this installer as root.")
+				os.Exit(1)
+			}
+		}
+
+		// check if the user is in the docker group (linux only)
+		if !isUserInDockerGroup() {
+			fmt.Println("You are not in the docker group.")
+			fmt.Println("The installer will not be able to run docker commands without running it as root.")
+			os.Exit(1)
+		}
+	} else {
+		// This shouldn't happen unless there's a third container runtime.
+		os.Exit(1)
+	}
+
+	return chosenContainer
 }
 
 func readString(reader *bufio.Reader, prompt string, defaultValue string) string {
@@ -316,6 +320,12 @@ func readString(reader *bufio.Reader, prompt string, defaultValue string) string
 		return defaultValue
 	}
 	return input
+}
+
+func readStringNoDefault(reader *bufio.Reader, prompt string) string {
+	fmt.Print(prompt + ": ")
+	input, _ := reader.ReadString('\n')
+	return strings.TrimSpace(input)
 }
 
 func readPassword(prompt string, reader *bufio.Reader) string {
@@ -347,6 +357,11 @@ func readBool(reader *bufio.Reader, prompt string, defaultValue bool) bool {
 	return strings.ToLower(input) == "yes"
 }
 
+func readBoolNoDefault(reader *bufio.Reader, prompt string) bool {
+	input := readStringNoDefault(reader, prompt+" (yes/no)")
+	return strings.ToLower(input) == "yes"
+}
+
 func readInt(reader *bufio.Reader, prompt string, defaultValue int) int {
 	input := readString(reader, prompt, fmt.Sprintf("%d", defaultValue))
 	if input == "" {
@@ -362,42 +377,50 @@ func collectUserInput(reader *bufio.Reader) Config {
 
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
-	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
+	config.HybridMode = readBoolNoDefault(reader, "Do you want to use hybrid mode?")
 
-	// Set default dashboard domain after base domain is collected
-	defaultDashboardDomain := ""
-	if config.BaseDomain != "" {
-		defaultDashboardDomain = "pangolin." + config.BaseDomain
+	if !config.HybridMode {
+		config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
+
+		// Set default dashboard domain after base domain is collected
+		defaultDashboardDomain := ""
+		if config.BaseDomain != "" {
+			defaultDashboardDomain = "pangolin." + config.BaseDomain
+		}
+		config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
+		config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
 	}
-	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
-	config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
+
 	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
 	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
 
-	// Email configuration
-	fmt.Println("\n=== Email Configuration ===")
-	config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
+	if !config.HybridMode {
+		// Email configuration
+		fmt.Println("\n=== Email Configuration ===")
+		config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
 
-	if config.EnableEmail {
-		config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
-		config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
-		config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
-		config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
-		config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
-	}
+		if config.EnableEmail {
+			config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
+			config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
+			config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
+			config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
+			config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
+		}
 
-	// Validate required fields
-	if config.BaseDomain == "" {
-		fmt.Println("Error: Domain name is required")
-		os.Exit(1)
-	}
-	if config.DashboardDomain == "" {
-		fmt.Println("Error: Dashboard Domain name is required")
-		os.Exit(1)
-	}
-	if config.LetsEncryptEmail == "" {
-		fmt.Println("Error: Let's Encrypt email is required")
-		os.Exit(1)
+
+		// Validate required fields
+		if config.BaseDomain == "" {
+			fmt.Println("Error: Domain name is required")
+			os.Exit(1)
+		}
+		if config.DashboardDomain == "" {
+			fmt.Println("Error: Dashboard Domain name is required")
+			os.Exit(1)
+		}
+		if config.LetsEncryptEmail == "" {
+			fmt.Println("Error: Let's Encrypt email is required")
+			os.Exit(1)
+		}
 	}
 
 	return config

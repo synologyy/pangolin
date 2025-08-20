@@ -16,21 +16,28 @@ export const configSchema = z
             dashboard_url: z
                 .string()
                 .url()
-                .optional()
                 .pipe(z.string().url())
-                .transform((url) => url.toLowerCase()),
+                .transform((url) => url.toLowerCase())
+                .optional(),
             log_level: z
                 .enum(["debug", "info", "warn", "error"])
                 .optional()
                 .default("info"),
             save_logs: z.boolean().optional().default(false),
             log_failed_attempts: z.boolean().optional().default(false),
-            telmetry: z
+            telemetry: z
                 .object({
                     anonymous_usage: z.boolean().optional().default(true)
                 })
                 .optional()
                 .default({})
+        }).optional().default({
+            log_level: "info",
+            save_logs: false,
+            log_failed_attempts: false,
+            telemetry: {
+                anonymous_usage: true
+            }
         }),
         hybrid: z
             .object({
@@ -122,9 +129,25 @@ export const configSchema = z
             trust_proxy: z.number().int().gte(0).optional().default(1),
             secret: z
                 .string()
-                .optional()
                 .transform(getEnvOrYaml("SERVER_SECRET"))
                 .pipe(z.string().min(8))
+                .optional()
+        }).optional().default({
+            integration_port: 3003,
+            external_port: 3000,
+            internal_port: 3001,
+            next_port: 3002,
+            internal_hostname: "pangolin",
+            session_cookie_name: "p_session_token",
+            resource_access_token_param: "p_token",
+            resource_access_token_headers: {
+                id: "P-Access-Token-Id",
+                token: "P-Access-Token"
+            },
+            resource_session_request_param: "resource_session_request_param",
+            dashboard_session_length_hours: 720,
+            resource_session_length_hours: 720,
+            trust_proxy: 1
         }),
         postgres: z
             .object({
@@ -282,6 +305,10 @@ export const configSchema = z
             if (data.flags?.disable_config_managed_domains) {
                 return true;
             }
+            // If hybrid is defined, domains are not required
+            if (data.hybrid) {
+                return true;
+            }
             if (keys.length === 0) {
                 return false;
             }
@@ -289,6 +316,32 @@ export const configSchema = z
         },
         {
             message: "At least one domain must be defined"
+        }
+    )
+    .refine(
+        (data) => {
+            // If hybrid is defined, server secret is not required
+            if (data.hybrid) {
+                return true;
+            }
+            // If hybrid is not defined, server secret must be defined
+            return data.server?.secret !== undefined && data.server.secret.length > 0;
+        },
+        {
+            message: "Server secret must be defined"
+        }
+    )
+    .refine(
+        (data) => {
+            // If hybrid is defined, dashboard_url is not required
+            if (data.hybrid) {
+                return true;
+            }
+            // If hybrid is not defined, dashboard_url must be defined
+            return data.app.dashboard_url !== undefined && data.app.dashboard_url.length > 0;
+        },
+        {
+            message: "Dashboard URL must be defined"
         }
     );
 
