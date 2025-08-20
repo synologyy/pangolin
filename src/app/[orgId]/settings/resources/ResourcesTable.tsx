@@ -99,7 +99,7 @@ type ResourcesTableProps = {
     defaultView?: "proxy" | "internal";
 };
 
-export default function SitesTable({
+export default function ResourcesTable({
     resources,
     internalResources,
     orgId,
