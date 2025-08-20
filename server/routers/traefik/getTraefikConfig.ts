@@ -98,6 +98,7 @@ export async function getTraefikConfig(
             type: string;
             subnet: string | null;
             exitNodeId: number | null;
+            online: boolean;
         };
     };
 
@@ -142,7 +143,6 @@ export async function getTraefikConfig(
                 and(
                     eq(targets.enabled, true),
                     eq(resources.enabled, true),
-                    eq(sites.online, true),
                     or(
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
@@ -189,7 +189,8 @@ export async function getTraefikConfig(
                     siteId: row.siteId,
                     type: row.siteType,
                     subnet: row.subnet,
-                    exitNodeId: row.exitNodeId
+                    exitNodeId: row.exitNodeId,
+                    online: row.siteOnline
                 }
             });
         });
@@ -317,48 +318,67 @@ export async function getTraefikConfig(
 
             config_output.http.services![serviceName] = {
                 loadBalancer: {
-                    servers: (targets as TargetWithSite[])
-                        .filter((target: TargetWithSite) => {
-                            if (!target.enabled) {
-                                return false;
-                            }
-                            if (
-                                target.site.type === "local" ||
-                                target.site.type === "wireguard"
-                            ) {
-                                if (
-                                    !target.ip ||
-                                    !target.port ||
-                                    !target.method
-                                ) {
+                    servers: (() => {
+                        // Check if any sites are online
+                        // THIS IS SO THAT THERE IS SOME IMMEDIATE FEEDBACK 
+                        // EVEN IF THE SITES HAVE NOT UPDATED YET FROM THE
+                        // RECEIVE BANDWIDTH ENDPOINT. 
+                        
+                        // TODO: HOW TO HANDLE ^^^^^^ BETTER 
+                        const anySitesOnline = (
+                            targets as TargetWithSite[]
+                        ).some((target: TargetWithSite) => target.site.online);
+
+                        return (targets as TargetWithSite[])
+                            .filter((target: TargetWithSite) => {
+                                if (!target.enabled) {
                                     return false;
                                 }
-                            } else if (target.site.type === "newt") {
-                                if (
-                                    !target.internalPort ||
-                                    !target.method ||
-                                    !target.site.subnet
-                                ) {
+
+                                // If any sites are online, exclude offline sites
+                                if (anySitesOnline && !target.site.online) {
                                     return false;
                                 }
-                            }
-                            return true;
-                        })
-                        .map((target: TargetWithSite) => {
-                            if (
-                                target.site.type === "local" ||
-                                target.site.type === "wireguard"
-                            ) {
-                                return {
-                                    url: `${target.method}://${target.ip}:${target.port}`
-                                };
-                            } else if (target.site.type === "newt") {
-                                const ip = target.site.subnet!.split("/")[0];
-                                return {
-                                    url: `${target.method}://${ip}:${target.internalPort}`
-                                };
-                            }
-                        }),
+
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    if (
+                                        !target.ip ||
+                                        !target.port ||
+                                        !target.method
+                                    ) {
+                                        return false;
+                                    }
+                                } else if (target.site.type === "newt") {
+                                    if (
+                                        !target.internalPort ||
+                                        !target.method ||
+                                        !target.site.subnet
+                                    ) {
+                                        return false;
+                                    }
+                                }
+                                return true;
+                            })
+                            .map((target: TargetWithSite) => {
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    return {
+                                        url: `${target.method}://${target.ip}:${target.port}`
+                                    };
+                                } else if (target.site.type === "newt") {
+                                    const ip =
+                                        target.site.subnet!.split("/")[0];
+                                    return {
+                                        url: `${target.method}://${ip}:${target.internalPort}`
+                                    };
+                                }
+                            });
+                    })(),
                     ...(resource.stickySession
                         ? {
                               sticky: {
@@ -437,43 +457,57 @@ export async function getTraefikConfig(
 
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
-                    servers: (targets as TargetWithSite[])
-                        .filter((target: TargetWithSite) => {
-                            if (!target.enabled) {
-                                return false;
-                            }
-                            if (
-                                target.site.type === "local" ||
-                                target.site.type === "wireguard"
-                            ) {
-                                if (!target.ip || !target.port) {
+                    servers: (() => {
+                        // Check if any sites are online
+                        const anySitesOnline = (
+                            targets as TargetWithSite[]
+                        ).some((target: TargetWithSite) => target.site.online);
+
+                        return (targets as TargetWithSite[])
+                            .filter((target: TargetWithSite) => {
+                                if (!target.enabled) {
                                     return false;
                                 }
-                            } else if (target.site.type === "newt") {
+
+                                // If any sites are online, exclude offline sites
+                                if (anySitesOnline && !target.site.online) {
+                                    return false;
+                                }
+
                                 if (
-                                    !target.internalPort ||
-                                    !target.site.subnet
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
                                 ) {
-                                    return false;
+                                    if (!target.ip || !target.port) {
+                                        return false;
+                                    }
+                                } else if (target.site.type === "newt") {
+                                    if (
+                                        !target.internalPort ||
+                                        !target.site.subnet
+                                    ) {
+                                        return false;
+                                    }
                                 }
-                            }
-                            return true;
-                        })
-                        .map((target: TargetWithSite) => {
-                            if (
-                                target.site.type === "local" ||
-                                target.site.type === "wireguard"
-                            ) {
-                                return {
-                                    address: `${target.ip}:${target.port}`
-                                };
-                            } else if (target.site.type === "newt") {
-                                const ip = target.site.subnet!.split("/")[0];
-                                return {
-                                    address: `${ip}:${target.internalPort}`
-                                };
-                            }
-                        }),
+                                return true;
+                            })
+                            .map((target: TargetWithSite) => {
+                                if (
+                                    target.site.type === "local" ||
+                                    target.site.type === "wireguard"
+                                ) {
+                                    return {
+                                        address: `${target.ip}:${target.port}`
+                                    };
+                                } else if (target.site.type === "newt") {
+                                    const ip =
+                                        target.site.subnet!.split("/")[0];
+                                    return {
+                                        address: `${ip}:${target.internalPort}`
+                                    };
+                                }
+                            });
+                    })(),
                     ...(resource.stickySession
                         ? {
                               sticky: {
