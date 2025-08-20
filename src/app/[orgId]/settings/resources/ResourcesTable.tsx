@@ -666,7 +666,7 @@ export default function SitesTable({
                         onValueChange={handleTabChange}
                     >
                         <CardHeader className="flex flex-col items-center gap-4 md:items-stretch lg:flex-row lg:items-center lg:justify-between pb-0">
-                            <div className="flex flex-col items-center gap-3 w-full md:flex-row md:justify-center lg:justify-start lg:w-auto lg:mr-2">
+                            <div className="flex flex-col items-center gap-3 w-full md:flex-row md:justify-start lg:justify-start lg:w-auto lg:mr-2">
                                 <div className="w-full md:w-auto lg:w-auto">{getSearchInput()}</div>
                                 {env.flags.enableClients && (
                                     <TabsList className="grid grid-cols-2 w-full md:w-auto">
@@ -679,7 +679,7 @@ export default function SitesTable({
                                     </TabsList>
                                 )}
                             </div>
-                            <div className="flex justify-center w-full md:justify-center lg:justify-end lg:w-auto">
+                            <div className="flex justify-center w-full md:justify-end lg:justify-end lg:w-auto">
                                 {getActionButton()}
                             </div>
                         </CardHeader>
