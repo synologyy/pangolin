@@ -87,7 +87,7 @@ export default function CreateInternalResourceDialog({
             .positive()
             .min(1, t("createInternalResourceDialogProxyPortMin"))
             .max(65535, t("createInternalResourceDialogProxyPortMax")),
-        destinationIp: z.string().ip(t("createInternalResourceDialogInvalidIPAddressFormat")),
+        destinationIp: z.string(),
         destinationPort: z
             .number()
             .int()

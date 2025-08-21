@@ -105,7 +105,8 @@ export async function deleteSiteResource(
             newt.newtId,
             existingSiteResource.destinationIp,
             existingSiteResource.destinationPort,
-            existingSiteResource.protocol
+            existingSiteResource.protocol,
+            existingSiteResource.proxyPort
         );
 
         logger.info(`Deleted site resource ${siteResourceId} for site ${siteId}`);

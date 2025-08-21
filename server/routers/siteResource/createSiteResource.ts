@@ -24,7 +24,7 @@ const createSiteResourceSchema = z
         protocol: z.enum(["tcp", "udp"]),
         proxyPort: z.number().int().positive(),
         destinationPort: z.number().int().positive(),
-        destinationIp: z.string().ip(),
+        destinationIp: z.string(),
         enabled: z.boolean().default(true)
     })
     .strict();
@@ -146,7 +146,7 @@ export async function createSiteResource(
             return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
         }
 
-        await addTargets(newt.newtId, destinationIp, destinationPort, protocol);
+        await addTargets(newt.newtId, destinationIp, destinationPort, protocol, proxyPort);
 
         logger.info(
             `Created site resource ${newSiteResource.siteResourceId} for site ${siteId}`

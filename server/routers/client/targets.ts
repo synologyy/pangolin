@@ -5,11 +5,9 @@ export async function addTargets(
     destinationIp: string,
     destinationPort: number,
     protocol: string,
-    port: number | null = null
+    port: number
 ) {
-    const target = `${port ? port + ":" : ""}${
-        destinationIp
-    }:${destinationPort}`;
+    const target = `${port}:${destinationIp}:${destinationPort}`;
 
     await sendToClient(newtId, {
         type: `newt/wg/${protocol}/add`,
@@ -24,11 +22,9 @@ export async function removeTargets(
     destinationIp: string,
     destinationPort: number,
     protocol: string,
-    port: number | null = null
+    port: number
 ) {
-    const target = `${port ? port + ":" : ""}${
-        destinationIp
-    }:${destinationPort}`;
+    const target = `${port}:${destinationIp}:${destinationPort}`;
 
     await sendToClient(newtId, {
         type: `newt/wg/${protocol}/remove`,

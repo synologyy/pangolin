@@ -7,6 +7,7 @@ import {
     ExitNode,
     exitNodes,
     resources,
+    siteResources,
     Target,
     targets
 } from "@server/db";
@@ -208,33 +209,23 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     const validPeers = peers.filter((peer) => peer !== null);
 
     // Get all enabled targets with their resource protocol information
-    const allTargets = await db
-        .select({
-            resourceId: targets.resourceId,
-            targetId: targets.targetId,
-            ip: targets.ip,
-            method: targets.method,
-            port: targets.port,
-            internalPort: targets.internalPort,
-            enabled: targets.enabled,
-            protocol: resources.protocol
-        })
-        .from(targets)
-        .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
-        .where(and(eq(targets.siteId, siteId), eq(targets.enabled, true)));
+    const allSiteResources = await db
+        .select()
+        .from(siteResources)
+        .where(eq(siteResources.siteId, siteId));
 
-    const { tcpTargets, udpTargets } = allTargets.reduce(
-        (acc, target) => {
+    const { tcpTargets, udpTargets } = allSiteResources.reduce(
+        (acc, resource) => {
             // Filter out invalid targets
-            if (!target.internalPort || !target.ip || !target.port) {
+            if (!resource.proxyPort || !resource.destinationIp || !resource.destinationPort) {
                 return acc;
             }
 
             // Format target into string
-            const formattedTarget = `${target.internalPort}:${target.ip}:${target.port}`;
+            const formattedTarget = `${resource.proxyPort}:${resource.destinationIp}:${resource.destinationPort}`;
 
             // Add to the appropriate protocol array
-            if (target.protocol === "tcp") {
+            if (resource.protocol === "tcp") {
                 acc.tcpTargets.push(formattedTarget);
             } else {
                 acc.udpTargets.push(formattedTarget);

@@ -54,29 +54,31 @@ export async function traefikConfigProvider(
             config.getRawConfig().traefik.site_types
         );
 
-        traefikConfig.http.middlewares[badgerMiddlewareName] = {
-            plugin: {
-                [badgerMiddlewareName]: {
-                    apiBaseUrl: new URL(
-                        "/api/v1",
-                        `http://${
-                            config.getRawConfig().server.internal_hostname
-                        }:${config.getRawConfig().server.internal_port}`
-                    ).href,
-                    userSessionCookieName:
-                        config.getRawConfig().server.session_cookie_name,
+        if (traefikConfig?.http?.middlewares) { // BECAUSE SOMETIMES THE CONFIG CAN BE EMPTY IF THERE IS NOTHING
+            traefikConfig.http.middlewares[badgerMiddlewareName] = {
+                plugin: {
+                    [badgerMiddlewareName]: {
+                        apiBaseUrl: new URL(
+                            "/api/v1",
+                            `http://${
+                                config.getRawConfig().server.internal_hostname
+                            }:${config.getRawConfig().server.internal_port}`
+                        ).href,
+                        userSessionCookieName:
+                            config.getRawConfig().server.session_cookie_name,
 
-                    // deprecated
-                    accessTokenQueryParam:
-                        config.getRawConfig().server
-                            .resource_access_token_param,
+                        // deprecated
+                        accessTokenQueryParam:
+                            config.getRawConfig().server
+                                .resource_access_token_param,
 
-                    resourceSessionRequestParam:
-                        config.getRawConfig().server
-                            .resource_session_request_param
+                        resourceSessionRequestParam:
+                            config.getRawConfig().server
+                                .resource_session_request_param
+                    }
                 }
-            }
-        };
+            };
+        }
 
         return res.status(HttpCode.OK).json(traefikConfig);
     } catch (e) {
@@ -320,11 +322,11 @@ export async function getTraefikConfig(
                 loadBalancer: {
                     servers: (() => {
                         // Check if any sites are online
-                        // THIS IS SO THAT THERE IS SOME IMMEDIATE FEEDBACK 
+                        // THIS IS SO THAT THERE IS SOME IMMEDIATE FEEDBACK
                         // EVEN IF THE SITES HAVE NOT UPDATED YET FROM THE
-                        // RECEIVE BANDWIDTH ENDPOINT. 
-                        
-                        // TODO: HOW TO HANDLE ^^^^^^ BETTER 
+                        // RECEIVE BANDWIDTH ENDPOINT.
+
+                        // TODO: HOW TO HANDLE ^^^^^^ BETTER
                         const anySitesOnline = (
                             targets as TargetWithSite[]
                         ).some((target: TargetWithSite) => target.site.online);

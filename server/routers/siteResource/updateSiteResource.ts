@@ -170,7 +170,8 @@ export async function updateSiteResource(
             newt.newtId,
             updatedSiteResource.destinationIp,
             updatedSiteResource.destinationPort,
-            updatedSiteResource.protocol
+            updatedSiteResource.protocol,
+            updatedSiteResource.proxyPort
         );
 
         logger.info(
