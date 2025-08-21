@@ -13,7 +13,7 @@ import (
 const (
 	FRONTEND_SECRET_KEY = "af4e4785-7e09-11f0-b93a-74563c4e2a7e"
 	// CLOUD_API_URL       = "https://pangolin.fossorial.io/api/v1/remote-exit-node/quick-start"
-	CLOUD_API_URL = "http://localhost:4000/api/v1/remote-exit-node/quick-start"
+	CLOUD_API_URL = "https://enterprise.fosrl.io/api/v1/remote-exit-node/quick-start"
 )
 
 // HybridCredentials represents the response from the cloud API
@@ -67,6 +67,7 @@ func requestHybridCredentials() (*HybridCredentials, error) {
 
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-CSRF-Token", "x-csrf-protection")
 
 	// Create HTTP client with timeout
 	client := &http.Client{

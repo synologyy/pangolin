@@ -309,7 +309,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
 	for {
-		response := readString(reader, "Do you want to install Pangolin as a cloud-managed self-hosted node? (yes/no)", "")
+		response := readString(reader, "Do you want to install Pangolin as a cloud-managed (beta) node? (yes/no)", "")
 		if strings.EqualFold(response, "yes") || strings.EqualFold(response, "y") {
 			config.HybridMode = true
 			break
