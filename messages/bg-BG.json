@@ -1,8 +1,8 @@
 {
     "setupCreate": "Създайте своя организация, сайт и ресурси",
     "setupNewOrg": "Нова организация",
-    "setupCreateOrg": "Създай организация",
-    "setupCreateResources": "Създай ресурси",
+    "setupCreateOrg": "Създаване на организация",
+    "setupCreateResources": "Създаване на ресурси",
     "setupOrgName": "Име на организацията",
     "orgDisplayName": "Това е публичното име на вашата организация.",
     "orgId": "Идентификатор на организация",
