@@ -28,6 +28,8 @@ tsconfig.tsbuildinfo
 config/config.yml
 config/postgres
 config/postgres*
+config/openapi.yaml
+config/key
 dist
 .dist
 installer
@@ -38,7 +40,6 @@ test_event.json
 .idea/
 public/branding
 server/db/index.ts
-config/openapi.yaml
 server/build.ts
 postgres/
 dynamic/
