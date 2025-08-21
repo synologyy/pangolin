@@ -5,7 +5,7 @@ gerbil:
     start_port: 51820
     base_endpoint: "{{.DashboardDomain}}"
 {{if .HybridMode}}
-hybrid:
+managed:
     id: "{{.HybridId}}"
     secret: "{{.HybridSecret}}"
   

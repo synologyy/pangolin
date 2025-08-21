@@ -23,7 +23,7 @@ function generateId(length: number): string {
 }
 
 export async function ensureSetupToken() {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN HYBRID
         return;
     }

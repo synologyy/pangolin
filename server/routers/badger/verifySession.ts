@@ -192,8 +192,8 @@ export async function verifyResourceSession(
         }
 
         let endpoint: string;
-        if (config.isHybridMode()) {
-            endpoint = config.getRawConfig().hybrid?.redirect_endpoint || config.getRawConfig().hybrid?.endpoint || "";
+        if (config.isManagedMode()) {
+            endpoint = config.getRawConfig().managed?.redirect_endpoint || config.getRawConfig().managed?.endpoint || "";
         } else {
             endpoint = config.getRawConfig().app.dashboard_url!;
         }

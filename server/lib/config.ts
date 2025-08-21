@@ -96,8 +96,8 @@ export class Config {
         if (!this.rawConfig) {
             throw new Error("Config not loaded. Call load() first.");
         }
-        if (this.rawConfig.hybrid) {
-            // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN HYBRID
+        if (this.rawConfig.managed) {
+            // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN MANAGED
             return;
         }
         license.setServerSecret(this.rawConfig.server.secret!);
@@ -149,8 +149,8 @@ export class Config {
         return false;
     }
 
-    public isHybridMode() {
-        return typeof this.rawConfig?.hybrid === "object";
+    public isManagedMode() {
+        return typeof this.rawConfig?.managed === "object";
     }
 
     public async checkSupporterKey() {

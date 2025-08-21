@@ -174,7 +174,7 @@ export class TokenManager {
         this.isRefreshing = true;
 
         try {
-            const hybridConfig = config.getRawConfig().hybrid;
+            const hybridConfig = config.getRawConfig().managed;
 
             if (
                 !hybridConfig?.id ||

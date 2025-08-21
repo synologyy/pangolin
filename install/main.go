@@ -623,5 +623,5 @@ func checkIsPangolinInstalledWithHybrid() bool {
 	}
 
 	// Check for hybrid section
-	return bytes.Contains(content, []byte("hybrid:"))
+	return bytes.Contains(content, []byte("managed:"))
 }

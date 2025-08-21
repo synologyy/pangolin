@@ -39,7 +39,7 @@ export const configSchema = z
                 anonymous_usage: true
             }
         }),
-        hybrid: z
+        managed: z
             .object({
                 name: z.string().optional(),
                 id: z.string().optional(),
@@ -306,7 +306,7 @@ export const configSchema = z
                 return true;
             }
             // If hybrid is defined, domains are not required
-            if (data.hybrid) {
+            if (data.managed) {
                 return true;
             }
             if (keys.length === 0) {
@@ -321,7 +321,7 @@ export const configSchema = z
     .refine(
         (data) => {
             // If hybrid is defined, server secret is not required
-            if (data.hybrid) {
+            if (data.managed) {
                 return true;
             }
             // If hybrid is not defined, server secret must be defined
@@ -334,7 +334,7 @@ export const configSchema = z
     .refine(
         (data) => {
             // If hybrid is defined, dashboard_url is not required
-            if (data.hybrid) {
+            if (data.managed) {
                 return true;
             }
             // If hybrid is not defined, dashboard_url must be defined

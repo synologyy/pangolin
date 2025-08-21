@@ -23,7 +23,7 @@ export async function createHybridClientServer() {
     // Create client
     const client = createWebSocketClient(
         token,
-        config.getRawConfig().hybrid!.endpoint!,
+        config.getRawConfig().managed!.endpoint!,
         {
             reconnectInterval: 5000,
             pingInterval: 30000,

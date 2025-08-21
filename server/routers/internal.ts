@@ -51,7 +51,7 @@ internalRouter.get("/idp/:idpId", idp.getIdp);
 const gerbilRouter = Router();
 internalRouter.use("/gerbil", gerbilRouter);
 
-if (config.isHybridMode()) {
+if (config.isManagedMode()) {
     // Use proxy router to forward requests to remote cloud server
     // Proxy endpoints for each gerbil route
     gerbilRouter.post("/receive-bandwidth", (req, res, next) =>
@@ -90,7 +90,7 @@ internalRouter.use("/badger", badgerRouter);
 
 badgerRouter.post("/verify-session", badger.verifyResourceSession);
 
-if (config.isHybridMode()) {
+if (config.isManagedMode()) {
     badgerRouter.post("/exchange-session", (req, res, next) =>
         proxyToRemote(req, res, next, "hybrid/badger/exchange-session")
     );

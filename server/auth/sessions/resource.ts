@@ -65,9 +65,9 @@ export async function validateResourceSessionToken(
     token: string,
     resourceId: number
 ): Promise<ResourceSessionValidationResult> {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.post(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/resource/${resourceId}/session/validate`, {
+            const response = await axios.post(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/${resourceId}/session/validate`, {
                 token: token
             }, await tokenManager.getAuthHeader());
             return response.data.data;

@@ -18,7 +18,7 @@ export const proxyToRemote = async (
     endpoint: string
 ): Promise<any> => {
     try {
-        const remoteUrl = `${config.getRawConfig().hybrid?.endpoint?.replace(/\/$/, '')}/api/v1/${endpoint}`;
+        const remoteUrl = `${config.getRawConfig().managed?.endpoint?.replace(/\/$/, '')}/api/v1/${endpoint}`;
 
         logger.debug(`Proxying request to remote server: ${remoteUrl}`);
 

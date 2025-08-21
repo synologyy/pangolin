@@ -104,7 +104,7 @@ export async function getConfig(
         }
 
         // STOP HERE IN HYBRID MODE
-        if (config.isHybridMode()) {
+        if (config.isManagedMode()) {
             req.body = {
                 ...req.body,
                 endpoint: exitNode[0].endpoint,

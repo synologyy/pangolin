@@ -37,9 +37,9 @@ export type UserSessionWithUser = {
 export async function getResourceByDomain(
     domain: string
 ): Promise<ResourceWithAuth | null> {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/resource/domain/${domain}`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/domain/${domain}`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -89,9 +89,9 @@ export async function getResourceByDomain(
 export async function getUserSessionWithUser(
     userSessionId: string
 ): Promise<UserSessionWithUser | null> {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/session/${userSessionId}`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/session/${userSessionId}`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -130,9 +130,9 @@ export async function getUserSessionWithUser(
  * Get user organization role
  */
 export async function getUserOrgRole(userId: string, orgId: string) {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/user/${userId}/org/${orgId}/role`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/org/${orgId}/role`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -169,9 +169,9 @@ export async function getUserOrgRole(userId: string, orgId: string) {
  * Check if role has access to resource
  */
 export async function getRoleResourceAccess(resourceId: number, roleId: number) {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/role/${roleId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/role/${roleId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -208,9 +208,9 @@ export async function getRoleResourceAccess(resourceId: number, roleId: number) 
  * Check if user has direct access to resource
  */
 export async function getUserResourceAccess(userId: string, resourceId: number) {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/user/${userId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -247,9 +247,9 @@ export async function getUserResourceAccess(userId: string, resourceId: number) 
  * Get resource rules for a given resource
  */
 export async function getResourceRules(resourceId: number): Promise<ResourceRule[]> {
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/resource/${resourceId}/rules`, await tokenManager.getAuthHeader());
+            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/${resourceId}/rules`, await tokenManager.getAuthHeader());
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {

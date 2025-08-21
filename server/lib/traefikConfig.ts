@@ -281,7 +281,7 @@ export class TraefikConfigManager {
 
             if (this.shouldFetchCertificates(domains)) {
                 // Get valid certificates for active domains
-                if (config.isHybridMode()) {
+                if (config.isManagedMode()) {
                     validCertificates =
                         await getValidCertificatesForDomainsHybrid(domains);
                 } else {
@@ -383,9 +383,9 @@ export class TraefikConfigManager {
     } | null> {
         let traefikConfig;
         try {
-            if (config.isHybridMode()) {
+            if (config.isManagedMode()) {
                 const resp = await axios.get(
-                    `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/traefik-config`,
+                    `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/traefik-config`,
                     await tokenManager.getAuthHeader()
                 );
 

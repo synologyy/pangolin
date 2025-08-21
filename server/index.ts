@@ -27,7 +27,7 @@ async function startServers() {
 
     let hybridClientServer;
     let nextServer;
-    if (config.isHybridMode()) {
+    if (config.isManagedMode()) {
         hybridClientServer = await createHybridClientServer();
     } else {
         nextServer = await createNextServer();

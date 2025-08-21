@@ -24,7 +24,7 @@ export async function getValidCertificatesForDomainsHybrid(domains: Set<string>)
 
     try {
         const response = await axios.get(
-            `${config.getRawConfig().hybrid?.endpoint}/api/v1/hybrid/certificates/domains`,
+            `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/certificates/domains`,
             {
                 params: {
                     domains: domainArray
