@@ -81,7 +81,7 @@ export async function createOidcIdp(
             autoProvision
         } = parsedBody.data;
 
-        const key = config.getRawConfig().server.secret;
+        const key = config.getRawConfig().server.secret!;
 
         const encryptedSecret = encrypt(clientSecret, key);
         const encryptedClientId = encrypt(clientId, key);

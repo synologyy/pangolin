@@ -71,8 +71,8 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         .where(eq(sites.siteId, siteId))
         .limit(1);
 
-    if (!oldSite || !oldSite.exitNodeId) {
-        logger.warn("Site not found or does not have exit node");
+    if (!oldSite) {
+        logger.warn("Site not found");
         return;
     }
 
@@ -137,13 +137,18 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             .returning();
     }
 
+    if (!exitNodeIdToQuery) {
+        logger.warn("No exit node ID to query");
+        return;
+    }
+
     const [exitNode] = await db
         .select()
         .from(exitNodes)
         .where(eq(exitNodes.exitNodeId, exitNodeIdToQuery))
         .limit(1);
 
-    if (oldSite.pubKey && oldSite.pubKey !== publicKey) {
+    if (oldSite.pubKey && oldSite.pubKey !== publicKey && oldSite.exitNodeId) {
         logger.info("Public key mismatch. Deleting old peer...");
         await deletePeer(oldSite.exitNodeId, oldSite.pubKey);
     }

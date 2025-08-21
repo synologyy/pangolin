@@ -65,7 +65,7 @@ export async function getIdp(
             return next(createHttpError(HttpCode.NOT_FOUND, "Idp not found"));
         }
 
-        const key = config.getRawConfig().server.secret;
+        const key = config.getRawConfig().server.secret!;
 
         if (idpRes.idp.type === "oidc") {
             const clientSecret = idpRes.idpOidcConfig!.clientSecret;

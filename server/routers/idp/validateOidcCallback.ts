@@ -96,7 +96,7 @@ export async function validateOidcCallback(
             );
         }
 
-        const key = config.getRawConfig().server.secret;
+        const key = config.getRawConfig().server.secret!;
 
         const decryptedClientId = decrypt(
             existingIdp.idpOidcConfig.clientId,
@@ -116,7 +116,7 @@ export async function validateOidcCallback(
 
         const statePayload = jsonwebtoken.verify(
             storedState,
-            config.getRawConfig().server.secret,
+            config.getRawConfig().server.secret!,
             function (err, decoded) {
                 if (err) {
                     logger.error("Error verifying state JWT", { err });

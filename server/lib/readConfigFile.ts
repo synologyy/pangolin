@@ -44,7 +44,7 @@ export const configSchema = z
                 name: z.string().optional(),
                 id: z.string().optional(),
                 secret: z.string().optional(),
-                endpoint: z.string().optional(),
+                endpoint: z.string().optional().default("https://pangolin.fossorial.io"),
                 redirect_endpoint: z.string().optional()
             })
             .optional(),

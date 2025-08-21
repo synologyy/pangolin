@@ -195,7 +195,7 @@ export async function verifyResourceSession(
         if (config.isHybridMode()) {
             endpoint = config.getRawConfig().hybrid?.redirect_endpoint || config.getRawConfig().hybrid?.endpoint || "";
         } else {
-            endpoint = config.getRawConfig().app.dashboard_url;
+            endpoint = config.getRawConfig().app.dashboard_url!;
         }
         const redirectUrl = `${endpoint}/auth/resource/${encodeURIComponent(
             resource.resourceId
