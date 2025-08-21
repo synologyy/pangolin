@@ -37,15 +37,28 @@ type DynamicConfig struct {
 	} `yaml:"http"`
 }
 
-// ConfigValues holds the extracted configuration values
-type ConfigValues struct {
+// TraefikConfigValues holds the extracted configuration values
+type TraefikConfigValues struct {
 	DashboardDomain  string
 	LetsEncryptEmail string
 	BadgerVersion    string
 }
 
+// AppConfig represents the app section of the config.yml
+type AppConfig struct {
+	App struct {
+		DashboardURL string `yaml:"dashboard_url"`
+		LogLevel     string `yaml:"log_level"`
+	} `yaml:"app"`
+}
+
+type AppConfigValues struct {
+	DashboardURL string
+	LogLevel     string
+}
+
 // ReadTraefikConfig reads and extracts values from Traefik configuration files
-func ReadTraefikConfig(mainConfigPath, dynamicConfigPath string) (*ConfigValues, error) {
+func ReadTraefikConfig(mainConfigPath string) (*TraefikConfigValues, error) {
 	// Read main config file
 	mainConfigData, err := os.ReadFile(mainConfigPath)
 	if err != nil {
@@ -57,48 +70,33 @@ func ReadTraefikConfig(mainConfigPath, dynamicConfigPath string) (*ConfigValues,
 		return nil, fmt.Errorf("error parsing main config file: %w", err)
 	}
 
-	// Read dynamic config file
-	dynamicConfigData, err := os.ReadFile(dynamicConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("error reading dynamic config file: %w", err)
-	}
-
-	var dynamicConfig DynamicConfig
-	if err := yaml.Unmarshal(dynamicConfigData, &dynamicConfig); err != nil {
-		return nil, fmt.Errorf("error parsing dynamic config file: %w", err)
-	}
-
 	// Extract values
-	values := &ConfigValues{
+	values := &TraefikConfigValues{
 		BadgerVersion:    mainConfig.Experimental.Plugins.Badger.Version,
 		LetsEncryptEmail: mainConfig.CertificatesResolvers.LetsEncrypt.Acme.Email,
-	}
-
-	// Extract DashboardDomain from router rules
-	// Look for it in the main router rules
-	for _, router := range dynamicConfig.HTTP.Routers {
-		if router.Rule != "" {
-			// Extract domain from Host(`mydomain.com`)
-			if domain := extractDomainFromRule(router.Rule); domain != "" {
-				values.DashboardDomain = domain
-				break
-			}
-		}
 	}
 
 	return values, nil
 }
 
-// extractDomainFromRule extracts the domain from a router rule
-func extractDomainFromRule(rule string) string {
-	// Look for the Host(`mydomain.com`) pattern
-	if start := findPattern(rule, "Host(`"); start != -1 {
-		end := findPattern(rule[start:], "`)")
-		if end != -1 {
-			return rule[start+6 : start+end]
-		}
+func ReadAppConfig(configPath string) (*AppConfigValues, error) {
+	// Read config file
+	configData, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading config file: %w", err)
 	}
-	return ""
+
+	var appConfig AppConfig
+	if err := yaml.Unmarshal(configData, &appConfig); err != nil {
+		return nil, fmt.Errorf("error parsing config file: %w", err)
+	}
+
+	values := &AppConfigValues{
+		DashboardURL: appConfig.App.DashboardURL,
+		LogLevel:     appConfig.App.LogLevel,
+	}
+
+	return values, nil
 }
 
 // findPattern finds the start of a pattern in a string

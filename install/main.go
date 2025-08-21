@@ -92,6 +92,26 @@ func main() {
 		config.DoCrowdsecInstall = false
 		config.Secret = generateRandomSecretKey()
 
+		fmt.Println("\n=== Generating Configuration Files ===")
+
+		// If the secret and id are not generated then generate them
+		if config.HybridMode && (config.HybridId == "" || config.HybridSecret == "") {
+			// fmt.Println("Requesting hybrid credentials from cloud...")
+			credentials, err := requestHybridCredentials()
+			if err != nil {
+				fmt.Printf("Error requesting hybrid credentials: %v\n", err)
+				fmt.Println("Please obtain credentials manually from the dashboard and run the installer again.")
+				os.Exit(1)
+			}
+			config.HybridId = credentials.RemoteExitNodeId
+			config.HybridSecret = credentials.Secret
+			fmt.Printf("Your managed credentials have been obtained successfully.\n")
+			fmt.Printf("	ID:     %s\n", config.HybridId)
+			fmt.Printf("	Secret: %s\n", config.HybridSecret)
+			fmt.Println("Take these to the Pangolin dashboard https://pangolin.fossorial.io to adopt your node.")
+			readBool(reader, "Have you adopted your node?", true)
+		}
+
 		if err := createConfigFiles(config); err != nil {
 			fmt.Printf("Error creating config files: %v\n", err)
 			os.Exit(1)
@@ -146,42 +166,10 @@ func main() {
 		}
 
 	} else {
-		fmt.Println("Looks like you already installed, so I am going to do the setup...")
-
-		// Read existing config to get DashboardDomain
-		traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml", "config/traefik/dynamic_config.yml")
-		if err != nil {
-			fmt.Printf("Warning: Could not read existing config: %v\n", err)
-			fmt.Println("You may need to manually enter your domain information.")
-			config = collectUserInput(reader)
-		} else {
-			config.DashboardDomain = traefikConfig.DashboardDomain
-			config.LetsEncryptEmail = traefikConfig.LetsEncryptEmail
-			config.BadgerVersion = traefikConfig.BadgerVersion
-
-			// Show detected values and allow user to confirm or re-enter
-			fmt.Println("Detected existing configuration:")
-			fmt.Printf("Dashboard Domain: %s\n", config.DashboardDomain)
-			fmt.Printf("Let's Encrypt Email: %s\n", config.LetsEncryptEmail)
-			fmt.Printf("Badger Version: %s\n", config.BadgerVersion)
-
-			if !readBool(reader, "Are these values correct?", true) {
-				config = collectUserInput(reader)
-			}
-		}
-
-		// Check if Pangolin is already installed with hybrid section
-		// if checkIsPangolinInstalledWithHybrid() {
-		// 	fmt.Println("\n=== Convert to Self-Host Node ===")
-		// 	if readBool(reader, "Do you want to convert this Pangolin instance into a managed self-host node?", true) {
-		// 		fmt.Println("hello world")
-		// 		return
-		// 	}
-		// }
-
+		fmt.Println("Looks like you already installed Pangolin!")
 	}
 
-	if !checkIsCrowdsecInstalledInCompose() {
+	if !checkIsCrowdsecInstalledInCompose() && !checkIsPangolinInstalledWithHybrid() {
 		fmt.Println("\n=== CrowdSec Install ===")
 		// check if crowdsec is installed
 		if readBool(reader, "Would you like to install CrowdSec?", false) {
@@ -190,12 +178,18 @@ func main() {
 			// BUG: crowdsec installation will be skipped if the user chooses to install on the first installation.
 			if readBool(reader, "Are you willing to manage CrowdSec?", false) {
 				if config.DashboardDomain == "" {
-					traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml", "config/traefik/dynamic_config.yml")
+					traefikConfig, err := ReadTraefikConfig("config/traefik/traefik_config.yml")
 					if err != nil {
 						fmt.Printf("Error reading config: %v\n", err)
 						return
 					}
-					config.DashboardDomain = traefikConfig.DashboardDomain
+					appConfig, err := ReadAppConfig("config/config.yml")
+					if err != nil {
+						fmt.Printf("Error reading config: %v\n", err)
+						return
+					}
+
+					config.DashboardDomain = appConfig.DashboardURL
 					config.LetsEncryptEmail = traefikConfig.LetsEncryptEmail
 					config.BadgerVersion = traefikConfig.BadgerVersion
 
@@ -237,7 +231,7 @@ func main() {
 
 	fmt.Println("\nInstallation complete!")
 
-	if !config.HybridMode {
+	if !config.HybridMode && !checkIsPangolinInstalledWithHybrid() {
 		fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
 	}
 }
@@ -327,15 +321,12 @@ func collectUserInput(reader *bufio.Reader) Config {
 	}
 
 	if config.HybridMode {
-		alreadyHaveCreds := readBool(reader, "Do you already have credentials from the dashboard?", false)
+		alreadyHaveCreds := readBool(reader, "Do you already have credentials from the dashboard? If not, we will create them later", false)
 		
 		if alreadyHaveCreds {
-			config.HybridId = readString(reader, "Enter your hybrid ID", "")
-			config.HybridSecret = readString(reader, "Enter your hybrid secret", "")
-		} else {
-			// Just print instructions for right now
-			fmt.Println("Please visit https://pangolin.fossorial.io, create a self hosted node, and return with the credentials.")
-		}
+			config.HybridId = readString(reader, "Enter your ID", "")
+			config.HybridSecret = readString(reader, "Enter your secret", "")
+		} 
 
 		config.DashboardDomain = readString(reader, "The public addressable IP address for this node or a domain pointing to it", "")
 		config.InstallGerbil = true
@@ -620,11 +611,6 @@ func checkPortsAvailable(port int) error {
 }
 
 func checkIsPangolinInstalledWithHybrid() bool {
-	// Check if docker-compose.yml exists (indicating Pangolin is installed)
-	if _, err := os.Stat("docker-compose.yml"); err != nil {
-		return false
-	}
-
 	// Check if config/config.yml exists and contains hybrid section
 	if _, err := os.Stat("config/config.yml"); err != nil {
 		return false
