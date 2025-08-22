@@ -665,21 +665,22 @@ export default function ResourcesTable({
                         className="w-full"
                         onValueChange={handleTabChange}
                     >
-                        <CardHeader className="flex flex-col items-center gap-4 md:items-stretch lg:flex-row lg:items-center lg:justify-between pb-0">
-                            <div className="flex flex-col items-center gap-3 w-full md:flex-row md:justify-start lg:justify-start lg:w-auto lg:mr-2">
-                                <div className="w-full md:w-auto lg:w-auto">{getSearchInput()}</div>
+                        <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-0">
+                            <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
+                                {getSearchInput()}
+
                                 {env.flags.enableClients && (
-                                    <TabsList className="grid grid-cols-2 w-full md:w-auto">
-                                        <TabsTrigger value="proxy" className="w-full">
+                                    <TabsList className="grid grid-cols-2">
+                                        <TabsTrigger value="proxy">
                                             {t("resourcesTableProxyResources")}
                                         </TabsTrigger>
-                                        <TabsTrigger value="internal" className="w-full">
+                                        <TabsTrigger value="internal">
                                             {t("resourcesTableClientResources")}
                                         </TabsTrigger>
                                     </TabsList>
                                 )}
                             </div>
-                            <div className="flex justify-center w-full md:justify-end lg:justify-end lg:w-auto">
+                            <div className="flex items-center gap-2 sm:justify-end">
                                 {getActionButton()}
                             </div>
                         </CardHeader>
