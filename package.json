@@ -114,7 +114,7 @@
         "yargs": "18.0.0"
     },
     "devDependencies": {
-        "@dotenvx/dotenvx": "1.48.4",
+        "@dotenvx/dotenvx": "1.49.0",
         "@esbuild-plugins/tsconfig-paths": "0.1.2",
         "@tailwindcss/postcss": "^4.1.12",
         "@types/better-sqlite3": "7.6.12",
@@ -144,7 +144,7 @@
         "tsc-alias": "1.8.16",
         "tsx": "4.20.4",
         "typescript": "^5",
-        "typescript-eslint": "^8.39.1"
+        "typescript-eslint": "^8.40.0"
     },
     "overrides": {
         "emblor": {
