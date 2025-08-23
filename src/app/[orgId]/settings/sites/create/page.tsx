@@ -488,9 +488,16 @@ WantedBy=default.target`
             let currentNewtVersion = "latest";
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
                 const response = await fetch(
-                    `https://api.github.com/repos/fosrl/newt/releases/latest`
+                    `https://api.github.com/repos/fosrl/newt/releases/latest`,
+                    { signal: controller.signal }
                 );
+                
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) {
                     throw new Error(
                         t("newtErrorFetchReleases", {
@@ -503,14 +510,18 @@ WantedBy=default.target`
                 currentNewtVersion = latestVersion;
                 setNewtVersion(latestVersion);
             } catch (error) {
-                console.error(
-                    t("newtErrorFetchLatest", {
-                        err:
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                    })
-                );
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.error(t("newtErrorFetchTimeout"));
+                } else {
+                    console.error(
+                        t("newtErrorFetchLatest", {
+                            err:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error)
+                        })
+                    );
+                }
             }
 
             const generatedKeypair = generateKeypair();

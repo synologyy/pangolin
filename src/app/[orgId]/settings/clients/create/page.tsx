@@ -331,9 +331,16 @@ export default function Page() {
             let olmVersion = "latest";
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
                 const response = await fetch(
-                    `https://api.github.com/repos/fosrl/olm/releases/latest`
+                    `https://api.github.com/repos/fosrl/olm/releases/latest`,
+                    { signal: controller.signal }
                 );
+                
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) {
                     throw new Error(
                         t("olmErrorFetchReleases", {
@@ -345,14 +352,18 @@ export default function Page() {
                 const latestVersion = data.tag_name;
                 olmVersion = latestVersion;
             } catch (error) {
-                console.error(
-                    t("olmErrorFetchLatest", {
-                        err:
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                    })
-                );
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.error(t("olmErrorFetchTimeout"));
+                } else {
+                    console.error(
+                        t("olmErrorFetchLatest", {
+                            err:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error)
+                        })
+                    );
+                }
             }
 
             await api
