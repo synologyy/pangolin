@@ -37,8 +37,7 @@ export default async function migration() {
 
         // Read and parse the YAML file
         const fileContents = fs.readFileSync(filePath, "utf8");
-        const rawConfig: any;
-        rawConfig = yaml.load(fileContents);
+        const rawConfig = yaml.load(fileContents) as any;
 
         if (rawConfig.server?.trust_proxy) {
             rawConfig.server.trust_proxy = 1;
