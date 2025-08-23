@@ -109,7 +109,7 @@ export async function getConfig(
                 ...req.body,
                 endpoint: exitNode[0].endpoint,
                 listenPort: exitNode[0].listenPort
-            }
+            };
             return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 

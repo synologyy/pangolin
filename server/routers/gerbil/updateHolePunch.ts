@@ -125,7 +125,7 @@ export async function updateAndGenerateEndpointDestinations(
     exitNode: ExitNode
 ) {
     let currentSiteId: number | undefined;
-    let destinations: PeerDestination[] = [];
+    const destinations: PeerDestination[] = [];
 
     if (olmId) {
         logger.debug(

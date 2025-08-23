@@ -49,7 +49,7 @@ export async function traefikConfigProvider(
         // Get the current exit node name from config
         await getCurrentExitNodeId();
 
-        let traefikConfig = await getTraefikConfig(
+        const traefikConfig = await getTraefikConfig(
             currentExitNodeId,
             config.getRawConfig().traefik.site_types
         );

@@ -55,7 +55,7 @@ export async function exchangeSession(
         let cleanHost = host;
         // if the host ends with :port
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
-            let matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
+            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
             cleanHost = cleanHost.slice(0, -1*matched.length);
         }
 

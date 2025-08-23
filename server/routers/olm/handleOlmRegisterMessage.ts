@@ -122,7 +122,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         .where(eq(clientSites.clientId, client.clientId));
 
     // Prepare an array to store site configurations
-    let siteConfigurations = [];
+    const siteConfigurations = [];
     logger.debug(
         `Found ${sitesData.length} sites for client ${client.clientId}`
     );

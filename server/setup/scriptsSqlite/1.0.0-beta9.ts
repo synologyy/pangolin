@@ -59,7 +59,7 @@ export default async function migration() {
 
             // Read and parse the YAML file
             const fileContents = fs.readFileSync(filePath, "utf8");
-            let rawConfig: any;
+            const rawConfig: any;
             rawConfig = yaml.load(fileContents);
 
             rawConfig.server.resource_session_request_param =

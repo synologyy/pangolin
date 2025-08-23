@@ -142,7 +142,7 @@ export class TraefikConfigManager {
                 const lastUpdateExists = await this.fileExists(lastUpdatePath);
 
                 let lastModified: Date | null = null;
-                let expiresAt: Date | null = null;
+                const expiresAt: Date | null = null;
 
                 if (lastUpdateExists) {
                     try {
