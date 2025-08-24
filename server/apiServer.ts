@@ -12,7 +12,7 @@ import { router as wsRouter, handleWSUpgrade } from "@server/routers/ws";
 import { logIncomingMiddleware } from "./middlewares/logIncoming";
 import { csrfProtectionMiddleware } from "./middlewares/csrfProtection";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import HttpCode from "./types/HttpCode";
 import requestTimeoutMiddleware from "./middlewares/requestTimeout";
@@ -70,7 +70,7 @@ export function createApiServer() {
                     60 *
                     1000,
                 max: config.getRawConfig().rate_limits.global.max_requests,
-                keyGenerator: (req) => `apiServerGlobal:${req.ip}:${req.path}`,
+                keyGenerator: (req) => `apiServerGlobal:${ipKeyGenerator(req.ip || "")}:${req.path}`,
                 handler: (req, res, next) => {
                     const message = `Rate limit exceeded. You can make ${config.getRawConfig().rate_limits.global.max_requests} requests every ${config.getRawConfig().rate_limits.global.window_minutes} minute(s).`;
                     return next(

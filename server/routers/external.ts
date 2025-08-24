@@ -42,7 +42,7 @@ import { createStore } from "@server/lib/rateLimitStore";
 import { ActionsEnum } from "@server/auth/actions";
 import { createNewt, getNewtToken } from "./newt";
 import { getOlmToken } from "./olm";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import { build } from "@server/build";
 
@@ -815,7 +815,7 @@ authRouter.use(
     rateLimit({
         windowMs: config.getRawConfig().rate_limits.auth.window_minutes,
         max: config.getRawConfig().rate_limits.auth.max_requests,
-        keyGenerator: (req) => `authRouterGlobal:${req.ip}:${req.path}`,
+        keyGenerator: (req) => `authRouterGlobal:${ipKeyGenerator(req.ip || "")}:${req.path}`,
         handler: (req, res, next) => {
             const message = `Rate limit exceeded. You can make ${config.getRawConfig().rate_limits.auth.max_requests} requests every ${config.getRawConfig().rate_limits.auth.window_minutes} minute(s).`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -829,7 +829,7 @@ authRouter.put(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `signup:${req.ip}:${req.body.email}`,
+        keyGenerator: (req) => `signup:${ipKeyGenerator(req.ip || "")}:${req.body.email}`,
         handler: (req, res, next) => {
             const message = `You can only sign up ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -843,7 +843,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `login:${req.body.email || req.ip}`,
+        keyGenerator: (req) => `login:${req.body.email || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only log in ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -858,7 +858,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 900,
-        keyGenerator: (req) => `newtGetToken:${req.body.newtId || req.ip}`,
+        keyGenerator: (req) => `newtGetToken:${req.body.newtId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only request a Newt token ${900} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -872,7 +872,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 900,
-        keyGenerator: (req) => `olmGetToken:${req.body.newtId || req.ip}`,
+        keyGenerator: (req) => `olmGetToken:${req.body.newtId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only request an Olm token ${900} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -888,7 +888,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) => {
-            return `signup:${req.body.email || req.user?.userId || req.ip}`;
+            return `signup:${req.body.email || req.user?.userId || ipKeyGenerator(req.ip || "")}`;
         },
         handler: (req, res, next) => {
             const message = `You can only enable 2FA ${15} times every ${15} minutes. Please try again later.`;
@@ -904,7 +904,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) => {
-            return `signup:${req.body.email || req.user?.userId || req.ip}`;
+            return `signup:${req.body.email || req.user?.userId || ipKeyGenerator(req.ip || "")}`;
         },
         handler: (req, res, next) => {
             const message = `You can only request a 2FA code ${15} times every ${15} minutes. Please try again later.`;
@@ -920,7 +920,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `signup:${req.user?.userId || req.ip}`,
+        keyGenerator: (req) => `signup:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only disable 2FA ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -934,7 +934,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `signup:${req.body.email || req.ip}`,
+        keyGenerator: (req) => `signup:${req.body.email || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only sign up ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -952,7 +952,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) =>
-            `requestEmailVerificationCode:${req.body.email || req.ip}`,
+            `requestEmailVerificationCode:${req.body.email || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only request an email verification code ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -974,7 +974,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) =>
-            `requestPasswordReset:${req.body.email || req.ip}`,
+            `requestPasswordReset:${req.body.email || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -989,7 +989,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `resetPassword:${req.body.email || req.ip}`,
+        keyGenerator: (req) => `resetPassword:${req.body.email || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1005,7 +1005,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) =>
-            `authWithPassword:${req.ip}:${req.params.resourceId || req.ip}`,
+            `authWithPassword:${ipKeyGenerator(req.ip || "")}:${req.params.resourceId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only authenticate with password ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1020,7 +1020,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) =>
-            `authWithPincode:${req.ip}:${req.params.resourceId || req.ip}`,
+            `authWithPincode:${ipKeyGenerator(req.ip || "")}:${req.params.resourceId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only authenticate with pincode ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1036,7 +1036,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000,
         max: 15,
         keyGenerator: (req) =>
-            `authWithWhitelist:${req.ip}:${req.body.email}:${req.params.resourceId}`,
+            `authWithWhitelist:${ipKeyGenerator(req.ip || "")}:${req.body.email}:${req.params.resourceId}`,
         handler: (req, res, next) => {
             const message = `You can only request an email OTP ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1069,7 +1069,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 5, // Allow 5 security key registrations per 15 minutes
         keyGenerator: (req) =>
-            `securityKeyRegister:${req.user?.userId || req.ip}`,
+            `securityKeyRegister:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only register a security key ${5} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1089,7 +1089,7 @@ authRouter.post(
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 10, // Allow 10 authentication attempts per 15 minutes per IP
         keyGenerator: (req) => {
-            return `securityKeyAuth:${req.body.email || req.ip}`;
+            return `securityKeyAuth:${req.body.email || ipKeyGenerator(req.ip || "")}`;
         },
         handler: (req, res, next) => {
             const message = `You can only attempt security key authentication ${10} times every ${15} minutes. Please try again later.`;
@@ -1111,7 +1111,7 @@ authRouter.delete(
     rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 20, // Allow 10 authentication attempts per 15 minutes per IP
-        keyGenerator: (req) => `securityKeyAuth:${req.user?.userId || req.ip}`,
+        keyGenerator: (req) => `securityKeyAuth:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
         handler: (req, res, next) => {
             const message = `You can only delete a security key ${10} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
