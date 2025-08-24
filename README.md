@@ -114,7 +114,7 @@ Easy to use with simple [pay as you go pricing](https://digpangolin.com/pricing)
 
 - Everything you get with self hosted Pangolin, but fully managed for you.
 
-### Hybrid & High Availability
+### Managed & High Availability
 
 Managed control plane, your infrastructure
 
@@ -123,7 +123,7 @@ Managed control plane, your infrastructure
 - Traffic flows through your infra.
 - We coordinate failover between your nodes or to Cloud when things go bad.
 
-If interested, [contact us](mailto:numbat@fossorial.io).
+Try it out using [Pangolin Cloud](https://pangolin.fossorial.io)
 
 ### Full Enterprise On-Premises
 
