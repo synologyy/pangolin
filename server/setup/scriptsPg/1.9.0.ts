@@ -58,6 +58,12 @@ export default async function migration() {
 
         await db.execute(sql`ALTER TABLE "clientSites" ADD COLUMN "endpoint" varchar;`);
 
+        await db.execute(sql`ALTER TABLE "exitNodes" ADD COLUMN "online" integer DEFAULT false NOT NULL;`);
+
+        await db.execute(sql`ALTER TABLE "exitNodes" ADD COLUMN "lastPing" integer;`);
+
+        await db.execute(sql`ALTER TABLE "exitNodes" ADD COLUMN "type" text DEFAULT 'gerbil';`);
+
         await db.execute(sql`ALTER TABLE "olms" ADD COLUMN "version" text;`);
 
         await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "createdAt" text;`);
