@@ -129,7 +129,6 @@ export const configSchema = z
             trust_proxy: z.number().int().gte(0).optional().default(1),
             secret: z
                 .string()
-                .transform(getEnvOrYaml("SERVER_SECRET"))
                 .pipe(z.string().min(8))
                 .optional()
         }).optional().default({
@@ -324,7 +323,10 @@ export const configSchema = z
             if (data.managed) {
                 return true;
             }
-            // If hybrid is not defined, server secret must be defined
+            // If hybrid is not defined, server secret must be defined. If its not defined already then pull it from env
+            if (data.server?.secret === undefined) {
+                data.server.secret = process.env.SERVER_SECRET;
+            }
             return data.server?.secret !== undefined && data.server.secret.length > 0;
         },
         {
