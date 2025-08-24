@@ -22,6 +22,7 @@ const updateTargetParamsSchema = z
 
 const updateTargetBodySchema = z
     .object({
+        siteId: z.number().int().positive(),
         ip: z.string().refine(isTargetValid),
         method: z.string().min(1).max(10).optional().nullable(),
         port: z.number().int().min(1).max(65535).optional(),
@@ -77,6 +78,7 @@ export async function updateTarget(
         }
 
         const { targetId } = parsedParams.data;
+        const { siteId } = parsedBody.data;
 
         const [target] = await db
             .select()
@@ -111,14 +113,42 @@ export async function updateTarget(
         const [site] = await db
             .select()
             .from(sites)
-            .where(eq(sites.siteId, resource.siteId!))
+            .where(eq(sites.siteId, siteId))
             .limit(1);
 
         if (!site) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Site with ID ${resource.siteId} not found`
+                    `Site with ID ${siteId} not found`
+                )
+            );
+        }
+
+        const targetData = {
+            ...target,
+            ...parsedBody.data
+        };
+
+        const existingTargets = await db
+            .select()
+            .from(targets)
+            .where(eq(targets.resourceId, target.resourceId));
+
+        const foundTarget = existingTargets.find(
+            (target) =>
+                target.targetId !== targetId && // Exclude the current target being updated
+                target.ip === targetData.ip &&
+                target.port === targetData.port &&
+                target.method === targetData.method &&
+                target.siteId === targetData.siteId
+        );
+
+        if (foundTarget) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Target with IP ${targetData.ip}, port ${targetData.port}, and method ${targetData.method} already exists on the same site.`
                 )
             );
         }
@@ -157,7 +187,12 @@ export async function updateTarget(
                     .where(eq(newts.siteId, site.siteId))
                     .limit(1);
 
-                addTargets(newt.newtId, [updatedTarget], resource.protocol, resource.proxyPort);
+                await addTargets(
+                    newt.newtId,
+                    [updatedTarget],
+                    resource.protocol,
+                    resource.proxyPort
+                );
             }
         }
         return response(res, {

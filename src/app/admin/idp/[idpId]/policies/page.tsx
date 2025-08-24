@@ -326,7 +326,7 @@ export default function PoliciesPage() {
                         {/*TODO(vlalx): Validate replacing */}
                         {t('orgPoliciesAboutDescription')}{" "}
                         <Link
-                            href="https://docs.fossorial.io/Pangolin/Identity%20Providers/auto-provision"
+                            href="https://docs.digpangolin.com/manage/identity-providers/auto-provisioning"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline"

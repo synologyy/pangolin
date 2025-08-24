@@ -8,7 +8,7 @@ export async function copyInConfig() {
     const endpoint = config.getRawConfig().gerbil.base_endpoint;
     const listenPort = config.getRawConfig().gerbil.start_port;
 
-    if (!config.getRawConfig().flags?.disable_config_managed_domains) {
+    if (!config.getRawConfig().flags?.disable_config_managed_domains && config.getRawConfig().domains) {
         await copyInDomains();
     }
 

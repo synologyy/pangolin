@@ -43,7 +43,7 @@ import {
     FaWindows
 } from "react-icons/fa";
 import { SiNixos } from "react-icons/si";
-import { Checkbox } from "@app/components/ui/checkbox";
+import { Checkbox, CheckboxWithLabel } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { generateKeypair } from "../[niceId]/wireguardConfig";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
@@ -59,6 +59,7 @@ import { useParams, useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 
 import { useTranslations } from "next-intl";
+import { build } from "@server/build";
 
 type SiteType = "newt" | "wireguard" | "local";
 
@@ -72,6 +73,7 @@ interface TunnelTypeOption {
 type Commands = {
     mac: Record<string, string[]>;
     linux: Record<string, string[]>;
+    freebsd: Record<string, string[]>;
     windows: Record<string, string[]>;
     docker: Record<string, string[]>;
     podman: Record<string, string[]>;
@@ -107,7 +109,8 @@ export default function Page() {
                 }),
             method: z.enum(["newt", "wireguard", "local"]),
             copied: z.boolean(),
-            clientAddress: z.string().optional()
+            clientAddress: z.string().optional(),
+            acceptClients: z.boolean()
         })
         .refine(
             (data) => {
@@ -140,7 +143,7 @@ export default function Page() {
                   {
                       id: "wireguard" as SiteType,
                       title: t("siteWg"),
-                      description: t("siteWgDescription"),
+                      description: build == "saas" ? t("siteWgDescriptionSaas") : t("siteWgDescription"),
                       disabled: true
                   }
               ]),
@@ -150,7 +153,7 @@ export default function Page() {
                   {
                       id: "local" as SiteType,
                       title: t("local"),
-                      description: t("siteLocalDescription")
+                      description: build == "saas" ? t("siteLocalDescriptionSaas") : t("siteLocalDescription")
                   }
               ])
     ]);
@@ -170,6 +173,8 @@ export default function Page() {
     const [wgConfig, setWgConfig] = useState("");
 
     const [createLoading, setCreateLoading] = useState(false);
+    const [acceptClients, setAcceptClients] = useState(false);
+    const [newtVersion, setNewtVersion] = useState("latest");
 
     const [siteDefaults, setSiteDefaults] =
         useState<PickSiteDefaultsResponse | null>(null);
@@ -199,55 +204,61 @@ PersistentKeepalive = 5`;
         id: string,
         secret: string,
         endpoint: string,
-        version: string
+        version: string,
+        acceptClients: boolean = false
     ) => {
+        const acceptClientsFlag = acceptClients ? " --accept-clients" : "";
+        const acceptClientsEnv = acceptClients
+            ? "\n      - ACCEPT_CLIENTS=true"
+            : "";
+
         const commands = {
             mac: {
-                "Apple Silicon (arm64)": [
-                    `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                "Intel x64 (amd64)": [
-                    `curl -L -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_darwin_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // "Intel x64 (amd64)": [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             linux: {
-                amd64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                arm64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                arm32: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                arm32v6: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_arm32v6" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                riscv64: [
-                    `wget -O newt "https://github.com/fosrl/newt/releases/download/${version}/newt_linux_riscv64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // arm64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // arm32: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // arm32v6: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ],
+                // riscv64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             freebsd: {
-                amd64: [
-                    `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_amd64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ],
-                arm64: [
-                    `fetch -o newt "https://github.com/fosrl/newt/releases/download/${version}/newt_freebsd_arm64" && chmod +x ./newt`,
-                    `./newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                All: [
+                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
+                // arm64: [
+                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             },
             windows: {
                 x64: [
                     `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`,
-                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             docker: {
@@ -260,10 +271,10 @@ PersistentKeepalive = 5`;
     environment:
       - PANGOLIN_ENDPOINT=${endpoint}
       - NEWT_ID=${id}
-      - NEWT_SECRET=${secret}`
+      - NEWT_SECRET=${secret}${acceptClientsEnv}`
                 ],
                 "Docker Run": [
-                    `docker run -dit fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `docker run -dit fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             podman: {
@@ -276,7 +287,7 @@ ContainerName=newt
 Image=docker.io/fosrl/newt
 Environment=PANGOLIN_ENDPOINT=${endpoint}
 Environment=NEWT_ID=${id}
-Environment=NEWT_SECRET=${secret}
+Environment=NEWT_SECRET=${secret}${acceptClients ? "\nEnvironment=ACCEPT_CLIENTS=true" : ""}
 # Secret=newt-secret,type=env,target=NEWT_SECRET
 
 [Service]
@@ -286,16 +297,16 @@ Restart=always
 WantedBy=default.target`
                 ],
                 "Podman Run": [
-                    `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `podman run -dit docker.io/fosrl/newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
             },
             nixos: {
-                x86_64: [
-                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                All: [
+                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ],
-                aarch64: [
-                    `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}`
-                ]
+                // aarch64: [
+                //     `nix run 'nixpkgs#fosrl-newt' -- --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                // ]
             }
         };
         setCommands(commands);
@@ -304,9 +315,11 @@ WantedBy=default.target`
     const getArchitectures = () => {
         switch (platform) {
             case "linux":
-                return ["amd64", "arm64", "arm32", "arm32v6", "riscv64"];
+                // return ["amd64", "arm64", "arm32", "arm32v6", "riscv64"];
+                return ["All"];
             case "mac":
-                return ["Apple Silicon (arm64)", "Intel x64 (amd64)"];
+                // return ["Apple Silicon (arm64)", "Intel x64 (amd64)"];
+                return ["All"];
             case "windows":
                 return ["x64"];
             case "docker":
@@ -314,9 +327,11 @@ WantedBy=default.target`
             case "podman":
                 return ["Podman Quadlet", "Podman Run"];
             case "freebsd":
-                return ["amd64", "arm64"];
+                // return ["amd64", "arm64"];
+                return ["All"];
             case "nixos":
-                return ["x86_64", "aarch64"];
+                // return ["x86_64", "aarch64"];
+                return ["All"];
             default:
                 return ["x64"];
         }
@@ -381,7 +396,7 @@ WantedBy=default.target`
             case "freebsd":
                 return <FaFreebsd className="h-4 w-4 mr-2" />;
             case "nixos":
-                return <SiNixos  className="h-4 w-4 mr-2" />;
+                return <SiNixos className="h-4 w-4 mr-2" />;
             default:
                 return <Terminal className="h-4 w-4 mr-2" />;
         }
@@ -393,7 +408,8 @@ WantedBy=default.target`
             name: "",
             copied: false,
             method: "newt",
-            clientAddress: ""
+            clientAddress: "",
+            acceptClients: false
         }
     });
 
@@ -469,12 +485,19 @@ WantedBy=default.target`
         const load = async () => {
             setLoadingPage(true);
 
-            let newtVersion = "latest";
+            let currentNewtVersion = "latest";
 
             try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000);
+                
                 const response = await fetch(
-                    `https://api.github.com/repos/fosrl/newt/releases/latest`
+                    `https://api.github.com/repos/fosrl/newt/releases/latest`,
+                    { signal: controller.signal }
                 );
+                
+                clearTimeout(timeoutId);
+                
                 if (!response.ok) {
                     throw new Error(
                         t("newtErrorFetchReleases", {
@@ -484,16 +507,21 @@ WantedBy=default.target`
                 }
                 const data = await response.json();
                 const latestVersion = data.tag_name;
-                newtVersion = latestVersion;
+                currentNewtVersion = latestVersion;
+                setNewtVersion(latestVersion);
             } catch (error) {
-                console.error(
-                    t("newtErrorFetchLatest", {
-                        err:
-                            error instanceof Error
-                                ? error.message
-                                : String(error)
-                    })
-                );
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.error(t("newtErrorFetchTimeout"));
+                } else {
+                    console.error(
+                        t("newtErrorFetchLatest", {
+                            err:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error)
+                        })
+                    );
+                }
             }
 
             const generatedKeypair = generateKeypair();
@@ -530,7 +558,8 @@ WantedBy=default.target`
                             newtId,
                             newtSecret,
                             env.app.dashboardUrl,
-                            newtVersion
+                            currentNewtVersion,
+                            acceptClients
                         );
 
                         hydrateWireGuardConfig(
@@ -555,6 +584,11 @@ WantedBy=default.target`
 
         load();
     }, []);
+
+    // Sync form acceptClients value with local state
+    useEffect(() => {
+        form.setValue("acceptClients", acceptClients);
+    }, [acceptClients, form]);
 
     return (
         <>
@@ -616,7 +650,9 @@ WantedBy=default.target`
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    Site Address
+                                                                    {t(
+                                                                        "siteAddress"
+                                                                    )}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -642,12 +678,9 @@ WantedBy=default.target`
                                                                 </FormControl>
                                                                 <FormMessage />
                                                                 <FormDescription>
-                                                                    Specify the
-                                                                    IP address
-                                                                    of the host
-                                                                    for clients
-                                                                    to connect
-                                                                    to.
+                                                                    {t(
+                                                                        "siteAddressDescription"
+                                                                    )}
                                                                 </FormDescription>
                                                             </FormItem>
                                                         )}
@@ -851,6 +884,59 @@ WantedBy=default.target`
                                                     )
                                                 )}
                                             </div>
+
+                                            <div className="pt-4">
+                                                <p className="font-bold mb-3">
+                                                    {t("siteConfiguration")}
+                                                </p>
+                                                <div className="flex items-center space-x-2 mb-2">
+                                                    <CheckboxWithLabel
+                                                        id="acceptClients"
+                                                         aria-describedby="acceptClients-desc"
+                                                        checked={acceptClients}
+                                                        onCheckedChange={(
+                                                            checked
+                                                        ) => {
+                                                            const value =
+                                                                checked as boolean;
+                                                            setAcceptClients(
+                                                                value
+                                                            );
+                                                            form.setValue(
+                                                                "acceptClients",
+                                                                value
+                                                            );
+                                                            // Re-hydrate commands with new acceptClients value
+                                                            if (
+                                                                newtId &&
+                                                                newtSecret &&
+                                                                newtVersion
+                                                            ) {
+                                                                hydrateCommands(
+                                                                    newtId,
+                                                                    newtSecret,
+                                                                    env.app
+                                                                        .dashboardUrl,
+                                                                    newtVersion,
+                                                                    value
+                                                                );
+                                                            }
+                                                        }}
+                                                        label={t(
+                                                            "siteAcceptClientConnections"
+                                                        )}
+                                                    />
+                                                </div>
+                                                <p
+                                                    id="acceptClients-desc"
+                                                    className="text-sm text-muted-foreground mb-4"
+                                                >
+                                                    {t(
+                                                        "siteAcceptClientConnectionsDescription"
+                                                    )}
+                                                </p>
+                                            </div>
+
                                             <div className="pt-4">
                                                 <p className="font-bold mb-3">
                                                     {t("commands")}

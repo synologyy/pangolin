@@ -1,16 +1,10 @@
 import { db, ExitNode } from "@server/db";
 import { MessageHandler } from "../ws";
-import {
-    clients,
-    clientSites,
-    exitNodes,
-    Olm,
-    olms,
-    sites
-} from "@server/db";
-import { eq, inArray } from "drizzle-orm";
+import { clients, clientSites, exitNodes, Olm, olms, sites } from "@server/db";
+import { and, eq, inArray } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
+import { listExitNodes } from "@server/lib/exitNodes";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -28,9 +22,11 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
     const clientId = olm.clientId;
-    const { publicKey, relay } = message.data;
+    const { publicKey, relay, olmVersion } = message.data;
 
-    logger.debug(`Olm client ID: ${clientId}, Public Key: ${publicKey}, Relay: ${relay}`);
+    logger.debug(
+        `Olm client ID: ${clientId}, Public Key: ${publicKey}, Relay: ${relay}`
+    );
 
     if (!publicKey) {
         logger.warn("Public key not provided");
@@ -50,22 +46,46 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     }
 
     if (client.exitNodeId) {
-        // Get the exit node for this site
-        const [exitNode] = await db
-            .select()
-            .from(exitNodes)
-            .where(eq(exitNodes.exitNodeId, client.exitNodeId))
-            .limit(1);
+        // TODO: FOR NOW WE ARE JUST HOLEPUNCHING ALL EXIT NODES BUT IN THE FUTURE WE SHOULD HANDLE THIS BETTER
 
-        // Send holepunch message for each site
-        sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch",
+        // Get the exit node
+        const allExitNodes = await listExitNodes(client.orgId, true); // FILTER THE ONLINE ONES
+
+        const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
+            return {
+                publicKey: exitNode.publicKey,
+                endpoint: exitNode.endpoint
+            };
+        });
+
+        // Send holepunch message
+        await sendToClient(olm.olmId, {
+            type: "olm/wg/holepunch/all",
             data: {
-                serverPubKey: exitNode.publicKey,
-                endpoint: exitNode.endpoint,
+                exitNodes: exitNodesHpData
             }
         });
-    
+
+        if (!olmVersion) {
+            // THIS IS FOR BACKWARDS COMPATIBILITY
+            // THE OLDER CLIENTS DID NOT SEND THE VERSION
+            await sendToClient(olm.olmId, {
+                type: "olm/wg/holepunch",
+                data: {
+                    serverPubKey: allExitNodes[0].publicKey,
+                    endpoint: allExitNodes[0].endpoint
+                }
+            });
+        }
+    }
+
+    if (olmVersion) {
+        await db
+            .update(olms)
+            .set({
+                version: olmVersion
+            })
+            .where(eq(olms.olmId, olm.olmId));
     }
 
     if (now - (client.lastHolePunch || 0) > 6) {
@@ -103,7 +123,9 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
     // Prepare an array to store site configurations
     const siteConfigurations = [];
-    logger.debug(`Found ${sitesData.length} sites for client ${client.clientId}`);
+    logger.debug(
+        `Found ${sitesData.length} sites for client ${client.clientId}`
+    );
 
     if (sitesData.length === 0) {
         sendToClient(olm.olmId, {
@@ -147,15 +169,26 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             continue;
         }
 
+        const [clientSite] = await db
+            .select()
+            .from(clientSites)
+            .where(
+                and(
+                    eq(clientSites.clientId, client.clientId),
+                    eq(clientSites.siteId, site.siteId)
+                )
+            )
+            .limit(1);
+
         // Add the peer to the exit node for this site
-        if (client.endpoint) {
+        if (clientSite.endpoint) {
             logger.info(
-                `Adding peer ${publicKey} to site ${site.siteId} with endpoint ${client.endpoint}`
+                `Adding peer ${publicKey} to site ${site.siteId} with endpoint ${clientSite.endpoint}`
             );
             await addPeer(site.siteId, {
                 publicKey: publicKey,
-                allowedIps: [`${client.subnet.split('/')[0]}/32`], // we want to only allow from that client
-                endpoint: relay ? "" : client.endpoint
+                allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
+                endpoint: relay ? "" : clientSite.endpoint
             });
         } else {
             logger.warn(
@@ -188,7 +221,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         });
     }
 
-    // REMOVED THIS SO IT CREATES THE INTERFACE AND JUST WAITS FOR THE SITES 
+    // REMOVED THIS SO IT CREATES THE INTERFACE AND JUST WAITS FOR THE SITES
     // if (siteConfigurations.length === 0) {
     //     logger.warn("No valid site configurations found");
     //     return;

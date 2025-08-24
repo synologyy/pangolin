@@ -52,6 +52,10 @@ export default function LocaleSwitcher() {
                 {
                     value: "ko-KR",
                     label: "한국어"
+                },
+                {
+                    value: "nb-NO",
+                    label: "Norsk (Bokmål)"
                 }
             ]}
         />

@@ -9,6 +9,7 @@ import {
     findNextAvailableCidr,
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
+import { selectBestExitNode, verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -24,7 +25,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
     const newt = client as Newt;
 
-    logger.info("Handling register newt message!");
+    logger.debug("Handling register newt message!");
 
     if (!newt) {
         logger.warn("Newt not found");
@@ -64,24 +65,14 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         exitNodeId = bestPingResult.exitNodeId;
     }
 
-    if (newtVersion) {
-        // update the newt version in the database
-        await db
-            .update(newts)
-            .set({
-                version: newtVersion as string
-            })
-            .where(eq(newts.newtId, newt.newtId));
-    }
-
     const [oldSite] = await db
         .select()
         .from(sites)
         .where(eq(sites.siteId, siteId))
         .limit(1);
 
-    if (!oldSite || !oldSite.exitNodeId) {
-        logger.warn("Site not found or does not have exit node");
+    if (!oldSite) {
+        logger.warn("Site not found");
         return;
     }
 
@@ -91,6 +82,18 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         // This effectively moves the exit node to the new one
         exitNodeIdToQuery = exitNodeId; // Use the provided exitNodeId if it differs from the site's exitNodeId
 
+        const { exitNode, hasAccess } = await verifyExitNodeOrgAccess(exitNodeIdToQuery, oldSite.orgId);
+
+        if (!exitNode) {
+            logger.warn("Exit node not found");
+            return;
+        }
+
+        if (!hasAccess) {
+            logger.warn("Not authorized to use this exit node");
+            return;
+        }
+
         const sitesQuery = await db
             .select({
                 subnet: sites.subnet
@@ -98,14 +101,10 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             .from(sites)
             .where(eq(sites.exitNodeId, exitNodeId));
 
-        const [exitNode] = await db
-            .select()
-            .from(exitNodes)
-            .where(eq(exitNodes.exitNodeId, exitNodeIdToQuery))
-            .limit(1);
-
         const blockSize = config.getRawConfig().gerbil.site_block_size;
-        const subnets = sitesQuery.map((site) => site.subnet).filter((subnet) => subnet !== null);
+        const subnets = sitesQuery
+            .map((site) => site.subnet)
+            .filter((subnet) => subnet !== null);
         subnets.push(exitNode.address.replace(/\/\d+$/, `/${blockSize}`));
         const newSubnet = findNextAvailableCidr(
             subnets,
@@ -138,13 +137,18 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             .returning();
     }
 
+    if (!exitNodeIdToQuery) {
+        logger.warn("No exit node ID to query");
+        return;
+    }
+
     const [exitNode] = await db
         .select()
         .from(exitNodes)
         .where(eq(exitNodes.exitNodeId, exitNodeIdToQuery))
         .limit(1);
 
-    if (oldSite.pubKey && oldSite.pubKey !== publicKey) {
+    if (oldSite.pubKey && oldSite.pubKey !== publicKey && oldSite.exitNodeId) {
         logger.info("Public key mismatch. Deleting old peer...");
         await deletePeer(oldSite.exitNodeId, oldSite.pubKey);
     }
@@ -160,78 +164,47 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         allowedIps: [siteSubnet]
     });
 
-    // Improved version
-    const allResources = await db.transaction(async (tx) => {
-        // First get all resources for the site
-        const resourcesList = await tx
-            .select({
-                resourceId: resources.resourceId,
-                subdomain: resources.subdomain,
-                fullDomain: resources.fullDomain,
-                ssl: resources.ssl,
-                blockAccess: resources.blockAccess,
-                sso: resources.sso,
-                emailWhitelistEnabled: resources.emailWhitelistEnabled,
-                http: resources.http,
-                proxyPort: resources.proxyPort,
-                protocol: resources.protocol
+    if (newtVersion && newtVersion !== newt.version) {
+        // update the newt version in the database
+        await db
+            .update(newts)
+            .set({
+                version: newtVersion as string
             })
-            .from(resources)
-            .where(eq(resources.siteId, siteId));
+            .where(eq(newts.newtId, newt.newtId));
+    }
 
-        // Get all enabled targets for these resources in a single query
-        const resourceIds = resourcesList.map((r) => r.resourceId);
-        const allTargets =
-            resourceIds.length > 0
-                ? await tx
-                      .select({
-                          resourceId: targets.resourceId,
-                          targetId: targets.targetId,
-                          ip: targets.ip,
-                          method: targets.method,
-                          port: targets.port,
-                          internalPort: targets.internalPort,
-                          enabled: targets.enabled
-                      })
-                      .from(targets)
-                      .where(
-                          and(
-                              inArray(targets.resourceId, resourceIds),
-                              eq(targets.enabled, true)
-                          )
-                      )
-                : [];
+    // Get all enabled targets with their resource protocol information
+    const allTargets = await db
+        .select({
+            resourceId: targets.resourceId,
+            targetId: targets.targetId,
+            ip: targets.ip,
+            method: targets.method,
+            port: targets.port,
+            internalPort: targets.internalPort,
+            enabled: targets.enabled,
+            protocol: resources.protocol
+        })
+        .from(targets)
+        .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
+        .where(and(eq(targets.siteId, siteId), eq(targets.enabled, true)));
 
-        // Combine the data in JS instead of using SQL for the JSON
-        return resourcesList.map((resource) => ({
-            ...resource,
-            targets: allTargets.filter(
-                (target) => target.resourceId === resource.resourceId
-            )
-        }));
-    });
+    const { tcpTargets, udpTargets } = allTargets.reduce(
+        (acc, target) => {
+            // Filter out invalid targets
+            if (!target.internalPort || !target.ip || !target.port) {
+                return acc;
+            }
 
-    const { tcpTargets, udpTargets } = allResources.reduce(
-        (acc, resource) => {
-            // Skip resources with no targets
-            if (!resource.targets?.length) return acc;
-
-            // Format valid targets into strings
-            const formattedTargets = resource.targets
-                .filter(
-                    (target: Target) =>
-                        target?.internalPort && target?.ip && target?.port
-                )
-                .map(
-                    (target: Target) =>
-                        `${target.internalPort}:${target.ip}:${target.port}`
-                );
+            // Format target into string
+            const formattedTarget = `${target.internalPort}:${target.ip}:${target.port}`;
 
             // Add to the appropriate protocol array
-            if (resource.protocol === "tcp") {
-                acc.tcpTargets.push(...formattedTargets);
+            if (target.protocol === "tcp") {
+                acc.tcpTargets.push(formattedTarget);
             } else {
-                acc.udpTargets.push(...formattedTargets);
+                acc.udpTargets.push(formattedTarget);
             }
 
             return acc;
@@ -257,14 +230,3 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         excludeSender: false // Include sender in broadcast
     };
 };
-
-function selectBestExitNode(
-    pingResults: ExitNodePingResult[]
-): ExitNodePingResult | null {
-    if (!pingResults || pingResults.length === 0) {
-        logger.warn("No ping results provided");
-        return null;
-    }
-
-    return pingResults[0];
-}

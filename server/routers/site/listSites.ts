@@ -21,11 +21,22 @@ async function getLatestNewtVersion(): Promise<string | null> {
             return cachedVersion;
         }
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500); // Reduced timeout to 1.5 seconds
+
         const response = await fetch(
-            "https://api.github.com/repos/fosrl/newt/tags"
+            "https://api.github.com/repos/fosrl/newt/tags",
+            {
+                signal: controller.signal
+            }
         );
+
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-            logger.warn("Failed to fetch latest Newt version from GitHub");
+            logger.warn(
+                `Failed to fetch latest Newt version from GitHub: ${response.status} ${response.statusText}`
+            );
             return null;
         }
 
@@ -40,8 +51,21 @@ async function getLatestNewtVersion(): Promise<string | null> {
         newtVersionCache.set("latestNewtVersion", latestVersion);
 
         return latestVersion;
-    } catch (error) {
-        logger.error("Error fetching latest Newt version:", error);
+    } catch (error: any) {
+        if (error.name === "AbortError") {
+            logger.warn(
+                "Request to fetch latest Newt version timed out (1.5s)"
+            );
+        } else if (error.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
+            logger.warn(
+                "Connection timeout while fetching latest Newt version"
+            );
+        } else {
+            logger.warn(
+                "Error fetching latest Newt version:",
+                error.message || error
+            );
+        }
         return null;
     }
 }
@@ -190,32 +214,47 @@ export async function listSites(
         const totalCountResult = await countQuery;
         const totalCount = totalCountResult[0].count;
 
-        const latestNewtVersion = await getLatestNewtVersion();
+        // Get latest version asynchronously without blocking the response
+        const latestNewtVersionPromise = getLatestNewtVersion();
 
         const sitesWithUpdates: SiteWithUpdateAvailable[] = sitesList.map(
             (site) => {
                 const siteWithUpdate: SiteWithUpdateAvailable = { ...site };
-
-                if (
-                    site.type === "newt" &&
-                    site.newtVersion &&
-                    latestNewtVersion
-                ) {
-                    try {
-                        siteWithUpdate.newtUpdateAvailable = semver.lt(
-                            site.newtVersion,
-                            latestNewtVersion
-                        );
-                    } catch (error) {
-                        siteWithUpdate.newtUpdateAvailable = false;
-                    }
-                } else {
-                    siteWithUpdate.newtUpdateAvailable = false;
-                }
-
+                // Initially set to false, will be updated if version check succeeds
+                siteWithUpdate.newtUpdateAvailable = false;
                 return siteWithUpdate;
             }
         );
+
+        // Try to get the latest version, but don't block if it fails
+        try {
+            const latestNewtVersion = await latestNewtVersionPromise;
+
+            if (latestNewtVersion) {
+                sitesWithUpdates.forEach((site) => {
+                    if (
+                        site.type === "newt" &&
+                        site.newtVersion &&
+                        latestNewtVersion
+                    ) {
+                        try {
+                            site.newtUpdateAvailable = semver.lt(
+                                site.newtVersion,
+                                latestNewtVersion
+                            );
+                        } catch (error) {
+                            site.newtUpdateAvailable = false;
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            // Log the error but don't let it block the response
+            logger.warn(
+                "Failed to check for Newt updates, continuing without update info:",
+                error
+            );
+        }
 
         return response<ListSitesResponse>(res, {
             data: {

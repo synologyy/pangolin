@@ -23,7 +23,8 @@ export const domains = pgTable("domains", {
 export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
-    subnet: varchar("subnet")
+    subnet: varchar("subnet"),
+    createdAt: text("createdAt")
 });
 
 export const orgDomains = pgTable("orgDomains", {
@@ -65,11 +66,6 @@ export const sites = pgTable("sites", {
 
 export const resources = pgTable("resources", {
     resourceId: serial("resourceId").primaryKey(),
-    siteId: integer("siteId")
-        .references(() => sites.siteId, {
-            onDelete: "cascade"
-        })
-        .notNull(),
     orgId: varchar("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -96,12 +92,20 @@ export const resources = pgTable("resources", {
     tlsServerName: varchar("tlsServerName"),
     setHostHeader: varchar("setHostHeader"),
     enableProxy: boolean("enableProxy").default(true),
+    skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
+        onDelete: "cascade"
+    }),
 });
 
 export const targets = pgTable("targets", {
     targetId: serial("targetId").primaryKey(),
     resourceId: integer("resourceId")
         .references(() => resources.resourceId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
+    siteId: integer("siteId")
+        .references(() => sites.siteId, {
             onDelete: "cascade"
         })
         .notNull(),
@@ -120,7 +124,26 @@ export const exitNodes = pgTable("exitNodes", {
     publicKey: varchar("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
     reachableAt: varchar("reachableAt"),
-    maxConnections: integer("maxConnections")
+    maxConnections: integer("maxConnections"),
+    online: boolean("online").notNull().default(false),
+    lastPing: integer("lastPing"),
+    type: text("type").default("gerbil") // gerbil, remoteExitNode
+});
+
+export const siteResources = pgTable("siteResources", { // this is for the clients
+    siteResourceId: serial("siteResourceId").primaryKey(),
+    siteId: integer("siteId")
+        .notNull()
+        .references(() => sites.siteId, { onDelete: "cascade" }),
+    orgId: varchar("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    name: varchar("name").notNull(),
+    protocol: varchar("protocol").notNull(),
+    proxyPort: integer("proxyPort").notNull(),
+    destinationPort: integer("destinationPort").notNull(),
+    destinationIp: varchar("destinationIp").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
 });
 
 export const users = pgTable("user", {
@@ -512,10 +535,10 @@ export const clients = pgTable("clients", {
     megabytesIn: real("bytesIn"),
     megabytesOut: real("bytesOut"),
     lastBandwidthUpdate: varchar("lastBandwidthUpdate"),
-    lastPing: varchar("lastPing"),
+    lastPing: integer("lastPing"),
     type: varchar("type").notNull(), // "olm"
     online: boolean("online").notNull().default(false),
-    endpoint: varchar("endpoint"),
+    // endpoint: varchar("endpoint"),
     lastHolePunch: integer("lastHolePunch"),
     maxConnections: integer("maxConnections")
 });
@@ -527,13 +550,15 @@ export const clientSites = pgTable("clientSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: boolean("isRelayed").notNull().default(false)
+    isRelayed: boolean("isRelayed").notNull().default(false),
+    endpoint: varchar("endpoint")
 });
 
 export const olms = pgTable("olms", {
     olmId: varchar("id").primaryKey(),
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
+    version: text("version"),
     clientId: integer("clientId").references(() => clients.clientId, {
         onDelete: "cascade"
     })
@@ -591,6 +616,14 @@ export const webauthnChallenge = pgTable("webauthnChallenge", {
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull() // Unix timestamp
 });
 
+export const setupTokens = pgTable("setupTokens", {
+    tokenId: varchar("tokenId").primaryKey(),
+    token: varchar("token").notNull(),
+    used: boolean("used").notNull().default(false),
+    dateCreated: varchar("dateCreated").notNull(),
+    dateUsed: varchar("dateUsed")
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -636,3 +669,6 @@ export type OlmSession = InferSelectModel<typeof olmSessions>;
 export type UserClient = InferSelectModel<typeof userClients>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
+export type SiteResource = InferSelectModel<typeof siteResources>;
+export type SetupToken = InferSelectModel<typeof setupTokens>;
+export type HostMeta = InferSelectModel<typeof hostMeta>;

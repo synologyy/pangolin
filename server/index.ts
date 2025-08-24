@@ -7,16 +7,35 @@ import { createNextServer } from "./nextServer";
 import { createInternalServer } from "./internalServer";
 import { ApiKey, ApiKeyOrg, Session, User, UserOrg } from "@server/db";
 import { createIntegrationApiServer } from "./integrationApiServer";
+import { createHybridClientServer } from "./hybridServer";
 import config from "@server/lib/config";
+import { setHostMeta } from "@server/lib/hostMeta";
+import { initTelemetryClient } from "./lib/telemetry.js";
+import { TraefikConfigManager } from "./lib/traefikConfig.js";
 
 async function startServers() {
+    await setHostMeta();
+
     await config.initServer();
     await runSetupFunctions();
+
+    initTelemetryClient();
 
     // Start all servers
     const apiServer = createApiServer();
     const internalServer = createInternalServer();
-    const nextServer = await createNextServer();
+
+    let hybridClientServer;
+    let nextServer;
+    if (config.isManagedMode()) {
+        hybridClientServer = await createHybridClientServer();
+    } else {
+        nextServer = await createNextServer();
+        if (config.getRawConfig().traefik.file_mode) {
+            const monitor = new TraefikConfigManager();
+            await monitor.start();
+        }
+    }
 
     let integrationServer;
     if (config.getRawConfig().flags?.enable_integration_api) {
@@ -27,7 +46,8 @@ async function startServers() {
         apiServer,
         nextServer,
         internalServer,
-        integrationServer
+        integrationServer,
+        hybridClientServer
     };
 }
 

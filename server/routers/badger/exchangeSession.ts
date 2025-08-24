@@ -52,20 +52,26 @@ export async function exchangeSession(
 
     try {
         const { requestToken, host, requestIp } = parsedBody.data;
+        let cleanHost = host;
+        // if the host ends with :port
+        if (cleanHost.match(/:[0-9]{1,5}$/)) {
+            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1*matched.length);
+        }
 
         const clientIp = requestIp?.split(":")[0];
 
         const [resource] = await db
             .select()
             .from(resources)
-            .where(eq(resources.fullDomain, host))
+            .where(eq(resources.fullDomain, cleanHost))
             .limit(1);
 
         if (!resource) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Resource with host ${host} not found`
+                    `Resource with host ${cleanHost} not found`
                 )
             );
         }

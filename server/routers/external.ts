@@ -9,6 +9,7 @@ import * as user from "./user";
 import * as auth from "./auth";
 import * as role from "./role";
 import * as client from "./client";
+import * as siteResource from "./siteResource";
 import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
@@ -34,7 +35,8 @@ import {
     verifyDomainAccess,
     verifyClientsEnabled,
     verifyUserHasAction,
-    verifyUserIsOrgOwner
+    verifyUserIsOrgOwner,
+    verifySiteResourceAccess
 } from "@server/middlewares";
 import { createStore } from "@server/lib/rateLimitStore";
 import { ActionsEnum } from "@server/auth/actions";
@@ -132,9 +134,9 @@ authenticated.get(
 );
 
 authenticated.get(
-    "/org/:orgId/client/:clientId",
+    "/client/:clientId",
     verifyClientsEnabled,
-    verifyOrgAccess,
+    verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
 );
@@ -213,8 +215,59 @@ authenticated.get(
     site.listContainers
 );
 
+// Site Resource endpoints
 authenticated.put(
     "/org/:orgId/site/:siteId/resource",
+    verifyOrgAccess,
+    verifySiteAccess,
+    verifyUserHasAction(ActionsEnum.createSiteResource),
+    siteResource.createSiteResource
+);
+
+authenticated.get(
+    "/org/:orgId/site/:siteId/resources",
+    verifyOrgAccess,
+    verifySiteAccess,
+    verifyUserHasAction(ActionsEnum.listSiteResources),
+    siteResource.listSiteResources
+);
+
+authenticated.get(
+    "/org/:orgId/site-resources",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listSiteResources),
+    siteResource.listAllSiteResourcesByOrg
+);
+
+authenticated.get(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyOrgAccess,
+    verifySiteAccess,
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.getSiteResource),
+    siteResource.getSiteResource
+);
+
+authenticated.post(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyOrgAccess,
+    verifySiteAccess,
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.updateSiteResource),
+    siteResource.updateSiteResource
+);
+
+authenticated.delete(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyOrgAccess,
+    verifySiteAccess,
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.deleteSiteResource),
+    siteResource.deleteSiteResource
+);
+
+authenticated.put(
+    "/org/:orgId/resource",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createResource),
     resource.createResource
@@ -397,28 +450,6 @@ authenticated.post(
     user.addUserRole
 );
 
-// authenticated.put(
-//     "/role/:roleId/site",
-//     verifyRoleAccess,
-//     verifyUserInRole,
-//     verifyUserHasAction(ActionsEnum.addRoleSite),
-//     role.addRoleSite
-// );
-// authenticated.delete(
-//     "/role/:roleId/site",
-//     verifyRoleAccess,
-//     verifyUserInRole,
-//     verifyUserHasAction(ActionsEnum.removeRoleSite),
-//     role.removeRoleSite
-// );
-// authenticated.get(
-//     "/role/:roleId/sites",
-//     verifyRoleAccess,
-//     verifyUserInRole,
-//     verifyUserHasAction(ActionsEnum.listRoleSites),
-//     role.listRoleSites
-// );
-
 authenticated.post(
     "/resource/:resourceId/roles",
     verifyResourceAccess,
@@ -461,13 +492,6 @@ authenticated.get(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.getResourceWhitelist),
     resource.getResourceWhitelist
-);
-
-authenticated.post(
-    `/resource/:resourceId/transfer`,
-    verifyResourceAccess,
-    verifyUserHasAction(ActionsEnum.updateResource),
-    resource.transferResource
 );
 
 authenticated.post(
@@ -848,7 +872,7 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 900,
-        keyGenerator: (req) => `newtGetToken:${req.body.newtId || req.ip}`,
+        keyGenerator: (req) => `olmGetToken:${req.body.newtId || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only request an Olm token ${900} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -927,7 +951,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `requestEmailVerificationCode:${req.body.email || req.ip}`,
+        keyGenerator: (req) =>
+            `requestEmailVerificationCode:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only request an email verification code ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -948,7 +973,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 15,
-        keyGenerator: (req) => `requestPasswordReset:${req.body.email || req.ip}`,
+        keyGenerator: (req) =>
+            `requestPasswordReset:${req.body.email || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only request a password reset ${15} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
@@ -1033,6 +1059,7 @@ authRouter.post("/idp/:idpId/oidc/validate-callback", idp.validateOidcCallback);
 
 authRouter.put("/set-server-admin", auth.setServerAdmin);
 authRouter.get("/initial-setup-complete", auth.initialSetupComplete);
+authRouter.post("/validate-setup-token", auth.validateSetupToken);
 
 // Security Key routes
 authRouter.post(
@@ -1041,7 +1068,8 @@ authRouter.post(
     rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
         max: 5, // Allow 5 security key registrations per 15 minutes
-        keyGenerator: (req) => `securityKeyRegister:${req.user?.userId || req.ip}`,
+        keyGenerator: (req) =>
+            `securityKeyRegister:${req.user?.userId || req.ip}`,
         handler: (req, res, next) => {
             const message = `You can only register a security key ${5} times every ${15} minutes. Please try again later.`;
             return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));

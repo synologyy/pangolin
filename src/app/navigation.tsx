@@ -13,10 +13,12 @@ import {
     TicketCheck,
     User,
     Globe, // Added from 'dev' branch
-    MonitorUp // Added from 'dev' branch
+    MonitorUp, // Added from 'dev' branch
+    Zap
 } from "lucide-react";
 
-export type SidebarNavSection = { // Added from 'dev' branch
+export type SidebarNavSection = {
+    // Added from 'dev' branch
     heading: string;
     items: SidebarNavItem[];
 };
@@ -108,6 +110,15 @@ export const adminNavSections: SidebarNavSection[] = [
     {
         heading: "Admin",
         items: [
+            ...(build == "oss"
+                ? [
+                      {
+                          title: "managedSelfhosted",
+                          href: "/admin/managed",
+                          icon: <Zap className="h-4 w-4" />
+                      }
+                  ]
+                : []),
             {
                 title: "sidebarAllUsers",
                 href: "/admin/users",

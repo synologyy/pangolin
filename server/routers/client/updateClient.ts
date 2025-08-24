@@ -17,7 +17,7 @@ import {
     addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "../olm/peers";
-import axios from "axios";
+import { sendToExitNode } from "../../lib/exitNodeComms";
 
 const updateClientParamsSchema = z
     .object({
@@ -129,7 +129,7 @@ export async function updateClient(
                 `Adding ${sitesAdded.length} new sites to client ${client.clientId}`
             );
             for (const siteId of sitesAdded) {
-                if (!client.subnet || !client.pubKey || !client.endpoint) {
+                if (!client.subnet || !client.pubKey) {
                     logger.debug(
                         "Client subnet, pubKey or endpoint is not set"
                     );
@@ -140,10 +140,27 @@ export async function updateClient(
                 // BUT REALLY WE NEED TO TRACK THE USERS PREFERENCE THAT THEY CHOSE IN THE CLIENTS
                 const isRelayed = true;
 
+                // get the clientsite
+                const [clientSite] = await db
+                    .select()
+                    .from(clientSites)
+                    .where(
+                        and(
+                            eq(clientSites.clientId, client.clientId),
+                            eq(clientSites.siteId, siteId)
+                        )
+                    )
+                    .limit(1);
+
+                if (!clientSite || !clientSite.endpoint) {
+                    logger.debug("Client site is missing or has no endpoint");
+                    continue;
+                }
+
                 const site = await newtAddPeer(siteId, {
                     publicKey: client.pubKey,
                     allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                    endpoint: isRelayed ? "" : client.endpoint
+                    endpoint: isRelayed ? "" : clientSite.endpoint
                 });
 
                 if (!site) {
@@ -255,99 +272,100 @@ export async function updateClient(
                 }
             }
 
-            if (client.endpoint) {
-                // get all sites for this client and join with exit nodes with site.exitNodeId
-                const sitesData = await db
-                    .select()
-                    .from(sites)
-                    .innerJoin(
-                        clientSites,
-                        eq(sites.siteId, clientSites.siteId)
-                    )
-                    .leftJoin(
-                        exitNodes,
-                        eq(sites.exitNodeId, exitNodes.exitNodeId)
-                    )
-                    .where(eq(clientSites.clientId, client.clientId));
+            // get all sites for this client and join with exit nodes with site.exitNodeId
+            const sitesData = await db
+                .select()
+                .from(sites)
+                .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+                .leftJoin(exitNodes, eq(sites.exitNodeId, exitNodes.exitNodeId))
+                .where(eq(clientSites.clientId, client.clientId));
 
-                let exitNodeDestinations: {
-                    reachableAt: string;
-                    destinations: PeerDestination[];
-                }[] = [];
+            let exitNodeDestinations: {
+                reachableAt: string;
+                exitNodeId: number;
+                type: string;
+                sourceIp: string;
+                sourcePort: number;
+                destinations: PeerDestination[];
+            }[] = [];
 
-                for (const site of sitesData) {
-                    if (!site.sites.subnet) {
-                        logger.warn(
-                            `Site ${site.sites.siteId} has no subnet, skipping`
-                        );
-                        continue;
-                    }
-                    // find the destinations in the array
-                    let destinations = exitNodeDestinations.find(
-                        (d) => d.reachableAt === site.exitNodes?.reachableAt
+            for (const site of sitesData) {
+                if (!site.sites.subnet) {
+                    logger.warn(
+                        `Site ${site.sites.siteId} has no subnet, skipping`
                     );
-
-                    if (!destinations) {
-                        destinations = {
-                            reachableAt: site.exitNodes?.reachableAt || "",
-                            destinations: [
-                                {
-                                    destinationIP:
-                                        site.sites.subnet.split("/")[0],
-                                    destinationPort: site.sites.listenPort || 0
-                                }
-                            ]
-                        };
-                    } else {
-                        // add to the existing destinations
-                        destinations.destinations.push({
-                            destinationIP: site.sites.subnet.split("/")[0],
-                            destinationPort: site.sites.listenPort || 0
-                        });
-                    }
-
-                    // update it in the array
-                    exitNodeDestinations = exitNodeDestinations.filter(
-                        (d) => d.reachableAt !== site.exitNodes?.reachableAt
-                    );
-                    exitNodeDestinations.push(destinations);
+                    continue;
                 }
 
-                for (const destination of exitNodeDestinations) {
-                    try {
-                        logger.info(
-                            `Updating destinations for exit node at ${destination.reachableAt}`
-                        );
-                        const payload = {
-                            sourceIp: client.endpoint?.split(":")[0] || "",
-                            sourcePort: parseInt(client.endpoint?.split(":")[1]) || 0,
-                            destinations: destination.destinations
-                        };
-                        logger.info(
-                            `Payload for update-destinations: ${JSON.stringify(payload, null, 2)}`
-                        );
-                        const response = await axios.post(
-                            `${destination.reachableAt}/update-destinations`,
-                            payload,
+                if (!site.clientSites.endpoint) {
+                    logger.warn(
+                        `Site ${site.sites.siteId} has no endpoint, skipping`
+                    );
+                    continue;
+                }
+
+                // find the destinations in the array
+                let destinations = exitNodeDestinations.find(
+                    (d) => d.reachableAt === site.exitNodes?.reachableAt
+                );
+
+                if (!destinations) {
+                    destinations = {
+                        reachableAt: site.exitNodes?.reachableAt || "",
+                        exitNodeId: site.exitNodes?.exitNodeId || 0,
+                        type: site.exitNodes?.type || "",
+                        sourceIp: site.clientSites.endpoint.split(":")[0] || "",
+                        sourcePort:
+                            parseInt(site.clientSites.endpoint.split(":")[1]) ||
+                            0,
+                        destinations: [
                             {
-                                headers: {
-                                    "Content-Type": "application/json"
-                                }
+                                destinationIP: site.sites.subnet.split("/")[0],
+                                destinationPort: site.sites.listenPort || 0
                             }
-                        );
-
-                        logger.info("Destinations updated:", {
-                            peer: response.data.status
-                        });
-                    } catch (error) {
-                        if (axios.isAxiosError(error)) {
-                            throw new Error(
-                                `Error communicating with Gerbil. Make sure Pangolin can reach the Gerbil HTTP API: ${error.response?.status}`
-                            );
-                        }
-                        throw error;
-                    }
+                        ]
+                    };
+                } else {
+                    // add to the existing destinations
+                    destinations.destinations.push({
+                        destinationIP: site.sites.subnet.split("/")[0],
+                        destinationPort: site.sites.listenPort || 0
+                    });
                 }
+
+                // update it in the array
+                exitNodeDestinations = exitNodeDestinations.filter(
+                    (d) => d.reachableAt !== site.exitNodes?.reachableAt
+                );
+                exitNodeDestinations.push(destinations);
+            }
+
+            for (const destination of exitNodeDestinations) {
+                logger.info(
+                    `Updating destinations for exit node at ${destination.reachableAt}`
+                );
+                const payload = {
+                    sourceIp: destination.sourceIp,
+                    sourcePort: destination.sourcePort,
+                    destinations: destination.destinations
+                };
+                logger.info(
+                    `Payload for update-destinations: ${JSON.stringify(payload, null, 2)}`
+                );
+
+                // Create an ExitNode-like object for sendToExitNode
+                const exitNodeForComm = {
+                    exitNodeId: destination.exitNodeId,
+                    type: destination.type,
+                    reachableAt: destination.reachableAt
+                } as any; // Using 'as any' since we know sendToExitNode will handle this correctly
+
+                await sendToExitNode(exitNodeForComm, {
+                    remoteType: "remoteExitNode/update-destinations",
+                    localPath: "/update-destinations",
+                    method: "POST",
+                    data: payload
+                });
             }
 
             // Fetch the updated client

@@ -20,7 +20,6 @@ import { tlsNameSchema } from "@server/lib/schemas";
 import { subdomainSchema } from "@server/lib/schemas";
 import { registry } from "@server/openApi";
 import { OpenAPITags } from "@server/openApi";
-import { build } from "@server/build";
 
 const updateResourceParamsSchema = z
     .object({
@@ -44,7 +43,8 @@ const updateHttpResourceBodySchema = z
         enabled: z.boolean().optional(),
         stickySession: z.boolean().optional(),
         tlsServerName: z.string().nullable().optional(),
-        setHostHeader: z.string().nullable().optional()
+        setHostHeader: z.string().nullable().optional(),
+        skipToIdpId: z.number().int().positive().nullable().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -91,8 +91,8 @@ const updateRawResourceBodySchema = z
         name: z.string().min(1).max(255).optional(),
         proxyPort: z.number().int().min(1).max(65535).optional(),
         stickySession: z.boolean().optional(),
-        enabled: z.boolean().optional(),
-        enableProxy: z.boolean().optional()
+        enabled: z.boolean().optional()
+        // enableProxy: z.boolean().optional() // always true now
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {

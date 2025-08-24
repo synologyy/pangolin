@@ -82,6 +82,14 @@ function getActionsCategories(root: boolean) {
             [t('actionDeleteResourceRule')]: "deleteResourceRule",
             [t('actionListResourceRules')]: "listResourceRules",
             [t('actionUpdateResourceRule')]: "updateResourceRule"
+        },
+
+        "Client": {
+            [t('actionCreateClient')]: "createClient",
+            [t('actionDeleteClient')]: "deleteClient",
+            [t('actionUpdateClient')]: "updateClient",
+            [t('actionListClients')]: "listClients",
+            [t('actionGetClient')]: "getClient"
         }
     };
 

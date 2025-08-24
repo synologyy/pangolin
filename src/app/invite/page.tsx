@@ -14,6 +14,7 @@ export default async function InvitePage(props: {
     const params = await props.searchParams;
 
     const tokenParam = params.token as string;
+    const emailParam = params.email as string;
 
     if (!tokenParam) {
         redirect("/");
@@ -70,16 +71,22 @@ export default async function InvitePage(props: {
     const type = cardType();
 
     if (!user && type === "user_does_not_exist") {
-        redirect(`/auth/signup?redirect=/invite?token=${params.token}`);
+        const redirectUrl = emailParam 
+            ? `/auth/signup?redirect=/invite?token=${params.token}&email=${encodeURIComponent(emailParam)}`
+            : `/auth/signup?redirect=/invite?token=${params.token}`;
+        redirect(redirectUrl);
     }
 
     if (!user && type === "not_logged_in") {
-        redirect(`/auth/login?redirect=/invite?token=${params.token}`);
+        const redirectUrl = emailParam 
+            ? `/auth/login?redirect=/invite?token=${params.token}&email=${encodeURIComponent(emailParam)}`
+            : `/auth/login?redirect=/invite?token=${params.token}`;
+        redirect(redirectUrl);
     }
 
     return (
         <>
-            <InviteStatusCard type={type} token={tokenParam} />
+            <InviteStatusCard type={type} token={tokenParam} email={emailParam} />
         </>
     );
 }

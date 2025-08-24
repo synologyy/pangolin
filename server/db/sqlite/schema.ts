@@ -16,7 +16,8 @@ export const domains = sqliteTable("domains", {
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
-    subnet: text("subnet")
+    subnet: text("subnet"),
+    createdAt: text("createdAt")
 });
 
 export const userDomains = sqliteTable("userDomains", {
@@ -66,16 +67,11 @@ export const sites = sqliteTable("sites", {
     dockerSocketEnabled: integer("dockerSocketEnabled", { mode: "boolean" })
         .notNull()
         .default(true),
-    remoteSubnets: text("remoteSubnets"), // comma-separated list of subnets that this site can access
+    remoteSubnets: text("remoteSubnets") // comma-separated list of subnets that this site can access
 });
 
 export const resources = sqliteTable("resources", {
     resourceId: integer("resourceId").primaryKey({ autoIncrement: true }),
-    siteId: integer("siteId")
-        .references(() => sites.siteId, {
-            onDelete: "cascade"
-        })
-        .notNull(),
     orgId: text("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -108,12 +104,20 @@ export const resources = sqliteTable("resources", {
     tlsServerName: text("tlsServerName"),
     setHostHeader: text("setHostHeader"),
     enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
+    skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
+        onDelete: "cascade"
+    }),
 });
 
 export const targets = sqliteTable("targets", {
     targetId: integer("targetId").primaryKey({ autoIncrement: true }),
     resourceId: integer("resourceId")
         .references(() => resources.resourceId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
+    siteId: integer("siteId")
+        .references(() => sites.siteId, {
             onDelete: "cascade"
         })
         .notNull(),
@@ -132,7 +136,26 @@ export const exitNodes = sqliteTable("exitNodes", {
     publicKey: text("publicKey").notNull(),
     listenPort: integer("listenPort").notNull(),
     reachableAt: text("reachableAt"), // this is the internal address of the gerbil http server for command control
-    maxConnections: integer("maxConnections")
+    maxConnections: integer("maxConnections"),
+    online: integer("online", { mode: "boolean" }).notNull().default(false),
+    lastPing: integer("lastPing"),
+    type: text("type").default("gerbil") // gerbil, remoteExitNode
+});
+
+export const siteResources = sqliteTable("siteResources", { // this is for the clients
+    siteResourceId: integer("siteResourceId").primaryKey({ autoIncrement: true }),
+    siteId: integer("siteId")
+        .notNull()
+        .references(() => sites.siteId, { onDelete: "cascade" }),
+    orgId: text("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    protocol: text("protocol").notNull(),
+    proxyPort: integer("proxyPort").notNull(),
+    destinationPort: integer("destinationPort").notNull(),
+    destinationIp: text("destinationIp").notNull(),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
 });
 
 export const users = sqliteTable("user", {
@@ -165,9 +188,11 @@ export const users = sqliteTable("user", {
 
 export const securityKeys = sqliteTable("webauthnCredentials", {
     credentialId: text("credentialId").primaryKey(),
-    userId: text("userId").notNull().references(() => users.userId, {
-        onDelete: "cascade"
-    }),
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, {
+            onDelete: "cascade"
+        }),
     publicKey: text("publicKey").notNull(),
     signCount: integer("signCount").notNull(),
     transports: text("transports"),
@@ -184,6 +209,14 @@ export const webauthnChallenge = sqliteTable("webauthnChallenge", {
         onDelete: "cascade"
     }),
     expiresAt: integer("expiresAt").notNull() // Unix timestamp
+});
+
+export const setupTokens = sqliteTable("setupTokens", {
+    tokenId: text("tokenId").primaryKey(),
+    token: text("token").notNull(),
+    used: integer("used", { mode: "boolean" }).notNull().default(false),
+    dateCreated: text("dateCreated").notNull(),
+    dateUsed: text("dateUsed")
 });
 
 export const newts = sqliteTable("newt", {
@@ -212,10 +245,10 @@ export const clients = sqliteTable("clients", {
     megabytesIn: integer("bytesIn"),
     megabytesOut: integer("bytesOut"),
     lastBandwidthUpdate: text("lastBandwidthUpdate"),
-    lastPing: text("lastPing"),
+    lastPing: integer("lastPing"),
     type: text("type").notNull(), // "olm"
     online: integer("online", { mode: "boolean" }).notNull().default(false),
-    endpoint: text("endpoint"),
+    // endpoint: text("endpoint"),
     lastHolePunch: integer("lastHolePunch")
 });
 
@@ -226,13 +259,15 @@ export const clientSites = sqliteTable("clientSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false)
+    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false),
+    endpoint: text("endpoint")
 });
 
 export const olms = sqliteTable("olms", {
     olmId: text("id").primaryKey(),
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
+    version: text("version"),
     clientId: integer("clientId").references(() => clients.clientId, {
         onDelete: "cascade"
     })
@@ -677,4 +712,7 @@ export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
+export type SiteResource = InferSelectModel<typeof siteResources>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
+export type SetupToken = InferSelectModel<typeof setupTokens>;
+export type HostMeta = InferSelectModel<typeof hostMeta>;

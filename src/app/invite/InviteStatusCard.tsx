@@ -17,11 +17,13 @@ import { useTranslations } from "next-intl";
 type InviteStatusCardProps = {
     type: "rejected" | "wrong_user" | "user_does_not_exist" | "not_logged_in";
     token: string;
+    email?: string;
 };
 
 export default function InviteStatusCard({
     type,
     token,
+    email,
 }: InviteStatusCardProps) {
     const router = useRouter();
     const api = createApiClient(useEnvContext());
@@ -29,12 +31,18 @@ export default function InviteStatusCard({
 
     async function goToLogin() {
         await api.post("/auth/logout", {});
-        router.push(`/auth/login?redirect=/invite?token=${token}`);
+        const redirectUrl = email 
+            ? `/auth/login?redirect=/invite?token=${token}&email=${encodeURIComponent(email)}`
+            : `/auth/login?redirect=/invite?token=${token}`;
+        router.push(redirectUrl);
     }
 
     async function goToSignup() {
         await api.post("/auth/logout", {});
-        router.push(`/auth/signup?redirect=/invite?token=${token}`);
+        const redirectUrl = email 
+            ? `/auth/signup?redirect=/invite?token=${token}&email=${encodeURIComponent(email)}`
+            : `/auth/signup?redirect=/invite?token=${token}`;
+        router.push(redirectUrl);
     }
 
     function renderBody() {

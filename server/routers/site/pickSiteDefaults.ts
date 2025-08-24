@@ -6,12 +6,16 @@ import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
-import { findNextAvailableCidr, getNextAvailableClientSubnet } from "@server/lib/ip";
+import {
+    findNextAvailableCidr,
+    getNextAvailableClientSubnet
+} from "@server/lib/ip";
 import { generateId } from "@server/auth/sessions/app";
 import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { fromError } from "zod-validation-error";
 import { z } from "zod";
+import { listExitNodes } from "@server/lib/exitNodes";
 
 export type PickSiteDefaultsResponse = {
     exitNodeId: number;
@@ -65,16 +69,10 @@ export async function pickSiteDefaults(
         const { orgId } = parsedParams.data;
         // TODO: more intelligent way to pick the exit node
 
-        // make sure there is an exit node by counting the exit nodes table
-        const nodes = await db.select().from(exitNodes);
-        if (nodes.length === 0) {
-            return next(
-                createHttpError(HttpCode.NOT_FOUND, "No exit nodes available")
-            );
-        }
+        const exitNodesList = await listExitNodes(orgId);
 
-        // get the first exit node
-        const exitNode = nodes[0];
+        const randomExitNode =
+            exitNodesList[Math.floor(Math.random() * exitNodesList.length)];
 
         // TODO: this probably can be optimized...
         // list all of the sites on that exit node
@@ -83,13 +81,15 @@ export async function pickSiteDefaults(
                 subnet: sites.subnet
             })
             .from(sites)
-            .where(eq(sites.exitNodeId, exitNode.exitNodeId));
+            .where(eq(sites.exitNodeId, randomExitNode.exitNodeId));
 
         // TODO: we need to lock this subnet for some time so someone else does not take it
-        const subnets = sitesQuery.map((site) => site.subnet).filter((subnet) => subnet !== null);
+        const subnets = sitesQuery
+            .map((site) => site.subnet)
+            .filter((subnet) => subnet !== null);
         // exclude the exit node address by replacing after the / with a site block size
         subnets.push(
-            exitNode.address.replace(
+            randomExitNode.address.replace(
                 /\/\d+$/,
                 `/${config.getRawConfig().gerbil.site_block_size}`
             )
@@ -97,7 +97,7 @@ export async function pickSiteDefaults(
         const newSubnet = findNextAvailableCidr(
             subnets,
             config.getRawConfig().gerbil.site_block_size,
-            exitNode.address
+            randomExitNode.address
         );
         if (!newSubnet) {
             return next(
@@ -125,12 +125,12 @@ export async function pickSiteDefaults(
 
         return response<PickSiteDefaultsResponse>(res, {
             data: {
-                exitNodeId: exitNode.exitNodeId,
-                address: exitNode.address,
-                publicKey: exitNode.publicKey,
-                name: exitNode.name,
-                listenPort: exitNode.listenPort,
-                endpoint: exitNode.endpoint,
+                exitNodeId: randomExitNode.exitNodeId,
+                address: randomExitNode.address,
+                publicKey: randomExitNode.publicKey,
+                name: randomExitNode.name,
+                listenPort: randomExitNode.listenPort,
+                endpoint: randomExitNode.endpoint,
                 // subnet: `${newSubnet.split("/")[0]}/${config.getRawConfig().gerbil.block_size}`, // we want the block size of the whole subnet
                 subnet: newSubnet,
                 clientAddress: clientAddress,

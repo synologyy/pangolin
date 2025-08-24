@@ -21,7 +21,7 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     let client = null;
     try {
         const res = await internal.get<AxiosResponse<GetClientResponse>>(
-            `/org/${params.orgId}/client/${params.clientId}`,
+            `/client/${params.clientId}`,
             await authCookieHeader()
         );
         client = res.data.data;

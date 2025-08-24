@@ -23,7 +23,7 @@ const pickClientDefaultsSchema = z
 
 registry.registerPath({
     method: "get",
-    path: "/site/{siteId}/pick-client-defaults",
+    path: "/org/{orgId}/pick-client-defaults",
     description: "Return pre-requisite data for creating a client.",
     tags: [OpenAPITags.Client, OpenAPITags.Site],
     request: {

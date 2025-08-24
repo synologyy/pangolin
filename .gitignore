@@ -26,6 +26,10 @@ next-env.d.ts
 migrations
 tsconfig.tsbuildinfo
 config/config.yml
+config/postgres
+config/postgres*
+config/openapi.yaml
+config/key
 dist
 .dist
 installer
@@ -34,4 +38,9 @@ bin
 .secrets
 test_event.json
 .idea/
+public/branding
 server/db/index.ts
+server/build.ts
+postgres/
+dynamic/
+certificates/ 

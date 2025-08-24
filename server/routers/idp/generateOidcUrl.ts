@@ -89,7 +89,7 @@ export async function generateOidcUrl(
                 return scope.length > 0;
             });
 
-        const key = config.getRawConfig().server.secret;
+        const key = config.getRawConfig().server.secret!;
 
         const decryptedClientId = decrypt(
             existingIdp.idpOidcConfig.clientId,
@@ -124,7 +124,7 @@ export async function generateOidcUrl(
                 state,
                 codeVerifier
             },
-            config.getRawConfig().server.secret
+            config.getRawConfig().server.secret!
         );
 
         res.cookie("p_oidc_state", stateJwt, {

@@ -10,3 +10,4 @@ export * from "./verifyApiKeySetResourceUsers";
 export * from "./verifyAccessTokenAccess";
 export * from "./verifyApiKeyIsRoot";
 export * from "./verifyApiKeyApiKeyAccess";
+export * from "./verifyApiKeyClientAccess";

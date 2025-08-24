@@ -26,6 +26,7 @@ const createTargetParamsSchema = z
 
 const createTargetSchema = z
     .object({
+        siteId: z.number().int().positive(),
         ip: z.string().refine(isTargetValid),
         method: z.string().optional().nullable(),
         port: z.number().int().min(1).max(65535),
@@ -98,17 +99,41 @@ export async function createTarget(
             );
         }
 
+        const siteId = targetData.siteId;
+
         const [site] = await db
             .select()
             .from(sites)
-            .where(eq(sites.siteId, resource.siteId!))
+            .where(eq(sites.siteId, siteId))
             .limit(1);
 
         if (!site) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Site with ID ${resource.siteId} not found`
+                    `Site with ID ${siteId} not found`
+                )
+            );
+        }
+
+        const existingTargets = await db
+            .select()
+            .from(targets)
+            .where(eq(targets.resourceId, resourceId));
+
+        const existingTarget = existingTargets.find(
+            (target) =>
+                target.ip === targetData.ip &&
+                target.port === targetData.port &&
+                target.method === targetData.method &&
+                target.siteId === targetData.siteId
+        );
+
+        if (existingTarget) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Target with IP ${targetData.ip}, port ${targetData.port}, method ${targetData.method} already exists for resource ID ${resourceId}`
                 )
             );
         }
@@ -173,7 +198,12 @@ export async function createTarget(
                         .where(eq(newts.siteId, site.siteId))
                         .limit(1);
 
-                    addTargets(newt.newtId, newTarget, resource.protocol, resource.proxyPort);
+                    await addTargets(
+                        newt.newtId,
+                        newTarget,
+                        resource.protocol,
+                        resource.proxyPort
+                    );
                 }
             }
         }

@@ -36,16 +36,16 @@ import { verifyTotpCode } from "@server/auth/totp";
 
 // The RP ID is the domain name of your application
 const rpID = (() => {
-    const url = new URL(config.getRawConfig().app.dashboard_url);
+    const url = config.getRawConfig().app.dashboard_url ? new URL(config.getRawConfig().app.dashboard_url!) : undefined;
     // For localhost, we must use 'localhost' without port
-    if (url.hostname === 'localhost') {
+    if (url?.hostname === 'localhost' || !url) {
         return 'localhost';
     }
     return url.hostname;
 })();
 
 const rpName = "Pangolin";
-const origin = config.getRawConfig().app.dashboard_url;
+const origin = config.getRawConfig().app.dashboard_url || "localhost";
 
 // Database-based challenge storage (replaces in-memory storage)
 // Challenges are stored in the webauthnChallenge table with automatic expiration

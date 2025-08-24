@@ -63,15 +63,6 @@ export async function createRootApiKey(
             lastChars,
             isRoot: true
         });
-
-        const allOrgs = await trx.select().from(orgs);
-
-        for (const org of allOrgs) {
-            await trx.insert(apiKeyOrg).values({
-                apiKeyId,
-                orgId: org.orgId
-            });
-        }
     });
 
     try {

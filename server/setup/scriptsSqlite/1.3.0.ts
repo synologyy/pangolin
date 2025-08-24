@@ -177,8 +177,7 @@ export default async function migration() {
         }
 
         const fileContents = fs.readFileSync(filePath, "utf8");
-        let rawConfig: any;
-        rawConfig = yaml.load(fileContents);
+        const rawConfig = yaml.load(fileContents) as any;
 
         if (!rawConfig.server.secret) {
             rawConfig.server.secret = generateIdFromEntropySize(32);

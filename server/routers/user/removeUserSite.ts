@@ -71,22 +71,22 @@ export async function removeUserSite(
                 );
             }
 
-            const siteResources = await trx
-                .select()
-                .from(resources)
-                .where(eq(resources.siteId, siteId));
-
-            for (const resource of siteResources) {
-                await trx
-                    .delete(userResources)
-                    .where(
-                        and(
-                            eq(userResources.userId, userId),
-                            eq(userResources.resourceId, resource.resourceId)
-                        )
-                    )
-                    .returning();
-            }
+            // const siteResources = await trx
+            //     .select()
+            //     .from(resources)
+            //     .where(eq(resources.siteId, siteId));
+            //
+            // for (const resource of siteResources) {
+            //     await trx
+            //         .delete(userResources)
+            //         .where(
+            //             and(
+            //                 eq(userResources.userId, userId),
+            //                 eq(userResources.resourceId, resource.resourceId)
+            //             )
+            //         )
+            //         .returning();
+            // }
         });
 
         return response(res, {

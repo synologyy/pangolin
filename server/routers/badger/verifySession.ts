@@ -7,19 +7,20 @@ import {
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import { db } from "@server/db";
 import {
+    getResourceByDomain,
+    getUserSessionWithUser,
+    getUserOrgRole,
+    getRoleResourceAccess,
+    getUserResourceAccess,
+    getResourceRules
+} from "@server/db/queries/verifySessionQueries";
+import {
     Resource,
     ResourceAccessToken,
     ResourcePassword,
-    resourcePassword,
     ResourcePincode,
-    resourcePincode,
     ResourceRule,
-    resourceRules,
-    resources,
-    roleResources,
     sessions,
-    userOrgs,
-    userResources,
     users
 } from "@server/db";
 import config from "@server/lib/config";
@@ -27,7 +28,6 @@ import { isIpInCidr } from "@server/lib/ip";
 import { response } from "@server/lib/response";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
-import { and, eq } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import NodeCache from "node-cache";
@@ -121,11 +121,10 @@ export async function verifyResourceSession(
         logger.debug("Client IP:", { clientIp });
 
         let cleanHost = host;
-        // if the host ends with :443 or :80 remove it
-        if (cleanHost.endsWith(":443")) {
-            cleanHost = cleanHost.slice(0, -4);
-        } else if (cleanHost.endsWith(":80")) {
-            cleanHost = cleanHost.slice(0, -3);
+        // if the host ends with :port, strip it
+        if (cleanHost.match(/:[0-9]{1,5}$/)) {
+            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1*matched.length);
         }
 
         const resourceCacheKey = `resource:${cleanHost}`;
@@ -138,38 +137,21 @@ export async function verifyResourceSession(
             | undefined = cache.get(resourceCacheKey);
 
         if (!resourceData) {
-            const [result] = await db
-                .select()
-                .from(resources)
-                .leftJoin(
-                    resourcePincode,
-                    eq(resourcePincode.resourceId, resources.resourceId)
-                )
-                .leftJoin(
-                    resourcePassword,
-                    eq(resourcePassword.resourceId, resources.resourceId)
-                )
-                .where(eq(resources.fullDomain, cleanHost))
-                .limit(1);
+            const result = await getResourceByDomain(cleanHost);
 
             if (!result) {
-                logger.debug("Resource not found", cleanHost);
+                logger.debug(`Resource not found ${cleanHost}`);
                 return notAllowed(res);
             }
 
-            resourceData = {
-                resource: result.resources,
-                pincode: result.resourcePincode,
-                password: result.resourcePassword
-            };
-
+            resourceData = result;
             cache.set(resourceCacheKey, resourceData);
         }
 
         const { resource, pincode, password } = resourceData;
 
         if (!resource) {
-            logger.debug("Resource not found", cleanHost);
+            logger.debug(`Resource not found ${cleanHost}`);
             return notAllowed(res);
         }
 
@@ -209,7 +191,13 @@ export async function verifyResourceSession(
             return allowed(res);
         }
 
-        const redirectUrl = `${config.getRawConfig().app.dashboard_url}/auth/resource/${encodeURIComponent(
+        let endpoint: string;
+        if (config.isManagedMode()) {
+            endpoint = config.getRawConfig().managed?.redirect_endpoint || config.getRawConfig().managed?.endpoint || "";
+        } else {
+            endpoint = config.getRawConfig().app.dashboard_url!;
+        }
+        const redirectUrl = `${endpoint}/auth/resource/${encodeURIComponent(
             resource.resourceId
         )}?redirect=${encodeURIComponent(originalRequestURL)}`;
 
@@ -530,14 +518,13 @@ async function isUserAllowedToAccessResource(
     userSessionId: string,
     resource: Resource
 ): Promise<BasicUserData | null> {
-    const [res] = await db
-        .select()
-        .from(sessions)
-        .leftJoin(users, eq(users.userId, sessions.userId))
-        .where(eq(sessions.sessionId, userSessionId));
+    const result = await getUserSessionWithUser(userSessionId);
 
-    const user = res.user;
-    const session = res.session;
+    if (!result) {
+        return null;
+    }
+
+    const { user, session } = result;
 
     if (!user || !session) {
         return null;
@@ -550,33 +537,18 @@ async function isUserAllowedToAccessResource(
         return null;
     }
 
-    const userOrgRole = await db
-        .select()
-        .from(userOrgs)
-        .where(
-            and(
-                eq(userOrgs.userId, user.userId),
-                eq(userOrgs.orgId, resource.orgId)
-            )
-        )
-        .limit(1);
+    const userOrgRole = await getUserOrgRole(user.userId, resource.orgId);
 
-    if (userOrgRole.length === 0) {
+    if (!userOrgRole) {
         return null;
     }
 
-    const roleResourceAccess = await db
-        .select()
-        .from(roleResources)
-        .where(
-            and(
-                eq(roleResources.resourceId, resource.resourceId),
-                eq(roleResources.roleId, userOrgRole[0].roleId)
-            )
-        )
-        .limit(1);
+    const roleResourceAccess = await getRoleResourceAccess(
+        resource.resourceId,
+        userOrgRole.roleId
+    );
 
-    if (roleResourceAccess.length > 0) {
+    if (roleResourceAccess) {
         return {
             username: user.username,
             email: user.email,
@@ -584,18 +556,12 @@ async function isUserAllowedToAccessResource(
         };
     }
 
-    const userResourceAccess = await db
-        .select()
-        .from(userResources)
-        .where(
-            and(
-                eq(userResources.userId, user.userId),
-                eq(userResources.resourceId, resource.resourceId)
-            )
-        )
-        .limit(1);
+    const userResourceAccess = await getUserResourceAccess(
+        user.userId,
+        resource.resourceId
+    );
 
-    if (userResourceAccess.length > 0) {
+    if (userResourceAccess) {
         return {
             username: user.username,
             email: user.email,
@@ -616,11 +582,7 @@ async function checkRules(
     let rules: ResourceRule[] | undefined = cache.get(ruleCacheKey);
 
     if (!rules) {
-        rules = await db
-            .select()
-            .from(resourceRules)
-            .where(eq(resourceRules.resourceId, resourceId));
-
+        rules = await getResourceRules(resourceId);
         cache.set(ruleCacheKey, rules);
     }
 

@@ -189,7 +189,7 @@ export async function inviteUser(
                     )
                 );
 
-            const inviteLink = `${config.getRawConfig().app.dashboard_url}/invite?token=${inviteId}-${token}`;
+            const inviteLink = `${config.getRawConfig().app.dashboard_url}/invite?token=${inviteId}-${token}&email=${encodeURIComponent(email)}`;
 
             if (doEmail) {
                 await sendEmail(
@@ -241,7 +241,7 @@ export async function inviteUser(
             });
         });
 
-        const inviteLink = `${config.getRawConfig().app.dashboard_url}/invite?token=${inviteId}-${token}`;
+        const inviteLink = `${config.getRawConfig().app.dashboard_url}/invite?token=${inviteId}-${token}&email=${encodeURIComponent(email)}`;
 
         if (doEmail) {
             await sendEmail(

@@ -37,6 +37,11 @@ export async function verifyApiKeyResourceAccess(
             );
         }
 
+        if (apiKey.isRoot) {
+            // Root keys can access any key in any org
+            return next();
+        }
+
         if (!resource.orgId) {
             return next(
                 createHttpError(

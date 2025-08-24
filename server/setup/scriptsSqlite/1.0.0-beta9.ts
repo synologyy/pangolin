@@ -59,8 +59,7 @@ export default async function migration() {
 
             // Read and parse the YAML file
             const fileContents = fs.readFileSync(filePath, "utf8");
-            let rawConfig: any;
-            rawConfig = yaml.load(fileContents);
+            const rawConfig = yaml.load(fileContents) as any;
 
             rawConfig.server.resource_session_request_param =
                 "p_session_request";
@@ -78,7 +77,7 @@ export default async function migration() {
             fs.writeFileSync(filePath, updatedYaml, "utf8");
         } catch (e) {
             console.log(
-                `Failed to add resource_session_request_param to config. Please add it manually. https://docs.fossorial.io/Pangolin/Configuration/config`
+                `Failed to add resource_session_request_param to config. Please add it manually. https://docs.digpangolin.com/self-host/advanced/config-file`
             );
             trx.rollback();
             return;

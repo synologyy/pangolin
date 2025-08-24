@@ -11,7 +11,10 @@ import { getTranslations } from "next-intl/server";
 export const dynamic = "force-dynamic";
 
 export default async function Page(props: {
-    searchParams: Promise<{ redirect: string | undefined }>;
+    searchParams: Promise<{ 
+        redirect: string | undefined;
+        email: string | undefined;
+    }>;
 }) {
     const searchParams = await props.searchParams;
     const getUser = cache(verifySession);
@@ -69,6 +72,7 @@ export default async function Page(props: {
                 redirect={redirectUrl}
                 inviteToken={inviteToken}
                 inviteId={inviteId}
+                emailParam={searchParams.email}
             />
 
             <p className="text-center text-muted-foreground mt-4">

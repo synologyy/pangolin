@@ -30,7 +30,15 @@ import {
     CardHeader,
     CardTitle
 } from "@app/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
+
+type TabFilter = {
+    id: string;
+    label: string;
+    filterFn: (row: any) => boolean;
+};
 
 type DataTableProps<TData, TValue> = {
     columns: ColumnDef<TData, TValue>[];
@@ -46,6 +54,8 @@ type DataTableProps<TData, TValue> = {
         id: string;
         desc: boolean;
     };
+    tabs?: TabFilter[];
+    defaultTab?: string;
 };
 
 export function DataTable<TData, TValue>({
@@ -58,17 +68,36 @@ export function DataTable<TData, TValue>({
     isRefreshing,
     searchPlaceholder = "Search...",
     searchColumn = "name",
-    defaultSort
+    defaultSort,
+    tabs,
+    defaultTab
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<any>([]);
+    const [activeTab, setActiveTab] = useState<string>(
+        defaultTab || tabs?.[0]?.id || ""
+    );
     const t = useTranslations();
 
+    // Apply tab filter to data
+    const filteredData = useMemo(() => {
+        if (!tabs || activeTab === "") {
+            return data;
+        }
+
+        const activeTabFilter = tabs.find((tab) => tab.id === activeTab);
+        if (!activeTabFilter) {
+            return data;
+        }
+
+        return data.filter(activeTabFilter.filterFn);
+    }, [data, tabs, activeTab]);
+
     const table = useReactTable({
-        data,
+        data: filteredData,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
@@ -90,20 +119,49 @@ export function DataTable<TData, TValue>({
         }
     });
 
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        // Reset to first page when changing tabs
+        table.setPageIndex(0);
+    };
+
     return (
         <div className="container mx-auto max-w-12xl">
             <Card>
                 <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-4">
-                    <div className="flex items-center w-full sm:max-w-sm sm:mr-2 relative">
-                        <Input
-                            placeholder={searchPlaceholder}
-                            value={globalFilter ?? ""}
-                            onChange={(e) =>
-                                table.setGlobalFilter(String(e.target.value))
-                            }
-                            className="w-full pl-8"
-                        />
-                        <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                    <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
+                        <div className="relative w-full sm:max-w-sm">
+                            <Input
+                                placeholder={searchPlaceholder}
+                                value={globalFilter ?? ""}
+                                onChange={(e) =>
+                                    table.setGlobalFilter(
+                                        String(e.target.value)
+                                    )
+                                }
+                                className="w-full pl-8"
+                            />
+                            <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                        </div>
+                        {tabs && tabs.length > 0 && (
+                            <Tabs
+                                value={activeTab}
+                                onValueChange={handleTabChange}
+                                className="w-full"
+                            >
+                                <TabsList>
+                                    {tabs.map((tab) => (
+                                        <TabsTrigger
+                                            key={tab.id}
+                                            value={tab.id}
+                                        >
+                                            {tab.label} (
+                                            {data.filter(tab.filterFn).length})
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        )}
                     </div>
                     <div className="flex items-center gap-2 sm:justify-end">
                         {onRefresh && (

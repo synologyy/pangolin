@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -31,6 +32,7 @@ import { passwordSchema } from "@server/auth/passwordSchema";
 
 const formSchema = z
     .object({
+        setupToken: z.string().min(1, "Setup token is required"),
         email: z.string().email({ message: "Invalid email address" }),
         password: passwordSchema,
         confirmPassword: z.string()
@@ -52,6 +54,7 @@ export default function InitialSetupPage() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            setupToken: "",
             email: "",
             password: "",
             confirmPassword: ""
@@ -63,6 +66,7 @@ export default function InitialSetupPage() {
         setError(null);
         try {
             const res = await api.put("/auth/set-server-admin", {
+                setupToken: values.setupToken,
                 email: values.email,
                 password: values.password
             });
@@ -102,6 +106,22 @@ export default function InitialSetupPage() {
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-4"
                     >
+                        <FormField
+                            control={form.control}
+                            name="setupToken"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("setupToken")}</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} autoComplete="off" />
+                                    </FormControl>
+                                    <FormDescription>
+                                        {t("setupTokenDescription")}
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name="email"

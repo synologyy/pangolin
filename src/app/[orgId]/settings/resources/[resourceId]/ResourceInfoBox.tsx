@@ -10,35 +10,22 @@ import {
     InfoSections,
     InfoSectionTitle
 } from "@app/components/InfoSection";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useDockerSocket } from "@app/hooks/useDockerSocket";
 import { useTranslations } from "next-intl";
-import { AxiosResponse } from "axios";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { RotateCw } from "lucide-react";
-import { createApiClient } from "@app/lib/api";
 import { build } from "@server/build";
 
 type ResourceInfoBoxType = {};
 
 export default function ResourceInfoBox({}: ResourceInfoBoxType) {
-    const { resource, authInfo, site } = useResourceContext();
-    const api = createApiClient(useEnvContext());
+    const { resource, authInfo } = useResourceContext();
 
-    const { isEnabled, isAvailable } = useDockerSocket(site!);
     const t = useTranslations();
 
     const fullUrl = `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`;
 
     return (
         <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle className="font-semibold">
-                {t("resourceInfo")}
-            </AlertTitle>
-            <AlertDescription className="mt-4">
-                <InfoSections cols={4}>
+            <AlertDescription>
+                <InfoSections cols={3}>
                     {resource.http ? (
                         <>
                             <InfoSection>
@@ -69,12 +56,6 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                         text={fullUrl}
                                         isLink={true}
                                     />
-                                </InfoSectionContent>
-                            </InfoSection>
-                            <InfoSection>
-                                <InfoSectionTitle>{t("site")}</InfoSectionTitle>
-                                <InfoSectionContent>
-                                    {resource.siteName}
                                 </InfoSectionContent>
                             </InfoSection>
                             {/* {isEnabled && (
@@ -117,7 +98,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                     />
                                 </InfoSectionContent>
                             </InfoSection>
-                            {build == "oss" && (
+                            {/* {build == "oss" && (
                                 <InfoSection>
                                     <InfoSectionTitle>
                                         {t("externalProxyEnabled")}
@@ -130,7 +111,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                         </span>
                                     </InfoSectionContent>
                                 </InfoSection>
-                            )}
+                            )} */}
                         </>
                     )}
                     <InfoSection>

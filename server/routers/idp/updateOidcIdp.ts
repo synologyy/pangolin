@@ -119,7 +119,7 @@ export async function updateOidcIdp(
             );
         }
 
-        const key = config.getRawConfig().server.secret;
+        const key = config.getRawConfig().server.secret!;
         const encryptedSecret = clientSecret
             ? encrypt(clientSecret, key)
             : undefined;

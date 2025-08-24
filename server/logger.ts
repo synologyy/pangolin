@@ -3,6 +3,7 @@ import config from "@server/lib/config";
 import * as winston from "winston";
 import path from "path";
 import { APP_PATH } from "./lib/consts";
+import telemetryClient from "./lib/telemetry";
 
 const hformat = winston.format.printf(
     ({ level, label, message, timestamp, stack, ...metadata }) => {

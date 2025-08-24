@@ -3,20 +3,17 @@
 import ResourceContext from "@app/contexts/resourceContext";
 import { GetResourceAuthInfoResponse } from "@server/routers/resource";
 import { GetResourceResponse } from "@server/routers/resource/getResource";
-import { GetSiteResponse } from "@server/routers/site";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 interface ResourceProviderProps {
     children: React.ReactNode;
     resource: GetResourceResponse;
-    site: GetSiteResponse | null;
     authInfo: GetResourceAuthInfoResponse;
 }
 
 export function ResourceProvider({
     children,
-    site,
     resource: serverResource,
     authInfo: serverAuthInfo
 }: ResourceProviderProps) {
@@ -66,7 +63,7 @@ export function ResourceProvider({
 
     return (
         <ResourceContext.Provider
-            value={{ resource, updateResource, site, authInfo, updateAuthInfo }}
+            value={{ resource, updateResource, authInfo, updateAuthInfo }}
         >
             {children}
         </ResourceContext.Provider>

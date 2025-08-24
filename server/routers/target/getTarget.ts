@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, Target } from "@server/db";
 import { targets } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -15,6 +15,8 @@ const getTargetSchema = z
         targetId: z.string().transform(Number).pipe(z.number().int().positive())
     })
     .strict();
+
+type GetTargetResponse = Target;
 
 registry.registerPath({
     method: "get",
@@ -60,7 +62,7 @@ export async function getTarget(
             );
         }
 
-        return response(res, {
+        return response<GetTargetResponse>(res, {
             data: target[0],
             success: true,
             error: false,

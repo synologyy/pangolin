@@ -29,7 +29,6 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
 
     let authInfo = null;
     let resource = null;
-    let site = null;
     try {
         const res = await internal.get<AxiosResponse<GetResourceResponse>>(
             `/resource/${params.resourceId}`,
@@ -42,19 +41,6 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
 
     if (!resource) {
         redirect(`/${params.orgId}/settings/resources`);
-    }
-
-    // Fetch site info
-    if (resource.siteId) {
-        try {
-            const res = await internal.get<AxiosResponse<GetSiteResponse>>(
-                `/site/${resource.siteId}`,
-                await authCookieHeader()
-            );
-            site = res.data.data;
-        } catch {
-            redirect(`/${params.orgId}/settings/resources`);
-        }
     }
 
     try {
@@ -119,7 +105,6 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
 
             <OrgProvider org={org}>
                 <ResourceProvider
-                    site={site}
                     resource={resource}
                     authInfo={authInfo}
                 >

@@ -27,6 +27,11 @@ export async function verifyApiKeyOrgAccess(
             );
         }
 
+        if (req.apiKey?.isRoot) {
+            // Root keys can access any key in any org
+            return next();
+        }
+
         if (!req.apiKeyOrg) {
             const apiKeyOrgRes = await db
                 .select()

@@ -7,13 +7,14 @@ import {
     ExitNode,
     exitNodes,
     resources,
+    siteResources,
     Target,
     targets
 } from "@server/db";
 import { clients, clientSites, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
-import axios from "axios";
+import { sendToExitNode } from "../../lib/exitNodeComms";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -102,38 +103,28 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             .from(exitNodes)
             .where(eq(exitNodes.exitNodeId, site.exitNodeId))
             .limit(1);
-        if (exitNode.reachableAt) {
-            try {
-                const response = await axios.post(
-                    `${exitNode.reachableAt}/update-proxy-mapping`,
-                    {
-                        oldDestination: {
-                            destinationIP: existingSite.subnet?.split("/")[0],
-                            destinationPort: existingSite.listenPort
-                        },
-                        newDestination: {
-                            destinationIP: site.subnet?.split("/")[0],
-                            destinationPort: site.listenPort
-                        }
-                    },
-                    {
-                        headers: {
-                            "Content-Type": "application/json"
-                        }
-                    }
-                );
-
-                logger.info("Destinations updated:", {
-                    peer: response.data.status
-                });
-            } catch (error) {
-                if (axios.isAxiosError(error)) {
-                    throw new Error(
-                        `Error communicating with Gerbil. Make sure Pangolin can reach the Gerbil HTTP API: ${error.response?.status}`
-                    );
+        if (
+            exitNode.reachableAt &&
+            existingSite.subnet &&
+            existingSite.listenPort
+        ) {
+            const payload = {
+                oldDestination: {
+                    destinationIP: existingSite.subnet?.split("/")[0],
+                    destinationPort: existingSite.listenPort
+                },
+                newDestination: {
+                    destinationIP: site.subnet?.split("/")[0],
+                    destinationPort: site.listenPort
                 }
-                throw error;
-            }
+            };
+
+            await sendToExitNode(exitNode, {
+                remoteType: "remoteExitNode/update-proxy-mapping",
+                localPath: "/update-proxy-mapping",
+                method: "POST",
+                data: payload
+            });
         }
     }
 
@@ -152,9 +143,6 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                     return false;
                 }
                 if (!client.clients.subnet) {
-                    return false;
-                }
-                if (!client.clients.endpoint) {
                     return false;
                 }
                 return true;
@@ -212,7 +200,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                     allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
                     endpoint: client.clientSites.isRelayed
                         ? ""
-                        : client.clients.endpoint! // if its relayed it should be localhost
+                        : client.clientSites.endpoint! // if its relayed it should be localhost
                 };
             })
     );
@@ -220,78 +208,27 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     // Filter out any null values from peers that didn't have an olm
     const validPeers = peers.filter((peer) => peer !== null);
 
-    // Improved version
-    const allResources = await db.transaction(async (tx) => {
-        // First get all resources for the site
-        const resourcesList = await tx
-            .select({
-                resourceId: resources.resourceId,
-                subdomain: resources.subdomain,
-                fullDomain: resources.fullDomain,
-                ssl: resources.ssl,
-                blockAccess: resources.blockAccess,
-                sso: resources.sso,
-                emailWhitelistEnabled: resources.emailWhitelistEnabled,
-                http: resources.http,
-                proxyPort: resources.proxyPort,
-                protocol: resources.protocol
-            })
-            .from(resources)
-            .where(and(eq(resources.siteId, siteId), eq(resources.http, false)));
+    // Get all enabled targets with their resource protocol information
+    const allSiteResources = await db
+        .select()
+        .from(siteResources)
+        .where(eq(siteResources.siteId, siteId));
 
-        // Get all enabled targets for these resources in a single query
-        const resourceIds = resourcesList.map((r) => r.resourceId);
-        const allTargets =
-            resourceIds.length > 0
-                ? await tx
-                      .select({
-                          resourceId: targets.resourceId,
-                          targetId: targets.targetId,
-                          ip: targets.ip,
-                          method: targets.method,
-                          port: targets.port,
-                          internalPort: targets.internalPort,
-                          enabled: targets.enabled,
-                      })
-                      .from(targets)
-                      .where(
-                          and(
-                              inArray(targets.resourceId, resourceIds),
-                              eq(targets.enabled, true)
-                          )
-                      )
-                : [];
-
-        // Combine the data in JS instead of using SQL for the JSON
-        return resourcesList.map((resource) => ({
-            ...resource,
-            targets: allTargets.filter(
-                (target) => target.resourceId === resource.resourceId
-            )
-        }));
-    });
-
-    const { tcpTargets, udpTargets } = allResources.reduce(
+    const { tcpTargets, udpTargets } = allSiteResources.reduce(
         (acc, resource) => {
-            // Skip resources with no targets
-            if (!resource.targets?.length) return acc;
+            // Filter out invalid targets
+            if (!resource.proxyPort || !resource.destinationIp || !resource.destinationPort) {
+                return acc;
+            }
 
-            // Format valid targets into strings
-            const formattedTargets = resource.targets
-                .filter(
-                    (target: Target) =>
-                        resource.proxyPort && target?.ip && target?.port
-                )
-                .map(
-                    (target: Target) =>
-                        `${resource.proxyPort}:${target.ip}:${target.port}`
-                );
+            // Format target into string
+            const formattedTarget = `${resource.proxyPort}:${resource.destinationIp}:${resource.destinationPort}`;
 
             // Add to the appropriate protocol array
             if (resource.protocol === "tcp") {
-                acc.tcpTargets.push(...formattedTargets);
+                acc.tcpTargets.push(formattedTarget);
             } else {
-                acc.udpTargets.push(...formattedTargets);
+                acc.udpTargets.push(formattedTarget);
             }
 
             return acc;

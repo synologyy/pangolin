@@ -14,19 +14,6 @@ import {
     FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem
-} from "@/components/ui/command";
-import { cn } from "@app/lib/cn";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-} from "@/components/ui/popover";
 import { useResourceContext } from "@app/hooks/useResourceContext";
 import { ListSitesResponse } from "@server/routers/site";
 import { useEffect, useState } from "react";
@@ -45,25 +32,11 @@ import {
     SettingsSectionFooter
 } from "@app/components/Settings";
 import { useOrgContext } from "@app/hooks/useOrgContext";
-import CustomDomainInput from "../CustomDomainInput";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { subdomainSchema, tlsNameSchema } from "@server/lib/schemas";
-import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
-import { RadioGroup, RadioGroupItem } from "@app/components/ui/radio-group";
 import { Label } from "@app/components/ui/label";
 import { ListDomainsResponse } from "@server/routers/domain";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@app/components/ui/select";
-import {
-    UpdateResourceResponse,
-    updateResourceRule
-} from "@server/routers/resource";
+import { UpdateResourceResponse } from "@server/routers/resource";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@app/components/ui/checkbox";
@@ -80,12 +53,6 @@ import {
 import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
-
-const TransferFormSchema = z.object({
-    siteId: z.number()
-});
-
-type TransferFormValues = z.infer<typeof TransferFormSchema>;
 
 export default function GeneralForm() {
     const [formKey, setFormKey] = useState(0);
@@ -127,7 +94,7 @@ export default function GeneralForm() {
             name: z.string().min(1).max(255),
             domainId: z.string().optional(),
             proxyPort: z.number().int().min(1).max(65535).optional(),
-            enableProxy: z.boolean().optional()
+            // enableProxy: z.boolean().optional()
         })
         .refine(
             (data) => {
@@ -156,16 +123,9 @@ export default function GeneralForm() {
             subdomain: resource.subdomain ? resource.subdomain : undefined,
             domainId: resource.domainId || undefined,
             proxyPort: resource.proxyPort || undefined,
-            enableProxy: resource.enableProxy || false
+            // enableProxy: resource.enableProxy || false
         },
         mode: "onChange"
-    });
-
-    const transferForm = useForm<TransferFormValues>({
-        resolver: zodResolver(TransferFormSchema),
-        defaultValues: {
-            siteId: resource.siteId ? Number(resource.siteId) : undefined
-        }
     });
 
     useEffect(() => {
@@ -221,9 +181,9 @@ export default function GeneralForm() {
                     subdomain: data.subdomain,
                     domainId: data.domainId,
                     proxyPort: data.proxyPort,
-                    ...(!resource.http && {
-                        enableProxy: data.enableProxy
-                    })
+                    // ...(!resource.http && {
+                    //     enableProxy: data.enableProxy
+                    // })
                 }
             )
             .catch((e) => {
@@ -251,48 +211,14 @@ export default function GeneralForm() {
                 subdomain: data.subdomain,
                 fullDomain: resource.fullDomain,
                 proxyPort: data.proxyPort,
-                ...(!resource.http && {
-                    enableProxy: data.enableProxy
-                }),
+                // ...(!resource.http && {
+                //     enableProxy: data.enableProxy
+                // })
             });
 
             router.refresh();
         }
         setSaveLoading(false);
-    }
-
-    async function onTransfer(data: TransferFormValues) {
-        setTransferLoading(true);
-
-        const res = await api
-            .post(`resource/${resource?.resourceId}/transfer`, {
-                siteId: data.siteId
-            })
-            .catch((e) => {
-                toast({
-                    variant: "destructive",
-                    title: t("resourceErrorTransfer"),
-                    description: formatAxiosError(
-                        e,
-                        t("resourceErrorTransferDescription")
-                    )
-                });
-            });
-
-        if (res && res.status === 200) {
-            toast({
-                title: t("resourceTransferred"),
-                description: t("resourceTransferredDescription")
-            });
-            router.refresh();
-
-            updateResource({
-                siteName:
-                    sites.find((site) => site.siteId === data.siteId)?.name ||
-                    ""
-            });
-        }
-        setTransferLoading(false);
     }
 
     return (
@@ -410,7 +336,7 @@ export default function GeneralForm() {
                                                     )}
                                                 />
 
-                                                {build == "oss" && (
+                                                {/* {build == "oss" && (
                                                     <FormField
                                                         control={form.control}
                                                         name="enableProxy"
@@ -444,13 +370,15 @@ export default function GeneralForm() {
                                                             </FormItem>
                                                         )}
                                                     />
-                                                )}
+                                                )} */}
                                             </>
                                         )}
 
                                         {resource.http && (
                                             <div className="space-y-2">
-                                                <Label>Domain</Label>
+                                                <Label>
+                                                    {t("resourceDomain")}
+                                                </Label>
                                                 <div className="border p-2 rounded-md flex items-center justify-between">
                                                     <span className="text-sm text-muted-foreground flex items-center gap-2">
                                                         <Globe size="14" />
@@ -466,7 +394,9 @@ export default function GeneralForm() {
                                                             )
                                                         }
                                                     >
-                                                        Edit Domain
+                                                        {t(
+                                                            "resourceEditDomain"
+                                                        )}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -487,140 +417,6 @@ export default function GeneralForm() {
                                 form="general-settings-form"
                             >
                                 {t("saveSettings")}
-                            </Button>
-                        </SettingsSectionFooter>
-                    </SettingsSection>
-
-                    <SettingsSection>
-                        <SettingsSectionHeader>
-                            <SettingsSectionTitle>
-                                {t("resourceTransfer")}
-                            </SettingsSectionTitle>
-                            <SettingsSectionDescription>
-                                {t("resourceTransferDescription")}
-                            </SettingsSectionDescription>
-                        </SettingsSectionHeader>
-
-                        <SettingsSectionBody>
-                            <SettingsSectionForm>
-                                <Form {...transferForm}>
-                                    <form
-                                        onSubmit={transferForm.handleSubmit(
-                                            onTransfer
-                                        )}
-                                        className="space-y-4"
-                                        id="transfer-form"
-                                    >
-                                        <FormField
-                                            control={transferForm.control}
-                                            name="siteId"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        {t("siteDestination")}
-                                                    </FormLabel>
-                                                    <Popover
-                                                        open={open}
-                                                        onOpenChange={setOpen}
-                                                    >
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    role="combobox"
-                                                                    className={cn(
-                                                                        "w-full justify-between",
-                                                                        !field.value &&
-                                                                            "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    {field.value
-                                                                        ? sites.find(
-                                                                              (
-                                                                                  site
-                                                                              ) =>
-                                                                                  site.siteId ===
-                                                                                  field.value
-                                                                          )
-                                                                              ?.name
-                                                                        : t(
-                                                                              "siteSelect"
-                                                                          )}
-                                                                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent
-                                                            className="w-full p-0"
-                                                            align="start"
-                                                        >
-                                                            <Command>
-                                                                <CommandInput
-                                                                    placeholder={t(
-                                                                        "searchSites"
-                                                                    )}
-                                                                />
-                                                                <CommandEmpty>
-                                                                    {t(
-                                                                        "sitesNotFound"
-                                                                    )}
-                                                                </CommandEmpty>
-                                                                <CommandGroup>
-                                                                    {sites.map(
-                                                                        (
-                                                                            site
-                                                                        ) => (
-                                                                            <CommandItem
-                                                                                value={`${site.name}:${site.siteId}`}
-                                                                                key={
-                                                                                    site.siteId
-                                                                                }
-                                                                                onSelect={() => {
-                                                                                    transferForm.setValue(
-                                                                                        "siteId",
-                                                                                        site.siteId
-                                                                                    );
-                                                                                    setOpen(
-                                                                                        false
-                                                                                    );
-                                                                                }}
-                                                                            >
-                                                                                {
-                                                                                    site.name
-                                                                                }
-                                                                                <CheckIcon
-                                                                                    className={cn(
-                                                                                        "ml-auto h-4 w-4",
-                                                                                        site.siteId ===
-                                                                                            field.value
-                                                                                            ? "opacity-100"
-                                                                                            : "opacity-0"
-                                                                                    )}
-                                                                                />
-                                                                            </CommandItem>
-                                                                        )
-                                                                    )}
-                                                                </CommandGroup>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </form>
-                                </Form>
-                            </SettingsSectionForm>
-                        </SettingsSectionBody>
-
-                        <SettingsSectionFooter>
-                            <Button
-                                type="submit"
-                                loading={transferLoading}
-                                disabled={transferLoading}
-                                form="transfer-form"
-                            >
-                                {t("resourceTransferSubmit")}
                             </Button>
                         </SettingsSectionFooter>
                     </SettingsSection>

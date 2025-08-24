@@ -20,7 +20,7 @@ _Pangolin tunnels your services to the internet so you can access anything from 
         Website
       </a>
       <span> | </span>
-      <a href="https://docs.fossorial.io/Getting%20Started/quick-install">
+      <a href="https://docs.digpangolin.com/self-host/quick-install">
         Install Guide
       </a>
       <span> | </span>
@@ -104,7 +104,7 @@ Pangolin is a self-hosted tunneled reverse proxy server with identity and access
 
 ### Fully Self Hosted
 
-Host the full application on your own server or on the cloud with a VPS. Take a look at the [documentation](https://docs.fossorial.io/Getting%20Started/quick-install) to get started.
+Host the full application on your own server or on the cloud with a VPS. Take a look at the [documentation](https://docs.digpangolin.com/self-host/quick-install) to get started.
 
 > Many of our users have had a great experience with [RackNerd](https://my.racknerd.com/aff.php?aff=13788). Depending on promotions, you can get a [**VPS with 1 vCPU, 1GB RAM, and ~20GB SSD for just around $12/year**](https://my.racknerd.com/aff.php?aff=13788&pid=912). That's a great deal!
 
@@ -139,7 +139,7 @@ Pangolin is dual licensed under the AGPL-3 and the Fossorial Commercial license.
 
 ## Contributions
 
-Looking for something to contribute? Take a look at issues marked with [help wanted](https://github.com/fosrl/pangolin/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22).
+Looking for something to contribute? Take a look at issues marked with [help wanted](https://github.com/fosrl/pangolin/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22help%20wanted%22). Also take a look through the freature requests in Discussions - any are available and some are marked as a good first issue.
 
 Please see [CONTRIBUTING](./CONTRIBUTING.md) in the repository for guidelines and best practices.
 

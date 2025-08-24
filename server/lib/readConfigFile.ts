@@ -3,7 +3,6 @@ import yaml from "js-yaml";
 import { configFilePath1, configFilePath2 } from "./consts";
 import { z } from "zod";
 import stoi from "./stoi";
-import { build } from "@server/build";
 
 const portSchema = z.number().positive().gt(0).lte(65535);
 
@@ -17,16 +16,38 @@ export const configSchema = z
             dashboard_url: z
                 .string()
                 .url()
-                .optional()
                 .pipe(z.string().url())
-                .transform((url) => url.toLowerCase()),
+                .transform((url) => url.toLowerCase())
+                .optional(),
             log_level: z
                 .enum(["debug", "info", "warn", "error"])
                 .optional()
                 .default("info"),
             save_logs: z.boolean().optional().default(false),
-            log_failed_attempts: z.boolean().optional().default(false)
+            log_failed_attempts: z.boolean().optional().default(false),
+            telemetry: z
+                .object({
+                    anonymous_usage: z.boolean().optional().default(true)
+                })
+                .optional()
+                .default({})
+        }).optional().default({
+            log_level: "info",
+            save_logs: false,
+            log_failed_attempts: false,
+            telemetry: {
+                anonymous_usage: true
+            }
         }),
+        managed: z
+            .object({
+                name: z.string().optional(),
+                id: z.string().optional(),
+                secret: z.string().optional(),
+                endpoint: z.string().optional().default("https://pangolin.fossorial.io"),
+                redirect_endpoint: z.string().optional()
+            })
+            .optional(),
         domains: z
             .record(
                 z.string(),
@@ -43,7 +64,7 @@ export const configSchema = z
         server: z.object({
             integration_port: portSchema
                 .optional()
-                .default(3003)
+                .default(3004)
                 .transform(stoi)
                 .pipe(portSchema.optional()),
             external_port: portSchema
@@ -108,9 +129,25 @@ export const configSchema = z
             trust_proxy: z.number().int().gte(0).optional().default(1),
             secret: z
                 .string()
-                .optional()
                 .transform(getEnvOrYaml("SERVER_SECRET"))
                 .pipe(z.string().min(8))
+                .optional()
+        }).optional().default({
+            integration_port: 3003,
+            external_port: 3000,
+            internal_port: 3001,
+            next_port: 3002,
+            internal_hostname: "pangolin",
+            session_cookie_name: "p_session_token",
+            resource_access_token_param: "p_token",
+            resource_access_token_headers: {
+                id: "P-Access-Token-Id",
+                token: "P-Access-Token"
+            },
+            resource_session_request_param: "resource_session_request_param",
+            dashboard_session_length_hours: 720,
+            resource_session_length_hours: 720,
+            trust_proxy: 1
         }),
         postgres: z
             .object({
@@ -130,7 +167,20 @@ export const configSchema = z
                 https_entrypoint: z.string().optional().default("websecure"),
                 additional_middlewares: z.array(z.string()).optional(),
                 cert_resolver: z.string().optional().default("letsencrypt"),
-                prefer_wildcard_cert: z.boolean().optional().default(false)
+                prefer_wildcard_cert: z.boolean().optional().default(false),
+                certificates_path: z.string().default("/var/certificates"),
+                monitor_interval: z.number().default(5000),
+                dynamic_cert_config_path: z
+                    .string()
+                    .optional()
+                    .default("/var/dynamic/cert_config.yml"),
+                dynamic_router_config_path: z
+                    .string()
+                    .optional()
+                    .default("/var/dynamic/router_config.yml"),
+                static_domains: z.array(z.string()).optional().default([]),
+                site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"]),
+                file_mode: z.boolean().optional().default(false)
             })
             .optional()
             .default({}),
@@ -213,7 +263,10 @@ export const configSchema = z
                 smtp_host: z.string().optional(),
                 smtp_port: portSchema.optional(),
                 smtp_user: z.string().optional(),
-                smtp_pass: z.string().optional().transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
+                smtp_pass: z
+                    .string()
+                    .optional()
+                    .transform(getEnvOrYaml("EMAIL_SMTP_PASS")),
                 smtp_secure: z.boolean().optional(),
                 smtp_tls_reject_unauthorized: z.boolean().optional(),
                 no_reply: z.string().email().optional()
@@ -229,7 +282,7 @@ export const configSchema = z
                 disable_local_sites: z.boolean().optional(),
                 disable_basic_wireguard_sites: z.boolean().optional(),
                 disable_config_managed_domains: z.boolean().optional(),
-                enable_clients: z.boolean().optional().default(true),
+                enable_clients: z.boolean().optional().default(true)
             })
             .optional(),
         dns: z
@@ -252,6 +305,10 @@ export const configSchema = z
             if (data.flags?.disable_config_managed_domains) {
                 return true;
             }
+            // If hybrid is defined, domains are not required
+            if (data.managed) {
+                return true;
+            }
             if (keys.length === 0) {
                 return false;
             }
@@ -259,6 +316,32 @@ export const configSchema = z
         },
         {
             message: "At least one domain must be defined"
+        }
+    )
+    .refine(
+        (data) => {
+            // If hybrid is defined, server secret is not required
+            if (data.managed) {
+                return true;
+            }
+            // If hybrid is not defined, server secret must be defined
+            return data.server?.secret !== undefined && data.server.secret.length > 0;
+        },
+        {
+            message: "Server secret must be defined"
+        }
+    )
+    .refine(
+        (data) => {
+            // If hybrid is defined, dashboard_url is not required
+            if (data.managed) {
+                return true;
+            }
+            // If hybrid is not defined, dashboard_url must be defined
+            return data.app.dashboard_url !== undefined && data.app.dashboard_url.length > 0;
+        },
+        {
+            message: "Dashboard URL must be defined"
         }
     );
 
@@ -287,7 +370,7 @@ export function readConfigFile() {
 
     if (!environment) {
         throw new Error(
-            "No configuration file found. Please create one. https://docs.fossorial.io/"
+            "No configuration file found. Please create one. https://docs.digpangolin.com/self-host/advanced/config-file"
         );
     }
 

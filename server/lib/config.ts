@@ -30,12 +30,6 @@ export class Config {
             throw new Error(`Invalid configuration file: ${errors}`);
         }
 
-        if (process.env.APP_BASE_DOMAIN) {
-            console.log(
-                "WARNING: You're using deprecated environment variables. Transition to the configuration file. https://docs.fossorial.io/"
-            );
-        }
-
         if (
             // @ts-ignore
             parsedConfig.users ||
@@ -102,16 +96,18 @@ export class Config {
         if (!this.rawConfig) {
             throw new Error("Config not loaded. Call load() first.");
         }
-        license.setServerSecret(this.rawConfig.server.secret);
+        if (this.rawConfig.managed) {
+            // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN MANAGED
+            return;
+        }
+        license.setServerSecret(this.rawConfig.server.secret!);
 
         await this.checkKeyStatus();
     }
 
     private async checkKeyStatus() {
         const licenseStatus = await license.check();
-        if (
-            !licenseStatus.isHostLicensed
-        ) {
+        if (!licenseStatus.isHostLicensed) {
             this.checkSupporterKey();
         }
     }
@@ -151,6 +147,10 @@ export class Config {
         }
 
         return false;
+    }
+
+    public isManagedMode() {
+        return typeof this.rawConfig?.managed === "object";
     }
 
     public async checkSupporterKey() {
