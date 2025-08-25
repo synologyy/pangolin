@@ -33,6 +33,8 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import axios from "axios";
+import { tokenManager } from "@server/lib";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -123,8 +125,8 @@ export async function verifyResourceSession(
         let cleanHost = host;
         // if the host ends with :port, strip it
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
-            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
-            cleanHost = cleanHost.slice(0, -1*matched.length);
+            const matched = "" + cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1 * matched.length);
         }
 
         const resourceCacheKey = `resource:${cleanHost}`;
@@ -193,7 +195,10 @@ export async function verifyResourceSession(
 
         let endpoint: string;
         if (config.isManagedMode()) {
-            endpoint = config.getRawConfig().managed?.redirect_endpoint || config.getRawConfig().managed?.endpoint || "";
+            endpoint =
+                config.getRawConfig().managed?.redirect_endpoint ||
+                config.getRawConfig().managed?.endpoint ||
+                "";
         } else {
             endpoint = config.getRawConfig().app.dashboard_url!;
         }
@@ -613,6 +618,12 @@ async function checkRules(
             isPathAllowed(rule.value, path)
         ) {
             return rule.action as any;
+        } else if (
+            clientIp &&
+            rule.match == "GEOIP" &&
+            (await isIpInGeoIP(clientIp, rule.value))
+        ) {
+            return rule.action as any;
         }
     }
 
@@ -736,4 +747,43 @@ export function isPathAllowed(pattern: string, path: string): boolean {
     const result = matchSegments(0, 0);
     logger.debug(`Final result: ${result}`);
     return result;
+}
+
+async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
+    const geoIpCacheKey = `geoip:${ip}`;
+    
+    let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
+    
+    if (!cachedCountryCode) {
+        try {
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/geoip/${ip}`,
+                await tokenManager.getAuthHeader()
+            );
+
+            cachedCountryCode = response.data.data.country;
+            
+            // Cache for longer since IP geolocation doesn't change frequently
+            cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
+
+            logger.debug(`IP ${ip} is in country:`, cachedCountryCode);
+
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
+            return false;
+        }
+    }
+
+    return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
 }
