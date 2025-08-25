@@ -430,7 +430,7 @@ export const resourceRules = pgTable("resourceRules", {
         .references(() => resources.resourceId, { onDelete: "cascade" }),
     enabled: boolean("enabled").notNull().default(true),
     priority: integer("priority").notNull(),
-    action: varchar("action").notNull(), // ACCEPT, DROP
+    action: varchar("action").notNull(), // ACCEPT, DROP, PASS
     match: varchar("match").notNull(), // CIDR, PATH, IP
     value: varchar("value").notNull()
 });

@@ -178,6 +178,9 @@ export async function verifyResourceSession(
             } else if (action == "DROP") {
                 logger.debug("Resource denied by rule");
                 return notAllowed(res);
+            } else if (action == "PASS") {
+                logger.debug("Resource passed by rule, continuing to auth checks");
+                // Continue to authentication checks below
             }
 
             // otherwise its undefined and we pass
@@ -581,7 +584,7 @@ async function checkRules(
     resourceId: number,
     clientIp: string | undefined,
     path: string | undefined
-): Promise<"ACCEPT" | "DROP" | undefined> {
+): Promise<"ACCEPT" | "DROP" | "PASS" | undefined> {
     const ruleCacheKey = `rules:${resourceId}`;
 
     let rules: ResourceRule[] | undefined = cache.get(ruleCacheKey);

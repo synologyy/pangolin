@@ -29,7 +29,7 @@ const updateResourceRuleParamsSchema = z
 // Define Zod schema for request body validation
 const updateResourceRuleSchema = z
     .object({
-        action: z.enum(["ACCEPT", "DROP"]).optional(),
+        action: z.enum(["ACCEPT", "DROP", "PASS"]).optional(),
         match: z.enum(["CIDR", "IP", "PATH"]).optional(),
         value: z.string().min(1).optional(),
         priority: z.number().int(),
