@@ -11,3 +11,4 @@ export * from "./verifyAccessTokenAccess";
 export * from "./verifyApiKeyIsRoot";
 export * from "./verifyApiKeyApiKeyAccess";
 export * from "./verifyApiKeyClientAccess";
+export * from "./verifyApiKeySiteResourceAccess";
