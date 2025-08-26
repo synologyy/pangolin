@@ -9,6 +9,7 @@ import * as client from "./client";
 import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
+import * as siteResource from "./siteResource";
 import {
     verifyApiKey,
     verifyApiKeyOrgAccess,
@@ -22,7 +23,8 @@ import {
     verifyApiKeyAccessTokenAccess,
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
-    verifyClientsEnabled
+    verifyClientsEnabled,
+    verifyApiKeySiteResourceAccess
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -126,6 +128,69 @@ authenticated.delete(
     verifyApiKeySiteAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteSite),
     site.deleteSite
+);
+
+authenticated.get(
+    "/org/:orgId/user-resources",
+    verifyApiKeyOrgAccess,
+    resource.getUserResources
+);
+// Site Resource endpoints
+authenticated.put(
+    "/org/:orgId/site/:siteId/resource",
+    verifyApiKeyOrgAccess,
+    verifyApiKeySiteAccess,
+    verifyApiKeyHasAction(ActionsEnum.createSiteResource),
+    siteResource.createSiteResource
+);
+
+authenticated.get(
+    "/org/:orgId/site/:siteId/resources",
+    verifyApiKeyOrgAccess,
+    verifyApiKeySiteAccess,
+    verifyApiKeyHasAction(ActionsEnum.listSiteResources),
+    siteResource.listSiteResources
+);
+
+authenticated.get(
+    "/org/:orgId/site-resources",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listSiteResources),
+    siteResource.listAllSiteResourcesByOrg
+);
+
+authenticated.get(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeySiteAccess,
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.getSiteResource),
+    siteResource.getSiteResource
+);
+
+authenticated.post(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeySiteAccess,
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.updateSiteResource),
+    siteResource.updateSiteResource
+);
+
+authenticated.delete(
+    "/org/:orgId/site/:siteId/resource/:siteResourceId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeySiteAccess,
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.deleteSiteResource),
+    siteResource.deleteSiteResource
+);
+
+authenticated.put(
+    "/org/:orgId/resource",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.createResource),
+    resource.createResource
 );
 
 authenticated.put(

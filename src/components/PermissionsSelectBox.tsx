@@ -51,7 +51,12 @@ function getActionsCategories(root: boolean) {
             [t('actionSetResourcePassword')]: "setResourcePassword",
             [t('actionSetResourcePincode')]: "setResourcePincode",
             [t('actionSetResourceEmailWhitelist')]: "setResourceWhitelist",
-            [t('actionGetResourceEmailWhitelist')]: "getResourceWhitelist"
+            [t('actionGetResourceEmailWhitelist')]: "getResourceWhitelist",
+            [t('actionCreateSiteResource')]: "createSiteResource",
+            [t('actionDeleteSiteResource')]: "deleteSiteResource",
+            [t('actionGetSiteResource')]: "getSiteResource",
+            [t('actionListSiteResources')]: "listSiteResources",
+            [t('actionUpdateSiteResource')]: "updateSiteResource"
         },
 
         Target: {
