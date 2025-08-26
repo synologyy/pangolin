@@ -60,7 +60,7 @@ export type ListRolesResponse = {
 
 registry.registerPath({
     method: "get",
-    path: "/orgs/{orgId}/roles",
+    path: "/org/{orgId}/roles",
     description: "List roles.",
     tags: [OpenAPITags.Org, OpenAPITags.Role],
     request: {
