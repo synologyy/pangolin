@@ -777,15 +777,6 @@ export default function Page() {
                 </SettingsContainer>
 
                 <div className="flex justify-end space-x-2 mt-8">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                            router.push(`/${orgId}/settings/access/users`);
-                        }}
-                    >
-                        {t("cancel")}
-                    </Button>
                     {userType && dataLoaded && (
                         <Button
                             type={inviteLink ? "button" : "submit"}
