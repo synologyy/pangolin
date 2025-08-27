@@ -753,6 +753,10 @@ export function isPathAllowed(pattern: string, path: string): boolean {
 }
 
 async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
+    if (countryCode == "ALL") {
+        return true;
+    }
+
     const geoIpCacheKey = `geoip:${ip}`;
     
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
@@ -760,16 +764,14 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     if (!cachedCountryCode) {
         try {
             const response = await axios.get(
-                `${config.getRawConfig().managed?.endpoint}/api/v1/geoip/${ip}`,
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/geoip/${ip}`,
                 await tokenManager.getAuthHeader()
             );
 
-            cachedCountryCode = response.data.data.country;
+            cachedCountryCode = response.data.data.countryCode;
             
             // Cache for longer since IP geolocation doesn't change frequently
             cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
-
-            logger.debug(`IP ${ip} is in country:`, cachedCountryCode);
 
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -787,6 +789,8 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
             return false;
         }
     }
+
+    logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
 
     return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
 }
