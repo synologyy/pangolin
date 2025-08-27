@@ -5,7 +5,6 @@ import {
     validateResourceSessionToken
 } from "@server/auth/sessions/resource";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
-import { db } from "@server/db";
 import {
     getResourceByDomain,
     getUserSessionWithUser,
@@ -33,8 +32,7 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import axios from "axios";
-import { tokenManager } from "@server/lib";
+import { getCountryCodeForIp } from "@server/lib";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -179,7 +177,9 @@ export async function verifyResourceSession(
                 logger.debug("Resource denied by rule");
                 return notAllowed(res);
             } else if (action == "PASS") {
-                logger.debug("Resource passed by rule, continuing to auth checks");
+                logger.debug(
+                    "Resource passed by rule, continuing to auth checks"
+                );
                 // Continue to authentication checks below
             }
 
@@ -758,36 +758,13 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     }
 
     const geoIpCacheKey = `geoip:${ip}`;
-    
+
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
-    
+
     if (!cachedCountryCode) {
-        try {
-            const response = await axios.get(
-                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/geoip/${ip}`,
-                await tokenManager.getAuthHeader()
-            );
-
-            cachedCountryCode = response.data.data.countryCode;
-            
-            // Cache for longer since IP geolocation doesn't change frequently
-            cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
-
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                logger.error("Error fetching config in verify session:", {
-                    message: error.message,
-                    code: error.code,
-                    status: error.response?.status,
-                    statusText: error.response?.statusText,
-                    url: error.config?.url,
-                    method: error.config?.method
-                });
-            } else {
-                logger.error("Error fetching config in verify session:", error);
-            }
-            return false;
-        }
+        cachedCountryCode = await getCountryCodeForIp(ip);
+        // Cache for longer since IP geolocation doesn't change frequently
+        cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
     }
 
     logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
