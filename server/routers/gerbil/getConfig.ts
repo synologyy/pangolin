@@ -14,6 +14,7 @@ import { getAllowedIps } from "../target/helpers";
 import { proxyToRemote } from "@server/lib/remoteProxy";
 import { getNextAvailableSubnet } from "@server/lib/exitNodes";
 import { createExitNode } from "./createExitNode";
+
 // Define Zod schema for request validation
 const getConfigSchema = z.object({
     publicKey: z.string(),
@@ -69,13 +70,13 @@ export async function getConfig(
         if (config.isManagedMode()) {
             req.body = {
                 ...req.body,
-                endpoint: exitNode[0].endpoint,
-                listenPort: exitNode[0].listenPort
+                endpoint: exitNode.endpoint,
+                listenPort: exitNode.listenPort
             };
             return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 
-        const configResponse = await generateGerbilConfig(exitNode[0]);
+        const configResponse = await generateGerbilConfig(exitNode);
 
         logger.debug("Sending config: ", configResponse);
 

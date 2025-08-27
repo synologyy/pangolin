@@ -1,4 +1,4 @@
-import { db, exitNodes } from "@server/db";
+import { db, ExitNode, exitNodes } from "@server/db";
 import { getUniqueExitNodeEndpointName } from "@server/db/names";
 import config from "@server/lib/config";
 import { getNextAvailableSubnet } from "@server/lib/exitNodes";
@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 export async function createExitNode(publicKey: string, reachableAt: string | undefined) {
     // Fetch exit node
     const [exitNodeQuery] = await db.select().from(exitNodes).limit(1);
-    let exitNode;
+    let exitNode: ExitNode;
     if (!exitNodeQuery) {
         const address = await getNextAvailableSubnet();
         // TODO: eventually we will want to get the next available port so that we can multiple exit nodes
@@ -24,7 +24,7 @@ export async function createExitNode(publicKey: string, reachableAt: string | un
             `Exit Node ${publicKey.slice(0, 8)}`;
 
         // create a new exit node
-        exitNode = await db
+        [exitNode] = await db
             .insert(exitNodes)
             .values({
                 publicKey,
@@ -38,11 +38,11 @@ export async function createExitNode(publicKey: string, reachableAt: string | un
             .execute();
 
         logger.info(
-            `Created new exit node ${exitNode[0].name} with address ${exitNode[0].address} and port ${exitNode[0].listenPort}`
+            `Created new exit node ${exitNode.name} with address ${exitNode.address} and port ${exitNode.listenPort}`
         );
     } else {
         // update the existing exit node
-        exitNode = await db
+        [exitNode] = await db
             .update(exitNodes)
             .set({
                 reachableAt,
