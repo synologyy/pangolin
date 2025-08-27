@@ -5,7 +5,6 @@ import {
     validateResourceSessionToken
 } from "@server/auth/sessions/resource";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
-import { db } from "@server/db";
 import {
     getResourceByDomain,
     getUserSessionWithUser,
@@ -33,6 +32,7 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
+import { getCountryCodeForIp } from "@server/lib";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -123,8 +123,8 @@ export async function verifyResourceSession(
         let cleanHost = host;
         // if the host ends with :port, strip it
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
-            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
-            cleanHost = cleanHost.slice(0, -1*matched.length);
+            const matched = "" + cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1 * matched.length);
         }
 
         const resourceCacheKey = `resource:${cleanHost}`;
@@ -176,6 +176,11 @@ export async function verifyResourceSession(
             } else if (action == "DROP") {
                 logger.debug("Resource denied by rule");
                 return notAllowed(res);
+            } else if (action == "PASS") {
+                logger.debug(
+                    "Resource passed by rule, continuing to auth checks"
+                );
+                // Continue to authentication checks below
             }
 
             // otherwise its undefined and we pass
@@ -193,7 +198,10 @@ export async function verifyResourceSession(
 
         let endpoint: string;
         if (config.isManagedMode()) {
-            endpoint = config.getRawConfig().managed?.redirect_endpoint || config.getRawConfig().managed?.endpoint || "";
+            endpoint =
+                config.getRawConfig().managed?.redirect_endpoint ||
+                config.getRawConfig().managed?.endpoint ||
+                "";
         } else {
             endpoint = config.getRawConfig().app.dashboard_url!;
         }
@@ -576,7 +584,7 @@ async function checkRules(
     resourceId: number,
     clientIp: string | undefined,
     path: string | undefined
-): Promise<"ACCEPT" | "DROP" | undefined> {
+): Promise<"ACCEPT" | "DROP" | "PASS" | undefined> {
     const ruleCacheKey = `rules:${resourceId}`;
 
     let rules: ResourceRule[] | undefined = cache.get(ruleCacheKey);
@@ -611,6 +619,12 @@ async function checkRules(
             path &&
             rule.match == "PATH" &&
             isPathAllowed(rule.value, path)
+        ) {
+            return rule.action as any;
+        } else if (
+            clientIp &&
+            rule.match == "GEOIP" &&
+            (await isIpInGeoIP(clientIp, rule.value))
         ) {
             return rule.action as any;
         }
@@ -736,4 +750,24 @@ export function isPathAllowed(pattern: string, path: string): boolean {
     const result = matchSegments(0, 0);
     logger.debug(`Final result: ${result}`);
     return result;
+}
+
+async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
+    if (countryCode == "ALL") {
+        return true;
+    }
+
+    const geoIpCacheKey = `geoip:${ip}`;
+
+    let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
+
+    if (!cachedCountryCode) {
+        cachedCountryCode = await getCountryCodeForIp(ip);
+        // Cache for longer since IP geolocation doesn't change frequently
+        cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
+    }
+
+    logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
+
+    return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
 }

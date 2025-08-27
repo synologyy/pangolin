@@ -570,7 +570,7 @@ export const resourceRules = sqliteTable("resourceRules", {
         .references(() => resources.resourceId, { onDelete: "cascade" }),
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     priority: integer("priority").notNull(),
-    action: text("action").notNull(), // ACCEPT, DROP
+    action: text("action").notNull(), // ACCEPT, DROP, PASS
     match: text("match").notNull(), // CIDR, PATH, IP
     value: text("value").notNull()
 });

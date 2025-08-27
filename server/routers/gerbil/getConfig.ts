@@ -13,6 +13,8 @@ import { fromError } from "zod-validation-error";
 import { getAllowedIps } from "../target/helpers";
 import { proxyToRemote } from "@server/lib/remoteProxy";
 import { getNextAvailableSubnet } from "@server/lib/exitNodes";
+import { createExitNode } from "./createExitNode";
+
 // Define Zod schema for request validation
 const getConfigSchema = z.object({
     publicKey: z.string(),
@@ -53,46 +55,7 @@ export async function getConfig(
             );
         }
 
-        // Fetch exit node
-        const exitNodeQuery = await db
-            .select()
-            .from(exitNodes)
-            .where(eq(exitNodes.publicKey, publicKey));
-        let exitNode;
-        if (exitNodeQuery.length === 0) {
-            const address = await getNextAvailableSubnet();
-            // TODO: eventually we will want to get the next available port so that we can multiple exit nodes
-            // const listenPort = await getNextAvailablePort();
-            const listenPort = config.getRawConfig().gerbil.start_port;
-            let subEndpoint = "";
-            if (config.getRawConfig().gerbil.use_subdomain) {
-                subEndpoint = await getUniqueExitNodeEndpointName();
-            }
-
-            const exitNodeName =
-                config.getRawConfig().gerbil.exit_node_name ||
-                `Exit Node ${publicKey.slice(0, 8)}`;
-
-            // create a new exit node
-            exitNode = await db
-                .insert(exitNodes)
-                .values({
-                    publicKey,
-                    endpoint: `${subEndpoint}${subEndpoint != "" ? "." : ""}${config.getRawConfig().gerbil.base_endpoint}`,
-                    address,
-                    listenPort,
-                    reachableAt,
-                    name: exitNodeName
-                })
-                .returning()
-                .execute();
-
-            logger.info(
-                `Created new exit node ${exitNode[0].name} with address ${exitNode[0].address} and port ${exitNode[0].listenPort}`
-            );
-        } else {
-            exitNode = exitNodeQuery;
-        }
+        const exitNode = await createExitNode(publicKey, reachableAt);
 
         if (!exitNode) {
             return next(
@@ -107,13 +70,13 @@ export async function getConfig(
         if (config.isManagedMode()) {
             req.body = {
                 ...req.body,
-                endpoint: exitNode[0].endpoint,
-                listenPort: exitNode[0].listenPort
+                endpoint: exitNode.endpoint,
+                listenPort: exitNode.listenPort
             };
             return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 
-        const configResponse = await generateGerbilConfig(exitNode[0]);
+        const configResponse = await generateGerbilConfig(exitNode);
 
         logger.debug("Sending config: ", configResponse);
 

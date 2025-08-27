@@ -63,7 +63,7 @@ esbuild
                 packagePath: getPackagePaths(),
             }),
         ],
-        sourcemap: true,
+        sourcemap: "external",
         target: "node22",
     })
     .then(() => {

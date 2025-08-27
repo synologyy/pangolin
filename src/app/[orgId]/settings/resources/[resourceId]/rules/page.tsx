@@ -76,7 +76,7 @@ import { useTranslations } from "next-intl";
 
 // Schema for rule validation
 const addRuleSchema = z.object({
-    action: z.string(),
+    action: z.enum(["ACCEPT", "DROP", "PASS"]),
     match: z.string(),
     value: z.string(),
     priority: z.coerce.number().int().optional()
@@ -104,7 +104,8 @@ export default function ResourceRules(props: {
 
     const RuleAction = {
         ACCEPT: t('alwaysAllow'),
-        DROP: t('alwaysDeny')
+        DROP: t('alwaysDeny'),
+        PASS: t('passToAuth')
     } as const;
 
     const RuleMatch = {
@@ -113,7 +114,7 @@ export default function ResourceRules(props: {
         CIDR: t('ipAddressRange')
     } as const;
 
-    const addRuleForm = useForm({
+    const addRuleForm = useForm<z.infer<typeof addRuleSchema>>({
         resolver: zodResolver(addRuleSchema),
         defaultValues: {
             action: "ACCEPT",
@@ -437,7 +438,7 @@ export default function ResourceRules(props: {
             cell: ({ row }) => (
                 <Select
                     defaultValue={row.original.action}
-                    onValueChange={(value: "ACCEPT" | "DROP") =>
+                    onValueChange={(value: "ACCEPT" | "DROP" | "PASS") =>
                         updateRule(row.original.ruleId, { action: value })
                     }
                 >
@@ -449,6 +450,7 @@ export default function ResourceRules(props: {
                             {RuleAction.ACCEPT}
                         </SelectItem>
                         <SelectItem value="DROP">{RuleAction.DROP}</SelectItem>
+                        <SelectItem value="PASS">{RuleAction.PASS}</SelectItem>
                     </SelectContent>
                 </Select>
             )
@@ -628,6 +630,9 @@ export default function ResourceRules(props: {
                                                             </SelectItem>
                                                             <SelectItem value="DROP">
                                                                 {RuleAction.DROP}
+                                                            </SelectItem>
+                                                            <SelectItem value="PASS">
+                                                                {RuleAction.PASS}
                                                             </SelectItem>
                                                         </SelectContent>
                                                     </Select>
