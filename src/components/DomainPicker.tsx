@@ -263,7 +263,7 @@ export default function DomainPicker2({
 
         if (baseDomain.type === "provided-search") {
             return subdomain === "" || (
-                /^[a-zA-Z0-9.-]+$/.test(subdomain) &&
+                /^[a-zA-Z0-9-]+$/.test(subdomain) &&
                 isValidSubdomainStructure(subdomain)
             );
         }
@@ -274,7 +274,7 @@ export default function DomainPicker2({
             } else if (baseDomain.domainType === "ns" || baseDomain.domainType === "wildcard") {
                 // NS and wildcard domains support multi-level subdomains with dots and hyphens
                 return subdomain === "" || (
-                    /^[a-zA-Z0-9.-]+$/.test(subdomain) &&
+                    /^[a-zA-Z0-9-]+$/.test(subdomain) &&
                     isValidSubdomainStructure(subdomain)
                 );
             }
@@ -287,24 +287,17 @@ export default function DomainPicker2({
         if (!input) return "";
         return input
             .toLowerCase()
-            .replace(/[^a-z0-9.-]/g, "");
+            .replace(/[^a-z0-9-]/g, "");
     };
 
     const isValidSubdomainStructure = (subdomain: string): boolean => {
         if (!subdomain) return true;
 
-        // check for consecutive dots or hyphens
-        if (/\.{2,}|-{2,}/.test(subdomain)) return false;
+        // Check for consecutive hyphens
+        if (/--/.test(subdomain)) return false;
 
-        // check if starts or ends with hyphen or dot
-        if (/^[-.]|[-.]$/.test(subdomain)) return false;
-
-        // check each label >> (part between dots)
-        const parts = subdomain.split(".");
-        for (const part of parts) {
-            if (!part) return false; // Empty label
-            if (/^-|-$/.test(part)) return false; // Label starts/ends with hyphen
-        }
+        // Check if starts or ends with hyphen
+        if (/^-|-$/.test(subdomain)) return false;
 
         return true;
     };
@@ -369,7 +362,7 @@ export default function DomainPicker2({
         if (value !== sanitized) {
             toast({
                 title: "Invalid characters removed",
-                description: `Only letters, numbers, hyphens, and dots are allowed`,
+                description: `Only letters, numbers, and hyphens are allowed`,
             });
         }
 
