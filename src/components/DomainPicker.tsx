@@ -262,16 +262,21 @@ export default function DomainPicker2({
         if (!baseDomain) return false;
 
         if (baseDomain.type === "provided-search") {
-            return /^[a-zA-Z0-9-]+$/.test(subdomain);
+            return subdomain === "" || (
+                /^[a-zA-Z0-9.-]+$/.test(subdomain) &&
+                isValidSubdomainStructure(subdomain)
+            );
         }
 
         if (baseDomain.type === "organization") {
             if (baseDomain.domainType === "cname") {
                 return subdomain === "";
-            } else if (baseDomain.domainType === "ns") {
-                return /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$/.test(subdomain);
-            } else if (baseDomain.domainType === "wildcard") {
-                return /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$/.test(subdomain);
+            } else if (baseDomain.domainType === "ns" || baseDomain.domainType === "wildcard") {
+                // NS and wildcard domains support multi-level subdomains with dots and hyphens
+                return subdomain === "" || (
+                    /^[a-zA-Z0-9.-]+$/.test(subdomain) &&
+                    isValidSubdomainStructure(subdomain)
+                );
             }
         }
 
@@ -279,14 +284,30 @@ export default function DomainPicker2({
     };
 
     const sanitizeSubdomain = (input: string): string => {
+        if (!input) return "";
         return input
             .toLowerCase()
-            .replace(/[^a-z0-9.-]/g, "")
-            .replace(/\.{2,}/g, ".")     // collapse multiple dots → single dot
-            .replace(/^-+|-+$/g, "")     // trim leading/trailing hyphens
-            .replace(/^\.+|\.+$/g, "");  // trim leading/trailing dots
+            .replace(/[^a-z0-9.-]/g, "");
     };
 
+    const isValidSubdomainStructure = (subdomain: string): boolean => {
+        if (!subdomain) return true;
+
+        // check for consecutive dots or hyphens
+        if (/\.{2,}|-{2,}/.test(subdomain)) return false;
+
+        // check if starts or ends with hyphen or dot
+        if (/^[-.]|[-.]$/.test(subdomain)) return false;
+
+        // check each label >> (part between dots)
+        const parts = subdomain.split(".");
+        for (const part of parts) {
+            if (!part) return false; // Empty label
+            if (/^-|-$/.test(part)) return false; // Label starts/ends with hyphen
+        }
+
+        return true;
+    };
 
     // Handle base domain selection
     const handleBaseDomainSelect = (option: DomainOption) => {
@@ -303,11 +324,11 @@ export default function DomainPicker2({
                 setSubdomainInput(sanitized);
             }
 
-            if (!validateSubdomain(sub, option)) {
+            if (sanitized && !validateSubdomain(sanitized, option)) {
                 toast({
                     variant: "destructive",
                     title: "Invalid subdomain",
-                    description: `"${sub}" cannot be used with ${option.domain}`,
+                    description: `"${sanitized}" is not valid for ${option.domain}. Subdomain labels cannot start or end with hyphens.`,
                 });
                 sub = "";
                 setSubdomainInput("");
@@ -344,28 +365,27 @@ export default function DomainPicker2({
         const sanitized = sanitizeSubdomain(value);
         setSubdomainInput(sanitized);
 
+        // Only show toast for truly invalid characters, not structure issues
         if (value !== sanitized) {
             toast({
                 title: "Invalid characters removed",
-                description: `"${value}" was corrected to "${sanitized}"`,
+                description: `Only letters, numbers, hyphens, and dots are allowed`,
             });
         }
 
         if (selectedBaseDomain?.type === "organization") {
-            const isValid = validateSubdomain(sanitized, selectedBaseDomain);
-            if (isValid || sanitized === "") {
-                const fullDomain = sanitized
-                    ? `${sanitized}.${selectedBaseDomain.domain}`
-                    : selectedBaseDomain.domain;
+            // Always update the domain, validation will show visual feedback
+            const fullDomain = sanitized
+                ? `${sanitized}.${selectedBaseDomain.domain}`
+                : selectedBaseDomain.domain;
 
-                onDomainChange?.({
-                    domainId: selectedBaseDomain.domainId!,
-                    type: "organization",
-                    subdomain: sanitized || undefined,
-                    fullDomain,
-                    baseDomain: selectedBaseDomain.domain
-                });
-            }
+            onDomainChange?.({
+                domainId: selectedBaseDomain.domainId!,
+                type: "organization",
+                subdomain: sanitized || undefined,
+                fullDomain,
+                baseDomain: selectedBaseDomain.domain
+            });
         }
     };
 
@@ -376,7 +396,7 @@ export default function DomainPicker2({
         if (value !== sanitized) {
             toast({
                 title: "Invalid characters removed",
-                description: `"${value}" was corrected to "${sanitized}"`,
+                description: `Only letters, numbers, hyphens, and dots are allowed`,
             });
         }
 
@@ -410,7 +430,7 @@ export default function DomainPicker2({
         });
     };
 
-    const isSubdomainValid = selectedBaseDomain
+    const isSubdomainValid = selectedBaseDomain && subdomainInput
         ? validateSubdomain(subdomainInput, selectedBaseDomain)
         : true;
     const showSubdomainInput =
@@ -458,8 +478,8 @@ export default function DomainPicker2({
                         }
                         className={cn(
                             !isSubdomainValid &&
-                                subdomainInput &&
-                                "border-red-500"
+                            subdomainInput &&
+                            "border-red-500 focus:border-red-500"
                         )}
                         onChange={(e) => {
                             if (showProvidedDomainSearch) {
@@ -469,6 +489,11 @@ export default function DomainPicker2({
                             }
                         }}
                     />
+                    {showSubdomainInput && subdomainInput && !isSubdomainValid && (
+                        <p className="text-sm text-red-500">
+                            Invalid format. Subdomain cannot start/end with hyphens or dots, and cannot have consecutive dots or hyphens.
+                        </p>
+                    )}
                     {showSubdomainInput && !subdomainInput && (
                         <p className="text-sm text-muted-foreground">
                             {t("domainPickerEnterSubdomainOrLeaveBlank")}
