@@ -37,6 +37,12 @@ import { cn } from "@/lib/cn";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    sanitizeInputRaw,
+    finalizeSubdomainSanitize,
+    validateByDomainType,
+    isValidSubdomainStructure
+} from "@/lib/subdomain-utils";
 
 type OrganizationDomain = {
     domainId: string;
@@ -255,127 +261,56 @@ export default function DomainPicker2({
 
     const dropdownOptions = generateDropdownOptions();
 
-    const validateSubdomain = (
-        subdomain: string,
-        baseDomain: DomainOption
-    ): boolean => {
-        if (!baseDomain) return false;
+    const finalizeSubdomain = (sub: string, base: DomainOption): string => {
+        const sanitized = finalizeSubdomainSanitize(sub);
 
-        if (baseDomain.type === "provided-search") {
-            return subdomain === "" || (
-                /^[a-zA-Z0-9-]+$/.test(subdomain) &&
-                isValidSubdomainStructure(subdomain)
-            );
-        }
-
-        if (baseDomain.type === "organization") {
-            if (baseDomain.domainType === "cname") {
-                return subdomain === "";
-            } else if (baseDomain.domainType === "ns" || baseDomain.domainType === "wildcard") {
-                // NS and wildcard domains support multi-level subdomains with dots and hyphens
-                return subdomain === "" || (
-                    /^[a-zA-Z0-9-]+$/.test(subdomain) &&
-                    isValidSubdomainStructure(subdomain)
-                );
-            }
-        }
-
-        return false;
-    };
-
-    const sanitizeSubdomain = (input: string): string => {
-        if (!input) return "";
-        return input
-            .toLowerCase()
-            .replace(/[^a-z0-9-]/g, "");
-    };
-
-    const isValidSubdomainStructure = (subdomain: string): boolean => {
-        if (!subdomain) return true;
-
-        // Check for consecutive hyphens
-        if (/--/.test(subdomain)) return false;
-
-        // Check if starts or ends with hyphen
-        if (/^-|-$/.test(subdomain)) return false;
-
-        return true;
-    };
-
-    // Handle base domain selection
-    const handleBaseDomainSelect = (option: DomainOption) => {
-        let sub = subdomainInput;
-
-        if (sub) {
-            const sanitized = sanitizeSubdomain(sub);
-            if (sub !== sanitized) {
-                toast({
-                    title: "Invalid subdomain",
-                    description: `"${sub}" was corrected to "${sanitized}"`,
-                });
-                sub = sanitized;
-                setSubdomainInput(sanitized);
-            }
-
-            if (sanitized && !validateSubdomain(sanitized, option)) {
-                toast({
-                    variant: "destructive",
-                    title: "Invalid subdomain",
-                    description: `"${sanitized}" is not valid for ${option.domain}. Subdomain labels cannot start or end with hyphens.`,
-                });
-                sub = "";
-                setSubdomainInput("");
-            }
-        }
-
-        setSelectedBaseDomain(option);
-        setOpen(false);
-
-        if (option.domainType === "cname") {
-            sub = "";
-            setSubdomainInput("");
-        }
-
-        if (option.type === "provided-search") {
-            setUserInput("");
-            setAvailableOptions([]);
-            setSelectedProvidedDomain(null);
-        }
-
-        const fullDomain = sub ? `${sub}.${option.domain}` : option.domain;
-
-        onDomainChange?.({
-            domainId: option.domainId || "",
-            type: option.type === "provided-search" ? "provided" : "organization",
-            subdomain: sub || undefined,
-            fullDomain,
-            baseDomain: option.domain
-        });
-    };
-
-
-    const handleSubdomainChange = (value: string) => {
-        const sanitized = sanitizeSubdomain(value);
-        setSubdomainInput(sanitized);
-
-        // Only show toast for truly invalid characters, not structure issues
-        if (value !== sanitized) {
+        if (!sanitized) {
             toast({
-                title: "Invalid characters removed",
-                description: `Only letters, numbers, and hyphens are allowed`,
+                variant: "destructive",
+                title: "Invalid subdomain",
+                description: `The input "${sub}" was removed because it's not valid.`,
+            });
+            return "";
+        }
+
+        const ok = validateByDomainType(sanitized, {
+            type: base.type === "provided-search" ? "provided-search" : "organization",
+            domainType: base.domainType
+        });
+
+        if (!ok) {
+            toast({
+                variant: "destructive",
+                title: "Invalid subdomain",
+                description: `"${sub}" could not be made valid for ${base.domain}.`,
+            });
+            return "";
+        }
+
+        if (sub !== sanitized) {
+            toast({
+                title: "Subdomain sanitized",
+                description: `"${sub}" was corrected to "${sanitized}"`,
             });
         }
 
+        return sanitized;
+    };
+
+    const handleSubdomainChange = (value: string) => {
+        const raw = sanitizeInputRaw(value);
+        setSubdomainInput(raw);
+        setSelectedProvidedDomain(null);
+
         if (selectedBaseDomain?.type === "organization") {
-            // Always update the domain, validation will show visual feedback
-            const fullDomain = sanitized
-                ? `${sanitized}.${selectedBaseDomain.domain}`
+            const fullDomain = raw
+                ? `${raw}.${selectedBaseDomain.domain}`
                 : selectedBaseDomain.domain;
 
             onDomainChange?.({
                 domainId: selectedBaseDomain.domainId!,
                 type: "organization",
-                subdomain: sanitized || undefined,
+                subdomain: raw || undefined,
                 fullDomain,
                 baseDomain: selectedBaseDomain.domain
             });
@@ -383,17 +318,7 @@ export default function DomainPicker2({
     };
 
     const handleProvidedDomainInputChange = (value: string) => {
-        const sanitized = sanitizeSubdomain(value);
-        setUserInput(sanitized);
-
-        if (value !== sanitized) {
-            toast({
-                title: "Invalid characters removed",
-                description: `Only letters, numbers, hyphens, and dots are allowed`,
-            });
-        }
-
-        // Clear selected domain when user types
+        setUserInput(value);
         if (selectedProvidedDomain) {
             setSelectedProvidedDomain(null);
             onDomainChange?.({
@@ -404,6 +329,38 @@ export default function DomainPicker2({
                 baseDomain: ""
             });
         }
+    };
+
+    const handleBaseDomainSelect = (option: DomainOption) => {
+        let sub = subdomainInput;
+
+        sub = finalizeSubdomain(sub, option);
+        setSubdomainInput(sub);
+
+        if (option.type === "provided-search") {
+            setUserInput("");
+            setAvailableOptions([]);
+            setSelectedProvidedDomain(null);
+        }
+
+        setSelectedBaseDomain(option);
+        setOpen(false);
+
+        if (option.domainType === "cname") {
+            sub = "";
+            setSubdomainInput("");
+        }
+
+        const fullDomain = sub ? `${sub}.${option.domain}` : option.domain;
+
+        onDomainChange?.({
+            domainId: option.domainId || "",
+            domainNamespaceId: option.domainNamespaceId,
+            type: option.type === "provided-search" ? "provided" : "organization",
+            subdomain: sub || undefined,
+            fullDomain,
+            baseDomain: option.domain
+        });
     };
 
     const handleProvidedDomainSelect = (option: AvailableOption) => {
@@ -417,15 +374,19 @@ export default function DomainPicker2({
             domainId: option.domainId,
             domainNamespaceId: option.domainNamespaceId,
             type: "provided",
-            subdomain: subdomain,
+            subdomain,
             fullDomain: option.fullDomain,
-            baseDomain: baseDomain
+            baseDomain
         });
     };
 
     const isSubdomainValid = selectedBaseDomain && subdomainInput
-        ? validateSubdomain(subdomainInput, selectedBaseDomain)
+        ? validateByDomainType(subdomainInput, {
+            type: selectedBaseDomain.type === "provided-search" ? "provided-search" : "organization",
+            domainType: selectedBaseDomain.domainType
+        })
         : true;
+
     const showSubdomainInput =
         selectedBaseDomain &&
         selectedBaseDomain.type === "organization" &&
@@ -433,7 +394,7 @@ export default function DomainPicker2({
     const showProvidedDomainSearch =
         selectedBaseDomain?.type === "provided-search";
 
-    const sortedAvailableOptions = availableOptions.sort((a, b) => {
+    const sortedAvailableOptions = [...availableOptions].sort((a, b) => {
         const comparison = a.fullDomain.localeCompare(b.fullDomain);
         return sortOrder === "asc" ? comparison : -comparison;
     });
@@ -482,11 +443,12 @@ export default function DomainPicker2({
                             }
                         }}
                     />
-                    {showSubdomainInput && subdomainInput && !isSubdomainValid && (
+                    {showSubdomainInput && subdomainInput && !isValidSubdomainStructure(subdomainInput) && (
                         <p className="text-sm text-red-500">
-                            Invalid format. Subdomain cannot start/end with hyphens or dots, and cannot have consecutive dots or hyphens.
+                            This subdomain contains invalid characters or structure. It will be sanitized automatically when you save.
                         </p>
                     )}
+
                     {showSubdomainInput && !subdomainInput && (
                         <p className="text-sm text-muted-foreground">
                             {t("domainPickerEnterSubdomainOrLeaveBlank")}

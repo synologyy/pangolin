@@ -53,6 +53,7 @@ import {
 import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
+import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 
 export default function GeneralForm() {
     const [formKey, setFormKey] = useState(0);
@@ -454,18 +455,27 @@ export default function GeneralForm() {
                             <Button
                                 onClick={() => {
                                     if (selectedDomain) {
-                                        setResourceFullDomain(
-                                            selectedDomain.fullDomain
-                                        );
-                                        form.setValue(
-                                            "domainId",
-                                            selectedDomain.domainId
-                                        );
-                                        form.setValue(
-                                            "subdomain",
-                                            selectedDomain.subdomain
-                                        );
+                                        const sanitizedSubdomain = selectedDomain.subdomain
+                                            ? finalizeSubdomainSanitize(selectedDomain.subdomain)
+                                            : "";
+
+                                        const sanitizedFullDomain = sanitizedSubdomain
+                                            ? `${sanitizedSubdomain}.${selectedDomain.fullDomain
+                                                .split(".")
+                                                .slice(-2)
+                                                .join(".")}`
+                                            : selectedDomain.fullDomain;
+
+                                        setResourceFullDomain(sanitizedFullDomain);
+                                        form.setValue("domainId", selectedDomain.domainId);
+                                        form.setValue("subdomain", sanitizedSubdomain);
+
                                         setEditDomainOpen(false);
+
+                                        toast({
+                                            title: "Domain sanitized",
+                                            description: `Final domain: ${sanitizedFullDomain}`,
+                                        });
                                     }
                                 }}
                             >
