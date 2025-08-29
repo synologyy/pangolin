@@ -29,7 +29,7 @@ export class TraefikConfigManager {
             exists: boolean;
             lastModified: Date | null;
             expiresAt: Date | null;
-            wildcard: boolean;
+            wildcard: boolean | null;
         }
     >();
 
@@ -311,7 +311,7 @@ export class TraefikConfigManager {
             let validCertificates: Array<{
                 id: number;
                 domain: string;
-                wildcard: boolean;
+                wildcard: boolean | null;
                 certFile: string | null;
                 keyFile: string | null;
                 expiresAt: Date | null;
@@ -683,7 +683,7 @@ export class TraefikConfigManager {
         validCertificates: Array<{
             id: number;
             domain: string;
-            wildcard: boolean;
+            wildcard: boolean | null;
             certFile: string | null;
             keyFile: string | null;
             expiresAt: Date | null;
@@ -1040,7 +1040,7 @@ export class TraefikConfigManager {
 /**
  * Check if a domain is covered by existing wildcard certificates
  */
-export function isDomainCoveredByWildcard(domain: string, lastLocalCertificateState: Map<string, { exists: boolean; wildcard: boolean }>): boolean {
+export function isDomainCoveredByWildcard(domain: string, lastLocalCertificateState: Map<string, { exists: boolean; wildcard: boolean | null }>): boolean {
     for (const [certDomain, state] of lastLocalCertificateState) {
         if (state.exists && state.wildcard) {
             // If stored as example.com but is wildcard, check subdomains
