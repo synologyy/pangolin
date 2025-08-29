@@ -86,6 +86,7 @@ export default function GeneralForm() {
         domainId: string;
         subdomain?: string;
         fullDomain: string;
+        baseDomain: string;
     } | null>(null);
 
     const GeneralFormSchema = z
@@ -442,7 +443,8 @@ export default function GeneralForm() {
                                     const selected = {
                                         domainId: res.domainId,
                                         subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain
+                                        fullDomain: res.fullDomain,
+                                        baseDomain: res.baseDomain
                                     };
                                     setSelectedDomain(selected);
                                 }}
@@ -460,11 +462,8 @@ export default function GeneralForm() {
                                             : "";
 
                                         const sanitizedFullDomain = sanitizedSubdomain
-                                            ? `${sanitizedSubdomain}.${selectedDomain.fullDomain
-                                                .split(".")
-                                                .slice(-2)
-                                                .join(".")}`
-                                            : selectedDomain.fullDomain;
+                                            ? `${sanitizedSubdomain}.${selectedDomain.baseDomain}`
+                                            : selectedDomain.baseDomain;
 
                                         setResourceFullDomain(sanitizedFullDomain);
                                         form.setValue("domainId", selectedDomain.domainId);
