@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { db, exitNodes } from "@server/db";
-import { and, eq, inArray, or, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, or, isNull, ne, isNotNull } from "drizzle-orm";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
@@ -149,7 +149,10 @@ export async function getTraefikConfig(
                         eq(sites.exitNodeId, exitNodeId),
                         isNull(sites.exitNodeId)
                     ),
-                    inArray(sites.type, siteTypes)
+                    inArray(sites.type, siteTypes),
+                    config.getRawConfig().traefik.allow_raw_resources
+                        ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
+                        : eq(resources.http, true),
                 )
             );
 

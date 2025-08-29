@@ -179,6 +179,7 @@ export const configSchema = z
                     .default("/var/dynamic/router_config.yml"),
                 static_domains: z.array(z.string()).optional().default([]),
                 site_types: z.array(z.string()).optional().default(["newt", "wireguard", "local"]),
+                allow_raw_resources: z.boolean().optional().default(true),
                 file_mode: z.boolean().optional().default(false)
             })
             .optional()
