@@ -37,6 +37,12 @@ import { cn } from "@/lib/cn";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+    sanitizeInputRaw,
+    finalizeSubdomainSanitize,
+    validateByDomainType,
+    isValidSubdomainStructure
+} from "@/lib/subdomain-utils";
 
 type OrganizationDomain = {
     domainId: string;
@@ -255,108 +261,64 @@ export default function DomainPicker2({
 
     const dropdownOptions = generateDropdownOptions();
 
-    const validateSubdomain = (
-        subdomain: string,
-        baseDomain: DomainOption
-    ): boolean => {
-        if (!baseDomain) return false;
+    const finalizeSubdomain = (sub: string, base: DomainOption): string => {
+        const sanitized = finalizeSubdomainSanitize(sub);
 
-        if (baseDomain.type === "provided-search") {
-            return /^[a-zA-Z0-9-]+$/.test(subdomain);
+        if (!sanitized) {
+            toast({
+                variant: "destructive",
+                title: "Invalid subdomain",
+                description: `The input "${sub}" was removed because it's not valid.`,
+            });
+            return "";
         }
 
-        if (baseDomain.type === "organization") {
-            if (baseDomain.domainType === "cname") {
-                return subdomain === "";
-            } else if (baseDomain.domainType === "ns") {
-                return /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$/.test(subdomain);
-            } else if (baseDomain.domainType === "wildcard") {
-                return /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*$/.test(subdomain);
-            }
+        const ok = validateByDomainType(sanitized, {
+            type: base.type === "provided-search" ? "provided-search" : "organization",
+            domainType: base.domainType
+        });
+
+        if (!ok) {
+            toast({
+                variant: "destructive",
+                title: "Invalid subdomain",
+                description: `"${sub}" could not be made valid for ${base.domain}.`,
+            });
+            return "";
         }
 
-        return false;
-    };
-
-    // Handle base domain selection
-    const handleBaseDomainSelect = (option: DomainOption) => {
-        setSelectedBaseDomain(option);
-        setOpen(false);
-
-        if (option.domainType === "cname") {
-            setSubdomainInput("");
-        }
-
-        if (option.type === "provided-search") {
-            setUserInput("");
-            setAvailableOptions([]);
-            setSelectedProvidedDomain(null);
-            onDomainChange?.({
-                domainId: option.domainId!,
-                type: "organization",
-                subdomain: undefined,
-                fullDomain: option.domain,
-                baseDomain: option.domain
+        if (sub !== sanitized) {
+            toast({
+                title: "Subdomain sanitized",
+                description: `"${sub}" was corrected to "${sanitized}"`,
             });
         }
 
-        if (option.type === "organization") {
-            if (option.domainType === "cname") {
-                onDomainChange?.({
-                    domainId: option.domainId!,
-                    type: "organization",
-                    subdomain: undefined,
-                    fullDomain: option.domain,
-                    baseDomain: option.domain
-                });
-            } else {
-                onDomainChange?.({
-                    domainId: option.domainId!,
-                    type: "organization",
-                    subdomain: undefined,
-                    fullDomain: option.domain,
-                    baseDomain: option.domain
-                });
-            }
-        }
+        return sanitized;
     };
 
     const handleSubdomainChange = (value: string) => {
-        const validInput = value.replace(/[^a-zA-Z0-9.-]/g, "");
-        setSubdomainInput(validInput);
-
+        const raw = sanitizeInputRaw(value);
+        setSubdomainInput(raw);
         setSelectedProvidedDomain(null);
 
-        if (selectedBaseDomain && selectedBaseDomain.type === "organization") {
-            const isValid = validateSubdomain(validInput, selectedBaseDomain);
-            if (isValid) {
-                const fullDomain = validInput
-                    ? `${validInput}.${selectedBaseDomain.domain}`
-                    : selectedBaseDomain.domain;
-                onDomainChange?.({
-                    domainId: selectedBaseDomain.domainId!,
-                    type: "organization",
-                    subdomain: validInput || undefined,
-                    fullDomain: fullDomain,
-                    baseDomain: selectedBaseDomain.domain
-                });
-            } else if (validInput === "") {
-                onDomainChange?.({
-                    domainId: selectedBaseDomain.domainId!,
-                    type: "organization",
-                    subdomain: undefined,
-                    fullDomain: selectedBaseDomain.domain,
-                    baseDomain: selectedBaseDomain.domain
-                });
-            }
+        if (selectedBaseDomain?.type === "organization") {
+            const fullDomain = raw
+                ? `${raw}.${selectedBaseDomain.domain}`
+                : selectedBaseDomain.domain;
+
+            onDomainChange?.({
+                domainId: selectedBaseDomain.domainId!,
+                type: "organization",
+                subdomain: raw || undefined,
+                fullDomain,
+                baseDomain: selectedBaseDomain.domain
+            });
         }
     };
 
     const handleProvidedDomainInputChange = (value: string) => {
-        const validInput = value.replace(/[^a-zA-Z0-9.-]/g, "");
-        setUserInput(validInput);
-
-        // Clear selected domain when user types
+        setUserInput(value);
         if (selectedProvidedDomain) {
             setSelectedProvidedDomain(null);
             onDomainChange?.({
@@ -367,6 +329,38 @@ export default function DomainPicker2({
                 baseDomain: ""
             });
         }
+    };
+
+    const handleBaseDomainSelect = (option: DomainOption) => {
+        let sub = subdomainInput;
+
+        sub = finalizeSubdomain(sub, option);
+        setSubdomainInput(sub);
+
+        if (option.type === "provided-search") {
+            setUserInput("");
+            setAvailableOptions([]);
+            setSelectedProvidedDomain(null);
+        }
+
+        setSelectedBaseDomain(option);
+        setOpen(false);
+
+        if (option.domainType === "cname") {
+            sub = "";
+            setSubdomainInput("");
+        }
+
+        const fullDomain = sub ? `${sub}.${option.domain}` : option.domain;
+
+        onDomainChange?.({
+            domainId: option.domainId || "",
+            domainNamespaceId: option.domainNamespaceId,
+            type: option.type === "provided-search" ? "provided" : "organization",
+            subdomain: sub || undefined,
+            fullDomain,
+            baseDomain: option.domain
+        });
     };
 
     const handleProvidedDomainSelect = (option: AvailableOption) => {
@@ -380,15 +374,19 @@ export default function DomainPicker2({
             domainId: option.domainId,
             domainNamespaceId: option.domainNamespaceId,
             type: "provided",
-            subdomain: subdomain,
+            subdomain,
             fullDomain: option.fullDomain,
-            baseDomain: baseDomain
+            baseDomain
         });
     };
 
-    const isSubdomainValid = selectedBaseDomain
-        ? validateSubdomain(subdomainInput, selectedBaseDomain)
+    const isSubdomainValid = selectedBaseDomain && subdomainInput
+        ? validateByDomainType(subdomainInput, {
+            type: selectedBaseDomain.type === "provided-search" ? "provided-search" : "organization",
+            domainType: selectedBaseDomain.domainType
+        })
         : true;
+
     const showSubdomainInput =
         selectedBaseDomain &&
         selectedBaseDomain.type === "organization" &&
@@ -396,7 +394,7 @@ export default function DomainPicker2({
     const showProvidedDomainSearch =
         selectedBaseDomain?.type === "provided-search";
 
-    const sortedAvailableOptions = availableOptions.sort((a, b) => {
+    const sortedAvailableOptions = [...availableOptions].sort((a, b) => {
         const comparison = a.fullDomain.localeCompare(b.fullDomain);
         return sortOrder === "asc" ? comparison : -comparison;
     });
@@ -434,8 +432,8 @@ export default function DomainPicker2({
                         }
                         className={cn(
                             !isSubdomainValid &&
-                                subdomainInput &&
-                                "border-red-500"
+                            subdomainInput &&
+                            "border-red-500 focus:border-red-500"
                         )}
                         onChange={(e) => {
                             if (showProvidedDomainSearch) {
@@ -445,6 +443,12 @@ export default function DomainPicker2({
                             }
                         }}
                     />
+                    {showSubdomainInput && subdomainInput && !isValidSubdomainStructure(subdomainInput) && (
+                        <p className="text-sm text-red-500">
+                            This subdomain contains invalid characters or structure. It will be sanitized automatically when you save.
+                        </p>
+                    )}
+
                     {showSubdomainInput && !subdomainInput && (
                         <p className="text-sm text-muted-foreground">
                             {t("domainPickerEnterSubdomainOrLeaveBlank")}

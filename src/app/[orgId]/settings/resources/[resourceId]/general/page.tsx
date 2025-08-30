@@ -53,6 +53,7 @@ import {
 import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
+import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 
 export default function GeneralForm() {
     const [formKey, setFormKey] = useState(0);
@@ -85,6 +86,7 @@ export default function GeneralForm() {
         domainId: string;
         subdomain?: string;
         fullDomain: string;
+        baseDomain: string;
     } | null>(null);
 
     const GeneralFormSchema = z
@@ -441,7 +443,8 @@ export default function GeneralForm() {
                                     const selected = {
                                         domainId: res.domainId,
                                         subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain
+                                        fullDomain: res.fullDomain,
+                                        baseDomain: res.baseDomain
                                     };
                                     setSelectedDomain(selected);
                                 }}
@@ -454,18 +457,24 @@ export default function GeneralForm() {
                             <Button
                                 onClick={() => {
                                     if (selectedDomain) {
-                                        setResourceFullDomain(
-                                            selectedDomain.fullDomain
-                                        );
-                                        form.setValue(
-                                            "domainId",
-                                            selectedDomain.domainId
-                                        );
-                                        form.setValue(
-                                            "subdomain",
-                                            selectedDomain.subdomain
-                                        );
+                                        const sanitizedSubdomain = selectedDomain.subdomain
+                                            ? finalizeSubdomainSanitize(selectedDomain.subdomain)
+                                            : "";
+
+                                        const sanitizedFullDomain = sanitizedSubdomain
+                                            ? `${sanitizedSubdomain}.${selectedDomain.baseDomain}`
+                                            : selectedDomain.baseDomain;
+
+                                        setResourceFullDomain(sanitizedFullDomain);
+                                        form.setValue("domainId", selectedDomain.domainId);
+                                        form.setValue("subdomain", sanitizedSubdomain);
+
                                         setEditDomainOpen(false);
+
+                                        toast({
+                                            title: "Domain sanitized",
+                                            description: `Final domain: ${sanitizedFullDomain}`,
+                                        });
                                     }
                                 }}
                             >
