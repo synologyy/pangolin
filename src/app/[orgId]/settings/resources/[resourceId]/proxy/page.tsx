@@ -94,6 +94,7 @@ import {
     CommandList
 } from "@app/components/ui/command";
 import { Badge } from "@app/components/ui/badge";
+import { parseHostTarget } from "@app/lib/parseHostTarget";
 
 const addTargetSchema = z.object({
     ip: z.string().refine(isTargetValid),
@@ -417,11 +418,11 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                          ...target,
-                          ...data,
-                          updated: true,
-                          siteType: site?.type || null
-                      }
+                        ...target,
+                        ...data,
+                        updated: true,
+                        siteType: site?.type || null
+                    }
                     : target
             )
         );
@@ -545,7 +546,7 @@ export default function ReverseProxyTargets(props: {
                                     className={cn(
                                         "justify-between flex-1",
                                         !row.original.siteId &&
-                                            "text-muted-foreground"
+                                        "text-muted-foreground"
                                     )}
                                 >
                                     {row.original.siteId
@@ -614,31 +615,31 @@ export default function ReverseProxyTargets(props: {
         },
         ...(resource.http
             ? [
-                  {
-                      accessorKey: "method",
-                      header: t("method"),
-                      cell: ({ row }: { row: Row<LocalTarget> }) => (
-                          <Select
-                              defaultValue={row.original.method ?? ""}
-                              onValueChange={(value) =>
-                                  updateTarget(row.original.targetId, {
-                                      ...row.original,
-                                      method: value
-                                  })
-                              }
-                          >
-                              <SelectTrigger>
-                                  {row.original.method}
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="http">http</SelectItem>
-                                  <SelectItem value="https">https</SelectItem>
-                                  <SelectItem value="h2c">h2c</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      )
-                  }
-              ]
+                {
+                    accessorKey: "method",
+                    header: t("method"),
+                    cell: ({ row }: { row: Row<LocalTarget> }) => (
+                        <Select
+                            defaultValue={row.original.method ?? ""}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    method: value
+                                })
+                            }
+                        >
+                            <SelectTrigger>
+                                {row.original.method}
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="http">http</SelectItem>
+                                <SelectItem value="https">https</SelectItem>
+                                <SelectItem value="h2c">h2c</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )
+                }
+            ]
             : []),
         {
             accessorKey: "ip",
@@ -647,13 +648,25 @@ export default function ReverseProxyTargets(props: {
                 <Input
                     defaultValue={row.original.ip}
                     className="min-w-[150px]"
-                    onBlur={(e) =>
-                        updateTarget(row.original.targetId, {
-                            ...row.original,
-                            ip: e.target.value
-                        })
-                    }
+                    onBlur={(e) => {
+                        const parsed = parseHostTarget(e.target.value);
+                        if (parsed) {
+                            updateTarget(row.original.targetId, {
+                                ...row.original,
+                                method: parsed.protocol,
+                                ip: parsed.host,
+                                port: parsed.port
+                            });
+                        } else {
+                            updateTarget(row.original.targetId, {
+                                ...row.original,
+                                ip: e.target.value
+                            });
+                        }
+                    }}
+
                 />
+
             )
         },
         {
@@ -785,21 +798,21 @@ export default function ReverseProxyTargets(props: {
                                                                     className={cn(
                                                                         "justify-between flex-1",
                                                                         !field.value &&
-                                                                            "text-muted-foreground"
+                                                                        "text-muted-foreground"
                                                                     )}
                                                                 >
                                                                     {field.value
                                                                         ? sites.find(
-                                                                              (
-                                                                                  site
-                                                                              ) =>
-                                                                                  site.siteId ===
-                                                                                  field.value
-                                                                          )
-                                                                              ?.name
+                                                                            (
+                                                                                site
+                                                                            ) =>
+                                                                                site.siteId ===
+                                                                                field.value
+                                                                        )
+                                                                            ?.name
                                                                         : t(
-                                                                              "siteSelect"
-                                                                          )}
+                                                                            "siteSelect"
+                                                                        )}
                                                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -865,18 +878,18 @@ export default function ReverseProxyTargets(props: {
                                                                 );
                                                             return selectedSite &&
                                                                 selectedSite.type ===
-                                                                    "newt" ? (() => {
-                                                                const dockerState = getDockerStateForSite(selectedSite.siteId);
-                                                                return (
-                                                                    <ContainersSelector
-                                                                        site={selectedSite}
-                                                                        containers={dockerState.containers}
-                                                                        isAvailable={dockerState.isAvailable}
-                                                                        onContainerSelect={handleContainerSelect}
-                                                                        onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
-                                                                    />
-                                                                );
-                                                            })() : null;
+                                                                "newt" ? (() => {
+                                                                    const dockerState = getDockerStateForSite(selectedSite.siteId);
+                                                                    return (
+                                                                        <ContainersSelector
+                                                                            site={selectedSite}
+                                                                            containers={dockerState.containers}
+                                                                            isAvailable={dockerState.isAvailable}
+                                                                            onContainerSelect={handleContainerSelect}
+                                                                            onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
+                                                                        />
+                                                                    );
+                                                                })() : null;
                                                         })()}
                                                 </div>
                                                 <FormMessage />
@@ -942,11 +955,22 @@ export default function ReverseProxyTargets(props: {
                                         name="ip"
                                         render={({ field }) => (
                                             <FormItem className="relative">
-                                                <FormLabel>
-                                                    {t("targetAddr")}
-                                                </FormLabel>
+                                                <FormLabel>{t("targetAddr")}</FormLabel>
                                                 <FormControl>
-                                                    <Input id="ip" {...field} />
+                                                    <Input
+                                                        id="ip"
+                                                        {...field}
+                                                        onBlur={(e) => {
+                                                            const parsed = parseHostTarget(e.target.value);
+                                                            if (parsed) {
+                                                                addTargetForm.setValue("method", parsed.protocol);
+                                                                addTargetForm.setValue("ip", parsed.host);
+                                                                addTargetForm.setValue("port", parsed.port);
+                                                            } else {
+                                                                field.onBlur();
+                                                            }
+                                                        }}
+                                                    />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -1048,12 +1072,12 @@ export default function ReverseProxyTargets(props: {
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
+                                                                        header
+                                                                            .column
+                                                                            .columnDef
+                                                                            .header,
+                                                                        header.getContext()
+                                                                    )}
                                                             </TableHead>
                                                         )
                                                     )}
