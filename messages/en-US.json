@@ -1457,5 +1457,41 @@
     "autoLoginRedirecting": "Redirecting to login...",
     "autoLoginError": "Auto Login Error",
     "autoLoginErrorNoRedirectUrl": "No redirect URL received from the identity provider.",
-    "autoLoginErrorGeneratingUrl": "Failed to generate authentication URL."
+    "autoLoginErrorGeneratingUrl": "Failed to generate authentication URL.",
+    "managedSelfHosted": {
+        "title": "Managed Self-Hosted",
+        "description": "More reliable and low-maintenance self-hosted Pangolin server with extra bells and whistles",
+        "introTitle": "Managed Self-Hosted Pangolin",
+        "introDescription": "is a deployment option designed for people who want simplicity and extra reliability while still keeping their data private and self-hosted.",
+        "introDetail": "With this option, you still run your own Pangolin node — your tunnels, SSL termination, and traffic all stay on your server. The difference is that management and monitoring are handled through our cloud dashboard, which unlocks a number of benefits:",
+        "benefitSimplerOperations": {
+            "title": "Simpler operations",
+            "description": "No need to run your own mail server or set up complex alerting. You'll get health checks and downtime alerts out of the box."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Automatic updates",
+            "description": "The cloud dashboard evolves quickly, so you get new features and bug fixes without having to manually pull new containers every time."
+        },
+        "benefitLessMaintenance": {
+            "title": "Less maintenance",
+            "description": "No database migrations, backups, or extra infrastructure to manage. We handle that in the cloud."
+        },
+        "benefitCloudFailover": {
+            "title": "Cloud failover",
+            "description": "If your node goes down, your tunnels can temporarily fail over to our cloud points of presence until you bring it back online."
+        },
+        "benefitHighAvailability": {
+            "title": "High availability (PoPs)",
+            "description": "You can also attach multiple nodes to your account for redundancy and better performance."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Future enhancements",
+            "description": "We're planning to add more analytics, alerting, and management tools to make your deployment even more robust."
+        },
+        "docsAlert": {
+            "text": "Learn more about the Managed Self-Hosted option in our",
+            "documentation": "documentation"
+        },
+        "convertButton": "Convert This Node to Managed Self-Hosted"
+    }
 }
