@@ -49,19 +49,7 @@ export async function deleteOrg(
         }
 
         const { orgId } = parsedParams.data;
-        // Check if the user has permission to list sites
-        const hasPermission = await checkUserActionPermission(
-            ActionsEnum.deleteOrg,
-            req
-        );
-        if (!hasPermission) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    "User does not have permission to perform this action"
-                )
-            );
-        }
+
         const [org] = await db
             .select()
             .from(orgs)
