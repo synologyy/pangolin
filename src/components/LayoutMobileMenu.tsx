@@ -7,7 +7,7 @@ import { cn } from "@app/lib/cn";
 import { ListUserOrgsResponse } from "@server/routers/org";
 import SupporterStatus from "@app/components/SupporterStatus";
 import { Button } from "@app/components/ui/button";
-import { Menu, Server } from "lucide-react";
+import { ExternalLink, Menu, Server } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserContext } from "@app/hooks/useUserContext";
@@ -117,7 +117,15 @@ export function LayoutMobileMenu({
                                         <SupporterStatus />
                                         {env?.app?.version && (
                                             <div className="text-xs text-muted-foreground text-center">
-                                                v{env.app.version}
+                                                <Link
+                                                    href={`https://github.com/fosrl/pangolin/releases/tag/${env.app.version}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-center gap-1"
+                                                >
+                                                    v{env.app.version}
+                                                    <ExternalLink size={12} />
+                                                </Link>
                                             </div>
                                         )}
                                     </div>
