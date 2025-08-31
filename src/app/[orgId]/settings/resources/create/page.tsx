@@ -89,7 +89,7 @@ import { isTargetValid } from "@server/lib/validators";
 import { ListTargetsResponse } from "@server/routers/target";
 import { DockerManager, DockerState } from "@app/lib/docker";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
-import { toUnicode } from 'punycode';
+import { toASCII, toUnicode } from 'punycode';
 import { DomainRow } from "../../domains/DomainsTable";
 
 const baseResourceFormSchema = z.object({
@@ -329,7 +329,7 @@ export default function Page() {
             if (isHttp) {
                 const httpData = httpForm.getValues();
                 Object.assign(payload, {
-                    subdomain: httpData.subdomain,
+                    subdomain: httpData.subdomain ? toASCII(httpData.subdomain) : undefined,
                     domainId: httpData.domainId,
                     protocol: "tcp"
                 });

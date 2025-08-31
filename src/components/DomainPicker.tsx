@@ -336,8 +336,13 @@ export default function DomainPicker2({
     const handleBaseDomainSelect = (option: DomainOption) => {
         let sub = subdomainInput;
 
-        sub = finalizeSubdomain(sub, option);
-        setSubdomainInput(sub);
+        if (sub && sub.trim() !== "") {
+            sub = finalizeSubdomain(sub, option) || "";
+            setSubdomainInput(sub);
+        } else {
+            sub = "";
+            setSubdomainInput("");
+        }
 
         if (option.type === "provided-search") {
             setUserInput("");
@@ -409,11 +414,6 @@ export default function DomainPicker2({
         sortedAvailableOptions.length > providedDomainsShown;
 
 
-    const isValidDomainCharacter = (char: string) => {
-        // Allow Unicode letters, numbers, hyphens, and periods
-        return /[\p{L}\p{N}.-]/u.test(char);
-    };
-
     return (
         <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -444,16 +444,10 @@ export default function DomainPicker2({
                             "border-red-500 focus:border-red-500"
                         )}
                         onChange={(e) => {
-                            const rawInput = e.target.value;
-                            const validInput = rawInput
-                                .split("")
-                                .filter((char) => isValidDomainCharacter(char))
-                                .join("");
-
                             if (showProvidedDomainSearch) {
-                                handleProvidedDomainInputChange(validInput);
+                                handleProvidedDomainInputChange(e.target.value);
                             } else {
-                                handleSubdomainChange(validInput);
+                                handleSubdomainChange(e.target.value);
                             }
                         }}
                     />

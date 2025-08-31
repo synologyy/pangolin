@@ -1,27 +1,30 @@
 
 export type DomainType = "organization" | "provided" | "provided-search";
 
-export const SINGLE_LABEL_RE = /^[a-z0-9-]+$/i; // provided-search (no dots)
-export const MULTI_LABEL_RE = /^[a-z0-9-]+(\.[a-z0-9-]+)*$/i; // ns/wildcard
-export const SINGLE_LABEL_STRICT_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i; // start/end alnum
+export const SINGLE_LABEL_RE = /^[\p{L}\p{N}-]+$/u; // provided-search (no dots)
+export const MULTI_LABEL_RE = /^[\p{L}\p{N}-]+(\.[\p{L}\p{N}-]+)*$/u; // ns/wildcard
+export const SINGLE_LABEL_STRICT_RE = /^[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?$/u; // start/end alnum
 
 
 export function sanitizeInputRaw(input: string): string {
   if (!input) return "";
-  return input.toLowerCase().replace(/[^a-z0-9.-]/g, "");
+  return input
+    .toLowerCase()
+    .normalize("NFC") // normalize Unicode
+    .replace(/[^\p{L}\p{N}.-]/gu, ""); // allow Unicode letters, numbers, dot, hyphen
 }
 
 export function finalizeSubdomainSanitize(input: string): string {
   if (!input) return "";
   return input
     .toLowerCase()
-    .replace(/[^a-z0-9.-]/g, "")   // allow only valid chars
-    .replace(/\.{2,}/g, ".")       // collapse multiple dots
-    .replace(/^-+|-+$/g, "")       // strip leading/trailing hyphens
-    .replace(/^\.+|\.+$/g, "");    // strip leading/trailing dots
+    .normalize("NFC")
+    .replace(/[^\p{L}\p{N}.-]/gu, "")  // allow Unicode
+    .replace(/\.{2,}/g, ".")           // collapse multiple dots
+    .replace(/^-+|-+$/g, "")           // strip leading/trailing hyphens
+    .replace(/^\.+|\.+$/g, "")         // strip leading/trailing dots
+    .replace(/(\.-)|(-\.)/g, ".");     // fix illegal dot-hyphen combos
 }
-
-
 
 
 export function validateByDomainType(subdomain: string, domainType: { type: "provided-search" | "organization"; domainType?: "ns" | "cname" | "wildcard" } ): boolean {
@@ -47,13 +50,14 @@ export function validateByDomainType(subdomain: string, domainType: { type: "pro
 
 
 export const isValidSubdomainStructure = (input: string): boolean => {
-  const regex = /^(?!-)([a-zA-Z0-9-]{1,63})(?<!-)$/;
+  const regex = /^(?!-)([\p{L}\p{N}-]{1,63})(?<!-)$/u;
 
   if (!input) return false;
   if (input.includes("..")) return false;
 
   return input.split(".").every(label => regex.test(label));
 };
+
 
 
 
