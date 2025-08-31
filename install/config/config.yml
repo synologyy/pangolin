@@ -13,6 +13,8 @@ managed:
 app:
     dashboard_url: "https://{{.DashboardDomain}}"
     log_level: "info"
+    telemetry:
+        anonymous_usage: true
 
 domains:
     domain1:
