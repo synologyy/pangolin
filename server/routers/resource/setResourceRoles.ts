@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, resources } from "@server/db";
 import { apiKeys, roleResources, roles } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -74,13 +74,18 @@ export async function setResourceRoles(
 
         const { resourceId } = parsedParams.data;
 
-        const orgId = req.userOrg?.orgId || req.apiKeyOrg?.orgId;
+        // get the resource
+        const [resource] = await db
+            .select()
+            .from(resources)
+            .where(eq(resources.resourceId, resourceId))
+            .limit(1);
 
-        if (!orgId) {
+        if (!resource) {
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    "Organization not found"
+                    "Resource not found"
                 )
             );
         }
@@ -92,7 +97,7 @@ export async function setResourceRoles(
             .where(
                 and(
                     eq(roles.name, "Admin"),
-                    eq(roles.orgId, orgId)
+                    eq(roles.orgId, resource.orgId)
                 )
             )
             .limit(1);
