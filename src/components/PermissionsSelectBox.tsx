@@ -24,6 +24,7 @@ function getActionsCategories(root: boolean) {
             [t('actionUpdateOrg')]: "updateOrg",
             [t('actionGetOrgUser')]: "getOrgUser",
             [t('actionInviteUser')]: "inviteUser",
+            [t('actionListInvitations')]: "listInvitations",
             [t('actionRemoveUser')]: "removeUser",
             [t('actionListUsers')]: "listUsers",
             [t('actionListOrgDomains')]: "listOrgDomains"

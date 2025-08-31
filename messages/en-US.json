@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Get Site Resource",
     "actionListSiteResources": "List Site Resources",
     "actionUpdateSiteResource": "Update Site Resource",
+    "actionListInvitations": "List Invitations",
     "noneSelected": "None selected",
     "orgNotFound2": "No organizations found.",
     "searchProgress": "Search...",
