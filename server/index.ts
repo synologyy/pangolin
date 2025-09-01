@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 import "./extendZod.ts";
+import 'source-map-support/register'
 
 import { runSetupFunctions } from "./setup";
 import { createApiServer } from "./apiServer";
