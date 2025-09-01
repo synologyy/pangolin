@@ -649,18 +649,29 @@ export default function ReverseProxyTargets(props: {
                     defaultValue={row.original.ip}
                     className="min-w-[150px]"
                     onBlur={(e) => {
-                        const parsed = parseHostTarget(e.target.value);
-                        if (parsed) {
-                            updateTarget(row.original.targetId, {
-                                ...row.original,
-                                method: parsed.protocol,
-                                ip: parsed.host,
-                                port: parsed.port
-                            });
+                        const input = e.target.value.trim();
+                        const hasProtocol = /^https?:\/\//.test(input);
+                        const hasPort = /:\d+/.test(input);
+
+                        if (hasProtocol || hasPort) {
+                            const parsed = parseHostTarget(input);
+                            if (parsed) {
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    method: hasProtocol ? parsed.protocol : row.original.method,
+                                    ip: parsed.host,
+                                    port: hasPort ? parsed.port : row.original.port
+                                });
+                            } else {
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    ip: input
+                                });
+                            }
                         } else {
                             updateTarget(row.original.targetId, {
                                 ...row.original,
-                                ip: e.target.value
+                                ip: input
                             });
                         }
                     }}
@@ -961,11 +972,21 @@ export default function ReverseProxyTargets(props: {
                                                         id="ip"
                                                         {...field}
                                                         onBlur={(e) => {
-                                                            const parsed = parseHostTarget(e.target.value);
-                                                            if (parsed) {
-                                                                addTargetForm.setValue("method", parsed.protocol);
-                                                                addTargetForm.setValue("ip", parsed.host);
-                                                                addTargetForm.setValue("port", parsed.port);
+                                                            const input = e.target.value.trim();
+                                                            const hasProtocol = /^https?:\/\//.test(input);
+                                                            const hasPort = /:\d+/.test(input);
+
+                                                            if (hasProtocol || hasPort) {
+                                                                const parsed = parseHostTarget(input);
+                                                                if (parsed) {
+                                                                    if (hasProtocol || !addTargetForm.getValues("method")) {
+                                                                        addTargetForm.setValue("method", parsed.protocol);
+                                                                    }
+                                                                    addTargetForm.setValue("ip", parsed.host);
+                                                                    if (hasPort || !addTargetForm.getValues("port")) {
+                                                                        addTargetForm.setValue("port", parsed.port);
+                                                                    }
+                                                                }
                                                             } else {
                                                                 field.onBlur();
                                                             }
