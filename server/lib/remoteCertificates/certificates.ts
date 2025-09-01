@@ -10,6 +10,7 @@ export async function getValidCertificatesForDomainsHybrid(domains: Set<string>)
     Array<{
         id: number;
         domain: string;
+        wildcard: boolean | null;
         certFile: string | null;
         keyFile: string | null;
         expiresAt: Date | null;
@@ -68,6 +69,7 @@ export async function getValidCertificatesForDomains(domains: Set<string>): Prom
     Array<{
         id: number;
         domain: string;
+        wildcard: boolean | null;
         certFile: string | null;
         keyFile: string | null;
         expiresAt: Date | null;

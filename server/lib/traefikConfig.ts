@@ -29,6 +29,7 @@ export class TraefikConfigManager {
             exists: boolean;
             lastModified: Date | null;
             expiresAt: Date | null;
+            wildcard: boolean | null;
         }
     >();
 
@@ -115,6 +116,7 @@ export class TraefikConfigManager {
                 exists: boolean;
                 lastModified: Date | null;
                 expiresAt: Date | null;
+                wildcard: boolean;
             }
         >
     > {
@@ -136,13 +138,16 @@ export class TraefikConfigManager {
                 const certPath = path.join(domainDir, "cert.pem");
                 const keyPath = path.join(domainDir, "key.pem");
                 const lastUpdatePath = path.join(domainDir, ".last_update");
+                const wildcardPath = path.join(domainDir, ".wildcard");
 
                 const certExists = await this.fileExists(certPath);
                 const keyExists = await this.fileExists(keyPath);
                 const lastUpdateExists = await this.fileExists(lastUpdatePath);
+                const wildcardExists = await this.fileExists(wildcardPath);
 
                 let lastModified: Date | null = null;
                 const expiresAt: Date | null = null;
+                let wildcard = false;
 
                 if (lastUpdateExists) {
                     try {
@@ -161,10 +166,26 @@ export class TraefikConfigManager {
                     }
                 }
 
+                // Check if this is a wildcard certificate
+                if (wildcardExists) {
+                    try {
+                        const wildcardContent = fs
+                            .readFileSync(wildcardPath, "utf8")
+                            .trim();
+                        wildcard = wildcardContent === "true";
+                    } catch (error) {
+                        logger.warn(
+                            `Could not read wildcard file for ${domain}:`,
+                            error
+                        );
+                    }
+                }
+
                 state.set(domain, {
                     exists: certExists && keyExists,
                     lastModified,
-                    expiresAt
+                    expiresAt,
+                    wildcard
                 });
             }
         } catch (error) {
@@ -192,19 +213,36 @@ export class TraefikConfigManager {
             return true;
         }
 
-        // Fetch if domains have changed
+        // Filter out domains covered by wildcard certificates
+        const domainsNeedingCerts = new Set<string>();
+        for (const domain of currentDomains) {
+            if (!isDomainCoveredByWildcard(domain, this.lastLocalCertificateState)) {
+                domainsNeedingCerts.add(domain);
+            }
+        }
+
+        // Fetch if domains needing certificates have changed
+        const lastDomainsNeedingCerts = new Set<string>();
+        for (const domain of this.lastKnownDomains) {
+            if (!isDomainCoveredByWildcard(domain, this.lastLocalCertificateState)) {
+                lastDomainsNeedingCerts.add(domain);
+            }
+        }
+
         if (
-            this.lastKnownDomains.size !== currentDomains.size ||
-            !Array.from(this.lastKnownDomains).every((domain) =>
-                currentDomains.has(domain)
+            domainsNeedingCerts.size !== lastDomainsNeedingCerts.size ||
+            !Array.from(domainsNeedingCerts).every((domain) =>
+                lastDomainsNeedingCerts.has(domain)
             )
         ) {
-            logger.info("Fetching certificates due to domain changes");
+            logger.info(
+                "Fetching certificates due to domain changes (after wildcard filtering)"
+            );
             return true;
         }
 
         // Check if any local certificates are missing or appear to be outdated
-        for (const domain of currentDomains) {
+        for (const domain of domainsNeedingCerts) {
             const localState = this.lastLocalCertificateState.get(domain);
             if (!localState || !localState.exists) {
                 logger.info(
@@ -273,6 +311,7 @@ export class TraefikConfigManager {
             let validCertificates: Array<{
                 id: number;
                 domain: string;
+                wildcard: boolean | null;
                 certFile: string | null;
                 keyFile: string | null;
                 expiresAt: Date | null;
@@ -280,23 +319,50 @@ export class TraefikConfigManager {
             }> = [];
 
             if (this.shouldFetchCertificates(domains)) {
-                // Get valid certificates for active domains
-                if (config.isManagedMode()) {
-                    validCertificates =
-                        await getValidCertificatesForDomainsHybrid(domains);
-                } else {
-                    validCertificates =
-                        await getValidCertificatesForDomains(domains);
+                // Filter out domains that are already covered by wildcard certificates
+                const domainsToFetch = new Set<string>();
+                for (const domain of domains) {
+                    if (!isDomainCoveredByWildcard(domain, this.lastLocalCertificateState)) {
+                        domainsToFetch.add(domain);
+                    } else {
+                        logger.debug(
+                            `Domain ${domain} is covered by existing wildcard certificate, skipping fetch`
+                        );
+                    }
                 }
-                this.lastCertificateFetch = new Date();
-                this.lastKnownDomains = new Set(domains);
 
-                logger.info(
-                    `Fetched ${validCertificates.length} certificates from remote`
-                );
+                if (domainsToFetch.size > 0) {
+                    // Get valid certificates for domains not covered by wildcards
+                    if (config.isManagedMode()) {
+                        validCertificates =
+                            await getValidCertificatesForDomainsHybrid(
+                                domainsToFetch
+                            );
+                    } else {
+                        validCertificates =
+                            await getValidCertificatesForDomains(
+                                domainsToFetch
+                            );
+                    }
+                    this.lastCertificateFetch = new Date();
+                    this.lastKnownDomains = new Set(domains);
 
-                // Download and decrypt new certificates
-                await this.processValidCertificates(validCertificates);
+                    logger.info(
+                        `Fetched ${validCertificates.length} certificates from remote (${domains.size - domainsToFetch.size} domains covered by wildcards)`
+                    );
+
+                    // Download and decrypt new certificates
+                    await this.processValidCertificates(validCertificates);
+                } else {
+                    logger.info(
+                        "All domains are covered by existing wildcard certificates, no fetch needed"
+                    );
+                    this.lastCertificateFetch = new Date();
+                    this.lastKnownDomains = new Set(domains);
+                }
+
+                // Always ensure all existing certificates (including wildcards) are in the config
+                await this.updateDynamicConfigFromLocalCerts(domains);
             } else {
                 const timeSinceLastFetch = this.lastCertificateFetch
                     ? Math.round(
@@ -544,7 +610,11 @@ export class TraefikConfigManager {
         // Clear existing certificates and rebuild from local state
         dynamicConfig.tls.certificates = [];
 
+        // Keep track of certificates we've already added to avoid duplicates
+        const addedCertPaths = new Set<string>();
+
         for (const domain of domains) {
+            // First, try to find an exact match certificate
             const localState = this.lastLocalCertificateState.get(domain);
             if (localState && localState.exists) {
                 const domainDir = path.join(
@@ -554,11 +624,47 @@ export class TraefikConfigManager {
                 const certPath = path.join(domainDir, "cert.pem");
                 const keyPath = path.join(domainDir, "key.pem");
 
-                const certEntry = {
-                    certFile: certPath,
-                    keyFile: keyPath
-                };
-                dynamicConfig.tls.certificates.push(certEntry);
+                if (!addedCertPaths.has(certPath)) {
+                    const certEntry = {
+                        certFile: certPath,
+                        keyFile: keyPath
+                    };
+                    dynamicConfig.tls.certificates.push(certEntry);
+                    addedCertPaths.add(certPath);
+                }
+                continue;
+            }
+
+            // If no exact match, check for wildcard certificates that cover this domain
+            for (const [certDomain, certState] of this.lastLocalCertificateState) {
+                if (certState.exists && certState.wildcard) {
+                    // Check if this wildcard certificate covers the domain
+                    if (domain.endsWith("." + certDomain)) {
+                        // Verify it's only one level deep (wildcard only covers one level)
+                        const prefix = domain.substring(
+                            0,
+                            domain.length - ("." + certDomain).length
+                        );
+                        if (!prefix.includes(".")) {
+                            const domainDir = path.join(
+                                config.getRawConfig().traefik.certificates_path,
+                                certDomain
+                            );
+                            const certPath = path.join(domainDir, "cert.pem");
+                            const keyPath = path.join(domainDir, "key.pem");
+
+                            if (!addedCertPaths.has(certPath)) {
+                                const certEntry = {
+                                    certFile: certPath,
+                                    keyFile: keyPath
+                                };
+                                dynamicConfig.tls.certificates.push(certEntry);
+                                addedCertPaths.add(certPath);
+                            }
+                            break; // Found a wildcard that covers this domain
+                        }
+                    }
+                }
             }
         }
 
@@ -577,6 +683,7 @@ export class TraefikConfigManager {
         validCertificates: Array<{
             id: number;
             domain: string;
+            wildcard: boolean | null;
             certFile: string | null;
             keyFile: string | null;
             expiresAt: Date | null;
@@ -651,15 +758,24 @@ export class TraefikConfigManager {
                         "utf8"
                     );
 
+                    // Check if this is a wildcard certificate and store it
+                    const wildcardPath = path.join(domainDir, ".wildcard");
+                    fs.writeFileSync(
+                        wildcardPath,
+                        cert.wildcard ? "true" : "false",
+                        "utf8"
+                    );
+
                     logger.info(
-                        `Certificate updated for domain: ${cert.domain}`
+                        `Certificate updated for domain: ${cert.domain}${cert.wildcard ? " (wildcard)" : ""}`
                     );
 
                     // Update local state tracking
                     this.lastLocalCertificateState.set(cert.domain, {
                         exists: true,
                         lastModified: new Date(),
-                        expiresAt: cert.expiresAt
+                        expiresAt: cert.expiresAt,
+                        wildcard: cert.wildcard
                     });
                 }
 
@@ -810,14 +926,8 @@ export class TraefikConfigManager {
                     this.lastLocalCertificateState.delete(dirName);
 
                     // Remove from dynamic config
-                    const certFilePath = path.join(
-                        domainDir,
-                        "cert.pem"
-                    );
-                    const keyFilePath = path.join(
-                        domainDir,
-                        "key.pem"
-                    );
+                    const certFilePath = path.join(domainDir, "cert.pem");
+                    const keyFilePath = path.join(domainDir, "key.pem");
                     const before = dynamicConfig.tls.certificates.length;
                     dynamicConfig.tls.certificates =
                         dynamicConfig.tls.certificates.filter(
@@ -894,14 +1004,58 @@ export class TraefikConfigManager {
         monitorInterval: number;
         lastCertificateFetch: Date | null;
         localCertificateCount: number;
+        wildcardCertificates: string[];
+        domainsCoveredByWildcards: string[];
     } {
+        const wildcardCertificates: string[] = [];
+        const domainsCoveredByWildcards: string[] = [];
+
+        // Find wildcard certificates
+        for (const [domain, state] of this.lastLocalCertificateState) {
+            if (state.exists && state.wildcard) {
+                wildcardCertificates.push(domain);
+            }
+        }
+
+        // Find domains covered by wildcards
+        for (const domain of this.activeDomains) {
+            if (isDomainCoveredByWildcard(domain, this.lastLocalCertificateState)) {
+                domainsCoveredByWildcards.push(domain);
+            }
+        }
+
         return {
             isRunning: this.isRunning,
             activeDomains: Array.from(this.activeDomains),
             monitorInterval:
                 config.getRawConfig().traefik.monitor_interval || 5000,
             lastCertificateFetch: this.lastCertificateFetch,
-            localCertificateCount: this.lastLocalCertificateState.size
+            localCertificateCount: this.lastLocalCertificateState.size,
+            wildcardCertificates,
+            domainsCoveredByWildcards
         };
     }
+}
+
+/**
+ * Check if a domain is covered by existing wildcard certificates
+ */
+export function isDomainCoveredByWildcard(domain: string, lastLocalCertificateState: Map<string, { exists: boolean; wildcard: boolean | null }>): boolean {
+    for (const [certDomain, state] of lastLocalCertificateState) {
+        if (state.exists && state.wildcard) {
+            // If stored as example.com but is wildcard, check subdomains
+            if (domain.endsWith("." + certDomain)) {
+                // Check that it's only one level deep (wildcard only covers one level)
+                const prefix = domain.substring(
+                    0,
+                    domain.length - ("." + certDomain).length
+                );
+                // If prefix contains a dot, it's more than one level deep
+                if (!prefix.includes(".")) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }

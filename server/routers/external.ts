@@ -82,6 +82,7 @@ authenticated.delete(
     "/org/:orgId",
     verifyOrgAccess,
     verifyUserIsOrgOwner,
+    verifyUserHasAction(ActionsEnum.deleteOrg),
     org.deleteOrg
 );
 

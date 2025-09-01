@@ -88,6 +88,9 @@ import { ArrayElement } from "@server/types/ArrayElement";
 import { isTargetValid } from "@server/lib/validators";
 import { ListTargetsResponse } from "@server/routers/target";
 import { DockerManager, DockerState } from "@app/lib/docker";
+import { parseHostTarget } from "@app/lib/parseHostTarget";
+import { toASCII, toUnicode } from 'punycode';
+import { DomainRow } from "../../domains/DomainsTable";
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
@@ -164,12 +167,12 @@ export default function Page() {
         ...(!env.flags.allowRawResources
             ? []
             : [
-                  {
-                      id: "raw" as ResourceType,
-                      title: t("resourceRaw"),
-                      description: t("resourceRawDescription")
-                  }
-              ])
+                {
+                    id: "raw" as ResourceType,
+                    title: t("resourceRaw"),
+                    description: t("resourceRawDescription")
+                }
+            ])
     ];
 
     const baseForm = useForm<BaseResourceFormValues>({
@@ -301,11 +304,11 @@ export default function Page() {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                          ...target,
-                          ...data,
-                          updated: true,
-                          siteType: site?.type || null
-                      }
+                        ...target,
+                        ...data,
+                        updated: true,
+                        siteType: site?.type || null
+                    }
                     : target
             )
         );
@@ -326,7 +329,7 @@ export default function Page() {
             if (isHttp) {
                 const httpData = httpForm.getValues();
                 Object.assign(payload, {
-                    subdomain: httpData.subdomain,
+                    subdomain: httpData.subdomain ? toASCII(httpData.subdomain) : undefined,
                     domainId: httpData.domainId,
                     protocol: "tcp"
                 });
@@ -468,7 +471,11 @@ export default function Page() {
                     });
 
                 if (res?.status === 200) {
-                    const domains = res.data.data.domains;
+                    const rawDomains = res.data.data.domains as DomainRow[];
+                    const domains = rawDomains.map((domain) => ({
+                        ...domain,
+                        baseDomain: toUnicode(domain.baseDomain),
+                    }));
                     setBaseDomains(domains);
                     // if (domains.length) {
                     //     httpForm.setValue("domainId", domains[0].domainId);
@@ -520,7 +527,7 @@ export default function Page() {
                                     className={cn(
                                         "justify-between flex-1",
                                         !row.original.siteId &&
-                                            "text-muted-foreground"
+                                        "text-muted-foreground"
                                     )}
                                 >
                                     {row.original.siteId
@@ -589,31 +596,31 @@ export default function Page() {
         },
         ...(baseForm.watch("http")
             ? [
-                  {
-                      accessorKey: "method",
-                      header: t("method"),
-                      cell: ({ row }: { row: Row<LocalTarget> }) => (
-                          <Select
-                              defaultValue={row.original.method ?? ""}
-                              onValueChange={(value) =>
-                                  updateTarget(row.original.targetId, {
-                                      ...row.original,
-                                      method: value
-                                  })
-                              }
-                          >
-                              <SelectTrigger>
-                                  {row.original.method}
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="http">http</SelectItem>
-                                  <SelectItem value="https">https</SelectItem>
-                                  <SelectItem value="h2c">h2c</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      )
-                  }
-              ]
+                {
+                    accessorKey: "method",
+                    header: t("method"),
+                    cell: ({ row }: { row: Row<LocalTarget> }) => (
+                        <Select
+                            defaultValue={row.original.method ?? ""}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    method: value
+                                })
+                            }
+                        >
+                            <SelectTrigger>
+                                {row.original.method}
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="http">http</SelectItem>
+                                <SelectItem value="https">https</SelectItem>
+                                <SelectItem value="h2c">h2c</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )
+                }
+            ]
             : []),
         {
             accessorKey: "ip",
@@ -622,12 +629,23 @@ export default function Page() {
                 <Input
                     defaultValue={row.original.ip}
                     className="min-w-[150px]"
-                    onBlur={(e) =>
-                        updateTarget(row.original.targetId, {
-                            ...row.original,
-                            ip: e.target.value
-                        })
-                    }
+                    onBlur={(e) => {
+                        const parsed = parseHostTarget(e.target.value);
+
+                        if (parsed) {
+                            updateTarget(row.original.targetId, {
+                                ...row.original,
+                                method: parsed.protocol,
+                                ip: parsed.host,
+                                port: parsed.port ? Number(parsed.port) : undefined,
+                            });
+                        } else {
+                            updateTarget(row.original.targetId, {
+                                ...row.original,
+                                ip: e.target.value,
+                            });
+                        }
+                    }}
                 />
             )
         },
@@ -909,10 +927,10 @@ export default function Page() {
                                                                                     .target
                                                                                     .value
                                                                                     ? parseInt(
-                                                                                          e
-                                                                                              .target
-                                                                                              .value
-                                                                                      )
+                                                                                        e
+                                                                                            .target
+                                                                                            .value
+                                                                                    )
                                                                                     : undefined
                                                                             )
                                                                         }
@@ -1015,21 +1033,21 @@ export default function Page() {
                                                                                     className={cn(
                                                                                         "justify-between flex-1",
                                                                                         !field.value &&
-                                                                                            "text-muted-foreground"
+                                                                                        "text-muted-foreground"
                                                                                     )}
                                                                                 >
                                                                                     {field.value
                                                                                         ? sites.find(
-                                                                                              (
-                                                                                                  site
-                                                                                              ) =>
-                                                                                                  site.siteId ===
-                                                                                                  field.value
-                                                                                          )
-                                                                                              ?.name
+                                                                                            (
+                                                                                                site
+                                                                                            ) =>
+                                                                                                site.siteId ===
+                                                                                                field.value
+                                                                                        )
+                                                                                            ?.name
                                                                                         : t(
-                                                                                              "siteSelect"
-                                                                                          )}
+                                                                                            "siteSelect"
+                                                                                        )}
                                                                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                                 </Button>
                                                                             </FormControl>
@@ -1097,18 +1115,18 @@ export default function Page() {
                                                                                 );
                                                                             return selectedSite &&
                                                                                 selectedSite.type ===
-                                                                                    "newt" ? (() => {
-                                                                                const dockerState = getDockerStateForSite(selectedSite.siteId);
-                                                                                return (
-                                                                                    <ContainersSelector
-                                                                                        site={selectedSite}
-                                                                                        containers={dockerState.containers}
-                                                                                        isAvailable={dockerState.isAvailable}
-                                                                                        onContainerSelect={handleContainerSelect}
-                                                                                        onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
-                                                                                    />
-                                                                                );
-                                                                            })() : null;
+                                                                                "newt" ? (() => {
+                                                                                    const dockerState = getDockerStateForSite(selectedSite.siteId);
+                                                                                    return (
+                                                                                        <ContainersSelector
+                                                                                            site={selectedSite}
+                                                                                            containers={dockerState.containers}
+                                                                                            isAvailable={dockerState.isAvailable}
+                                                                                            onContainerSelect={handleContainerSelect}
+                                                                                            onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
+                                                                                        />
+                                                                                    );
+                                                                                })() : null;
                                                                         })()}
                                                                 </div>
                                                                 <FormMessage />
@@ -1176,21 +1194,25 @@ export default function Page() {
                                                     )}
 
                                                     <FormField
-                                                        control={
-                                                            addTargetForm.control
-                                                        }
+                                                        control={addTargetForm.control}
                                                         name="ip"
                                                         render={({ field }) => (
                                                             <FormItem className="relative">
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "targetAddr"
-                                                                    )}
-                                                                </FormLabel>
+                                                                <FormLabel>{t("targetAddr")}</FormLabel>
                                                                 <FormControl>
                                                                     <Input
                                                                         id="ip"
                                                                         {...field}
+                                                                        onBlur={(e) => {
+                                                                            const parsed = parseHostTarget(e.target.value);
+                                                                            if (parsed) {
+                                                                                addTargetForm.setValue("method", parsed.protocol);
+                                                                                addTargetForm.setValue("ip", parsed.host);
+                                                                                addTargetForm.setValue("port", parsed.port);
+                                                                            } else {
+                                                                                field.onBlur();
+                                                                            }
+                                                                        }}
                                                                     />
                                                                 </FormControl>
                                                                 <FormMessage />
@@ -1270,12 +1292,12 @@ export default function Page() {
                                                                                     {header.isPlaceholder
                                                                                         ? null
                                                                                         : flexRender(
-                                                                                              header
-                                                                                                  .column
-                                                                                                  .columnDef
-                                                                                                  .header,
-                                                                                              header.getContext()
-                                                                                          )}
+                                                                                            header
+                                                                                                .column
+                                                                                                .columnDef
+                                                                                                .header,
+                                                                                            header.getContext()
+                                                                                        )}
                                                                                 </TableHead>
                                                                             )
                                                                         )}

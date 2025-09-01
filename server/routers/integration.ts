@@ -221,6 +221,13 @@ authenticated.get(
     domain.listDomains
 );
 
+authenticated.get(
+    "/org/:orgId/invitations",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listInvitations),
+    user.listInvitations
+);
+
 authenticated.post(
     "/org/:orgId/create-invite",
     verifyApiKeyOrgAccess,

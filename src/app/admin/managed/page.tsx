@@ -1,3 +1,5 @@
+"use client";
+
 import {
     SettingsContainer,
     SettingsSection,
@@ -18,30 +20,27 @@ import {
     ExternalLink
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
-export default async function ManagedPage() {
+export default function ManagedPage() {
+    const t = useTranslations();
+
     return (
         <>
             <SettingsSectionTitle
-                title="Managed Self-Hosted"
-                description="More reliable and low-maintenance self-hosted Pangolin server with extra bells and whistles"
+                title={t("managedSelfHosted.title")}
+                description={t("managedSelfHosted.description")}
             />
 
             <SettingsContainer>
                 <SettingsSection>
                     <SettingsSectionBody>
                         <p className="text-muted-foreground mb-4">
-                            <strong>Managed Self-Hosted Pangolin</strong> is a
-                            deployment option designed for people who want
-                            simplicity and extra reliability while still keeping
-                            their data private and self-hosted.
+                            <strong>{t("managedSelfHosted.introTitle")}</strong>{" "}
+                            {t("managedSelfHosted.introDescription")}
                         </p>
                         <p className="text-muted-foreground mb-6">
-                            With this option, you still run your own Pangolin
-                            node — your tunnels, SSL termination, and traffic
-                            all stay on your server. The difference is that
-                            management and monitoring are handled through our
-                            cloud dashboard, which unlocks a number of benefits:
+                            {t("managedSelfHosted.introDetail")}
                         </p>
 
                         <div className="grid gap-4 md:grid-cols-2 py-4">
@@ -50,13 +49,14 @@ export default async function ManagedPage() {
                                     <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            Simpler operations
+                                            {t(
+                                                "managedSelfHosted.benefitSimplerOperations.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            No need to run your own mail server
-                                            or set up complex alerting. You'll
-                                            get health checks and downtime
-                                            alerts out of the box.
+                                            {t(
+                                                "managedSelfHosted.benefitSimplerOperations.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -65,13 +65,14 @@ export default async function ManagedPage() {
                                     <RefreshCw className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            Automatic updates
+                                            {t(
+                                                "managedSelfHosted.benefitAutomaticUpdates.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            The cloud dashboard evolves quickly,
-                                            so you get new features and bug
-                                            fixes without having to manually
-                                            pull new containers every time.
+                                            {t(
+                                                "managedSelfHosted.benefitAutomaticUpdates.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -80,12 +81,14 @@ export default async function ManagedPage() {
                                     <Wrench className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            Less maintenance
+                                            {t(
+                                                "managedSelfHosted.benefitLessMaintenance.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            No database migrations, backups, or
-                                            extra infrastructure to manage. We
-                                            handle that in the cloud.
+                                            {t(
+                                                "managedSelfHosted.benefitLessMaintenance.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -96,13 +99,14 @@ export default async function ManagedPage() {
                                     <Activity className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            Cloud failover
+                                            {t(
+                                                "managedSelfHosted.benefitCloudFailover.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            If your node goes down, your tunnels
-                                            can temporarily fail over to our
-                                            cloud points of presence until you
-                                            bring it back online.
+                                            {t(
+                                                "managedSelfHosted.benefitCloudFailover.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -110,12 +114,14 @@ export default async function ManagedPage() {
                                     <Shield className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            High availability (PoPs)
+                                            {t(
+                                                "managedSelfHosted.benefitHighAvailability.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            You can also attach multiple nodes
-                                            to your account for redundancy and
-                                            better performance.
+                                            {t(
+                                                "managedSelfHosted.benefitHighAvailability.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -124,13 +130,14 @@ export default async function ManagedPage() {
                                     <Zap className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
                                     <div>
                                         <h4 className="font-medium">
-                                            Future enhancements
+                                            {t(
+                                                "managedSelfHosted.benefitFutureEnhancements.title"
+                                            )}
                                         </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            We're planning to add more
-                                            analytics, alerting, and management
-                                            tools to make your deployment even
-                                            more robust.
+                                            {t(
+                                                "managedSelfHosted.benefitFutureEnhancements.description"
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -141,15 +148,14 @@ export default async function ManagedPage() {
                             variant="neutral"
                             className="flex items-center gap-1"
                         >
-                            Read the docs to learn more about the Managed
-                            Self-Hosted option in our{" "}
+                            {t("managedSelfHosted.docsAlert.text")}{" "}
                             <Link
-                                href="https://docs.digpangolin.com/self-host/advanced/convert-to-managed"
+                                href="https://docs.digpangolin.com/manage/managed"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="hover:underline text-primary flex items-center gap-1"
                             >
-                                documentation
+                                {t("managedSelfHosted.docsAlert.documentation")}
                                 <ExternalLink className="w-4 h-4" />
                             </Link>
                             .
@@ -157,13 +163,13 @@ export default async function ManagedPage() {
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
                         <Link
-                            href="https://docs.digpangolin.com/self-host/advanced/convert-to-managed"
+                            href="https://docs.digpangolin.com/self-host/convert-managed"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:underline text-primary flex items-center gap-1"
                         >
                             <Button>
-                                Convert This Node to Managed Self-Hosted
+                                {t("managedSelfHosted.convertButton")}
                             </Button>
                         </Link>
                     </SettingsSectionFooter>

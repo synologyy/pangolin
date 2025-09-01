@@ -7,6 +7,7 @@ import { cn } from "@app/lib/cn";
 import { ListUserOrgsResponse } from "@server/routers/org";
 import SupporterStatus from "@app/components/SupporterStatus";
 import { ExternalLink, Server, BookOpenText, Zap } from "lucide-react";
+import { FaDiscord, FaGithub } from "react-icons/fa";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserContext } from "@app/hooks/useUserContext";
@@ -151,7 +152,7 @@ export function LayoutSidebar({
                                 {!isUnlocked()
                                     ? t("communityEdition")
                                     : t("commercialEdition")}
-                                <ExternalLink size={12} />
+                                <FaGithub size={12} />
                             </Link>
                         </div>
                         <div className="text-xs text-muted-foreground ">
@@ -165,9 +166,28 @@ export function LayoutSidebar({
                                 <BookOpenText size={12} />
                             </Link>
                         </div>
+                        <div className="text-xs text-muted-foreground text-center">
+                            <Link
+                                href="https://discord.gg/HCJR8Xhme4"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-1"
+                            >
+                                Discord
+                                <FaDiscord size={12} />
+                            </Link>
+                        </div>
                         {env?.app?.version && (
                             <div className="text-xs text-muted-foreground text-center">
-                                v{env.app.version}
+                                <Link
+                                    href={`https://github.com/fosrl/pangolin/releases/tag/${env.app.version}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-1"
+                                >
+                                    v{env.app.version}
+                                    <ExternalLink size={12} />
+                                </Link>
                             </div>
                         )}
                     </div>

@@ -272,7 +272,7 @@ export async function createSite(
                         type,
                         dockerSocketEnabled: false,
                         online: true,
-                        subnet: "0.0.0.0/0"
+                        subnet: "0.0.0.0/32"
                     })
                     .returning();
             }

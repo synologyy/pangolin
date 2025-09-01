@@ -22,7 +22,7 @@ export async function verifyRoleAccess(
         );
     }
 
-    const { roleIds } = req.body;
+    const roleIds = req.body?.roleIds;
     const allRoleIds = roleIds || (isNaN(singleRoleId) ? [] : [singleRoleId]);
 
     if (allRoleIds.length === 0) {

@@ -58,18 +58,23 @@ export async function addUserRole(
             );
         }
 
-        const orgId = req.userOrg?.orgId || req.apiKeyOrg?.orgId;
+        // get the role
+        const [role] = await db
+            .select()
+            .from(roles)
+            .where(eq(roles.roleId, roleId))
+            .limit(1);
 
-        if (!orgId) {
+        if (!role) {
             return next(
-                createHttpError(HttpCode.BAD_REQUEST, "Invalid organization ID")
+                createHttpError(HttpCode.BAD_REQUEST, "Invalid role ID")
             );
         }
 
         const existingUser = await db
             .select()
             .from(userOrgs)
-            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId)))
+            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, role.orgId)))
             .limit(1);
 
         if (existingUser.length === 0) {
@@ -93,7 +98,7 @@ export async function addUserRole(
         const roleExists = await db
             .select()
             .from(roles)
-            .where(and(eq(roles.roleId, roleId), eq(roles.orgId, orgId)))
+            .where(and(eq(roles.roleId, roleId), eq(roles.orgId, role.orgId)))
             .limit(1);
 
         if (roleExists.length === 0) {
@@ -108,7 +113,7 @@ export async function addUserRole(
         const newUserRole = await db
             .update(userOrgs)
             .set({ roleId })
-            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId)))
+            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, role.orgId)))
             .returning();
 
         return response(res, {
