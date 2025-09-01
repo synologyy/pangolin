@@ -99,6 +99,43 @@ type ResourcesTableProps = {
     defaultView?: "proxy" | "internal";
 };
 
+
+const STORAGE_KEYS = {
+    PAGE_SIZE: 'datatable-page-size',
+    getTablePageSize: (tableId?: string) =>
+        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE
+};
+
+const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
+    if (typeof window === 'undefined') return defaultSize;
+
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = parseInt(stored, 10);
+            if (parsed > 0 && parsed <= 1000) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to read page size from localStorage:', error);
+    }
+    return defaultSize;
+};
+
+const setStoredPageSize = (pageSize: number, tableId?: string): void => {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        localStorage.setItem(key, pageSize.toString());
+    } catch (error) {
+        console.warn('Failed to save page size to localStorage:', error);
+    }
+};
+
+
 export default function ResourcesTable({
     resources,
     internalResources,
@@ -112,6 +149,13 @@ export default function ResourcesTable({
     const { env } = useEnvContext();
 
     const api = createApiClient({ env });
+
+    const [proxyPageSize, setProxyPageSize] = useState<number>(() =>
+        getStoredPageSize('proxy-resources', 20)
+    );
+    const [internalPageSize, setInternalPageSize] = useState<number>(() =>
+        getStoredPageSize('internal-resources', 20)
+    );
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedResource, setSelectedResource] =
@@ -559,7 +603,7 @@ export default function ResourcesTable({
         onGlobalFilterChange: setProxyGlobalFilter,
         initialState: {
             pagination: {
-                pageSize: 20,
+                pageSize: proxyPageSize,
                 pageIndex: 0
             }
         },
@@ -582,7 +626,7 @@ export default function ResourcesTable({
         onGlobalFilterChange: setInternalGlobalFilter,
         initialState: {
             pagination: {
-                pageSize: 20,
+                pageSize: proxyPageSize,
                 pageIndex: 0
             }
         },
@@ -592,6 +636,16 @@ export default function ResourcesTable({
             globalFilter: internalGlobalFilter
         }
     });
+
+    const handleProxyPageSizeChange = (newPageSize: number) => {
+        setProxyPageSize(newPageSize);
+        setStoredPageSize(newPageSize, 'proxy-resources');
+    };
+
+    const handleInternalPageSizeChange = (newPageSize: number) => {
+        setInternalPageSize(newPageSize);
+        setStoredPageSize(newPageSize, 'internal-resources');
+    };
 
     return (
         <>
@@ -761,7 +815,10 @@ export default function ResourcesTable({
                                     </TableBody>
                                 </Table>
                                 <div className="mt-4">
-                                    <DataTablePagination table={proxyTable} />
+                                    <DataTablePagination
+                                        table={proxyTable}
+                                        onPageSizeChange={handleProxyPageSizeChange}
+                                    />
                                 </div>
                             </TabsContent>
                             <TabsContent value="internal">
@@ -861,6 +918,7 @@ export default function ResourcesTable({
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={internalTable}
+                                        onPageSizeChange={handleInternalPageSizeChange}
                                     />
                                 </div>
                             </TabsContent>

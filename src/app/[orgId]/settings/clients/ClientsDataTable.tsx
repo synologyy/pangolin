@@ -20,6 +20,7 @@ export function ClientsDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="clients-table"
             title="Clients"
             searchPlaceholder="Search clients..."
             searchColumn="name"

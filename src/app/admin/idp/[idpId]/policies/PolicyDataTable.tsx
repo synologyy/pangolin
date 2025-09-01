@@ -22,6 +22,7 @@ export function PolicyDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="orgPolicies-table"
             title={t('orgPolicies')}
             searchPlaceholder={t('orgPoliciesSearch')}
             searchColumn="orgId"

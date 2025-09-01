@@ -25,6 +25,7 @@ export function DomainsDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="domains-table"
             title={t("domains")}
             searchPlaceholder={t("domainsSearch")}
             searchColumn="baseDomain"

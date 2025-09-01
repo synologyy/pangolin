@@ -20,7 +20,7 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { Button } from "@app/components/ui/button";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
 import { Plus, Search, RefreshCw } from "lucide-react";
@@ -32,7 +32,42 @@ import {
 } from "@app/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+
+const STORAGE_KEYS = {
+    PAGE_SIZE: 'datatable-page-size',
+    getTablePageSize: (tableId?: string) => 
+        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
+};
+
+const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
+    if (typeof window === 'undefined') return defaultSize;
+    
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = parseInt(stored, 10);
+            // Validate that it's a reasonable page size
+            if (parsed > 0 && parsed <= 1000) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn('Failed to read page size from localStorage:', error);
+    }
+    return defaultSize;
+};
+
+const setStoredPageSize = (pageSize: number, tableId?: string): void => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        localStorage.setItem(key, pageSize.toString());
+    } catch (error) {
+        console.warn('Failed to save page size to localStorage:', error);
+    }
+};
 
 type TabFilter = {
     id: string;
@@ -56,6 +91,8 @@ type DataTableProps<TData, TValue> = {
     };
     tabs?: TabFilter[];
     defaultTab?: string;
+    persistPageSize?: boolean | string;
+    defaultPageSize?: number;
 };
 
 export function DataTable<TData, TValue>({
@@ -70,8 +107,23 @@ export function DataTable<TData, TValue>({
     searchColumn = "name",
     defaultSort,
     tabs,
-    defaultTab
+    defaultTab,
+    persistPageSize = false,
+    defaultPageSize = 20
 }: DataTableProps<TData, TValue>) {
+    const t = useTranslations();
+    
+    // Determine table identifier for storage
+    const tableId = typeof persistPageSize === 'string' ? persistPageSize : undefined;
+    
+    // Initialize page size from storage or default
+    const [pageSize, setPageSize] = useState<number>(() => {
+        if (persistPageSize) {
+            return getStoredPageSize(tableId, defaultPageSize);
+        }
+        return defaultPageSize;
+    });
+    
     const [sorting, setSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
     );
@@ -80,7 +132,6 @@ export function DataTable<TData, TValue>({
     const [activeTab, setActiveTab] = useState<string>(
         defaultTab || tabs?.[0]?.id || ""
     );
-    const t = useTranslations();
 
     // Apply tab filter to data
     const filteredData = useMemo(() => {
@@ -108,7 +159,7 @@ export function DataTable<TData, TValue>({
         onGlobalFilterChange: setGlobalFilter,
         initialState: {
             pagination: {
-                pageSize: 20,
+                pageSize: pageSize,
                 pageIndex: 0
             }
         },
@@ -119,10 +170,33 @@ export function DataTable<TData, TValue>({
         }
     });
 
+    useEffect(() => {
+        const currentPageSize = table.getState().pagination.pageSize;
+        if (currentPageSize !== pageSize) {
+            table.setPageSize(pageSize);
+            
+            // Persist to localStorage if enabled
+            if (persistPageSize) {
+                setStoredPageSize(pageSize, tableId);
+            }
+        }
+    }, [pageSize, table, persistPageSize, tableId]);
+
     const handleTabChange = (value: string) => {
         setActiveTab(value);
         // Reset to first page when changing tabs
         table.setPageIndex(0);
+    };
+
+    // Enhanced pagination component that updates our local state
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        table.setPageSize(newPageSize);
+        
+        // Persist immediately when changed
+        if (persistPageSize) {
+            setStoredPageSize(newPageSize, tableId);
+        }
     };
 
     return (
@@ -235,7 +309,10 @@ export function DataTable<TData, TValue>({
                         </TableBody>
                     </Table>
                     <div className="mt-4">
-                        <DataTablePagination table={table} />
+                        <DataTablePagination 
+                            table={table} 
+                            onPageSizeChange={handlePageSizeChange}
+                        />
                     </div>
                 </CardContent>
             </Card>

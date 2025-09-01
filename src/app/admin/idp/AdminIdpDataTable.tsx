@@ -21,6 +21,7 @@ export function IdpDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="idp-table"
             title={t('idp')}
             searchPlaceholder={t('idpSearch')}
             searchColumn="name"

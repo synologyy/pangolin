@@ -24,6 +24,7 @@ export function UsersDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="users-table"
             title={t('users')}
             searchPlaceholder={t('accessUsersSearch')}
             searchColumn="email"
