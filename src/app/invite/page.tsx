@@ -48,6 +48,7 @@ export default async function InvitePage(props: {
         )
         .catch((e) => {
             error = formatAxiosError(e);
+            console.error(error);
         });
 
     if (res && res.status === 200) {
@@ -55,13 +56,13 @@ export default async function InvitePage(props: {
     }
 
     function cardType() {
-        if (error.includes(t('inviteErrorWrongUser'))) {
+        if (error.includes("Invite is not for this user")) {
             return "wrong_user";
         } else if (
-            error.includes(t('inviteErrorUserNotExists'))
+            error.includes("User does not exist. Please create an account first.")
         ) {
             return "user_does_not_exist";
-        } else if (error.includes(t('inviteErrorLoginRequired'))) {
+        } else if (error.includes("You must be logged in to accept an invite")) {
             return "not_logged_in";
         } else {
             return "rejected";
