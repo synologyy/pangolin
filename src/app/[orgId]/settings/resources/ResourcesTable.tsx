@@ -626,7 +626,7 @@ export default function ResourcesTable({
         onGlobalFilterChange: setInternalGlobalFilter,
         initialState: {
             pagination: {
-                pageSize: proxyPageSize,
+                pageSize: internalPageSize,
                 pageIndex: 0
             }
         },
