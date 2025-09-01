@@ -650,8 +650,8 @@ export default function ReverseProxyTargets(props: {
                     className="min-w-[150px]"
                     onBlur={(e) => {
                         const input = e.target.value.trim();
-                        const hasProtocol = /^https?:\/\//.test(input);
-                        const hasPort = /:\d+/.test(input);
+                        const hasProtocol = /^(https?|h2c):\/\//.test(input);
+                        const hasPort = /:\d+(?:\/|$)/.test(input);
 
                         if (hasProtocol || hasPort) {
                             const parsed = parseHostTarget(input);
@@ -675,9 +675,7 @@ export default function ReverseProxyTargets(props: {
                             });
                         }
                     }}
-
                 />
-
             )
         },
         {
@@ -973,8 +971,8 @@ export default function ReverseProxyTargets(props: {
                                                         {...field}
                                                         onBlur={(e) => {
                                                             const input = e.target.value.trim();
-                                                            const hasProtocol = /^https?:\/\//.test(input);
-                                                            const hasPort = /:\d+/.test(input);
+                                                            const hasProtocol = /^(https?|h2c):\/\//.test(input);
+                                                            const hasPort = /:\d+(?:\/|$)/.test(input);
 
                                                             if (hasProtocol || hasPort) {
                                                                 const parsed = parseHostTarget(input);
