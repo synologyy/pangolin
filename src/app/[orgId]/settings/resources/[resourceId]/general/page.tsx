@@ -54,6 +54,8 @@ import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
+import { DomainRow } from "../../../domains/DomainsTable";
+import { toASCII, toUnicode } from "punycode";
 
 export default function GeneralForm() {
     const [formKey, setFormKey] = useState(0);
@@ -80,7 +82,7 @@ export default function GeneralForm() {
 
     const [loadingPage, setLoadingPage] = useState(true);
     const [resourceFullDomain, setResourceFullDomain] = useState(
-        `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`
+        `${resource.ssl ? "https" : "http"}://${toUnicode(resource.fullDomain || "")}`
     );
     const [selectedDomain, setSelectedDomain] = useState<{
         domainId: string;
@@ -155,7 +157,11 @@ export default function GeneralForm() {
                 });
 
             if (res?.status === 200) {
-                const domains = res.data.data.domains;
+                const rawDomains = res.data.data.domains as DomainRow[];
+                const domains = rawDomains.map((domain) => ({
+                    ...domain,
+                    baseDomain: toUnicode(domain.baseDomain), 
+                }));
                 setBaseDomains(domains);
                 setFormKey((key) => key + 1);
             }
@@ -180,7 +186,7 @@ export default function GeneralForm() {
                 {
                     enabled: data.enabled,
                     name: data.name,
-                    subdomain: data.subdomain,
+                    subdomain: data.subdomain ? toASCII(data.subdomain) : undefined,
                     domainId: data.domainId,
                     proxyPort: data.proxyPort,
                     // ...(!resource.http && {
@@ -319,10 +325,10 @@ export default function GeneralForm() {
                                                                                 .target
                                                                                 .value
                                                                                 ? parseInt(
-                                                                                      e
-                                                                                          .target
-                                                                                          .value
-                                                                                  )
+                                                                                    e
+                                                                                        .target
+                                                                                        .value
+                                                                                )
                                                                                 : undefined
                                                                         )
                                                                     }
@@ -472,7 +478,6 @@ export default function GeneralForm() {
                                         setEditDomainOpen(false);
 
                                         toast({
-                                            title: "Domain sanitized",
                                             description: `Final domain: ${sanitizedFullDomain}`,
                                         });
                                     }
