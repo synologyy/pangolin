@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "获取站点资源",
     "actionListSiteResources": "列出站点资源",
     "actionUpdateSiteResource": "更新站点资源",
+    "actionListInvitations": "邀请列表",
     "noneSelected": "未选择",
     "orgNotFound2": "未找到组织。",
     "searchProgress": "搜索中...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "自动登录错误",
     "autoLoginErrorNoRedirectUrl": "未从身份提供商收到重定向URL。",
     "autoLoginErrorGeneratingUrl": "生成身份验证URL失败。",
-    "internationaldomaindetected": "检测到国际域名",
-    "willbestoredas": "将存储为："
+    "managedSelfHosted": {
+        "title": "托管自托管",
+        "description": "更可靠和低维护自我托管的 Pangolin 服务器，带有额外的铃声和告密器",
+        "introTitle": "托管自托管的潘戈林公司",
+        "introDescription": "这是一种部署选择，为那些希望简洁和额外可靠的人设计，同时仍然保持他们的数据的私密性和自我托管性。",
+        "introDetail": "通过此选项，您仍然运行您自己的 Pangolin 节点 — — 您的隧道、SSL 终止，并且流量在您的服务器上保持所有状态。 不同之处在于，管理和监测是通过我们的云层仪表板进行的，该仪表板开启了一些好处：",
+        "benefitSimplerOperations": {
+            "title": "简单的操作",
+            "description": "无需运行您自己的邮件服务器或设置复杂的警报。您将从方框中获得健康检查和下限提醒。"
+        },
+        "benefitAutomaticUpdates": {
+            "title": "自动更新",
+            "description": "云仪表盘快速演化，所以您可以获得新的功能和错误修复，而不必每次手动拉取新的容器。"
+        },
+        "benefitLessMaintenance": {
+            "title": "减少维护时间",
+            "description": "没有要管理的数据库迁移、备份或额外的基础设施。我们在云端处理这个问题。"
+        },
+        "benefitCloudFailover": {
+            "title": "云失败",
+            "description": "如果您的节点被关闭，您的隧道可能暂时无法连接到我们的云端，直到您将其重新连接上线。"
+        },
+        "benefitHighAvailability": {
+            "title": "高可用率(PoPs)",
+            "description": "您还可以将多个节点添加到您的帐户中以获取冗余和更好的性能。"
+        },
+        "benefitFutureEnhancements": {
+            "title": "将来的改进",
+            "description": "我们正在计划添加更多的分析、警报和管理工具，使你的部署更加有力。"
+        },
+        "docsAlert": {
+            "text": "在我们中更多地了解管理下的自托管选项",
+            "documentation": "文档"
+        },
+        "convertButton": "将此节点转换为管理自托管的"
+    },
+    "internationaldomaindetected": "检测到国际域",
+    "willbestoredas": "储存为："
 }

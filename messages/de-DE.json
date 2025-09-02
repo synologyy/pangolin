@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Site-Ressource abrufen",
     "actionListSiteResources": "Site-Ressourcen auflisten",
     "actionUpdateSiteResource": "Site-Ressource aktualisieren",
+    "actionListInvitations": "Einladungen auflisten",
     "noneSelected": "Keine ausgewählt",
     "orgNotFound2": "Keine Organisationen gefunden.",
     "searchProgress": "Suche...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Fehler bei der automatischen Anmeldung",
     "autoLoginErrorNoRedirectUrl": "Keine Weiterleitungs-URL vom Identitätsanbieter erhalten.",
     "autoLoginErrorGeneratingUrl": "Fehler beim Generieren der Authentifizierungs-URL.",
-    "internationaldomaindetected": "Internationale Domäne erkannt",
+    "managedSelfHosted": {
+        "title": "Verwaltetes Selbsthosted",
+        "description": "Zuverlässiger und wartungsarmer Pangolin Server mit zusätzlichen Glocken und Pfeifen",
+        "introTitle": "Verwalteter selbstgehosteter Pangolin",
+        "introDescription": "ist eine Deployment-Option, die für Personen konzipiert wurde, die Einfachheit und zusätzliche Zuverlässigkeit wünschen, während sie ihre Daten privat und selbstgehostet halten.",
+        "introDetail": "Mit dieser Option haben Sie immer noch Ihren eigenen Pangolin-Knoten – Ihre Tunnel, SSL-Terminierung und Traffic bleiben auf Ihrem Server. Der Unterschied besteht darin, dass Verwaltung und Überwachung über unser Cloud-Dashboard abgewickelt werden, das eine Reihe von Vorteilen freischaltet:",
+        "benefitSimplerOperations": {
+            "title": "Einfachere Operationen",
+            "description": "Sie brauchen keinen eigenen Mail-Server auszuführen oder komplexe Warnungen einzurichten. Sie erhalten Gesundheitschecks und Ausfallwarnungen aus dem Box."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Automatische Updates",
+            "description": "Das Cloud-Dashboard entwickelt sich schnell, so dass Sie neue Funktionen und Fehlerbehebungen erhalten, ohne jedes Mal neue Container manuell ziehen zu müssen."
+        },
+        "benefitLessMaintenance": {
+            "title": "Weniger Wartung",
+            "description": "Keine Datenbankmigrationen, Sicherungen oder zusätzliche Infrastruktur zum Verwalten. Wir kümmern uns um das in der Cloud."
+        },
+        "benefitCloudFailover": {
+            "title": "Cloud-Ausfall",
+            "description": "Wenn Ihr Knoten runtergeht, können Ihre Tunnel vorübergehend an unsere Cloud-Punkte scheitern, bis Sie ihn wieder online bringen."
+        },
+        "benefitHighAvailability": {
+            "title": "Hohe Verfügbarkeit (PoPs)",
+            "description": "Sie können auch mehrere Knoten an Ihr Konto anhängen, um Redundanz und bessere Leistung zu erzielen."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Zukünftige Verbesserungen",
+            "description": "Wir planen weitere Analyse-, Alarm- und Management-Tools hinzuzufügen, um Ihren Einsatz noch robuster zu machen."
+        },
+        "docsAlert": {
+            "text": "Erfahren Sie mehr über die Managed Self-Hosted Option in unserer",
+            "documentation": "dokumentation"
+        },
+        "convertButton": "Diesen Knoten in Managed Self-Hosted umwandeln"
+    },
+    "internationaldomaindetected": "Internationale Domain erkannt",
     "willbestoredas": "Wird gespeichert als:"
 }

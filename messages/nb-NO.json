@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Hent Stedsressurs",
     "actionListSiteResources": "List opp Stedsressurser",
     "actionUpdateSiteResource": "Oppdater Stedsressurs",
+    "actionListInvitations": "Liste invitasjoner",
     "noneSelected": "Ingen valgt",
     "orgNotFound2": "Ingen organisasjoner funnet.",
     "searchProgress": "Søker...",
@@ -1457,5 +1458,43 @@
     "autoLoginRedirecting": "Omdirigerer til innlogging...",
     "autoLoginError": "Feil ved automatisk innlogging",
     "autoLoginErrorNoRedirectUrl": "Ingen omdirigerings-URL mottatt fra identitetsleverandøren.",
-    "autoLoginErrorGeneratingUrl": "Kunne ikke generere autentiserings-URL."
+    "autoLoginErrorGeneratingUrl": "Kunne ikke generere autentiserings-URL.",
+    "managedSelfHosted": {
+        "title": "Administrert selv-hostet",
+        "description": "Sikre og lavvedlikeholdsservere, selvbetjente Pangolin med ekstra klokker, og understell",
+        "introTitle": "Administrert Self-Hosted Pangolin",
+        "introDescription": "er et alternativ for bruk utviklet for personer som ønsker enkel og ekstra pålitelighet mens de fortsatt holder sine data privat og selvdrevne.",
+        "introDetail": "Med dette valget kjører du fortsatt din egen Pangolin-node - tunneler, SSL-terminering og trafikken ligger på serveren din. Forskjellen er at behandling og overvåking håndteres gjennom vårt skydashbord, som låser opp en rekke fordeler:",
+        "benefitSimplerOperations": {
+            "title": "Enklere operasjoner",
+            "description": "Ingen grunn til å kjøre din egen e-postserver eller sette opp kompleks varsling. Du vil få helsesjekk og nedetid varsler ut av boksen."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Automatiske oppdateringer",
+            "description": "Cloud dashbordet utvikler seg raskt, så du får nye funksjoner og feilrettinger uten at du trenger å trekke nye beholdere manuelt hver gang."
+        },
+        "benefitLessMaintenance": {
+            "title": "Mindre vedlikehold",
+            "description": "Ingen databasestyrer, sikkerhetskopier eller ekstra infrastruktur for å forvalte. Vi håndterer det i skyen."
+        },
+        "benefitCloudFailover": {
+            "title": "Sky feilslått",
+            "description": "Hvis EK-gruppen din går ned, kan tunnlene midlertidig mislykkes i å nå våre sky-punkter til du tar den tilbake på nett."
+        },
+        "benefitHighAvailability": {
+            "title": "Høy tilgjengelighet (PoPs)",
+            "description": "Du kan også legge ved flere noder til kontoen din for redundans og bedre ytelse."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Fremtidige forbedringer",
+            "description": "Vi planlegger å legge inn mer analyser, varsle og styringsverktøy for å gjøre din distribusjon enda mer robust."
+        },
+        "docsAlert": {
+            "text": "Lær mer om Managed Self-Hosted alternativet i vår",
+            "documentation": "dokumentasjon"
+        },
+        "convertButton": "Konverter denne noden til manuelt bruk"
+    },
+    "internationaldomaindetected": "Internasjonalt domene oppdaget",
+    "willbestoredas": "Vil bli lagret som:"
 }

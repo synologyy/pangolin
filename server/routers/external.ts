@@ -78,13 +78,16 @@ authenticated.post(
     verifyUserHasAction(ActionsEnum.updateOrg),
     org.updateOrg
 );
-authenticated.delete(
-    "/org/:orgId",
-    verifyOrgAccess,
-    verifyUserIsOrgOwner,
-    verifyUserHasAction(ActionsEnum.deleteOrg),
-    org.deleteOrg
-);
+
+if (build !== "saas") {
+    authenticated.delete(
+        "/org/:orgId",
+        verifyOrgAccess,
+        verifyUserIsOrgOwner,
+        verifyUserHasAction(ActionsEnum.deleteOrg),
+        org.deleteOrg
+    );
+}
 
 authenticated.put(
     "/org/:orgId/site",

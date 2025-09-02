@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Obtenir une ressource de site",
     "actionListSiteResources": "Lister les ressources de site",
     "actionUpdateSiteResource": "Mettre à jour une ressource de site",
+    "actionListInvitations": "Lister les invitations",
     "noneSelected": "Aucune sélection",
     "orgNotFound2": "Aucune organisation trouvée.",
     "searchProgress": "Rechercher...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Erreur de connexion automatique",
     "autoLoginErrorNoRedirectUrl": "Aucune URL de redirection reçue du fournisseur d'identité.",
     "autoLoginErrorGeneratingUrl": "Échec de la génération de l'URL d'authentification.",
+    "managedSelfHosted": {
+        "title": "Gestion autonome",
+        "description": "Serveur Pangolin auto-hébergé avec des cloches et des sifflets supplémentaires",
+        "introTitle": "Pangolin auto-hébergé géré",
+        "introDescription": "est une option de déploiement conçue pour les personnes qui veulent de la simplicité et de la fiabilité tout en gardant leurs données privées et auto-hébergées.",
+        "introDetail": "Avec cette option, vous exécutez toujours votre propre nœud Pangolin — vos tunnels, la terminaison SSL et le trafic restent sur votre serveur. La différence est que la gestion et la surveillance sont gérées via notre tableau de bord du cloud, qui déverrouille un certain nombre d'avantages :",
+        "benefitSimplerOperations": {
+            "title": "Opérations plus simples",
+            "description": "Pas besoin de faire tourner votre propre serveur de messagerie ou de configurer des alertes complexes. Vous obtiendrez des contrôles de santé et des alertes de temps d'arrêt par la suite."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Mises à jour automatiques",
+            "description": "Le tableau de bord du cloud évolue rapidement, de sorte que vous obtenez de nouvelles fonctionnalités et des corrections de bugs sans avoir à extraire manuellement de nouveaux conteneurs à chaque fois."
+        },
+        "benefitLessMaintenance": {
+            "title": "Moins de maintenance",
+            "description": "Aucune migration de base de données, sauvegarde ou infrastructure supplémentaire à gérer. Nous gérons cela dans le cloud."
+        },
+        "benefitCloudFailover": {
+            "title": "Basculement du Cloud",
+            "description": "Si votre nœud descend, vos tunnels peuvent temporairement échouer jusqu'à ce que vous le rapatriez en ligne."
+        },
+        "benefitHighAvailability": {
+            "title": "Haute disponibilité (PoPs)",
+            "description": "Vous pouvez également attacher plusieurs nœuds à votre compte pour une redondance et de meilleures performances."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Améliorations futures",
+            "description": "Nous prévoyons d'ajouter plus d'outils d'analyse, d'alerte et de gestion pour rendre votre déploiement encore plus robuste."
+        },
+        "docsAlert": {
+            "text": "En savoir plus sur l'option Auto-Hébergement géré dans notre",
+            "documentation": "documentation"
+        },
+        "convertButton": "Convertir ce noeud en auto-hébergé géré"
+    },
     "internationaldomaindetected": "Domaine international détecté",
-    "willbestoredas": "Sera stocké comme:"
+    "willbestoredas": "Sera stocké comme :"
 }

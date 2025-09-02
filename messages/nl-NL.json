@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Bron van site ophalen",
     "actionListSiteResources": "Bronnen van site weergeven",
     "actionUpdateSiteResource": "Document bijwerken van site",
+    "actionListInvitations": "Toon uitnodigingen",
     "noneSelected": "Niet geselecteerd",
     "orgNotFound2": "Geen organisaties gevonden.",
     "searchProgress": "Zoeken...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Auto Login Fout",
     "autoLoginErrorNoRedirectUrl": "Geen redirect URL ontvangen van de identity provider.",
     "autoLoginErrorGeneratingUrl": "Genereren van authenticatie-URL mislukt.",
+    "managedSelfHosted": {
+        "title": "Beheerde Self-Hosted",
+        "description": "betrouwbaardere en slecht onderhouden Pangolin server met extra klokken en klokkenluiders",
+        "introTitle": "Beheerde zelfgehoste pangolin",
+        "introDescription": "is een implementatieoptie ontworpen voor mensen die eenvoud en extra betrouwbaarheid willen, terwijl hun gegevens privé en zelf georganiseerd blijven.",
+        "introDetail": "Met deze optie beheert u nog steeds uw eigen Pangolin node - uw tunnels, SSL-verbinding en verkeer alles op uw server. Het verschil is dat beheer en monitoring worden behandeld via onze cloud dashboard, wat een aantal voordelen oplevert:",
+        "benefitSimplerOperations": {
+            "title": "Simpler operaties",
+            "description": "Je hoeft geen eigen mailserver te draaien of complexe waarschuwingen in te stellen. Je krijgt gezondheidscontroles en downtime meldingen uit de box."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Automatische updates",
+            "description": "Het cloud dashboard evolueert snel, zodat u nieuwe functies en bug fixes krijgt zonder elke keer handmatig nieuwe containers te moeten trekken."
+        },
+        "benefitLessMaintenance": {
+            "title": "Minder onderhoud",
+            "description": "Geen database migratie, back-ups of extra infrastructuur om te beheren. Dat behandelen we in de cloud."
+        },
+        "benefitCloudFailover": {
+            "title": "Cloud fout",
+            "description": "Als uw node omlaag gaat, kunnen uw tunnels tijdelijk niet meer naar onze aanwezigheidspunten gaan totdat u hem weer online brengt."
+        },
+        "benefitHighAvailability": {
+            "title": "Hoge beschikbaarheid (PoPs)",
+            "description": "U kunt ook meerdere nodes koppelen aan uw account voor ontslag en betere prestaties."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Toekomstige verbeteringen",
+            "description": "We zijn van plan om meer analytica, waarschuwing en beheerhulpmiddelen toe te voegen om uw implementatie nog steviger te maken."
+        },
+        "docsAlert": {
+            "text": "Meer informatie over de optie voor zelf-verzorging in onze",
+            "documentation": "documentatie"
+        },
+        "convertButton": "Converteer deze node naar Beheerde Zelf-Hosted"
+    },
     "internationaldomaindetected": "Internationaal Domein Gedetecteerd",
-    "willbestoredas": "Wordt opgeslagen als:"
+    "willbestoredas": "Zal worden opgeslagen als:"
 }

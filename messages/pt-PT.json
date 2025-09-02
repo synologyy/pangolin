@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Obter Recurso do Site",
     "actionListSiteResources": "Listar Recursos do Site",
     "actionUpdateSiteResource": "Atualizar Recurso do Site",
+    "actionListInvitations": "Listar Convites",
     "noneSelected": "Nenhum selecionado",
     "orgNotFound2": "Nenhuma organização encontrada.",
     "searchProgress": "Pesquisar...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Erro de Login Automático",
     "autoLoginErrorNoRedirectUrl": "Nenhum URL de redirecionamento recebido do provedor de identidade.",
     "autoLoginErrorGeneratingUrl": "Falha ao gerar URL de autenticação.",
-    "internationaldomaindetected": "Domínio internacional detetado",
+    "managedSelfHosted": {
+        "title": "Gerenciado Auto-Hospedado",
+        "description": "Servidor Pangolin auto-hospedado mais confiável e com baixa manutenção com sinos extras e assobiamentos",
+        "introTitle": "Pangolin Auto-Hospedado Gerenciado",
+        "introDescription": "é uma opção de implantação projetada para pessoas que querem simplicidade e confiança adicional, mantendo os seus dados privados e auto-hospedados.",
+        "introDetail": "Com esta opção, você ainda roda seu próprio nó Pangolin — seus túneis, terminação SSL e tráfego todos permanecem no seu servidor. A diferença é que a gestão e a monitorização são geridos através do nosso painel de nuvem, que desbloqueia vários benefícios:",
+        "benefitSimplerOperations": {
+            "title": "Operações simples",
+            "description": "Não é necessário executar o seu próprio servidor de e-mail ou configurar um alerta complexo. Você receberá fora de caixa verificações de saúde e alertas de tempo de inatividade."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Atualizações automáticas",
+            "description": "O painel em nuvem evolui rapidamente, para que você obtenha novos recursos e correções de bugs sem ter de puxar manualmente novos contêineres toda vez."
+        },
+        "benefitLessMaintenance": {
+            "title": "Menos manutenção",
+            "description": "Sem migrações, backups ou infraestrutura extra para gerenciar. Lidamos com isso na nuvem."
+        },
+        "benefitCloudFailover": {
+            "title": "Falha na nuvem",
+            "description": "Se o seu nó descer, seus túneis podem falhar temporariamente nos nossos pontos de presença na nuvem até que você o traga online."
+        },
+        "benefitHighAvailability": {
+            "title": "Alta disponibilidade (Ppos)",
+            "description": "Você também pode anexar vários nós à sua conta para um melhor desempenho."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Aprimoramentos futuros",
+            "description": "Estamos planejando adicionar mais análises, alertas e ferramentas de gerenciamento para tornar sua implantação ainda mais robusta."
+        },
+        "docsAlert": {
+            "text": "Saiba mais sobre a opção Hospedagem Auto-Gerenciada no nosso",
+            "documentation": "documentação"
+        },
+        "convertButton": "Converter este nó para Auto-Hospedado Gerenciado"
+    },
+    "internationaldomaindetected": "Domínio Internacional Detectado",
     "willbestoredas": "Será armazenado como:"
 }

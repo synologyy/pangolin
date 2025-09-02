@@ -22,6 +22,7 @@ export function OrgApiKeysDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="Org-apikeys-table"
             title={t('apiKeys')}
             searchPlaceholder={t('searchApiKeys')}
             searchColumn="name"

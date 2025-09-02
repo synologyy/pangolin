@@ -18,28 +18,38 @@ import { useTranslations } from "next-intl";
 
 interface DataTablePaginationProps<TData> {
     table: Table<TData>;
+    onPageSizeChange?: (pageSize: number) => void;
 }
 
 export function DataTablePagination<TData>({
-    table
+    table,
+    onPageSizeChange
 }: DataTablePaginationProps<TData>) {
     const t = useTranslations();
+
+    const handlePageSizeChange = (value: string) => {
+        const newPageSize = Number(value);
+        table.setPageSize(newPageSize);
+        
+        // Call the callback if provided (for persistence)
+        if (onPageSizeChange) {
+            onPageSizeChange(newPageSize);
+        }
+    };
 
     return (
         <div className="flex items-center justify-between text-muted-foreground">
             <div className="flex items-center space-x-2">
                 <Select
                     value={`${table.getState().pagination.pageSize}`}
-                    onValueChange={(value) => {
-                        table.setPageSize(Number(value));
-                    }}
+                    onValueChange={handlePageSizeChange}
                 >
                     <SelectTrigger className="h-8 w-[70px]">
                         <SelectValue
                             placeholder={table.getState().pagination.pageSize}
                         />
                     </SelectTrigger>
-                    <SelectContent side="top">
+                    <SelectContent side="bottom">
                         {[10, 20, 30, 40, 50, 100].map((pageSize) => (
                             <SelectItem key={pageSize} value={`${pageSize}`}>
                                 {pageSize}
