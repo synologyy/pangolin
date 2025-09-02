@@ -24,6 +24,7 @@ export function RolesDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="roles-table"
             title={t('roles')}
             searchPlaceholder={t('accessRolesSearch')}
             searchColumn="name"
