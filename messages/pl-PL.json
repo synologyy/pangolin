@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Pobierz zasób strony",
     "actionListSiteResources": "Lista zasobów strony",
     "actionUpdateSiteResource": "Aktualizuj zasób strony",
+    "actionListInvitations": "Lista zaproszeń",
     "noneSelected": "Nie wybrano",
     "orgNotFound2": "Nie znaleziono organizacji.",
     "searchProgress": "Szukaj...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Błąd automatycznego logowania",
     "autoLoginErrorNoRedirectUrl": "Nie otrzymano URL przekierowania od dostawcy tożsamości.",
     "autoLoginErrorGeneratingUrl": "Nie udało się wygenerować URL uwierzytelniania.",
-    "internationaldomaindetected": "Wykryto domenę międzynarodową",
-    "willbestoredas": "Będzie przechowywane jako:"
+    "managedSelfHosted": {
+        "title": "Zarządzane Samodzielnie-Hostingowane",
+        "description": "Większa niezawodność i niska konserwacja serwera Pangolin z dodatkowymi dzwonkami i sygnałami",
+        "introTitle": "Zarządzany samowystarczalny Pangolin",
+        "introDescription": "jest opcją wdrażania zaprojektowaną dla osób, które chcą prostoty i dodatkowej niezawodności, przy jednoczesnym utrzymaniu swoich danych prywatnych i samodzielnych.",
+        "introDetail": "Z tą opcją nadal obsługujesz swój własny węzeł Pangolin — tunele, zakończenie SSL i ruch na Twoim serwerze. Różnica polega na tym, że zarządzanie i monitorowanie odbywa się za pomocą naszej tablicy rozdzielczej, która odblokowuje szereg korzyści:",
+        "benefitSimplerOperations": {
+            "title": "Uproszczone operacje",
+            "description": "Nie ma potrzeby uruchamiania własnego serwera pocztowego lub ustawiania skomplikowanych powiadomień. Będziesz mieć kontrolę zdrowia i powiadomienia o przestoju."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Automatyczne aktualizacje",
+            "description": "Panel chmury rozwija się szybko, więc otrzymujesz nowe funkcje i poprawki błędów bez konieczności ręcznego ciągnięcia nowych kontenerów za każdym razem."
+        },
+        "benefitLessMaintenance": {
+            "title": "Mniej konserwacji",
+            "description": "Brak migracji bazy danych, kopii zapasowych lub dodatkowej infrastruktury do zarządzania. Obsługujemy to w chmurze."
+        },
+        "benefitCloudFailover": {
+            "title": "Przegrywanie w chmurze",
+            "description": "Jeśli Twój węzeł zostanie wyłączony, tunele mogą tymczasowo zawieść do naszych punktów w chmurze, dopóki nie przyniesiesz go z powrotem do trybu online."
+        },
+        "benefitHighAvailability": {
+            "title": "Wysoka dostępność (PoPs)",
+            "description": "Możesz również dołączyć wiele węzłów do swojego konta w celu nadmiarowości i lepszej wydajności."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Przyszłe ulepszenia",
+            "description": "Planujemy dodać więcej narzędzi analitycznych, ostrzegawczych i zarządzania, aby zwiększyć odporność wdrożenia."
+        },
+        "docsAlert": {
+            "text": "Dowiedz się więcej o opcji zarządzania samodzielnym hostingiem w naszym",
+            "documentation": "dokumentacja"
+        },
+        "convertButton": "Konwertuj ten węzeł do zarządzanego samodzielnie"
+    },
+    "internationaldomaindetected": "Wykryto międzynarodową domenę",
+    "willbestoredas": "Będą przechowywane jako:"
 }

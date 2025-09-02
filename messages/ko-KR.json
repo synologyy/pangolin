@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "사이트 리소스 가져오기",
     "actionListSiteResources": "사이트 리소스 목록",
     "actionUpdateSiteResource": "사이트 리소스 업데이트",
+    "actionListInvitations": "초대 목록",
     "noneSelected": "선택된 항목 없음",
     "orgNotFound2": "조직이 없습니다.",
     "searchProgress": "검색...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "자동 로그인 오류",
     "autoLoginErrorNoRedirectUrl": "ID 공급자로부터 리디렉션 URL을 받지 못했습니다.",
     "autoLoginErrorGeneratingUrl": "인증 URL 생성 실패.",
+    "managedSelfHosted": {
+        "title": "관리 자체 호스팅",
+        "description": "더 신뢰할 수 있고 낮은 유지보수의 자체 호스팅 팡골린 서버, 추가 기능 포함",
+        "introTitle": "관리 자체 호스팅 팡골린",
+        "introDescription": "는 자신의 데이터를 프라이빗하고 자체 호스팅을 유지하면서 더 간단하고 추가적인 신뢰성을 원하는 사람들을 위한 배포 옵션입니다.",
+        "introDetail": "이 옵션을 사용하면 여전히 자신의 팡골린 노드를 운영하고 - 터널, SSL 종료 및 트래픽 모두 서버에 유지됩니다. 차이점은 관리 및 모니터링이 클라우드 대시보드를 통해 처리되어 여러 혜택을 제공합니다.",
+        "benefitSimplerOperations": {
+            "title": "더 간단한 운영",
+            "description": "자체 메일 서버를 운영하거나 복잡한 경고를 설정할 필요가 없습니다. 기본적으로 상태 점검 및 다운타임 경고를 받을 수 있습니다."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "자동 업데이트",
+            "description": "클라우드 대시보드는 빠르게 발전하므로 새로운 기능과 버그 수정 사항을 수동으로 새로운 컨테이너를 가져오지 않고도 받을 수 있습니다."
+        },
+        "benefitLessMaintenance": {
+            "title": "유지보수 감소",
+            "description": "데이터베이스 마이그레이션, 백업 또는 추가 인프라를 관리할 필요가 없습니다. 저희가 클라우드에서 처리합니다."
+        },
+        "benefitCloudFailover": {
+            "title": "클라우드 장애 조치",
+            "description": "노드가 다운되면 터널이 클라우드의 프레즌스 포인트로 임시 전환되어 노드를 다시 온라인으로 가져올 때까지 유지됩니다."
+        },
+        "benefitHighAvailability": {
+            "title": "고가용성 (PoPs)",
+            "description": "계정에 여러 노드를 연결하여 이중성과 성능을 향상시킬 수 있습니다."
+        },
+        "benefitFutureEnhancements": {
+            "title": "향후 개선",
+            "description": "배포를 더욱 견고하게 만들기 위해 더 많은 분석, 경고, 및 관리 도구를 추가할 계획입니다."
+        },
+        "docsAlert": {
+            "text": "관리 자체 호스팅 옵션에 대해 더 알아보세요",
+            "documentation": "문서"
+        },
+        "convertButton": "이 노드를 관리 자체 호스팅으로 변환"
+    },
     "internationaldomaindetected": "국제 도메인 감지됨",
-    "willbestoredas": "다음과 같이 저장됩니다."
+    "willbestoredas": "다음으로 저장됩니다:"
 }

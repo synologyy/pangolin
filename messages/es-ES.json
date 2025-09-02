@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Obtener recurso del sitio",
     "actionListSiteResources": "Listar recursos del sitio",
     "actionUpdateSiteResource": "Actualizar recurso del sitio",
+    "actionListInvitations": "Listar invitaciones",
     "noneSelected": "Ninguno seleccionado",
     "orgNotFound2": "No se encontraron organizaciones.",
     "searchProgress": "Buscar...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Error de inicio de sesión automático",
     "autoLoginErrorNoRedirectUrl": "No se recibió URL de redirección del proveedor de identidad.",
     "autoLoginErrorGeneratingUrl": "Error al generar URL de autenticación.",
-    "internationaldomaindetected": "Dominio internacional detectado",
-    "willbestoredas": "Se almacenará como: "
+    "managedSelfHosted": {
+        "title": "Autogestionado",
+        "description": "Servidor Pangolin autoalojado más fiable y de bajo mantenimiento con campanas y silbidos extra",
+        "introTitle": "Pangolin autogestionado",
+        "introDescription": "es una opción de despliegue diseñada para personas que quieren simplicidad y fiabilidad extra mientras mantienen sus datos privados y autoalojados.",
+        "introDetail": "Con esta opción, todavía ejecuta su propio nodo Pangolin, sus túneles, terminación SSL y tráfico permanecen en su servidor. La diferencia es que la gestión y el control se gestionan a través de nuestro panel de control en la nube, que desbloquea una serie de ventajas:",
+        "benefitSimplerOperations": {
+            "title": "Operaciones simples",
+            "description": "No necesitas ejecutar tu propio servidor de correo o configurar alertas complejas. Recibirás cheques de salud y alertas de tiempo de inactividad."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Actualizaciones automáticas",
+            "description": "El tablero de la nube evolucionará rápidamente, por lo que obtendrá nuevas características y correcciones de errores sin tener que extraer manualmente nuevos contenedores cada vez."
+        },
+        "benefitLessMaintenance": {
+            "title": "Menos mantenimiento",
+            "description": "No hay migraciones de base de datos, copias de seguridad o infraestructura extra para administrar. Lo manejamos en la nube."
+        },
+        "benefitCloudFailover": {
+            "title": "Fallo en la nube",
+            "description": "Si tu nodo cae, tus túneles pueden fallar temporalmente a nuestros puntos de presencia en la nube hasta que lo vuelvas a conectar."
+        },
+        "benefitHighAvailability": {
+            "title": "Alta disponibilidad (PoPs)",
+            "description": "También puede adjuntar múltiples nodos a su cuenta para redundancia y mejor rendimiento."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Mejoras futuras",
+            "description": "Estamos planeando añadir más herramientas analíticas, alertas y de administración para hacer su despliegue aún más robusto."
+        },
+        "docsAlert": {
+            "text": "Aprenda más acerca de la opción de autoalojamiento administrado en nuestra",
+            "documentation": "documentación"
+        },
+        "convertButton": "Convierte este nodo a autoalojado administrado"
+    },
+    "internationaldomaindetected": "Dominio Internacional detectado",
+    "willbestoredas": "Se almacenará como:"
 }

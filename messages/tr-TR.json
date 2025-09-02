@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Site Kaynağını Al",
     "actionListSiteResources": "Site Kaynaklarını Listele",
     "actionUpdateSiteResource": "Site Kaynağını Güncelle",
+    "actionListInvitations": "Davetiyeleri Listele",
     "noneSelected": "Hiçbiri seçili değil",
     "orgNotFound2": "Hiçbir organizasyon bulunamadı.",
     "searchProgress": "Ara...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Otomatik Giriş Hatası",
     "autoLoginErrorNoRedirectUrl": "Kimlik sağlayıcıdan yönlendirme URL'si alınamadı.",
     "autoLoginErrorGeneratingUrl": "Kimlik doğrulama URL'si oluşturulamadı.",
-    "internationaldomaindetected": "Uluslararası Etki Alanı Algılandı",
-    "willbestoredas": "Şu şekilde saklanacaktır:"
+    "managedSelfHosted": {
+        "title": "Yönetilen Self-Hosted",
+        "description": "Daha güvenilir ve düşük bakım gerektiren, ekstra özelliklere sahip kendi kendine barındırabileceğiniz Pangolin sunucusu",
+        "introTitle": "Yönetilen Kendi Kendine Barındırılan Pangolin",
+        "introDescription": "Bu, basitlik ve ekstra güvenilirlik arayan, ancak verilerini gizli tutmak ve kendi sunucularında barındırmak isteyen kişiler için tasarlanmış bir dağıtım seçeneğidir.",
+        "introDetail": "Bu seçenekle, kendi Pangolin düğümünüzü çalıştırmaya devam edersiniz — tünelleriniz, SSL bitişiniz ve trafiğiniz tamamen sunucunuzda kalır. Fark, yönetim ve izlemeyi bulut panomuz üzerinden gerçekleştiririz, bu da bir dizi avantaj sağlar:",
+        "benefitSimplerOperations": {
+            "title": "Daha basit işlemler",
+            "description": "Kendi e-posta sunucunuzu çalıştırmanıza veya karmaşık uyarılar kurmanıza gerek yok. Sağlık kontrolleri ve kesinti uyarılarını kutudan çıktığı gibi alırsınız."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Otomatik güncellemeler",
+            "description": "Bulut panosu hızla gelişir, böylece her seferinde yeni konteynerler manuel olarak çekmeden yeni özellikler ve hata düzeltmeleri alırsınız."
+        },
+        "benefitLessMaintenance": {
+            "title": "Daha az bakım",
+            "description": "Veritabanı geçişleri, yedeklemeler veya ekstra altyapı yönetimi yok. Biz bunu bulutta hallederiz."
+        },
+        "benefitCloudFailover": {
+            "title": "Bulut yedekleme",
+            "description": "Düğümünüz kapandığında, tünelleriniz geçici olarak bulut bağlantı noktalarımıza geçebilir, böylece tekrar çevrimiçi hale getirene kadar tünelleriniz kesintiye uğramaz."
+        },
+        "benefitHighAvailability": {
+            "title": "Yüksek kullanılabilirlik (Bağlantı Noktaları)",
+            "description": "Yedeklilik ve daha iyi performans için hesabınıza birden fazla düğüm bağlayabilirsiniz."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Gelecek iyileştirmeler",
+            "description": "Dağıtımınızı daha sağlam hale getirmek amacıyla daha fazla analiz, uyarı ve yönetim aracı eklemeyi planlıyoruz."
+        },
+        "docsAlert": {
+            "text": "Yönetilen Kendi Kendine Barındırılan seçeneği hakkında daha fazla bilgi edinin",
+            "documentation": "dokümantasyon"
+        },
+        "convertButton": "Bu Düğümü Yönetilen Kendi Kendine Barındırma Dönüştürün"
+    },
+    "internationaldomaindetected": "Uluslararası Alan Adı Tespit Edildi",
+    "willbestoredas": "Şu şekilde depolanacak:"
 }

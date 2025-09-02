@@ -1059,6 +1059,7 @@
     "actionGetSiteResource": "Ottieni Risorsa del Sito",
     "actionListSiteResources": "Elenca Risorse del Sito",
     "actionUpdateSiteResource": "Aggiorna Risorsa del Sito",
+    "actionListInvitations": "Elenco Inviti",
     "noneSelected": "Nessuna selezione",
     "orgNotFound2": "Nessuna organizzazione trovata.",
     "searchProgress": "Ricerca...",
@@ -1458,6 +1459,42 @@
     "autoLoginError": "Errore di Accesso Automatico",
     "autoLoginErrorNoRedirectUrl": "Nessun URL di reindirizzamento ricevuto dal provider di identità.",
     "autoLoginErrorGeneratingUrl": "Impossibile generare l'URL di autenticazione.",
-    "internationaldomaindetected": "Rilevato dominio internazionale",
-    "willbestoredas": "Verrà archiviato come:"
+    "managedSelfHosted": {
+        "title": "Gestito Auto-Ospitato",
+        "description": "Server Pangolin self-hosted più affidabile e a bassa manutenzione con campanelli e fischietti extra",
+        "introTitle": "Managed Self-Hosted Pangolin",
+        "introDescription": "è un'opzione di distribuzione progettata per le persone che vogliono la semplicità e l'affidabilità extra mantenendo i loro dati privati e self-hosted.",
+        "introDetail": "Con questa opzione, esegui ancora il tuo nodo Pangolin — i tunnel, la terminazione SSL e il traffico rimangono tutti sul tuo server. La differenza è che la gestione e il monitoraggio sono gestiti attraverso il nostro cruscotto cloud, che sblocca una serie di vantaggi:",
+        "benefitSimplerOperations": {
+            "title": "Operazioni più semplici",
+            "description": "Non è necessario eseguire il proprio server di posta o impostare un avviso complesso. Otterrai controlli di salute e avvisi di inattività fuori dalla casella."
+        },
+        "benefitAutomaticUpdates": {
+            "title": "Aggiornamenti automatici",
+            "description": "Il cruscotto cloud si evolve rapidamente, in modo da ottenere nuove funzionalità e correzioni di bug senza dover tirare manualmente nuovi contenitori ogni volta."
+        },
+        "benefitLessMaintenance": {
+            "title": "Meno manutenzione",
+            "description": "Nessuna migrazione di database, backup o infrastruttura extra da gestire. Gestiamo questo problema nel cloud."
+        },
+        "benefitCloudFailover": {
+            "title": "failover del cloud",
+            "description": "Se il tuo nodo scende, i tuoi tunnel possono temporaneamente fallire nei nostri punti di presenza cloud fino a quando non lo riporti online."
+        },
+        "benefitHighAvailability": {
+            "title": "Alta disponibilità (PoPs)",
+            "description": "Puoi anche allegare più nodi al tuo account per ridondanza e prestazioni migliori."
+        },
+        "benefitFutureEnhancements": {
+            "title": "Miglioramenti futuri",
+            "description": "Stiamo pianificando di aggiungere più strumenti di analisi, allerta e gestione per rendere la tua distribuzione ancora più robusta."
+        },
+        "docsAlert": {
+            "text": "Scopri di più sull'opzione Managed Self-Hosted nella nostra",
+            "documentation": "documentazione"
+        },
+        "convertButton": "Converti questo nodo in auto-ospitato gestito"
+    },
+    "internationaldomaindetected": "Dominio Internazionale Rilevato",
+    "willbestoredas": "Verrà conservato come:"
 }
