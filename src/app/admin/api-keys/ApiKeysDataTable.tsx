@@ -47,6 +47,7 @@ export function ApiKeysDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="apiKeys-table"
             title={t('apiKeys')}
             searchPlaceholder={t('searchApiKeys')}
             searchColumn="name"

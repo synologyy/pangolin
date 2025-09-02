@@ -24,6 +24,7 @@ export function ShareLinksDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="shareLinks-table"
             title={t('shareLinks')}
             searchPlaceholder={t('shareSearch')}
             searchColumn="name"

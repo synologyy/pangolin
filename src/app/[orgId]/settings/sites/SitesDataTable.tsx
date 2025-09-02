@@ -26,6 +26,7 @@ export function SitesDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="sites-table"
             title={t('sites')}
             searchPlaceholder={t('searchSitesProgress')}
             searchColumn="name"

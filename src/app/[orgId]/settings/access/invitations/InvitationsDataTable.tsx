@@ -22,6 +22,7 @@ export function InvitationsDataTable<TData, TValue>({
         <DataTable
             columns={columns}
             data={data}
+            persistPageSize="invitations-table"
             title={t('invite')}
             searchPlaceholder={t('inviteSearch')}
             searchColumn="email"

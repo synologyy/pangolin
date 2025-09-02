@@ -136,6 +136,7 @@ export function LicenseKeysDataTable({
         <DataTable
             columns={columns}
             data={licenseKeys}
+            persistPageSize="licenseKeys-table"
             title={t('licenseKeys')}
             searchPlaceholder={t('licenseKeySearch')}
             searchColumn="licenseKey"
