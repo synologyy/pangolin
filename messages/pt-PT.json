@@ -1234,7 +1234,7 @@
     "newtUpdateAvailable": "Nova Atualização Disponível",
     "newtUpdateAvailableInfo": "Uma nova versão do Newt está disponível. Atualize para a versão mais recente para uma melhor experiência.",
     "domainPickerEnterDomain": "Domínio",
-    "domainPickerPlaceholder": "meuapp.exemplo.com, api.v1.meudominio.com, ou apenas meuapp",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "Insira o domínio completo do recurso para ver as opções disponíveis.",
     "domainPickerDescriptionSaas": "Insira um domínio completo, subdomínio ou apenas um nome para ver as opções disponíveis",
     "domainPickerTabAll": "Todos",
