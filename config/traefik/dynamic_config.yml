@@ -16,8 +16,9 @@ http:
 
     # Next.js router (handles everything except API and WebSocket paths)
     next-router:
-      rule: "Host(`{{.DashboardDomain}}`) && !PathPrefix(`/api/v1`)"
+      rule: "Host(`{{.DashboardDomain}}`)"
       service: next-service
+      priority: 10
       entryPoints:
         - websecure
       tls:
@@ -27,15 +28,7 @@ http:
     api-router:
       rule: "Host(`{{.DashboardDomain}}`) && PathPrefix(`/api/v1`)"
       service: api-service
-      entryPoints:
-        - websecure
-      tls:
-        certResolver: letsencrypt
-
-    # WebSocket router
-    ws-router:
-      rule: "Host(`{{.DashboardDomain}}`)"
-      service: api-service
+      priority: 100
       entryPoints:
         - websecure
       tls:
