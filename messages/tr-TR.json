@@ -1234,7 +1234,7 @@
     "newtUpdateAvailable": "Güncelleme Mevcut",
     "newtUpdateAvailableInfo": "Newt'in yeni bir versiyonu mevcut. En iyi deneyim için lütfen en son sürüme güncelleyin.",
     "domainPickerEnterDomain": "Domain",
-    "domainPickerPlaceholder": "myapp.example.com, api.v1.mydomain.com veya sadece myapp",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "Mevcut seçenekleri görmek için kaynağın tam etki alanını girin.",
     "domainPickerDescriptionSaas": "Mevcut seçenekleri görmek için tam etki alanı, alt etki alanı veya sadece bir isim girin",
     "domainPickerTabAll": "Tümü",

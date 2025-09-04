@@ -238,7 +238,7 @@ export default function CreateDomainForm({
                                             <FormLabel>{t("domain")}</FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="example.com, café.com, 日本.com"
+                                                    placeholder="example.com"
                                                     {...field}
                                                 />
                                             </FormControl>
