@@ -1234,7 +1234,7 @@
     "newtUpdateAvailable": "업데이트 가능",
     "newtUpdateAvailableInfo": "뉴트의 새 버전이 출시되었습니다. 최상의 경험을 위해 최신 버전으로 업데이트하세요.",
     "domainPickerEnterDomain": "도메인",
-    "domainPickerPlaceholder": "myapp.example.com, api.v1.mydomain.com",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "리소스의 전체 도메인을 입력하여 사용 가능한 옵션을 확인하십시오.",
     "domainPickerDescriptionSaas": "전체 도메인, 서브도메인 또는 이름을 입력하여 사용 가능한 옵션을 확인하십시오.",
     "domainPickerTabAll": "모두",
