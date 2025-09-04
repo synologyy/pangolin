@@ -1234,7 +1234,7 @@
     "newtUpdateAvailable": "更新可用",
     "newtUpdateAvailableInfo": "新版本的 Newt 已可用。请更新到最新版本以获得最佳体验。",
     "domainPickerEnterDomain": "域名",
-    "domainPickerPlaceholder": "myapp.example.com、api.v1.mydomain.com 或仅 myapp",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "输入资源的完整域名以查看可用选项。",
     "domainPickerDescriptionSaas": "输入完整域名、子域或名称以查看可用选项。",
     "domainPickerTabAll": "所有",
