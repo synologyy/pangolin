@@ -71,6 +71,7 @@ export const resources = pgTable("resources", {
             onDelete: "cascade"
         })
         .notNull(),
+    niceId: text("niceId"), // TODO: SHOULD THIS BE NULLABLE?
     name: varchar("name").notNull(),
     subdomain: varchar("subdomain"),
     fullDomain: varchar("fullDomain"),

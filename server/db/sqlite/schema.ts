@@ -77,6 +77,7 @@ export const resources = sqliteTable("resources", {
             onDelete: "cascade"
         })
         .notNull(),
+    niceId: text("niceId"), // TODO: SHOULD THIS BE NULLABLE?
     name: text("name").notNull(),
     subdomain: text("subdomain"),
     fullDomain: text("fullDomain"),
