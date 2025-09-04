@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { ClientsDataTable } from "./ClientsDataTable";
+import { ClientsDataTable } from "@app/components/ClientsDataTable";
 import {
     DropdownMenu,
     DropdownMenuContent,

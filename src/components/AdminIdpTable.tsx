@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { IdpDataTable } from "./AdminIdpDataTable";
+import { IdpDataTable } from "@app/components/AdminIdpDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { useState } from "react";

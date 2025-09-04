@@ -2,7 +2,7 @@ import { verifySession } from "@app/lib/auth/verifySession";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import DashboardLoginForm from "./DashboardLoginForm";
+import DashboardLoginForm from "@app/components/DashboardLoginForm";
 import { Mail } from "lucide-react";
 import { pullEnv } from "@app/lib/pullEnv";
 import { cleanRedirect } from "@app/lib/cleanRedirect";

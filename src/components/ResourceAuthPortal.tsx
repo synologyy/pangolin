@@ -38,7 +38,7 @@ import {
     AuthWithPasswordResponse,
     AuthWithWhitelistResponse
 } from "@server/routers/resource";
-import ResourceAccessDenied from "./ResourceAccessDenied";
+import ResourceAccessDenied from "@app/components/ResourceAccessDenied";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";

@@ -1,10 +1,10 @@
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
-import { ClientRow } from "./ClientsTable";
+import { ClientRow } from "../../../../components/ClientsTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { ListClientsResponse } from "@server/routers/client";
-import ClientsTable from "./ClientsTable";
+import ClientsTable from "../../../../components/ClientsTable";
 
 type ClientsPageProps = {
     params: Promise<{ orgId: string }>;

@@ -31,7 +31,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { InfoIcon, ExternalLink, CheckIcon } from "lucide-react";
-import PolicyTable, { PolicyRow } from "./PolicyTable";
+import PolicyTable, { PolicyRow } from "../../../../../components/PolicyTable";
 import { AxiosResponse } from "axios";
 import { ListOrgsResponse } from "@server/routers/org";
 import {

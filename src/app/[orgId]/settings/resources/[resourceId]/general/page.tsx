@@ -54,7 +54,7 @@ import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
-import { DomainRow } from "../../../domains/DomainsTable";
+import { DomainRow } from "../../../../../../components/DomainsTable";
 import { toASCII, toUnicode } from "punycode";
 
 export default function GeneralForm() {
@@ -160,7 +160,7 @@ export default function GeneralForm() {
                 const rawDomains = res.data.data.domains as DomainRow[];
                 const domains = rawDomains.map((domain) => ({
                     ...domain,
-                    baseDomain: toUnicode(domain.baseDomain), 
+                    baseDomain: toUnicode(domain.baseDomain),
                 }));
                 setBaseDomains(domains);
                 setFormKey((key) => key + 1);

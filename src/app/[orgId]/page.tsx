@@ -1,8 +1,8 @@
 import { verifySession } from "@app/lib/auth/verifySession";
 import UserProvider from "@app/providers/UserProvider";
 import { cache } from "react";
-import OrganizationLandingCard from "./OrganizationLandingCard";
-import MemberResourcesPortal from "./MemberResourcesPortal";
+import OrganizationLandingCard from "../../components/OrganizationLandingCard";
+import MemberResourcesPortal from "../../components/MemberResourcesPortal";
 import { GetOrgOverviewResponse } from "@server/routers/org/getOrgOverview";
 import { internal } from "@app/lib/api";
 import { AxiosResponse } from "axios";

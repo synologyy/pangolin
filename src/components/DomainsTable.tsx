@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { DomainsDataTable } from "./DomainsDataTable";
+import { DomainsDataTable } from "@app/components/DomainsDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { useState } from "react";
@@ -12,7 +12,7 @@ import { useEnvContext } from "@app/hooks/useEnvContext";
 import { Badge } from "@app/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import CreateDomainForm from "./CreateDomainForm";
+import CreateDomainForm from "@app/components/CreateDomainForm";
 import { useToast } from "@app/hooks/useToast";
 import { useOrgContext } from "@app/hooks/useOrgContext";
 

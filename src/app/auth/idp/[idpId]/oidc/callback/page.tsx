@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import ValidateOidcToken from "./ValidateOidcToken";
+import ValidateOidcToken from "@app/components/ValidateOidcToken";
 import { cache } from "react";
 import { priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";

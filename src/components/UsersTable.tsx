@@ -9,7 +9,7 @@ import {
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, Crown, MoreHorizontal } from "lucide-react";
-import { UsersDataTable } from "./UsersDataTable";
+import { UsersDataTable } from "@app/components/UsersDataTable";
 import { useState } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { useOrgContext } from "@app/hooks/useOrgContext";

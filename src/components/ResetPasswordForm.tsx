@@ -35,7 +35,7 @@ import {
     ResetPasswordResponse
 } from "@server/routers/auth";
 import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "@app/components/ui/alert";
+import { Alert, AlertDescription } from "./ui/alert";
 import { toast } from "@app/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { formatAxiosError } from "@app/lib/api";

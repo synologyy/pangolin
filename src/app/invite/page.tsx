@@ -4,7 +4,7 @@ import { verifySession } from "@app/lib/auth/verifySession";
 import { AcceptInviteResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
-import InviteStatusCard from "./InviteStatusCard";
+import InviteStatusCard from "../../components/InviteStatusCard";
 import { formatAxiosError } from "@app/lib/api";
 import { getTranslations } from "next-intl/server";
 
@@ -72,14 +72,14 @@ export default async function InvitePage(props: {
     const type = cardType();
 
     if (!user && type === "user_does_not_exist") {
-        const redirectUrl = emailParam 
+        const redirectUrl = emailParam
             ? `/auth/signup?redirect=/invite?token=${params.token}&email=${encodeURIComponent(emailParam)}`
             : `/auth/signup?redirect=/invite?token=${params.token}`;
         redirect(redirectUrl);
     }
 
     if (!user && type === "not_logged_in") {
-        const redirectUrl = emailParam 
+        const redirectUrl = emailParam
             ? `/auth/login?redirect=/invite?token=${params.token}&email=${encodeURIComponent(emailParam)}`
             : `/auth/login?redirect=/invite?token=${params.token}`;
         redirect(redirectUrl);

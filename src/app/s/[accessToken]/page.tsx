@@ -1,4 +1,4 @@
-import AccessToken from "@app/app/auth/resource/[resourceId]/AccessToken";
+import AccessToken from "@app/components/AccessToken";
 
 export default async function ResourceAuthPage(props: {
     params: Promise<{ accessToken: string }>;

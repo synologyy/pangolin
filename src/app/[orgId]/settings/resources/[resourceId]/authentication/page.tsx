@@ -27,8 +27,8 @@ import {
 } from "@app/components/ui/form";
 import { ListUsersResponse } from "@server/routers/user";
 import { Binary, Key } from "lucide-react";
-import SetResourcePasswordForm from "./SetResourcePasswordForm";
-import SetResourcePincodeForm from "./SetResourcePincodeForm";
+import SetResourcePasswordForm from "../../../../../../components/SetResourcePasswordForm";
+import SetResourcePincodeForm from "../../../../../../components/SetResourcePincodeForm";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import {

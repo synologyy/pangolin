@@ -2,7 +2,7 @@ import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import OrgApiKeysTable, { OrgApiKeyRow } from "./OrgApiKeysTable";
+import OrgApiKeysTable, { OrgApiKeyRow } from "../../../../components/OrgApiKeysTable";
 import { ListOrgApiKeysResponse } from "@server/routers/apiKeys";
 import { getTranslations } from 'next-intl/server';
 
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default async function ApiKeysPage(props: ApiKeyPageProps) {
     const params = await props.params;
     const t = await getTranslations();
-    
+
     let apiKeys: ListOrgApiKeysResponse["apiKeys"] = [];
     try {
         const res = await internal.get<AxiosResponse<ListOrgApiKeysResponse>>(

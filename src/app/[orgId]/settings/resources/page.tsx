@@ -3,7 +3,7 @@ import { authCookieHeader } from "@app/lib/api/cookies";
 import ResourcesTable, {
     ResourceRow,
     InternalResourceRow
-} from "./ResourcesTable";
+} from "../../../../components/ResourcesTable";
 import { AxiosResponse } from "axios";
 import { ListResourcesResponse } from "@server/routers/resource";
 import { ListAllSiteResourcesByOrgResponse } from "@server/routers/siteResource";

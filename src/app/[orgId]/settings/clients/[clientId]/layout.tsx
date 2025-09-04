@@ -3,7 +3,7 @@ import { AxiosResponse } from "axios";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { GetClientResponse } from "@server/routers/client";
-import ClientInfoCard from "./ClientInfoCard";
+import ClientInfoCard from "../../../../../components/ClientInfoCard";
 import ClientProvider from "@app/providers/ClientProvider";
 import { redirect } from "next/navigation";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";

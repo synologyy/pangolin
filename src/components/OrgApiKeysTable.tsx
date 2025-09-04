@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { OrgApiKeysDataTable } from "./OrgApiKeysDataTable";
+import { OrgApiKeysDataTable } from "@app/components/OrgApiKeysDataTable";
 import {
     DropdownMenu,
     DropdownMenuContent,

@@ -12,7 +12,7 @@ import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
 import { cache } from "react";
-import ResourceInfoBox from "./ResourceInfoBox";
+import ResourceInfoBox from "../../../../../components/ResourceInfoBox";
 import { GetSiteResponse } from "@server/routers/site";
 import { getTranslations } from 'next-intl/server';
 

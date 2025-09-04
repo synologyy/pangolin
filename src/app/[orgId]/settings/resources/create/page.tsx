@@ -90,7 +90,7 @@ import { ListTargetsResponse } from "@server/routers/target";
 import { DockerManager, DockerState } from "@app/lib/docker";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { toASCII, toUnicode } from 'punycode';
-import { DomainRow } from "../../domains/DomainsTable";
+import { DomainRow } from "../../../../../components/DomainsTable";
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),

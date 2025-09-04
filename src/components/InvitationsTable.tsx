@@ -9,10 +9,10 @@ import {
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
-import { InvitationsDataTable } from "./InvitationsDataTable";
+import { InvitationsDataTable } from "@app/components/InvitationsDataTable";
 import { useState } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import RegenerateInvitationForm from "./RegenerateInvitationForm";
+import RegenerateInvitationForm from "@app/components/RegenerateInvitationForm";
 import { useOrgContext } from "@app/hooks/useOrgContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient } from "@app/lib/api";

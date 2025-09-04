@@ -34,7 +34,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
-import { RoleRow } from "./RolesTable";
+import { RoleRow } from "@app/components/RolesTable";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";

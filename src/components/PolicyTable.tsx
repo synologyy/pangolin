@@ -9,7 +9,7 @@ import {
     Pencil,
     ArrowRight
 } from "lucide-react";
-import { PolicyDataTable } from "./PolicyDataTable";
+import { PolicyDataTable } from "@app/components/PolicyDataTable";
 import { Badge } from "@app/components/ui/badge";
 import {
     DropdownMenu,

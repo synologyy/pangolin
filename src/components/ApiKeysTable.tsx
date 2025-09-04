@@ -18,7 +18,7 @@ import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import moment from "moment";
-import { ApiKeysDataTable } from "./ApiKeysDataTable";
+import { ApiKeysDataTable } from "@app/components/ApiKeysDataTable";
 import { useTranslations } from "next-intl";
 
 export type ApiKeyRow = {
