@@ -1234,7 +1234,7 @@
     "newtUpdateAvailable": "Oppdatering tilgjengelig",
     "newtUpdateAvailableInfo": "En ny versjon av Newt er tilgjengelig. Vennligst oppdater til den nyeste versjonen for den beste opplevelsen.",
     "domainPickerEnterDomain": "Domene",
-    "domainPickerPlaceholder": "minapp.eksempel.com, api.v1.mittdomene.com, eller bare minapp",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "Skriv inn hele domenet til ressursen for å se tilgjengelige alternativer.",
     "domainPickerDescriptionSaas": "Skriv inn et fullt domene, underdomene eller bare et navn for å se tilgjengelige alternativer",
     "domainPickerTabAll": "Alle",
