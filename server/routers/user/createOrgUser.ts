@@ -141,7 +141,12 @@ export async function createOrgUser(
                 const [existingUser] = await trx
                     .select()
                     .from(users)
-                    .where(eq(users.username, username));
+                    .where(
+                        and(
+                            eq(users.username, username),
+                            eq(users.idpId, idpId)
+                        )
+                    );
 
                 if (existingUser) {
                     const [existingOrgUser] = await trx
