@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, idpOidcConfig } from "@server/db";
 import { idp, roles, userOrgs, users } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -50,12 +50,15 @@ async function queryUsers(orgId: string, limit: number, offset: number) {
             isOwner: userOrgs.isOwner,
             idpName: idp.name,
             idpId: users.idpId,
+            idpType: idp.type,
+            idpVariant: idpOidcConfig.variant,
             twoFactorEnabled: users.twoFactorEnabled,
         })
         .from(users)
         .leftJoin(userOrgs, eq(users.userId, userOrgs.userId))
         .leftJoin(roles, eq(userOrgs.roleId, roles.roleId))
         .leftJoin(idp, eq(users.idpId, idp.idpId))
+        .leftJoin(idpOidcConfig, eq(idpOidcConfig.idpId, idp.idpId))
         .where(eq(userOrgs.orgId, orgId))
         .limit(limit)
         .offset(offset);

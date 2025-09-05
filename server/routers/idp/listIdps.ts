@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, idpOidcConfig } from "@server/db";
 import { domains, idp, orgDomains, users, idpOrg } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
@@ -33,10 +33,13 @@ async function query(limit: number, offset: number) {
             idpId: idp.idpId,
             name: idp.name,
             type: idp.type,
-            orgCount: sql<number>`count(${idpOrg.orgId})`
+            variant: idpOidcConfig.variant,
+            orgCount: sql<number>`count(${idpOrg.orgId})`,
+            autoProvision: idp.autoProvision
         })
         .from(idp)
         .leftJoin(idpOrg, sql`${idp.idpId} = ${idpOrg.idpId}`)
+        .leftJoin(idpOidcConfig, eq(idp.idpId, idpOidcConfig.idpId))
         .groupBy(idp.idpId)
         .limit(limit)
         .offset(offset);
@@ -44,12 +47,7 @@ async function query(limit: number, offset: number) {
 }
 
 export type ListIdpsResponse = {
-    idps: Array<{
-        idpId: number;
-        name: string;
-        type: string;
-        orgCount: number;
-    }>;
+    idps: Awaited<ReturnType<typeof query>>;
     pagination: {
         total: number;
         limit: number;

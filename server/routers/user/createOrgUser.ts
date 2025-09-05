@@ -84,7 +84,14 @@ export async function createOrgUser(
         }
 
         const { orgId } = parsedParams.data;
-        const { username, email, name, type, idpId, roleId } = parsedBody.data;
+        const {
+            username,
+            email,
+            name,
+            type,
+            idpId,
+            roleId
+        } = parsedBody.data;
 
         const [role] = await db
             .select()
@@ -173,7 +180,8 @@ export async function createOrgUser(
                         .values({
                             orgId,
                             userId: existingUser.userId,
-                            roleId: role.roleId
+                            roleId: role.roleId,
+                            autoProvisioned: false
                         })
                         .returning();
                 } else {
@@ -189,7 +197,7 @@ export async function createOrgUser(
                             type: "oidc",
                             idpId,
                             dateCreated: new Date().toISOString(),
-                            emailVerified: true
+                            emailVerified: true,
                         })
                         .returning();
 
@@ -198,7 +206,8 @@ export async function createOrgUser(
                         .values({
                             orgId,
                             userId: newUser.userId,
-                            roleId: role.roleId
+                            roleId: role.roleId,
+                            autoProvisioned: false
                         })
                         .returning();
                 }
@@ -209,7 +218,6 @@ export async function createOrgUser(
                     .from(userOrgs)
                     .where(eq(userOrgs.orgId, orgId));
             });
-
         } else {
             return next(
                 createHttpError(HttpCode.BAD_REQUEST, "User type is required")

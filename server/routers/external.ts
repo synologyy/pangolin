@@ -582,6 +582,14 @@ authenticated.put(
     user.createOrgUser
 );
 
+authenticated.post(
+    "/org/:orgId/user/:userId",
+    verifyOrgAccess,
+    verifyUserAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgUser),
+    user.updateOrgUser
+);
+
 authenticated.get("/org/:orgId/user/:userId", verifyOrgAccess, user.getOrgUser);
 
 authenticated.post(

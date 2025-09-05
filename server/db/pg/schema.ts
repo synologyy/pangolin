@@ -213,7 +213,8 @@ export const userOrgs = pgTable("userOrgs", {
     roleId: integer("roleId")
         .notNull()
         .references(() => roles.roleId),
-    isOwner: boolean("isOwner").notNull().default(false)
+    isOwner: boolean("isOwner").notNull().default(false),
+    autoProvisioned: boolean("autoProvisioned").default(false)
 });
 
 export const emailVerificationCodes = pgTable("emailVerificationCodes", {

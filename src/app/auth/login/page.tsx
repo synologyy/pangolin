@@ -42,7 +42,8 @@ export default async function Page(props: {
     )();
     const loginIdps = idpsRes.data.data.idps.map((idp) => ({
         idpId: idp.idpId,
-        name: idp.name
+        name: idp.name,
+        variant: idp.variant
     })) as LoginFormIDP[];
 
     const t = await getTranslations();

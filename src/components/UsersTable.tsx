@@ -21,6 +21,7 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useTranslations } from "next-intl";
+import IdpTypeBadge from "./IdpTypeBadge";
 
 export type UserRow = {
     id: string;
@@ -31,6 +32,7 @@ export type UserRow = {
     idpId: number | null;
     idpName: string;
     type: string;
+    idpVariant: string | null;
     status: string;
     role: string;
     isOwner: boolean;
@@ -80,6 +82,16 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                         {t("identityProvider")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
+                );
+            },
+            cell: ({ row }) => {
+                const userRow = row.original;
+                return (
+                    <IdpTypeBadge
+                        type={userRow.type}
+                        name={userRow.idpName}
+                        variant={userRow.idpVariant || undefined}
+                    />
                 );
             }
         },

@@ -77,6 +77,7 @@ export default async function UsersPage(props: UsersPageProps) {
             name: user.name,
             email: user.email,
             type: user.type,
+            idpVariant: user.idpVariant,
             idpId: user.idpId,
             idpName: user.idpName || t('idpNameInternal'),
             status: t('userConfirmed'),

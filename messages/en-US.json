@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "An error occurred while adding user to the role.",
     "userSaved": "User saved",
     "userSavedDescription": "The user has been updated.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Manage what this user can access and do in the organization",
     "accessControlsSubmit": "Save Access Controls",
     "roles": "Roles",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Connected",
     "idpErrorConnectingTo": "There was a problem connecting to {name}. Please contact your administrator.",
     "idpErrorNotFound": "IdP not found",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Invalid Invite",
     "inviteInvalidDescription": "The invite link is invalid.",
     "inviteErrorWrongUser": "Invite is not for this user",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Professional Edition Required",
     "licenseTierProfessionalRequiredDescription": "This feature is only available in the Professional Edition.",
     "actionGetOrg": "Get Organization",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Update Organization",
     "actionUpdateUser": "Update User",
     "actionGetUser": "Get User",
@@ -1496,5 +1502,7 @@
         "convertButton": "Convert This Node to Managed Self-Hosted"
     },
     "internationaldomaindetected": "International Domain Detected",
-    "willbestoredas": "Will be stored as:"
+    "willbestoredas": "Will be stored as:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }

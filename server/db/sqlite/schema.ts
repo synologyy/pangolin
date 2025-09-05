@@ -107,7 +107,7 @@ export const resources = sqliteTable("resources", {
     enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
-    }),
+    })
 });
 
 export const targets = sqliteTable("targets", {
@@ -143,8 +143,11 @@ export const exitNodes = sqliteTable("exitNodes", {
     type: text("type").default("gerbil") // gerbil, remoteExitNode
 });
 
-export const siteResources = sqliteTable("siteResources", { // this is for the clients
-    siteResourceId: integer("siteResourceId").primaryKey({ autoIncrement: true }),
+export const siteResources = sqliteTable("siteResources", {
+    // this is for the clients
+    siteResourceId: integer("siteResourceId").primaryKey({
+        autoIncrement: true
+    }),
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
@@ -156,7 +159,7 @@ export const siteResources = sqliteTable("siteResources", { // this is for the c
     proxyPort: integer("proxyPort").notNull(),
     destinationPort: integer("destinationPort").notNull(),
     destinationIp: text("destinationIp").notNull(),
-    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true)
 });
 
 export const users = sqliteTable("user", {
@@ -260,7 +263,9 @@ export const clientSites = sqliteTable("clientSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: integer("isRelayed", { mode: "boolean" }).notNull().default(false),
+    isRelayed: integer("isRelayed", { mode: "boolean" })
+        .notNull()
+        .default(false),
     endpoint: text("endpoint")
 });
 
@@ -318,7 +323,10 @@ export const userOrgs = sqliteTable("userOrgs", {
     roleId: integer("roleId")
         .notNull()
         .references(() => roles.roleId),
-    isOwner: integer("isOwner", { mode: "boolean" }).notNull().default(false)
+    isOwner: integer("isOwner", { mode: "boolean" }).notNull().default(false),
+    autoProvisioned: integer("autoProvisioned", {
+        mode: "boolean"
+    }).default(false)
 });
 
 export const emailVerificationCodes = sqliteTable("emailVerificationCodes", {

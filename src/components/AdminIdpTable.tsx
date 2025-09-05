@@ -20,12 +20,14 @@ import {
 } from "@app/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import IdpTypeBadge from "./IdpTypeBadge";
 
 export type IdpRow = {
     idpId: number;
     name: string;
     type: string;
     orgCount: number;
+    variant?: string;
 };
 
 type Props = {
@@ -54,15 +56,6 @@ export default function IdpTable({ idps }: Props) {
                 description: formatAxiosError(e),
                 variant: "destructive"
             });
-        }
-    };
-
-    const getTypeDisplay = (type: string) => {
-        switch (type) {
-            case "oidc":
-                return "OAuth2/OIDC";
-            default:
-                return type;
         }
     };
 
@@ -116,9 +109,8 @@ export default function IdpTable({ idps }: Props) {
             },
             cell: ({ row }) => {
                 const type = row.original.type;
-                return (
-                    <Badge variant="secondary">{getTypeDisplay(type)}</Badge>
-                );
+                const variant = row.original.variant;
+                return <IdpTypeBadge type={type} variant={variant} />;
             }
         },
         {
