@@ -161,7 +161,7 @@ export async function createTarget(
                 );
             }
 
-            const { internalPort, targetIps } = await pickPort(site.siteId!);
+            const { internalPort, targetIps } = await pickPort(site.siteId!, db);
 
             if (!internalPort) {
                 return next(
