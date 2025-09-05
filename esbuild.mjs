@@ -52,7 +52,7 @@ esbuild
         bundle: true,
         outfile: argv.out,
         format: "esm",
-        minify: true,
+        minify: false,
         banner: {
             js: banner,
         },
@@ -63,7 +63,7 @@ esbuild
                 packagePath: getPackagePaths(),
             }),
         ],
-        sourcemap: "external",
+        sourcemap: "inline",
         target: "node22",
     })
     .then(() => {

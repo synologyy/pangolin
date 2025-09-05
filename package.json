@@ -21,7 +21,7 @@
         "db:clear-migrations": "rm -rf server/migrations",
         "build:sqlite": "mkdir -p dist && next build && node esbuild.mjs -e server/index.ts -o dist/server.mjs && node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs",
         "build:pg": "mkdir -p dist && next build && node esbuild.mjs -e server/index.ts -o dist/server.mjs && node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs",
-        "start": "DB_TYPE=sqlite NODE_OPTIONS=--enable-source-maps NODE_ENV=development ENVIRONMENT=prod sh -c 'node dist/migrations.mjs && node dist/server.mjs'",
+        "start": "NODE_OPTIONS=--enable-source-maps ENVIRONMENT=prod node dist/migrations.mjs && node dist/server.mjs",
         "email": "email dev --dir server/emails/templates --port 3005",
         "build:cli": "node esbuild.mjs -e cli/index.ts -o dist/cli.mjs"
     },
