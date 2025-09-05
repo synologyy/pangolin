@@ -604,6 +604,7 @@ export const idpOidcConfig = sqliteTable("idpOidcConfig", {
     idpOauthConfigId: integer("idpOauthConfigId").primaryKey({
         autoIncrement: true
     }),
+    variant: text("variant").notNull().default("generic"),
     idpId: integer("idpId")
         .notNull()
         .references(() => idp.idpId, { onDelete: "cascade" }),

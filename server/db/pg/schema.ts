@@ -459,6 +459,7 @@ export const idpOidcConfig = pgTable("idpOidcConfig", {
     idpId: integer("idpId")
         .notNull()
         .references(() => idp.idpId, { onDelete: "cascade" }),
+    variant: varchar("variant").notNull().default("generic"),
     clientId: varchar("clientId").notNull(),
     clientSecret: varchar("clientSecret").notNull(),
     authUrl: varchar("authUrl").notNull(),
