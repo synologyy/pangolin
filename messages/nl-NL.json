@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Er is een fout opgetreden tijdens het toevoegen van de rol.",
     "userSaved": "Gebruiker opgeslagen",
     "userSavedDescription": "De gebruiker is bijgewerkt.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Beheer wat deze gebruiker toegang heeft tot en doet in de organisatie",
     "accessControlsSubmit": "Bewaar Toegangsbesturing",
     "roles": "Rollen",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Verbonden",
     "idpErrorConnectingTo": "Er was een probleem bij het verbinden met {name}. Neem contact op met uw beheerder.",
     "idpErrorNotFound": "IdP niet gevonden",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Ongeldige uitnodiging",
     "inviteInvalidDescription": "Uitnodigingslink is ongeldig.",
     "inviteErrorWrongUser": "Uitnodiging is niet voor deze gebruiker",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Professionele editie vereist",
     "licenseTierProfessionalRequiredDescription": "Deze functie is alleen beschikbaar in de Professional Edition.",
     "actionGetOrg": "Krijg Organisatie",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Organisatie bijwerken",
     "actionUpdateUser": "Gebruiker bijwerken",
     "actionGetUser": "Gebruiker ophalen",
@@ -1496,5 +1502,7 @@
         "convertButton": "Converteer deze node naar Beheerde Zelf-Hosted"
     },
     "internationaldomaindetected": "Internationaal Domein Gedetecteerd",
-    "willbestoredas": "Zal worden opgeslagen als:"
+    "willbestoredas": "Zal worden opgeslagen als:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
