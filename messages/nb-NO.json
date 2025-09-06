@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Det oppstod en feil under tilordning av brukeren til rollen.",
     "userSaved": "Bruker lagret",
     "userSavedDescription": "Brukeren har blitt oppdatert.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Administrer hva denne brukeren kan få tilgang til og gjøre i organisasjonen",
     "accessControlsSubmit": "Lagre tilgangskontroller",
     "roles": "Roller",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Tilkoblet",
     "idpErrorConnectingTo": "Det oppstod et problem med å koble til {name}. Vennligst kontakt din administrator.",
     "idpErrorNotFound": "IdP ikke funnet",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Ugyldig invitasjon",
     "inviteInvalidDescription": "Invitasjonslenken er ugyldig.",
     "inviteErrorWrongUser": "Invitasjonen er ikke for denne brukeren",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Profesjonell utgave påkrevd",
     "licenseTierProfessionalRequiredDescription": "Denne funksjonen er kun tilgjengelig i den profesjonelle utgaven.",
     "actionGetOrg": "Hent organisasjon",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Oppdater organisasjon",
     "actionUpdateUser": "Oppdater bruker",
     "actionGetUser": "Hent bruker",
@@ -1496,5 +1502,7 @@
         "convertButton": "Konverter denne noden til manuelt bruk"
     },
     "internationaldomaindetected": "Internasjonalt domene oppdaget",
-    "willbestoredas": "Vil bli lagret som:"
+    "willbestoredas": "Vil bli lagret som:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
