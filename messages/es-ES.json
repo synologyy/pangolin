@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Ocurrió un error mientras se añadía el usuario al rol.",
     "userSaved": "Usuario guardado",
     "userSavedDescription": "El usuario ha sido actualizado.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Administrar lo que este usuario puede acceder y hacer en la organización",
     "accessControlsSubmit": "Guardar controles de acceso",
     "roles": "Roles",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Conectado",
     "idpErrorConnectingTo": "Hubo un problema al conectar con {name}. Por favor, póngase en contacto con su administrador.",
     "idpErrorNotFound": "IdP no encontrado",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Invitación inválida",
     "inviteInvalidDescription": "El enlace de invitación no es válido.",
     "inviteErrorWrongUser": "La invitación no es para este usuario",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Edición Profesional requerida",
     "licenseTierProfessionalRequiredDescription": "Esta característica sólo está disponible en la Edición Profesional.",
     "actionGetOrg": "Obtener organización",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Actualizar organización",
     "actionUpdateUser": "Actualizar usuario",
     "actionGetUser": "Obtener usuario",
@@ -1496,5 +1502,7 @@
         "convertButton": "Convierte este nodo a autoalojado administrado"
     },
     "internationaldomaindetected": "Dominio Internacional detectado",
-    "willbestoredas": "Se almacenará como:"
+    "willbestoredas": "Se almacenará como:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
