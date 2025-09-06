@@ -128,7 +128,8 @@ export const exitNodes = pgTable("exitNodes", {
     maxConnections: integer("maxConnections"),
     online: boolean("online").notNull().default(false),
     lastPing: integer("lastPing"),
-    type: text("type").default("gerbil") // gerbil, remoteExitNode
+    type: text("type").default("gerbil"), // gerbil, remoteExitNode
+    region: varchar("region")
 });
 
 export const siteResources = pgTable("siteResources", { // this is for the clients

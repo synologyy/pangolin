@@ -140,7 +140,8 @@ export const exitNodes = sqliteTable("exitNodes", {
     maxConnections: integer("maxConnections"),
     online: integer("online", { mode: "boolean" }).notNull().default(false),
     lastPing: integer("lastPing"),
-    type: text("type").default("gerbil") // gerbil, remoteExitNode
+    type: text("type").default("gerbil"), // gerbil, remoteExitNode
+    region: text("region")
 });
 
 export const siteResources = sqliteTable("siteResources", {
