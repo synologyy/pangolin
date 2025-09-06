@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Si è verificato un errore durante l'aggiunta dell'utente al ruolo.",
     "userSaved": "Utente salvato",
     "userSavedDescription": "L'utente è stato aggiornato.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Gestisci cosa questo utente può accedere e fare nell'organizzazione",
     "accessControlsSubmit": "Salva Controlli di Accesso",
     "roles": "Ruoli",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Connesso",
     "idpErrorConnectingTo": "Si è verificato un problema durante la connessione a {name}. Contatta il tuo amministratore.",
     "idpErrorNotFound": "IdP non trovato",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Invito Non Valido",
     "inviteInvalidDescription": "Il link di invito non è valido.",
     "inviteErrorWrongUser": "L'invito non è per questo utente",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Edizione Professional Richiesta",
     "licenseTierProfessionalRequiredDescription": "Questa funzionalità è disponibile solo nell'Edizione Professional.",
     "actionGetOrg": "Ottieni Organizzazione",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Aggiorna Organizzazione",
     "actionUpdateUser": "Aggiorna Utente",
     "actionGetUser": "Ottieni Utente",
@@ -1496,5 +1502,7 @@
         "convertButton": "Converti questo nodo in auto-ospitato gestito"
     },
     "internationaldomaindetected": "Dominio Internazionale Rilevato",
-    "willbestoredas": "Verrà conservato come:"
+    "willbestoredas": "Verrà conservato come:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
