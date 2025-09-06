@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "사용자를 역할에 추가하는 동안 오류가 발생했습니다.",
     "userSaved": "사용자 저장됨",
     "userSavedDescription": "사용자가 업데이트되었습니다.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "이 사용자가 조직에서 접근하고 수행할 수 있는 작업을 관리하세요",
     "accessControlsSubmit": "접근 제어 저장",
     "roles": "역할",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "연결됨",
     "idpErrorConnectingTo": "{name}에 연결하는 데 문제가 발생했습니다. 관리자에게 문의하십시오.",
     "idpErrorNotFound": "IdP를 찾을 수 없습니다.",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "유효하지 않은 초대",
     "inviteInvalidDescription": "초대 링크가 유효하지 않습니다.",
     "inviteErrorWrongUser": "이 초대는 이 사용자에게 해당되지 않습니다",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "전문 에디션이 필요합니다.",
     "licenseTierProfessionalRequiredDescription": "이 기능은 Professional Edition에서만 사용할 수 있습니다.",
     "actionGetOrg": "조직 가져오기",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "조직 업데이트",
     "actionUpdateUser": "사용자 업데이트",
     "actionGetUser": "사용자 조회",
@@ -1496,5 +1502,7 @@
         "convertButton": "이 노드를 관리 자체 호스팅으로 변환"
     },
     "internationaldomaindetected": "국제 도메인 감지됨",
-    "willbestoredas": "다음으로 저장됩니다:"
+    "willbestoredas": "다음으로 저장됩니다:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
