@@ -20,7 +20,7 @@ _Pangolin tunnels your services to the internet so you can access anything from 
         Website
       </a>
       <span> | </span>
-      <a href="https://docs.digpangolin.com/self-host/quick-install">
+      <a href="https://docs.digpangolin.com/self-host/quick-install-managed">
         Install Guide
       </a>
       <span> | </span>
