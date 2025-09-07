@@ -19,6 +19,11 @@ export async function verifyApiKeySetResourceUsers(
         );
     }
 
+    if (apiKey.isRoot) {
+        // Root keys can access any key in any org
+        return next();
+    }
+
     if (!req.apiKeyOrg) {
         return next(
             createHttpError(
@@ -30,11 +35,6 @@ export async function verifyApiKeySetResourceUsers(
 
     if (!userIds) {
         return next(createHttpError(HttpCode.BAD_REQUEST, "Invalid user IDs"));
-    }
-
-    if (apiKey.isRoot) {
-        // Root keys can access any key in any org
-        return next();
     }
 
     if (userIds.length === 0) {
