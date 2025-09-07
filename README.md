@@ -20,11 +20,11 @@ _Pangolin tunnels your services to the internet so you can access anything from 
         Website
       </a>
       <span> | </span>
-      <a href="https://docs.digpangolin.com/self-host/quick-install">
-        Install Guide
+      <a href="https://docs.digpangolin.com/self-host/quick-install-managed">
+        Quick Install Guide
       </a>
       <span> | </span>
-      <a href="mailto:numbat@fossorial.io">
+      <a href="mailto:contact@fossorial.io">
         Contact Us
       </a>
   </h5>
