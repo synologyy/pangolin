@@ -30,7 +30,8 @@ export async function listExitNodes(orgId: string, filterOnline = false) {
             maxConnections: exitNodes.maxConnections,
             online: exitNodes.online,
             lastPing: exitNodes.lastPing,
-            type: exitNodes.type
+            type: exitNodes.type,
+            region: exitNodes.region
         })
         .from(exitNodes);
 
