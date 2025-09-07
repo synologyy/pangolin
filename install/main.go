@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/fs"
 	"math/rand"
+	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,7 +17,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-    "net"
 )
 
 // DO NOT EDIT THIS FUNCTION; IT MATCHED BY REGEX IN CICD
@@ -328,7 +329,12 @@ func collectUserInput(reader *bufio.Reader) Config {
 			config.HybridSecret = readString(reader, "Enter your secret", "")
 		} 
 
-		config.DashboardDomain = readString(reader, "The public addressable IP address for this node or a domain pointing to it", "")
+		// Try to get public IP as default
+		publicIP := getPublicIP()
+		if publicIP != "" {
+			fmt.Printf("Detected public IP: %s\n", publicIP)
+		}
+		config.DashboardDomain = readString(reader, "The public addressable IP address for this node or a domain pointing to it", publicIP)
 		config.InstallGerbil = true
 	} else {
 		config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
@@ -582,6 +588,32 @@ func generateRandomSecretKey() string {
 		b[i] = charset[seededRand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+func getPublicIP() string {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+	
+	resp, err := client.Get("https://ifconfig.io/ip")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+	
+	ip := strings.TrimSpace(string(body))
+	
+	// Validate that it's a valid IP address
+	if net.ParseIP(ip) != nil {
+		return ip
+	}
+	
+	return ""
 }
 
 // Run external commands with stdio/stderr attached.
