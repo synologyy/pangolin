@@ -39,8 +39,8 @@ async function query(limit: number, offset: number) {
         })
         .from(idp)
         .leftJoin(idpOrg, sql`${idp.idpId} = ${idpOrg.idpId}`)
-        .leftJoin(idpOidcConfig, eq(idp.idpId, idpOidcConfig.idpId))
-        .groupBy(idp.idpId)
+        .leftJoin(idpOidcConfig, eq(idpOidcConfig.idpId, idp.idpId))
+        .groupBy(idp.idpId, idpOidcConfig.variant)
         .limit(limit)
         .offset(offset);
     return res;
