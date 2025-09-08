@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Wystąpił błąd podczas dodawania użytkownika do roli.",
     "userSaved": "Użytkownik zapisany",
     "userSavedDescription": "Użytkownik został zaktualizowany.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Zarządzaj tym, do czego użytkownik ma dostęp i co może robić w organizacji",
     "accessControlsSubmit": "Zapisz kontrole dostępu",
     "roles": "Role",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Połączono",
     "idpErrorConnectingTo": "Wystąpił problem z połączeniem z {name}. Skontaktuj się z administratorem.",
     "idpErrorNotFound": "Nie znaleziono IdP",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Nieprawidłowe zaproszenie",
     "inviteInvalidDescription": "Link zapraszający jest nieprawidłowy.",
     "inviteErrorWrongUser": "Zaproszenie nie jest dla tego użytkownika",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Wymagana edycja Professional",
     "licenseTierProfessionalRequiredDescription": "Ta funkcja jest dostępna tylko w edycji Professional.",
     "actionGetOrg": "Pobierz organizację",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Aktualizuj organizację",
     "actionUpdateUser": "Zaktualizuj użytkownika",
     "actionGetUser": "Pobierz użytkownika",
@@ -1496,5 +1502,7 @@
         "convertButton": "Konwertuj ten węzeł do zarządzanego samodzielnie"
     },
     "internationaldomaindetected": "Wykryto międzynarodową domenę",
-    "willbestoredas": "Będą przechowywane jako:"
+    "willbestoredas": "Będą przechowywane jako:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }

@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Kullanıcı role eklenirken bir hata oluştu.",
     "userSaved": "Kullanıcı kaydedildi",
     "userSavedDescription": "Kullanıcı güncellenmiştir.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Bu kullanıcının organizasyonda neleri erişebileceğini ve yapabileceğini yönetin",
     "accessControlsSubmit": "Erişim Kontrollerini Kaydet",
     "roles": "Roller",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Bağlandı",
     "idpErrorConnectingTo": "{name} ile bağlantı kurarken bir sorun meydana geldi. Lütfen yöneticiye danışın.",
     "idpErrorNotFound": "IdP bulunamadı",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Geçersiz Davet",
     "inviteInvalidDescription": "Davet bağlantısı geçersiz.",
     "inviteErrorWrongUser": "Davet bu kullanıcı için değil",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Profesyonel Sürüme Gereklidir",
     "licenseTierProfessionalRequiredDescription": "Bu özellik yalnızca Professional Edition'da kullanılabilir.",
     "actionGetOrg": "Kuruluşu Al",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Kuruluşu Güncelle",
     "actionUpdateUser": "Kullanıcıyı Güncelle",
     "actionGetUser": "Kullanıcıyı Getir",
@@ -1496,5 +1502,7 @@
         "convertButton": "Bu Düğümü Yönetilen Kendi Kendine Barındırma Dönüştürün"
     },
     "internationaldomaindetected": "Uluslararası Alan Adı Tespit Edildi",
-    "willbestoredas": "Şu şekilde depolanacak:"
+    "willbestoredas": "Şu şekilde depolanacak:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }

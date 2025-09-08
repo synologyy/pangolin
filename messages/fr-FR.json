@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Une erreur s'est produite lors de l'ajout de l'utilisateur au rôle.",
     "userSaved": "Utilisateur enregistré",
     "userSavedDescription": "L'utilisateur a été mis à jour.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Gérer ce que cet utilisateur peut accéder et faire dans l'organisation",
     "accessControlsSubmit": "Enregistrer les contrôles d'accès",
     "roles": "Rôles",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Connecté",
     "idpErrorConnectingTo": "Un problème est survenu lors de la connexion à {name}. Veuillez contacter votre administrateur.",
     "idpErrorNotFound": "IdP introuvable",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Invitation invalide",
     "inviteInvalidDescription": "Le lien d'invitation n'est pas valide.",
     "inviteErrorWrongUser": "L'invitation n'est pas pour cet utilisateur",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Édition Professionnelle Requise",
     "licenseTierProfessionalRequiredDescription": "Cette fonctionnalité n'est disponible que dans l'Édition Professionnelle.",
     "actionGetOrg": "Obtenir l'organisation",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Mettre à jour l'organisation",
     "actionUpdateUser": "Mettre à jour l'utilisateur",
     "actionGetUser": "Obtenir l'utilisateur",
@@ -1496,5 +1502,7 @@
         "convertButton": "Convertir ce noeud en auto-hébergé géré"
     },
     "internationaldomaindetected": "Domaine international détecté",
-    "willbestoredas": "Sera stocké comme :"
+    "willbestoredas": "Sera stocké comme :",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
