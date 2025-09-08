@@ -28,7 +28,7 @@ const updateSiteResourceSchema = z
         protocol: z.enum(["tcp", "udp"]).optional(),
         proxyPort: z.number().int().positive().optional(),
         destinationPort: z.number().int().positive().optional(),
-        destinationIp: z.string().ip().optional(),
+        destinationIp: z.string().optional(),
         enabled: z.boolean().optional()
     })
     .strict();
