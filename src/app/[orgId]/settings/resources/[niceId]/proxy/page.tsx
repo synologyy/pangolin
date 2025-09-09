@@ -256,7 +256,7 @@ export default function ReverseProxyTargets(props: {
         const fetchTargets = async () => {
             try {
                 const res = await api.get<AxiosResponse<ListTargetsResponse>>(
-                    `/resource/${params.resourceId}/targets`
+                    `/resource/${resource.resourceId}/targets`
                 );
 
                 if (res.status === 200) {
@@ -447,7 +447,7 @@ export default function ReverseProxyTargets(props: {
                 if (target.new) {
                     const res = await api.put<
                         AxiosResponse<CreateTargetResponse>
-                    >(`/resource/${params.resourceId}/target`, data);
+                    >(`/resource/${resource.resourceId}/target`, data);
                     target.targetId = res.data.data.targetId;
                     target.new = false;
                 } else if (target.updated) {
@@ -475,7 +475,7 @@ export default function ReverseProxyTargets(props: {
                 };
 
                 // Single API call to update all settings
-                await api.post(`/resource/${params.resourceId}`, payload);
+                await api.post(`/resource/${resource.resourceId}`, payload);
 
                 // Update local resource context
                 updateResource({

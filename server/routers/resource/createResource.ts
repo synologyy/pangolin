@@ -21,6 +21,7 @@ import { subdomainSchema } from "@server/lib/schemas";
 import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
+import { getUniqueResourceName } from "@server/db/names";
 
 const createResourceParamsSchema = z
     .object({
@@ -283,10 +284,13 @@ async function createHttpResource(
 
     let resource: Resource | undefined;
 
+    const niceId = await getUniqueResourceName(orgId);
+
     await db.transaction(async (trx) => {
         const newResource = await trx
             .insert(resources)
             .values({
+                niceId,
                 fullDomain,
                 domainId,
                 orgId,
@@ -391,10 +395,13 @@ async function createRawResource(
 
     let resource: Resource | undefined;
 
+    const niceId = await getUniqueResourceName(orgId);
+
     await db.transaction(async (trx) => {
         const newResource = await trx
             .insert(resources)
             .values({
+                niceId,
                 orgId,
                 name,
                 http,

@@ -481,7 +481,7 @@ export default function ResourcesTable({
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Link
-                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.id}`}
+                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
                         >
                             <Button
                                 variant={"secondary"}

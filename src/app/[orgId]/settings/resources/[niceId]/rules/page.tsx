@@ -128,7 +128,7 @@ export default function ResourceRules(props: {
             try {
                 const res = await api.get<
                     AxiosResponse<ListResourceRulesResponse>
-                >(`/resource/${params.resourceId}/rules`);
+                >(`/resource/${resource.resourceId}/rules`);
                 if (res.status === 200) {
                     setRules(res.data.data.rules);
                 }
@@ -251,7 +251,7 @@ export default function ResourceRules(props: {
 
             // Save rules enabled state
             const res = await api
-                .post(`/resource/${params.resourceId}`, {
+                .post(`/resource/${resource.resourceId}`, {
                     applyRules: rulesEnabled
                 })
                 .catch((err) => {
@@ -336,13 +336,13 @@ export default function ResourceRules(props: {
 
                 if (rule.new) {
                     const res = await api.put(
-                        `/resource/${params.resourceId}/rule`,
+                        `/resource/${resource.resourceId}/rule`,
                         data
                     );
                     rule.ruleId = res.data.data.ruleId;
                 } else if (rule.updated) {
                     await api.post(
-                        `/resource/${params.resourceId}/rule/${rule.ruleId}`,
+                        `/resource/${resource.resourceId}/rule/${rule.ruleId}`,
                         data
                     );
                 }
@@ -361,7 +361,7 @@ export default function ResourceRules(props: {
 
             for (const ruleId of rulesToRemove) {
                 await api.delete(
-                    `/resource/${params.resourceId}/rule/${ruleId}`
+                    `/resource/${resource.resourceId}/rule/${ruleId}`
                 );
                 setRules(rules.filter((r) => r.ruleId !== ruleId));
             }

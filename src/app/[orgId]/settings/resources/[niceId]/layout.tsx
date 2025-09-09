@@ -18,7 +18,7 @@ import { getTranslations } from 'next-intl/server';
 
 interface ResourceLayoutProps {
     children: React.ReactNode;
-    params: Promise<{ resourceId: number | string; orgId: string }>;
+    params: Promise<{ niceId: string; orgId: string }>;
 }
 
 export default async function ResourceLayout(props: ResourceLayoutProps) {
@@ -31,7 +31,7 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
     let resource = null;
     try {
         const res = await internal.get<AxiosResponse<GetResourceResponse>>(
-            `/resource/${params.resourceId}`,
+            `/org/${params.orgId}/resource/${params.niceId}`,
             await authCookieHeader()
         );
         resource = res.data.data;
@@ -77,22 +77,22 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
     const navItems = [
         {
             title: t('general'),
-            href: `/{orgId}/settings/resources/{resourceId}/general`
+            href: `/{orgId}/settings/resources/{niceId}/general`
         },
         {
             title: t('proxy'),
-            href: `/{orgId}/settings/resources/{resourceId}/proxy`
+            href: `/{orgId}/settings/resources/{niceId}/proxy`
         }
     ];
 
     if (resource.http) {
         navItems.push({
             title: t('authentication'),
-            href: `/{orgId}/settings/resources/{resourceId}/authentication`
+            href: `/{orgId}/settings/resources/{niceId}/authentication`
         });
         navItems.push({
             title: t('rules'),
-            href: `/{orgId}/settings/resources/{resourceId}/rules`
+            href: `/{orgId}/settings/resources/{niceId}/rules`
         });
     }
 
