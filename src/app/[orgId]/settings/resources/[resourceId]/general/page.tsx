@@ -471,15 +471,11 @@ export default function GeneralForm() {
                                             ? `${sanitizedSubdomain}.${selectedDomain.baseDomain}`
                                             : selectedDomain.baseDomain;
 
-                                        setResourceFullDomain(sanitizedFullDomain);
+                                        setResourceFullDomain(`${resource.ssl ? "https" : "http"}://${sanitizedFullDomain}`);
                                         form.setValue("domainId", selectedDomain.domainId);
                                         form.setValue("subdomain", sanitizedSubdomain);
 
                                         setEditDomainOpen(false);
-
-                                        toast({
-                                            description: `Final domain: ${sanitizedFullDomain}`,
-                                        });
                                     }
                                 }}
                             >
