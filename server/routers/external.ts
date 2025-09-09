@@ -345,6 +345,12 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.getResource),
     resource.getResource
 );
+authenticated.get(
+    "/org/:orgId/resource/:niceId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getResource),
+    resource.getResource
+);
 authenticated.post(
     "/resource/:resourceId",
     verifyResourceAccess,

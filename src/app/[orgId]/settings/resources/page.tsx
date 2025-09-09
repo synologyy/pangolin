@@ -76,8 +76,7 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
             id: resource.resourceId,
             name: resource.name,
             orgId: params.orgId,
-
-
+            nice: resource.niceId,
             domain: `${resource.ssl ? "https://" : "http://"}${toUnicode(resource.fullDomain || "")}`,
             protocol: resource.protocol,
             proxyPort: resource.proxyPort,
@@ -91,7 +90,8 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                   ? "protected"
                   : "not_protected",
             enabled: resource.enabled,
-            domainId: resource.domainId || undefined
+            domainId: resource.domainId || undefined,
+            ssl: resource.ssl
         };
     });
 

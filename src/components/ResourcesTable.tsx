@@ -66,6 +66,7 @@ import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 export type ResourceRow = {
     id: number;
+    nice: string | null;
     name: string;
     orgId: string;
     domain: string;
@@ -75,6 +76,7 @@ export type ResourceRow = {
     proxyPort: number | null;
     enabled: boolean;
     domainId?: string;
+    ssl: boolean;
 };
 
 export type InternalResourceRow = {
@@ -337,11 +339,27 @@ export default function ResourcesTable({
             }
         },
         {
+            accessorKey: "nice",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("resource")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            }
+        },
+        {
             accessorKey: "protocol",
             header: t("protocol"),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                return <span>{resourceRow.protocol.toUpperCase()}</span>;
+                return <span>{resourceRow.http ? (resourceRow.ssl ? "HTTPS" : "HTTP") : resourceRow.protocol.toUpperCase()}</span>;
             }
         },
         {

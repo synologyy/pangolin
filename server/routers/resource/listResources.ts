@@ -16,6 +16,7 @@ import logger from "@server/logger";
 import stoi from "@server/lib/stoi";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { warn } from "console";
 
 const listResourcesParamsSchema = z
     .object({
@@ -54,7 +55,8 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
             protocol: resources.protocol,
             proxyPort: resources.proxyPort,
             enabled: resources.enabled,
-            domainId: resources.domainId
+            domainId: resources.domainId,
+            niceId: resources.niceId
         })
         .from(resources)
         .leftJoin(
