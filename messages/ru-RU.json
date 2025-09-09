@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Произошла ошибка при добавлении пользователя в роль.",
     "userSaved": "Пользователь сохранён",
     "userSavedDescription": "Пользователь был обновлён.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Управляйте тем, к чему этот пользователь может получить доступ и что делать в организации",
     "accessControlsSubmit": "Сохранить контроль доступа",
     "roles": "Роли",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Подключено",
     "idpErrorConnectingTo": "Возникла проблема при подключении к {name}. Пожалуйста, свяжитесь с вашим администратором.",
     "idpErrorNotFound": "IdP не найден",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Недействительное приглашение",
     "inviteInvalidDescription": "Ссылка на приглашение недействительна.",
     "inviteErrorWrongUser": "Приглашение не для этого пользователя",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Требуется профессиональная версия",
     "licenseTierProfessionalRequiredDescription": "Эта функция доступна только в профессиональной версии.",
     "actionGetOrg": "Получить организацию",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Обновить организацию",
     "actionUpdateUser": "Обновить пользователя",
     "actionGetUser": "Получить пользователя",
@@ -1496,5 +1502,7 @@
         "convertButton": "Конвертировать этот узел в управляемый себе-хост"
     },
     "internationaldomaindetected": "Обнаружен международный домен",
-    "willbestoredas": "Будет храниться как:"
+    "willbestoredas": "Будет храниться как:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }

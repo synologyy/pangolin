@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "添加用户到角色时出错。",
     "userSaved": "用户已保存",
     "userSavedDescription": "用户已更新。",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "管理此用户在组织中可以访问和做什么",
     "accessControlsSubmit": "保存访问控制",
     "roles": "角色",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "已连接",
     "idpErrorConnectingTo": "无法连接到 {name}，请联系管理员协助处理。",
     "idpErrorNotFound": "找不到 IdP",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "无效邀请",
     "inviteInvalidDescription": "邀请链接无效。",
     "inviteErrorWrongUser": "邀请不是该用户的",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "需要专业版",
     "licenseTierProfessionalRequiredDescription": "此功能仅在专业版可用。",
     "actionGetOrg": "获取组织",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "更新组织",
     "actionUpdateUser": "更新用户",
     "actionGetUser": "获取用户",
@@ -1234,7 +1240,7 @@
     "newtUpdateAvailable": "更新可用",
     "newtUpdateAvailableInfo": "新版本的 Newt 已可用。请更新到最新版本以获得最佳体验。",
     "domainPickerEnterDomain": "域名",
-    "domainPickerPlaceholder": "myapp.example.com、api.v1.mydomain.com 或仅 myapp",
+    "domainPickerPlaceholder": "myapp.example.com",
     "domainPickerDescription": "输入资源的完整域名以查看可用选项。",
     "domainPickerDescriptionSaas": "输入完整域名、子域或名称以查看可用选项。",
     "domainPickerTabAll": "所有",
@@ -1496,5 +1502,7 @@
         "convertButton": "将此节点转换为管理自托管的"
     },
     "internationaldomaindetected": "检测到国际域",
-    "willbestoredas": "储存为："
+    "willbestoredas": "储存为：",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }

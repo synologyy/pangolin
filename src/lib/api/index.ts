@@ -22,7 +22,7 @@ export function createApiClient({ env }: { env: Env }): AxiosInstance {
         axios.defaults.withCredentials = true;
     } else {
         // user is accessing through a proxy
-        baseURL = window.location.origin + `/${suffix}`;
+        baseURL = `${env.app.dashboardUrl}/${suffix}`;
     }
 
     if (!baseURL) {

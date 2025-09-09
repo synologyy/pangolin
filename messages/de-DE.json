@@ -454,6 +454,8 @@
     "accessRoleErrorAddDescription": "Beim Hinzufügen des Benutzers zur Rolle ist ein Fehler aufgetreten.",
     "userSaved": "Benutzer gespeichert",
     "userSavedDescription": "Der Benutzer wurde aktualisiert.",
+    "autoProvisioned": "Auto Provisioned",
+    "autoProvisionedDescription": "Allow this user to be automatically managed by identity provider",
     "accessControlsDescription": "Verwalten Sie, worauf dieser Benutzer in der Organisation zugreifen und was er tun kann",
     "accessControlsSubmit": "Zugriffskontrollen speichern",
     "roles": "Rollen",
@@ -911,6 +913,8 @@
     "idpConnectingToFinished": "Verbunden",
     "idpErrorConnectingTo": "Es gab ein Problem bei der Verbindung zu {name}. Bitte kontaktieren Sie Ihren Administrator.",
     "idpErrorNotFound": "IdP nicht gefunden",
+    "idpGoogleAlt": "Google",
+    "idpAzureAlt": "Azure",
     "inviteInvalid": "Ungültige Einladung",
     "inviteInvalidDescription": "Der Einladungslink ist ungültig.",
     "inviteErrorWrongUser": "Einladung ist nicht für diesen Benutzer",
@@ -982,6 +986,8 @@
     "licenseTierProfessionalRequired": "Professional Edition erforderlich",
     "licenseTierProfessionalRequiredDescription": "Diese Funktion ist nur in der Professional Edition verfügbar.",
     "actionGetOrg": "Organisation abrufen",
+    "updateOrgUser": "Update Org User",
+    "createOrgUser": "Create Org User",
     "actionUpdateOrg": "Organisation aktualisieren",
     "actionUpdateUser": "Benutzer aktualisieren",
     "actionGetUser": "Benutzer abrufen",
@@ -1496,5 +1502,7 @@
         "convertButton": "Diesen Knoten in Managed Self-Hosted umwandeln"
     },
     "internationaldomaindetected": "Internationale Domain erkannt",
-    "willbestoredas": "Wird gespeichert als:"
+    "willbestoredas": "Wird gespeichert als:",
+    "idpGoogleDescription": "Google OAuth2/OIDC provider",
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
 }
