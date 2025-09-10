@@ -2,6 +2,7 @@ import { MessageHandler } from "../ws";
 import logger from "@server/logger";
 import { dockerSocketCache } from "./dockerSocket";
 import { Newt } from "@server/db";
+import { applyNewtDockerBlueprint } from "@server/lib/blueprints/applyNewtDockerBlueprint";
 
 export const handleDockerStatusMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
@@ -57,4 +58,15 @@ export const handleDockerContainersMessage: MessageHandler = async (
     } else {
         logger.warn(`Newt ${newt.newtId} does not have Docker containers`);
     }
+
+    if (!newt.siteId) {
+        logger.warn("Newt has no site!");
+        return;
+    }
+
+    await applyNewtDockerBlueprint(
+        newt.siteId,
+        newt.newtId,
+        containers
+    );
 };

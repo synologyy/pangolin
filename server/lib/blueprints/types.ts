@@ -1,0 +1,232 @@
+import { z } from "zod";
+
+export const SiteSchema = z.object({
+    name: z.string().min(1).max(100),
+    "docker-socket-enabled": z.boolean().optional().default(true)
+});
+
+// Schema for individual target within a resource
+export const TargetSchema = z.object({
+    site: z.string().optional(),
+    method: z.enum(["http", "https", "h2c"]).optional(),
+    hostname: z.string(),
+    port: z.number().int().min(1).max(65535),
+    enabled: z.boolean().optional().default(true),
+    "internal-port": z.number().int().min(1).max(65535).optional(),
+});
+export type TargetData = z.infer<typeof TargetSchema>;
+
+export const AuthSchema = z.object({
+    // pincode has to have 6 digits
+    pincode: z.number().min(100000).max(999999).optional(),
+    password: z.string().min(1).optional(),
+    "sso-enabled": z.boolean().optional().default(false),
+    "sso-roles": z
+        .array(z.string())
+        .optional()
+        .default([])
+        .refine((roles) => !roles.includes("Admin"), {
+            message: "Admin role cannot be included in sso-roles"
+        }),
+    "sso-users": z.array(z.string().email()).optional().default([]),
+    "whitelist-users": z.array(z.string().email()).optional().default([])
+});
+
+// Schema for individual resource
+export const ResourceSchema = z
+    .object({
+        name: z.string().optional(),
+        protocol: z.enum(["http", "tcp", "udp"]).optional(),
+        ssl: z.boolean().optional(),
+        "full-domain": z.string().optional(),
+        "proxy-port": z.number().int().min(1).max(65535).optional(),
+        enabled: z.boolean().optional(),
+        targets: z.array(TargetSchema.nullable()).optional().default([]),
+        auth: AuthSchema.optional(),
+        "host-header": z.string().optional(),
+        "tls-server-name": z.string().optional()
+    })
+    .refine(
+        (resource) => {
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
+            // Otherwise, require name and protocol for full resource definition
+            return (
+                resource.name !== undefined && resource.protocol !== undefined
+            );
+        },
+        {
+            message:
+                "Resource must either be targets-only (only 'targets' field) or have both 'name' and 'protocol' fields at a minimum",
+            path: ["name", "protocol"]
+        }
+    )
+    .refine(
+        (resource) => {
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
+            // If protocol is http, all targets must have method field
+            if (resource.protocol === "http") {
+                return resource.targets.every(
+                    (target) => target == null || target.method !== undefined
+                );
+            }
+            // If protocol is tcp or udp, no target should have method field
+            if (resource.protocol === "tcp" || resource.protocol === "udp") {
+                return resource.targets.every(
+                    (target) => target == null || target.method === undefined
+                );
+            }
+            return true;
+        },
+        (resource) => {
+            if (resource.protocol === "http") {
+                return {
+                    message:
+                        "When protocol is 'http', all targets must have a 'method' field",
+                    path: ["targets"]
+                };
+            }
+            return {
+                message:
+                    "When protocol is 'tcp' or 'udp', targets must not have a 'method' field",
+                path: ["targets"]
+            };
+        }
+    )
+    .refine(
+        (resource) => {
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
+            // If protocol is http, it must have a full-domain
+            if (resource.protocol === "http") {
+                return (
+                    resource["full-domain"] !== undefined &&
+                    resource["full-domain"].length > 0
+                );
+            }
+            return true;
+        },
+        {
+            message:
+                "When protocol is 'http', a 'full-domain' must be provided",
+            path: ["full-domain"]
+        }
+    )
+    .refine(
+        (resource) => {
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
+            // If protocol is tcp or udp, it must have both proxy-port
+            if (resource.protocol === "tcp" || resource.protocol === "udp") {
+                return resource["proxy-port"] !== undefined;
+            }
+            return true;
+        },
+        {
+            message:
+                "When protocol is 'tcp' or 'udp', 'proxy-port' must be provided",
+            path: ["proxy-port", "exit-node"]
+        }
+    )
+    .refine(
+        (resource) => {
+            // Skip validation for targets-only resources
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
+            // If protocol is tcp or udp, it must not have auth
+            if (resource.protocol === "tcp" || resource.protocol === "udp") {
+                return resource.auth === undefined;
+            }
+            return true;
+        },
+        {
+            message:
+                "When protocol is 'tcp' or 'udp', 'auth' must not be provided",
+            path: ["auth"]
+        }
+    );
+
+export function isTargetsOnlyResource(resource: any): boolean {
+    return Object.keys(resource).length === 1 && resource.targets;
+}
+
+// Schema for the entire configuration object
+export const ConfigSchema = z
+    .object({
+        resources: z.record(z.string(), ResourceSchema).optional().default({}),
+        sites: z.record(z.string(), SiteSchema).optional().default({})
+    })
+    .refine(
+        // Enforce the full-domain uniqueness across resources in the same stack
+        (config) => {
+            // Extract all full-domain values with their resource keys
+            const fullDomainMap = new Map<string, string[]>();
+
+            Object.entries(config.resources).forEach(
+                ([resourceKey, resource]) => {
+                    const fullDomain = resource["full-domain"];
+                    if (fullDomain) {
+                        // Only process if full-domain is defined
+                        if (!fullDomainMap.has(fullDomain)) {
+                            fullDomainMap.set(fullDomain, []);
+                        }
+                        fullDomainMap.get(fullDomain)!.push(resourceKey);
+                    }
+                }
+            );
+
+            // Find duplicates
+            const duplicates = Array.from(fullDomainMap.entries()).filter(
+                ([_, resourceKeys]) => resourceKeys.length > 1
+            );
+
+            return duplicates.length === 0;
+        },
+        (config) => {
+            // Extract duplicates for error message
+            const fullDomainMap = new Map<string, string[]>();
+
+            Object.entries(config.resources).forEach(
+                ([resourceKey, resource]) => {
+                    const fullDomain = resource["full-domain"];
+                    if (fullDomain) {
+                        // Only process if full-domain is defined
+                        if (!fullDomainMap.has(fullDomain)) {
+                            fullDomainMap.set(fullDomain, []);
+                        }
+                        fullDomainMap.get(fullDomain)!.push(resourceKey);
+                    }
+                }
+            );
+
+            const duplicates = Array.from(fullDomainMap.entries())
+                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+                .map(
+                    ([fullDomain, resourceKeys]) =>
+                        `'${fullDomain}' used by resources: ${resourceKeys.join(", ")}`
+                )
+                .join("; ");
+
+            return {
+                message: `Duplicate 'full-domain' values found: ${duplicates}`,
+                path: ["resources"]
+            };
+        }
+    );
+
+// Type inference from the schema
+export type Site = z.infer<typeof SiteSchema>;
+export type Target = z.infer<typeof TargetSchema>;
+export type Resource = z.infer<typeof ResourceSchema>;
+export type Config = z.infer<typeof ConfigSchema>;
