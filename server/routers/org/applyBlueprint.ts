@@ -98,6 +98,7 @@ export async function applyBlueprint(
             const decoded = Buffer.from(blueprint, "base64").toString("utf-8");
             // then parse the json
             const blueprintParsed = JSON.parse(decoded);
+
             // Update the blueprint in the database
             await applyBlueprintFunc(orgId, blueprintParsed);
         } catch (error) {

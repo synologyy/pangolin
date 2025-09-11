@@ -247,11 +247,12 @@ export async function updateResources(
 
             // Create new targets
             for (const [index, targetData] of resourceData.targets.entries()) {
-                if (!targetData) {
+                if (!targetData || (typeof targetData === 'object' && Object.keys(targetData).length === 0)) {
                     // If targetData is null or an empty object, we can skip it
                     continue;
                 }
                 const existingTarget = existingResourceTargets[index];
+
                 if (existingTarget) {
                     let targetSiteId = targetData.site;
                     let site;
@@ -281,7 +282,7 @@ export async function updateResources(
                             )
                             .limit(1);
                     } else {
-                        throw new Error(`Target site ID is required`);
+                        throw new Error(`Target site is required`);
                     }
 
                     if (!site) {
@@ -336,7 +337,16 @@ export async function updateResources(
                 const targetsToDelete = existingResourceTargets.slice(
                     resourceData.targets.length
                 );
+                logger.debug(`Targets to delete: ${JSON.stringify(targetsToDelete)}`);
                 for (const target of targetsToDelete) {
+                    if (!target) {
+                        continue;
+                    } 
+                    if (siteId && target.siteId !== siteId) {
+                        logger.debug(`Skipping target ${target.targetId} for deletion. Site ID does not match filter.`);
+                        continue; // only delete targets for the specified siteId
+                    }
+                    logger.debug(`Deleting target ${target.targetId}`);
                     await trx
                         .delete(targets)
                         .where(eq(targets.targetId, target.targetId)); 

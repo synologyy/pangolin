@@ -1,10 +1,10 @@
 resources:
-  resource-nice-id:
+  resource-nice-id-duce:
     name: this is my resource
     protocol: http
     full-domain: level1.test3.example.com
-    # host-header: example.com
-    # tls-server-name: example.com
+    host-header: example.com
+    tls-server-name: example.com
     auth:
       pincode: 123456
       password: sadfasdfadsf
@@ -16,22 +16,23 @@ resources:
       whitelist-users:
       - owen@fossorial.io
     targets:
-    # - site: glossy-plains-viscacha-rat
-    # - hostname: localhost
-    #   method: http
-    #   port: 8000
-    #   healthcheck:
-    #     port: 8000
-    #     hostname: localhost
-    # - site: glossy-plains-viscacha-rat
-    # - hostname: localhost
-    #   method: http
-    #   port: 8001
-  # resource-nice-id2:
-  #   name: this is other resource
-  #   protocol: tcp
-  #   proxy-port: 3000
-  #   targets:
-  #   # - site: glossy-plains-viscacha-rat
-  #   - hostname: localhost
-  #     port: 3000
+    - site: lively-yosemite-toad
+      hostname: localhost
+      method: http
+      port: 8000
+    - site: slim-alpine-chipmunk
+      hostname: localhost
+      method: http
+      port: 8001
+    - site: glossy-plains-viscacha-rat
+      hostname: localhost
+      method: http
+      port: 8001
+  resource-nice-id2:
+    name: this is other resource
+    protocol: tcp
+    proxy-port: 3000
+    targets:
+    - site: glossy-plains-viscacha-rat
+      hostname: localhost
+      port: 3000

@@ -29,18 +29,11 @@ def convert_and_send(file_path, url, headers):
         # This will be used to ensure the YAML is valid before sending
         parsed_yaml = yaml.safe_load(yaml_content)
 
-        # Create the JSON payload. The curl request shows the value
-        # of "blueprint" is a string, which means the raw YAML content
-        # should be sent as a string value for that key.
-        json_payload = {
-            "blueprint": yaml_content
-        }
+        # convert the parsed YAML to a JSON string
+        json_payload = json.dumps(parsed_yaml)
 
-        # Convert the payload to a JSON string
-        json_string = json.dumps(json_payload)
-
-        # Base64 encode the JSON string
-        encoded_json = base64.b64encode(json_string.encode('utf-8')).decode('utf-8')
+        # Encode the JSON string to Base64
+        encoded_json = base64.b64encode(json_payload.encode('utf-8')).decode('utf-8')
 
         # Create the final payload with the base64 encoded data
         final_payload = {
