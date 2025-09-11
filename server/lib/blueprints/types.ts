@@ -44,7 +44,8 @@ export const ResourceSchema = z
         targets: z.array(TargetSchema.nullable()).optional().default([]),
         auth: AuthSchema.optional(),
         "host-header": z.string().optional(),
-        "tls-server-name": z.string().optional()
+        "tls-server-name": z.string().optional(),
+        headers: z.array(z.record(z.string(), z.string())).optional().default([]),
     })
     .refine(
         (resource) => {

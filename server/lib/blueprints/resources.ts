@@ -120,6 +120,17 @@ export async function updateResources(
         const http = resourceData.protocol == "http";
         const protocol =
             resourceData.protocol == "http" ? "tcp" : resourceData.protocol;
+        const resourceEnabled = resourceData.enabled == undefined || resourceData.enabled == null ? true : resourceData.enabled;
+        let headers = "";
+        for (const headerObj of resourceData.headers || []) {
+            for (const [key, value] of Object.entries(headerObj)) {
+                headers += `${key}: ${value},`;
+            }
+        }
+        // if there are headers, remove the trailing comma
+        if (headers.endsWith(",")) {
+            headers = headers.slice(0, -1);
+        }
 
         if (existingResource) {
             let domain;
@@ -152,7 +163,7 @@ export async function updateResources(
                         fullDomain: http ? resourceData["full-domain"] : null,
                         subdomain: domain ? domain.subdomain : null,
                         domainId: domain ? domain.domainId : null,
-                        enabled: resourceData.enabled ? true : false,
+                        enabled: resourceEnabled,
                         sso: resourceData.auth?.["sso-enabled"] || false,
                         ssl: resourceData.ssl ? true : false,
                         setHostHeader: resourceData["host-header"] || null,
@@ -161,7 +172,8 @@ export async function updateResources(
                             "whitelist-users"
                         ]
                             ? resourceData.auth["whitelist-users"].length > 0
-                            : false
+                            : false,
+                        headers: headers || null,
                     })
                     .where(
                         eq(resources.resourceId, existingResource.resourceId)
@@ -379,11 +391,12 @@ export async function updateResources(
                     fullDomain: http ? resourceData["full-domain"] : null,
                     subdomain: domain ? domain.subdomain : null,
                     domainId: domain ? domain.domainId : null,
-                    enabled: resourceData.enabled ? true : false,
+                    enabled: resourceEnabled,
                     sso: resourceData.auth?.["sso-enabled"] || false,
                     setHostHeader: resourceData["host-header"] || null,
                     tlsServerName: resourceData["tls-server-name"] || null,
-                    ssl: resourceData.ssl ? true : false
+                    ssl: resourceData.ssl ? true : false,
+                    headers: headers || null
                 })
                 .returning();
 

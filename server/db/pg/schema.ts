@@ -96,6 +96,7 @@ export const resources = pgTable("resources", {
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
     }),
+    headers: text("headers"), // comma-separated list of headers to add to the request
 });
 
 export const targets = pgTable("targets", {

@@ -5,16 +5,19 @@ resources:
     full-domain: level1.test3.example.com
     host-header: example.com
     tls-server-name: example.com
-    auth:
-      pincode: 123456
-      password: sadfasdfadsf
-      sso-enabled: true
-      sso-roles:
-      - Member
-      sso-users:
-      - owen@fossorial.io
-      whitelist-users:
-      - owen@fossorial.io
+    # auth:
+      # pincode: 123456
+      # password: sadfasdfadsf
+      # sso-enabled: true
+      # sso-roles:
+      #   - Member
+      # sso-users:
+      #   - owen@fossorial.io
+      # whitelist-users:
+      #   - owen@fossorial.io
+    headers:
+      - X-Example-Header: example-value
+      - X-Another-Header: another-value
     targets:
     - site: lively-yosemite-toad
       hostname: localhost
@@ -24,15 +27,11 @@ resources:
       hostname: localhost
       method: http
       port: 8001
-    - site: glossy-plains-viscacha-rat
-      hostname: localhost
-      method: http
-      port: 8001
   resource-nice-id2:
     name: this is other resource
     protocol: tcp
     proxy-port: 3000
     targets:
-    - site: glossy-plains-viscacha-rat
+    - site: lively-yosemite-toad 
       hostname: localhost
       port: 3000

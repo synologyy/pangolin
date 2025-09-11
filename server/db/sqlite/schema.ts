@@ -107,7 +107,8 @@ export const resources = sqliteTable("resources", {
     enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
-    })
+    }),
+    headers: text("headers"), // comma-separated list of headers to add to the request
 });
 
 export const targets = sqliteTable("targets", {

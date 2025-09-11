@@ -31,6 +31,8 @@ def convert_and_send(file_path, url, headers):
 
         # convert the parsed YAML to a JSON string
         json_payload = json.dumps(parsed_yaml)
+        print("Converted JSON payload:")
+        print(json_payload)
 
         # Encode the JSON string to Base64
         encoded_json = base64.b64encode(json_payload.encode('utf-8')).decode('utf-8')

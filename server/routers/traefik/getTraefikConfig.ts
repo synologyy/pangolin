@@ -54,7 +54,8 @@ export async function traefikConfigProvider(
             config.getRawConfig().traefik.site_types
         );
 
-        if (traefikConfig?.http?.middlewares) { // BECAUSE SOMETIMES THE CONFIG CAN BE EMPTY IF THERE IS NOTHING
+        if (traefikConfig?.http?.middlewares) {
+            // BECAUSE SOMETIMES THE CONFIG CAN BE EMPTY IF THERE IS NOTHING
             traefikConfig.http.middlewares[badgerMiddlewareName] = {
                 plugin: {
                     [badgerMiddlewareName]: {
@@ -124,6 +125,7 @@ export async function getTraefikConfig(
                 tlsServerName: resources.tlsServerName,
                 setHostHeader: resources.setHostHeader,
                 enableProxy: resources.enableProxy,
+                headers: resources.headers,
                 // Target fields
                 targetId: targets.targetId,
                 targetEnabled: targets.enabled,
@@ -152,7 +154,7 @@ export async function getTraefikConfig(
                     inArray(sites.type, siteTypes),
                     config.getRawConfig().traefik.allow_raw_resources
                         ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
-                        : eq(resources.http, true),
+                        : eq(resources.http, true)
                 )
             );
 
@@ -177,7 +179,8 @@ export async function getTraefikConfig(
                     tlsServerName: row.tlsServerName,
                     setHostHeader: row.setHostHeader,
                     enableProxy: row.enableProxy,
-                    targets: []
+                    targets: [],
+                    headers: row.headers
                 });
             }
 
@@ -296,13 +299,52 @@ export async function getTraefikConfig(
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
 
+            let routerMiddlewares = [
+                badgerMiddlewareName,
+                ...additionalMiddlewares
+            ];
+
+            if (resource.headers && resource.headers.length > 0) {
+                const headersMiddlewareName = `${resource.resourceId}-headers-middleware`;
+                // if there are headers, parse them into an object
+                let headersObj: { [key: string]: string } = {};
+                const headersArr = resource.headers.split(",");
+                for (const header of headersArr) {
+                    const [key, value] = header
+                        .split(":")
+                        .map((s: string) => s.trim());
+                    if (key && value) {
+                        headersObj[key] = value;
+                    }
+                }
+
+                if (resource.setHostHeader) {
+                    headersObj["Host"] = resource.setHostHeader;
+                }
+
+                // check if the object is not empty
+                if (Object.keys(headersObj).length > 0) {
+                    // Add the headers middleware
+                    if (!config_output.http.middlewares) {
+                        config_output.http.middlewares = {};
+                    }
+                    config_output.http.middlewares[headersMiddlewareName] = {
+                        headers: {
+                            customRequestHeaders: headersObj
+                        }
+                    };
+
+                    routerMiddlewares.push(headersMiddlewareName);
+                }
+            }
+
             config_output.http.routers![routerName] = {
                 entryPoints: [
                     resource.ssl
                         ? config.getRawConfig().traefik.https_entrypoint
                         : config.getRawConfig().traefik.http_entrypoint
                 ],
-                middlewares: [badgerMiddlewareName, ...additionalMiddlewares],
+                middlewares: routerMiddlewares,
                 service: serviceName,
                 rule: `Host(\`${fullDomain}\`)`,
                 priority: 100,
@@ -412,27 +454,6 @@ export async function getTraefikConfig(
                 config_output.http.services![
                     serviceName
                 ].loadBalancer.serversTransport = transportName;
-            }
-
-            // Add the host header middleware
-            if (resource.setHostHeader) {
-                if (!config_output.http.middlewares) {
-                    config_output.http.middlewares = {};
-                }
-                config_output.http.middlewares[hostHeaderMiddlewareName] = {
-                    headers: {
-                        customRequestHeaders: {
-                            Host: resource.setHostHeader
-                        }
-                    }
-                };
-                if (!config_output.http.routers![routerName].middlewares) {
-                    config_output.http.routers![routerName].middlewares = [];
-                }
-                config_output.http.routers![routerName].middlewares = [
-                    ...config_output.http.routers![routerName].middlewares,
-                    hostHeaderMiddlewareName
-                ];
             }
         } else {
             // Non-HTTP (TCP/UDP) configuration
