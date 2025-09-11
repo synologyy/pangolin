@@ -12,7 +12,7 @@ export default async function migration() {
     const db = new Database(location);
 
     const resourceSiteMap = new Map<number, number>();
-	let firstSiteId: number = 1;
+	const firstSiteId: number = 1;
 
     try {
 		const resources = db
@@ -29,7 +29,7 @@ export default async function migration() {
                 ALTER TABLE 'userOrgs' ADD 'autoProvisioned' integer DEFAULT false;
             `); // this diverges from the schema a bit because the schema does not have a default on niceId but was required for the migration and I dont think it will effect much down the line...
 
-            let usedNiceIds: string[] = [];
+            const usedNiceIds: string[] = [];
 
             for (const resourceId of resources) {
                 // Generate a unique name and ensure it's unique

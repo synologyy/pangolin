@@ -24,7 +24,7 @@ export default async function migration() {
         
         await db.execute(sql`ALTER TABLE "userOrgs" ADD COLUMN "autoProvisioned" boolean DEFAULT false;`);
 
-        let usedNiceIds: string[] = [];
+        const usedNiceIds: string[] = [];
 
         for (const resource of resources.rows) {
             // Generate a unique name and ensure it's unique
