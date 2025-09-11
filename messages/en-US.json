@@ -1505,5 +1505,8 @@
     "internationaldomaindetected": "International Domain Detected",
     "willbestoredas": "Will be stored as:",
     "idpGoogleDescription": "Google OAuth2/OIDC provider",
-    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider"
+    "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
+    "customHeaders": "Custom Headers",
+    "customHeadersDescription": "Headers new line separated: Header-Name: value",
+    "headersValidationError": "Headers must be in the format: Header-Name: value"
 }

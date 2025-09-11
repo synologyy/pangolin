@@ -21,6 +21,7 @@ import { subdomainSchema } from "@server/lib/schemas";
 import { registry } from "@server/openApi";
 import { OpenAPITags } from "@server/openApi";
 import { validateAndConstructDomain } from "@server/lib/domainUtils";
+import { validateHeaders } from "@server/lib/validators";
 
 const updateResourceParamsSchema = z
     .object({
@@ -45,7 +46,8 @@ const updateHttpResourceBodySchema = z
         stickySession: z.boolean().optional(),
         tlsServerName: z.string().nullable().optional(),
         setHostHeader: z.string().nullable().optional(),
-        skipToIdpId: z.number().int().positive().nullable().optional()
+        skipToIdpId: z.number().int().positive().nullable().optional(),
+        headers: z.string().nullable().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -82,6 +84,18 @@ const updateHttpResourceBodySchema = z
         {
             message:
                 "Invalid custom Host Header value. Use domain name format, or save empty to unset custom Host Header."
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.headers) {
+                return validateHeaders(data.headers)
+            }
+            return true;
+        },
+        {
+            message:
+                "Invalid headers format. Use comma-separated format: 'Header-Name: value, Another-Header: another-value'. Header values cannot contain colons."
         }
     );
 

@@ -95,6 +95,7 @@ import {
 } from "@app/components/ui/command";
 import { Badge } from "@app/components/ui/badge";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
+import { HeadersInput } from "@app/components/HeadersInput";
 
 const addTargetSchema = z.object({
     ip: z.string().refine(isTargetValid),
@@ -129,7 +130,9 @@ export default function ReverseProxyTargets(props: {
     const [targets, setTargets] = useState<LocalTarget[]>([]);
     const [targetsToRemove, setTargetsToRemove] = useState<number[]>([]);
     const [sites, setSites] = useState<ListSitesResponse["sites"]>([]);
-    const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(new Map());
+    const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(
+        new Map()
+    );
 
     const initializeDockerForSite = async (siteId: number) => {
         if (dockerStates.has(siteId)) {
@@ -139,14 +142,14 @@ export default function ReverseProxyTargets(props: {
         const dockerManager = new DockerManager(api, siteId);
         const dockerState = await dockerManager.initializeDocker();
 
-        setDockerStates(prev => new Map(prev.set(siteId, dockerState)));
+        setDockerStates((prev) => new Map(prev.set(siteId, dockerState)));
     };
 
     const refreshContainersForSite = async (siteId: number) => {
         const dockerManager = new DockerManager(api, siteId);
         const containers = await dockerManager.fetchContainers();
 
-        setDockerStates(prev => {
+        setDockerStates((prev) => {
             const newMap = new Map(prev);
             const existingState = newMap.get(siteId);
             if (existingState) {
@@ -157,11 +160,13 @@ export default function ReverseProxyTargets(props: {
     };
 
     const getDockerStateForSite = (siteId: number): DockerState => {
-        return dockerStates.get(siteId) || {
-            isEnabled: false,
-            isAvailable: false,
-            containers: []
-        };
+        return (
+            dockerStates.get(siteId) || {
+                isEnabled: false,
+                isAvailable: false,
+                containers: []
+            }
+        );
     };
 
     const [httpsTlsLoading, setHttpsTlsLoading] = useState(false);
@@ -185,7 +190,8 @@ export default function ReverseProxyTargets(props: {
                 {
                     message: t("proxyErrorInvalidHeader")
                 }
-            )
+            ),
+        headers: z.string().optional()
     });
 
     const tlsSettingsSchema = z.object({
@@ -241,7 +247,8 @@ export default function ReverseProxyTargets(props: {
     const proxySettingsForm = useForm<ProxySettingsValues>({
         resolver: zodResolver(proxySettingsSchema),
         defaultValues: {
-            setHostHeader: resource.setHostHeader || ""
+            setHostHeader: resource.setHostHeader || "",
+            headers: resource.headers || ""
         }
     });
 
@@ -298,7 +305,9 @@ export default function ReverseProxyTargets(props: {
                 setSites(res.data.data.sites);
 
                 // Initialize Docker for newt sites
-                const newtSites = res.data.data.sites.filter(site => site.type === "newt");
+                const newtSites = res.data.data.sites.filter(
+                    (site) => site.type === "newt"
+                );
                 for (const site of newtSites) {
                     initializeDockerForSite(site.siteId);
                 }
@@ -418,11 +427,11 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...data,
-                        updated: true,
-                        siteType: site?.type || null
-                    }
+                          ...target,
+                          ...data,
+                          updated: true,
+                          siteType: site?.type || null
+                      }
                     : target
             )
         );
@@ -471,7 +480,8 @@ export default function ReverseProxyTargets(props: {
                     stickySession: stickySessionData.stickySession,
                     ssl: tlsData.ssl,
                     tlsServerName: tlsData.tlsServerName || null,
-                    setHostHeader: proxyData.setHostHeader || null
+                    setHostHeader: proxyData.setHostHeader || null,
+                    headers: proxyData.headers || null
                 };
 
                 // Single API call to update all settings
@@ -483,7 +493,8 @@ export default function ReverseProxyTargets(props: {
                     stickySession: stickySessionData.stickySession,
                     ssl: tlsData.ssl,
                     tlsServerName: tlsData.tlsServerName || null,
-                    setHostHeader: proxyData.setHostHeader || null
+                    setHostHeader: proxyData.setHostHeader || null,
+                    headers: proxyData.headers || null
                 });
             }
 
@@ -546,7 +557,7 @@ export default function ReverseProxyTargets(props: {
                                     className={cn(
                                         "justify-between flex-1",
                                         !row.original.siteId &&
-                                        "text-muted-foreground"
+                                            "text-muted-foreground"
                                     )}
                                 >
                                     {row.original.siteId
@@ -597,49 +608,59 @@ export default function ReverseProxyTargets(props: {
                                 </Command>
                             </PopoverContent>
                         </Popover>
-                        {selectedSite && selectedSite.type === "newt" && (() => {
-                            const dockerState = getDockerStateForSite(selectedSite.siteId);
-                            return (
-                                <ContainersSelector
-                                    site={selectedSite}
-                                    containers={dockerState.containers}
-                                    isAvailable={dockerState.isAvailable}
-                                    onContainerSelect={handleContainerSelectForTarget}
-                                    onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
-                                />
-                            );
-                        })()}
+                        {selectedSite &&
+                            selectedSite.type === "newt" &&
+                            (() => {
+                                const dockerState = getDockerStateForSite(
+                                    selectedSite.siteId
+                                );
+                                return (
+                                    <ContainersSelector
+                                        site={selectedSite}
+                                        containers={dockerState.containers}
+                                        isAvailable={dockerState.isAvailable}
+                                        onContainerSelect={
+                                            handleContainerSelectForTarget
+                                        }
+                                        onRefresh={() =>
+                                            refreshContainersForSite(
+                                                selectedSite.siteId
+                                            )
+                                        }
+                                    />
+                                );
+                            })()}
                     </div>
                 );
             }
         },
         ...(resource.http
             ? [
-                {
-                    accessorKey: "method",
-                    header: t("method"),
-                    cell: ({ row }: { row: Row<LocalTarget> }) => (
-                        <Select
-                            defaultValue={row.original.method ?? ""}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    method: value
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                {row.original.method}
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="http">http</SelectItem>
-                                <SelectItem value="https">https</SelectItem>
-                                <SelectItem value="h2c">h2c</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )
-                }
-            ]
+                  {
+                      accessorKey: "method",
+                      header: t("method"),
+                      cell: ({ row }: { row: Row<LocalTarget> }) => (
+                          <Select
+                              defaultValue={row.original.method ?? ""}
+                              onValueChange={(value) =>
+                                  updateTarget(row.original.targetId, {
+                                      ...row.original,
+                                      method: value
+                                  })
+                              }
+                          >
+                              <SelectTrigger>
+                                  {row.original.method}
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="http">http</SelectItem>
+                                  <SelectItem value="https">https</SelectItem>
+                                  <SelectItem value="h2c">h2c</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      )
+                  }
+              ]
             : []),
         {
             accessorKey: "ip",
@@ -658,9 +679,13 @@ export default function ReverseProxyTargets(props: {
                             if (parsed) {
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
-                                    method: hasProtocol ? parsed.protocol : row.original.method,
+                                    method: hasProtocol
+                                        ? parsed.protocol
+                                        : row.original.method,
                                     ip: parsed.host,
-                                    port: hasPort ? parsed.port : row.original.port
+                                    port: hasPort
+                                        ? parsed.port
+                                        : row.original.port
                                 });
                             } else {
                                 updateTarget(row.original.targetId, {
@@ -807,21 +832,21 @@ export default function ReverseProxyTargets(props: {
                                                                     className={cn(
                                                                         "justify-between flex-1",
                                                                         !field.value &&
-                                                                        "text-muted-foreground"
+                                                                            "text-muted-foreground"
                                                                     )}
                                                                 >
                                                                     {field.value
                                                                         ? sites.find(
-                                                                            (
-                                                                                site
-                                                                            ) =>
-                                                                                site.siteId ===
-                                                                                field.value
-                                                                        )
-                                                                            ?.name
+                                                                              (
+                                                                                  site
+                                                                              ) =>
+                                                                                  site.siteId ===
+                                                                                  field.value
+                                                                          )
+                                                                              ?.name
                                                                         : t(
-                                                                            "siteSelect"
-                                                                        )}
+                                                                              "siteSelect"
+                                                                          )}
                                                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -887,18 +912,35 @@ export default function ReverseProxyTargets(props: {
                                                                 );
                                                             return selectedSite &&
                                                                 selectedSite.type ===
-                                                                "newt" ? (() => {
-                                                                    const dockerState = getDockerStateForSite(selectedSite.siteId);
-                                                                    return (
-                                                                        <ContainersSelector
-                                                                            site={selectedSite}
-                                                                            containers={dockerState.containers}
-                                                                            isAvailable={dockerState.isAvailable}
-                                                                            onContainerSelect={handleContainerSelect}
-                                                                            onRefresh={() => refreshContainersForSite(selectedSite.siteId)}
-                                                                        />
-                                                                    );
-                                                                })() : null;
+                                                                    "newt"
+                                                                ? (() => {
+                                                                      const dockerState =
+                                                                          getDockerStateForSite(
+                                                                              selectedSite.siteId
+                                                                          );
+                                                                      return (
+                                                                          <ContainersSelector
+                                                                              site={
+                                                                                  selectedSite
+                                                                              }
+                                                                              containers={
+                                                                                  dockerState.containers
+                                                                              }
+                                                                              isAvailable={
+                                                                                  dockerState.isAvailable
+                                                                              }
+                                                                              onContainerSelect={
+                                                                                  handleContainerSelect
+                                                                              }
+                                                                              onRefresh={() =>
+                                                                                  refreshContainersForSite(
+                                                                                      selectedSite.siteId
+                                                                                  )
+                                                                              }
+                                                                          />
+                                                                      );
+                                                                  })()
+                                                                : null;
                                                         })()}
                                                 </div>
                                                 <FormMessage />
@@ -964,25 +1006,59 @@ export default function ReverseProxyTargets(props: {
                                         name="ip"
                                         render={({ field }) => (
                                             <FormItem className="relative">
-                                                <FormLabel>{t("targetAddr")}</FormLabel>
+                                                <FormLabel>
+                                                    {t("targetAddr")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         id="ip"
                                                         {...field}
                                                         onBlur={(e) => {
-                                                            const input = e.target.value.trim();
-                                                            const hasProtocol = /^(https?|h2c):\/\//.test(input);
-                                                            const hasPort = /:\d+(?:\/|$)/.test(input);
+                                                            const input =
+                                                                e.target.value.trim();
+                                                            const hasProtocol =
+                                                                /^(https?|h2c):\/\//.test(
+                                                                    input
+                                                                );
+                                                            const hasPort =
+                                                                /:\d+(?:\/|$)/.test(
+                                                                    input
+                                                                );
 
-                                                            if (hasProtocol || hasPort) {
-                                                                const parsed = parseHostTarget(input);
+                                                            if (
+                                                                hasProtocol ||
+                                                                hasPort
+                                                            ) {
+                                                                const parsed =
+                                                                    parseHostTarget(
+                                                                        input
+                                                                    );
                                                                 if (parsed) {
-                                                                    if (hasProtocol || !addTargetForm.getValues("method")) {
-                                                                        addTargetForm.setValue("method", parsed.protocol);
+                                                                    if (
+                                                                        hasProtocol ||
+                                                                        !addTargetForm.getValues(
+                                                                            "method"
+                                                                        )
+                                                                    ) {
+                                                                        addTargetForm.setValue(
+                                                                            "method",
+                                                                            parsed.protocol
+                                                                        );
                                                                     }
-                                                                    addTargetForm.setValue("ip", parsed.host);
-                                                                    if (hasPort || !addTargetForm.getValues("port")) {
-                                                                        addTargetForm.setValue("port", parsed.port);
+                                                                    addTargetForm.setValue(
+                                                                        "ip",
+                                                                        parsed.host
+                                                                    );
+                                                                    if (
+                                                                        hasPort ||
+                                                                        !addTargetForm.getValues(
+                                                                            "port"
+                                                                        )
+                                                                    ) {
+                                                                        addTargetForm.setValue(
+                                                                            "port",
+                                                                            parsed.port
+                                                                        );
                                                                     }
                                                                 }
                                                             } else {
@@ -1091,12 +1167,12 @@ export default function ReverseProxyTargets(props: {
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1250,6 +1326,36 @@ export default function ReverseProxyTargets(props: {
                                                 <FormDescription>
                                                     {t(
                                                         "proxyCustomHeaderDescription"
+                                                    )}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={proxySettingsForm.control}
+                                        name="headers"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-base font-semibold">
+                                                    {t("customHeaders")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <HeadersInput
+                                                        value={
+                                                            field.value || ""
+                                                        }
+                                                        onChange={(value) => {
+                                                            field.onChange(
+                                                                value
+                                                            );
+                                                        }}
+                                                        rows={4}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t(
+                                                        "customHeadersDescription"
                                                     )}
                                                 </FormDescription>
                                                 <FormMessage />
