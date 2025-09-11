@@ -644,3 +644,10 @@ authenticated.post(
     verifyApiKeyHasAction(ActionsEnum.updateClient),
     client.updateClient
 );
+
+authenticated.put(
+    "/org/:orgId/blueprint",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
+    org.applyBlueprint
+);

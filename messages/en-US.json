@@ -997,6 +997,7 @@
     "actionDeleteSite": "Delete Site",
     "actionGetSite": "Get Site",
     "actionListSites": "List Sites",
+    "actionApplyBlueprint": "Apply Blueprint",
     "setupToken": "Setup Token",
     "setupTokenDescription": "Enter the setup token from the server console.",
     "setupTokenRequired": "Setup token is required",

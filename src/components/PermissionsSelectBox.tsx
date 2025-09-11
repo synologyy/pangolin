@@ -29,7 +29,8 @@ function getActionsCategories(root: boolean) {
             [t('actionListUsers')]: "listUsers",
             [t('actionListOrgDomains')]: "listOrgDomains",
             [t('updateOrgUser')]: "updateOrgUser",
-            [t('createOrgUser')]: "createOrgUser"
+            [t('createOrgUser')]: "createOrgUser",
+            [t('actionApplyBlueprint')]: "applyBlueprint",
         },
 
         Site: {

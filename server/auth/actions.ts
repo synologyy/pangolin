@@ -101,7 +101,8 @@ export enum ActionsEnum {
     createOrgDomain = "createOrgDomain",
     deleteOrgDomain = "deleteOrgDomain",
     restartOrgDomain = "restartOrgDomain",
-    updateOrgUser = "updateOrgUser"
+    updateOrgUser = "updateOrgUser",
+    applyBlueprint = "applyBlueprint"
 }
 
 export async function checkUserActionPermission(
