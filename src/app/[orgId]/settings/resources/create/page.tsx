@@ -315,6 +315,8 @@ export default function Page() {
     }
 
     async function onSubmit() {
+                    setShowSnippets(true);
+                    router.refresh();
         setCreateLoading(true);
 
         const baseData = baseForm.getValues();
@@ -1420,7 +1422,9 @@ export default function Page() {
                                             <h3 className="text-lg font-semibold">
                                                 {t("resourceAddEntrypoints")}
                                             </h3>
-                                            (Edit file: config/traefik/traefik_config.yml)
+                                            <p className="text-sm text-muted-foreground">
+                                                (Edit file: config/traefik/traefik_config.yml)
+                                            </p>
                                             <CopyTextBox
                                                 text={`entryPoints:
   ${tcpUdpForm.getValues("protocol")}-${tcpUdpForm.getValues("proxyPort")}:
@@ -1433,7 +1437,9 @@ export default function Page() {
                                             <h3 className="text-lg font-semibold">
                                                 {t("resourceExposePorts")}
                                             </h3>
-                                            (Edit file: docker-compose.yml)
+                                            <p className="text-sm text-muted-foreground">
+                                                (Edit file: docker-compose.yml)
+                                            </p>
                                             <CopyTextBox
                                                 text={`ports:
   - ${tcpUdpForm.getValues("proxyPort")}:${tcpUdpForm.getValues("proxyPort")}${tcpUdpForm.getValues("protocol") === "tcp" ? "" : "/" + tcpUdpForm.getValues("protocol")}`}
