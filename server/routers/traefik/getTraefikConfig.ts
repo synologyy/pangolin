@@ -105,11 +105,9 @@ export async function getTraefikConfig(
         };
     };
 
-    // Get all resources with related data
-    const allResources = await db.transaction(async (tx) => {
         // Get resources with their targets and sites in a single optimized query
         // Start from sites on this exit node, then join to targets and resources
-        const resourcesWithTargetsAndSites = await tx
+        const resourcesWithTargetsAndSites = await db
             .select({
                 // Resource fields
                 resourceId: resources.resourceId,
@@ -133,6 +131,9 @@ export async function getTraefikConfig(
                 method: targets.method,
                 port: targets.port,
                 internalPort: targets.internalPort,
+                path: targets.path,
+                pathMatchType: targets.pathMatchType,
+
                 // Site fields
                 siteId: sites.siteId,
                 siteType: sites.type,
@@ -163,9 +164,15 @@ export async function getTraefikConfig(
 
         resourcesWithTargetsAndSites.forEach((row) => {
             const resourceId = row.resourceId;
+            const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
+            const pathMatchType = row.pathMatchType || "";
 
-            if (!resourcesMap.has(resourceId)) {
-                resourcesMap.set(resourceId, {
+            // Create a unique key combining resourceId and path+pathMatchType
+            const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
+            const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
+
+            if (!resourcesMap.has(mapKey)) {
+                resourcesMap.set(mapKey, {
                     resourceId: row.resourceId,
                     fullDomain: row.fullDomain,
                     ssl: row.ssl,
@@ -180,12 +187,14 @@ export async function getTraefikConfig(
                     setHostHeader: row.setHostHeader,
                     enableProxy: row.enableProxy,
                     targets: [],
-                    headers: row.headers
+                    headers: row.headers,
+                    path: row.path, // the targets will all have the same path
+                    pathMatchType: row.pathMatchType // the targets will all have the same pathMatchType
                 });
             }
 
             // Add target with its associated site data
-            resourcesMap.get(resourceId).targets.push({
+            resourcesMap.get(mapKey).targets.push({
                 resourceId: row.resourceId,
                 targetId: row.targetId,
                 ip: row.ip,
@@ -203,10 +212,13 @@ export async function getTraefikConfig(
             });
         });
 
-        return Array.from(resourcesMap.values());
-    });
+    
+    // convert the map to an object for printing
 
-    if (!allResources.length) {
+    logger.debug(`Resources: ${JSON.stringify(Object.fromEntries(resourcesMap), null, 2)}`);
+
+    // make sure we have at least one resource
+    if (resourcesMap.size === 0) {
         return {};
     }
 
@@ -222,14 +234,15 @@ export async function getTraefikConfig(
         }
     };
 
-    for (const resource of allResources) {
+    // get the key and the resource
+    for (const [key, resource] of resourcesMap.entries()) {
         const targets = resource.targets;
 
-        const routerName = `${resource.resourceId}-router`;
-        const serviceName = `${resource.resourceId}-service`;
+        const routerName = `${key}-router`;
+        const serviceName = `${key}-service`;
         const fullDomain = `${resource.fullDomain}`;
-        const transportName = `${resource.resourceId}-transport`;
-        const hostHeaderMiddlewareName = `${resource.resourceId}-host-header-middleware`;
+        const transportName = `${key}-transport`;
+        const headersMiddlewareName = `${key}-headers-middleware`;
 
         if (!resource.enabled) {
             continue;
@@ -241,9 +254,6 @@ export async function getTraefikConfig(
             }
 
             if (!resource.fullDomain) {
-                logger.error(
-                    `Resource ${resource.resourceId} has no fullDomain`
-                );
                 continue;
             }
 
@@ -305,7 +315,6 @@ export async function getTraefikConfig(
             ];
 
             if (resource.headers && resource.headers.length > 0) {
-                const headersMiddlewareName = `${resource.resourceId}-headers-middleware`;
                 // if there are headers, parse them into an object
                 let headersObj: { [key: string]: string } = {};
                 const headersArr = resource.headers.split(",");
@@ -338,6 +347,18 @@ export async function getTraefikConfig(
                 }
             }
 
+            let rule = `Host(\`${fullDomain}\`)`;
+            if (resource.path && resource.pathMatchType) {
+                // add path to rule based on match type
+                if (resource.pathMatchType === "exact") {
+                    rule += ` && Path(\`${resource.path}\`)`;
+                } else if (resource.pathMatchType === "prefix") {
+                    rule += ` && PathPrefix(\`${resource.path}\`)`;
+                } else if (resource.pathMatchType === "regex") {
+                    rule += ` && PathRegexp(\`${resource.path}\`)`;
+                }
+            }
+
             config_output.http.routers![routerName] = {
                 entryPoints: [
                     resource.ssl
@@ -346,7 +367,7 @@ export async function getTraefikConfig(
                 ],
                 middlewares: routerMiddlewares,
                 service: serviceName,
-                rule: `Host(\`${fullDomain}\`)`,
+                rule: rule,
                 priority: 100,
                 ...(resource.ssl ? { tls } : {})
             };
@@ -358,7 +379,7 @@ export async function getTraefikConfig(
                     ],
                     middlewares: [redirectHttpsMiddlewareName],
                     service: serviceName,
-                    rule: `Host(\`${fullDomain}\`)`,
+                    rule: rule,
                     priority: 100
                 };
             }
@@ -549,4 +570,14 @@ export async function getTraefikConfig(
         }
     }
     return config_output;
+}
+
+function sanitizePath(path: string | null | undefined): string | undefined {
+    if (!path) return undefined;
+    // clean any non alphanumeric characters from the path and replace with dashes
+    // the path cant be too long either, so limit to 50 characters
+    if (path.length > 50) {
+        path = path.substring(0, 50);
+    }
+    return path.replace(/[^a-zA-Z0-9]/g, "");
 }
