@@ -41,9 +41,10 @@ const applyBlueprintParamsSchema = z
 registry.registerPath({
     method: "put",
     path: "/org/{orgId}/blueprint",
-    description: "Apply a blueprint to an organization",
+    description: "Apply a base64 encoded blueprint to an organization",
     tags: [OpenAPITags.Org],
     request: {
+        params: applyBlueprintParamsSchema,
         body: {
             content: {
                 "application/json": {
@@ -93,7 +94,10 @@ export async function applyBlueprint(
         logger.debug(`Received blueprint: ${blueprint}`);
 
         try {
-            const blueprintParsed = JSON.parse(blueprint);
+            // first base64 decode the blueprint
+            const decoded = Buffer.from(blueprint, "base64").toString("utf-8");
+            // then parse the json
+            const blueprintParsed = JSON.parse(decoded);
             // Update the blueprint in the database
             await applyBlueprintFunc(orgId, blueprintParsed);
         } catch (error) {

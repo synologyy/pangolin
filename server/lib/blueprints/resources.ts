@@ -68,7 +68,7 @@ export async function updateResources(
                     )
                     .limit(1);
             } else {
-                throw new Error(`Target site ID is required`);
+                throw new Error(`Target site is required`);
             }
 
             if (!site) {
@@ -712,7 +712,7 @@ async function getDomainId(
     }
 
     const validDomains = possibleDomains.filter((domain) => {
-        if (domain.domains.type == "ns") {
+        if (domain.domains.type == "ns" || domain.domains.type == "wildcard") {
             return (
                 fullDomain === domain.domains.baseDomain ||
                 fullDomain.endsWith(`.${domain.domains.baseDomain}`)
