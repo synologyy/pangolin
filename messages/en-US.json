@@ -1507,6 +1507,19 @@
     "idpGoogleDescription": "Google OAuth2/OIDC provider",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Custom Headers",
-    "customHeadersDescription": "Headers new line separated: Header-Name: value",
-    "headersValidationError": "Headers must be in the format: Header-Name: value"
+    "customHeadersDescription": "Headers new line separated: Header-Name: value.",
+    "headersValidationError": "Headers must be in the format: Header-Name: value.",
+    "domainPickerProvidedDomain": "Provided Domain",
+    "domainPickerFreeProvidedDomain": "Free Provided Domain",
+    "domainPickerVerified": "Verified",
+    "domainPickerUnverified": "Unverified",
+    "domainPickerInvalidSubdomainStructure": "This subdomain contains invalid characters or structure. It will be sanitized automatically when you save.",
+    "domainPickerError": "Error",
+    "domainPickerErrorLoadDomains": "Failed to load organization domains",
+    "domainPickerErrorCheckAvailability": "Failed to check domain availability",
+    "domainPickerInvalidSubdomain": "Invalid subdomain",
+    "domainPickerInvalidSubdomainRemoved": "The input \"{sub}\" was removed because it's not valid.",
+    "domainPickerInvalidSubdomainCannotMakeValid": "\"{sub}\" could not be made valid for {domain}.",
+    "domainPickerSubdomainSanitized": "Subdomain sanitized",
+    "domainPickerSubdomainCorrected": "\"{sub}\" was corrected to \"{sanitized}\""
 }

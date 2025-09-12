@@ -79,12 +79,14 @@ interface DomainPicker2Props {
         baseDomain: string;
     }) => void;
     cols?: number;
+    hideFreeDomain?: boolean;
 }
 
 export default function DomainPicker2({
     orgId,
     onDomainChange,
-    cols = 2
+    cols = 2,
+    hideFreeDomain = false
 }: DomainPicker2Props) {
     const { env } = useEnvContext();
     const api = createApiClient({ env });
@@ -153,12 +155,12 @@ export default function DomainPicker2({
                             fullDomain: firstOrgDomain.baseDomain,
                             baseDomain: firstOrgDomain.baseDomain
                         });
-                    } else if (build === "saas" || build === "enterprise") {
+                    } else if ((build === "saas" || build === "enterprise") && !hideFreeDomain) {
                         // If no organization domains, select the provided domain option
                         const domainOptionText =
                             build === "enterprise"
-                                ? "Provided Domain"
-                                : "Free Provided Domain";
+                                ? t("domainPickerProvidedDomain")
+                                : t("domainPickerFreeProvidedDomain");
                         const freeDomainOption: DomainOption = {
                             id: "provided-search",
                             domain: domainOptionText,
@@ -171,8 +173,8 @@ export default function DomainPicker2({
                 console.error("Failed to load organization domains:", error);
                 toast({
                     variant: "destructive",
-                    title: "Error",
-                    description: "Failed to load organization domains"
+                    title: t("domainPickerError"),
+                    description: t("domainPickerErrorLoadDomains")
                 });
             } finally {
                 setLoadingDomains(false);
@@ -180,7 +182,7 @@ export default function DomainPicker2({
         };
 
         loadOrganizationDomains();
-    }, [orgId, api]);
+    }, [orgId, api, hideFreeDomain]);
 
     const checkAvailability = useCallback(
         async (input: string) => {
@@ -202,8 +204,8 @@ export default function DomainPicker2({
                 setAvailableOptions([]);
                 toast({
                     variant: "destructive",
-                    title: "Error",
-                    description: "Failed to check domain availability"
+                    title: t("domainPickerError"),
+                    description: t("domainPickerErrorCheckAvailability")
                 });
             } finally {
                 setIsChecking(false);
@@ -246,11 +248,11 @@ export default function DomainPicker2({
             });
         });
 
-        if (build === "saas" || build === "enterprise") {
+        if ((build === "saas" || build === "enterprise") && !hideFreeDomain) {
             const domainOptionText =
                 build === "enterprise"
-                    ? "Provided Domain"
-                    : "Free Provided Domain";
+                    ? t("domainPickerProvidedDomain")
+                    : t("domainPickerFreeProvidedDomain");
             options.push({
                 id: "provided-search",
                 domain: domainOptionText,
@@ -269,8 +271,8 @@ export default function DomainPicker2({
         if (!sanitized) {
             toast({
                 variant: "destructive",
-                title: "Invalid subdomain",
-                description: `The input "${sub}" was removed because it's not valid.`,
+                title: t("domainPickerInvalidSubdomain"),
+                description: t("domainPickerInvalidSubdomainRemoved", { sub }),
             });
             return "";
         }
@@ -283,16 +285,16 @@ export default function DomainPicker2({
         if (!ok) {
             toast({
                 variant: "destructive",
-                title: "Invalid subdomain",
-                description: `"${sub}" could not be made valid for ${base.domain}.`,
+                title: t("domainPickerInvalidSubdomain"),
+                description: t("domainPickerInvalidSubdomainCannotMakeValid", { sub, domain: base.domain }),
             });
             return "";
         }
 
         if (sub !== sanitized) {
             toast({
-                title: "Subdomain sanitized",
-                description: `"${sub}" was corrected to "${sanitized}"`,
+                title: t("domainPickerSubdomainSanitized"),
+                description: t("domainPickerSubdomainCorrected", { sub, sanitized }),
             });
         }
 
@@ -453,7 +455,7 @@ export default function DomainPicker2({
                     />
                     {showSubdomainInput && subdomainInput && !isValidSubdomainStructure(subdomainInput) && (
                         <p className="text-sm text-red-500">
-                            This subdomain contains invalid characters or structure. It will be sanitized automatically when you save.
+                            {t("domainPickerInvalidSubdomainStructure")}
                         </p>
                     )}
                     {showSubdomainInput && !subdomainInput && (
@@ -555,8 +557,8 @@ export default function DomainPicker2({
                                                                     {orgDomain.type.toUpperCase()}{" "}
                                                                     •{" "}
                                                                     {orgDomain.verified
-                                                                        ? "Verified"
-                                                                        : "Unverified"}
+                                                                        ? t("domainPickerVerified")
+                                                                        : t("domainPickerUnverified")}
                                                                 </span>
                                                             </div>
                                                             <Check
@@ -574,14 +576,14 @@ export default function DomainPicker2({
                                             </CommandList>
                                         </CommandGroup>
                                         {(build === "saas" ||
-                                            build === "enterprise") && (
+                                            build === "enterprise") && !hideFreeDomain && (
                                                 <CommandSeparator className="my-2" />
                                             )}
                                     </>
                                 )}
 
                                 {(build === "saas" ||
-                                    build === "enterprise") && (
+                                    build === "enterprise") && !hideFreeDomain && (
                                         <CommandGroup
                                             heading={
                                                 build === "enterprise"
@@ -601,8 +603,8 @@ export default function DomainPicker2({
                                                             domain:
                                                                 build ===
                                                                     "enterprise"
-                                                                    ? "Provided Domain"
-                                                                    : "Free Provided Domain",
+                                                                    ? t("domainPickerProvidedDomain")
+                                                                    : t("domainPickerFreeProvidedDomain"),
                                                             type: "provided-search"
                                                         })
                                                     }
@@ -614,8 +616,8 @@ export default function DomainPicker2({
                                                     <div className="flex flex-col flex-1 min-w-0">
                                                         <span className="font-medium truncate">
                                                             {build === "enterprise"
-                                                                ? "Provided Domain"
-                                                                : "Free Provided Domain"}
+                                                                ? t("domainPickerProvidedDomain")
+                                                                : t("domainPickerFreeProvidedDomain")}
                                                         </span>
                                                         <span className="text-xs text-muted-foreground">
                                                             {t(
