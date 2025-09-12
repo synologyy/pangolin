@@ -31,19 +31,19 @@ export async function updateResources(
     trx: Transaction,
     siteId?: number
 ): Promise<ResourcesResults> {
-    let results: ResourcesResults = [];
+    const results: ResourcesResults = [];
 
     for (const [resourceNiceId, resourceData] of Object.entries(
         config.resources
     )) {
-        let targetsToUpdate: Target[] = [];
+        const targetsToUpdate: Target[] = [];
         let resource: Resource;
 
         async function createTarget( // reusable function to create a target
             resourceId: number,
             targetData: TargetData
         ) {
-            let targetSiteId = targetData.site;
+            const targetSiteId = targetData.site;
             let site;
 
             if (targetSiteId) {
@@ -269,7 +269,7 @@ export async function updateResources(
                 const existingTarget = existingResourceTargets[index];
 
                 if (existingTarget) {
-                    let targetSiteId = targetData.site;
+                    const targetSiteId = targetData.site;
                     let site;
 
                     if (targetSiteId) {

@@ -309,14 +309,14 @@ export async function getTraefikConfig(
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
 
-            let routerMiddlewares = [
+            const routerMiddlewares = [
                 badgerMiddlewareName,
                 ...additionalMiddlewares
             ];
 
             if (resource.headers && resource.headers.length > 0) {
                 // if there are headers, parse them into an object
-                let headersObj: { [key: string]: string } = {};
+                const headersObj: { [key: string]: string } = {};
                 const headersArr = resource.headers.split(",");
                 for (const header of headersArr) {
                     const [key, value] = header

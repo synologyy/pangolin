@@ -89,7 +89,7 @@ const updateHttpResourceBodySchema = z
     .refine(
         (data) => {
             if (data.headers) {
-                return validateHeaders(data.headers)
+                return validateHeaders(data.headers);
             }
             return true;
         },
