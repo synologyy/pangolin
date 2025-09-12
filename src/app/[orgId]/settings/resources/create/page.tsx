@@ -58,7 +58,7 @@ import {
 } from "@app/components/ui/popover";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { cn } from "@app/lib/cn";
-import { SquareArrowOutUpRight } from "lucide-react";
+import { ArrowRight, MoveRight, SquareArrowOutUpRight } from "lucide-react";
 import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -355,8 +355,6 @@ export default function Page() {
     }
 
     async function onSubmit() {
-                    setShowSnippets(true);
-                    router.refresh();
         setCreateLoading(true);
 
         const baseData = baseForm.getValues();
@@ -538,6 +536,89 @@ export default function Page() {
 
     const columns: ColumnDef<LocalTarget>[] = [
         {
+            accessorKey: "path",
+            header: t("matchPath"),
+            cell: ({ row }) => {
+                const [showPathInput, setShowPathInput] = useState(
+                    !!(row.original.path || row.original.pathMatchType)
+                );
+                
+                if (!showPathInput) {
+                    return (
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowPathInput(true)}
+                        >
+                            + {t("matchPath")}
+                        </Button>
+                    );
+                }
+
+                return (
+                    <div className="flex gap-2 min-w-[200px] items-center">
+                        <Select
+                            defaultValue={row.original.pathMatchType || "exact"}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    pathMatchType: value as "exact" | "prefix" | "regex"
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-25">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="exact">Exact</SelectItem>
+                                <SelectItem value="prefix">Prefix</SelectItem>
+                                <SelectItem value="regex">Regex</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            placeholder={
+                                row.original.pathMatchType === "regex" 
+                                    ? "^/api/.*" 
+                                    : "/path"
+                            }
+                            defaultValue={row.original.path || ""}
+                            className="flex-1 min-w-[150px]"
+                            onBlur={(e) => {
+                                const value = e.target.value.trim();
+                                if (!value) {
+                                    setShowPathInput(false);
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        path: null,
+                                        pathMatchType: null
+                                    });
+                                } else {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        path: value
+                                    });
+                                }
+                            }}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowPathInput(false);
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    path: null,
+                                    pathMatchType: null
+                                });
+                            }}
+                        >
+                            ×
+                        </Button>
+
+                        <MoveRight className="ml-4 h-4 w-4" />
+                    </div>
+                );
+            }
+        },
+        {
             accessorKey: "siteId",
             header: t("site"),
             cell: ({ row }) => {
@@ -709,87 +790,6 @@ export default function Page() {
                     }
                 />
             )
-        },
-        {
-            accessorKey: "path",
-            header: t("path"),
-            cell: ({ row }) => {
-                const [showPathInput, setShowPathInput] = useState(
-                    !!(row.original.path || row.original.pathMatchType)
-                );
-                
-                if (!showPathInput) {
-                    return (
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowPathInput(true)}
-                        >
-                            + Path
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2 min-w-[200px]">
-                        <Select
-                            defaultValue={row.original.pathMatchType || "exact"}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    pathMatchType: value as "exact" | "prefix" | "regex"
-                                })
-                            }
-                        >
-                            <SelectTrigger className="w-25">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="exact">Exact</SelectItem>
-                                <SelectItem value="prefix">Prefix</SelectItem>
-                                <SelectItem value="regex">Regex</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input
-                            placeholder={
-                                row.original.pathMatchType === "regex" 
-                                    ? "^/api/.*" 
-                                    : "/path"
-                            }
-                            defaultValue={row.original.path || ""}
-                            className="flex-1 min-w-[150px]"
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (!value) {
-                                    setShowPathInput(false);
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: null,
-                                        pathMatchType: null
-                                    });
-                                } else {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: value
-                                    });
-                                }
-                            }}
-                        />
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(false);
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    path: null,
-                                    pathMatchType: null
-                                });
-                            }}
-                        >
-                            ×
-                        </Button>
-                    </div>
-                );
-            }
         },
         {
             accessorKey: "enabled",

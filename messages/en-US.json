@@ -513,6 +513,7 @@
     "ipAddressErrorInvalidFormat": "Invalid IP address format",
     "ipAddressErrorInvalidOctet": "Invalid IP address octet",
     "path": "Path",
+    "matchPath": "Match Path",
     "ipAddressRange": "IP Range",
     "rulesErrorFetch": "Failed to fetch rules",
     "rulesErrorFetchDescription": "An error occurred while fetching rules",
