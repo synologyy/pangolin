@@ -20,11 +20,15 @@ resources:
       - X-Another-Header: another-value
     targets:
     - site: lively-yosemite-toad
+      path: /path
+      pathMatchType: prefix
       hostname: localhost
       method: http
       port: 8000
     - site: slim-alpine-chipmunk
       hostname: localhost
+      path: /yoman
+      pathMatchType: exact
       method: http
       port: 8001
   resource-nice-id2:

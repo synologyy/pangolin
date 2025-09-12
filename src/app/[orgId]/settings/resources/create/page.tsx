@@ -112,8 +112,42 @@ const addTargetSchema = z.object({
     ip: z.string().refine(isTargetValid),
     method: z.string().nullable(),
     port: z.coerce.number().int().positive(),
-    siteId: z.number().int().positive()
-});
+    siteId: z.number().int().positive(),
+    path: z.string().optional().nullable(),
+    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable()
+}).refine(
+    (data) => {
+        // If path is provided, pathMatchType must be provided
+        if (data.path && !data.pathMatchType) {
+            return false;
+        }
+        // If pathMatchType is provided, path must be provided
+        if (data.pathMatchType && !data.path) {
+            return false;
+        }
+        // Validate path based on pathMatchType
+        if (data.path && data.pathMatchType) {
+            switch (data.pathMatchType) {
+                case "exact":
+                case "prefix":
+                    // Path should start with /
+                    return data.path.startsWith("/");
+                case "regex":
+                    // Validate regex
+                    try {
+                        new RegExp(data.path);
+                        return true;
+                    } catch {
+                        return false;
+                    }
+            }
+        }
+        return true;
+    },
+    {
+        message: "Invalid path configuration"
+    }
+);
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
 type HttpResourceFormValues = z.infer<typeof httpResourceFormSchema>;
@@ -202,7 +236,9 @@ export default function Page() {
         defaultValues: {
             ip: "",
             method: baseForm.watch("http") ? "http" : null,
-            port: "" as any as number
+            port: "" as any as number,
+            path: null,
+            pathMatchType: null
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -273,6 +309,8 @@ export default function Page() {
 
         const newTarget: LocalTarget = {
             ...data,
+            path: data.path || null,
+            pathMatchType: data.pathMatchType || null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
@@ -284,7 +322,9 @@ export default function Page() {
         addTargetForm.reset({
             ip: "",
             method: baseForm.watch("http") ? "http" : null,
-            port: "" as any as number
+            port: "" as any as number,
+            path: null,
+            pathMatchType: null
         });
     }
 
@@ -370,7 +410,9 @@ export default function Page() {
                                 port: target.port,
                                 method: target.method,
                                 enabled: target.enabled,
-                                siteId: target.siteId
+                                siteId: target.siteId,
+                                path: target.path,
+                                pathMatchType: target.pathMatchType
                             };
 
                             await api.put(`/resource/${id}/target`, data);
@@ -665,6 +707,87 @@ export default function Page() {
                     }
                 />
             )
+        },
+        {
+            accessorKey: "path",
+            header: t("path"),
+            cell: ({ row }) => {
+                const [showPathInput, setShowPathInput] = useState(
+                    !!(row.original.path || row.original.pathMatchType)
+                );
+                
+                if (!showPathInput) {
+                    return (
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowPathInput(true)}
+                        >
+                            + Path
+                        </Button>
+                    );
+                }
+
+                return (
+                    <div className="flex gap-2 min-w-[200px]">
+                        <Select
+                            defaultValue={row.original.pathMatchType || "exact"}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    pathMatchType: value as "exact" | "prefix" | "regex"
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-25">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="exact">Exact</SelectItem>
+                                <SelectItem value="prefix">Prefix</SelectItem>
+                                <SelectItem value="regex">Regex</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            placeholder={
+                                row.original.pathMatchType === "regex" 
+                                    ? "^/api/.*" 
+                                    : "/path"
+                            }
+                            defaultValue={row.original.path || ""}
+                            className="flex-1 min-w-[150px]"
+                            onBlur={(e) => {
+                                const value = e.target.value.trim();
+                                if (!value) {
+                                    setShowPathInput(false);
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        path: null,
+                                        pathMatchType: null
+                                    });
+                                } else {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        path: value
+                                    });
+                                }
+                            }}
+                        />
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowPathInput(false);
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    path: null,
+                                    pathMatchType: null
+                                });
+                            }}
+                        >
+                            ×
+                        </Button>
+                    </div>
+                );
+            }
         },
         {
             accessorKey: "enabled",

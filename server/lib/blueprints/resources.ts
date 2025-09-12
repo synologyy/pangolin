@@ -98,7 +98,9 @@ export async function updateResources(
                     method: targetData.method,
                     port: targetData.port,
                     enabled: targetData.enabled,
-                    internalPort: internalPortToCreate
+                    internalPort: internalPortToCreate,
+                    path: targetData.path,
+                    pathMatchType: targetData.pathMatchType
                 })
                 .returning();
 
@@ -121,6 +123,7 @@ export async function updateResources(
         const protocol =
             resourceData.protocol == "http" ? "tcp" : resourceData.protocol;
         const resourceEnabled = resourceData.enabled == undefined || resourceData.enabled == null ? true : resourceData.enabled;
+        const resourceSsl = resourceData.ssl == undefined || resourceData.ssl == null ? true : resourceData.ssl;
         let headers = "";
         for (const headerObj of resourceData.headers || []) {
             for (const [key, value] of Object.entries(headerObj)) {
@@ -165,7 +168,7 @@ export async function updateResources(
                         domainId: domain ? domain.domainId : null,
                         enabled: resourceEnabled,
                         sso: resourceData.auth?.["sso-enabled"] || false,
-                        ssl: resourceData.ssl ? true : false,
+                        ssl: resourceSsl,
                         setHostHeader: resourceData["host-header"] || null,
                         tlsServerName: resourceData["tls-server-name"] || null,
                         emailWhitelistEnabled: resourceData.auth?.[
@@ -311,7 +314,9 @@ export async function updateResources(
                             ip: targetData.hostname,
                             method: http ? targetData.method : null,
                             port: targetData.port,
-                            enabled: targetData.enabled
+                            enabled: targetData.enabled,
+                            path: targetData.path,
+                            pathMatchType: targetData.pathMatchType
                         })
                         .where(eq(targets.targetId, existingTarget.targetId))
                         .returning();
@@ -395,7 +400,7 @@ export async function updateResources(
                     sso: resourceData.auth?.["sso-enabled"] || false,
                     setHostHeader: resourceData["host-header"] || null,
                     tlsServerName: resourceData["tls-server-name"] || null,
-                    ssl: resourceData.ssl ? true : false,
+                    ssl: resourceSsl,
                     headers: headers || null
                 })
                 .returning();

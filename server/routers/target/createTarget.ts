@@ -30,7 +30,9 @@ const createTargetSchema = z
         ip: z.string().refine(isTargetValid),
         method: z.string().optional().nullable(),
         port: z.number().int().min(1).max(65535),
-        enabled: z.boolean().default(true)
+        enabled: z.boolean().default(true),
+        path: z.string().optional().nullable(),
+        pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable()
     })
     .strict();
 
