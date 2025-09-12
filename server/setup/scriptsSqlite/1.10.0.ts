@@ -12,14 +12,14 @@ export default async function migration() {
     const db = new Database(location);
 
     const resourceSiteMap = new Map<number, number>();
-	const firstSiteId: number = 1;
+    const firstSiteId: number = 1;
 
     try {
-		const resources = db
-			.prepare(
-				"SELECT resourceId FROM resources WHERE siteId IS NOT NULL"
-			)
-			.all() as Array<{ resourceId: number; }>;
+        const resources = db
+            .prepare(
+                "SELECT resourceId FROM resources WHERE siteId IS NOT NULL"
+            )
+            .all() as Array<{ resourceId: number }>;
 
         db.transaction(() => {
             db.exec(`
@@ -27,6 +27,9 @@ export default async function migration() {
                 ALTER TABLE 'idpOidcConfig' ADD 'variant' text DEFAULT 'oidc' NOT NULL;
                 ALTER TABLE 'resources' ADD 'niceId' text DEFAULT '' NOT NULL;
                 ALTER TABLE 'userOrgs' ADD 'autoProvisioned' integer DEFAULT false;
+                ALTER TABLE 'targets' ADD 'pathMatchType' text;
+                ALTER TABLE 'targets' ADD 'path' text;
+                ALTER TABLE 'resources' ADD 'headers' text;
             `); // this diverges from the schema a bit because the schema does not have a default on niceId but was required for the migration and I dont think it will effect much down the line...
 
             const usedNiceIds: string[] = [];
@@ -47,7 +50,9 @@ export default async function migration() {
                     }
                     loops++;
                 }
-                db.prepare(`UPDATE resources SET niceId = ? WHERE resourceId = ?`).run(niceId, resourceId.resourceId);
+                db.prepare(
+                    `UPDATE resources SET niceId = ? WHERE resourceId = ?`
+                ).run(niceId, resourceId.resourceId);
             }
         })();
 

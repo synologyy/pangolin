@@ -16,13 +16,31 @@ export default async function migration() {
 
         await db.execute(sql`BEGIN`);
 
-        await db.execute(sql`ALTER TABLE "exitNodes" ADD COLUMN "region" text;`);
-        
-        await db.execute(sql`ALTER TABLE "idpOidcConfig" ADD COLUMN "variant" text DEFAULT 'oidc' NOT NULL;`);
-        
-        await db.execute(sql`ALTER TABLE "resources" ADD COLUMN "niceId" text DEFAULT '' NOT NULL;`);
-        
-        await db.execute(sql`ALTER TABLE "userOrgs" ADD COLUMN "autoProvisioned" boolean DEFAULT false;`);
+        await db.execute(
+            sql`ALTER TABLE "exitNodes" ADD COLUMN "region" text;`
+        );
+
+        await db.execute(
+            sql`ALTER TABLE "idpOidcConfig" ADD COLUMN "variant" text DEFAULT 'oidc' NOT NULL;`
+        );
+
+        await db.execute(
+            sql`ALTER TABLE "resources" ADD COLUMN "niceId" text DEFAULT '' NOT NULL;`
+        );
+
+        await db.execute(
+            sql`ALTER TABLE "userOrgs" ADD COLUMN "autoProvisioned" boolean DEFAULT false;`
+        );
+
+        await db.execute(
+            sql`ALTER TABLE "targets" ADD COLUMN "pathMatchType" text;`
+        );
+
+        await db.execute(sql`ALTER TABLE "targets" ADD COLUMN "path" text;`);
+
+        await db.execute(
+            sql`ALTER TABLE "resources" ADD COLUMN "headers" text;`
+        );
 
         const usedNiceIds: string[] = [];
 
