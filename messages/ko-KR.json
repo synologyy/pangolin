@@ -1517,5 +1517,7 @@
     "domainPickerInvalidSubdomainRemoved": "입력 \"{sub}\"이(가) 유효하지 않으므로 제거되었습니다.",
     "domainPickerInvalidSubdomainCannotMakeValid": "\"{sub}\"을(를) {domain}에 대해 유효하게 만들 수 없습니다.",
     "domainPickerSubdomainSanitized": "하위 도메인 정리됨",
-    "domainPickerSubdomainCorrected": "\"{sub}\"이(가) \"{sanitized}\"로 수정되었습니다"
+    "domainPickerSubdomainCorrected": "\"{sub}\"이(가) \"{sanitized}\"로 수정되었습니다",
+    "resourceAddEntrypointsEditFile": "Edit file: config/traefik/traefik_config.yml",
+    "resourceExposePortsEditFile": "Edit file: docker-compose.yml"
 }
