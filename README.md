@@ -27,8 +27,17 @@ _Pangolin tunnels your services to the internet so you can access anything from 
       <a href="mailto:contact@fossorial.io">
         Contact Us
       </a>
+      <span> | </span>
+      <a href="https://digpangolin.com/slack">
+        Slack
+      </a>
+      <span> | </span>
+      <a href="https://discord.gg/HCJR8Xhme4">
+        Discord
+      </a>
   </h5>
 
+[![Slack](https://img.shields.io/badge/chat-slack-yellow?style=flat-square&logo=slack)](https://digpangolin.com/slack)
 [![Docker](https://img.shields.io/docker/pulls/fosrl/pangolin?style=flat-square)](https://hub.docker.com/r/fosrl/pangolin)
 ![Stars](https://img.shields.io/github/stars/fosrl/pangolin?style=flat-square)
 [![Discord](https://img.shields.io/discord/1325658630518865980?logo=discord&style=flat-square)](https://discord.gg/HCJR8Xhme4)
