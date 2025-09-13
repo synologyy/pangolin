@@ -1,7 +1,6 @@
 interface AccessLayoutProps {
     children: React.ReactNode;
     params: Promise<{
-        resourceId?: number | string;
         orgId: string;
     }>;
 }
