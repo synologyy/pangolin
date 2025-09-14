@@ -66,9 +66,9 @@ export function processContainerLabels(containers: Container[]): {
 
         const resourceLabels: DockerLabels = {};
 
-        // Filter labels that start with "pangolin.resources."
+        // Filter labels that start with "pangolin.proxy-resources."
         Object.entries(container.labels).forEach(([key, value]) => {
-            if (key.startsWith("pangolin.resources.")) {
+            if (key.startsWith("pangolin.proxy-resources.") || key.startsWith("pangolin.client-resources.")) {
                 // remove the pangolin. prefix
                 const strippedKey = key.replace("pangolin.", "");
                 resourceLabels[strippedKey] = value;

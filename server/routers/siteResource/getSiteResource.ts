@@ -12,21 +12,72 @@ import { OpenAPITags, registry } from "@server/openApi";
 
 const getSiteResourceParamsSchema = z
     .object({
-        siteResourceId: z.string().transform(Number).pipe(z.number().int().positive()),
+        siteResourceId: z
+            .string()
+            .optional()
+            .transform((val) => val ? Number(val) : undefined)
+            .pipe(z.number().int().positive().optional())
+            .optional(),
         siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+        niceId: z.string().optional(),
         orgId: z.string()
     })
     .strict();
 
-export type GetSiteResourceResponse = SiteResource;
+async function query(siteResourceId?: number, siteId?: number, niceId?: string, orgId?: string) {
+    if (siteResourceId && siteId && orgId) {
+        const [siteResource] = await db
+            .select()
+            .from(siteResources)
+            .where(and(
+                eq(siteResources.siteResourceId, siteResourceId),
+                eq(siteResources.siteId, siteId),
+                eq(siteResources.orgId, orgId)
+            ))
+            .limit(1);
+        return siteResource;
+    } else if (niceId && siteId && orgId) {
+        const [siteResource] = await db
+            .select()
+            .from(siteResources)
+            .where(and(
+                eq(siteResources.niceId, niceId),
+                eq(siteResources.siteId, siteId),
+                eq(siteResources.orgId, orgId)
+            ))
+            .limit(1);
+        return siteResource;
+    }
+}
+
+export type GetSiteResourceResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
 
 registry.registerPath({
     method: "get",
     path: "/org/{orgId}/site/{siteId}/resource/{siteResourceId}",
-    description: "Get a specific site resource.",
+    description: "Get a specific site resource by siteResourceId.",
     tags: [OpenAPITags.Client, OpenAPITags.Org],
     request: {
-        params: getSiteResourceParamsSchema
+        params: z.object({
+            siteResourceId: z.number(),
+            siteId: z.number(),
+            orgId: z.string()
+        })
+    },
+    responses: {}
+});
+
+registry.registerPath({
+    method: "get",
+    path: "/org/{orgId}/site/{siteId}/resource/nice/{niceId}",
+    description: "Get a specific site resource by niceId.",
+    tags: [OpenAPITags.Client, OpenAPITags.Org],
+    request: {
+        params: z.object({
+            niceId: z.string(),
+            siteId: z.number(),
+            orgId: z.string()
+        })
     },
     responses: {}
 });
@@ -47,18 +98,10 @@ export async function getSiteResource(
             );
         }
 
-        const { siteResourceId, siteId, orgId } = parsedParams.data;
+        const { siteResourceId, siteId, niceId, orgId } = parsedParams.data;
 
         // Get the site resource
-        const [siteResource] = await db
-            .select()
-            .from(siteResources)
-            .where(and(
-                eq(siteResources.siteResourceId, siteResourceId),
-                eq(siteResources.siteId, siteId),
-                eq(siteResources.orgId, orgId)
-            ))
-            .limit(1);
+        const siteResource = await query(siteResourceId, siteId, niceId, orgId);
 
         if (!siteResource) {
             return next(

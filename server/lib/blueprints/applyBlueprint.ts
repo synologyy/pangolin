@@ -1,11 +1,16 @@
 import { db, newts, Target } from "@server/db";
 import { Config, ConfigSchema } from "./types";
-import { ResourcesResults, updateResources } from "./resources";
+import { ProxyResourcesResults, updateProxyResources } from "./proxyResources";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { resources, targets, sites } from "@server/db";
 import { eq, and, asc, or, ne, count, isNotNull } from "drizzle-orm";
-import { addTargets } from "@server/routers/newt/targets";
+import { addTargets as addProxyTargets } from "@server/routers/newt/targets";
+import { addTargets as addClientTargets } from "@server/routers/client/targets";
+import {
+    ClientResourcesResults,
+    updateClientResources
+} from "./clientResources";
 
 export async function applyBlueprint(
     orgId: string,
@@ -21,17 +26,29 @@ export async function applyBlueprint(
     const config: Config = validationResult.data;
 
     try {
-        let resourcesResults: ResourcesResults = [];
+        let proxyResourcesResults: ProxyResourcesResults = [];
+        let clientResourcesResults: ClientResourcesResults = [];
         await db.transaction(async (trx) => {
-            resourcesResults = await updateResources(orgId, config, trx, siteId);
+            proxyResourcesResults = await updateProxyResources(
+                orgId,
+                config,
+                trx,
+                siteId
+            );
+            clientResourcesResults = await updateClientResources(
+                orgId,
+                config,
+                trx,
+                siteId
+            );
         });
 
         logger.debug(
-            `Successfully updated resources for org ${orgId}: ${JSON.stringify(resourcesResults)}`
+            `Successfully updated proxy resources for org ${orgId}: ${JSON.stringify(proxyResourcesResults)}`
         );
 
         // We need to update the targets on the newts from the successfully updated information
-        for (const result of resourcesResults) {
+        for (const result of proxyResourcesResults) {
             for (const target of result.targetsToUpdate) {
                 const [site] = await db
                     .select()
@@ -52,13 +69,48 @@ export async function applyBlueprint(
                         `Updating target ${target.targetId} on site ${site.sites.siteId}`
                     );
 
-                    await addTargets(
+                    await addProxyTargets(
                         site.newt.newtId,
                         [target],
-                        result.resource.protocol,
-                        result.resource.proxyPort
+                        result.proxyResource.protocol,
+                        result.proxyResource.proxyPort
                     );
                 }
+            }
+        }
+
+        logger.debug(
+            `Successfully updated client resources for org ${orgId}: ${JSON.stringify(clientResourcesResults)}`
+        );
+
+        // We need to update the targets on the newts from the successfully updated information
+        for (const result of clientResourcesResults) {
+            const [site] = await db
+                .select()
+                .from(sites)
+                .innerJoin(newts, eq(sites.siteId, newts.siteId))
+                .where(
+                    and(
+                        eq(sites.siteId, result.resource.siteId),
+                        eq(sites.orgId, orgId),
+                        eq(sites.type, "newt"),
+                        isNotNull(sites.pubKey)
+                    )
+                )
+                .limit(1);
+
+            if (site) {
+                logger.debug(
+                    `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
+                );
+
+                await addClientTargets(
+                    site.newt.newtId,
+                    result.resource.destinationIp,
+                    result.resource.destinationPort,
+                    result.resource.protocol,
+                    result.resource.proxyPort
+                );
             }
         }
     } catch (error) {
@@ -102,17 +154,17 @@ export async function applyBlueprint(
 //                 }
 //             ]
 //         },
-        // "resource-nice-id2": {
-        //     name: "http server",
-        //     protocol: "tcp",
-        //     "proxy-port": 3000,
-        //     targets: [
-        //         {
-        //             site: "glossy-plains-viscacha-rat",
-        //             hostname: "localhost",
-        //             port: 3000,
-        //         }
-        //     ]
-        // }
+// "resource-nice-id2": {
+//     name: "http server",
+//     protocol: "tcp",
+//     "proxy-port": 3000,
+//     targets: [
+//         {
+//             site: "glossy-plains-viscacha-rat",
+//             hostname: "localhost",
+//             port: 3000,
+//         }
+//     ]
+// }
 //     }
 // });

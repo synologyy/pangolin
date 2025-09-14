@@ -158,6 +158,7 @@ export const siteResources = sqliteTable("siteResources", {
     orgId: text("orgId")
         .notNull()
         .references(() => orgs.orgId, { onDelete: "cascade" }),
+    niceId: text("niceId").notNull(),
     name: text("name").notNull(),
     protocol: text("protocol").notNull(),
     proxyPort: integer("proxyPort").notNull(),

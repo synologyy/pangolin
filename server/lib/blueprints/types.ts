@@ -31,7 +31,13 @@ export const AuthSchema = z.object({
             message: "Admin role cannot be included in sso-roles"
         }),
     "sso-users": z.array(z.string().email()).optional().default([]),
-    "whitelist-users": z.array(z.string().email()).optional().default([])
+    "whitelist-users": z.array(z.string().email()).optional().default([]),
+});
+
+export const RuleSchema = z.object({
+    action: z.enum(["allow", "deny", "pass"]),
+    match: z.enum(["cidr", "path", "ip", "country"]),
+    value: z.string()
 });
 
 // Schema for individual resource
@@ -48,6 +54,7 @@ export const ResourceSchema = z
         "host-header": z.string().optional(),
         "tls-server-name": z.string().optional(),
         headers: z.array(z.record(z.string(), z.string())).optional().default([]),
+        rules: z.array(RuleSchema).optional().default([]),
     })
     .refine(
         (resource) => {
@@ -164,10 +171,21 @@ export function isTargetsOnlyResource(resource: any): boolean {
     return Object.keys(resource).length === 1 && resource.targets;
 }
 
+export const ClientResourceSchema = z.object({
+    name: z.string().min(2).max(100),
+    site: z.string().min(2).max(100),
+    protocol: z.enum(["tcp", "udp"]),
+    "proxy-port": z.number().min(1).max(65535),
+    "hostname": z.string().min(1).max(255),
+    "internal-port": z.number().min(1).max(65535),
+    enabled: z.boolean().optional().default(true)   
+});
+
 // Schema for the entire configuration object
 export const ConfigSchema = z
     .object({
-        resources: z.record(z.string(), ResourceSchema).optional().default({}),
+        "proxy-resources": z.record(z.string(), ResourceSchema).optional().default({}),
+        "client-resources": z.record(z.string(), ClientResourceSchema).optional().default({}),
         sites: z.record(z.string(), SiteSchema).optional().default({})
     })
     .refine(
@@ -176,7 +194,7 @@ export const ConfigSchema = z
             // Extract all full-domain values with their resource keys
             const fullDomainMap = new Map<string, string[]>();
 
-            Object.entries(config.resources).forEach(
+            Object.entries(config["proxy-resources"]).forEach(
                 ([resourceKey, resource]) => {
                     const fullDomain = resource["full-domain"];
                     if (fullDomain) {
@@ -200,7 +218,7 @@ export const ConfigSchema = z
             // Extract duplicates for error message
             const fullDomainMap = new Map<string, string[]>();
 
-            Object.entries(config.resources).forEach(
+            Object.entries(config["proxy-resources"]).forEach(
                 ([resourceKey, resource]) => {
                     const fullDomain = resource["full-domain"];
                     if (fullDomain) {
@@ -224,6 +242,114 @@ export const ConfigSchema = z
             return {
                 message: `Duplicate 'full-domain' values found: ${duplicates}`,
                 path: ["resources"]
+            };
+        }
+    )
+    .refine(
+        // Enforce proxy-port uniqueness within proxy-resources
+        (config) => {
+            const proxyPortMap = new Map<number, string[]>();
+
+            Object.entries(config["proxy-resources"]).forEach(
+                ([resourceKey, resource]) => {
+                    const proxyPort = resource["proxy-port"];
+                    if (proxyPort !== undefined) {
+                        if (!proxyPortMap.has(proxyPort)) {
+                            proxyPortMap.set(proxyPort, []);
+                        }
+                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                    }
+                }
+            );
+
+            // Find duplicates
+            const duplicates = Array.from(proxyPortMap.entries()).filter(
+                ([_, resourceKeys]) => resourceKeys.length > 1
+            );
+
+            return duplicates.length === 0;
+        },
+        (config) => {
+            // Extract duplicates for error message
+            const proxyPortMap = new Map<number, string[]>();
+
+            Object.entries(config["proxy-resources"]).forEach(
+                ([resourceKey, resource]) => {
+                    const proxyPort = resource["proxy-port"];
+                    if (proxyPort !== undefined) {
+                        if (!proxyPortMap.has(proxyPort)) {
+                            proxyPortMap.set(proxyPort, []);
+                        }
+                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                    }
+                }
+            );
+
+            const duplicates = Array.from(proxyPortMap.entries())
+                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+                .map(
+                    ([proxyPort, resourceKeys]) =>
+                        `port ${proxyPort} used by proxy-resources: ${resourceKeys.join(", ")}`
+                )
+                .join("; ");
+
+            return {
+                message: `Duplicate 'proxy-port' values found in proxy-resources: ${duplicates}`,
+                path: ["proxy-resources"]
+            };
+        }
+    )
+    .refine(
+        // Enforce proxy-port uniqueness within client-resources
+        (config) => {
+            const proxyPortMap = new Map<number, string[]>();
+
+            Object.entries(config["client-resources"]).forEach(
+                ([resourceKey, resource]) => {
+                    const proxyPort = resource["proxy-port"];
+                    if (proxyPort !== undefined) {
+                        if (!proxyPortMap.has(proxyPort)) {
+                            proxyPortMap.set(proxyPort, []);
+                        }
+                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                    }
+                }
+            );
+
+            // Find duplicates
+            const duplicates = Array.from(proxyPortMap.entries()).filter(
+                ([_, resourceKeys]) => resourceKeys.length > 1
+            );
+
+            return duplicates.length === 0;
+        },
+        (config) => {
+            // Extract duplicates for error message
+            const proxyPortMap = new Map<number, string[]>();
+
+            Object.entries(config["client-resources"]).forEach(
+                ([resourceKey, resource]) => {
+                    const proxyPort = resource["proxy-port"];
+                    if (proxyPort !== undefined) {
+                        if (!proxyPortMap.has(proxyPort)) {
+                            proxyPortMap.set(proxyPort, []);
+                        }
+                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                    }
+                }
+            );
+
+            const duplicates = Array.from(proxyPortMap.entries())
+                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+                .map(
+                    ([proxyPort, resourceKeys]) =>
+                        `port ${proxyPort} used by client-resources: ${resourceKeys.join(", ")}`
+                )
+                .join("; ");
+
+            return {
+                message: `Duplicate 'proxy-port' values found in client-resources: ${duplicates}`,
+                path: ["client-resources"]
             };
         }
     );

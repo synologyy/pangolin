@@ -10,6 +10,7 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { addTargets } from "../client/targets";
+import { getUniqueSiteResourceName } from "@server/db/names";
 
 const createSiteResourceParamsSchema = z
     .object({
@@ -121,11 +122,14 @@ export async function createSiteResource(
             );
         }
 
+        const niceId = await getUniqueSiteResourceName(orgId);
+
         // Create the site resource
         const [newSiteResource] = await db
             .insert(siteResources)
             .values({
                 siteId,
+                niceId,
                 orgId,
                 name,
                 protocol,

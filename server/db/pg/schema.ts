@@ -143,6 +143,7 @@ export const siteResources = pgTable("siteResources", { // this is for the clien
     orgId: varchar("orgId")
         .notNull()
         .references(() => orgs.orgId, { onDelete: "cascade" }),
+    niceId: varchar("niceId").notNull(),
     name: varchar("name").notNull(),
     protocol: varchar("protocol").notNull(),
     proxyPort: integer("proxyPort").notNull(),

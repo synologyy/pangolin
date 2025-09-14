@@ -3,6 +3,7 @@ import {
     orgDomains,
     Resource,
     resourcePincode,
+    resourceRules,
     resourceWhitelist,
     roleResources,
     roles,
@@ -14,27 +15,33 @@ import {
 } from "@server/db";
 import { resources, targets, sites } from "@server/db";
 import { eq, and, asc, or, ne, count, isNotNull } from "drizzle-orm";
-import { Config, ConfigSchema, isTargetsOnlyResource, TargetData } from "./types";
+import {
+    Config,
+    ConfigSchema,
+    isTargetsOnlyResource,
+    TargetData
+} from "./types";
 import logger from "@server/logger";
 import { pickPort } from "@server/routers/target/helpers";
 import { resourcePassword } from "@server/db";
 import { hashPassword } from "@server/auth/password";
+import { isValidCIDR, isValidIP, isValidUrlGlobPattern } from "../validators";
 
-export type ResourcesResults = {
-    resource: Resource;
+export type ProxyResourcesResults = {
+    proxyResource: Resource;
     targetsToUpdate: Target[];
 }[];
 
-export async function updateResources(
+export async function updateProxyResources(
     orgId: string,
     config: Config,
     trx: Transaction,
     siteId?: number
-): Promise<ResourcesResults> {
-    const results: ResourcesResults = [];
+): Promise<ProxyResourcesResults> {
+    const results: ProxyResourcesResults = [];
 
     for (const [resourceNiceId, resourceData] of Object.entries(
-        config.resources
+        config["proxy-resources"]
     )) {
         const targetsToUpdate: Target[] = [];
         let resource: Resource;
@@ -122,8 +129,14 @@ export async function updateResources(
         const http = resourceData.protocol == "http";
         const protocol =
             resourceData.protocol == "http" ? "tcp" : resourceData.protocol;
-        const resourceEnabled = resourceData.enabled == undefined || resourceData.enabled == null ? true : resourceData.enabled;
-        const resourceSsl = resourceData.ssl == undefined || resourceData.ssl == null ? true : resourceData.ssl;
+        const resourceEnabled =
+            resourceData.enabled == undefined || resourceData.enabled == null
+                ? true
+                : resourceData.enabled;
+        const resourceSsl =
+            resourceData.ssl == undefined || resourceData.ssl == null
+                ? true
+                : resourceData.ssl;
         let headers = "";
         for (const headerObj of resourceData.headers || []) {
             for (const [key, value] of Object.entries(headerObj)) {
@@ -147,9 +160,7 @@ export async function updateResources(
             }
 
             // check if the only key in the resource is targets, if so, skip the update
-            if (
-                isTargetsOnlyResource(resourceData)
-            ) {
+            if (isTargetsOnlyResource(resourceData)) {
                 logger.debug(
                     `Skipping update for resource ${existingResource.resourceId} as only targets are provided`
                 );
@@ -177,6 +188,8 @@ export async function updateResources(
                             ? resourceData.auth["whitelist-users"].length > 0
                             : false,
                         headers: headers || null,
+                        applyRules:
+                            resourceData.rules && resourceData.rules.length > 0
                     })
                     .where(
                         eq(resources.resourceId, existingResource.resourceId)
@@ -262,7 +275,11 @@ export async function updateResources(
 
             // Create new targets
             for (const [index, targetData] of resourceData.targets.entries()) {
-                if (!targetData || (typeof targetData === 'object' && Object.keys(targetData).length === 0)) {
+                if (
+                    !targetData ||
+                    (typeof targetData === "object" &&
+                        Object.keys(targetData).length === 0)
+                ) {
                     // If targetData is null or an empty object, we can skip it
                     continue;
                 }
@@ -354,19 +371,65 @@ export async function updateResources(
                 const targetsToDelete = existingResourceTargets.slice(
                     resourceData.targets.length
                 );
-                logger.debug(`Targets to delete: ${JSON.stringify(targetsToDelete)}`);
+                logger.debug(
+                    `Targets to delete: ${JSON.stringify(targetsToDelete)}`
+                );
                 for (const target of targetsToDelete) {
                     if (!target) {
                         continue;
-                    } 
+                    }
                     if (siteId && target.siteId !== siteId) {
-                        logger.debug(`Skipping target ${target.targetId} for deletion. Site ID does not match filter.`);
+                        logger.debug(
+                            `Skipping target ${target.targetId} for deletion. Site ID does not match filter.`
+                        );
                         continue; // only delete targets for the specified siteId
                     }
                     logger.debug(`Deleting target ${target.targetId}`);
                     await trx
                         .delete(targets)
-                        .where(eq(targets.targetId, target.targetId)); 
+                        .where(eq(targets.targetId, target.targetId));
+                }
+            }
+
+            const existingRules = await trx
+                .select()
+                .from(resourceRules)
+                .where(
+                    eq(resourceRules.resourceId, existingResource.resourceId)
+                )
+                .orderBy(resourceRules.priority);
+
+            // Sync rules
+            for (const [index, rule] of resourceData.rules?.entries() || []) {
+                const existingRule = existingRules[index];
+                if (existingRule) {
+                    if (
+                        existingRule.action !== rule.action ||
+                        existingRule.match !== rule.match ||
+                        existingRule.value !== rule.value
+                    ) {
+                        await trx
+                            .update(resourceRules)
+                            .set({
+                                action: rule.action,
+                                match: rule.match,
+                                value: rule.value
+                            })
+                            .where(
+                                eq(resourceRules.ruleId, existingRule.ruleId)
+                            );
+                    }
+                }
+            }
+
+            if (existingRules.length > (resourceData.rules?.length || 0)) {
+                const rulesToDelete = existingRules.slice(
+                    resourceData.rules?.length || 0
+                );
+                for (const rule of rulesToDelete) {
+                    await trx
+                        .delete(resourceRules)
+                        .where(eq(resourceRules.ruleId, rule.ruleId));
                 }
             }
 
@@ -401,7 +464,9 @@ export async function updateResources(
                     setHostHeader: resourceData["host-header"] || null,
                     tlsServerName: resourceData["tls-server-name"] || null,
                     ssl: resourceSsl,
-                    headers: headers || null
+                    headers: headers || null,
+                    applyRules:
+                        resourceData.rules && resourceData.rules.length > 0
                 })
                 .returning();
 
@@ -484,12 +549,37 @@ export async function updateResources(
                 await createTarget(newResource.resourceId, targetData);
             }
 
+            for (const [index, rule] of resourceData.rules?.entries() || []) {
+                if (rule.match === "cidr") {
+                    if (!isValidCIDR(rule.value)) {
+                        throw new Error(`Invalid CIDR provided: ${rule.value}`);
+                    }
+                } else if (rule.match === "ip") {
+                    if (!isValidIP(rule.value)) {
+                        throw new Error(`Invalid IP provided: ${rule.value}`);
+                    }
+                } else if (rule.match === "path") {
+                    if (!isValidUrlGlobPattern(rule.value)) {
+                        throw new Error(
+                            `Invalid URL glob pattern: ${rule.value}`
+                        );
+                    }
+                }
+                await trx.insert(resourceRules).values({
+                    resourceId: newResource.resourceId,
+                    action: rule.action,
+                    match: rule.match,
+                    value: rule.value,
+                    priority: index + 1 // start priorities at 1
+                });
+            }
+
             logger.debug(`Created resource ${newResource.resourceId}`);
         }
 
         results.push({
-            resource: resource,
-            targetsToUpdate,
+            proxyResource: resource,
+            targetsToUpdate
         });
     }
 

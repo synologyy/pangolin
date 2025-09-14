@@ -221,7 +221,7 @@ export default function EditInternalResourceDialog({
                                             name="destinationIp"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{t("editInternalResourceDialogDestinationIP")}</FormLabel>
+                                                    <FormLabel>{t("targetAddr")}</FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
@@ -235,7 +235,7 @@ export default function EditInternalResourceDialog({
                                             name="destinationPort"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{t("editInternalResourceDialogDestinationPort")}</FormLabel>
+                                                    <FormLabel>{t("targetPort")}</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
