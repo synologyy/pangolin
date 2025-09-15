@@ -410,10 +410,6 @@ export default function Page() {
                 const id = res.data.data.resourceId;
                 setResourceId(id);
 
-                toast({
-                    description: `Subdomain: ${sanitizedSubdomain}`,
-                });
-
                 // Create targets if any exist
                 if (targets.length > 0) {
                     try {
