@@ -1517,5 +1517,7 @@
     "domainPickerInvalidSubdomainRemoved": "L'entrée \"{sub}\" a été supprimée car elle n'est pas valide.",
     "domainPickerInvalidSubdomainCannotMakeValid": "La «{sub}» n'a pas pu être validée pour {domain}.",
     "domainPickerSubdomainSanitized": "Sous-domaine nettoyé",
-    "domainPickerSubdomainCorrected": "\"{sub}\" a été corrigé à \"{sanitized}\""
+    "domainPickerSubdomainCorrected": "\"{sub}\" a été corrigé à \"{sanitized}\"",
+    "resourceAddEntrypointsEditFile": "Edit file: config/traefik/traefik_config.yml",
+    "resourceExposePortsEditFile": "Edit file: docker-compose.yml"
 }
