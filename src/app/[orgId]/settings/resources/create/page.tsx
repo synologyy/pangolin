@@ -91,6 +91,8 @@ import { DockerManager, DockerState } from "@app/lib/docker";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { toASCII, toUnicode } from 'punycode';
 import { DomainRow } from "../../../../../components/DomainsTable";
+import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
+
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
@@ -366,10 +368,17 @@ export default function Page() {
                 http: baseData.http
             };
 
+            let sanitizedSubdomain: string | undefined;
+
             if (isHttp) {
                 const httpData = httpForm.getValues();
+
+                sanitizedSubdomain = httpData.subdomain
+                    ? finalizeSubdomainSanitize(httpData.subdomain)
+                    : undefined;
+
                 Object.assign(payload, {
-                    subdomain: httpData.subdomain ? toASCII(httpData.subdomain) : undefined,
+                    subdomain: sanitizedSubdomain ? toASCII(sanitizedSubdomain) : undefined,
                     domainId: httpData.domainId,
                     protocol: "tcp"
                 });
@@ -557,7 +566,7 @@ export default function Page() {
                 return (
                     <div className="flex gap-2 min-w-[200px] items-center">
                         <Select
-                            defaultValue={row.original.pathMatchType || "exact"}
+                            defaultValue={row.original.pathMatchType || "prefix"}
                             onValueChange={(value) =>
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
@@ -569,8 +578,8 @@ export default function Page() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="exact">Exact</SelectItem>
                                 <SelectItem value="prefix">Prefix</SelectItem>
+                                <SelectItem value="exact">Exact</SelectItem>
                                 <SelectItem value="regex">Regex</SelectItem>
                             </SelectContent>
                         </Select>
@@ -755,19 +764,29 @@ export default function Page() {
                     defaultValue={row.original.ip}
                     className="min-w-[150px]"
                     onBlur={(e) => {
-                        const parsed = parseHostTarget(e.target.value);
+                        const input = e.target.value.trim();
+                        const hasProtocol = /^(https?|h2c):\/\//.test(input);
+                        const hasPort = /:\d+(?:\/|$)/.test(input);
 
-                        if (parsed) {
-                            updateTarget(row.original.targetId, {
-                                ...row.original,
-                                method: parsed.protocol,
-                                ip: parsed.host,
-                                port: parsed.port ? Number(parsed.port) : undefined,
-                            });
+                        if (hasProtocol || hasPort) {
+                            const parsed = parseHostTarget(input);
+                            if (parsed) {
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    method: hasProtocol ? parsed.protocol : row.original.method,
+                                    ip: parsed.host,
+                                    port: hasPort ? parsed.port : row.original.port
+                                });
+                            } else {
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    ip: input
+                                });
+                            }
                         } else {
                             updateTarget(row.original.targetId, {
                                 ...row.original,
-                                ip: e.target.value,
+                                ip: input
                             });
                         }
                     }}
@@ -869,6 +888,11 @@ export default function Page() {
                                     <SettingsSectionForm>
                                         <Form {...baseForm}>
                                             <form
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault(); // block default enter refresh
+                                                    }
+                                                }}
                                                 className="space-y-4"
                                                 id="base-resource-form"
                                             >
@@ -981,6 +1005,11 @@ export default function Page() {
                                         <SettingsSectionForm>
                                             <Form {...tcpUdpForm}>
                                                 <form
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === "Enter") {
+                                                            e.preventDefault(); // block default enter refresh
+                                                        }
+                                                    }}
                                                     className="space-y-4"
                                                     id="tcp-udp-settings-form"
                                                 >
@@ -1329,11 +1358,21 @@ export default function Page() {
                                                                         id="ip"
                                                                         {...field}
                                                                         onBlur={(e) => {
-                                                                            const parsed = parseHostTarget(e.target.value);
-                                                                            if (parsed) {
-                                                                                addTargetForm.setValue("method", parsed.protocol);
-                                                                                addTargetForm.setValue("ip", parsed.host);
-                                                                                addTargetForm.setValue("port", parsed.port);
+                                                                            const input = e.target.value.trim();
+                                                                            const hasProtocol = /^(https?|h2c):\/\//.test(input);
+                                                                            const hasPort = /:\d+(?:\/|$)/.test(input);
+
+                                                                            if (hasProtocol || hasPort) {
+                                                                                const parsed = parseHostTarget(input);
+                                                                                if (parsed) {
+                                                                                    if (hasProtocol || !addTargetForm.getValues("method")) {
+                                                                                        addTargetForm.setValue("method", parsed.protocol);
+                                                                                    }
+                                                                                    addTargetForm.setValue("ip", parsed.host);
+                                                                                    if (hasPort || !addTargetForm.getValues("port")) {
+                                                                                        addTargetForm.setValue("port", parsed.port);
+                                                                                    }
+                                                                                }
                                                                             } else {
                                                                                 field.onBlur();
                                                                             }

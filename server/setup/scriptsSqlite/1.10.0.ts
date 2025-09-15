@@ -32,11 +32,11 @@ export default async function migration() {
                 ALTER TABLE 'exitNodes' ADD 'region' text;
                 ALTER TABLE 'idpOidcConfig' ADD 'variant' text DEFAULT 'oidc' NOT NULL;
                 ALTER TABLE 'resources' ADD 'niceId' text DEFAULT '' NOT NULL;
+                ALTER TABLE 'siteResources' ADD 'niceId' text DEFAULT '' NOT NULL;
                 ALTER TABLE 'userOrgs' ADD 'autoProvisioned' integer DEFAULT false;
                 ALTER TABLE 'targets' ADD 'pathMatchType' text;
                 ALTER TABLE 'targets' ADD 'path' text;
                 ALTER TABLE 'resources' ADD 'headers' text;
-                ALTER TABLE 'siteResources' ADD 'niceId' text NOT NULL;
             `); // this diverges from the schema a bit because the schema does not have a default on niceId but was required for the migration and I dont think it will effect much down the line...
 
             const usedNiceIds: string[] = [];
