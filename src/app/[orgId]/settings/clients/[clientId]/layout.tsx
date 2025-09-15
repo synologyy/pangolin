@@ -10,7 +10,7 @@ import { HorizontalTabs } from "@app/components/HorizontalTabs";
 
 type SettingsLayoutProps = {
     children: React.ReactNode;
-    params: Promise<{ clientId: number; orgId: string }>;
+    params: Promise<{ clientId: number | string; orgId: string }>;
 }
 
 export default async function SettingsLayout(props: SettingsLayoutProps) {
