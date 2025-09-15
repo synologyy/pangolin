@@ -348,7 +348,9 @@ export async function getTraefikConfig(
             }
 
             let rule = `Host(\`${fullDomain}\`)`;
+            let priority = 100;
             if (resource.path && resource.pathMatchType) {
+                priority += 1;
                 // add path to rule based on match type
                 if (resource.pathMatchType === "exact") {
                     rule += ` && Path(\`${resource.path}\`)`;
@@ -368,7 +370,7 @@ export async function getTraefikConfig(
                 middlewares: routerMiddlewares,
                 service: serviceName,
                 rule: rule,
-                priority: 100,
+                priority: priority,
                 ...(resource.ssl ? { tls } : {})
             };
 
@@ -380,7 +382,7 @@ export async function getTraefikConfig(
                     middlewares: [redirectHttpsMiddlewareName],
                     service: serviceName,
                     rule: rule,
-                    priority: 100
+                    priority: priority
                 };
             }
 

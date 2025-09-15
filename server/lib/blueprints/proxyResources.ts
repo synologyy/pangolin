@@ -107,7 +107,7 @@ export async function updateProxyResources(
                     enabled: targetData.enabled,
                     internalPort: internalPortToCreate,
                     path: targetData.path,
-                    pathMatchType: targetData.pathMatchType
+                    pathMatchType: targetData["path-match"]
                 })
                 .returning();
 
@@ -333,7 +333,7 @@ export async function updateProxyResources(
                             port: targetData.port,
                             enabled: targetData.enabled,
                             path: targetData.path,
-                            pathMatchType: targetData.pathMatchType
+                            pathMatchType: targetData["path-match"]
                         })
                         .where(eq(targets.targetId, existingTarget.targetId))
                         .returning();
@@ -424,7 +424,7 @@ export async function updateProxyResources(
                     validateRule(rule);
                     await trx.insert(resourceRules).values({
                         resourceId: existingResource.resourceId,
-                        action: rule.action.toUpperCase(),
+                        action: getRuleAction(rule.action),
                         match: rule.match.toUpperCase(),
                         value: rule.value,
                         priority: index + 1 // start priorities at 1
