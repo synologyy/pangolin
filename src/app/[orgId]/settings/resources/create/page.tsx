@@ -557,7 +557,7 @@ export default function Page() {
                 return (
                     <div className="flex gap-2 min-w-[200px] items-center">
                         <Select
-                            defaultValue={row.original.pathMatchType || "exact"}
+                            defaultValue={row.original.pathMatchType || "prefix"}
                             onValueChange={(value) =>
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
@@ -569,8 +569,8 @@ export default function Page() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="exact">Exact</SelectItem>
                                 <SelectItem value="prefix">Prefix</SelectItem>
+                                <SelectItem value="exact">Exact</SelectItem>
                                 <SelectItem value="regex">Regex</SelectItem>
                             </SelectContent>
                         </Select>
