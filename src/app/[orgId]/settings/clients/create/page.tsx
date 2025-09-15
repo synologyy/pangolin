@@ -42,6 +42,10 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
+import { 
+    SiNixos,
+    SiKubernetes
+} from "react-icons/si";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
@@ -248,10 +252,14 @@ export default function Page() {
                 return <FaApple className="h-4 w-4 mr-2" />;
             case "docker":
                 return <FaDocker className="h-4 w-4 mr-2" />;
+            case "kubernetes":
+                return <SiKubernetes className="h-4 w-4 mr-2" />;
             case "podman":
                 return <FaCubes className="h-4 w-4 mr-2" />;
             case "freebsd":
                 return <FaFreebsd className="h-4 w-4 mr-2" />;
+            case "nixos":
+                return <SiNixos className="h-4 w-4 mr-2" />;
             default:
                 return <Terminal className="h-4 w-4 mr-2" />;
         }
