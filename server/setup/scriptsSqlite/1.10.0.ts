@@ -17,9 +17,15 @@ export default async function migration() {
     try {
         const resources = db
             .prepare(
-                "SELECT resourceId FROM resources WHERE siteId IS NOT NULL"
+                "SELECT resourceId FROM resources"
             )
             .all() as Array<{ resourceId: number }>;
+
+        const siteResources = db
+            .prepare(
+                "SELECT siteResourceId FROM siteResources"
+            )
+            .all() as Array<{ siteResourceId: number }>;
 
         db.transaction(() => {
             db.exec(`
@@ -30,6 +36,7 @@ export default async function migration() {
                 ALTER TABLE 'targets' ADD 'pathMatchType' text;
                 ALTER TABLE 'targets' ADD 'path' text;
                 ALTER TABLE 'resources' ADD 'headers' text;
+                ALTER TABLE 'siteResources' ADD 'niceId' text NOT NULL;
             `); // this diverges from the schema a bit because the schema does not have a default on niceId but was required for the migration and I dont think it will effect much down the line...
 
             const usedNiceIds: string[] = [];
@@ -53,6 +60,27 @@ export default async function migration() {
                 db.prepare(
                     `UPDATE resources SET niceId = ? WHERE resourceId = ?`
                 ).run(niceId, resourceId.resourceId);
+            }
+
+            for (const resourceId of siteResources) {
+                // Generate a unique name and ensure it's unique
+                let niceId = "";
+                let loops = 0;
+                while (true) {
+                    if (loops > 100) {
+                        throw new Error("Could not generate a unique name");
+                    }
+
+                    niceId = generateName();
+                    if (!usedNiceIds.includes(niceId)) {
+                        usedNiceIds.push(niceId);
+                        break;
+                    }
+                    loops++;
+                }
+                db.prepare(
+                    `UPDATE siteResources SET niceId = ? WHERE siteResourceId = ?`
+                ).run(niceId, resourceId.siteResourceId);
             }
         })();
 

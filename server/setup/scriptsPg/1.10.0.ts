@@ -11,7 +11,11 @@ export default async function migration() {
 
     try {
         const resources = await db.execute(sql`
-            SELECT "resourceId" FROM "resources" WHERE "siteId" IS NOT NULL
+            SELECT "resourceId" FROM "resources"
+        `);
+
+        const siteResources = await db.execute(sql`
+            SELECT "siteResourceId" FROM "siteResources"
         `);
 
         await db.execute(sql`BEGIN`);
@@ -26,6 +30,10 @@ export default async function migration() {
 
         await db.execute(
             sql`ALTER TABLE "resources" ADD COLUMN "niceId" text DEFAULT '' NOT NULL;`
+        );
+
+        await db.execute(
+            sql`ALTER TABLE "siteResources" ADD COLUMN "niceId" text DEFAULT '' NOT NULL;`
         );
 
         await db.execute(
@@ -62,6 +70,27 @@ export default async function migration() {
             }
             await db.execute(sql`
                 UPDATE "resources" SET "niceId" = ${niceId} WHERE "resourceId" = ${resource.resourceId}
+            `);
+        }
+
+        for (const resource of siteResources.rows) {
+            // Generate a unique name and ensure it's unique
+            let niceId = "";
+            let loops = 0;
+            while (true) {
+                if (loops > 100) {
+                    throw new Error("Could not generate a unique name");
+                }
+
+                niceId = generateName();
+                if (!usedNiceIds.includes(niceId)) {
+                    usedNiceIds.push(niceId);
+                    break;
+                }
+                loops++;
+            }
+            await db.execute(sql`
+                UPDATE "siteResources" SET "niceId" = ${niceId} WHERE "siteResourceId" = ${resource.siteResourceId}
             `);
         }
 
