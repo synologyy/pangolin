@@ -1517,5 +1517,7 @@
     "domainPickerInvalidSubdomainRemoved": "Ввод \"{sub}\" был удален, потому что он недействителен.",
     "domainPickerInvalidSubdomainCannotMakeValid": "\"{sub}\" не может быть действительным для {domain}.",
     "domainPickerSubdomainSanitized": "Субдомен очищен",
-    "domainPickerSubdomainCorrected": "\"{sub}\" был исправлен на \"{sanitized}\""
+    "domainPickerSubdomainCorrected": "\"{sub}\" был исправлен на \"{sanitized}\"",
+    "resourceAddEntrypointsEditFile": "Edit file: config/traefik/traefik_config.yml",
+    "resourceExposePortsEditFile": "Edit file: docker-compose.yml"
 }

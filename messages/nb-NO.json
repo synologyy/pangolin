@@ -1517,5 +1517,7 @@
     "domainPickerInvalidSubdomainRemoved": "Inndata \"{sub}\" ble fjernet fordi det ikke er gyldig.",
     "domainPickerInvalidSubdomainCannotMakeValid": "\"{sub}\" kunne ikke gjøres gyldig for {domain}.",
     "domainPickerSubdomainSanitized": "Underdomenet som ble sanivert",
-    "domainPickerSubdomainCorrected": "\"{sub}\" var korrigert til \"{sanitized}\""
+    "domainPickerSubdomainCorrected": "\"{sub}\" var korrigert til \"{sanitized}\"",
+    "resourceAddEntrypointsEditFile": "Edit file: config/traefik/traefik_config.yml",
+    "resourceExposePortsEditFile": "Edit file: docker-compose.yml"
 }
