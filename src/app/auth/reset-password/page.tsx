@@ -1,7 +1,7 @@
 import { verifySession } from "@app/lib/auth/verifySession";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import ResetPasswordForm from "./ResetPasswordForm";
+import ResetPasswordForm from "@app/components/ResetPasswordForm";
 import Link from "next/link";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { getTranslations } from "next-intl/server";

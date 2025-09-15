@@ -1,4 +1,4 @@
-import VerifyEmailForm from "@app/app/auth/verify-email/VerifyEmailForm";
+import VerifyEmailForm from "@app/components/VerifyEmailForm";
 import { verifySession } from "@app/lib/auth/verifySession";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { pullEnv } from "@app/lib/pullEnv";

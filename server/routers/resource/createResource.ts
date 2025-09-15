@@ -21,6 +21,8 @@ import { subdomainSchema } from "@server/lib/schemas";
 import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
+import { getUniqueResourceName } from "@server/db/names";
+import { validateAndConstructDomain } from "@server/lib/domainUtils";
 
 const createResourceParamsSchema = z
     .object({
@@ -193,76 +195,21 @@ async function createHttpResource(
     }
 
     const { name, domainId } = parsedBody.data;
-    let subdomain = parsedBody.data.subdomain;
+    const subdomain = parsedBody.data.subdomain;
 
-    const [domainRes] = await db
-        .select()
-        .from(domains)
-        .where(eq(domains.domainId, domainId))
-        .leftJoin(
-            orgDomains,
-            and(eq(orgDomains.orgId, orgId), eq(orgDomains.domainId, domainId))
-        );
-
-    if (!domainRes || !domainRes.domains) {
-        return next(
-            createHttpError(
-                HttpCode.NOT_FOUND,
-                `Domain with ID ${domainId} not found`
-            )
-        );
-    }
-
-    if (domainRes.orgDomains && domainRes.orgDomains.orgId !== orgId) {
-        return next(
-            createHttpError(
-                HttpCode.FORBIDDEN,
-                `Organization does not have access to domain with ID ${domainId}`
-            )
-        );
-    }
-
-    if (!domainRes.domains.verified) {
+    // Validate domain and construct full domain
+    const domainResult = await validateAndConstructDomain(domainId, orgId, subdomain);
+    
+    if (!domainResult.success) {
         return next(
             createHttpError(
                 HttpCode.BAD_REQUEST,
-                `Domain with ID ${domainRes.domains.domainId} is not verified`
+                domainResult.error
             )
         );
     }
 
-    let fullDomain = "";
-    if (domainRes.domains.type == "ns") {
-        if (subdomain) {
-            fullDomain = `${subdomain}.${domainRes.domains.baseDomain}`;
-        } else {
-            fullDomain = domainRes.domains.baseDomain;
-        }
-    } else if (domainRes.domains.type == "cname") {
-        fullDomain = domainRes.domains.baseDomain;
-    } else if (domainRes.domains.type == "wildcard") {
-        if (subdomain) {
-            // the subdomain cant have a dot in it
-            const parsedSubdomain = subdomainSchema.safeParse(subdomain);
-            if (!parsedSubdomain.success) {
-                return next(
-                    createHttpError(
-                        HttpCode.BAD_REQUEST,
-                        fromError(parsedSubdomain.error).toString()
-                    )
-                );
-            }
-            fullDomain = `${subdomain}.${domainRes.domains.baseDomain}`;
-        } else {
-            fullDomain = domainRes.domains.baseDomain;
-        }
-    }
-
-    if (fullDomain === domainRes.domains.baseDomain) {
-        subdomain = null;
-    }
-
-    fullDomain = fullDomain.toLowerCase();
+    const { fullDomain, subdomain: finalSubdomain } = domainResult;
 
     logger.debug(`Full domain: ${fullDomain}`);
 
@@ -283,15 +230,18 @@ async function createHttpResource(
 
     let resource: Resource | undefined;
 
+    const niceId = await getUniqueResourceName(orgId);
+
     await db.transaction(async (trx) => {
         const newResource = await trx
             .insert(resources)
             .values({
+                niceId,
                 fullDomain,
                 domainId,
                 orgId,
                 name,
-                subdomain,
+                subdomain: finalSubdomain,
                 http: true,
                 protocol: "tcp",
                 ssl: true
@@ -391,10 +341,13 @@ async function createRawResource(
 
     let resource: Resource | undefined;
 
+    const niceId = await getUniqueResourceName(orgId);
+
     await db.transaction(async (trx) => {
         const newResource = await trx
             .insert(resources)
             .values({
+                niceId,
                 orgId,
                 name,
                 http,

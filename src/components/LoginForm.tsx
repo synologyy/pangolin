@@ -46,6 +46,7 @@ import { startAuthentication } from "@simplewebauthn/browser";
 export type LoginFormIDP = {
     idpId: number;
     name: string;
+    variant?: string;
 };
 
 type LoginFormProps = {
@@ -496,19 +497,41 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
                                     </div>
                                 </div>
 
-                                {idps.map((idp) => (
-                                    <Button
-                                        key={idp.idpId}
-                                        type="button"
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={() => {
-                                            loginWithIdp(idp.idpId);
-                                        }}
-                                    >
-                                        {idp.name}
-                                    </Button>
-                                ))}
+                                {idps.map((idp) => {
+                                    const effectiveType = idp.variant || idp.name.toLowerCase();
+
+                                    return (
+                                        <Button
+                                            key={idp.idpId}
+                                            type="button"
+                                            variant="outline"
+                                            className="w-full inline-flex items-center space-x-2"
+                                            onClick={() => {
+                                                loginWithIdp(idp.idpId);
+                                            }}
+                                        >
+                                            {effectiveType === "google" && (
+                                                <Image
+                                                    src="/idp/google.png"
+                                                    alt="Google"
+                                                    width={16}
+                                                    height={16}
+                                                    className="rounded"
+                                                />
+                                            )}
+                                            {effectiveType === "azure" && (
+                                                <Image
+                                                    src="/idp/azure.png"
+                                                    alt="Azure"
+                                                    width={16}
+                                                    height={16}
+                                                    className="rounded"
+                                                />
+                                            )}
+                                            <span>{idp.name}</span>
+                                        </Button>
+                                    );
+                                })}
                             </>
                         )}
                     </>

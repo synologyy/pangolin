@@ -35,7 +35,7 @@ import {
     ResetPasswordResponse
 } from "@server/routers/auth";
 import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "../../../components/ui/alert";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { toast } from "@app/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { formatAxiosError } from "@app/lib/api";
@@ -210,7 +210,7 @@ export default function ResetPasswordForm({
                     } catch (verificationError) {
                         console.error("Failed to send verification code:", verificationError);
                     }
-                    
+
                     if (redirect) {
                         router.push(`/auth/verify-email?redirect=${redirect}`);
                     } else {
@@ -254,8 +254,8 @@ export default function ResetPasswordForm({
                         {quickstart ? t('completeAccountSetup') : t('passwordReset')}
                     </CardTitle>
                     <CardDescription>
-                        {quickstart 
-                            ? t('completeAccountSetupDescription') 
+                        {quickstart
+                            ? t('completeAccountSetupDescription')
                             : t('passwordResetDescription')
                         }
                     </CardDescription>
@@ -282,8 +282,8 @@ export default function ResetPasswordForm({
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {quickstart 
-                                                        ? t('accountSetupSent') 
+                                                    {quickstart
+                                                        ? t('accountSetupSent')
                                                         : t('passwordResetSent')
                                                     }
                                                 </FormDescription>
@@ -325,8 +325,8 @@ export default function ResetPasswordForm({
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {quickstart 
-                                                            ? t('accountSetupCode') 
+                                                        {quickstart
+                                                            ? t('accountSetupCode')
                                                             : t('passwordResetCode')
                                                         }
                                                     </FormLabel>
@@ -338,8 +338,8 @@ export default function ResetPasswordForm({
                                                     </FormControl>
                                                     <FormMessage />
                                                     <FormDescription>
-                                                        {quickstart 
-                                                            ? t('accountSetupCodeDescription') 
+                                                        {quickstart
+                                                            ? t('accountSetupCodeDescription')
                                                             : t('passwordResetCodeDescription')
                                                         }
                                                     </FormDescription>
@@ -354,8 +354,8 @@ export default function ResetPasswordForm({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {quickstart 
-                                                        ? t('passwordCreate') 
+                                                    {quickstart
+                                                        ? t('passwordCreate')
                                                         : t('passwordNew')
                                                     }
                                                 </FormLabel>
@@ -375,8 +375,8 @@ export default function ResetPasswordForm({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {quickstart 
-                                                        ? t('passwordCreateConfirm') 
+                                                    {quickstart
+                                                        ? t('passwordCreateConfirm')
                                                         : t('passwordNewConfirm')
                                                     }
                                                 </FormLabel>
@@ -490,8 +490,8 @@ export default function ResetPasswordForm({
                                     {isSubmitting && (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     )}
-                                    {quickstart 
-                                        ? t('accountSetupSubmit') 
+                                    {quickstart
+                                        ? t('accountSetupSubmit')
                                         : t('passwordResetSubmit')
                                     }
                                 </Button>

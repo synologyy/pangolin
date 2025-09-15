@@ -3,7 +3,7 @@ import logger from "@server/logger";
 import { ExitNode } from "@server/db";
 
 interface ExitNodeRequest {
-    remoteType: string;
+    remoteType?: string;
     localPath: string;
     method?: "POST" | "DELETE" | "GET" | "PUT";
     data?: any;

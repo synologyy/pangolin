@@ -1,6 +1,6 @@
 import { join } from "path";
 import { readFileSync } from "fs";
-import { db } from "@server/db";
+import { db, resources, siteResources } from "@server/db";
 import { exitNodes, sites } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import { __DIRNAME } from "@server/lib/consts";
@@ -27,6 +27,44 @@ export async function getUniqueSiteName(orgId: string): Promise<string> {
             .select({ niceId: sites.niceId, orgId: sites.orgId })
             .from(sites)
             .where(and(eq(sites.niceId, name), eq(sites.orgId, orgId)));
+        if (count.length === 0) {
+            return name;
+        }
+        loops++;
+    }
+}
+
+export async function getUniqueResourceName(orgId: string): Promise<string> {
+    let loops = 0;
+    while (true) {
+        if (loops > 100) {
+            throw new Error("Could not generate a unique name");
+        }
+
+        const name = generateName();
+        const count = await db
+            .select({ niceId: resources.niceId, orgId: resources.orgId })
+            .from(resources)
+            .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId)));
+        if (count.length === 0) {
+            return name;
+        }
+        loops++;
+    }
+}
+
+export async function getUniqueSiteResourceName(orgId: string): Promise<string> {
+    let loops = 0;
+    while (true) {
+        if (loops > 100) {
+            throw new Error("Could not generate a unique name");
+        }
+
+        const name = generateName();
+        const count = await db
+            .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
+            .from(siteResources)
+            .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)));
         if (count.length === 0) {
             return name;
         }

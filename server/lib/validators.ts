@@ -129,6 +129,40 @@ export function isValidDomain(domain: string): boolean {
     return true;
 }
 
+export function validateHeaders(headers: string): boolean {
+    // Validate comma-separated headers in format "Header-Name: value"
+    const headerPairs = headers.split(",").map((pair) => pair.trim());
+    return headerPairs.every((pair) => {
+        // Check if the pair contains exactly one colon
+        const colonCount = (pair.match(/:/g) || []).length;
+        if (colonCount !== 1) {
+            return false;
+        }
+
+        const colonIndex = pair.indexOf(":");
+        if (colonIndex === 0 || colonIndex === pair.length - 1) {
+            return false;
+        }
+
+        const headerName = pair.substring(0, colonIndex).trim();
+        const headerValue = pair.substring(colonIndex + 1).trim();
+
+        // Header name should not be empty and should contain valid characters
+        // Header names are case-insensitive and can contain alphanumeric, hyphens
+        const headerNameRegex = /^[a-zA-Z0-9\-_]+$/;
+        if (!headerName || !headerNameRegex.test(headerName)) {
+            return false;
+        }
+
+        // Header value should not be empty and should not contain colons
+        if (!headerValue || headerValue.includes(":")) {
+            return false;
+        }
+
+        return true;
+    });
+}
+
 const validTlds = [
     "AAA",
     "AARP",

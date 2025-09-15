@@ -10,6 +10,7 @@ import {
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
 import { selectBestExitNode, verifyExitNodeOrgAccess } from "@server/lib/exitNodes";
+import { fetchContainers } from "./dockerSocket";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -74,6 +75,15 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
     if (!oldSite) {
         logger.warn("Site not found");
         return;
+    }
+
+    logger.debug(`Docker socket enabled: ${oldSite.dockerSocketEnabled}`);
+
+    if (oldSite.dockerSocketEnabled) {
+        logger.debug(
+            "Site has docker socket enabled - requesting docker containers"
+        );
+        fetchContainers(newt.newtId);
     }
 
     let siteSubnet = oldSite.subnet;

@@ -139,7 +139,7 @@ export async function pickSiteDefaults(
             },
             success: true,
             error: false,
-            message: "Organization retrieved successfully",
+            message: "Site defaults chosen successfully",
             status: HttpCode.OK
         });
     } catch (error) {

@@ -3,7 +3,7 @@ import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { ListRootApiKeysResponse } from "@server/routers/apiKeys";
-import ApiKeysTable, { ApiKeyRow } from "./ApiKeysTable";
+import ApiKeysTable, { ApiKeyRow } from "../../../components/ApiKeysTable";
 import { getTranslations } from "next-intl/server";
 
 type ApiKeyPageProps = {};

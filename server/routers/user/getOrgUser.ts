@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, idp, idpOidcConfig } from "@server/db";
 import { roles, userOrgs, users } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -25,10 +25,18 @@ async function queryUser(orgId: string, userId: string) {
             isOwner: userOrgs.isOwner,
             isAdmin: roles.isAdmin,
             twoFactorEnabled: users.twoFactorEnabled,
+            autoProvisioned: userOrgs.autoProvisioned,
+            idpId: users.idpId,
+            idpName: idp.name,
+            idpType: idp.type,
+            idpVariant: idpOidcConfig.variant,
+            idpAutoProvision: idp.autoProvision
         })
         .from(userOrgs)
         .leftJoin(roles, eq(userOrgs.roleId, roles.roleId))
         .leftJoin(users, eq(userOrgs.userId, users.userId))
+        .leftJoin(idp, eq(users.idpId, idp.idpId))
+        .leftJoin(idpOidcConfig, eq(idp.idpId, idpOidcConfig.idpId))
         .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId)))
         .limit(1);
     return user;

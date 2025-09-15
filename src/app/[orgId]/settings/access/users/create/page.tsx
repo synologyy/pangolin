@@ -46,6 +46,7 @@ import { Checkbox } from "@app/components/ui/checkbox";
 import { ListIdpsResponse } from "@server/routers/idp";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
+import Image from "next/image";
 
 type UserType = "internal" | "oidc";
 
@@ -53,6 +54,17 @@ interface IdpOption {
     idpId: number;
     name: string;
     type: string;
+    variant: string | null;
+}
+
+interface UserOption {
+    id: string;
+    title: string;
+    description: string;
+    disabled: boolean;
+    icon?: React.ReactNode;
+    idpId?: number;
+    variant?: string | null;
 }
 
 export default function Page() {
@@ -62,14 +74,14 @@ export default function Page() {
     const api = createApiClient({ env });
     const t = useTranslations();
 
-    const [userType, setUserType] = useState<UserType | null>("internal");
+    const [selectedOption, setSelectedOption] = useState<string | null>("internal");
     const [inviteLink, setInviteLink] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [expiresInDays, setExpiresInDays] = useState(1);
     const [roles, setRoles] = useState<{ roleId: number; name: string }[]>([]);
     const [idps, setIdps] = useState<IdpOption[]>([]);
     const [sendEmail, setSendEmail] = useState(env.email.emailEnabled);
-    const [selectedIdp, setSelectedIdp] = useState<IdpOption | null>(null);
+    const [userOptions, setUserOptions] = useState<UserOption[]>([]);
     const [dataLoaded, setDataLoaded] = useState(false);
 
     const internalFormSchema = z.object({
@@ -80,7 +92,13 @@ export default function Page() {
         roleId: z.string().min(1, { message: t("accessRoleSelectPlease") })
     });
 
-    const externalFormSchema = z.object({
+    const googleAzureFormSchema = z.object({
+        email: z.string().email({ message: t("emailInvalid") }),
+        name: z.string().optional(),
+        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") })
+    });
+
+    const genericOidcFormSchema = z.object({
         username: z.string().min(1, { message: t("usernameRequired") }),
         email: z
             .string()
@@ -96,8 +114,41 @@ export default function Page() {
         switch (type.toLowerCase()) {
             case "oidc":
                 return t("idpGenericOidc");
+            case "google":
+                return t("idpGoogleDescription");
+            case "azure":
+                return t("idpAzureDescription");
             default:
                 return type;
+        }
+    };
+
+    const getIdpIcon = (variant: string | null) => {
+        if (!variant) return null;
+        
+        switch (variant.toLowerCase()) {
+            case "google":
+                return (
+                    <Image
+                        src="/idp/google.png"
+                        alt={t("idpGoogleAlt")}
+                        width={24}
+                        height={24}
+                        className="rounded"
+                    />
+                );
+            case "azure":
+                return (
+                    <Image
+                        src="/idp/azure.png"
+                        alt={t("idpAzureAlt")}
+                        width={24}
+                        height={24}
+                        className="rounded"
+                    />
+                );
+            default:
+                return null;
         }
     };
 
@@ -120,8 +171,17 @@ export default function Page() {
         }
     });
 
-    const externalForm = useForm<z.infer<typeof externalFormSchema>>({
-        resolver: zodResolver(externalFormSchema),
+    const googleAzureForm = useForm<z.infer<typeof googleAzureFormSchema>>({
+        resolver: zodResolver(googleAzureFormSchema),
+        defaultValues: {
+            email: "",
+            name: "",
+            roleId: ""
+        }
+    });
+
+    const genericOidcForm = useForm<z.infer<typeof genericOidcFormSchema>>({
+        resolver: zodResolver(genericOidcFormSchema),
         defaultValues: {
             username: "",
             email: "",
@@ -132,33 +192,19 @@ export default function Page() {
     });
 
     useEffect(() => {
-        if (userType === "internal") {
+        if (selectedOption === "internal") {
             setSendEmail(env.email.emailEnabled);
             internalForm.reset();
             setInviteLink(null);
             setExpiresInDays(1);
-        } else if (userType === "oidc") {
-            externalForm.reset();
+        } else if (selectedOption && selectedOption !== "internal") {
+            googleAzureForm.reset();
+            genericOidcForm.reset();
         }
-    }, [userType, env.email.emailEnabled, internalForm, externalForm]);
-
-    const [userTypes, setUserTypes] = useState<StrategyOption<string>[]>([
-        {
-            id: "internal",
-            title: t("userTypeInternal"),
-            description: t("userTypeInternalDescription"),
-            disabled: false
-        },
-        {
-            id: "oidc",
-            title: t("userTypeExternal"),
-            description: t("userTypeExternalDescription"),
-            disabled: true
-        }
-    ]);
+    }, [selectedOption, env.email.emailEnabled, internalForm, googleAzureForm, genericOidcForm]);
 
     useEffect(() => {
-        if (!userType) {
+        if (!selectedOption) {
             return;
         }
 
@@ -199,20 +245,6 @@ export default function Page() {
 
             if (res?.status === 200) {
                 setIdps(res.data.data.idps);
-
-                if (res.data.data.idps.length) {
-                    setUserTypes((prev) =>
-                        prev.map((type) => {
-                            if (type.id === "oidc") {
-                                return {
-                                    ...type,
-                                    disabled: false
-                                };
-                            }
-                            return type;
-                        })
-                    );
-                }
             }
         }
 
@@ -225,6 +257,33 @@ export default function Page() {
 
         fetchInitialData();
     }, []);
+
+    // Build user options when IDPs are loaded
+    useEffect(() => {
+        const options: UserOption[] = [
+            {
+                id: "internal",
+                title: t("userTypeInternal"),
+                description: t("userTypeInternalDescription"),
+                disabled: false
+            }
+        ];
+
+        // Add IDP options
+        idps.forEach((idp) => {
+            options.push({
+                id: `idp-${idp.idpId}`,
+                title: idp.name,
+                description: formatIdpType(idp.variant || idp.type),
+                disabled: false,
+                icon: getIdpIcon(idp.variant),
+                idpId: idp.idpId,
+                variant: idp.variant
+            });
+        });
+
+        setUserOptions(options);
+    }, [idps, t]);
 
     async function onSubmitInternal(
         values: z.infer<typeof internalFormSchema>
@@ -274,9 +333,52 @@ export default function Page() {
         setLoading(false);
     }
 
-    async function onSubmitExternal(
-        values: z.infer<typeof externalFormSchema>
+    async function onSubmitGoogleAzure(
+        values: z.infer<typeof googleAzureFormSchema>
     ) {
+        const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
+        if (!selectedUserOption?.idpId) return;
+        
+        setLoading(true);
+
+        const res = await api
+            .put(`/org/${orgId}/user`, {
+                username: values.email, // Use email as username for Google/Azure
+                email: values.email,
+                name: values.name,
+                type: "oidc",
+                idpId: selectedUserOption.idpId,
+                roleId: parseInt(values.roleId)
+            })
+            .catch((e) => {
+                toast({
+                    variant: "destructive",
+                    title: t("userErrorCreate"),
+                    description: formatAxiosError(
+                        e,
+                        t("userErrorCreateDescription")
+                    )
+                });
+            });
+
+        if (res && res.status === 201) {
+            toast({
+                variant: "default",
+                title: t("userCreated"),
+                description: t("userCreatedDescription")
+            });
+            router.push(`/${orgId}/settings/access/users`);
+        }
+
+        setLoading(false);
+    }
+
+    async function onSubmitGenericOidc(
+        values: z.infer<typeof genericOidcFormSchema>
+    ) {
+        const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
+        if (!selectedUserOption?.idpId) return;
+        
         setLoading(true);
 
         const res = await api
@@ -285,7 +387,7 @@ export default function Page() {
                 email: values.email,
                 name: values.name,
                 type: "oidc",
-                idpId: parseInt(values.idpId),
+                idpId: selectedUserOption.idpId,
                 roleId: parseInt(values.roleId)
             })
             .catch((e) => {
@@ -330,7 +432,7 @@ export default function Page() {
 
             <div>
                 <SettingsContainer>
-                    {!inviteLink && build !== "saas" ? (
+                    {!inviteLink && build !== "saas" && dataLoaded ? (
                         <SettingsSection>
                             <SettingsSectionHeader>
                                 <SettingsSectionTitle>
@@ -342,15 +444,15 @@ export default function Page() {
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
                                 <StrategySelect
-                                    options={userTypes}
-                                    defaultValue={userType || undefined}
+                                    options={userOptions}
+                                    defaultValue={selectedOption || undefined}
                                     onChange={(value) => {
-                                        setUserType(value as UserType);
+                                        setSelectedOption(value);
                                         if (value === "internal") {
                                             internalForm.reset();
-                                        } else if (value === "oidc") {
-                                            externalForm.reset();
-                                            setSelectedIdp(null);
+                                        } else {
+                                            googleAzureForm.reset();
+                                            genericOidcForm.reset();
                                         }
                                     }}
                                     cols={2}
@@ -359,7 +461,7 @@ export default function Page() {
                         </SettingsSection>
                     ) : null}
 
-                    {userType === "internal" && dataLoaded && (
+                    {selectedOption === "internal" && dataLoaded && (
                         <>
                             {!inviteLink ? (
                                 <SettingsSection>
@@ -564,71 +666,7 @@ export default function Page() {
                         </>
                     )}
 
-                    {userType !== "internal" && dataLoaded && (
-                        <>
-                            <SettingsSection>
-                                <SettingsSectionHeader>
-                                    <SettingsSectionTitle>
-                                        {t("idpTitle")}
-                                    </SettingsSectionTitle>
-                                    <SettingsSectionDescription>
-                                        {t("idpSelect")}
-                                    </SettingsSectionDescription>
-                                </SettingsSectionHeader>
-                                <SettingsSectionBody>
-                                    {idps.length === 0 ? (
-                                        <p className="text-muted-foreground">
-                                            {t("idpNotConfigured")}
-                                        </p>
-                                    ) : (
-                                        <Form {...externalForm}>
-                                            <FormField
-                                                control={externalForm.control}
-                                                name="idpId"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <StrategySelect
-                                                            options={idps.map(
-                                                                (idp) => ({
-                                                                    id: idp.idpId.toString(),
-                                                                    title: idp.name,
-                                                                    description:
-                                                                        formatIdpType(
-                                                                            idp.type
-                                                                        )
-                                                                })
-                                                            )}
-                                                            defaultValue={
-                                                                field.value
-                                                            }
-                                                            onChange={(
-                                                                value
-                                                            ) => {
-                                                                field.onChange(
-                                                                    value
-                                                                );
-                                                                const idp =
-                                                                    idps.find(
-                                                                        (idp) =>
-                                                                            idp.idpId.toString() ===
-                                                                            value
-                                                                    );
-                                                                setSelectedIdp(
-                                                                    idp || null
-                                                                );
-                                                            }}
-                                                            cols={2}
-                                                        />
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </Form>
-                                    )}
-                                </SettingsSectionBody>
-                            </SettingsSection>
-
-                            {idps.length > 0 && (
+                    {selectedOption && selectedOption !== "internal" && dataLoaded && (
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
@@ -640,144 +678,206 @@ export default function Page() {
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
                                         <SettingsSectionForm>
-                                            <Form {...externalForm}>
-                                                <form
-                                                    onSubmit={externalForm.handleSubmit(
-                                                        onSubmitExternal
-                                                    )}
-                                                    className="space-y-4"
-                                                    id="create-user-form"
-                                                >
-                                                    <FormField
-                                                        control={
-                                                            externalForm.control
-                                                        }
-                                                        name="username"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "username"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <p className="text-sm text-muted-foreground mt-1">
-                                                                    {t(
-                                                                        "usernameUniq"
-                                                                    )}
-                                                                </p>
-                                                                <FormMessage />
-                                                            </FormItem>
+                                            {/* Google/Azure Form */}
+                                            {(() => {
+                                                const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
+                                                return selectedUserOption?.variant === "google" || selectedUserOption?.variant === "azure";
+                                            })() && (
+                                                <Form {...googleAzureForm}>
+                                                    <form
+                                                        onSubmit={googleAzureForm.handleSubmit(
+                                                            onSubmitGoogleAzure
                                                         )}
-                                                    />
-
-                                                    <FormField
-                                                        control={
-                                                            externalForm.control
-                                                        }
-                                                        name="email"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "emailOptional"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    <FormField
-                                                        control={
-                                                            externalForm.control
-                                                        }
-                                                        name="name"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "nameOptional"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    <FormField
-                                                        control={
-                                                            externalForm.control
-                                                        }
-                                                        name="roleId"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t("role")}
-                                                                </FormLabel>
-                                                                <Select
-                                                                    onValueChange={
-                                                                        field.onChange
-                                                                    }
-                                                                >
+                                                        className="space-y-4"
+                                                        id="create-user-form"
+                                                    >
+                                                        <FormField
+                                                            control={googleAzureForm.control}
+                                                            name="email"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("email")}
+                                                                    </FormLabel>
                                                                     <FormControl>
-                                                                        <SelectTrigger className="w-full">
-                                                                            <SelectValue
-                                                                                placeholder={t(
-                                                                                    "accessRoleSelect"
-                                                                                )}
-                                                                            />
-                                                                        </SelectTrigger>
+                                                                        <Input
+                                                                            {...field}
+                                                                        />
                                                                     </FormControl>
-                                                                    <SelectContent>
-                                                                        {roles.map(
-                                                                            (
-                                                                                role
-                                                                            ) => (
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={googleAzureForm.control}
+                                                            name="name"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("nameOptional")}
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={googleAzureForm.control}
+                                                            name="roleId"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("role")}
+                                                                    </FormLabel>
+                                                                    <Select
+                                                                        onValueChange={field.onChange}
+                                                                    >
+                                                                        <FormControl>
+                                                                            <SelectTrigger className="w-full">
+                                                                                <SelectValue
+                                                                                    placeholder={t("accessRoleSelect")}
+                                                                                />
+                                                                            </SelectTrigger>
+                                                                        </FormControl>
+                                                                        <SelectContent>
+                                                                            {roles.map((role) => (
                                                                                 <SelectItem
-                                                                                    key={
-                                                                                        role.roleId
-                                                                                    }
+                                                                                    key={role.roleId}
                                                                                     value={role.roleId.toString()}
                                                                                 >
-                                                                                    {
-                                                                                        role.name
-                                                                                    }
+                                                                                    {role.name}
                                                                                 </SelectItem>
-                                                                            )
-                                                                        )}
-                                                                    </SelectContent>
-                                                                </Select>
-                                                                <FormMessage />
-                                                            </FormItem>
+                                                                            ))}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </form>
+                                                </Form>
+                                            )}
+
+                                            {/* Generic OIDC Form */}
+                                            {(() => {
+                                                const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
+                                                return selectedUserOption?.variant !== "google" && selectedUserOption?.variant !== "azure";
+                                            })() && (
+                                                <Form {...genericOidcForm}>
+                                                    <form
+                                                        onSubmit={genericOidcForm.handleSubmit(
+                                                            onSubmitGenericOidc
                                                         )}
-                                                    />
-                                                </form>
-                                            </Form>
+                                                        className="space-y-4"
+                                                        id="create-user-form"
+                                                    >
+                                                        <FormField
+                                                            control={genericOidcForm.control}
+                                                            name="username"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("username")}
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <p className="text-sm text-muted-foreground mt-1">
+                                                                        {t("usernameUniq")}
+                                                                    </p>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={genericOidcForm.control}
+                                                            name="email"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("emailOptional")}
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={genericOidcForm.control}
+                                                            name="name"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("nameOptional")}
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            {...field}
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+
+                                                        <FormField
+                                                            control={genericOidcForm.control}
+                                                            name="roleId"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        {t("role")}
+                                                                    </FormLabel>
+                                                                    <Select
+                                                                        onValueChange={field.onChange}
+                                                                    >
+                                                                        <FormControl>
+                                                                            <SelectTrigger className="w-full">
+                                                                                <SelectValue
+                                                                                    placeholder={t("accessRoleSelect")}
+                                                                                />
+                                                                            </SelectTrigger>
+                                                                        </FormControl>
+                                                                        <SelectContent>
+                                                                            {roles.map((role) => (
+                                                                                <SelectItem
+                                                                                    key={role.roleId}
+                                                                                    value={role.roleId.toString()}
+                                                                                >
+                                                                                    {role.name}
+                                                                                </SelectItem>
+                                                                            ))}
+                                                                        </SelectContent>
+                                                                    </Select>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </form>
+                                                </Form>
+                                            )}
                                         </SettingsSectionForm>
                                     </SettingsSectionBody>
                                 </SettingsSection>
-                            )}
-                        </>
                     )}
                 </SettingsContainer>
 
                 <div className="flex justify-end space-x-2 mt-8">
-                    {userType && dataLoaded && (
+                    {selectedOption && dataLoaded && (
                         <Button
                             type={inviteLink ? "button" : "submit"}
                             form={inviteLink ? undefined : "create-user-form"}

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import SiteInfoCard from "./SiteInfoCard";
+import SiteInfoCard from "../../../../../components/SiteInfoCard";
 import { getTranslations } from "next-intl/server";
 
 interface SettingsLayoutProps {

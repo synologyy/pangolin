@@ -24,7 +24,8 @@ import {
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
     verifyClientsEnabled,
-    verifyApiKeySiteResourceAccess
+    verifyApiKeySiteResourceAccess,
+    verifyOrgAccess
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -469,6 +470,21 @@ authenticated.get(
     user.listUsers
 );
 
+authenticated.put(
+    "/org/:orgId/user",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.createOrgUser),
+    user.createOrgUser
+);
+
+authenticated.post(
+    "/org/:orgId/user/:userId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyUserAccess,
+    verifyApiKeyHasAction(ActionsEnum.updateOrgUser),
+    user.updateOrgUser
+);
+
 authenticated.delete(
     "/org/:orgId/user/:userId",
     verifyApiKeyOrgAccess,
@@ -627,4 +643,11 @@ authenticated.post(
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.updateClient),
     client.updateClient
+);
+
+authenticated.put(
+    "/org/:orgId/blueprint",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
+    org.applyBlueprint
 );

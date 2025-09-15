@@ -354,8 +354,13 @@ export async function validateOidcCallback(
                     .from(userOrgs)
                     .where(eq(userOrgs.userId, userId!));
 
-                // Delete orgs that are no longer valid
-                const orgsToDelete = currentUserOrgs.filter(
+                // Filter to only auto-provisioned orgs for CRUD operations
+                const autoProvisionedOrgs = currentUserOrgs.filter(
+                    (org) => org.autoProvisioned === true
+                );
+
+                // Delete auto-provisioned orgs that are no longer valid
+                const orgsToDelete = autoProvisionedOrgs.filter(
                     (currentOrg) =>
                         !userOrgInfo.some(
                             (newOrg) => newOrg.orgId === currentOrg.orgId
@@ -374,8 +379,8 @@ export async function validateOidcCallback(
                     );
                 }
 
-                // Update roles for existing orgs where the role has changed
-                const orgsToUpdate = currentUserOrgs.filter((currentOrg) => {
+                // Update roles for existing auto-provisioned orgs where the role has changed
+                const orgsToUpdate = autoProvisionedOrgs.filter((currentOrg) => {
                     const newOrg = userOrgInfo.find(
                         (newOrg) => newOrg.orgId === currentOrg.orgId
                     );
@@ -401,7 +406,7 @@ export async function validateOidcCallback(
                     }
                 }
 
-                // Add new orgs that don't exist yet
+                // Add new orgs that don't exist yet (these will be auto-provisioned)
                 const orgsToAdd = userOrgInfo.filter(
                     (newOrg) =>
                         !currentUserOrgs.some(
@@ -415,12 +420,14 @@ export async function validateOidcCallback(
                             userId: userId!,
                             orgId: org.orgId,
                             roleId: org.roleId,
+                            autoProvisioned: true,
                             dateCreated: new Date().toISOString()
                         }))
                     );
                 }
 
                 // Loop through all the orgs and get the total number of users from the userOrgs table
+                // Use all current user orgs (both auto-provisioned and manually added) for counting
                 for (const org of currentUserOrgs) {
                     const userCount = await trx
                         .select()

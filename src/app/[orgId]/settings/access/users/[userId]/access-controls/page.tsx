@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
+import { Checkbox } from "@app/components/ui/checkbox";
 import { toast } from "@app/hooks/useToast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InviteUserResponse } from "@server/routers/user";
@@ -41,6 +42,8 @@ import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useTranslations } from "next-intl";
+import IdpTypeBadge from "@app/components/IdpTypeBadge";
+import { UserType } from "@server/types/UserTypes";
 
 export default function AccessControlsPage() {
     const { orgUser: user } = userOrgUserContext();
@@ -56,14 +59,16 @@ export default function AccessControlsPage() {
 
     const formSchema = z.object({
         username: z.string(),
-        roleId: z.string().min(1, { message: t('accessRoleSelectPlease') })
+        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") }),
+        autoProvisioned: z.boolean()
     });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             username: user.username!,
-            roleId: user.roleId?.toString()
+            roleId: user.roleId?.toString(),
+            autoProvisioned: user.autoProvisioned || false
         }
     });
 
@@ -75,10 +80,10 @@ export default function AccessControlsPage() {
                     console.error(e);
                     toast({
                         variant: "destructive",
-                        title: t('accessRoleErrorFetch'),
+                        title: t("accessRoleErrorFetch"),
                         description: formatAxiosError(
                             e,
-                            t('accessRoleErrorFetchDescription')
+                            t("accessRoleErrorFetchDescription")
                         )
                     });
                 });
@@ -91,31 +96,38 @@ export default function AccessControlsPage() {
         fetchRoles();
 
         form.setValue("roleId", user.roleId.toString());
+        form.setValue("autoProvisioned", user.autoProvisioned || false);
     }, []);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true);
 
-        const res = await api
-            .post<
-                AxiosResponse<InviteUserResponse>
-            >(`/role/${values.roleId}/add/${user.userId}`)
-            .catch((e) => {
-                toast({
-                    variant: "destructive",
-                    title: t('accessRoleErrorAdd'),
-                    description: formatAxiosError(
-                        e,
-                        t('accessRoleErrorAddDescription')
-                    )
-                });
-            });
+        try {
+            // Execute both API calls simultaneously
+            const [roleRes, userRes] = await Promise.all([
+                api.post<AxiosResponse<InviteUserResponse>>(
+                    `/role/${values.roleId}/add/${user.userId}`
+                ),
+                api.post(`/org/${orgId}/user/${user.userId}`, {
+                    autoProvisioned: values.autoProvisioned
+                })
+            ]);
 
-        if (res && res.status === 200) {
+            if (roleRes.status === 200 && userRes.status === 200) {
+                toast({
+                    variant: "default",
+                    title: t("userSaved"),
+                    description: t("userSavedDescription")
+                });
+            }
+        } catch (e) {
             toast({
-                variant: "default",
-                title: t('userSaved'),
-                description: t('userSavedDescription')
+                variant: "destructive",
+                title: t("accessRoleErrorAdd"),
+                description: formatAxiosError(
+                    e,
+                    t("accessRoleErrorAddDescription")
+                )
             });
         }
 
@@ -126,9 +138,11 @@ export default function AccessControlsPage() {
         <SettingsContainer>
             <SettingsSection>
                 <SettingsSectionHeader>
-                    <SettingsSectionTitle>{t('accessControls')}</SettingsSectionTitle>
+                    <SettingsSectionTitle>
+                        {t("accessControls")}
+                    </SettingsSectionTitle>
                     <SettingsSectionDescription>
-                        {t('accessControlsDescription')}
+                        {t("accessControlsDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
 
@@ -140,19 +154,49 @@ export default function AccessControlsPage() {
                                 className="space-y-4"
                                 id="access-controls-form"
                             >
+                                {/* IDP Type Display */}
+                                {user.type !== UserType.Internal &&
+                                    user.idpType && (
+                                        <div className="flex items-center space-x-2 mb-4">
+                                            <span className="text-sm font-medium text-muted-foreground">
+                                                {t("idp")}:
+                                            </span>
+                                            <IdpTypeBadge
+                                                type={user.idpType}
+                                                variant={
+                                                    user.idpVariant || undefined
+                                                }
+                                                name={user.idpName || undefined}
+                                            />
+                                        </div>
+                                    )}
+
                                 <FormField
                                     control={form.control}
                                     name="roleId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('role')}</FormLabel>
+                                            <FormLabel>{t("role")}</FormLabel>
                                             <Select
-                                                onValueChange={field.onChange}
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    // If auto provision is enabled, set it to false when role changes
+                                                    if (user.idpAutoProvision) {
+                                                        form.setValue(
+                                                            "autoProvisioned",
+                                                            false
+                                                        );
+                                                    }
+                                                }}
                                                 value={field.value}
                                             >
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder={t('accessRoleSelect')} />
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "accessRoleSelect"
+                                                            )}
+                                                        />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -170,6 +214,35 @@ export default function AccessControlsPage() {
                                         </FormItem>
                                     )}
                                 />
+
+                                {user.idpAutoProvision && (
+                                    <FormField
+                                        control={form.control}
+                                        name="autoProvisioned"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={
+                                                            field.onChange
+                                                        }
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel>
+                                                        {t("autoProvisioned")}
+                                                    </FormLabel>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {t(
+                                                            "autoProvisionedDescription"
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </form>
                         </Form>
                     </SettingsSectionForm>
@@ -182,7 +255,7 @@ export default function AccessControlsPage() {
                         disabled={loading}
                         form="access-controls-form"
                     >
-                        {t('accessControlsSubmit')}
+                        {t("accessControlsSubmit")}
                     </Button>
                 </SettingsSectionFooter>
             </SettingsSection>

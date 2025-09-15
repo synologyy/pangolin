@@ -2,13 +2,13 @@ import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { ListUsersResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
-import UsersTable, { UserRow } from "./UsersTable";
+import UsersTable, { UserRow } from "../../../../../components/UsersTable";
 import { GetOrgResponse } from "@server/routers/org";
 import { cache } from "react";
 import OrgProvider from "@app/providers/OrgProvider";
 import UserProvider from "@app/providers/UserProvider";
 import { verifySession } from "@app/lib/auth/verifySession";
-import AccessPageHeaderAndNav from "../AccessPageHeaderAndNav";
+import AccessPageHeaderAndNav from "../../../../../components/AccessPageHeaderAndNav";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { getTranslations } from 'next-intl/server';
 
@@ -77,6 +77,7 @@ export default async function UsersPage(props: UsersPageProps) {
             name: user.name,
             email: user.email,
             type: user.type,
+            idpVariant: user.idpVariant,
             idpId: user.idpId,
             idpName: user.idpName || t('idpNameInternal'),
             status: t('userConfirmed'),

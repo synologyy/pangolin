@@ -2,20 +2,20 @@ import {
     GetResourceAuthInfoResponse,
     GetExchangeTokenResponse
 } from "@server/routers/resource";
-import ResourceAuthPortal from "./ResourceAuthPortal";
+import ResourceAuthPortal from "@app/components/ResourceAuthPortal";
 import { internal, priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { cache } from "react";
 import { verifySession } from "@app/lib/auth/verifySession";
 import { redirect } from "next/navigation";
-import ResourceNotFound from "./ResourceNotFound";
-import ResourceAccessDenied from "./ResourceAccessDenied";
-import AccessToken from "./AccessToken";
+import ResourceNotFound from "@app/components/ResourceNotFound";
+import ResourceAccessDenied from "@app/components/ResourceAccessDenied";
+import AccessToken from "@app/components/AccessToken";
 import { pullEnv } from "@app/lib/pullEnv";
 import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListIdpsResponse } from "@server/routers/idp";
-import AutoLoginHandler from "./AutoLoginHandler";
+import AutoLoginHandler from "@app/components/AutoLoginHandler";
 
 export const dynamic = "force-dynamic";
 

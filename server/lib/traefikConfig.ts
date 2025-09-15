@@ -15,6 +15,7 @@ import {
     getValidCertificatesForDomains,
     getValidCertificatesForDomainsHybrid
 } from "./remoteCertificates";
+import { sendToExitNode } from "./exitNodeComms";
 
 export class TraefikConfigManager {
     private intervalId: NodeJS.Timeout | null = null;
@@ -403,27 +404,11 @@ export class TraefikConfigManager {
                     [exitNode] = await db.select().from(exitNodes).limit(1);
                 }
                 if (exitNode) {
-                    try {
-                        await axios.post(
-                            `${exitNode.reachableAt}/update-local-snis`,
-                            { fullDomains: Array.from(domains) },
-                            { headers: { "Content-Type": "application/json" } }
-                        );
-                    } catch (error) {
-                        // pull data out of the axios error to log
-                        if (axios.isAxiosError(error)) {
-                            logger.error("Error updating local SNI:", {
-                                message: error.message,
-                                code: error.code,
-                                status: error.response?.status,
-                                statusText: error.response?.statusText,
-                                url: error.config?.url,
-                                method: error.config?.method
-                            });
-                        } else {
-                            logger.error("Error updating local SNI:", error);
-                        }
-                    }
+                    await sendToExitNode(exitNode, {
+                        localPath: "/update-local-snis",
+                        method: "POST",
+                        data: { fullDomains: Array.from(domains) }
+                    });
                 } else {
                     logger.error(
                         "No exit node found. Has gerbil registered yet?"

@@ -6,7 +6,7 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
-import { LicenseKeysDataTable } from "./LicenseKeysDataTable";
+import { LicenseKeysDataTable } from "../../../components/LicenseKeysDataTable";
 import { AxiosResponse } from "axios";
 import { Button } from "@app/components/ui/button";
 import {
@@ -49,7 +49,7 @@ import CopyTextBox from "@app/components/CopyTextBox";
 import { Progress } from "@app/components/ui/progress";
 import { MinusCircle, PlusCircle } from "lucide-react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import { SitePriceCalculator } from "./components/SitePriceCalculator";
+import { SitePriceCalculator } from "../../../components/SitePriceCalculator";
 import Link from "next/link";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";

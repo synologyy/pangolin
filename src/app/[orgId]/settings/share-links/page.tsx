@@ -7,8 +7,7 @@ import { cache } from "react";
 import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
 import { ListAccessTokensResponse } from "@server/routers/accessToken";
-import ShareLinksTable, { ShareLinkRow } from "./ShareLinksTable";
-import ShareableLinksSplash from "./ShareLinksSplash";
+import ShareLinksTable, { ShareLinkRow } from "../../../../components/ShareLinksTable";
 import { getTranslations } from "next-intl/server";
 
 type ShareLinksPageProps = {

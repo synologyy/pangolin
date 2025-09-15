@@ -352,7 +352,7 @@ export default function CreateInternalResourceDialog({
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t("createInternalResourceDialogDestinationIP")}
+                                                        {t("targetAddr")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input
@@ -373,7 +373,7 @@ export default function CreateInternalResourceDialog({
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t("createInternalResourceDialogDestinationPort")}
+                                                        {t("targetPort")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input

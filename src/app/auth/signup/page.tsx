@@ -1,4 +1,4 @@
-import SignupForm from "@app/app/auth/signup/SignupForm";
+import SignupForm from "@app/components/SignupForm";
 import { verifySession } from "@app/lib/auth/verifySession";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { pullEnv } from "@app/lib/pullEnv";
@@ -11,7 +11,7 @@ import { getTranslations } from "next-intl/server";
 export const dynamic = "force-dynamic";
 
 export default async function Page(props: {
-    searchParams: Promise<{ 
+    searchParams: Promise<{
         redirect: string | undefined;
         email: string | undefined;
     }>;

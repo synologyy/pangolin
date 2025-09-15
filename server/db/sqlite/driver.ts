@@ -18,6 +18,7 @@ function createDb() {
 
 export const db = createDb();
 export default db;
+export type Transaction = Parameters<Parameters<typeof db["transaction"]>[0]>[0];
 
 function checkFileExists(filePath: string): boolean {
     try {

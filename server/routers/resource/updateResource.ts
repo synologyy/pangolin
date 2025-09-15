@@ -20,6 +20,8 @@ import { tlsNameSchema } from "@server/lib/schemas";
 import { subdomainSchema } from "@server/lib/schemas";
 import { registry } from "@server/openApi";
 import { OpenAPITags } from "@server/openApi";
+import { validateAndConstructDomain } from "@server/lib/domainUtils";
+import { validateHeaders } from "@server/lib/validators";
 
 const updateResourceParamsSchema = z
     .object({
@@ -44,7 +46,8 @@ const updateHttpResourceBodySchema = z
         stickySession: z.boolean().optional(),
         tlsServerName: z.string().nullable().optional(),
         setHostHeader: z.string().nullable().optional(),
-        skipToIdpId: z.number().int().positive().nullable().optional()
+        skipToIdpId: z.number().int().positive().nullable().optional(),
+        headers: z.string().nullable().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -81,6 +84,18 @@ const updateHttpResourceBodySchema = z
         {
             message:
                 "Invalid custom Host Header value. Use domain name format, or save empty to unset custom Host Header."
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.headers) {
+                return validateHeaders(data.headers);
+            }
+            return true;
+        },
+        {
+            message:
+                "Invalid headers format. Use comma-separated format: 'Header-Name: value, Another-Header: another-value'. Header values cannot contain colons."
         }
     );
 
@@ -230,78 +245,19 @@ async function updateHttpResource(
     if (updateData.domainId) {
         const domainId = updateData.domainId;
 
-        const [domainRes] = await db
-            .select()
-            .from(domains)
-            .where(eq(domains.domainId, domainId))
-            .leftJoin(
-                orgDomains,
-                and(
-                    eq(orgDomains.orgId, resource.orgId),
-                    eq(orgDomains.domainId, domainId)
-                )
-            );
-
-        if (!domainRes || !domainRes.domains) {
-            return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    `Domain with ID ${updateData.domainId} not found`
-                )
-            );
-        }
-
-        if (
-            domainRes.orgDomains &&
-            domainRes.orgDomains.orgId !== resource.orgId
-        ) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    `You do not have permission to use domain with ID ${updateData.domainId}`
-                )
-            );
-        }
-
-        if (!domainRes.domains.verified) {
+        // Validate domain and construct full domain
+        const domainResult = await validateAndConstructDomain(domainId, resource.orgId, updateData.subdomain);
+        
+        if (!domainResult.success) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
-                    `Domain with ID ${updateData.domainId} is not verified`
+                    domainResult.error
                 )
             );
         }
 
-        let fullDomain = "";
-        if (domainRes.domains.type == "ns") {
-            if (updateData.subdomain) {
-                fullDomain = `${updateData.subdomain}.${domainRes.domains.baseDomain}`;
-            } else {
-                fullDomain = domainRes.domains.baseDomain;
-            }
-        } else if (domainRes.domains.type == "cname") {
-            fullDomain = domainRes.domains.baseDomain;
-        } else if (domainRes.domains.type == "wildcard") {
-            if (updateData.subdomain !== undefined) {
-                // the subdomain cant have a dot in it
-                const parsedSubdomain = subdomainSchema.safeParse(
-                    updateData.subdomain
-                );
-                if (!parsedSubdomain.success) {
-                    return next(
-                        createHttpError(
-                            HttpCode.BAD_REQUEST,
-                            fromError(parsedSubdomain.error).toString()
-                        )
-                    );
-                }
-                fullDomain = `${updateData.subdomain}.${domainRes.domains.baseDomain}`;
-            } else {
-                fullDomain = domainRes.domains.baseDomain;
-            }
-        }
-
-        fullDomain = fullDomain.toLowerCase();
+        const { fullDomain, subdomain: finalSubdomain } = domainResult;
 
         logger.debug(`Full domain: ${fullDomain}`);
 
@@ -332,9 +288,8 @@ async function updateHttpResource(
                 .where(eq(resources.resourceId, resource.resourceId));
         }
 
-        if (fullDomain === domainRes.domains.baseDomain) {
-            updateData.subdomain = null;
-        }
+        // Update the subdomain in the update data
+        updateData.subdomain = finalSubdomain;
     }
 
     const updatedResource = await db

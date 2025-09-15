@@ -1,10 +1,10 @@
-import { db } from "@server/db";
+import { db, Transaction } from "@server/db";
 import { resources, targets } from "@server/db";
 import { eq } from "drizzle-orm";
 
 const currentBannedPorts: number[] = [];
 
-export async function pickPort(siteId: number): Promise<{
+export async function pickPort(siteId: number, trx: Transaction | typeof db): Promise<{
     internalPort: number;
     targetIps: string[];
 }> {
@@ -12,7 +12,7 @@ export async function pickPort(siteId: number): Promise<{
     const targetIps: string[] = [];
     const targetInternalPorts: number[] = [];
 
-    const targetsRes = await db
+    const targetsRes = await trx
         .select()
         .from(targets)
         .where(eq(targets.siteId, siteId));

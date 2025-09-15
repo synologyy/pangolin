@@ -63,7 +63,7 @@ class TelemetryClient {
                     logger.error("Failed to collect analytics:", err);
                 });
             },
-            6 * 60 * 60 * 1000
+            48 * 60 * 60 * 1000
         );
 
         this.collectAndSendAnalytics().catch((err) => {
