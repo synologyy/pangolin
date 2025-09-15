@@ -1517,5 +1517,7 @@
     "domainPickerInvalidSubdomainRemoved": "Girdi \"{sub}\" geçersiz olduğu için kaldırıldı.",
     "domainPickerInvalidSubdomainCannotMakeValid": "\"{sub}\" {domain} için geçerli yapılamadı.",
     "domainPickerSubdomainSanitized": "Alt alan adı temizlendi",
-    "domainPickerSubdomainCorrected": "\"{sub}\" \"{sanitized}\" olarak düzeltildi"
+    "domainPickerSubdomainCorrected": "\"{sub}\" \"{sanitized}\" olarak düzeltildi",
+    "resourceAddEntrypointsEditFile": "Edit file: config/traefik/traefik_config.yml",
+    "resourceExposePortsEditFile": "Edit file: docker-compose.yml"
 }

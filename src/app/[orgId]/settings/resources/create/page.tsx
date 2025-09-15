@@ -1546,7 +1546,7 @@ export default function Page() {
                                                 {t("resourceAddEntrypoints")}
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                (Edit file: config/traefik/traefik_config.yml)
+                                                {t("resourceAddEntrypointsEditFile")}
                                             </p>
                                             <CopyTextBox
                                                 text={`entryPoints:
@@ -1561,7 +1561,7 @@ export default function Page() {
                                                 {t("resourceExposePorts")}
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                (Edit file: docker-compose.yml)
+                                                {t("resourceExposePortsEditFile")}
                                             </p>
                                             <CopyTextBox
                                                 text={`ports:
