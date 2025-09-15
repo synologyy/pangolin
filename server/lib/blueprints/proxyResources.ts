@@ -404,21 +404,31 @@ export async function updateProxyResources(
                 const existingRule = existingRules[index];
                 if (existingRule) {
                     if (
-                        existingRule.action !== rule.action ||
-                        existingRule.match !== rule.match ||
+                        existingRule.action !== getRuleAction(rule.action) ||
+                        existingRule.match !== rule.match.toUpperCase() ||
                         existingRule.value !== rule.value
                     ) {
+                        validateRule(rule);
                         await trx
                             .update(resourceRules)
                             .set({
-                                action: rule.action,
-                                match: rule.match,
+                                action: getRuleAction(rule.action),
+                                match: rule.match.toUpperCase(),
                                 value: rule.value
                             })
                             .where(
                                 eq(resourceRules.ruleId, existingRule.ruleId)
                             );
                     }
+                } else {
+                    validateRule(rule);
+                    await trx.insert(resourceRules).values({
+                        resourceId: existingResource.resourceId,
+                        action: rule.action.toUpperCase(),
+                        match: rule.match.toUpperCase(),
+                        value: rule.value,
+                        priority: index + 1 // start priorities at 1
+                    });
                 }
             }
 
@@ -550,25 +560,11 @@ export async function updateProxyResources(
             }
 
             for (const [index, rule] of resourceData.rules?.entries() || []) {
-                if (rule.match === "cidr") {
-                    if (!isValidCIDR(rule.value)) {
-                        throw new Error(`Invalid CIDR provided: ${rule.value}`);
-                    }
-                } else if (rule.match === "ip") {
-                    if (!isValidIP(rule.value)) {
-                        throw new Error(`Invalid IP provided: ${rule.value}`);
-                    }
-                } else if (rule.match === "path") {
-                    if (!isValidUrlGlobPattern(rule.value)) {
-                        throw new Error(
-                            `Invalid URL glob pattern: ${rule.value}`
-                        );
-                    }
-                }
+                validateRule(rule);
                 await trx.insert(resourceRules).values({
                     resourceId: newResource.resourceId,
-                    action: rule.action,
-                    match: rule.match,
+                    action: getRuleAction(rule.action),
+                    match: rule.match.toUpperCase(),
                     value: rule.value,
                     priority: index + 1 // start priorities at 1
                 });
@@ -584,6 +580,34 @@ export async function updateProxyResources(
     }
 
     return results;
+}
+
+function getRuleAction(input: string) {
+    let action = "DROP";
+    if (input == "allow") {
+        action = "ACCEPT";
+    } else if (input == "deny") {
+        action = "DROP";
+    } else if (input == "pass") {
+        action = "PASS";
+    }
+    return action;
+}
+
+function validateRule(rule: any) {
+    if (rule.match === "cidr") {
+        if (!isValidCIDR(rule.value)) {
+            throw new Error(`Invalid CIDR provided: ${rule.value}`);
+        }
+    } else if (rule.match === "ip") {
+        if (!isValidIP(rule.value)) {
+            throw new Error(`Invalid IP provided: ${rule.value}`);
+        }
+    } else if (rule.match === "path") {
+        if (!isValidUrlGlobPattern(rule.value)) {
+            throw new Error(`Invalid URL glob pattern: ${rule.value}`);
+        }
+    }
 }
 
 async function syncRoleResources(

@@ -52,10 +52,12 @@ function getContainerPort(container: Container): number | null {
 }
 
 export function processContainerLabels(containers: Container[]): {
-    resources: { [key: string]: ResourceConfig };
+    "proxy-resources": { [key: string]: ResourceConfig };
+    "client-resources": { [key: string]: ResourceConfig };
 } {
-    const result: { resources: { [key: string]: ResourceConfig } } = {
-        resources: {}
+    const result = {
+        "proxy-resources": {} as { [key: string]: ResourceConfig },
+        "client-resources": {} as { [key: string]: ResourceConfig }
     };
 
     // Process each container
@@ -64,109 +66,124 @@ export function processContainerLabels(containers: Container[]): {
             return;
         }
 
-        const resourceLabels: DockerLabels = {};
+        const proxyResourceLabels: DockerLabels = {};
+        const clientResourceLabels: DockerLabels = {};
 
-        // Filter labels that start with "pangolin.proxy-resources."
+        // Filter and separate proxy-resources and client-resources labels
         Object.entries(container.labels).forEach(([key, value]) => {
-            if (key.startsWith("pangolin.proxy-resources.") || key.startsWith("pangolin.client-resources.")) {
-                // remove the pangolin. prefix
-                const strippedKey = key.replace("pangolin.", "");
-                resourceLabels[strippedKey] = value;
+            if (key.startsWith("pangolin.proxy-resources.")) {
+                // remove the pangolin.proxy- prefix to get "resources.xxx"
+                const strippedKey = key.replace("pangolin.proxy-", "");
+                proxyResourceLabels[strippedKey] = value;
+            } else if (key.startsWith("pangolin.client-resources.")) {
+                // remove the pangolin.client- prefix to get "resources.xxx"
+                const strippedKey = key.replace("pangolin.client-", "");
+                clientResourceLabels[strippedKey] = value;
             }
         });
 
-        // Skip containers with no resource labels
-        if (Object.keys(resourceLabels).length === 0) {
-            return;
+        // Process proxy resources
+        if (Object.keys(proxyResourceLabels).length > 0) {
+            processResourceLabels(proxyResourceLabels, container, result["proxy-resources"]);
         }
 
-        // Parse the labels using the existing parseDockerLabels logic
-        const tempResult: ParsedObject = {};
-        Object.entries(resourceLabels).forEach(([key, value]) => {
-            setNestedProperty(tempResult, key, value);
-        });
-
-        // Merge into main result
-        if (tempResult.resources) {
-            Object.entries(tempResult.resources).forEach(
-                ([resourceKey, resourceConfig]: [string, any]) => {
-                    // Initialize resource if it doesn't exist
-                    if (!result.resources[resourceKey]) {
-                        result.resources[resourceKey] = {};
-                    }
-
-                    // Merge all properties except targets
-                    Object.entries(resourceConfig).forEach(
-                        ([propKey, propValue]) => {
-                            if (propKey !== "targets") {
-                                result.resources[resourceKey][propKey] =
-                                    propValue;
-                            }
-                        }
-                    );
-
-                    // Handle targets specially
-                    if (
-                        resourceConfig.targets &&
-                        Array.isArray(resourceConfig.targets)
-                    ) {
-                        const resource = result.resources[resourceKey];
-                        if (resource) {
-                            if (!resource.targets) {
-                                resource.targets = [];
-                            }
-
-                            resourceConfig.targets.forEach(
-                                (target: any, targetIndex: number) => {
-                                    // check if the target is an empty object
-                                    if (
-                                        typeof target === "object" &&
-                                        Object.keys(target).length === 0
-                                    ) {
-                                        logger.debug(
-                                            `Skipping null target at index ${targetIndex} for resource ${resourceKey}`
-                                        );
-                                        resource.targets!.push(null);
-                                        return;
-                                    }
-
-                                    // Ensure targets array is long enough
-                                    while (
-                                        resource.targets!.length <= targetIndex
-                                    ) {
-                                        resource.targets!.push({});
-                                    }
-
-                                    // Set default hostname and port if not provided
-                                    const finalTarget = { ...target };
-                                    if (!finalTarget.hostname) {
-                                        finalTarget.hostname =
-                                            container.name ||
-                                            container.hostname;
-                                    }
-                                    if (!finalTarget.port) {
-                                        const containerPort =
-                                            getContainerPort(container);
-                                        if (containerPort !== null) {
-                                            finalTarget.port = containerPort;
-                                        }
-                                    }
-
-                                    // Merge with existing target data
-                                    resource.targets![targetIndex] = {
-                                        ...resource.targets![targetIndex],
-                                        ...finalTarget
-                                    };
-                                }
-                            );
-                        }
-                    }
-                }
-            );
+        // Process client resources
+        if (Object.keys(clientResourceLabels).length > 0) {
+            processResourceLabels(clientResourceLabels, container, result["client-resources"]);
         }
     });
 
     return result;
+}
+
+function processResourceLabels(
+    resourceLabels: DockerLabels,
+    container: Container,
+    targetResult: { [key: string]: ResourceConfig }
+) {
+    // Parse the labels using the existing parseDockerLabels logic
+    const tempResult: ParsedObject = {};
+    Object.entries(resourceLabels).forEach(([key, value]) => {
+        setNestedProperty(tempResult, key, value);
+    });
+
+    // Merge into target result
+    if (tempResult.resources) {
+        Object.entries(tempResult.resources).forEach(
+            ([resourceKey, resourceConfig]: [string, any]) => {
+                // Initialize resource if it doesn't exist
+                if (!targetResult[resourceKey]) {
+                    targetResult[resourceKey] = {};
+                }
+
+                // Merge all properties except targets
+                Object.entries(resourceConfig).forEach(
+                    ([propKey, propValue]) => {
+                        if (propKey !== "targets") {
+                            targetResult[resourceKey][propKey] = propValue;
+                        }
+                    }
+                );
+
+                // Handle targets specially
+                if (
+                    resourceConfig.targets &&
+                    Array.isArray(resourceConfig.targets)
+                ) {
+                    const resource = targetResult[resourceKey];
+                    if (resource) {
+                        if (!resource.targets) {
+                            resource.targets = [];
+                        }
+
+                        resourceConfig.targets.forEach(
+                            (target: any, targetIndex: number) => {
+                                // check if the target is an empty object
+                                if (
+                                    typeof target === "object" &&
+                                    Object.keys(target).length === 0
+                                ) {
+                                    logger.debug(
+                                        `Skipping null target at index ${targetIndex} for resource ${resourceKey}`
+                                    );
+                                    resource.targets!.push(null);
+                                    return;
+                                }
+
+                                // Ensure targets array is long enough
+                                while (
+                                    resource.targets!.length <= targetIndex
+                                ) {
+                                    resource.targets!.push({});
+                                }
+
+                                // Set default hostname and port if not provided
+                                const finalTarget = { ...target };
+                                if (!finalTarget.hostname) {
+                                    finalTarget.hostname =
+                                        container.name ||
+                                        container.hostname;
+                                }
+                                if (!finalTarget.port) {
+                                    const containerPort =
+                                        getContainerPort(container);
+                                    if (containerPort !== null) {
+                                        finalTarget.port = containerPort;
+                                    }
+                                }
+
+                                // Merge with existing target data
+                                resource.targets![targetIndex] = {
+                                    ...resource.targets![targetIndex],
+                                    ...finalTarget
+                                };
+                            }
+                        );
+                    }
+                }
+            }
+        );
+    }
 }
 
 // // Test example

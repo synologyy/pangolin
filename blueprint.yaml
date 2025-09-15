@@ -1,8 +1,24 @@
-resources:
-  resource-nice-id-duce:
+client-resources:
+  client-resource-nice-id-uno:
+    name: this is my resource
+    protocol: tcp
+    proxy-port: 3001
+    hostname: localhost
+    internal-port: 3000
+    site: lively-yosemite-toad
+  client-resource-nice-id-duce:
+    name: this is my resource
+    protocol: udp
+    proxy-port: 3000
+    hostname: localhost
+    internal-port: 3000
+    site: lively-yosemite-toad
+
+proxy-resources:
+  resource-nice-id-uno:
     name: this is my resource
     protocol: http
-    full-domain: level1.test3.example.com
+    full-domain: duce.test.example.com
     host-header: example.com
     tls-server-name: example.com
     # auth:
@@ -18,6 +34,16 @@ resources:
     headers:
       - X-Example-Header: example-value
       - X-Another-Header: another-value
+    rules:
+      - action: allow
+        match: ip
+        value: 1.1.1.1
+      - action: deny
+        match: cidr 
+        value: 2.2.2.2/32
+      - action: pass
+        match: path
+        value: /admin
     targets:
     - site: lively-yosemite-toad
       path: /path
@@ -31,7 +57,7 @@ resources:
       pathMatchType: exact
       method: http
       port: 8001
-  resource-nice-id2:
+  resource-nice-id-duce:
     name: this is other resource
     protocol: tcp
     proxy-port: 3000
