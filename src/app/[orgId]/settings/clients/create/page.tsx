@@ -448,6 +448,11 @@ export default function Page() {
                                 <SettingsSectionForm>
                                     <Form {...form}>
                                         <form
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault(); // block default enter refresh
+                                                }
+                                            }}
                                             className="space-y-4"
                                             id="create-client-form"
                                         >
