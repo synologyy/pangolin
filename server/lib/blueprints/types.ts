@@ -40,6 +40,11 @@ export const RuleSchema = z.object({
     value: z.string()
 });
 
+export const HeaderSchema = z.object({
+    name: z.string().min(1),
+    value: z.string().min(1)
+});
+
 // Schema for individual resource
 export const ResourceSchema = z
     .object({
@@ -53,7 +58,7 @@ export const ResourceSchema = z
         auth: AuthSchema.optional(),
         "host-header": z.string().optional(),
         "tls-server-name": z.string().optional(),
-        headers: z.array(z.record(z.string(), z.string())).optional().default([]),
+        headers: z.array(HeaderSchema).optional().default([]),
         rules: z.array(RuleSchema).optional().default([]),
     })
     .refine(

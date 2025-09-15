@@ -138,10 +138,8 @@ export async function updateProxyResources(
                 ? true
                 : resourceData.ssl;
         let headers = "";
-        for (const headerObj of resourceData.headers || []) {
-            for (const [key, value] of Object.entries(headerObj)) {
-                headers += `${key}: ${value},`;
-            }
+        for (const header of resourceData.headers || []) {
+            headers += `${header.name}: ${header.value},`;
         }
         // if there are headers, remove the trailing comma
         if (headers.endsWith(",")) {

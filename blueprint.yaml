@@ -32,8 +32,10 @@ proxy-resources:
       # whitelist-users:
       #   - owen@fossorial.io
     headers:
-      - X-Example-Header: example-value
-      - X-Another-Header: another-value
+      - name: X-Example-Header
+        value: example-value
+      - name: X-Another-Header
+        value: another-value
     rules:
       - action: allow
         match: ip
