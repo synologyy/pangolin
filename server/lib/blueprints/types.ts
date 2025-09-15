@@ -58,8 +58,8 @@ export const ResourceSchema = z
         auth: AuthSchema.optional(),
         "host-header": z.string().optional(),
         "tls-server-name": z.string().optional(),
-        headers: z.array(HeaderSchema).optional().default([]),
-        rules: z.array(RuleSchema).optional().default([]),
+        headers: z.array(HeaderSchema).optional(),
+        rules: z.array(RuleSchema).optional()
     })
     .refine(
         (resource) => {
