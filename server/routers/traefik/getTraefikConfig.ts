@@ -105,117 +105,115 @@ export async function getTraefikConfig(
         };
     };
 
-        // Get resources with their targets and sites in a single optimized query
-        // Start from sites on this exit node, then join to targets and resources
-        const resourcesWithTargetsAndSites = await db
-            .select({
-                // Resource fields
-                resourceId: resources.resourceId,
-                fullDomain: resources.fullDomain,
-                ssl: resources.ssl,
-                http: resources.http,
-                proxyPort: resources.proxyPort,
-                protocol: resources.protocol,
-                subdomain: resources.subdomain,
-                domainId: resources.domainId,
-                enabled: resources.enabled,
-                stickySession: resources.stickySession,
-                tlsServerName: resources.tlsServerName,
-                setHostHeader: resources.setHostHeader,
-                enableProxy: resources.enableProxy,
-                headers: resources.headers,
-                // Target fields
-                targetId: targets.targetId,
-                targetEnabled: targets.enabled,
-                ip: targets.ip,
-                method: targets.method,
-                port: targets.port,
-                internalPort: targets.internalPort,
-                path: targets.path,
-                pathMatchType: targets.pathMatchType,
+    // Get resources with their targets and sites in a single optimized query
+    // Start from sites on this exit node, then join to targets and resources
+    const resourcesWithTargetsAndSites = await db
+        .select({
+            // Resource fields
+            resourceId: resources.resourceId,
+            fullDomain: resources.fullDomain,
+            ssl: resources.ssl,
+            http: resources.http,
+            proxyPort: resources.proxyPort,
+            protocol: resources.protocol,
+            subdomain: resources.subdomain,
+            domainId: resources.domainId,
+            enabled: resources.enabled,
+            stickySession: resources.stickySession,
+            tlsServerName: resources.tlsServerName,
+            setHostHeader: resources.setHostHeader,
+            enableProxy: resources.enableProxy,
+            headers: resources.headers,
+            // Target fields
+            targetId: targets.targetId,
+            targetEnabled: targets.enabled,
+            ip: targets.ip,
+            method: targets.method,
+            port: targets.port,
+            internalPort: targets.internalPort,
+            path: targets.path,
+            pathMatchType: targets.pathMatchType,
 
-                // Site fields
-                siteId: sites.siteId,
-                siteType: sites.type,
-                siteOnline: sites.online,
-                subnet: sites.subnet,
-                exitNodeId: sites.exitNodeId
-            })
-            .from(sites)
-            .innerJoin(targets, eq(targets.siteId, sites.siteId))
-            .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
-            .where(
-                and(
-                    eq(targets.enabled, true),
-                    eq(resources.enabled, true),
-                    or(
-                        eq(sites.exitNodeId, exitNodeId),
-                        isNull(sites.exitNodeId)
-                    ),
-                    inArray(sites.type, siteTypes),
-                    config.getRawConfig().traefik.allow_raw_resources
-                        ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
-                        : eq(resources.http, true)
-                )
-            );
+            // Site fields
+            siteId: sites.siteId,
+            siteType: sites.type,
+            siteOnline: sites.online,
+            subnet: sites.subnet,
+            exitNodeId: sites.exitNodeId
+        })
+        .from(sites)
+        .innerJoin(targets, eq(targets.siteId, sites.siteId))
+        .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
+        .where(
+            and(
+                eq(targets.enabled, true),
+                eq(resources.enabled, true),
+                or(eq(sites.exitNodeId, exitNodeId), isNull(sites.exitNodeId)),
+                inArray(sites.type, siteTypes),
+                config.getRawConfig().traefik.allow_raw_resources
+                    ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
+                    : eq(resources.http, true)
+            )
+        );
 
-        // Group by resource and include targets with their unique site data
-        const resourcesMap = new Map();
+    // Group by resource and include targets with their unique site data
+    const resourcesMap = new Map();
 
-        resourcesWithTargetsAndSites.forEach((row) => {
-            const resourceId = row.resourceId;
-            const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
-            const pathMatchType = row.pathMatchType || "";
+    resourcesWithTargetsAndSites.forEach((row) => {
+        const resourceId = row.resourceId;
+        const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
+        const pathMatchType = row.pathMatchType || "";
 
-            // Create a unique key combining resourceId and path+pathMatchType
-            const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
-            const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
+        // Create a unique key combining resourceId and path+pathMatchType
+        const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
+        const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
 
-            if (!resourcesMap.has(mapKey)) {
-                resourcesMap.set(mapKey, {
-                    resourceId: row.resourceId,
-                    fullDomain: row.fullDomain,
-                    ssl: row.ssl,
-                    http: row.http,
-                    proxyPort: row.proxyPort,
-                    protocol: row.protocol,
-                    subdomain: row.subdomain,
-                    domainId: row.domainId,
-                    enabled: row.enabled,
-                    stickySession: row.stickySession,
-                    tlsServerName: row.tlsServerName,
-                    setHostHeader: row.setHostHeader,
-                    enableProxy: row.enableProxy,
-                    targets: [],
-                    headers: row.headers,
-                    path: row.path, // the targets will all have the same path
-                    pathMatchType: row.pathMatchType // the targets will all have the same pathMatchType
-                });
-            }
-
-            // Add target with its associated site data
-            resourcesMap.get(mapKey).targets.push({
+        if (!resourcesMap.has(mapKey)) {
+            resourcesMap.set(mapKey, {
                 resourceId: row.resourceId,
-                targetId: row.targetId,
-                ip: row.ip,
-                method: row.method,
-                port: row.port,
-                internalPort: row.internalPort,
-                enabled: row.targetEnabled,
-                site: {
-                    siteId: row.siteId,
-                    type: row.siteType,
-                    subnet: row.subnet,
-                    exitNodeId: row.exitNodeId,
-                    online: row.siteOnline
-                }
+                fullDomain: row.fullDomain,
+                ssl: row.ssl,
+                http: row.http,
+                proxyPort: row.proxyPort,
+                protocol: row.protocol,
+                subdomain: row.subdomain,
+                domainId: row.domainId,
+                enabled: row.enabled,
+                stickySession: row.stickySession,
+                tlsServerName: row.tlsServerName,
+                setHostHeader: row.setHostHeader,
+                enableProxy: row.enableProxy,
+                targets: [],
+                headers: row.headers,
+                path: row.path, // the targets will all have the same path
+                pathMatchType: row.pathMatchType // the targets will all have the same pathMatchType
             });
-        });
+        }
 
-    
+        // Add target with its associated site data
+        resourcesMap.get(mapKey).targets.push({
+            resourceId: row.resourceId,
+            targetId: row.targetId,
+            ip: row.ip,
+            method: row.method,
+            port: row.port,
+            internalPort: row.internalPort,
+            enabled: row.targetEnabled,
+            site: {
+                siteId: row.siteId,
+                type: row.siteType,
+                subnet: row.subnet,
+                exitNodeId: row.exitNodeId,
+                online: row.siteOnline
+            }
+        });
+    });
+
     // convert the map to an object for printing
 
-    logger.debug(`Resources: ${JSON.stringify(Object.fromEntries(resourcesMap), null, 2)}`);
+    logger.debug(
+        `Resources: ${JSON.stringify(Object.fromEntries(resourcesMap), null, 2)}`
+    );
 
     // make sure we have at least one resource
     if (resourcesMap.size === 0) {
@@ -399,55 +397,64 @@ export async function getTraefikConfig(
                             targets as TargetWithSite[]
                         ).some((target: TargetWithSite) => target.site.online);
 
-                        return (targets as TargetWithSite[])
-                            .filter((target: TargetWithSite) => {
-                                if (!target.enabled) {
-                                    return false;
-                                }
-
-                                // If any sites are online, exclude offline sites
-                                if (anySitesOnline && !target.site.online) {
-                                    return false;
-                                }
-
-                                if (
-                                    target.site.type === "local" ||
-                                    target.site.type === "wireguard"
-                                ) {
-                                    if (
-                                        !target.ip ||
-                                        !target.port ||
-                                        !target.method
-                                    ) {
+                        return (
+                            (targets as TargetWithSite[])
+                                .filter((target: TargetWithSite) => {
+                                    if (!target.enabled) {
                                         return false;
                                     }
-                                } else if (target.site.type === "newt") {
-                                    if (
-                                        !target.internalPort ||
-                                        !target.method ||
-                                        !target.site.subnet
-                                    ) {
+
+                                    // If any sites are online, exclude offline sites
+                                    if (anySitesOnline && !target.site.online) {
                                         return false;
                                     }
-                                }
-                                return true;
-                            })
-                            .map((target: TargetWithSite) => {
-                                if (
-                                    target.site.type === "local" ||
-                                    target.site.type === "wireguard"
-                                ) {
-                                    return {
-                                        url: `${target.method}://${target.ip}:${target.port}`
-                                    };
-                                } else if (target.site.type === "newt") {
-                                    const ip =
-                                        target.site.subnet!.split("/")[0];
-                                    return {
-                                        url: `${target.method}://${ip}:${target.internalPort}`
-                                    };
-                                }
-                            });
+
+                                    if (
+                                        target.site.type === "local" ||
+                                        target.site.type === "wireguard"
+                                    ) {
+                                        if (
+                                            !target.ip ||
+                                            !target.port ||
+                                            !target.method
+                                        ) {
+                                            return false;
+                                        }
+                                    } else if (target.site.type === "newt") {
+                                        if (
+                                            !target.internalPort ||
+                                            !target.method ||
+                                            !target.site.subnet
+                                        ) {
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                })
+                                .map((target: TargetWithSite) => {
+                                    if (
+                                        target.site.type === "local" ||
+                                        target.site.type === "wireguard"
+                                    ) {
+                                        return {
+                                            url: `${target.method}://${target.ip}:${target.port}`
+                                        };
+                                    } else if (target.site.type === "newt") {
+                                        const ip =
+                                            target.site.subnet!.split("/")[0];
+                                        return {
+                                            url: `${target.method}://${ip}:${target.internalPort}`
+                                        };
+                                    }
+                                })
+                                // filter out duplicates
+                                .filter(
+                                    (v, i, a) =>
+                                        a.findIndex(
+                                            (t) => t && v && t.url === v.url
+                                        ) === i
+                                )
+                        );
                     })(),
                     ...(resource.stickySession
                         ? {
