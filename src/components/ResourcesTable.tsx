@@ -462,7 +462,7 @@ export default function ResourcesTable({
                             <DropdownMenuContent align="end">
                                 <Link
                                     className="block w-full"
-                                    href={`/${resourceRow.orgId}/settings/resources/${resourceRow.id}`}
+                                    href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
                                 >
                                     <DropdownMenuItem>
                                         {t("viewSettings")}
