@@ -114,7 +114,7 @@
         "zod-validation-error": "3.5.2"
     },
     "devDependencies": {
-        "@dotenvx/dotenvx": "1.49.0",
+        "@dotenvx/dotenvx": "1.49.1",
         "@esbuild-plugins/tsconfig-paths": "0.1.2",
         "@tailwindcss/postcss": "^4.1.13",
         "@types/better-sqlite3": "7.6.12",
