@@ -94,6 +94,25 @@ export default async function migration() {
             `);
         }
 
+        // Handle auto-provisioned users for identity providers
+        const autoProvisionIdps = await db.execute(sql`
+            SELECT "idpId" FROM "idp" WHERE "autoProvision" = true
+        `);
+
+        for (const idp of autoProvisionIdps.rows) {
+            // Get all users with this identity provider
+            const usersWithIdp = await db.execute(sql`
+                SELECT "id" FROM "user" WHERE "idpId" = ${idp.idpId}
+            `);
+
+            // Update userOrgs to set autoProvisioned to true for these users
+            for (const user of usersWithIdp.rows) {
+                await db.execute(sql`
+                    UPDATE "userOrgs" SET "autoProvisioned" = true WHERE "userId" = ${user.id}
+                `);
+            }
+        }
+
         await db.execute(sql`COMMIT`);
         console.log(`Migrated database`);
     } catch (e) {

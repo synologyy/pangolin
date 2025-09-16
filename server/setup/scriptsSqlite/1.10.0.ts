@@ -11,9 +11,6 @@ export default async function migration() {
     const location = path.join(APP_PATH, "db", "db.sqlite");
     const db = new Database(location);
 
-    const resourceSiteMap = new Map<number, number>();
-    const firstSiteId: number = 1;
-
     try {
         const resources = db
             .prepare(
@@ -81,6 +78,29 @@ export default async function migration() {
                 db.prepare(
                     `UPDATE siteResources SET niceId = ? WHERE siteResourceId = ?`
                 ).run(niceId, resourceId.siteResourceId);
+            }
+
+            // Handle auto-provisioned users for identity providers
+            const autoProvisionIdps = db
+                .prepare(
+                    "SELECT idpId FROM idp WHERE autoProvision = 1"
+                )
+                .all() as Array<{ idpId: number }>;
+
+            for (const idp of autoProvisionIdps) {
+                // Get all users with this identity provider
+                const usersWithIdp = db
+                    .prepare(
+                        "SELECT id FROM user WHERE idpId = ?"
+                    )
+                    .all(idp.idpId) as Array<{ id: string }>;
+
+                // Update userOrgs to set autoProvisioned to true for these users
+                for (const user of usersWithIdp) {
+                    db.prepare(
+                        "UPDATE userOrgs SET autoProvisioned = 1 WHERE userId = ?"
+                    ).run(user.id);
+                }
             }
         })();
 
