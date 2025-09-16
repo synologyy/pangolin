@@ -579,7 +579,16 @@ export default function ReverseProxyTargets(props: {
                     return (
                         <Button
                             variant="outline"
-                            onClick={() => setShowPathInput(true)}
+                            onClick={() => {
+                                setShowPathInput(true);
+                                // Set default pathMatchType when first showing path input
+                                if (!row.original.pathMatchType) {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        pathMatchType: "prefix"
+                                    });
+                                }
+                            }}
                         >
                            + {t("matchPath")} 
                         </Button>
