@@ -127,7 +127,7 @@ func main() {
 		if readBool(reader, "Would you like to install and start the containers?", true) {
 
 			config.InstallationContainerType = podmanOrDocker(reader)
-			
+
 			if !isDockerInstalled() && runtime.GOOS == "linux" && config.InstallationContainerType == Docker {
 				if readBool(reader, "Docker is not installed. Would you like to install it?", true) {
 					installDocker()
@@ -206,12 +206,16 @@ func main() {
 				}
 
 				config.DoCrowdsecInstall = true
-				installCrowdsec(config)
+                err := installCrowdsec(config)
+                if (err != nil) {
+                    fmt.Printf("Error installing CrowdSec: %v\n", err)
+                    return
+                }
 			}
 		}
 	}
 
-	if !config.HybridMode {
+	if !config.HybridMode && checkIsPangolinInstalledWithHybrid() {
 		// Setup Token Section
 		fmt.Println("\n=== Setup Token ===")
 
@@ -323,11 +327,11 @@ func collectUserInput(reader *bufio.Reader) Config {
 
 	if config.HybridMode {
 		alreadyHaveCreds := readBool(reader, "Do you already have credentials from the dashboard? If not, we will create them later", false)
-		
+
 		if alreadyHaveCreds {
 			config.HybridId = readString(reader, "Enter your ID", "")
 			config.HybridSecret = readString(reader, "Enter your secret", "")
-		} 
+		}
 
 		// Try to get public IP as default
 		publicIP := getPublicIP()
@@ -351,7 +355,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 		// Email configuration
 		fmt.Println("\n=== Email Configuration ===")
 		config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
-		
+
 		if config.EnableEmail {
 			config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
 			config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
@@ -359,7 +363,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 			config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
 			config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
 		}
-		
+
 		// Validate required fields
 		if config.BaseDomain == "" {
 			fmt.Println("Error: Domain name is required")
@@ -594,25 +598,25 @@ func getPublicIP() string {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
-	
+
 	resp, err := client.Get("https://ifconfig.io/ip")
 	if err != nil {
 		return ""
 	}
 	defer resp.Body.Close()
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ""
 	}
-	
+
 	ip := strings.TrimSpace(string(body))
-	
+
 	// Validate that it's a valid IP address
 	if net.ParseIP(ip) != nil {
 		return ip
 	}
-	
+
 	return ""
 }
 
