@@ -106,8 +106,7 @@ export default function Page() {
             .optional()
             .or(z.literal("")),
         name: z.string().optional(),
-        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") }),
-        idpId: z.string().min(1, { message: t("idpSelectPlease") })
+        roleId: z.string().min(1, { message: t("accessRoleSelectPlease") })
     });
 
     const formatIdpType = (type: string) => {
@@ -125,7 +124,7 @@ export default function Page() {
 
     const getIdpIcon = (variant: string | null) => {
         if (!variant) return null;
-        
+
         switch (variant.toLowerCase()) {
             case "google":
                 return (
@@ -186,8 +185,7 @@ export default function Page() {
             username: "",
             email: "",
             name: "",
-            roleId: "",
-            idpId: ""
+            roleId: ""
         }
     });
 
@@ -338,7 +336,7 @@ export default function Page() {
     ) {
         const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
         if (!selectedUserOption?.idpId) return;
-        
+
         setLoading(true);
 
         const res = await api
@@ -378,7 +376,7 @@ export default function Page() {
     ) {
         const selectedUserOption = userOptions.find(opt => opt.id === selectedOption);
         if (!selectedUserOption?.idpId) return;
-        
+
         setLoading(true);
 
         const res = await api
