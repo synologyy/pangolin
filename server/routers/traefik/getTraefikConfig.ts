@@ -209,12 +209,6 @@ export async function getTraefikConfig(
         });
     });
 
-    // convert the map to an object for printing
-
-    logger.debug(
-        `Resources: ${JSON.stringify(Object.fromEntries(resourcesMap), null, 2)}`
-    );
-
     // make sure we have at least one resource
     if (resourcesMap.size === 0) {
         return {};
