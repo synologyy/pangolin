@@ -21,9 +21,9 @@ import (
 
 // DO NOT EDIT THIS FUNCTION; IT MATCHED BY REGEX IN CICD
 func loadVersions(config *Config) {
-	config.PangolinVersion = "replaceme"
-	config.GerbilVersion = "replaceme"
-	config.BadgerVersion = "replaceme"
+	config.PangolinVersion = "1.9.4"
+	config.GerbilVersion = "1.2.1"
+	config.BadgerVersion = "1.2.0"
 }
 
 //go:embed config/*
@@ -75,7 +75,7 @@ func main() {
 			if err := checkPortsAvailable(p); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 
-				fmt.Printf("Please close any services on ports 80/443 in order to run the installation smoothly")
+				fmt.Printf("Please close any services on ports 80/443 in order to run the installation smoothly. If you already have the Pangolin stack running, shut them down before proceeding.\n")
 				os.Exit(1)
 			}
 		}
@@ -205,12 +205,17 @@ func main() {
 					}
 				}
 
+                config.InstallationContainerType = podmanOrDocker(reader)
+
 				config.DoCrowdsecInstall = true
                 err := installCrowdsec(config)
                 if (err != nil) {
                     fmt.Printf("Error installing CrowdSec: %v\n", err)
                     return
                 }
+
+                fmt.Println("CrowdSec installed successfully!")
+                return
 			}
 		}
 	}
