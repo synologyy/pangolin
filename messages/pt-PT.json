@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Provedor Google OAuth2/OIDC",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Cabeçalhos Personalizados",
-    "customHeadersDescription": "Separados por cabeçalhos da nova linha: Nome do Cabeçalho: valor.",
     "headersValidationError": "Cabeçalhos devem estar no formato: Nome do Cabeçalho: valor.",
     "domainPickerProvidedDomain": "Domínio fornecido",
     "domainPickerFreeProvidedDomain": "Domínio fornecido grátis",

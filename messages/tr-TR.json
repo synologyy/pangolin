@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC sağlayıcısı",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC sağlayıcısı",
     "customHeaders": "Özel Başlıklar",
-    "customHeadersDescription": "Başlıklar yeni satıra geçirilmiş: Başlık-Adı: değer.",
     "headersValidationError": "Başlıklar şu formatta olmalıdır: Başlık-Adı: değer.",
     "domainPickerProvidedDomain": "Sağlanan Alan Adı",
     "domainPickerFreeProvidedDomain": "Ücretsiz Sağlanan Alan Adı",

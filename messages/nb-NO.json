@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC leverandør",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Egendefinerte topptekster",
-    "customHeadersDescription": "Overskrifter separert som linje: Header-Name: verdi.",
     "headersValidationError": "Topptekst må være i formatet: header-navn: verdi.",
     "domainPickerProvidedDomain": "Gitt domene",
     "domainPickerFreeProvidedDomain": "Gratis oppgitt domene",

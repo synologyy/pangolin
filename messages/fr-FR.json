@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Fournisseur Google OAuth2/OIDC",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "En-têtes personnalisés",
-    "customHeadersDescription": "Nouvelles lignes séparées des en-têtes : Nom de l'en-tête : valeur.",
     "headersValidationError": "Les entêtes doivent être au format : Header-Name: valeur.",
     "domainPickerProvidedDomain": "Domaine fourni",
     "domainPickerFreeProvidedDomain": "Domaine fourni gratuitement",

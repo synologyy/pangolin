@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC провайдер",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Пользовательские заголовки",
-    "customHeadersDescription": "Заголовки новой строки, разделённые: название заголовка: значение.",
     "headersValidationError": "Заголовки должны быть в формате: Название заголовка: значение.",
     "domainPickerProvidedDomain": "Домен предоставлен",
     "domainPickerFreeProvidedDomain": "Бесплатный домен",

@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC provider",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Aangepaste headers",
-    "customHeadersDescription": "Headers nieuwe lijn gescheiden: Header-Naam: waarde.",
     "headersValidationError": "Headers moeten in het formaat zijn: Header-Naam: waarde.",
     "domainPickerProvidedDomain": "Opgegeven domein",
     "domainPickerFreeProvidedDomain": "Gratis verstrekt domein",

@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Dostawca Google OAuth2/OIDC",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Niestandardowe nagłówki",
-    "customHeadersDescription": "Nagłówki oddzielone: Nazwa nagłówka: wartość.",
     "headersValidationError": "Nagłówki muszą być w formacie: Nazwa nagłówka: wartość.",
     "domainPickerProvidedDomain": "Dostarczona domena",
     "domainPickerFreeProvidedDomain": "Darmowa oferowana domena",

@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC provider",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Intestazioni Personalizzate",
-    "customHeadersDescription": "Intestazioni nuova riga separate: Intestazione-Nome: valore.",
     "headersValidationError": "Le intestazioni devono essere nel formato: Intestazione-Nome: valore.",
     "domainPickerProvidedDomain": "Dominio Fornito",
     "domainPickerFreeProvidedDomain": "Dominio Fornito Gratuito",

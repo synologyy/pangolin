@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC Provider",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Eigene Kopfzeilen",
-    "customHeadersDescription": "Header neue Zeile getrennt: Kopfname: Wert.",
     "headersValidationError": "Header müssen im Format Header-Name: Wert sein.",
     "domainPickerProvidedDomain": "Angegebene Domain",
     "domainPickerFreeProvidedDomain": "Kostenlose Domain",

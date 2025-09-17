@@ -1504,7 +1504,6 @@
     "idpGoogleDescription": "Google OAuth2/OIDC 提供商",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "自定义标题",
-    "customHeadersDescription": "头部新行分隔：头部名称：值。",
     "headersValidationError": "头部必须是格式：头部名称：值。",
     "domainPickerProvidedDomain": "提供的域",
     "domainPickerFreeProvidedDomain": "免费提供的域",

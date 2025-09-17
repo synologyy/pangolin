@@ -408,6 +408,7 @@ export default function Page() {
 
             if (res && res.status === 201) {
                 const id = res.data.data.resourceId;
+                const niceId = res.data.data.niceId;
                 setResourceId(id);
 
                 // Create targets if any exist
@@ -440,7 +441,7 @@ export default function Page() {
                 }
 
                 if (isHttp) {
-                    router.push(`/${orgId}/settings/resources/${id}`);
+                    router.push(`/${orgId}/settings/resources/${niceId}`);
                 } else {
                     const tcpUdpData = tcpUdpForm.getValues();
                     // Only show config snippets if enableProxy is explicitly true
@@ -551,7 +552,7 @@ export default function Page() {
                 const [showPathInput, setShowPathInput] = useState(
                     !!(row.original.path || row.original.pathMatchType)
                 );
-                
+
                 if (!showPathInput) {
                     return (
                         <Button
@@ -594,8 +595,8 @@ export default function Page() {
                         </Select>
                         <Input
                             placeholder={
-                                row.original.pathMatchType === "regex" 
-                                    ? "^/api/.*" 
+                                row.original.pathMatchType === "regex"
+                                    ? "^/api/.*"
                                     : "/path"
                             }
                             defaultValue={row.original.path || ""}

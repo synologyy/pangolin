@@ -574,7 +574,7 @@ export default function ReverseProxyTargets(props: {
                 const [showPathInput, setShowPathInput] = useState(
                     !!(row.original.path || row.original.pathMatchType)
                 );
-                
+
                 if (!showPathInput) {
                     return (
                         <Button
@@ -590,7 +590,7 @@ export default function ReverseProxyTargets(props: {
                                 }
                             }}
                         >
-                           + {t("matchPath")} 
+                           + {t("matchPath")}
                         </Button>
                     );
                 }
@@ -617,8 +617,8 @@ export default function ReverseProxyTargets(props: {
                         </Select>
                         <Input
                             placeholder={
-                                row.original.pathMatchType === "regex" 
-                                    ? "^/api/.*" 
+                                row.original.pathMatchType === "regex"
+                                    ? "^/api/.*"
                                     : "/path"
                             }
                             defaultValue={row.original.path || ""}
@@ -1489,11 +1489,6 @@ export default function ReverseProxyTargets(props: {
                                                         rows={4}
                                                     />
                                                 </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "customHeadersDescription"
-                                                    )}
-                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
