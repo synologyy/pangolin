@@ -513,7 +513,7 @@
     "ipAddressErrorInvalidFormat": "Ungültiges IP-Adressformat",
     "ipAddressErrorInvalidOctet": "Ungültiges IP-Adress-Oktett",
     "path": "Pfad",
-    "matchPath": "Spielpfad",
+    "matchPath": "Unterverzeichnis",
     "ipAddressRange": "IP-Bereich",
     "rulesErrorFetch": "Fehler beim Abrufen der Regeln",
     "rulesErrorFetchDescription": "Beim Abrufen der Regeln ist ein Fehler aufgetreten",
