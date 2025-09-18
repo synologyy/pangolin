@@ -220,7 +220,7 @@ func main() {
 		}
 	}
 
-	if !config.HybridMode && checkIsPangolinInstalledWithHybrid() {
+	if !config.HybridMode {
 		// Setup Token Section
 		fmt.Println("\n=== Setup Token ===")
 
