@@ -306,10 +306,10 @@ export async function getTraefikConfig(
                 ...additionalMiddlewares
             ];
 
-            if (resource.headers && resource.headers.length > 0) {
+            if ((resource.headers && resource.headers.length > 0) || resource.setHostHeader) {
                 // if there are headers, parse them into an object
                 const headersObj: { [key: string]: string } = {};
-                const headersArr = resource.headers.split(",");
+                const headersArr = resource.headers?.split(",");
                 for (const header of headersArr) {
                     const [key, value] = header
                         .split(":")
