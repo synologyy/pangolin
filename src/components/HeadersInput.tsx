@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
 
@@ -21,6 +21,8 @@ X-Another-Header: another-value`,
     className
 }: HeadersInputProps) {
     const [internalValue, setInternalValue] = useState("");
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const isUserEditingRef = useRef(false);
 
     // Convert header objects array to newline-separated string for display
     const convertToNewlineSeparated = (headers: { name: string, value: string }[] | null): string => {
@@ -54,23 +56,63 @@ X-Another-Header: another-value`,
     };
 
     // Update internal value when external value changes
+    // But only if the user is not currently editing (textarea not focused)
     useEffect(() => {
-        setInternalValue(convertToNewlineSeparated(value));
+        if (!isUserEditingRef.current) {
+            setInternalValue(convertToNewlineSeparated(value));
+        }
     }, [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const newValue = e.target.value;
         setInternalValue(newValue);
         
-        // Convert back to header objects array for the parent
-        const headersArray = convertToHeadersArray(newValue);
-        onChange(headersArray);
+        // Mark that user is actively editing
+        isUserEditingRef.current = true;
+        
+        // Only update parent if the input is in a valid state
+        // Valid states: empty/whitespace only, or contains properly formatted headers
+        
+        if (newValue.trim() === "") {
+            // Empty input is valid - represents no headers
+            onChange([]);
+        } else {
+            // Check if all non-empty lines are properly formatted (contain ':')
+            const lines = newValue.split('\n');
+            const nonEmptyLines = lines
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            // If there are no non-empty lines, or all non-empty lines contain ':', it's valid
+            const isValid = nonEmptyLines.length === 0 || nonEmptyLines.every(line => line.includes(':'));
+            
+            if (isValid) {
+                // Safe to convert and update parent
+                const headersArray = convertToHeadersArray(newValue);
+                onChange(headersArray);
+            }
+            // If not valid, don't call onChange - let user continue typing
+        }
+    };
+
+    const handleFocus = () => {
+        isUserEditingRef.current = true;
+    };
+
+    const handleBlur = () => {
+        // Small delay to allow any final change events to process
+        setTimeout(() => {
+            isUserEditingRef.current = false;
+        }, 100);
     };
 
     return (
         <Textarea
+            ref={textareaRef}
             value={internalValue}
             onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             placeholder={placeholder}
             rows={rows}
             className={className}
