@@ -227,7 +227,7 @@ export default function ReverseProxyTargets(props: {
                     message: t("proxyErrorInvalidHeader")
                 }
             ),
-        headers: z.string().optional()
+        headers: z.array(z.object({ name: z.string(), value: z.string() })).nullable()
     });
 
     const tlsSettingsSchema = z.object({
@@ -286,7 +286,7 @@ export default function ReverseProxyTargets(props: {
         resolver: zodResolver(proxySettingsSchema),
         defaultValues: {
             setHostHeader: resource.setHostHeader || "",
-            headers: resource.headers || ""
+            headers: resource.headers
         }
     });
 
@@ -1479,7 +1479,7 @@ export default function ReverseProxyTargets(props: {
                                                 <FormControl>
                                                     <HeadersInput
                                                         value={
-                                                            field.value || ""
+                                                            field.value
                                                         }
                                                         onChange={(value) => {
                                                             field.onChange(

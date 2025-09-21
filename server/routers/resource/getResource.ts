@@ -42,7 +42,9 @@ async function query(resourceId?: number, niceId?: string, orgId?: string) {
     }
 }
 
-export type GetResourceResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
+export type GetResourceResponse = Omit<NonNullable<Awaited<ReturnType<typeof query>>>, 'headers'> & {
+    headers: { name: string; value: string }[] | null;
+};
 
 registry.registerPath({
     method: "get",
@@ -99,7 +101,10 @@ export async function getResource(
         }
 
         return response<GetResourceResponse>(res, {
-            data: resource,
+            data: {
+                ...resource,
+                headers: resource.headers ? JSON.parse(resource.headers) : resource.headers
+            },
             success: true,
             error: false,
             message: "Resource retrieved successfully",

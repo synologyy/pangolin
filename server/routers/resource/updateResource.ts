@@ -47,7 +47,7 @@ const updateHttpResourceBodySchema = z
         tlsServerName: z.string().nullable().optional(),
         setHostHeader: z.string().nullable().optional(),
         skipToIdpId: z.number().int().positive().nullable().optional(),
-        headers: z.string().nullable().optional()
+        headers: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -86,18 +86,6 @@ const updateHttpResourceBodySchema = z
                 "Invalid custom Host Header value. Use domain name format, or save empty to unset custom Host Header."
         }
     )
-    .refine(
-        (data) => {
-            if (data.headers) {
-                return validateHeaders(data.headers);
-            }
-            return true;
-        },
-        {
-            message:
-                "Invalid headers format. Use comma-separated format: 'Header-Name: value, Another-Header: another-value'. Header values cannot contain colons."
-        }
-    );
 
 export type UpdateResourceResponse = Resource;
 
@@ -292,9 +280,14 @@ async function updateHttpResource(
         updateData.subdomain = finalSubdomain;
     }
 
+    let headers = null;
+    if (updateData.headers) {
+        headers = JSON.stringify(updateData.headers);
+    }
+
     const updatedResource = await db
         .update(resources)
-        .set({ ...updateData })
+        .set({ ...updateData, headers })
         .where(eq(resources.resourceId, resource.resourceId))
         .returning();
 

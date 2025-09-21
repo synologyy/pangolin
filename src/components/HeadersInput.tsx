@@ -3,16 +3,17 @@
 import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 
+
 interface HeadersInputProps {
-    value?: string;
-    onChange: (value: string) => void;
+    value?: { name: string, value: string }[] | null;
+    onChange: (value: { name: string, value: string }[] | null) => void;
     placeholder?: string;
     rows?: number;
     className?: string;
 }
 
 export function HeadersInput({ 
-    value = "", 
+    value = [], 
     onChange, 
     placeholder = `X-Example-Header: example-value
 X-Another-Header: another-value`,
@@ -21,26 +22,35 @@ X-Another-Header: another-value`,
 }: HeadersInputProps) {
     const [internalValue, setInternalValue] = useState("");
 
-    // Convert comma-separated to newline-separated for display
-    const convertToNewlineSeparated = (commaSeparated: string): string => {
-        if (!commaSeparated || commaSeparated.trim() === "") return "";
+    // Convert header objects array to newline-separated string for display
+    const convertToNewlineSeparated = (headers: { name: string, value: string }[] | null): string => {
+        if (!headers || headers.length === 0) return "";
         
-        return commaSeparated
-            .split(',')
-            .map(header => header.trim())
-            .filter(header => header.length > 0)
+        return headers
+            .map(header => `${header.name}: ${header.value}`)
             .join('\n');
     };
 
-    // Convert newline-separated to comma-separated for output
-    const convertToCommaSeparated = (newlineSeparated: string): string => {
-        if (!newlineSeparated || newlineSeparated.trim() === "") return "";
+    // Convert newline-separated string to header objects array
+    const convertToHeadersArray = (newlineSeparated: string): { name: string, value: string }[] | null => {
+        if (!newlineSeparated || newlineSeparated.trim() === "") return [];
         
         return newlineSeparated
             .split('\n')
-            .map(header => header.trim())
-            .filter(header => header.length > 0)
-            .join(', ');
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && line.includes(':'))
+            .map(line => {
+                const colonIndex = line.indexOf(':');
+                const name = line.substring(0, colonIndex).trim();
+                const value = line.substring(colonIndex + 1).trim();
+                
+                // Ensure header name conforms to HTTP header requirements
+                // Header names should be case-insensitive, contain only ASCII letters, digits, and hyphens
+                const normalizedName = name.replace(/[^a-zA-Z0-9\-]/g, '').toLowerCase();
+                
+                return { name: normalizedName, value };
+            })
+            .filter(header => header.name.length > 0); // Filter out headers with invalid names
     };
 
     // Update internal value when external value changes
@@ -52,9 +62,9 @@ X-Another-Header: another-value`,
         const newValue = e.target.value;
         setInternalValue(newValue);
         
-        // Convert back to comma-separated format for the parent
-        const commaSeparatedValue = convertToCommaSeparated(newValue);
-        onChange(commaSeparatedValue);
+        // Convert back to header objects array for the parent
+        const headersArray = convertToHeadersArray(newValue);
+        onChange(headersArray);
     };
 
     return (
