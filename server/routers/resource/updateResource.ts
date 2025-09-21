@@ -335,31 +335,6 @@ async function updateRawResource(
 
     const updateData = parsedBody.data;
 
-    if (updateData.proxyPort) {
-        const proxyPort = updateData.proxyPort;
-        const existingResource = await db
-            .select()
-            .from(resources)
-            .where(
-                and(
-                    eq(resources.protocol, resource.protocol),
-                    eq(resources.proxyPort, proxyPort!)
-                )
-            );
-
-        if (
-            existingResource.length > 0 &&
-            existingResource[0].resourceId !== resource.resourceId
-        ) {
-            return next(
-                createHttpError(
-                    HttpCode.CONFLICT,
-                    "Resource with that protocol and port already exists"
-                )
-            );
-        }
-    }
-
     const updatedResource = await db
         .update(resources)
         .set(updateData)
