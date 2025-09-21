@@ -20,14 +20,16 @@ import type {
     GenerateAuthenticationOptionsOpts,
     VerifyAuthenticationResponseOpts,
     VerifiedRegistrationResponse,
-    VerifiedAuthenticationResponse
-} from "@simplewebauthn/server";
-import type { 
+    VerifiedAuthenticationResponse,
     AuthenticatorTransport,
     AuthenticatorTransportFuture,
     PublicKeyCredentialDescriptorJSON,
     PublicKeyCredentialDescriptorFuture
-} from "@simplewebauthn/types";
+} from "@simplewebauthn/server";
+import {
+    isoUint8Array,
+    isoBase64URL 
+} from '@simplewebauthn/server/helpers';
 import config from "@server/lib/config";
 import { UserType } from "@server/types/UserTypes";
 import { verifyPassword } from "@server/auth/password";
@@ -204,15 +206,15 @@ export async function startRegistration(
             .where(eq(securityKeys.userId, user.userId));
 
         const excludeCredentials = existingSecurityKeys.map(key => ({
-            id: new Uint8Array(Buffer.from(key.credentialId, 'base64')),
-            type: 'public-key' as const,
+            id: key.credentialId,
+            type: "public-key" as const,
             transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
         }));
 
         const options: GenerateRegistrationOptionsOpts = {
             rpName,
             rpID,
-            userID: user.userId,
+            userID: isoUint8Array.fromUTF8String( user.userId ),
             userName: user.email || user.username,
             attestationType: 'none',
             excludeCredentials,
@@ -308,10 +310,10 @@ export async function verifyRegistration(
 
         // Store the security key in the database
         await db.insert(securityKeys).values({
-            credentialId: Buffer.from(registrationInfo.credentialID).toString('base64'),
+            credentialId: registrationInfo.credential.id,
             userId: user.userId,
-            publicKey: Buffer.from(registrationInfo.credentialPublicKey).toString('base64'),
-            signCount: registrationInfo.counter || 0,
+            publicKey: Buffer.from(registrationInfo.credential.publicKey).toString('base64'),
+            signCount: registrationInfo.credential.counter || 0,
             transports: credential.response.transports ? JSON.stringify(credential.response.transports) : null,
             name: challengeData.securityKeyName,
             lastUsed: new Date().toISOString(),
@@ -496,7 +498,7 @@ export async function startAuthentication(
     const { email } = parsedBody.data;
 
     try {
-        let allowCredentials: PublicKeyCredentialDescriptorFuture[] = [];
+        let allowCredentials;
         let userId;
 
         // If email is provided, get security keys for that specific user
@@ -533,13 +535,10 @@ export async function startAuthentication(
             }
 
             allowCredentials = userSecurityKeys.map(key => ({
-                id: new Uint8Array(Buffer.from(key.credentialId, 'base64')),
+                id: key.credentialId,
                 type: 'public-key' as const,
                 transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
             }));
-        } else {
-            // If no email provided, allow any security key (for resident key authentication)
-            allowCredentials = [];
         }
 
         const options: GenerateAuthenticationOptionsOpts = {
@@ -653,9 +652,9 @@ export async function verifyAuthentication(
             expectedChallenge: challengeData.challenge,
             expectedOrigin: origin,
             expectedRPID: rpID,
-            authenticator: {
-                credentialID: Buffer.from(securityKey.credentialId, 'base64'),
-                credentialPublicKey: Buffer.from(securityKey.publicKey, 'base64'),
+            credential: {
+                id: securityKey.credentialId,
+                publicKey: Buffer.from(securityKey.publicKey, 'base64'),
                 counter: securityKey.signCount,
                 transports: securityKey.transports ? JSON.parse(securityKey.transports) as AuthenticatorTransportFuture[] : undefined
             },
@@ -714,4 +713,4 @@ export async function verifyAuthentication(
             )
         );
     }
-} 
+}
