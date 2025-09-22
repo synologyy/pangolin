@@ -319,26 +319,6 @@ async function createRawResource(
 
     const { name, http, protocol, proxyPort } = parsedBody.data;
 
-    // if http is false check to see if there is already a resource with the same port and protocol
-    const existingResource = await db
-        .select()
-        .from(resources)
-        .where(
-            and(
-                eq(resources.protocol, protocol),
-                eq(resources.proxyPort, proxyPort!)
-            )
-        );
-
-    if (existingResource.length > 0) {
-        return next(
-            createHttpError(
-                HttpCode.CONFLICT,
-                "Resource with that protocol and port already exists"
-            )
-        );
-    }
-
     let resource: Resource | undefined;
 
     const niceId = await getUniqueResourceName(orgId);

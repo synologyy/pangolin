@@ -306,17 +306,25 @@ export async function getTraefikConfig(
                 ...additionalMiddlewares
             ];
 
-            if (resource.headers && resource.headers.length > 0) {
+            if (resource.headers || resource.setHostHeader) {
                 // if there are headers, parse them into an object
                 const headersObj: { [key: string]: string } = {};
-                const headersArr = resource.headers.split(",");
-                for (const header of headersArr) {
-                    const [key, value] = header
-                        .split(":")
-                        .map((s: string) => s.trim());
-                    if (key && value) {
-                        headersObj[key] = value;
+                if (resource.headers) {
+                    let headersArr: { name: string; value: string }[] = [];
+                    try {
+                        headersArr = JSON.parse(resource.headers) as {
+                            name: string;
+                            value: string;
+                        }[];
+                    } catch (e) {
+                        logger.warn(
+                            `Failed to parse headers for resource ${resource.resourceId}: ${e}`
+                        );
                     }
+
+                    headersArr.forEach((header) => {
+                        headersObj[header.name] = header.value;
+                    });
                 }
 
                 if (resource.setHostHeader) {
