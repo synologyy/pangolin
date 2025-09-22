@@ -207,7 +207,6 @@ export async function startRegistration(
 
         const excludeCredentials = existingSecurityKeys.map(key => ({
             id: key.credentialId,
-            type: "public-key" as const,
             transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
         }));
 
@@ -536,7 +535,6 @@ export async function startAuthentication(
 
             allowCredentials = userSecurityKeys.map(key => ({
                 id: key.credentialId,
-                type: 'public-key' as const,
                 transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
             }));
         }
