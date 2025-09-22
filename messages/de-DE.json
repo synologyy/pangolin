@@ -454,7 +454,7 @@
     "accessRoleErrorAddDescription": "Beim Hinzufügen des Benutzers zur Rolle ist ein Fehler aufgetreten.",
     "userSaved": "Benutzer gespeichert",
     "userSavedDescription": "Der Benutzer wurde aktualisiert.",
-    "autoProvisioned": "Automatisch vorgesehen",
+    "autoProvisioned": "Automatisch bereitgestellt",
     "autoProvisionedDescription": "Erlaube diesem Benutzer die automatische Verwaltung durch Identitätsanbieter",
     "accessControlsDescription": "Verwalten Sie, worauf dieser Benutzer in der Organisation zugreifen und was er tun kann",
     "accessControlsSubmit": "Zugriffskontrollen speichern",
