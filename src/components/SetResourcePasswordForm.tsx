@@ -61,7 +61,7 @@ export default function SetResourcePasswordForm({
 
     const [loading, setLoading] = useState(false);
 
-    const form = useForm<SetPasswordFormValues>({
+    const form = useForm({
         resolver: zodResolver(setPasswordFormSchema),
         defaultValues
     });

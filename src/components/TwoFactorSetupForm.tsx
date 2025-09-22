@@ -91,14 +91,14 @@ const TwoFactorSetupForm = forwardRef<
             code: z.string().length(6, { message: t("pincodeInvalid") })
         });
 
-        const enableForm = useForm<z.infer<typeof enableSchema>>({
+        const enableForm = useForm({
             resolver: zodResolver(enableSchema),
             defaultValues: {
                 password: initialPassword || ""
             }
         });
 
-        const confirmForm = useForm<z.infer<typeof confirmSchema>>({
+        const confirmForm = useForm({
             resolver: zodResolver(confirmSchema),
             defaultValues: {
                 code: ""

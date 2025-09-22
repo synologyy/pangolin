@@ -65,7 +65,7 @@ export default function SetResourcePincodeForm({
 
     const api = createApiClient(useEnvContext());
 
-    const form = useForm<SetPincodeFormValues>({
+    const form = useForm({
         resolver: zodResolver(setPincodeFormSchema),
         defaultValues
     });

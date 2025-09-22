@@ -211,7 +211,7 @@ export default function Page() {
             ])
     ];
 
-    const baseForm = useForm<BaseResourceFormValues>({
+    const baseForm = useForm({
         resolver: zodResolver(baseResourceFormSchema),
         defaultValues: {
             name: "",
@@ -219,12 +219,12 @@ export default function Page() {
         }
     });
 
-    const httpForm = useForm<HttpResourceFormValues>({
+    const httpForm = useForm({
         resolver: zodResolver(httpResourceFormSchema),
         defaultValues: {}
     });
 
-    const tcpUdpForm = useForm<TcpUdpResourceFormValues>({
+    const tcpUdpForm = useForm({
         resolver: zodResolver(tcpUdpResourceFormSchema),
         defaultValues: {
             protocol: "tcp",
@@ -241,7 +241,7 @@ export default function Page() {
             port: "" as any as number,
             path: null,
             pathMatchType: null
-        } as z.infer<typeof addTargetSchema>
+        }
     });
 
     const watchedIp = addTargetForm.watch("ip");

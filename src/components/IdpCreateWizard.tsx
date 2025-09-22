@@ -84,7 +84,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
         }
     ];
 
-    const form = useForm<CreateIdpFormValues>({
+    const form = useForm({
         resolver: zodResolver(createIdpFormSchema),
         defaultValues: {
             name: "",

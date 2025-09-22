@@ -102,7 +102,7 @@ export default function PoliciesPage() {
     type PolicyFormValues = z.infer<typeof policyFormSchema>;
     type DefaultMappingsValues = z.infer<typeof defaultMappingsSchema>;
 
-    const form = useForm<PolicyFormValues>({
+    const form = useForm({
         resolver: zodResolver(policyFormSchema),
         defaultValues: {
             orgId: "",
@@ -111,7 +111,7 @@ export default function PoliciesPage() {
         }
     });
 
-    const defaultMappingsForm = useForm<DefaultMappingsValues>({
+    const defaultMappingsForm = useForm({
         resolver: zodResolver(defaultMappingsSchema),
         defaultValues: {
             defaultRoleMapping: "",

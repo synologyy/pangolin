@@ -50,7 +50,7 @@ export default function StepperForm() {
         subnet: z.string().min(1, { message: t("subnetRequired") })
     });
 
-    const orgForm = useForm<z.infer<typeof orgSchema>>({
+    const orgForm = useForm({
         resolver: zodResolver(orgSchema),
         defaultValues: {
             orgName: "",

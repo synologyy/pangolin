@@ -74,7 +74,7 @@ export default function GeneralPage() {
 
     type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 
-    const form = useForm<GeneralFormValues>({
+    const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: "",
