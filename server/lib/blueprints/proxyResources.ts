@@ -165,7 +165,7 @@ export async function updateProxyResources(
                     .update(resources)
                     .set({
                         name: resourceData.name || "Unnamed Resource",
-                        protocol: protocol || "http",
+                        protocol: protocol || "tcp",
                         http: http,
                         proxyPort: http ? null : resourceData["proxy-port"],
                         fullDomain: http ? resourceData["full-domain"] : null,
@@ -457,7 +457,7 @@ export async function updateProxyResources(
                     orgId,
                     niceId: resourceNiceId,
                     name: resourceData.name || "Unnamed Resource",
-                    protocol: resourceData.protocol || "http",
+                    protocol: protocol || "tcp",
                     http: http,
                     proxyPort: http ? null : resourceData["proxy-port"],
                     fullDomain: http ? resourceData["full-domain"] : null,
