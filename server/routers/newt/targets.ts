@@ -15,7 +15,7 @@ export async function addTargets(
         }:${target.port}`;
     });
 
-    sendToClient(newtId, {
+    await sendToClient(newtId, {
         type: `newt/${protocol}/add`,
         data: {
             targets: payloadTargets
