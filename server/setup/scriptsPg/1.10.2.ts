@@ -1,10 +1,8 @@
 import { db } from "@server/db/pg/driver";
 import { sql } from "drizzle-orm";
 import { __DIRNAME, APP_PATH } from "@server/lib/consts";
-import { readFileSync } from "fs";
-import path, { join } from "path";
 
-const version = "1.10.1";
+const version = "1.10.2";
 
 export default async function migration() {
     console.log(`Running setup script ${version}...`);

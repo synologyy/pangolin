@@ -28,6 +28,7 @@ import m23 from "./scriptsSqlite/1.8.0";
 import m24 from "./scriptsSqlite/1.9.0";
 import m25 from "./scriptsSqlite/1.10.0";
 import m26 from "./scriptsSqlite/1.10.1";
+import m27 from "./scriptsSqlite/1.10.2";
 
 // THIS CANNOT IMPORT ANYTHING FROM THE SERVER
 // EXCEPT FOR THE DATABASE AND THE SCHEMA
@@ -55,6 +56,7 @@ const migrations = [
     { version: "1.9.0", run: m24 },
     { version: "1.10.0", run: m25 },
     { version: "1.10.1", run: m26 },
+    { version: "1.10.2", run: m27 },
     // Add new migrations here as they are created
 ] as const;
 
