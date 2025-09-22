@@ -16,19 +16,11 @@ import {
 } from "@simplewebauthn/server";
 import type {
     GenerateRegistrationOptionsOpts,
-    VerifyRegistrationResponseOpts,
     GenerateAuthenticationOptionsOpts,
-    VerifyAuthenticationResponseOpts,
-    VerifiedRegistrationResponse,
-    VerifiedAuthenticationResponse,
-    AuthenticatorTransport,
-    AuthenticatorTransportFuture,
-    PublicKeyCredentialDescriptorJSON,
-    PublicKeyCredentialDescriptorFuture
+    AuthenticatorTransportFuture
 } from "@simplewebauthn/server";
 import {
-    isoUint8Array,
-    isoBase64URL 
+    isoUint8Array
 } from '@simplewebauthn/server/helpers';
 import config from "@server/lib/config";
 import { UserType } from "@server/types/UserTypes";
