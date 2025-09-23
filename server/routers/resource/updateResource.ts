@@ -47,7 +47,7 @@ const updateHttpResourceBodySchema = z
         tlsServerName: z.string().nullable().optional(),
         setHostHeader: z.string().nullable().optional(),
         skipToIdpId: z.number().int().positive().nullable().optional(),
-        headers: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+        headers: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
