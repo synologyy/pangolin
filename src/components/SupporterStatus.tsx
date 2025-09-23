@@ -78,7 +78,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
         key: z.string().nonempty({ message: "Supporter key is required" })
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             githubUsername: "",

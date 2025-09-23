@@ -102,7 +102,7 @@ export default function ResetPasswordForm({
         code: z.string().length(6, { message: t('pincodeInvalid') })
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: emailParam || "",
@@ -112,14 +112,14 @@ export default function ResetPasswordForm({
         }
     });
 
-    const mfaForm = useForm<z.infer<typeof mfaSchema>>({
+    const mfaForm = useForm({
         resolver: zodResolver(mfaSchema),
         defaultValues: {
             code: ""
         }
     });
 
-    const requestForm = useForm<z.infer<typeof requestSchema>>({
+    const requestForm = useForm({
         resolver: zodResolver(requestSchema),
         defaultValues: {
             email: emailParam || ""

@@ -119,7 +119,7 @@ export default function GeneralForm() {
 
     type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
 
-    const form = useForm<GeneralFormValues>({
+    const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             enabled: resource.enabled,

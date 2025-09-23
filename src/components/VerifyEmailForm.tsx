@@ -80,7 +80,7 @@ export default function VerifyEmailForm({
         })
     });
 
-    const form = useForm<z.infer<typeof FormSchema>>({
+    const form = useForm({
         resolver: zodResolver(FormSchema),
         defaultValues: {
             email: email,

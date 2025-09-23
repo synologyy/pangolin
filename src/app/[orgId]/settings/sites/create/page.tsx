@@ -425,7 +425,7 @@ WantedBy=default.target`
         }
     };
 
-    const form = useForm<CreateSiteFormValues>({
+    const form = useForm({
         resolver: zodResolver(createSiteFormSchema),
         defaultValues: {
             name: "",

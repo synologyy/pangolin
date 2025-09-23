@@ -79,7 +79,7 @@ export default function Page() {
         }
     ];
 
-    const form = useForm<CreateIdpFormValues>({
+    const form = useForm({
         resolver: zodResolver(createIdpFormSchema),
         defaultValues: {
             name: "",

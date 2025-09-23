@@ -58,7 +58,7 @@ export default function GeneralPage() {
     const [clientSites, setClientSites] = useState<Tag[]>([]);
     const [activeSitesTagIndex, setActiveSitesTagIndex] = useState<number | null>(null);
 
-    const form = useForm<GeneralFormValues>({
+    const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: client?.name,

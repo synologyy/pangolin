@@ -114,7 +114,7 @@ export default function ResourceRules(props: {
         CIDR: t('ipAddressRange')
     } as const;
 
-    const addRuleForm = useForm<z.infer<typeof addRuleSchema>>({
+    const addRuleForm = useForm({
         resolver: zodResolver(addRuleSchema),
         defaultValues: {
             action: "ACCEPT",

@@ -64,7 +64,7 @@ export default function GeneralPage() {
     const router = useRouter();
     const t = useTranslations();
 
-    const form = useForm<GeneralFormValues>({
+    const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: site?.name,
