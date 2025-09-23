@@ -20,7 +20,7 @@ import type {
     AuthenticatorTransportFuture
 } from "@simplewebauthn/server";
 import {
-    isoUint8Array
+    isoBase64URL
 } from '@simplewebauthn/server/helpers';
 import config from "@server/lib/config";
 import { UserType } from "@server/types/UserTypes";
@@ -205,7 +205,7 @@ export async function startRegistration(
         const options: GenerateRegistrationOptionsOpts = {
             rpName,
             rpID,
-            userID: isoUint8Array.fromUTF8String( user.userId ),
+            userID: isoBase64URL.toBuffer(user.userId),
             userName: user.email || user.username,
             attestationType: 'none',
             excludeCredentials,
@@ -303,9 +303,9 @@ export async function verifyRegistration(
         await db.insert(securityKeys).values({
             credentialId: registrationInfo.credential.id,
             userId: user.userId,
-            publicKey: Buffer.from(registrationInfo.credential.publicKey).toString('base64'),
+            publicKey: isoBase64URL.fromBuffer(registrationInfo.credential.publicKey),
             signCount: registrationInfo.credential.counter || 0,
-            transports: credential.response.transports ? JSON.stringify(credential.response.transports) : null,
+            transports: registrationInfo.credential.transports ? JSON.stringify(registrationInfo.credential.transports) : null,
             name: challengeData.securityKeyName,
             lastUsed: new Date().toISOString(),
             dateCreated: new Date().toISOString()
@@ -644,7 +644,7 @@ export async function verifyAuthentication(
             expectedRPID: rpID,
             credential: {
                 id: securityKey.credentialId,
-                publicKey: Buffer.from(securityKey.publicKey, 'base64'),
+                publicKey: isoBase64URL.toBuffer(securityKey.publicKey),
                 counter: securityKey.signCount,
                 transports: securityKey.transports ? JSON.parse(securityKey.transports) as AuthenticatorTransportFuture[] : undefined
             },
