@@ -80,7 +80,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
         code: z.string().length(6, { message: t("pincodeInvalid") })
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: "",
@@ -88,7 +88,7 @@ export default function LoginForm({ redirect, onLogin, idps }: LoginFormProps) {
         }
     });
 
-    const mfaForm = useForm<z.infer<typeof mfaSchema>>({
+    const mfaForm = useForm({
         resolver: zodResolver(mfaSchema),
         defaultValues: {
             code: ""

@@ -89,14 +89,14 @@ export default function Page() {
 
     type CopiedFormValues = z.infer<typeof copiedFormSchema>;
 
-    const form = useForm<CreateFormValues>({
+    const form = useForm({
         resolver: zodResolver(createFormSchema),
         defaultValues: {
             name: ""
         }
     });
 
-    const copiedForm = useForm<CopiedFormValues>({
+    const copiedForm = useForm({
         resolver: zodResolver(copiedFormSchema),
         defaultValues: {
             copied: true

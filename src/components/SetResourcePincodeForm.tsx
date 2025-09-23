@@ -44,10 +44,6 @@ const setPincodeFormSchema = z.object({
 
 type SetPincodeFormValues = z.infer<typeof setPincodeFormSchema>;
 
-const defaultValues: Partial<SetPincodeFormValues> = {
-    pincode: ""
-};
-
 type SetPincodeFormProps = {
     open: boolean;
     setOpen: (open: boolean) => void;
@@ -65,9 +61,11 @@ export default function SetResourcePincodeForm({
 
     const api = createApiClient(useEnvContext());
 
-    const form = useForm<SetPincodeFormValues>({
+    const form = useForm({
         resolver: zodResolver(setPincodeFormSchema),
-        defaultValues
+        defaultValues: {
+            pincode: ""
+        }
     });
 
     const t = useTranslations();

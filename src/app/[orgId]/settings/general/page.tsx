@@ -59,7 +59,7 @@ export default function GeneralPage() {
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
 
-    const form = useForm<GeneralFormValues>({
+    const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: org?.org.name,

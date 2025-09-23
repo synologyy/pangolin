@@ -117,7 +117,7 @@ export default function SignupForm({
     const [passwordValue, setPasswordValue] = useState("");
     const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             email: emailParam || "",
