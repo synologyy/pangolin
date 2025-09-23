@@ -605,7 +605,7 @@ export async function verifyAuthentication(
         }
 
         // Find the security key in database
-        const credentialId = Buffer.from(credential.id, 'base64').toString('base64');
+        const credentialId = credential.id;
         const [securityKey] = await db
             .select()
             .from(securityKeys)
