@@ -54,6 +54,7 @@ export async function getTraefikConfig(
         .select({
             // Resource fields
             resourceId: resources.resourceId,
+            resourceName: resources.name,
             fullDomain: resources.fullDomain,
             ssl: resources.ssl,
             http: resources.http,
@@ -125,7 +126,8 @@ export async function getTraefikConfig(
 
     resourcesWithTargetsAndSites.forEach((row) => {
         const resourceId = row.resourceId;
-        const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
+        const resourceName = sanitize(row.resourceName) || "";
+        const targetPath = sanitize(row.path) || ""; // Handle null/undefined paths
         const pathMatchType = row.pathMatchType || "";
 
         if (filterOutNamespaceDomains && row.domainNamespaceId) {
@@ -139,6 +141,7 @@ export async function getTraefikConfig(
         if (!resourcesMap.has(mapKey)) {
             resourcesMap.set(mapKey, {
                 resourceId: row.resourceId,
+                name: resourceName,
                 fullDomain: row.fullDomain,
                 ssl: row.ssl,
                 http: row.http,
@@ -206,8 +209,8 @@ export async function getTraefikConfig(
     for (const [key, resource] of resourcesMap.entries()) {
         const targets = resource.targets;
 
-        const routerName = `${key}-router`;
-        const serviceName = `${key}-service`;
+        const routerName = `${key}-${resource.name}-router`;
+        const serviceName = `${key}-${resource.name}-service`;
         const fullDomain = `${resource.fullDomain}`;
         const transportName = `${key}-transport`;
         const headersMiddlewareName = `${key}-headers-middleware`;
@@ -681,12 +684,12 @@ export async function getTraefikConfig(
     return config_output;
 }
 
-function sanitizePath(path: string | null | undefined): string | undefined {
-    if (!path) return undefined;
-    // clean any non alphanumeric characters from the path and replace with dashes
-    // the path cant be too long either, so limit to 50 characters
-    if (path.length > 50) {
-        path = path.substring(0, 50);
+function sanitize(input: string | null | undefined): string | undefined {
+    if (!input) return undefined;
+    // clean any non alphanumeric characters from the input and replace with dashes
+    // the input cant be too long either, so limit to 50 characters
+    if (input.length > 50) {
+        input = input.substring(0, 50);
     }
-    return path.replace(/[^a-zA-Z0-9]/g, "");
+    return input.replace(/[^a-zA-Z0-9]/g, "");
 }
