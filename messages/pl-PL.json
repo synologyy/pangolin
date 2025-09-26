@@ -1519,5 +1519,7 @@
     "domainPickerSubdomainSanitized": "Poddomena oczyszczona",
     "domainPickerSubdomainCorrected": "\"{sub}\" został skorygowany do \"{sanitized}\"",
     "resourceAddEntrypointsEditFile": "Edytuj plik: config/traefik/traefik_config.yml",
-    "resourceExposePortsEditFile": "Edytuj plik: docker-compose.yml"
+    "resourceExposePortsEditFile": "Edytuj plik: docker-compose.yml",
+    "emailVerificationRequired": "Email verification is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here.",
+    "twoFactorSetupRequired": "Two-factor authentication setup is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here."
 }
