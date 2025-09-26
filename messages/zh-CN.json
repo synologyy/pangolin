@@ -1520,6 +1520,6 @@
     "domainPickerSubdomainCorrected": "\"{sub}\" 已被更正为 \"{sanitized}\"",
     "resourceAddEntrypointsEditFile": "编辑文件：config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "编辑文件：docker-compose.yml",
-    "emailVerificationRequired": "Email verification is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here.",
-    "twoFactorSetupRequired": "Two-factor authentication setup is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here."
+    "emailVerificationRequired": "需要电子邮件验证。 请通过 {dashboardUrl}/auth/login 再次登录以完成此步骤。 然后，回到这里。",
+    "twoFactorSetupRequired": "需要设置双因素身份验证。 请通过 {dashboardUrl}/auth/login 再次登录以完成此步骤。 然后，回到这里。"
 }

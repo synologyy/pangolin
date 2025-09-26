@@ -1520,6 +1520,6 @@
     "domainPickerSubdomainCorrected": "\"{sub}\" var korrigert til \"{sanitized}\"",
     "resourceAddEntrypointsEditFile": "Rediger fil: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Rediger fil: docker-compose.yml",
-    "emailVerificationRequired": "Email verification is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here.",
-    "twoFactorSetupRequired": "Two-factor authentication setup is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here."
+    "emailVerificationRequired": "E-postbekreftelse er nødvendig. Logg inn på nytt via {dashboardUrl}/auth/login og fullfør dette trinnet. Kom deretter tilbake her.",
+    "twoFactorSetupRequired": "To-faktor autentiseringsoppsett er nødvendig. Vennligst logg inn igjen via {dashboardUrl}/auth/login og fullfør dette steget. Kom deretter tilbake her."
 }
