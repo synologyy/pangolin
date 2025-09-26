@@ -1520,6 +1520,6 @@
     "domainPickerSubdomainCorrected": "\"{sub}\" \"{sanitized}\" olarak düzeltildi",
     "resourceAddEntrypointsEditFile": "Dosyayı düzenle: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Dosyayı düzenle: docker-compose.yml",
-    "emailVerificationRequired": "Email verification is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here.",
-    "twoFactorSetupRequired": "Two-factor authentication setup is required. Please log in again via {dashboardUrl}/auth/login complete this step. Then, come back here."
+    "emailVerificationRequired": "E-posta doğrulaması gereklidir. Bu adımı tamamlamak için lütfen tekrar {dashboardUrl}/auth/login üzerinden oturum açın. Sonra buraya geri dönün.",
+    "twoFactorSetupRequired": "İki faktörlü kimlik doğrulama ayarı gereklidir. Bu adımı tamamlamak için lütfen tekrar {dashboardUrl}/auth/login üzerinden oturum açın. Sonra buraya geri dönün."
 }
