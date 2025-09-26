@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useTranslations } from "next-intl";
+import { validateOidcUrlCallbackProxy } from "@app/actions/server";
 
 type ValidateOidcTokenParams = {
     orgId: string;
@@ -54,17 +55,27 @@ export default function ValidateOidcToken(props: ValidateOidcTokenParams) {
             }
 
             try {
-                const res = await api.post<
-                    AxiosResponse<ValidateOidcUrlCallbackResponse>
-                >(`/auth/idp/${props.idpId}/oidc/validate-callback`, {
-                    code: props.code,
-                    state: props.expectedState,
-                    storedState: props.stateCookie
-                });
+                const response = await validateOidcUrlCallbackProxy(
+                    props.idpId,
+                    props.code || "",
+                    props.expectedState || "",
+                    props.stateCookie || ""
+                );
 
-                console.log(t('idpOidcTokenResponse'), res.data);
+                if (response.error) {
+                    setError(response.message);
+                    setLoading(false);
+                    return;
+                }
 
-                const redirectUrl = res.data.data.redirectUrl;
+                const data = response.data;
+                if (!data) {
+                    setError("Unable to validate OIDC token");
+                    setLoading(false);
+                    return;
+                }
+
+                const redirectUrl = data.redirectUrl;
 
                 if (!redirectUrl) {
                     router.push("/");
@@ -74,9 +85,9 @@ export default function ValidateOidcToken(props: ValidateOidcTokenParams) {
                 await new Promise((resolve) => setTimeout(resolve, 100));
 
                 if (redirectUrl.startsWith("http")) {
-                    window.location.href = res.data.data.redirectUrl; // this is validated by the parent using this component
+                    window.location.href = data.redirectUrl; // this is validated by the parent using this component
                 } else {
-                    router.push(res.data.data.redirectUrl);
+                    router.push(data.redirectUrl);
                 }
             } catch (e) {
                 setError(formatAxiosError(e, t('idpErrorOidcTokenValidating')));

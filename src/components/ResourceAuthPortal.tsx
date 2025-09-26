@@ -39,6 +39,12 @@ import {
     AuthWithWhitelistResponse
 } from "@server/routers/resource";
 import ResourceAccessDenied from "@app/components/ResourceAccessDenied";
+import {
+    resourcePasswordProxy,
+    resourcePincodeProxy,
+    resourceWhitelistProxy,
+    resourceAccessProxy,
+} from "@app/actions/server";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
@@ -173,100 +179,126 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         return fullUrl.toString();
     }
 
-    const onWhitelistSubmit = (values: any) => {
+    const onWhitelistSubmit = async (values: any) => {
         setLoadingLogin(true);
-        api.post<AxiosResponse<AuthWithWhitelistResponse>>(
-            `/auth/resource/${props.resource.id}/whitelist`,
-            { email: values.email, otp: values.otp }
-        )
-            .then((res) => {
-                setWhitelistError(null);
+        setWhitelistError(null);
 
-                if (res.data.data.otpSent) {
-                    setOtpState("otp_sent");
-                    submitOtpForm.setValue("email", values.email);
-                    toast({
-                        title: t("otpEmailSent"),
-                        description: t("otpEmailSentDescription")
-                    });
-                    return;
-                }
+        try {
+            const response = await resourceWhitelistProxy(props.resource.id, {
+                email: values.email,
+                otp: values.otp
+            });
 
-                const session = res.data.data.session;
-                if (session) {
-                    window.location.href = appendRequestToken(
-                        props.redirect,
-                        session
-                    );
-                }
-            })
-            .catch((e) => {
-                console.error(e);
-                setWhitelistError(
-                    formatAxiosError(e, t("otpEmailErrorAuthenticate"))
-                );
-            })
-            .then(() => setLoadingLogin(false));
-    };
-
-    const onPinSubmit = (values: z.infer<typeof pinSchema>) => {
-        setLoadingLogin(true);
-        api.post<AxiosResponse<AuthWithPasswordResponse>>(
-            `/auth/resource/${props.resource.id}/pincode`,
-            { pincode: values.pin }
-        )
-            .then((res) => {
-                setPincodeError(null);
-                const session = res.data.data.session;
-                if (session) {
-                    window.location.href = appendRequestToken(
-                        props.redirect,
-                        session
-                    );
-                }
-            })
-            .catch((e) => {
-                console.error(e);
-                setPincodeError(
-                    formatAxiosError(e, t("pincodeErrorAuthenticate"))
-                );
-            })
-            .then(() => setLoadingLogin(false));
-    };
-
-    const onPasswordSubmit = (values: z.infer<typeof passwordSchema>) => {
-        setLoadingLogin(true);
-
-        api.post<AxiosResponse<AuthWithPasswordResponse>>(
-            `/auth/resource/${props.resource.id}/password`,
-            {
-                password: values.password
+            if (response.error) {
+                setWhitelistError(response.message);
+                return;
             }
-        )
-            .then((res) => {
-                setPasswordError(null);
-                const session = res.data.data.session;
-                if (session) {
-                    window.location.href = appendRequestToken(
-                        props.redirect,
-                        session
-                    );
-                }
-            })
-            .catch((e) => {
-                console.error(e);
-                setPasswordError(
-                    formatAxiosError(e, t("passwordErrorAuthenticate"))
+
+            const data = response.data!;
+            if (data.otpSent) {
+                setOtpState("otp_sent");
+                submitOtpForm.setValue("email", values.email);
+                toast({
+                    title: t("otpEmailSent"),
+                    description: t("otpEmailSentDescription")
+                });
+                return;
+            }
+
+            const session = data.session;
+            if (session) {
+                window.location.href = appendRequestToken(
+                    props.redirect,
+                    session
                 );
-            })
-            .finally(() => setLoadingLogin(false));
+            }
+        } catch (e: any) {
+            console.error(e);
+            setWhitelistError(
+                t("otpEmailErrorAuthenticate", {
+                    defaultValue: "An unexpected error occurred. Please try again."
+                })
+            );
+        } finally {
+            setLoadingLogin(false);
+        }
+    };
+
+    const onPinSubmit = async (values: z.infer<typeof pinSchema>) => {
+        setLoadingLogin(true);
+        setPincodeError(null);
+
+        try {
+            const response = await resourcePincodeProxy(props.resource.id, {
+                pincode: values.pin
+            });
+
+            if (response.error) {
+                setPincodeError(response.message);
+                return;
+            }
+
+            const session = response.data!.session;
+            if (session) {
+                window.location.href = appendRequestToken(
+                    props.redirect,
+                    session
+                );
+            }
+        } catch (e: any) {
+            console.error(e);
+            setPincodeError(
+                t("pincodeErrorAuthenticate", {
+                    defaultValue: "An unexpected error occurred. Please try again."
+                })
+            );
+        } finally {
+            setLoadingLogin(false);
+        }
+    };
+
+    const onPasswordSubmit = async (values: z.infer<typeof passwordSchema>) => {
+        setLoadingLogin(true);
+        setPasswordError(null);
+
+        try {
+            const response = await resourcePasswordProxy(props.resource.id, {
+                password: values.password
+            });
+
+            if (response.error) {
+                setPasswordError(response.message);
+                return;
+            }
+
+            const session = response.data!.session;
+            if (session) {
+                window.location.href = appendRequestToken(
+                    props.redirect,
+                    session
+                );
+            }
+        } catch (e: any) {
+            console.error(e);
+            setPasswordError(
+                t("passwordErrorAuthenticate", {
+                    defaultValue: "An unexpected error occurred. Please try again."
+                })
+            );
+        } finally {
+            setLoadingLogin(false);
+        }
     };
 
     async function handleSSOAuth() {
         let isAllowed = false;
         try {
-            await api.get(`/resource/${props.resource.id}`);
-            isAllowed = true;
+            const response = await resourceAccessProxy(props.resource.id);
+            if (response.error) {
+                setAccessDenied(true);
+            } else {
+                isAllowed = true;
+            }
         } catch (e) {
             setAccessDenied(true);
         }

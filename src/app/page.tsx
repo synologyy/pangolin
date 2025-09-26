@@ -29,10 +29,13 @@ export default async function Page(props: {
     const getUser = cache(verifySession);
     const user = await getUser({ skipCheckVerifyEmail: true });
 
-    const setupRes = await internal.get<
+    let complete = false;
+    try {
+        const setupRes = await internal.get<
         AxiosResponse<InitialSetupCompleteResponse>
-    >(`/auth/initial-setup-complete`, await authCookieHeader());
-    const complete = setupRes.data.data.complete;
+        >(`/auth/initial-setup-complete`, await authCookieHeader());
+        complete = setupRes.data.data.complete;
+    } catch (e) {}
     if (!complete) {
         redirect("/auth/initial-setup");
     }

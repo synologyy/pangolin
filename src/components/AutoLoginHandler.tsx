@@ -3,9 +3,8 @@
 import { useEffect, useState } from "react";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
-import { GenerateOidcUrlResponse } from "@server/routers/idp";
 import { AxiosResponse } from "axios";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import {
     Card,
     CardHeader,
@@ -16,6 +15,7 @@ import {
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { generateOidcUrlProxy } from "@app/actions/server";
 
 type AutoLoginHandlerProps = {
     resourceId: number;
@@ -40,24 +40,38 @@ export default function AutoLoginHandler({
         async function initiateAutoLogin() {
             setLoading(true);
 
+            let doRedirect: string | undefined;
             try {
-                const res = await api.post<
-                    AxiosResponse<GenerateOidcUrlResponse>
-                >(`/auth/idp/${skipToIdpId}/oidc/generate-url`, {
+                const response = await generateOidcUrlProxy(
+                    skipToIdpId,
                     redirectUrl
-                });
+                );
 
-                if (res.data.data.redirectUrl) {
-                    // Redirect to the IDP for authentication
-                    window.location.href = res.data.data.redirectUrl;
+                if (response.error) {
+                    setError(response.message);
+                    setLoading(false);
+                    return;
+                }
+
+                const data = response.data;
+                const url = data?.redirectUrl;
+                if (url) {
+                    doRedirect = url;
                 } else {
                     setError(t("autoLoginErrorNoRedirectUrl"));
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Failed to generate OIDC URL:", e);
-                setError(formatAxiosError(e, t("autoLoginErrorGeneratingUrl")));
+                setError(
+                    t("autoLoginErrorGeneratingUrl", {
+                        defaultValue: "An unexpected error occurred. Please try again."
+                    })
+                );
             } finally {
                 setLoading(false);
+                if (doRedirect) {
+                    redirect(doRedirect);
+                }
             }
         }
 
