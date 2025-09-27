@@ -1,5 +1,6 @@
 .PHONY: build build-pg build-release build-arm build-x86 test clean
 
+minor_tag := $(shell echo $(tag) | cut -d. -f1,2)
 build-release:
 	@if [ -z "$(tag)" ]; then \
 		echo "Error: tag is required. Usage: make build-release tag=<tag>"; \
@@ -7,8 +8,10 @@ build-release:
 	fi
 	docker buildx build --build-arg DATABASE=sqlite --platform linux/arm64,linux/amd64 -t fosrl/pangolin:latest --push .
 	docker buildx build --build-arg DATABASE=sqlite --platform linux/arm64,linux/amd64 -t fosrl/pangolin:$(tag) --push .
+	docker buildx build --build-arg DATABASE=sqlite --platform linux/arm64,linux/amd64 -t fosrl/pangolin:$(minor_tag) --push .
 	docker buildx build --build-arg DATABASE=pg --platform linux/arm64,linux/amd64 -t fosrl/pangolin:postgresql-latest --push .
 	docker buildx build --build-arg DATABASE=pg --platform linux/arm64,linux/amd64 -t fosrl/pangolin:postgresql-$(tag) --push .
+	docker buildx build --build-arg DATABASE=pg --platform linux/arm64,linux/amd64 -t fosrl/pangolin:postgresql-$(minor_tag) --push .
 
 build-arm:
 	docker buildx build --platform linux/arm64 -t fosrl/pangolin:latest .
