@@ -20,13 +20,13 @@ export default async function migration() {
         for (const webauthnCredential of webauthnCredentials) {
             const credentialId = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.credentialId, 'base64')));
                 db.prepare(
-                    `UPDATE 'webauthnCredentials' SET 'credentialId' = ?`
-                ).run(credentialId);
+                    `UPDATE 'webauthnCredentials' SET 'credentialId' = ? WHERE 'credentialId' = ?`
+                ).run(credentialId, webauthnCredential.credentialId);
 
             const publicKey = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.publicKey, 'base64')));
                 db.prepare(
-                    `UPDATE 'webauthnCredentials' SET 'publicKey' = ?`
-                ).run(publicKey);
+                    `UPDATE 'webauthnCredentials' SET 'publicKey' = ? WHERE 'credentialId' = ?`
+                ).run(publicKey, webauthnCredential.credentialId);
             }
         })();
 

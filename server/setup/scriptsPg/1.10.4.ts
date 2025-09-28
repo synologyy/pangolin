@@ -18,11 +18,13 @@ export default async function migration() {
             const credentialId = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.credentialId, 'base64')));
             await db.execute(sql`
                 UPDATE "webauthnCredentials" SET "credentialId" = ${credentialId} 
+                WHERE "credentialId" = ${webauthnCredential.credentialId}
             `);
 
             const publicKey = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.publicKey, 'base64')));
             await db.execute(sql`
                 UPDATE "webauthnCredentials" SET "publicKey" = ${publicKey} 
+                WHERE "credentialId" = ${webauthnCredential.credentialId}
             `);
         }
 
