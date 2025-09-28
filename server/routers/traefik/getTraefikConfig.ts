@@ -184,9 +184,10 @@ function createPathRewriteMiddleware(
     switch (rewritePathType) {
         case "exact":
             // Replace the entire path with the exact rewrite path
+            let exactPattern = `^${escapeRegex(path)}$`;
             middlewares[middlewareName] = {
                 replacePathRegex: {
-                    regex: "^.*$",
+                    regex: exactPattern,
                     replacement: rewritePath
                 }
             };
