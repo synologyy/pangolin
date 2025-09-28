@@ -10,7 +10,7 @@ export default async function migration() {
     try {
         await db.execute(sql`BEGIN`);
 
-        const webauthnCredentialsQuery = await db.execute(sql`SELECT credentialId, publicKey FROM 'webauthnCredentials'`);
+        const webauthnCredentialsQuery = await db.execute(sql`SELECT "credentialId", "publicKey" FROM "webauthnCredentials"`);
 
         const webauthnCredentials = webauthnCredentialsQuery.rows as { credentialId: string; publicKey: string }[];
 
