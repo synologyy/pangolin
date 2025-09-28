@@ -141,28 +141,28 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
 
     const [activeTab, setActiveTab] = useState(getDefaultSelectedMethod());
 
-    const pinForm = useForm<z.infer<typeof pinSchema>>({
+    const pinForm = useForm({
         resolver: zodResolver(pinSchema),
         defaultValues: {
             pin: ""
         }
     });
 
-    const passwordForm = useForm<z.infer<typeof passwordSchema>>({
+    const passwordForm = useForm({
         resolver: zodResolver(passwordSchema),
         defaultValues: {
             password: ""
         }
     });
 
-    const requestOtpForm = useForm<z.infer<typeof requestOtpSchema>>({
+    const requestOtpForm = useForm({
         resolver: zodResolver(requestOtpSchema),
         defaultValues: {
             email: ""
         }
     });
 
-    const submitOtpForm = useForm<z.infer<typeof submitOtpSchema>>({
+    const submitOtpForm = useForm({
         resolver: zodResolver(submitOtpSchema),
         defaultValues: {
             email: "",

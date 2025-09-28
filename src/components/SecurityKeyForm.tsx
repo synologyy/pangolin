@@ -119,7 +119,7 @@ export default function SecurityKeyForm({
         code: z.string().optional()
     });
 
-    const registerForm = useForm<RegisterFormValues>({
+    const registerForm = useForm({
         resolver: zodResolver(registerSchema),
         defaultValues: {
             name: "",
@@ -128,7 +128,7 @@ export default function SecurityKeyForm({
         }
     });
 
-    const deleteForm = useForm<DeleteFormValues>({
+    const deleteForm = useForm({
         resolver: zodResolver(deleteSchema),
         defaultValues: {
             password: "",

@@ -150,40 +150,41 @@ export default function Page() {
         const commands = {
             mac: {
                 "Apple Silicon (arm64)": [
-                    `curl -L -o olm "https://github.com/fosrl/olm/releases/download/${version}/olm_darwin_arm64" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 "Intel x64 (amd64)": [
-                    `curl -L -o olm "https://github.com/fosrl/olm/releases/download/${version}/olm_darwin_amd64" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             },
             linux: {
                 amd64: [
-                    `wget -O olm "https://github.com/fosrl/olm/releases/download/${version}/olm_linux_amd64" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm64: [
-                    `wget -O olm "https://github.com/fosrl/olm/releases/download/${version}/olm_linux_arm64" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm32: [
-                    `wget -O olm "https://github.com/fosrl/olm/releases/download/${version}/olm_linux_arm32" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm32v6: [
-                    `wget -O olm "https://github.com/fosrl/olm/releases/download/${version}/olm_linux_arm32v6" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 riscv64: [
-                    `wget -O olm "https://github.com/fosrl/olm/releases/download/${version}/olm_linux_riscv64" && chmod +x ./olm`,
-                    `sudo ./olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             },
             windows: {
                 x64: [
+                    `# Download and run the installer`,
                     `curl -o olm.exe -L "https://github.com/fosrl/olm/releases/download/${version}/olm_windows_installer.exe"`,
-                    `# Run the installer to install olm and wintun`,
+                    `# Then run olm with your credentials`,
                     `olm.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             }
@@ -265,7 +266,7 @@ export default function Page() {
         }
     };
 
-    const form = useForm<CreateClientFormValues>({
+    const form = useForm({
         resolver: zodResolver(createClientFormSchema),
         defaultValues: {
             name: "",

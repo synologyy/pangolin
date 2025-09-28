@@ -51,7 +51,7 @@ export default function InitialSetupPage() {
     const [error, setError] = useState<string | null>(null);
     const [checking, setChecking] = useState(true);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             setupToken: "",

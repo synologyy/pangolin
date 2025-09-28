@@ -153,3 +153,5 @@ Looking for something to contribute? Take a look at issues marked with [help wan
 Please see [CONTRIBUTING](./CONTRIBUTING.md) in the repository for guidelines and best practices.
 
 Please post bug reports and other functional issues in the [Issues](https://github.com/fosrl/pangolin/issues) section of the repository.
+
+If you are looking to help with translations, please contribute [on Crowdin](https://crowdin.com/project/fossorial-pangolin) or open a PR with changes to the translations files found in `messages/`.

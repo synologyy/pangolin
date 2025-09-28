@@ -260,7 +260,7 @@ export default function ReverseProxyTargets(props: {
             port: "" as any as number,
             path: null,
             pathMatchType: null
-        } as z.infer<typeof addTargetSchema>
+        }
     });
 
     const watchedIp = addTargetForm.watch("ip");
@@ -274,7 +274,7 @@ export default function ReverseProxyTargets(props: {
         }
     };
 
-    const tlsSettingsForm = useForm<TlsSettingsValues>({
+    const tlsSettingsForm = useForm({
         resolver: zodResolver(tlsSettingsSchema),
         defaultValues: {
             ssl: resource.ssl,
@@ -282,7 +282,7 @@ export default function ReverseProxyTargets(props: {
         }
     });
 
-    const proxySettingsForm = useForm<ProxySettingsValues>({
+    const proxySettingsForm = useForm({
         resolver: zodResolver(proxySettingsSchema),
         defaultValues: {
             setHostHeader: resource.setHostHeader || "",
@@ -290,7 +290,7 @@ export default function ReverseProxyTargets(props: {
         }
     });
 
-    const targetsSettingsForm = useForm<TargetsSettingsValues>({
+    const targetsSettingsForm = useForm({
         resolver: zodResolver(targetsSettingsSchema),
         defaultValues: {
             stickySession: resource.stickySession

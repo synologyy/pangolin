@@ -97,7 +97,7 @@ export default function LicensePage() {
         })
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             licenseKey: "",

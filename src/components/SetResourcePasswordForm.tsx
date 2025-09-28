@@ -39,10 +39,6 @@ const setPasswordFormSchema = z.object({
 
 type SetPasswordFormValues = z.infer<typeof setPasswordFormSchema>;
 
-const defaultValues: Partial<SetPasswordFormValues> = {
-    password: ""
-};
-
 type SetPasswordFormProps = {
     open: boolean;
     setOpen: (open: boolean) => void;
@@ -61,9 +57,11 @@ export default function SetResourcePasswordForm({
 
     const [loading, setLoading] = useState(false);
 
-    const form = useForm<SetPasswordFormValues>({
+    const form = useForm({
         resolver: zodResolver(setPasswordFormSchema),
-        defaultValues
+        defaultValues: {
+            password: ""
+        }
     });
 
     useEffect(() => {

@@ -138,12 +138,12 @@ export default function ResourceAuthenticationPage() {
     const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
     const [isSetPincodeOpen, setIsSetPincodeOpen] = useState(false);
 
-    const usersRolesForm = useForm<z.infer<typeof UsersRolesFormSchema>>({
+    const usersRolesForm = useForm({
         resolver: zodResolver(UsersRolesFormSchema),
         defaultValues: { roles: [], users: [] }
     });
 
-    const whitelistForm = useForm<z.infer<typeof whitelistSchema>>({
+    const whitelistForm = useForm({
         resolver: zodResolver(whitelistSchema),
         defaultValues: { emails: [] }
     });

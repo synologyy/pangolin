@@ -63,7 +63,7 @@ export default function AccessControlsPage() {
         autoProvisioned: z.boolean()
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
+    const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             username: user.username!,
