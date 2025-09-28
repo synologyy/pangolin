@@ -146,12 +146,6 @@ function validatePathRewriteConfig(
         }
     }
 
-    if (rewritePathType === "regex") {
-        // For regex rewrite type, we don't validate the replacement pattern
-        // as it may contain capture groups like $1, $2, etc.
-        // The regex engine will handle validation at runtime
-    }
-
     // Validate path formats for non-regex types
     if (pathMatchType !== "regex" && !path.startsWith("/")) {
         return {
@@ -184,7 +178,7 @@ function createPathRewriteMiddleware(
     pathMatchType: string,
     rewritePath: string,
     rewritePathType: string
-): { [key: string]: any } {
+): { middlewares: { [key: string]: any }; chain?: string[] } {
     const middlewares: { [key: string]: any } = {};
 
     switch (rewritePathType) {
@@ -259,13 +253,12 @@ function createPathRewriteMiddleware(
 
                 // If rewritePath is provided and not empty, add it as a prefix after stripping
                 if (rewritePath && rewritePath !== "" && rewritePath !== "/") {
-                    const addPrefixMiddlewareName = `${middlewareName.replace('-rewrite', '')}-add-prefix-middleware`;
+                    const addPrefixMiddlewareName = `addprefix-${middlewareName.replace('rewrite-', '')}`;
                     middlewares[addPrefixMiddlewareName] = {
                         addPrefix: {
                             prefix: rewritePath
                         }
                     };
-                    // Return both middlewares with a special flag to indicate chaining
                     return { 
                         middlewares, 
                         chain: [middlewareName, addPrefixMiddlewareName] 
@@ -279,7 +272,6 @@ function createPathRewriteMiddleware(
                 } else if (pathMatchType === "regex") {
                     regexPattern = path;
                 } else {
-                    // This shouldn't happen due to earlier validation, but handle gracefully
                     regexPattern = `^${escapeRegex(path)}`;
                 }
 
@@ -538,9 +530,10 @@ export async function getTraefikConfig(
                 resource.path && 
                 resource.pathMatchType && 
                 resource.rewritePathType) {
-
-                const rewriteMiddlewareName = `${resource.id}-${key}-rewrite`;
-
+                
+                // Create a unique middleware name
+                const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${sanitizeForMiddlewareName(key)}`;
+                
                 try {
                     const rewriteResult = createPathRewriteMiddleware(
                         rewriteMiddlewareName,
@@ -567,17 +560,17 @@ export async function getTraefikConfig(
                         routerMiddlewares.push(rewriteMiddlewareName);
                     }
 
-                    logger.info(`Created path rewrite middleware for ${key}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`);
+                    logger.info(`Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`);
                 } catch (error) {
-                    logger.error(`Failed to create path rewrite middleware for ${key}: ${error}`);
+                    logger.error(`Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`);
                     // Continue without the rewrite middleware rather than failing completely
                 }
             }
 
             // Handle custom headers middleware
             if (resource.headers || resource.setHostHeader) {
-                // if there are headers, parse them into an object
                 const headersObj: { [key: string]: string } = {};
+                
                 if (resource.headers) {
                     let headersArr: { name: string; value: string }[] = [];
                     try {
@@ -586,9 +579,7 @@ export async function getTraefikConfig(
                             value: string;
                         }[];
                     } catch (e) {
-                        logger.warn(
-                            `Failed to parse headers for resource ${resource.resourceId}: ${e}`
-                        );
+                        logger.warn(`Failed to parse headers for resource ${resource.resourceId}: ${e}`);
                     }
 
                     headersArr.forEach((header) => {
@@ -600,9 +591,7 @@ export async function getTraefikConfig(
                     headersObj["Host"] = resource.setHostHeader;
                 }
 
-                // check if the object is not empty
                 if (Object.keys(headersObj).length > 0) {
-                    // Add the headers middleware
                     if (!config_output.http.middlewares) {
                         config_output.http.middlewares = {};
                     }
@@ -616,8 +605,10 @@ export async function getTraefikConfig(
                 }
             }
 
+            // Build routing rules
             let rule = `Host(\`${fullDomain}\`)`;
             let priority = 100;
+
             if (resource.path && resource.pathMatchType) {
                 priority += 1;
                 // add path to rule based on match type
@@ -763,7 +754,7 @@ export async function getTraefikConfig(
             }
         } else {
             // Non-HTTP (TCP/UDP) configuration
-            if (!resource.enableProxy) {
+            if (!resource.enableProxy || !resource.proxyPort) {
                 continue;
             }
 
@@ -860,16 +851,22 @@ export async function getTraefikConfig(
 function sanitizePath(path: string | null | undefined): string | undefined {
     if (!path) return undefined;
     
-    // For path rewriting, we need to be more careful about sanitization
-    // Only limit length and ensure it's a valid path structure
-    if (path.length > 50) {
-        path = path.substring(0, 50);
-        logger.warn(`Path truncated to 50 characters: ${path}`);
+    const trimmed = path.trim();
+    if (!trimmed) return undefined;
+    
+    // Preserve path structure for rewriting, only warn if very long
+    if (trimmed.length > 1000) {
+        logger.warn(`Path exceeds 1000 characters: ${trimmed.substring(0, 100)}...`);
+        return trimmed.substring(0, 1000);
     }
     
-    // Don't remove special characters as they might be part of regex patterns
-    // Just ensure it's not empty after trimming
-    return path.trim() || undefined;
+    return trimmed;
+}
+
+function sanitizeForMiddlewareName(str: string): string {
+    // Replace any characters that aren't alphanumeric or dash with dash
+    // and remove consecutive dashes
+    return str.replace(/[^a-zA-Z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
 
 function escapeRegex(string: string): string {
