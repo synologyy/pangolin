@@ -388,6 +388,7 @@ export default function CreateShareLinkForm({
                                                                         field.onChange
                                                                     }
                                                                     defaultValue={field.value.toString()}
+                                                                    disabled={neverExpire}
                                                                 >
                                                                     <FormControl>
                                                                         <SelectTrigger className="w-full">
@@ -423,6 +424,7 @@ export default function CreateShareLinkForm({
                                                     <FormField
                                                         control={form.control}
                                                         name="timeValue"
+                                                        disabled={neverExpire}
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormControl>
