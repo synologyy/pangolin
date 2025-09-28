@@ -75,35 +75,6 @@ export function LayoutSidebar({
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
-                            {build === "oss" && (
-                                <Link
-                                    href="/admin/managed"
-                                    className={cn(
-                                        "flex items-center rounded transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
-                                        isSidebarCollapsed
-                                            ? "px-2 py-2 justify-center"
-                                            : "px-3 py-1.5"
-                                    )}
-                                    title={
-                                        isSidebarCollapsed
-                                            ? t("managedSelfhosted")
-                                            : undefined
-                                    }
-                                >
-                                    <span
-                                        className={cn(
-                                            "flex-shrink-0",
-                                            !isSidebarCollapsed && "mr-2"
-                                        )}
-                                    >
-                                        <Zap className="h-4 w-4" />
-                                    </span>
-                                    {!isSidebarCollapsed && (
-                                        <span>{t("managedSelfhosted")}</span>
-                                    )}
-                                </Link>
-                            )}
-
                             <Link
                                 href="/admin"
                                 className={cn(
@@ -138,7 +109,7 @@ export function LayoutSidebar({
                     />
                 </div>
             </div>
-            <div className="p-4 space-y-4 border-t shrink-0">
+            <div className="p-4 space-y-4 shrink-0">
                 <SupporterStatus isCollapsed={isSidebarCollapsed} />
                 {!isSidebarCollapsed && (
                     <div className="space-y-2">
@@ -153,28 +124,6 @@ export function LayoutSidebar({
                                     ? t("communityEdition")
                                     : t("commercialEdition")}
                                 <FaGithub size={12} />
-                            </Link>
-                        </div>
-                        <div className="text-xs text-muted-foreground ">
-                            <Link
-                                href="https://docs.digpangolin.com/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-1"
-                            >
-                                {t("documentation")}
-                                <BookOpenText size={12} />
-                            </Link>
-                        </div>
-                        <div className="text-xs text-muted-foreground text-center">
-                            <Link
-                                href="https://discord.gg/HCJR8Xhme4"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-1"
-                            >
-                                Discord
-                                <FaDiscord size={12} />
                             </Link>
                         </div>
                         {env?.app?.version && (
@@ -202,7 +151,7 @@ export function LayoutSidebar({
                             onClick={() =>
                                 setIsSidebarCollapsed(!isSidebarCollapsed)
                             }
-                            className="cursor-pointer absolute -right-2.5 top-1/2 transform -translate-y-1/2 w-2 h-8 rounded-full flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-110 group z-[60]"
+                            className="cursor-pointer absolute -right-2.5 top-1/2 transform -translate-y-1/2 w-2 h-8 rounded-full flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-110 group z-1"
                             aria-label={
                                 isSidebarCollapsed
                                     ? "Expand sidebar"

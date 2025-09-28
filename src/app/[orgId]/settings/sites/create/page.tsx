@@ -42,7 +42,7 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
-import { 
+import {
     SiNixos,
     SiKubernetes
 } from "react-icons/si";
@@ -513,14 +513,14 @@ WantedBy=default.target`
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
-                
+
                 const response = await fetch(
                     `https://api.github.com/repos/fosrl/newt/releases/latest`,
                     { signal: controller.signal }
                 );
-                
+
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) {
                     throw new Error(
                         t("newtErrorFetchReleases", {
