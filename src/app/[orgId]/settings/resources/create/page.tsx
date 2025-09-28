@@ -116,7 +116,9 @@ const addTargetSchema = z.object({
     port: z.coerce.number().int().positive(),
     siteId: z.number().int().positive(),
     path: z.string().optional().nullable(),
-    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable()
+    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+    rewritePath: z.string().optional().nullable(),
+    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
 }).refine(
     (data) => {
         // If path is provided, pathMatchType must be provided
@@ -149,7 +151,23 @@ const addTargetSchema = z.object({
     {
         message: "Invalid path configuration"
     }
-);
+)
+ .refine(
+        (data) => {
+            // If rewritePath is provided, rewritePathType must be provided
+            if (data.rewritePath && !data.rewritePathType) {
+                return false;
+            }
+            // If rewritePathType is provided, rewritePath must be provided
+            if (data.rewritePathType && !data.rewritePath) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message: "Invalid rewrite path configuration"
+        }
+    );
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
 type HttpResourceFormValues = z.infer<typeof httpResourceFormSchema>;
@@ -240,8 +258,10 @@ export default function Page() {
             method: baseForm.watch("http") ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
-        }
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
+        } as z.infer<typeof addTargetSchema>
     });
 
     const watchedIp = addTargetForm.watch("ip");
@@ -313,6 +333,8 @@ export default function Page() {
             ...data,
             path: data.path || null,
             pathMatchType: data.pathMatchType || null,
+            rewritePath: data.rewritePath || null,
+            rewritePathType: data.rewritePathType || null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
@@ -326,7 +348,9 @@ export default function Page() {
             method: baseForm.watch("http") ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
         });
     }
 
@@ -422,7 +446,9 @@ export default function Page() {
                                 enabled: target.enabled,
                                 siteId: target.siteId,
                                 path: target.path,
-                                pathMatchType: target.pathMatchType
+                                pathMatchType: target.pathMatchType,
+                                rewritePath: target.rewritePath,
+                                rewritePathType: target.rewritePathType
                             };
 
                             await api.put(`/resource/${id}/target`, data);
@@ -819,6 +845,102 @@ export default function Page() {
                     }
                 />
             )
+        },
+        {
+            accessorKey: "rewritePath",
+            header: t("rewritePath"),
+            cell: ({ row }) => {
+                const [showRewritePathInput, setShowRewritePathInput] = useState(
+                    !!(row.original.rewritePath || row.original.rewritePathType)
+                );
+
+                if (!showRewritePathInput) {
+                    const noPathMatch =
+                        !row.original.path && !row.original.pathMatchType;
+                    return (
+                        <Button
+                            variant="outline"
+                            disabled={noPathMatch}
+                            onClick={() => {
+                                setShowRewritePathInput(true);
+                                // Set default rewritePathType when first showing path input
+                                if (!row.original.rewritePathType) {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        rewritePathType: "prefix"
+                                    });
+                                }
+                            }}
+                        >
+                            + {t("rewritePath")}
+                        </Button>
+                    );
+                }
+
+                return (
+                    <div className="flex gap-2 min-w-[200px] items-center">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowRewritePathInput(false);
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    rewritePath: null,
+                                    rewritePathType: null
+                                });
+                            }}
+                        >
+                            ×
+                        </Button>
+
+                        <MoveRight className="ml-4 h-4 w-4" />
+                        <Select
+                            defaultValue={row.original.rewritePathType || "prefix"}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    rewritePathType: value as "exact" | "prefix" | "regex"
+                                })
+                            }
+                        >
+                            <SelectTrigger className="w-25">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="prefix">Prefix</SelectItem>
+                                <SelectItem value="exact">Exact</SelectItem>
+                                <SelectItem value="regex">Regex</SelectItem>
+                                <SelectItem value="stripPrefix">Strip Prefix</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Input
+                            placeholder={
+                                row.original.rewritePathType === "regex"
+                                    ? "^/api/.*"
+                                    : "/path"
+                            }
+                            defaultValue={row.original.rewritePath || ""}
+                            className="flex-1 min-w-[150px]"
+                            onBlur={(e) => {
+                                const value = e.target.value.trim();
+                                if (!value) {
+                                    setShowRewritePathInput(false);
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        rewritePath: null,
+                                        rewritePathType: null
+                                    });
+                                } else {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        rewritePath: value
+                                    });
+                                }
+                            }}
+                        />
+                    </div>
+                );
+            }
         },
         {
             accessorKey: "enabled",
