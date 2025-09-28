@@ -15,16 +15,15 @@ import logger from "@server/logger";
 
 const getResourceAuthInfoSchema = z
     .object({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.number().int().positive())
+        resourceGuid: z.string()
     })
     .strict();
 
 export type GetResourceAuthInfoResponse = {
     resourceId: number;
+    resourceGuid: string;
     resourceName: string;
+    niceId: string;
     password: boolean;
     pincode: boolean;
     sso: boolean;
@@ -51,7 +50,7 @@ export async function getResourceAuthInfo(
             );
         }
 
-        const { resourceId } = parsedParams.data;
+        const { resourceGuid } = parsedParams.data;
 
         const [result] = await db
             .select()
@@ -64,7 +63,7 @@ export async function getResourceAuthInfo(
                 resourcePassword,
                 eq(resourcePassword.resourceId, resources.resourceId)
             )
-            .where(eq(resources.resourceId, resourceId))
+            .where(eq(resources.resourceGuid, resourceGuid))
             .limit(1);
 
         const resource = result?.resources;
@@ -81,6 +80,8 @@ export async function getResourceAuthInfo(
 
         return response<GetResourceAuthInfoResponse>(res, {
             data: {
+                niceId: resource.niceId,
+                resourceGuid: resource.resourceGuid,
                 resourceId: resource.resourceId,
                 resourceName: resource.name,
                 password: password !== null,

@@ -9,6 +9,7 @@ import {
     text
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
+import { randomUUID } from "crypto";
 
 export const domains = pgTable("domains", {
     domainId: varchar("domainId").primaryKey(),
@@ -66,6 +67,10 @@ export const sites = pgTable("sites", {
 
 export const resources = pgTable("resources", {
     resourceId: serial("resourceId").primaryKey(),
+    resourceGuid: varchar("resourceGuid", { length: 36 })
+        .unique()
+        .notNull()
+        .$defaultFn(() => randomUUID()),
     orgId: varchar("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -96,7 +101,7 @@ export const resources = pgTable("resources", {
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
     }),
-    headers: text("headers"), // comma-separated list of headers to add to the request
+    headers: text("headers") // comma-separated list of headers to add to the request
 });
 
 export const targets = pgTable("targets", {
@@ -117,7 +122,7 @@ export const targets = pgTable("targets", {
     internalPort: integer("internalPort"),
     enabled: boolean("enabled").notNull().default(true),
     path: text("path"),
-    pathMatchType: text("pathMatchType"), // exact, prefix, regex
+    pathMatchType: text("pathMatchType") // exact, prefix, regex
 });
 
 export const exitNodes = pgTable("exitNodes", {
@@ -135,7 +140,8 @@ export const exitNodes = pgTable("exitNodes", {
     region: varchar("region")
 });
 
-export const siteResources = pgTable("siteResources", { // this is for the clients
+export const siteResources = pgTable("siteResources", {
+    // this is for the clients
     siteResourceId: serial("siteResourceId").primaryKey(),
     siteId: integer("siteId")
         .notNull()
@@ -149,7 +155,7 @@ export const siteResources = pgTable("siteResources", { // this is for the clien
     proxyPort: integer("proxyPort").notNull(),
     destinationPort: integer("destinationPort").notNull(),
     destinationIp: varchar("destinationIp").notNull(),
-    enabled: boolean("enabled").notNull().default(true),
+    enabled: boolean("enabled").notNull().default(true)
 });
 
 export const users = pgTable("user", {

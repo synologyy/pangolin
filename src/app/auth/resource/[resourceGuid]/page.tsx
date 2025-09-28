@@ -20,7 +20,7 @@ import AutoLoginHandler from "@app/components/AutoLoginHandler";
 export const dynamic = "force-dynamic";
 
 export default async function ResourceAuthPage(props: {
-    params: Promise<{ resourceId: number }>;
+    params: Promise<{ resourceGuid: number }>;
     searchParams: Promise<{
         redirect: string | undefined;
         token: string | undefined;
@@ -37,7 +37,7 @@ export default async function ResourceAuthPage(props: {
     try {
         const res = await internal.get<
             AxiosResponse<GetResourceAuthInfoResponse>
-        >(`/resource/${params.resourceId}/auth`, authHeader);
+        >(`/resource/${params.resourceGuid}/auth`, authHeader);
 
         if (res && res.status === 200) {
             authInfo = res.data.data;
@@ -48,10 +48,8 @@ export default async function ResourceAuthPage(props: {
     const user = await getUser({ skipCheckVerifyEmail: true });
 
     if (!authInfo) {
-        // TODO: fix this
         return (
             <div className="w-full max-w-md">
-                {/* @ts-ignore */}
                 <ResourceNotFound />
             </div>
         );
@@ -86,7 +84,7 @@ export default async function ResourceAuthPage(props: {
 
     if (user && !user.emailVerified && env.flags.emailVerificationRequired) {
         redirect(
-            `/auth/verify-email?redirect=/auth/resource/${authInfo.resourceId}`
+            `/auth/verify-email?redirect=/auth/resource/${authInfo.resourceGuid}`
         );
     }
 
@@ -103,7 +101,7 @@ export default async function ResourceAuthPage(props: {
             const res = await priv.post<
                 AxiosResponse<GetExchangeTokenResponse>
             >(
-                `/resource/${params.resourceId}/get-exchange-token`,
+                `/resource/${authInfo.resourceId}/get-exchange-token`,
                 {},
                 await authCookieHeader()
             );
@@ -132,7 +130,7 @@ export default async function ResourceAuthPage(props: {
             <div className="w-full max-w-md">
                 <AccessToken
                     token={searchParams.token}
-                    resourceId={params.resourceId}
+                    resourceId={authInfo.resourceId}
                 />
             </div>
         );

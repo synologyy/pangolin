@@ -206,7 +206,7 @@ export async function verifyResourceSession(
             endpoint = config.getRawConfig().app.dashboard_url!;
         }
         const redirectUrl = `${endpoint}/auth/resource/${encodeURIComponent(
-            resource.resourceId
+            resource.resourceGuid
         )}?redirect=${encodeURIComponent(originalRequestURL)}`;
 
         // check for access token in headers

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
@@ -72,6 +73,10 @@ export const sites = sqliteTable("sites", {
 
 export const resources = sqliteTable("resources", {
     resourceId: integer("resourceId").primaryKey({ autoIncrement: true }),
+    resourceGuid: text("resourceGuid", { length: 36 })
+        .unique()
+        .notNull()
+        .$defaultFn(() => randomUUID()),
     orgId: text("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -108,7 +113,7 @@ export const resources = sqliteTable("resources", {
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
     }),
-    headers: text("headers"), // comma-separated list of headers to add to the request
+    headers: text("headers") // comma-separated list of headers to add to the request
 });
 
 export const targets = sqliteTable("targets", {
@@ -129,7 +134,7 @@ export const targets = sqliteTable("targets", {
     internalPort: integer("internalPort"),
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     path: text("path"),
-    pathMatchType: text("pathMatchType"), // exact, prefix, regex
+    pathMatchType: text("pathMatchType") // exact, prefix, regex
 });
 
 export const exitNodes = sqliteTable("exitNodes", {

@@ -540,7 +540,7 @@ authenticated.post(
 );
 authenticated.post(`/supporter-key/hide`, supporterKey.hideSupporterKey);
 
-unauthenticated.get("/resource/:resourceId/auth", resource.getResourceAuthInfo);
+unauthenticated.get("/resource/:resourceGuid/auth", resource.getResourceAuthInfo);
 
 // authenticated.get(
 //     "/role/:roleId/resources",
