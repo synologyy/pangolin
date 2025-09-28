@@ -10,21 +10,33 @@ export default async function migration() {
     try {
         await db.execute(sql`BEGIN`);
 
-        const webauthnCredentialsQuery = await db.execute(sql`SELECT "credentialId", "publicKey" FROM "webauthnCredentials"`);
+        const webauthnCredentialsQuery = await db.execute(sql`SELECT "credentialId", "publicKey", "userId", "signCount", "transports", "name", "lastUsed", "dateCreated" FROM "webauthnCredentials"`);
 
-        const webauthnCredentials = webauthnCredentialsQuery.rows as { credentialId: string; publicKey: string }[];
+        const webauthnCredentials = webauthnCredentialsQuery.rows as { 
+            credentialId: string; 
+            publicKey: string; 
+            userId: string; 
+            signCount: number; 
+            transports: string | null; 
+            name: string | null; 
+            lastUsed: string; 
+            dateCreated: string;
+        }[];
 
         for (const webauthnCredential of webauthnCredentials) {
-            const credentialId = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.credentialId, 'base64')));
+            const newCredentialId = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.credentialId, 'base64')));
+            const newPublicKey = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.publicKey, 'base64')));
+            
+            // Delete the old record
             await db.execute(sql`
-                UPDATE "webauthnCredentials" SET "credentialId" = ${credentialId} 
+                DELETE FROM "webauthnCredentials" 
                 WHERE "credentialId" = ${webauthnCredential.credentialId}
             `);
-
-            const publicKey = isoBase64URL.fromBuffer(new Uint8Array(Buffer.from(webauthnCredential.publicKey, 'base64')));
+            
+            // Insert the updated record with converted values
             await db.execute(sql`
-                UPDATE "webauthnCredentials" SET "publicKey" = ${publicKey} 
-                WHERE "credentialId" = ${webauthnCredential.credentialId}
+                INSERT INTO "webauthnCredentials" ("credentialId", "publicKey", "userId", "signCount", "transports", "name", "lastUsed", "dateCreated")
+                VALUES (${newCredentialId}, ${newPublicKey}, ${webauthnCredential.userId}, ${webauthnCredential.signCount}, ${webauthnCredential.transports}, ${webauthnCredential.name}, ${webauthnCredential.lastUsed}, ${webauthnCredential.dateCreated})
             `);
         }
 
