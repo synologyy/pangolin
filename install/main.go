@@ -59,6 +59,7 @@ type SupportedContainer string
 const (
 	Docker SupportedContainer = "docker"
 	Podman SupportedContainer = "podman"
+	Undefined SupportedContainer = "undefined"
 )
 
 func main() {
@@ -85,6 +86,7 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	var config Config
+	var alreadyInstalled = false
 
 	// check if there is already a config file
 	if _, err := os.Stat("config/config.yml"); err != nil {
@@ -168,6 +170,7 @@ func main() {
 		}
 
 	} else {
+		alreadyInstalled = true
 		fmt.Println("Looks like you already installed Pangolin!")
 	}
 
@@ -227,7 +230,7 @@ func main() {
 		}
 	}
 
-	if !config.HybridMode {
+	if !config.HybridMode && !alreadyInstalled {
 		// Setup Token Section
 		fmt.Println("\n=== Setup Token ===")
 
@@ -563,28 +566,30 @@ func showSetupTokenInstructions(containerType SupportedContainer, dashboardDomai
 	fmt.Println("\n=== Setup Token Instructions ===")
 	fmt.Println("To get your setup token, you need to:")
 	fmt.Println("")
-	fmt.Println("1. Start the containers:")
+	fmt.Println("1. Start the containers")
 	if containerType == Docker {
-		fmt.Println("   docker-compose up -d")
-	} else {
+		fmt.Println("   docker compose up -d")
+	} else if containerType == Podman {
 		fmt.Println("   podman-compose up -d")
+	} else {
 	}
 	fmt.Println("")
 	fmt.Println("2. Wait for the Pangolin container to start and generate the token")
 	fmt.Println("")
-	fmt.Println("3. Check the container logs for the setup token:")
+	fmt.Println("3. Check the container logs for the setup token")
 	if containerType == Docker {
 		fmt.Println("   docker logs pangolin | grep -A 2 -B 2 'SETUP TOKEN'")
-	} else {
+	} else if containerType == Podman {
 		fmt.Println("   podman logs pangolin | grep -A 2 -B 2 'SETUP TOKEN'")
+	} else {
 	}
 	fmt.Println("")
-	fmt.Println("4. Look for output like:")
+	fmt.Println("4. Look for output like")
 	fmt.Println("   === SETUP TOKEN GENERATED ===")
 	fmt.Println("   Token: [your-token-here]")
 	fmt.Println("   Use this token on the initial setup page")
 	fmt.Println("")
-	fmt.Println("5. Use the token to complete initial setup at:")
+	fmt.Println("5. Use the token to complete initial setup at")
 	fmt.Printf("   https://%s/auth/initial-setup\n", dashboardDomain)
 	fmt.Println("")
 	fmt.Println("The setup token is required to register the first admin account.")
