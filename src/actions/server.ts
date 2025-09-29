@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { ResponseT } from "@server/types/Response";
+import { pullEnv } from "@app/lib/pullEnv";
 
 type CookieOptions = {
     path?: string;
@@ -10,6 +11,7 @@ type CookieOptions = {
     sameSite?: "lax" | "strict" | "none";
     expires?: Date;
     maxAge?: number;
+    domain?: string;
 };
 
 function parseSetCookieString(setCookie: string): {
@@ -21,6 +23,8 @@ function parseSetCookieString(setCookie: string): {
     const [nameValue, ...attrParts] = parts;
     const [name, ...valParts] = nameValue.split("=");
     const value = valParts.join("="); // handles '=' inside JWT
+
+    const env = pullEnv();
 
     const options: CookieOptions = {};
 
@@ -46,6 +50,18 @@ function parseSetCookieString(setCookie: string): {
             case "max-age":
                 options.maxAge = parseInt(v, 10);
                 break;
+            case "domain":
+                options.domain = v;
+                break;
+        }
+    }
+
+    if (!options.domain) {
+        const d = env.app.dashboardUrl
+            ? "." + new URL(env.app.dashboardUrl).hostname
+            : undefined;
+        if (d) {
+            options.domain = d;
         }
     }
 
