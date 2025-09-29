@@ -18,7 +18,8 @@ export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
     subnet: text("subnet"),
-    createdAt: text("createdAt")
+    createdAt: text("createdAt"),
+    settings: text("settings") // JSON blob of org-specific settings
 });
 
 export const userDomains = sqliteTable("userDomains", {

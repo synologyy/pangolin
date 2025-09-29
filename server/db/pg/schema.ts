@@ -25,7 +25,8 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
-    createdAt: text("createdAt")
+    createdAt: text("createdAt"),
+    settings: text("settings") // JSON blob of org-specific settings
 });
 
 export const orgDomains = pgTable("orgDomains", {
