@@ -150,7 +150,7 @@ export const configSchema = z
         }),
         postgres: z
             .object({
-                connection_string: z.string(),
+                connection_string: z.string().optional(),
                 replicas: z
                     .array(
                         z.object({
