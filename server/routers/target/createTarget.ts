@@ -34,7 +34,7 @@ const createTargetSchema = z
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
         rewritePath: z.string().optional().nullable(),
-        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable() // NEW: rewrite path type
+        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
     })
     .strict();
 
