@@ -352,12 +352,17 @@ export async function getTraefikConfig(
             if (resource.path && resource.pathMatchType) {
                 priority += 1;
                 // add path to rule based on match type
+                let path = resource.path;
+                // if the path doesn't start with a /, add it
+                if (!path.startsWith("/")) {
+                    path = `/${path}`;
+                }
                 if (resource.pathMatchType === "exact") {
-                    rule += ` && Path(\`${resource.path}\`)`;
+                    rule += ` && Path(\`${path}\`)`;
                 } else if (resource.pathMatchType === "prefix") {
-                    rule += ` && PathPrefix(\`${resource.path}\`)`;
+                    rule += ` && PathPrefix(\`${path}\`)`;
                 } else if (resource.pathMatchType === "regex") {
-                    rule += ` && PathRegexp(\`${resource.path}\`)`;
+                    rule += ` && PathRegexp(\`${resource.path}\`)`; // this is the raw path because it's a regex
                 }
             }
 
