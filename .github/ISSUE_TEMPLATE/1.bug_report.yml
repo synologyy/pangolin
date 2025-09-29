@@ -1,5 +1,5 @@
 name: Bug Report
-description: Create a bug report for the Pangolin
+description: Create a bug report
 labels: []
 body:
     - type: textarea
@@ -19,6 +19,7 @@ body:
               - Gerbil Version:
               - Traefik Version:
               - Newt Version:
+              - Olm Version: (if applicable)
       validations:
           required: true
 
