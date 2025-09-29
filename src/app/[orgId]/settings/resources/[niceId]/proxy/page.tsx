@@ -73,6 +73,7 @@ import {
     CircleCheck,
     CircleX,
     ArrowRight,
+    Plus,
     MoveRight
 } from "lucide-react";
 import { ContainersSelector } from "@app/components/ContainersSelector";
@@ -95,9 +96,9 @@ import {
     CommandItem,
     CommandList
 } from "@app/components/ui/command";
-import { Badge } from "@app/components/ui/badge";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { HeadersInput } from "@app/components/HeadersInput";
+import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
 
 const addTargetSchema = z.object({
     ip: z.string().refine(isTargetValid),
@@ -597,93 +598,64 @@ export default function ReverseProxyTargets(props: {
             accessorKey: "path",
             header: t("matchPath"),
             cell: ({ row }) => {
-                const [showPathInput, setShowPathInput] = useState(
-                    !!(row.original.path || row.original.pathMatchType)
-                );
+                const hasPathMatch = !!(row.original.path || row.original.pathMatchType);
 
-                if (!showPathInput) {
-                    return (
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(true);
-                                // Set default pathMatchType when first showing path input
-                                if (!row.original.pathMatchType) {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        pathMatchType: "prefix"
-                                    });
-                                }
+                return hasPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        <PathMatchModal
+                            value={{
+                                path: row.original.path,
+                                pathMatchType: row.original.pathMatchType,
                             }}
-                        >
-                            + {t("matchPath")}
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2 min-w-[200px] items-center">
-                        <Select
-                            defaultValue={row.original.pathMatchType || "prefix"}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    pathMatchType: value as "exact" | "prefix" | "regex"
-                                })
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                >
+                                    <PathMatchDisplay
+                                        value={{
+                                            path: row.original.path,
+                                            pathMatchType: row.original.pathMatchType,
+                                        }}
+                                    />
+                                </Button>
                             }
-                        >
-                            <SelectTrigger className="w-25">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="prefix">Prefix</SelectItem>
-                                <SelectItem value="exact">Exact</SelectItem>
-                                <SelectItem value="regex">Regex</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input
-                            placeholder={
-                                row.original.pathMatchType === "regex"
-                                    ? "^/api/.*"
-                                    : "/path"
-                            }
-                            defaultValue={row.original.path || ""}
-                            className="flex-1 min-w-[150px]"
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (!value) {
-                                    setShowPathInput(false);
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: null,
-                                        pathMatchType: null
-                                    });
-                                } else {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: value
-                                    });
-                                }
-                            }}
                         />
                         <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(false);
+                            variant="text"
+                            size="sm"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
                                     path: null,
-                                    pathMatchType: null
+                                    pathMatchType: null,
                                 });
                             }}
                         >
                             ×
                         </Button>
 
-                        <MoveRight className="ml-4 h-4 w-4" />
+                        {/* <MoveRight className="ml-1 h-4 w-4" /> */}
                     </div>
+                ) : (
+                    <PathMatchModal
+                        value={{
+                            path: row.original.path,
+                            pathMatchType: row.original.pathMatchType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline" size="sm">
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("matchPath")}
+                            </Button>
+                        }
+                    />
                 );
-            }
+            },
         },
         {
             accessorKey: "siteId",
@@ -886,98 +858,68 @@ export default function ReverseProxyTargets(props: {
             accessorKey: "rewritePath",
             header: t("rewritePath"),
             cell: ({ row }) => {
-                const [showRewritePathInput, setShowRewritePathInput] = useState(
-                    !!(row.original.rewritePath || row.original.rewritePathType)
-                );
+                const hasRewritePath = !!(row.original.rewritePath || row.original.rewritePathType);
+                const noPathMatch = !row.original.path && !row.original.pathMatchType;
 
-                if (!showRewritePathInput) {
-                    const noPathMatch =
-                        !row.original.path && !row.original.pathMatchType;
-                    return (
-                        <Button
-                            variant="outline"
-                            disabled={noPathMatch}
-                            onClick={() => {
-                                setShowRewritePathInput(true);
-                                // Set default rewritePathType when first showing path input
-                                if (!row.original.rewritePathType) {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        rewritePathType: "prefix"
-                                    });
-                                }
+                return hasRewritePath && !noPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        {/* <MoveRight className="mr-2 h-4 w-4" /> */}
+                        <PathRewriteModal
+                            value={{
+                                rewritePath: row.original.rewritePath,
+                                rewritePathType: row.original.rewritePathType,
                             }}
-                        >
-                            + {t("rewritePath")}
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2 min-w-[200px] items-center">
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                    disabled={noPathMatch}
+                                >
+                                    <PathRewriteDisplay
+                                        value={{
+                                            rewritePath: row.original.rewritePath,
+                                            rewritePathType: row.original.rewritePathType,
+                                        }}
+                                    />
+                                </Button>
+                            }
+                        />
                         <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowRewritePathInput(false);
+                            size="sm"
+                            variant="text"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
                                     rewritePath: null,
-                                    rewritePathType: null
+                                    rewritePathType: null,
                                 });
                             }}
                         >
                             ×
                         </Button>
-
-                        <MoveRight className="ml-4 h-4 w-4" />
-                        <Select
-                            defaultValue={row.original.rewritePathType || "prefix"}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    rewritePathType: value as "exact" | "prefix" | "regex"
-                                })
-                            }
-                        >
-                            <SelectTrigger className="w-25">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="prefix">Prefix</SelectItem>
-                                <SelectItem value="exact">Exact</SelectItem>
-                                <SelectItem value="regex">Regex</SelectItem>
-                                <SelectItem value="stripPrefix">Strip Prefix</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input
-                            placeholder={
-                                row.original.rewritePathType === "regex"
-                                    ? "^/api/.*"
-                                    : "/path"
-                            }
-                            defaultValue={row.original.rewritePath || ""}
-                            className="flex-1 min-w-[150px]"
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (!value) {
-                                    setShowRewritePathInput(false);
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        rewritePath: null,
-                                        rewritePathType: null
-                                    });
-                                } else {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        rewritePath: value
-                                    });
-                                }
-                            }}
-                        />
                     </div>
+                ) : (
+                    <PathRewriteModal
+                        value={{
+                            rewritePath: row.original.rewritePath,
+                            rewritePathType: row.original.rewritePathType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline" size="sm" disabled={noPathMatch}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("rewritePath")}
+                            </Button>
+                        }
+                        disabled={noPathMatch}
+                    />
                 );
-            }
+            },
         },
+
         // {
         //     accessorKey: "protocol",
         //     header: t('targetProtocol'),
@@ -1649,7 +1591,6 @@ export default function ReverseProxyTargets(props: {
 }
 
 function isIPInSubnet(subnet: string, ip: string): boolean {
-    // Split subnet into IP and mask parts
     const [subnetIP, maskBits] = subnet.split("/");
     const mask = parseInt(maskBits);
 
