@@ -648,7 +648,7 @@ export default function ReverseProxyTargets(props: {
                         }}
                         onChange={(config) => updateTarget(row.original.targetId, config)}
                         trigger={
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline">
                                 <Plus className="h-4 w-4 mr-2" />
                                 {t("matchPath")}
                             </Button>
@@ -909,7 +909,7 @@ export default function ReverseProxyTargets(props: {
                         }}
                         onChange={(config) => updateTarget(row.original.targetId, config)}
                         trigger={
-                            <Button variant="outline" size="sm" disabled={noPathMatch}>
+                            <Button variant="outline" disabled={noPathMatch}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 {t("rewritePath")}
                             </Button>
