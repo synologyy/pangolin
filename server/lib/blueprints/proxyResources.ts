@@ -107,7 +107,9 @@ export async function updateProxyResources(
                     enabled: targetData.enabled,
                     internalPort: internalPortToCreate,
                     path: targetData.path,
-                    pathMatchType: targetData["path-match"]
+                    pathMatchType: targetData["path-match"],
+                    rewritePath: targetData.rewritePath,
+                    rewritePathType: targetData["rewrite-match"]
                 })
                 .returning();
 
@@ -327,7 +329,9 @@ export async function updateProxyResources(
                             port: targetData.port,
                             enabled: targetData.enabled,
                             path: targetData.path,
-                            pathMatchType: targetData["path-match"]
+                            pathMatchType: targetData["path-match"],
+                            rewritePath: targetData.rewritePath,
+                            rewritePathType: targetData["rewrite-match"]
                         })
                         .where(eq(targets.targetId, existingTarget.targetId))
                         .returning();
