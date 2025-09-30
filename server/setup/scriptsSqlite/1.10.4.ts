@@ -82,6 +82,8 @@ export default async function migration() {
         for (const row of rows) {
             updateStmt.run(randomUUID(), row.resourceId);
         }
+
+        db.prepare(`ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "settings" text`).run();
     })();
 
     console.log(`${version} migration complete`);

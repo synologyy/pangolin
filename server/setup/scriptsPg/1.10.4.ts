@@ -49,33 +49,35 @@ export default async function migration() {
                 INSERT INTO "webauthnCredentials" ("credentialId", "publicKey", "userId", "signCount", "transports", "name", "lastUsed", "dateCreated")
                 VALUES (${newCredentialId}, ${newPublicKey}, ${webauthnCredential.userId}, ${webauthnCredential.signCount}, ${webauthnCredential.transports}, ${webauthnCredential.name}, ${webauthnCredential.lastUsed}, ${webauthnCredential.dateCreated})
             `);
+        }
 
-            // 1. Add the column with placeholder so NOT NULL is satisfied
-            await db.execute(sql`
+        // 1. Add the column with placeholder so NOT NULL is satisfied
+        await db.execute(sql`
             ALTER TABLE "resources"
             ADD COLUMN IF NOT EXISTS "resourceGuid" varchar(36) NOT NULL DEFAULT 'PLACEHOLDER'
         `);
 
-            // 2. Fetch every row to backfill UUIDs
-            const rows = await db.execute(
-                sql`SELECT "resourceId" FROM "resources" WHERE "resourceGuid" = 'PLACEHOLDER'`
-            );
-            const resources = rows.rows as { resourceId: number }[];
+        // 2. Fetch every row to backfill UUIDs
+        const rows = await db.execute(
+            sql`SELECT "resourceId" FROM "resources" WHERE "resourceGuid" = 'PLACEHOLDER'`
+        );
+        const resources = rows.rows as { resourceId: number }[];
 
-            for (const r of resources) {
-                await db.execute(sql`
+        for (const r of resources) {
+            await db.execute(sql`
                 UPDATE "resources"
                 SET "resourceGuid" = ${randomUUID()}
                 WHERE "resourceId" = ${r.resourceId}
             `);
-            }
+        }
 
-            // 3. Add UNIQUE constraint now that values are filled
-            await db.execute(sql`
+        // 3. Add UNIQUE constraint now that values are filled
+        await db.execute(sql`
             ALTER TABLE "resources"
             ADD CONSTRAINT "resources_resourceGuid_unique" UNIQUE("resourceGuid")
         `);
-        }
+
+        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "settings" text`);
 
         await db.execute(sql`COMMIT`);
         console.log(`Updated credentialId and publicKey`);
