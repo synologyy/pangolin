@@ -65,10 +65,6 @@ export default async function migration() {
             `ALTER TABLE resources ADD COLUMN resourceGuid TEXT DEFAULT 'PLACEHOLDER';`
         ).run();
 
-        db.prepare(
-            `CREATE UNIQUE INDEX resources_resourceGuid_unique ON resources ('resourceGuid');`
-        ).run();
-
         // 2. Select all rows
         const rows = db.prepare(`SELECT resourceId FROM resources`).all() as {
             resourceId: number;
@@ -82,6 +78,10 @@ export default async function migration() {
         for (const row of rows) {
             updateStmt.run(randomUUID(), row.resourceId);
         }
+
+        db.prepare(
+            `CREATE UNIQUE INDEX resources_resourceGuid_unique ON resources ('resourceGuid');`
+        ).run();
 
         db.prepare(`ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "settings" text`).run();
     })();
