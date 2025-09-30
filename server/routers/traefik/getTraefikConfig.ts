@@ -183,7 +183,7 @@ function createPathRewriteMiddleware(
 
     switch (rewritePathType) {
         case "exact":
-            // Replace the entire path with the exact rewrite path
+            // Replace the path with the exact rewrite path
             let exactPattern = `^${escapeRegex(path)}$`;
             middlewares[middlewareName] = {
                 replacePathRegex: {
@@ -549,10 +549,10 @@ export async function getTraefikConfig(
                         config_output.http.middlewares = {};
                     }
 
-                    // Add the middleware(s) to the config
+                    // the middleware to the config
                     Object.assign(config_output.http.middlewares, rewriteResult.middlewares);
 
-                    // Add middleware(s) to the router middleware chain
+                    // middlewares to the router middleware chain
                     if (rewriteResult.chain) {
                         // For chained middlewares (like stripPrefix + addPrefix)
                         routerMiddlewares.push(...rewriteResult.chain);
@@ -564,7 +564,6 @@ export async function getTraefikConfig(
                     logger.info(`Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`);
                 } catch (error) {
                     logger.error(`Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`);
-                    // Continue without the rewrite middleware rather than failing completely
                 }
             }
 

@@ -610,6 +610,8 @@ export default function Page() {
                                     ...row.original,
                                     path: null,
                                     pathMatchType: null,
+                                    rewritePath: null,
+                                    rewritePathType: null
                                 });
                             }}
                         >

@@ -632,6 +632,8 @@ export default function ReverseProxyTargets(props: {
                                     ...row.original,
                                     path: null,
                                     pathMatchType: null,
+                                    rewritePath: null,
+                                    rewritePathType: null
                                 });
                             }}
                         >
