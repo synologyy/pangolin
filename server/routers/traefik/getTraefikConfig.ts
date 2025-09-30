@@ -455,11 +455,13 @@ export async function getTraefikConfig(
     for (const [key, resource] of resourcesMap.entries()) {
         const targets = resource.targets;
 
-        const routerName = `${key}-router`;
-        const serviceName = `${key}-service`;
+        const sanatizedKey = sanitizeForMiddlewareName(key);
+
+        const routerName = `${sanatizedKey}-router`;
+        const serviceName = `${sanatizedKey}-service`;
         const fullDomain = `${resource.fullDomain}`;
-        const transportName = `${key}-transport`;
-        const headersMiddlewareName = `${key}-headers-middleware`;
+        const transportName = `${sanatizedKey}-transport`;
+        const headersMiddlewareName = `${sanatizedKey}-headers-middleware`;
 
         if (!resource.enabled) {
             continue;
