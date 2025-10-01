@@ -108,12 +108,12 @@ function validatePathRewriteConfig(
         return { isValid: true };
     }
 
-    if ((rewritePath && !rewritePathType) || (!rewritePath && rewritePathType)) {
-        return {
-            isValid: false,
-            error: "Both rewritePath and rewritePathType must be specified together"
-        };
+    if (rewritePathType !== "stripPrefix") {
+        if ((rewritePath && !rewritePathType) || (!rewritePath && rewritePathType)) {
+            return { isValid: false, error: "Both rewritePath and rewritePathType must be specified together" };
+        }
     }
+
 
     if (!rewritePath || !rewritePathType) {
         return { isValid: true };
@@ -146,25 +146,11 @@ function validatePathRewriteConfig(
         }
     }
 
-    // Validate path formats for non-regex types
-    if (pathMatchType !== "regex" && !path.startsWith("/")) {
-        return {
-            isValid: false,
-            error: "Path must start with '/' for exact and prefix matching"
-        };
-    }
 
     // Additional validation for stripPrefix
     if (rewritePathType === "stripPrefix") {
         if (pathMatchType !== "prefix") {
             logger.warn(`stripPrefix rewrite type is most effective with prefix path matching. Current match type: ${pathMatchType}`);
-        }
-        // For stripPrefix, rewritePath is optional (can be empty to just strip)
-        if (rewritePath && !rewritePath.startsWith("/") && rewritePath !== "") {
-            return {
-                isValid: false,
-                error: "stripPrefix rewritePath must start with '/' or be empty"
-            };
         }
     }
 
@@ -180,6 +166,14 @@ function createPathRewriteMiddleware(
     rewritePathType: string
 ): { middlewares: { [key: string]: any }; chain?: string[] } {
     const middlewares: { [key: string]: any } = {};
+
+    if (pathMatchType !== "regex" && !path.startsWith("/")) {
+        path = `/${path}`;
+    }
+
+    if (rewritePathType !== "regex" && rewritePath !== "" && !rewritePath.startsWith("/")) {
+        rewritePath = `/${rewritePath}`;
+    }
 
     switch (rewritePathType) {
         case "exact":
@@ -260,9 +254,9 @@ function createPathRewriteMiddleware(
                             prefix: rewritePath
                         }
                     };
-                    return { 
-                        middlewares, 
-                        chain: [middlewareName, addPrefixMiddlewareName] 
+                    return {
+                        middlewares,
+                        chain: [middlewareName, addPrefixMiddlewareName]
                     };
                 }
             } else {
@@ -387,7 +381,7 @@ export async function getTraefikConfig(
 
             if (!validation.isValid) {
                 logger.error(`Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`);
-                return; 
+                return;
             }
 
             resourcesMap.set(mapKey, {
@@ -520,8 +514,8 @@ export async function getTraefikConfig(
                 };
             }
 
-            const additionalMiddlewares = 
-            config.getRawConfig().traefik.additional_middlewares || [];
+            const additionalMiddlewares =
+                config.getRawConfig().traefik.additional_middlewares || [];
 
             const routerMiddlewares = [
                 badgerMiddlewareName,
@@ -529,14 +523,14 @@ export async function getTraefikConfig(
             ];
 
             // Handle path rewriting middleware
-            if (resource.rewritePath && 
-                resource.path && 
-                resource.pathMatchType && 
+            if (resource.rewritePath &&
+                resource.path &&
+                resource.pathMatchType &&
                 resource.rewritePathType) {
-                
+
                 // Create a unique middleware name
                 const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${sanitizeForMiddlewareName(key)}`;
-                
+
                 try {
                     const rewriteResult = createPathRewriteMiddleware(
                         rewriteMiddlewareName,
@@ -572,7 +566,7 @@ export async function getTraefikConfig(
             // Handle custom headers middleware
             if (resource.headers || resource.setHostHeader) {
                 const headersObj: { [key: string]: string } = {};
-                
+
                 if (resource.headers) {
                     let headersArr: { name: string; value: string }[] = [];
                     try {
@@ -668,15 +662,15 @@ export async function getTraefikConfig(
 
                         return (
                             (targets as TargetWithSite[])
-                            .filter((target: TargetWithSite) => {
-                                if (!target.enabled) {
-                                    return false;
-                                }
+                                .filter((target: TargetWithSite) => {
+                                    if (!target.enabled) {
+                                        return false;
+                                    }
 
                                     // If any sites are online, exclude offline sites
-                                if (anySitesOnline && !target.site.online) {
-                                    return false;
-                                }
+                                    if (anySitesOnline && !target.site.online) {
+                                        return false;
+                                    }
 
                                     if (
                                         target.site.type === "local" ||
@@ -689,33 +683,33 @@ export async function getTraefikConfig(
                                         ) {
                                             return false;
                                         }
-                                } else if (target.site.type === "newt") {
+                                    } else if (target.site.type === "newt") {
                                         if (
                                             !target.internalPort ||
                                             !target.method ||
                                             !target.site.subnet
                                         ) {
-                                return false;
+                                            return false;
                                         }
                                     }
                                     return true;
-                            })
-                            .map((target: TargetWithSite) => {
+                                })
+                                .map((target: TargetWithSite) => {
                                     if (
                                         target.site.type === "local" ||
                                         target.site.type === "wireguard"
                                     ) {
-                                    return {
-                                        url: `${target.method}://${target.ip}:${target.port}`
-                                    };
-                                } else if (target.site.type === "newt") {
+                                        return {
+                                            url: `${target.method}://${target.ip}:${target.port}`
+                                        };
+                                    } else if (target.site.type === "newt") {
                                         const ip =
                                             target.site.subnet!.split("/")[0];
-                                    return {
-                                        url: `${target.method}://${ip}:${target.internalPort}`
-                                    };
-                                }
-                            })
+                                        return {
+                                            url: `${target.method}://${ip}:${target.internalPort}`
+                                        };
+                                    }
+                                })
                                 // filter out duplicates
                                 .filter(
                                     (v, i, a) =>
@@ -729,7 +723,7 @@ export async function getTraefikConfig(
                         ? {
                             sticky: {
                                 cookie: {
-                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
                                     secure: resource.ssl,
                                     httpOnly: true
                                 }
@@ -811,7 +805,7 @@ export async function getTraefikConfig(
                                         !target.internalPort ||
                                         !target.site.subnet
                                     ) {
-                                return false;
+                                        return false;
                                     }
                                 }
                                 return true;
@@ -852,16 +846,16 @@ export async function getTraefikConfig(
 
 function sanitizePath(path: string | null | undefined): string | undefined {
     if (!path) return undefined;
-    
+
     const trimmed = path.trim();
     if (!trimmed) return undefined;
-    
+
     // Preserve path structure for rewriting, only warn if very long
     if (trimmed.length > 1000) {
         logger.warn(`Path exceeds 1000 characters: ${trimmed.substring(0, 100)}...`);
         return trimmed.substring(0, 1000);
     }
-    
+
     return trimmed;
 }
 
