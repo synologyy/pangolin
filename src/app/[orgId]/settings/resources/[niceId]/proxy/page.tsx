@@ -1489,6 +1489,11 @@ export default function ReverseProxyTargets(props: {
                                                         rows={4}
                                                     />
                                                 </FormControl>
+                                                <FormDescription>
+                                                    {t(
+                                                        "customHeadersDescription"
+                                                    )}
+                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
