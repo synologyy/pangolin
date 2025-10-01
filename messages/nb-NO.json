@@ -1504,6 +1504,7 @@
     "idpGoogleDescription": "Google OAuth2/OIDC leverandør",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Egendefinerte topptekster",
+    "customHeadersDescription": "Add custom headers to be sent when proxying requests. One per line in the format Header-Name: value",
     "headersValidationError": "Topptekst må være i formatet: header-navn: verdi.",
     "domainPickerProvidedDomain": "Gitt domene",
     "domainPickerFreeProvidedDomain": "Gratis oppgitt domene",
