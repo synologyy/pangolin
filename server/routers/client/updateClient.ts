@@ -280,6 +280,7 @@ export async function updateClient(
             reachableAt: string;
             exitNodeId: number;
             type: string;
+            name: string;
             sourceIp: string;
             sourcePort: number;
             destinations: PeerDestination[];
@@ -310,6 +311,7 @@ export async function updateClient(
                     reachableAt: site.exitNodes?.reachableAt || "",
                     exitNodeId: site.exitNodes?.exitNodeId || 0,
                     type: site.exitNodes?.type || "",
+                    name: site.exitNodes?.name || "",
                     sourceIp: site.clientSites.endpoint.split(":")[0] || "",
                     sourcePort:
                         parseInt(site.clientSites.endpoint.split(":")[1]) || 0,
@@ -352,7 +354,8 @@ export async function updateClient(
             const exitNodeForComm = {
                 exitNodeId: destination.exitNodeId,
                 type: destination.type,
-                reachableAt: destination.reachableAt
+                reachableAt: destination.reachableAt,
+                name: destination.name
             } as any; // Using 'as any' since we know sendToExitNode will handle this correctly
 
             await sendToExitNode(exitNodeForComm, {
