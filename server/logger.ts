@@ -6,6 +6,7 @@ import { APP_PATH } from "./lib/consts";
 import telemetryClient from "./lib/telemetry";
 
 // helper to get ISO8601 string in the TZ from process.env.TZ
+// This replaces the default Z (UTC) with the local offset from process.env.TZ
 const isoLocal = () => {
     const tz = process.env.TZ || "UTC";
     const d = new Date();
@@ -15,6 +16,8 @@ const isoLocal = () => {
     const pad = (n: number) => String(n).padStart(2, "0");
     const hours = pad(Math.floor(Math.abs(tzOffsetMin) / 60));
     const mins = pad(Math.abs(tzOffsetMin) % 60);
+
+    // Replace Z in ISO string with local offset
     return s.replace(" ", "T") + `${sign}${hours}:${mins}`;
 };
 
@@ -74,6 +77,8 @@ const logger = winston.createLogger({
         winston.format.errors({ stack: true }),
         winston.format.colorize(),
         winston.format.splat(),
+
+        // Use isoLocal so timestamps respect TZ env, not just UTC
         winston.format.timestamp({ format: isoLocal }),
         hformat
     ),

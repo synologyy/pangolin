@@ -29,7 +29,9 @@ RUN apk add --no-cache curl
 
 # COPY package.json package-lock.json ./
 COPY package*.json ./
-#RUN npm ci --omit=dev && npm cache clean --force
+
+# 'npm ci --omit=dev' with 'npm install --omit=dev' to fix Alpine build failure
+# RUN npm ci --omit=dev && npm cache clean --force
 RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/.next/standalone ./
