@@ -476,7 +476,9 @@ export default function CreateShareLinkForm({
                                     </p>
 
                                     <div className="h-[250px] w-full mx-auto flex items-center justify-center">
+                                        <div className="bg-white p-6 border rounded-md">
                                         <QRCodeCanvas value={link} size={200} />
+                                        </div>
                                     </div>
 
                                     <Collapsible
