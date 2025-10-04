@@ -1504,6 +1504,7 @@
     "idpGoogleDescription": "Proveedor OAuth2/OIDC de Google",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Cabeceras personalizadas",
+    "customHeadersDescription": "Add custom headers to be sent when proxying requests. One per line in the format Header-Name: value",
     "headersValidationError": "Los encabezados deben estar en el formato: Nombre de cabecera: valor.",
     "domainPickerProvidedDomain": "Dominio proporcionado",
     "domainPickerFreeProvidedDomain": "Dominio proporcionado gratis",
@@ -1521,5 +1522,7 @@
     "resourceAddEntrypointsEditFile": "Editar archivo: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Editar archivo: docker-compose.yml",
     "emailVerificationRequired": "Se requiere verificación de correo electrónico. Por favor, inicie sesión de nuevo a través de {dashboardUrl}/auth/login complete este paso. Luego, vuelva aquí.",
-    "twoFactorSetupRequired": "La configuración de autenticación de doble factor es requerida. Por favor, inicia sesión de nuevo a través de {dashboardUrl}/auth/login completa este paso. Luego, vuelve aquí."
+    "twoFactorSetupRequired": "La configuración de autenticación de doble factor es requerida. Por favor, inicia sesión de nuevo a través de {dashboardUrl}/auth/login completa este paso. Luego, vuelve aquí.",
+    "rewritePath": "Rewrite Path",
+    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target."
 }
