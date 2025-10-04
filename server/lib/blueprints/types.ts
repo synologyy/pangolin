@@ -14,7 +14,9 @@ export const TargetSchema = z.object({
     enabled: z.boolean().optional().default(true),
     "internal-port": z.number().int().min(1).max(65535).optional(),
     path: z.string().optional(),
-    "path-match": z.enum(["exact", "prefix", "regex"]).optional().nullable()
+    "path-match": z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+    rewritePath: z.string().optional(),
+    "rewrite-match": z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
 });
 export type TargetData = z.infer<typeof TargetSchema>;
 
@@ -183,7 +185,7 @@ export const ClientResourceSchema = z.object({
     "proxy-port": z.number().min(1).max(65535),
     "hostname": z.string().min(1).max(255),
     "internal-port": z.number().min(1).max(65535),
-    enabled: z.boolean().optional().default(true)   
+    enabled: z.boolean().optional().default(true)
 });
 
 // Schema for the entire configuration object

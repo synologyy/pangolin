@@ -46,7 +46,9 @@ function queryTargets(resourceId: number) {
             siteId: targets.siteId,
             siteType: sites.type,
             path: targets.path,
-            pathMatchType: targets.pathMatchType
+            pathMatchType: targets.pathMatchType,
+            rewritePath: targets.rewritePath,
+            rewritePathType: targets.rewritePathType
         })
         .from(targets)
         .leftJoin(sites, eq(sites.siteId, targets.siteId))

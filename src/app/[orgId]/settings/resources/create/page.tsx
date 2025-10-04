@@ -58,7 +58,7 @@ import {
 } from "@app/components/ui/popover";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { cn } from "@app/lib/cn";
-import { ArrowRight, MoveRight, SquareArrowOutUpRight } from "lucide-react";
+import { ArrowRight, MoveRight, Plus, SquareArrowOutUpRight } from "lucide-react";
 import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -92,6 +92,7 @@ import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { toASCII, toUnicode } from 'punycode';
 import { DomainRow } from "../../../../../components/DomainsTable";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
+import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
 
 
 const baseResourceFormSchema = z.object({
@@ -116,7 +117,9 @@ const addTargetSchema = z.object({
     port: z.coerce.number().int().positive(),
     siteId: z.number().int().positive(),
     path: z.string().optional().nullable(),
-    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable()
+    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+    rewritePath: z.string().optional().nullable(),
+    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
 }).refine(
     (data) => {
         // If path is provided, pathMatchType must be provided
@@ -149,7 +152,23 @@ const addTargetSchema = z.object({
     {
         message: "Invalid path configuration"
     }
-);
+)
+    .refine(
+        (data) => {
+            // If rewritePath is provided, rewritePathType must be provided
+            if (data.rewritePath && !data.rewritePathType) {
+                return false;
+            }
+            // If rewritePathType is provided, rewritePath must be provided
+            if (data.rewritePathType && !data.rewritePath) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message: "Invalid rewrite path configuration"
+        }
+    );
 
 type BaseResourceFormValues = z.infer<typeof baseResourceFormSchema>;
 type HttpResourceFormValues = z.infer<typeof httpResourceFormSchema>;
@@ -240,8 +259,10 @@ export default function Page() {
             method: baseForm.watch("http") ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
-        }
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
+        } as z.infer<typeof addTargetSchema>
     });
 
     const watchedIp = addTargetForm.watch("ip");
@@ -313,6 +334,8 @@ export default function Page() {
             ...data,
             path: data.path || null,
             pathMatchType: data.pathMatchType || null,
+            rewritePath: data.rewritePath || null,
+            rewritePathType: data.rewritePathType || null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
@@ -326,7 +349,9 @@ export default function Page() {
             method: baseForm.watch("http") ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
         });
     }
 
@@ -422,7 +447,9 @@ export default function Page() {
                                 enabled: target.enabled,
                                 siteId: target.siteId,
                                 path: target.path,
-                                pathMatchType: target.pathMatchType
+                                pathMatchType: target.pathMatchType,
+                                rewritePath: target.rewritePath,
+                                rewritePathType: target.rewritePathType
                             };
 
                             await api.put(`/resource/${id}/target`, data);
@@ -549,93 +576,66 @@ export default function Page() {
             accessorKey: "path",
             header: t("matchPath"),
             cell: ({ row }) => {
-                const [showPathInput, setShowPathInput] = useState(
-                    !!(row.original.path || row.original.pathMatchType)
-                );
+                const hasPathMatch = !!(row.original.path || row.original.pathMatchType);
 
-                if (!showPathInput) {
-                    return (
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(true);
-                                // Set default pathMatchType when first showing path input
-                                if (!row.original.pathMatchType) {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        pathMatchType: "prefix"
-                                    });
-                                }
+                return hasPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        <PathMatchModal
+                            value={{
+                                path: row.original.path,
+                                pathMatchType: row.original.pathMatchType,
                             }}
-                        >
-                            + {t("matchPath")}
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2 min-w-[200px] items-center">
-                        <Select
-                            defaultValue={row.original.pathMatchType || "prefix"}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    pathMatchType: value as "exact" | "prefix" | "regex"
-                                })
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                >
+                                    <PathMatchDisplay
+                                        value={{
+                                            path: row.original.path,
+                                            pathMatchType: row.original.pathMatchType,
+                                        }}
+                                    />
+                                </Button>
                             }
-                        >
-                            <SelectTrigger className="w-25">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="prefix">Prefix</SelectItem>
-                                <SelectItem value="exact">Exact</SelectItem>
-                                <SelectItem value="regex">Regex</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input
-                            placeholder={
-                                row.original.pathMatchType === "regex"
-                                    ? "^/api/.*"
-                                    : "/path"
-                            }
-                            defaultValue={row.original.path || ""}
-                            className="flex-1 min-w-[150px]"
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (!value) {
-                                    setShowPathInput(false);
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: null,
-                                        pathMatchType: null
-                                    });
-                                } else {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: value
-                                    });
-                                }
-                            }}
                         />
                         <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(false);
+                            variant="text"
+                            size="sm"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
                                     path: null,
-                                    pathMatchType: null
+                                    pathMatchType: null,
+                                    rewritePath: null,
+                                    rewritePathType: null
                                 });
                             }}
                         >
                             ×
                         </Button>
 
-                        <MoveRight className="ml-4 h-4 w-4" />
+                        {/* <MoveRight className="ml-1 h-4 w-4" /> */}
                     </div>
+                ) : (
+                    <PathMatchModal
+                        value={{
+                            path: row.original.path,
+                            pathMatchType: row.original.pathMatchType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline">
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("matchPath")}
+                            </Button>
+                        }
+                    />
                 );
-            }
+            },
         },
         {
             accessorKey: "siteId",
@@ -819,6 +819,71 @@ export default function Page() {
                     }
                 />
             )
+        },
+        {
+            accessorKey: "rewritePath",
+            header: t("rewritePath"),
+            cell: ({ row }) => {
+                const hasRewritePath = !!(row.original.rewritePath || row.original.rewritePathType);
+                const noPathMatch = !row.original.path && !row.original.pathMatchType;
+
+                return hasRewritePath && !noPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        {/* <MoveRight className="mr-2 h-4 w-4" /> */}
+                        <PathRewriteModal
+                            value={{
+                                rewritePath: row.original.rewritePath,
+                                rewritePathType: row.original.rewritePathType,
+                            }}
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                    disabled={noPathMatch}
+                                >
+                                    <PathRewriteDisplay
+                                        value={{
+                                            rewritePath: row.original.rewritePath,
+                                            rewritePathType: row.original.rewritePathType,
+                                        }}
+                                    />
+                                </Button>
+                            }
+                        />
+                        <Button
+                            size="sm"
+                            variant="text"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    rewritePath: null,
+                                    rewritePathType: null,
+                                });
+                            }}
+                        >
+                            ×
+                        </Button>
+                    </div>
+                ) : (
+                    <PathRewriteModal
+                        value={{
+                            rewritePath: row.original.rewritePath,
+                            rewritePathType: row.original.rewritePathType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline" disabled={noPathMatch}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("rewritePath")}
+                            </Button>
+                        }
+                        disabled={noPathMatch}
+                    />
+                );
+            },
         },
         {
             accessorKey: "enabled",

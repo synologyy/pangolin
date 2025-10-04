@@ -90,6 +90,204 @@ export async function traefikConfigProvider(
     }
 }
 
+
+function validatePathRewriteConfig(
+    path: string | null,
+    pathMatchType: string | null,
+    rewritePath: string | null,
+    rewritePathType: string | null
+): { isValid: boolean; error?: string } {
+    // If no path matching is configured, no rewriting is possible
+    if (!path || !pathMatchType) {
+        if (rewritePath || rewritePathType) {
+            return {
+                isValid: false,
+                error: "Path rewriting requires path matching to be configured"
+            };
+        }
+        return { isValid: true };
+    }
+
+    if (rewritePathType !== "stripPrefix") {
+        if ((rewritePath && !rewritePathType) || (!rewritePath && rewritePathType)) {
+            return { isValid: false, error: "Both rewritePath and rewritePathType must be specified together" };
+        }
+    }
+
+
+    if (!rewritePath || !rewritePathType) {
+        return { isValid: true };
+    }
+
+    const validPathMatchTypes = ["exact", "prefix", "regex"];
+    if (!validPathMatchTypes.includes(pathMatchType)) {
+        return {
+            isValid: false,
+            error: `Invalid pathMatchType: ${pathMatchType}. Must be one of: ${validPathMatchTypes.join(", ")}`
+        };
+    }
+
+    const validRewritePathTypes = ["exact", "prefix", "regex", "stripPrefix"];
+    if (!validRewritePathTypes.includes(rewritePathType)) {
+        return {
+            isValid: false,
+            error: `Invalid rewritePathType: ${rewritePathType}. Must be one of: ${validRewritePathTypes.join(", ")}`
+        };
+    }
+
+    if (pathMatchType === "regex") {
+        try {
+            new RegExp(path);
+        } catch (e) {
+            return {
+                isValid: false,
+                error: `Invalid regex pattern in path: ${path}`
+            };
+        }
+    }
+
+
+    // Additional validation for stripPrefix
+    if (rewritePathType === "stripPrefix") {
+        if (pathMatchType !== "prefix") {
+            logger.warn(`stripPrefix rewrite type is most effective with prefix path matching. Current match type: ${pathMatchType}`);
+        }
+    }
+
+    return { isValid: true };
+}
+
+
+function createPathRewriteMiddleware(
+    middlewareName: string,
+    path: string,
+    pathMatchType: string,
+    rewritePath: string,
+    rewritePathType: string
+): { middlewares: { [key: string]: any }; chain?: string[] } {
+    const middlewares: { [key: string]: any } = {};
+
+    if (pathMatchType !== "regex" && !path.startsWith("/")) {
+        path = `/${path}`;
+    }
+
+    if (rewritePathType !== "regex" && rewritePath !== "" && !rewritePath.startsWith("/")) {
+        rewritePath = `/${rewritePath}`;
+    }
+
+    switch (rewritePathType) {
+        case "exact":
+            // Replace the path with the exact rewrite path
+            let exactPattern = `^${escapeRegex(path)}$`;
+            middlewares[middlewareName] = {
+                replacePathRegex: {
+                    regex: exactPattern,
+                    replacement: rewritePath
+                }
+            };
+            break;
+
+        case "prefix":
+            // Replace matched prefix with new prefix, preserve the rest
+            switch (pathMatchType) {
+                case "prefix":
+                    middlewares[middlewareName] = {
+                        replacePathRegex: {
+                            regex: `^${escapeRegex(path)}(.*)`,
+                            replacement: `${rewritePath}$1`
+                        }
+                    };
+                    break;
+                case "exact":
+                    middlewares[middlewareName] = {
+                        replacePathRegex: {
+                            regex: `^${escapeRegex(path)}$`,
+                            replacement: rewritePath
+                        }
+                    };
+                    break;
+                case "regex":
+                    // For regex path matching with prefix rewrite, we assume the regex has capture groups
+                    middlewares[middlewareName] = {
+                        replacePathRegex: {
+                            regex: path,
+                            replacement: rewritePath
+                        }
+                    };
+                    break;
+            }
+            break;
+
+        case "regex":
+            // Use advanced regex replacement - works with any match type
+            let regexPattern: string;
+            if (pathMatchType === "regex") {
+                regexPattern = path;
+            } else if (pathMatchType === "prefix") {
+                regexPattern = `^${escapeRegex(path)}(.*)`;
+            } else { // exact
+                regexPattern = `^${escapeRegex(path)}$`;
+            }
+
+            middlewares[middlewareName] = {
+                replacePathRegex: {
+                    regex: regexPattern,
+                    replacement: rewritePath
+                }
+            };
+            break;
+
+        case "stripPrefix":
+            // Strip the matched prefix and optionally add new path
+            if (pathMatchType === "prefix") {
+                middlewares[middlewareName] = {
+                    stripPrefix: {
+                        prefixes: [path]
+                    }
+                };
+
+                // If rewritePath is provided and not empty, add it as a prefix after stripping
+                if (rewritePath && rewritePath !== "" && rewritePath !== "/") {
+                    const addPrefixMiddlewareName = `addprefix-${middlewareName.replace('rewrite-', '')}`;
+                    middlewares[addPrefixMiddlewareName] = {
+                        addPrefix: {
+                            prefix: rewritePath
+                        }
+                    };
+                    return {
+                        middlewares,
+                        chain: [middlewareName, addPrefixMiddlewareName]
+                    };
+                }
+            } else {
+                // For exact and regex matches, use replacePathRegex to strip
+                let regexPattern: string;
+                if (pathMatchType === "exact") {
+                    regexPattern = `^${escapeRegex(path)}$`;
+                } else if (pathMatchType === "regex") {
+                    regexPattern = path;
+                } else {
+                    regexPattern = `^${escapeRegex(path)}`;
+                }
+
+                const replacement = rewritePath || "/";
+                middlewares[middlewareName] = {
+                    replacePathRegex: {
+                        regex: regexPattern,
+                        replacement: replacement
+                    }
+                };
+            }
+            break;
+
+        default:
+            logger.error(`Unknown rewritePathType: ${rewritePathType}`);
+            throw new Error(`Unknown rewritePathType: ${rewritePathType}`);
+    }
+
+    return { middlewares };
+}
+
 export async function getTraefikConfig(
     exitNodeId: number,
     siteTypes: string[]
@@ -133,7 +331,8 @@ export async function getTraefikConfig(
             internalPort: targets.internalPort,
             path: targets.path,
             pathMatchType: targets.pathMatchType,
-
+            rewritePath: targets.rewritePath,
+            rewritePathType: targets.rewritePathType,
             // Site fields
             siteId: sites.siteId,
             siteType: sites.type,
@@ -163,12 +362,28 @@ export async function getTraefikConfig(
         const resourceId = row.resourceId;
         const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
         const pathMatchType = row.pathMatchType || "";
+        const rewritePath = row.rewritePath || "";
+        const rewritePathType = row.rewritePathType || "";
 
-        // Create a unique key combining resourceId and path+pathMatchType
-        const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
+        // Create a unique key combining resourceId, path config, and rewrite config
+        const pathKey = [targetPath, pathMatchType, rewritePath, rewritePathType]
+            .filter(Boolean)
+            .join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
 
         if (!resourcesMap.has(mapKey)) {
+            const validation = validatePathRewriteConfig(
+                row.path,
+                row.pathMatchType,
+                row.rewritePath,
+                row.rewritePathType
+            );
+
+            if (!validation.isValid) {
+                logger.error(`Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`);
+                return;
+            }
+
             resourcesMap.set(mapKey, {
                 resourceId: row.resourceId,
                 fullDomain: row.fullDomain,
@@ -186,7 +401,9 @@ export async function getTraefikConfig(
                 targets: [],
                 headers: row.headers,
                 path: row.path, // the targets will all have the same path
-                pathMatchType: row.pathMatchType // the targets will all have the same pathMatchType
+                pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
+                rewritePath: row.rewritePath,
+                rewritePathType: row.rewritePathType
             });
         }
 
@@ -199,6 +416,8 @@ export async function getTraefikConfig(
             port: row.port,
             internalPort: row.internalPort,
             enabled: row.targetEnabled,
+            rewritePath: row.rewritePath,
+            rewritePathType: row.rewritePathType,
             site: {
                 siteId: row.siteId,
                 type: row.siteType,
@@ -230,30 +449,27 @@ export async function getTraefikConfig(
     for (const [key, resource] of resourcesMap.entries()) {
         const targets = resource.targets;
 
-        const routerName = `${key}-router`;
-        const serviceName = `${key}-service`;
+        const sanatizedKey = sanitizeForMiddlewareName(key);
+
+        const routerName = `${sanatizedKey}-router`;
+        const serviceName = `${sanatizedKey}-service`;
         const fullDomain = `${resource.fullDomain}`;
-        const transportName = `${key}-transport`;
-        const headersMiddlewareName = `${key}-headers-middleware`;
+        const transportName = `${sanatizedKey}-transport`;
+        const headersMiddlewareName = `${sanatizedKey}-headers-middleware`;
 
         if (!resource.enabled) {
             continue;
         }
 
         if (resource.http) {
-            if (!resource.domainId) {
+            if (!resource.domainId || !resource.fullDomain) {
                 continue;
             }
 
-            if (!resource.fullDomain) {
-                continue;
-            }
-
-            // add routers and services empty objects if they don't exist
+            // Initialize routers and services if they don't exist
             if (!config_output.http.routers) {
                 config_output.http.routers = {};
             }
-
             if (!config_output.http.services) {
                 config_output.http.services = {};
             }
@@ -288,12 +504,12 @@ export async function getTraefikConfig(
                     certResolver: certResolver,
                     ...(preferWildcardCert
                         ? {
-                              domains: [
-                                  {
-                                      main: wildCard
-                                  }
-                              ]
-                          }
+                            domains: [
+                                {
+                                    main: wildCard
+                                }
+                            ]
+                        }
                         : {})
                 };
             }
@@ -306,9 +522,51 @@ export async function getTraefikConfig(
                 ...additionalMiddlewares
             ];
 
+            // Handle path rewriting middleware
+            if (resource.rewritePath &&
+                resource.path &&
+                resource.pathMatchType &&
+                resource.rewritePathType) {
+
+                // Create a unique middleware name
+                const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${sanitizeForMiddlewareName(key)}`;
+
+                try {
+                    const rewriteResult = createPathRewriteMiddleware(
+                        rewriteMiddlewareName,
+                        resource.path,
+                        resource.pathMatchType,
+                        resource.rewritePath,
+                        resource.rewritePathType
+                    );
+
+                    // Initialize middlewares object if it doesn't exist
+                    if (!config_output.http.middlewares) {
+                        config_output.http.middlewares = {};
+                    }
+
+                    // the middleware to the config
+                    Object.assign(config_output.http.middlewares, rewriteResult.middlewares);
+
+                    // middlewares to the router middleware chain
+                    if (rewriteResult.chain) {
+                        // For chained middlewares (like stripPrefix + addPrefix)
+                        routerMiddlewares.push(...rewriteResult.chain);
+                    } else {
+                        // Single middleware
+                        routerMiddlewares.push(rewriteMiddlewareName);
+                    }
+
+                    logger.debug(`Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`);
+                } catch (error) {
+                    logger.error(`Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`);
+                }
+            }
+
+            // Handle custom headers middleware
             if (resource.headers || resource.setHostHeader) {
-                // if there are headers, parse them into an object
                 const headersObj: { [key: string]: string } = {};
+
                 if (resource.headers) {
                     let headersArr: { name: string; value: string }[] = [];
                     try {
@@ -317,9 +575,7 @@ export async function getTraefikConfig(
                             value: string;
                         }[];
                     } catch (e) {
-                        logger.warn(
-                            `Failed to parse headers for resource ${resource.resourceId}: ${e}`
-                        );
+                        logger.warn(`Failed to parse headers for resource ${resource.resourceId}: ${e}`);
                     }
 
                     headersArr.forEach((header) => {
@@ -331,9 +587,7 @@ export async function getTraefikConfig(
                     headersObj["Host"] = resource.setHostHeader;
                 }
 
-                // check if the object is not empty
                 if (Object.keys(headersObj).length > 0) {
-                    // Add the headers middleware
                     if (!config_output.http.middlewares) {
                         config_output.http.middlewares = {};
                     }
@@ -347,8 +601,10 @@ export async function getTraefikConfig(
                 }
             }
 
+            // Build routing rules
             let rule = `Host(\`${fullDomain}\`)`;
             let priority = 100;
+
             if (resource.path && resource.pathMatchType) {
                 priority += 1;
                 // add path to rule based on match type
@@ -465,14 +721,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  cookie: {
-                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                      secure: resource.ssl,
-                                      httpOnly: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                cookie: {
+                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                    secure: resource.ssl,
+                                    httpOnly: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
@@ -494,7 +750,7 @@ export async function getTraefikConfig(
             }
         } else {
             // Non-HTTP (TCP/UDP) configuration
-            if (!resource.enableProxy) {
+            if (!resource.enableProxy || !resource.proxyPort) {
                 continue;
             }
 
@@ -573,13 +829,13 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  ipStrategy: {
-                                      depth: 0,
-                                      sourcePort: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                ipStrategy: {
+                                    depth: 0,
+                                    sourcePort: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
@@ -590,10 +846,25 @@ export async function getTraefikConfig(
 
 function sanitizePath(path: string | null | undefined): string | undefined {
     if (!path) return undefined;
-    // clean any non alphanumeric characters from the path and replace with dashes
-    // the path cant be too long either, so limit to 50 characters
-    if (path.length > 50) {
-        path = path.substring(0, 50);
+
+    const trimmed = path.trim();
+    if (!trimmed) return undefined;
+
+    // Preserve path structure for rewriting, only warn if very long
+    if (trimmed.length > 1000) {
+        logger.warn(`Path exceeds 1000 characters: ${trimmed.substring(0, 100)}...`);
+        return trimmed.substring(0, 1000);
     }
-    return path.replace(/[^a-zA-Z0-9]/g, "");
+
+    return trimmed;
+}
+
+function sanitizeForMiddlewareName(str: string): string {
+    // Replace any characters that aren't alphanumeric or dash with dash
+    // and remove consecutive dashes
+    return str.replace(/[^a-zA-Z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function escapeRegex(string: string): string {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

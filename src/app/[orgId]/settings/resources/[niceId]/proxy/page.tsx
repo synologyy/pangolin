@@ -73,6 +73,7 @@ import {
     CircleCheck,
     CircleX,
     ArrowRight,
+    Plus,
     MoveRight
 } from "lucide-react";
 import { ContainersSelector } from "@app/components/ContainersSelector";
@@ -95,9 +96,9 @@ import {
     CommandItem,
     CommandList
 } from "@app/components/ui/command";
-import { Badge } from "@app/components/ui/badge";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { HeadersInput } from "@app/components/HeadersInput";
+import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
 
 const addTargetSchema = z.object({
     ip: z.string().refine(isTargetValid),
@@ -105,7 +106,9 @@ const addTargetSchema = z.object({
     port: z.coerce.number().int().positive(),
     siteId: z.number().int().positive(),
     path: z.string().optional().nullable(),
-    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable()
+    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+    rewritePath: z.string().optional().nullable(),
+    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
 }).refine(
     (data) => {
         // If path is provided, pathMatchType must be provided
@@ -138,7 +141,23 @@ const addTargetSchema = z.object({
     {
         message: "Invalid path configuration"
     }
-);
+)
+    .refine(
+        (data) => {
+            // If rewritePath is provided, rewritePathType must be provided
+            if (data.rewritePath && !data.rewritePathType) {
+                return false;
+            }
+            // If rewritePathType is provided, rewritePath must be provided
+            if (data.rewritePathType && !data.rewritePath) {
+                return false;
+            }
+            return true;
+        },
+        {
+            message: "Invalid rewrite path configuration"
+        }
+    );
 
 const targetsSettingsSchema = z.object({
     stickySession: z.boolean()
@@ -259,8 +278,10 @@ export default function ReverseProxyTargets(props: {
             method: resource.http ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
-        }
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
+        } as z.infer<typeof addTargetSchema>
     });
 
     const watchedIp = addTargetForm.watch("ip");
@@ -436,6 +457,8 @@ export default function ReverseProxyTargets(props: {
             ...data,
             path: data.path || null,
             pathMatchType: data.pathMatchType || null,
+            rewritePath: data.rewritePath || null,
+            rewritePathType: data.rewritePathType || null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
@@ -449,7 +472,9 @@ export default function ReverseProxyTargets(props: {
             method: resource.http ? "http" : null,
             port: "" as any as number,
             path: null,
-            pathMatchType: null
+            pathMatchType: null,
+            rewritePath: null,
+            rewritePathType: null,
         });
     }
 
@@ -469,11 +494,11 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                          ...target,
-                          ...data,
-                          updated: true,
-                          siteType: site?.type || null
-                      }
+                        ...target,
+                        ...data,
+                        updated: true,
+                        siteType: site?.type || null
+                    }
                     : target
             )
         );
@@ -494,7 +519,9 @@ export default function ReverseProxyTargets(props: {
                     enabled: target.enabled,
                     siteId: target.siteId,
                     path: target.path,
-                    pathMatchType: target.pathMatchType
+                    pathMatchType: target.pathMatchType,
+                    rewritePath: target.rewritePath,
+                    rewritePathType: target.rewritePathType
                 };
 
                 if (target.new) {
@@ -571,93 +598,66 @@ export default function ReverseProxyTargets(props: {
             accessorKey: "path",
             header: t("matchPath"),
             cell: ({ row }) => {
-                const [showPathInput, setShowPathInput] = useState(
-                    !!(row.original.path || row.original.pathMatchType)
-                );
+                const hasPathMatch = !!(row.original.path || row.original.pathMatchType);
 
-                if (!showPathInput) {
-                    return (
-                        <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(true);
-                                // Set default pathMatchType when first showing path input
-                                if (!row.original.pathMatchType) {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        pathMatchType: "prefix"
-                                    });
-                                }
+                return hasPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        <PathMatchModal
+                            value={{
+                                path: row.original.path,
+                                pathMatchType: row.original.pathMatchType,
                             }}
-                        >
-                           + {t("matchPath")}
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex gap-2 min-w-[200px] items-center">
-                        <Select
-                            defaultValue={row.original.pathMatchType || "prefix"}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    pathMatchType: value as "exact" | "prefix" | "regex"
-                                })
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                >
+                                    <PathMatchDisplay
+                                        value={{
+                                            path: row.original.path,
+                                            pathMatchType: row.original.pathMatchType,
+                                        }}
+                                    />
+                                </Button>
                             }
-                        >
-                            <SelectTrigger className="w-25">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="prefix">Prefix</SelectItem>
-                                <SelectItem value="exact">Exact</SelectItem>
-                                <SelectItem value="regex">Regex</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Input
-                            placeholder={
-                                row.original.pathMatchType === "regex"
-                                    ? "^/api/.*"
-                                    : "/path"
-                            }
-                            defaultValue={row.original.path || ""}
-                            className="flex-1 min-w-[150px]"
-                            onBlur={(e) => {
-                                const value = e.target.value.trim();
-                                if (!value) {
-                                    setShowPathInput(false);
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: null,
-                                        pathMatchType: null
-                                    });
-                                } else {
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        path: value
-                                    });
-                                }
-                            }}
                         />
                         <Button
-                            variant="outline"
-                            onClick={() => {
-                                setShowPathInput(false);
+                            variant="text"
+                            size="sm"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
                                     path: null,
-                                    pathMatchType: null
+                                    pathMatchType: null,
+                                    rewritePath: null,
+                                    rewritePathType: null
                                 });
                             }}
                         >
                             ×
                         </Button>
 
-                        <MoveRight className="ml-4 h-4 w-4" />
+                        {/* <MoveRight className="ml-1 h-4 w-4" /> */}
                     </div>
+                ) : (
+                    <PathMatchModal
+                        value={{
+                            path: row.original.path,
+                            pathMatchType: row.original.pathMatchType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline">
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("matchPath")}
+                            </Button>
+                        }
+                    />
                 );
-            }
+            },
         },
         {
             accessorKey: "siteId",
@@ -693,7 +693,7 @@ export default function ReverseProxyTargets(props: {
                                     className={cn(
                                         "justify-between flex-1",
                                         !row.original.siteId &&
-                                            "text-muted-foreground"
+                                        "text-muted-foreground"
                                     )}
                                 >
                                     {row.original.siteId
@@ -772,31 +772,31 @@ export default function ReverseProxyTargets(props: {
         },
         ...(resource.http
             ? [
-                  {
-                      accessorKey: "method",
-                      header: t("method"),
-                      cell: ({ row }: { row: Row<LocalTarget> }) => (
-                          <Select
-                              defaultValue={row.original.method ?? ""}
-                              onValueChange={(value) =>
-                                  updateTarget(row.original.targetId, {
-                                      ...row.original,
-                                      method: value
-                                  })
-                              }
-                          >
-                              <SelectTrigger>
-                                  {row.original.method}
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="http">http</SelectItem>
-                                  <SelectItem value="https">https</SelectItem>
-                                  <SelectItem value="h2c">h2c</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      )
-                  }
-              ]
+                {
+                    accessorKey: "method",
+                    header: t("method"),
+                    cell: ({ row }: { row: Row<LocalTarget> }) => (
+                        <Select
+                            defaultValue={row.original.method ?? ""}
+                            onValueChange={(value) =>
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    method: value
+                                })
+                            }
+                        >
+                            <SelectTrigger>
+                                {row.original.method}
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="http">http</SelectItem>
+                                <SelectItem value="https">https</SelectItem>
+                                <SelectItem value="h2c">h2c</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )
+                }
+            ]
             : []),
         {
             accessorKey: "ip",
@@ -856,6 +856,72 @@ export default function ReverseProxyTargets(props: {
                 />
             )
         },
+        {
+            accessorKey: "rewritePath",
+            header: t("rewritePath"),
+            cell: ({ row }) => {
+                const hasRewritePath = !!(row.original.rewritePath || row.original.rewritePathType);
+                const noPathMatch = !row.original.path && !row.original.pathMatchType;
+
+                return hasRewritePath && !noPathMatch ? (
+                    <div className="flex items-center gap-1">
+                        {/* <MoveRight className="mr-2 h-4 w-4" /> */}
+                        <PathRewriteModal
+                            value={{
+                                rewritePath: row.original.rewritePath,
+                                rewritePathType: row.original.rewritePathType,
+                            }}
+                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            trigger={
+                                <Button
+                                    variant="outline"
+                                    className="flex items-center gap-2 p-2 max-w-md w-full text-left cursor-pointer"
+                                    disabled={noPathMatch}
+                                >
+                                    <PathRewriteDisplay
+                                        value={{
+                                            rewritePath: row.original.rewritePath,
+                                            rewritePathType: row.original.rewritePathType,
+                                        }}
+                                    />
+                                </Button>
+                            }
+                        />
+                        <Button
+                            size="sm"
+                            variant="text"
+                            className="px-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                updateTarget(row.original.targetId, {
+                                    ...row.original,
+                                    rewritePath: null,
+                                    rewritePathType: null,
+                                });
+                            }}
+                        >
+                            ×
+                        </Button>
+                    </div>
+                ) : (
+                    <PathRewriteModal
+                        value={{
+                            rewritePath: row.original.rewritePath,
+                            rewritePathType: row.original.rewritePathType,
+                        }}
+                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        trigger={
+                            <Button variant="outline" disabled={noPathMatch}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                {t("rewritePath")}
+                            </Button>
+                        }
+                        disabled={noPathMatch}
+                    />
+                );
+            },
+        },
+
         // {
         //     accessorKey: "protocol",
         //     header: t('targetProtocol'),
@@ -968,21 +1034,21 @@ export default function ReverseProxyTargets(props: {
                                                                     className={cn(
                                                                         "justify-between flex-1",
                                                                         !field.value &&
-                                                                            "text-muted-foreground"
+                                                                        "text-muted-foreground"
                                                                     )}
                                                                 >
                                                                     {field.value
                                                                         ? sites.find(
-                                                                              (
-                                                                                  site
-                                                                              ) =>
-                                                                                  site.siteId ===
-                                                                                  field.value
-                                                                          )
-                                                                              ?.name
+                                                                            (
+                                                                                site
+                                                                            ) =>
+                                                                                site.siteId ===
+                                                                                field.value
+                                                                        )
+                                                                            ?.name
                                                                         : t(
-                                                                              "siteSelect"
-                                                                          )}
+                                                                            "siteSelect"
+                                                                        )}
                                                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -1048,34 +1114,34 @@ export default function ReverseProxyTargets(props: {
                                                                 );
                                                             return selectedSite &&
                                                                 selectedSite.type ===
-                                                                    "newt"
+                                                                "newt"
                                                                 ? (() => {
-                                                                      const dockerState =
-                                                                          getDockerStateForSite(
-                                                                              selectedSite.siteId
-                                                                          );
-                                                                      return (
-                                                                          <ContainersSelector
-                                                                              site={
-                                                                                  selectedSite
-                                                                              }
-                                                                              containers={
-                                                                                  dockerState.containers
-                                                                              }
-                                                                              isAvailable={
-                                                                                  dockerState.isAvailable
-                                                                              }
-                                                                              onContainerSelect={
-                                                                                  handleContainerSelect
-                                                                              }
-                                                                              onRefresh={() =>
-                                                                                  refreshContainersForSite(
-                                                                                      selectedSite.siteId
-                                                                                  )
-                                                                              }
-                                                                          />
-                                                                      );
-                                                                  })()
+                                                                    const dockerState =
+                                                                        getDockerStateForSite(
+                                                                            selectedSite.siteId
+                                                                        );
+                                                                    return (
+                                                                        <ContainersSelector
+                                                                            site={
+                                                                                selectedSite
+                                                                            }
+                                                                            containers={
+                                                                                dockerState.containers
+                                                                            }
+                                                                            isAvailable={
+                                                                                dockerState.isAvailable
+                                                                            }
+                                                                            onContainerSelect={
+                                                                                handleContainerSelect
+                                                                            }
+                                                                            onRefresh={() =>
+                                                                                refreshContainersForSite(
+                                                                                    selectedSite.siteId
+                                                                                )
+                                                                            }
+                                                                        />
+                                                                    );
+                                                                })()
                                                                 : null;
                                                         })()}
                                                 </div>
@@ -1303,12 +1369,12 @@ export default function ReverseProxyTargets(props: {
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
+                                                                        header
+                                                                            .column
+                                                                            .columnDef
+                                                                            .header,
+                                                                        header.getContext()
+                                                                    )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1527,7 +1593,6 @@ export default function ReverseProxyTargets(props: {
 }
 
 function isIPInSubnet(subnet: string, ip: string): boolean {
-    // Split subnet into IP and mask parts
     const [subnetIP, maskBits] = subnet.split("/");
     const mask = parseInt(maskBits);
 

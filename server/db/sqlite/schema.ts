@@ -135,7 +135,9 @@ export const targets = sqliteTable("targets", {
     internalPort: integer("internalPort"),
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     path: text("path"),
-    pathMatchType: text("pathMatchType") // exact, prefix, regex
+    pathMatchType: text("pathMatchType"), // exact, prefix, regex
+    rewritePath: text("rewritePath"), // if set, rewrites the path to this value before sending to the target
+    rewritePathType: text("rewritePathType") // exact, prefix, regex, stripPrefix
 });
 
 export const exitNodes = sqliteTable("exitNodes", {
