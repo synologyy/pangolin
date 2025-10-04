@@ -1504,6 +1504,7 @@
     "idpGoogleDescription": "Google OAuth2/OIDC доставчик",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC доставчик",
     "customHeaders": "Персонализирани заглавия",
+    "customHeadersDescription": "Add custom headers to be sent when proxying requests. One per line in the format Header-Name: value",
     "headersValidationError": "Заглавията трябва да бъдат във формат: Име на заглавието: стойност.",
     "domainPickerProvidedDomain": "Предоставен домейн",
     "domainPickerFreeProvidedDomain": "Безплатен предоставен домейн",

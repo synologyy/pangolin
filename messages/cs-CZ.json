@@ -1504,6 +1504,7 @@
     "idpGoogleDescription": "Poskytovatel Google OAuth2/OIDC",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC provider",
     "customHeaders": "Vlastní záhlaví",
+    "customHeadersDescription": "Add custom headers to be sent when proxying requests. One per line in the format Header-Name: value",
     "headersValidationError": "Záhlaví musí být ve formátu: název záhlaví: hodnota.",
     "domainPickerProvidedDomain": "Poskytnutá doména",
     "domainPickerFreeProvidedDomain": "Zdarma poskytnutá doména",

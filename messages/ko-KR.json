@@ -1504,6 +1504,7 @@
     "idpGoogleDescription": "Google OAuth2/OIDC 공급자",
     "idpAzureDescription": "Microsoft Azure OAuth2/OIDC 공급자",
     "customHeaders": "사용자 정의 헤더",
+    "customHeadersDescription": "Add custom headers to be sent when proxying requests. One per line in the format Header-Name: value",
     "headersValidationError": "헤더는 형식이어야 합니다: 헤더명: 값.",
     "domainPickerProvidedDomain": "제공된 도메인",
     "domainPickerFreeProvidedDomain": "무료 제공된 도메인",
