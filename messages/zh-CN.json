@@ -1522,5 +1522,7 @@
     "resourceAddEntrypointsEditFile": "编辑文件：config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "编辑文件：docker-compose.yml",
     "emailVerificationRequired": "需要电子邮件验证。 请通过 {dashboardUrl}/auth/login 再次登录以完成此步骤。 然后，回到这里。",
-    "twoFactorSetupRequired": "需要设置双因素身份验证。 请通过 {dashboardUrl}/auth/login 再次登录以完成此步骤。 然后，回到这里。"
+    "twoFactorSetupRequired": "需要设置双因素身份验证。 请通过 {dashboardUrl}/auth/login 再次登录以完成此步骤。 然后，回到这里。",
+    "rewritePath": "Rewrite Path",
+    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target."
 }

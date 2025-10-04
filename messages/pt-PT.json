@@ -1522,5 +1522,7 @@
     "resourceAddEntrypointsEditFile": "Editar arquivo: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Editar arquivo: docker-compose.yml",
     "emailVerificationRequired": "Verificação de e-mail é necessária. Por favor, faça login novamente via {dashboardUrl}/auth/login conclui esta etapa. Em seguida, volte aqui.",
-    "twoFactorSetupRequired": "Configuração de autenticação de dois fatores é necessária. Por favor, entre novamente via {dashboardUrl}/auth/login conclua este passo. Em seguida, volte aqui."
+    "twoFactorSetupRequired": "Configuração de autenticação de dois fatores é necessária. Por favor, entre novamente via {dashboardUrl}/auth/login conclua este passo. Em seguida, volte aqui.",
+    "rewritePath": "Rewrite Path",
+    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target."
 }

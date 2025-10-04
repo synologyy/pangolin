@@ -1522,5 +1522,7 @@
     "resourceAddEntrypointsEditFile": "Bestand bewerken: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Bestand bewerken: docker-compose.yml",
     "emailVerificationRequired": "E-mail verificatie is vereist. Log opnieuw in via {dashboardUrl}/auth/login voltooide deze stap. Kom daarna hier terug.",
-    "twoFactorSetupRequired": "Tweestapsverificatie instellen is vereist. Log opnieuw in via {dashboardUrl}/auth/login voltooide deze stap. Kom daarna hier terug."
+    "twoFactorSetupRequired": "Tweestapsverificatie instellen is vereist. Log opnieuw in via {dashboardUrl}/auth/login voltooide deze stap. Kom daarna hier terug.",
+    "rewritePath": "Rewrite Path",
+    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target."
 }
