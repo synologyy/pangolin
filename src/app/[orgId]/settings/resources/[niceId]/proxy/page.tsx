@@ -126,7 +126,8 @@ const addTargetSchema = z
         rewritePathType: z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
-            .nullable()
+            .nullable(),
+        priority: z.number().int().min(1).max(1000)
     })
     .refine(
         (data) => {
