@@ -25,10 +25,11 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Curl used for the health checks
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl tzdata
 
 # COPY package.json package-lock.json ./
 COPY package*.json ./
+
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/.next/standalone ./
