@@ -46,5 +46,4 @@ server/db/index.ts
 server/build.ts
 postgres/
 dynamic/
-certificates/ 
 *.mmdb
