@@ -1724,5 +1724,6 @@
     "authPageUpdated": "Auth page updated successfully",
     "healthCheckNotAvailable": "Local",
     "rewritePath": "Rewrite Path",
-    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target."
+    "rewritePathDescription": "Optionally rewrite the path before forwarding to the target.",
+    "continueToApplication": "Continue to application"
 }

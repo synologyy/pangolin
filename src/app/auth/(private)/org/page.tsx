@@ -69,6 +69,8 @@ export default async function OrgAuthPage(props: {
     const t = await getTranslations();
 
     const expectedHost = env.app.dashboardUrl.split("//")[1];
+
+    let redirectToUrl: string | undefined;
     let loginPage: LoadLoginPageResponse | undefined;
     if (host !== expectedHost) {
         try {
@@ -110,7 +112,6 @@ export default async function OrgAuthPage(props: {
 
                 if (res && res.status === 200) {
                     const newToken = res.data.data.token;
-
                     redirectToken = newToken;
                 }
             } catch (e) {
@@ -120,9 +121,8 @@ export default async function OrgAuthPage(props: {
             }
 
             if (redirectToken) {
-                redirect(
-                    `${env.app.dashboardUrl}/auth/org?token=${redirectToken}`
-                );
+                redirectToUrl = `${env.app.dashboardUrl}/auth/org?token=${redirectToken}`;
+                redirect(redirectToUrl);
             }
         }
     } else {

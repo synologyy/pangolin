@@ -13,13 +13,21 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@app/components/ui/button";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { generateOidcUrlProxy, type GenerateOidcUrlResponse } from "@app/actions/server";
-import { redirect as redirectTo } from "next/navigation";
+import {
+    generateOidcUrlProxy,
+    type GenerateOidcUrlResponse
+} from "@app/actions/server";
+import {
+    redirect as redirectTo,
+    useParams,
+    useSearchParams
+} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export type LoginFormIDP = {
     idpId: number;
@@ -42,6 +50,20 @@ export default function IdpLoginButtons({
     const [loading, setLoading] = useState(false);
     const t = useTranslations();
 
+    const params = useSearchParams();
+    const router = useRouter();
+
+    function goToApp() {
+        const url = window.location.href.split("?")[0];
+        router.push(url);
+    }
+
+    useEffect(() => {
+        if (params.get("gotoapp")) {
+            goToApp();
+        }
+    }, []);
+
     async function loginWithIdp(idpId: number) {
         setLoading(true);
         setError(null);
@@ -50,7 +72,7 @@ export default function IdpLoginButtons({
         try {
             const response = await generateOidcUrlProxy(
                 idpId,
-                redirect || "/",
+                redirect || "/auth/org?gotoapp=app",
                 orgId
             );
 
@@ -69,7 +91,8 @@ export default function IdpLoginButtons({
             console.error(e);
             setError(
                 t("loginError", {
-                    defaultValue: "An unexpected error occurred. Please try again."
+                    defaultValue:
+                        "An unexpected error occurred. Please try again."
                 })
             );
             setLoading(false);
@@ -93,42 +116,59 @@ export default function IdpLoginButtons({
             )}
 
             <div className="space-y-2">
-                {idps.map((idp) => {
-                    const effectiveType = idp.variant || idp.name.toLowerCase();
-
-                    return (
+                {params.get("gotoapp") ? (
+                    <>
                         <Button
-                            key={idp.idpId}
                             type="button"
-                            variant="outline"
-                            className="w-full inline-flex items-center space-x-2"
+                            className="w-full"
                             onClick={() => {
-                                loginWithIdp(idp.idpId);
+                                goToApp();
                             }}
-                            disabled={loading}
                         >
-                            {effectiveType === "google" && (
-                                <Image
-                                    src="/idp/google.png"
-                                    alt="Google"
-                                    width={16}
-                                    height={16}
-                                    className="rounded"
-                                />
-                            )}
-                            {effectiveType === "azure" && (
-                                <Image
-                                    src="/idp/azure.png"
-                                    alt="Azure"
-                                    width={16}
-                                    height={16}
-                                    className="rounded"
-                                />
-                            )}
-                            <span>{idp.name}</span>
+                            {t("continueToApplication")}
                         </Button>
-                    );
-                })}
+                    </>
+                ) : (
+                    <>
+                        {idps.map((idp) => {
+                            const effectiveType =
+                                idp.variant || idp.name.toLowerCase();
+
+                            return (
+                                <Button
+                                    key={idp.idpId}
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full inline-flex items-center space-x-2"
+                                    onClick={() => {
+                                        loginWithIdp(idp.idpId);
+                                    }}
+                                    disabled={loading}
+                                >
+                                    {effectiveType === "google" && (
+                                        <Image
+                                            src="/idp/google.png"
+                                            alt="Google"
+                                            width={16}
+                                            height={16}
+                                            className="rounded"
+                                        />
+                                    )}
+                                    {effectiveType === "azure" && (
+                                        <Image
+                                            src="/idp/azure.png"
+                                            alt="Azure"
+                                            width={16}
+                                            height={16}
+                                            className="rounded"
+                                        />
+                                    )}
+                                    <span>{idp.name}</span>
+                                </Button>
+                            );
+                        })}
+                    </>
+                )}
             </div>
         </div>
     );

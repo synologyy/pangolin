@@ -57,9 +57,12 @@ function parseSetCookieString(
     }
 
     if (!options.domain) {
-        const d = host ? new URL(env.app.dashboardUrl).hostname : undefined;
+        const d = host
+            ? host.split(":")[0] // strip port if present
+            : new URL(env.app.dashboardUrl).hostname;
         if (d) {
             options.domain = d;
+            console.log("Setting cookie domain to:", d);
         }
     }
 
@@ -91,7 +94,8 @@ async function makeApiRequest<T>(
         res = await fetch(url, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined
+            body: body ? JSON.stringify(body) : undefined,
+            cache: "no-store"
         });
     } catch (fetchError) {
         console.error("API request failed:", fetchError);
