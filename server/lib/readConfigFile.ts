@@ -30,7 +30,7 @@ export const configSchema = z
                     anonymous_usage: z.boolean().optional().default(true)
                 })
                 .optional()
-                .default({})
+                .default({}),
         }).optional().default({
             log_level: "info",
             save_logs: false,
@@ -130,7 +130,8 @@ export const configSchema = z
             secret: z
                 .string()
                 .pipe(z.string().min(8))
-                .optional()
+                .optional(),
+            maxmind_db_path: z.string().optional()
         }).optional().default({
             integration_port: 3003,
             external_port: 3000,

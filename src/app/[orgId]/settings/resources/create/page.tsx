@@ -340,7 +340,21 @@ export default function Page() {
             enabled: true,
             targetId: new Date().getTime(),
             new: true,
-            resourceId: 0 // Will be set when resource is created
+            resourceId: 0, // Will be set when resource is created
+            hcEnabled: false,
+            hcPath: null,
+            hcMethod: null,
+            hcInterval: null,
+            hcTimeout: null,
+            hcHeaders: null,
+            hcScheme: null,
+            hcHostname: null,
+            hcPort: null,
+            hcFollowRedirects: null,
+            hcHealth: "unknown",
+            hcStatus: null,
+            hcMode: null,
+            hcUnhealthyInterval: null
         };
 
         setTargets([...targets, newTarget]);
@@ -446,6 +460,18 @@ export default function Page() {
                                 method: target.method,
                                 enabled: target.enabled,
                                 siteId: target.siteId,
+                                hcEnabled: target.hcEnabled,
+                                hcPath: target.hcPath || null,
+                                hcMethod: target.hcMethod || null,
+                                hcInterval: target.hcInterval || null,
+                                hcTimeout: target.hcTimeout || null,
+                                hcHeaders: target.hcHeaders || null,
+                                hcScheme: target.hcScheme || null,
+                                hcHostname: target.hcHostname || null,
+                                hcPort: target.hcPort || null,
+                                hcFollowRedirects:
+                                    target.hcFollowRedirects || null,
+                                hcStatus: target.hcStatus || null,
                                 path: target.path,
                                 pathMatchType: target.pathMatchType,
                                 rewritePath: target.rewritePath,

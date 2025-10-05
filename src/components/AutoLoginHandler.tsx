@@ -21,12 +21,14 @@ type AutoLoginHandlerProps = {
     resourceId: number;
     skipToIdpId: number;
     redirectUrl: string;
+    orgId?: string;
 };
 
 export default function AutoLoginHandler({
     resourceId,
     skipToIdpId,
-    redirectUrl
+    redirectUrl,
+    orgId
 }: AutoLoginHandlerProps) {
     const { env } = useEnvContext();
     const api = createApiClient({ env });
@@ -44,7 +46,8 @@ export default function AutoLoginHandler({
             try {
                 const response = await generateOidcUrlProxy(
                     skipToIdpId,
-                    redirectUrl
+                    redirectUrl,
+                    orgId
                 );
 
                 if (response.error) {
@@ -83,7 +86,9 @@ export default function AutoLoginHandler({
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle>{t("autoLoginTitle")}</CardTitle>
-                    <CardDescription>{t("autoLoginDescription")}</CardDescription>
+                    <CardDescription>
+                        {t("autoLoginDescription")}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col items-center space-y-4">
                     {loading && (

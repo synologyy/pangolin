@@ -11,9 +11,11 @@ import {
     getUserOrgRole,
     getRoleResourceAccess,
     getUserResourceAccess,
-    getResourceRules
+    getResourceRules,
+    getOrgLoginPage
 } from "@server/db/queries/verifySessionQueries";
 import {
+    LoginPage,
     Resource,
     ResourceAccessToken,
     ResourcePassword,
@@ -32,7 +34,9 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { getCountryCodeForIp } from "@server/lib";
+import { getCountryCodeForIp, remoteGetCountryCodeForIp } from "@server/lib/geoip";
+import { getOrgTierData } from "@server/routers/private/billing";
+import { TierId } from "@server/lib/private/billing/tiers";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -196,16 +200,7 @@ export async function verifyResourceSession(
             return allowed(res);
         }
 
-        let endpoint: string;
-        if (config.isManagedMode()) {
-            endpoint =
-                config.getRawConfig().managed?.redirect_endpoint ||
-                config.getRawConfig().managed?.endpoint ||
-                "";
-        } else {
-            endpoint = config.getRawConfig().app.dashboard_url!;
-        }
-        const redirectUrl = `${endpoint}/auth/resource/${encodeURIComponent(
+        const redirectPath = `/auth/resource/${encodeURIComponent(
             resource.resourceGuid
         )}?redirect=${encodeURIComponent(originalRequestURL)}`;
 
@@ -408,7 +403,10 @@ export async function verifyResourceSession(
                 }. IP: ${clientIp}.`
             );
         }
-        return notAllowed(res, redirectUrl);
+
+        logger.debug(`Redirecting to login at ${redirectPath}`);
+
+        return notAllowed(res, redirectPath, resource.orgId);
     } catch (e) {
         console.error(e);
         return next(
@@ -463,7 +461,34 @@ function extractResourceSessionToken(
     return latest.token;
 }
 
-function notAllowed(res: Response, redirectUrl?: string) {
+async function notAllowed(res: Response, redirectPath?: string, orgId?: string) {
+    let loginPage: LoginPage | null = null;
+    if (orgId) {
+        const { tier } = await getOrgTierData(orgId); // returns null in oss
+        if (tier === TierId.STANDARD) {
+            loginPage = await getOrgLoginPage(orgId);
+        }
+    }
+
+    let redirectUrl: string | undefined = undefined;
+    if (redirectPath) {
+        let endpoint: string;
+
+        if (loginPage && loginPage.domainId && loginPage.fullDomain) {
+            const secure = config.getRawConfig().app.dashboard_url?.startsWith("https");
+            const method = secure ? "https" : "http";
+            endpoint = `${method}://${loginPage.fullDomain}`;
+        } else if (config.isManagedMode()) {
+            endpoint =
+                config.getRawConfig().managed?.redirect_endpoint ||
+                config.getRawConfig().managed?.endpoint ||
+                "";
+        } else {
+            endpoint = config.getRawConfig().app.dashboard_url!;
+        }
+        redirectUrl = `${endpoint}${redirectPath}`;
+    }
+
     const data = {
         data: { valid: false, redirectUrl },
         success: true,
@@ -762,7 +787,11 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
 
     if (!cachedCountryCode) {
-        cachedCountryCode = await getCountryCodeForIp(ip);
+        if (config.isManagedMode()) {
+            cachedCountryCode = await remoteGetCountryCodeForIp(ip);
+        } else {
+            cachedCountryCode = await getCountryCodeForIp(ip); // do it locally
+        }
         // Cache for longer since IP geolocation doesn't change frequently
         cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
     }

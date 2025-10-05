@@ -40,7 +40,6 @@ COPY ./cli/wrapper.sh /usr/local/bin/pangctl
 RUN chmod +x /usr/local/bin/pangctl ./dist/cli.mjs
 
 COPY server/db/names.json ./dist/names.json
-
 COPY public ./public
 
 CMD ["npm", "run", "start"]

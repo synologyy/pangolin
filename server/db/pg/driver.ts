@@ -39,7 +39,7 @@ function createDb() {
         connectionString,
         max: 20,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        connectionTimeoutMillis: 5000,
     });
 
     const replicas = [];
@@ -52,7 +52,7 @@ function createDb() {
                 connectionString: conn.connection_string,
                 max: 10,
                 idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 2000,
+                connectionTimeoutMillis: 5000,
             });
             replicas.push(DrizzlePostgres(replicaPool));
         }

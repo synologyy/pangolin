@@ -128,6 +128,27 @@ export const targets = pgTable("targets", {
     rewritePathType: text("rewritePathType") // exact, prefix, regex, stripPrefix
 });
 
+export const targetHealthCheck = pgTable("targetHealthCheck", {
+    targetHealthCheckId: serial("targetHealthCheckId").primaryKey(),
+    targetId: integer("targetId")
+        .notNull()
+        .references(() => targets.targetId, { onDelete: "cascade" }),
+    hcEnabled: boolean("hcEnabled").notNull().default(false),
+    hcPath: varchar("hcPath"),
+    hcScheme: varchar("hcScheme"),
+    hcMode: varchar("hcMode").default("http"),
+    hcHostname: varchar("hcHostname"),
+    hcPort: integer("hcPort"),
+    hcInterval: integer("hcInterval").default(30), // in seconds
+    hcUnhealthyInterval: integer("hcUnhealthyInterval").default(30), // in seconds
+    hcTimeout: integer("hcTimeout").default(5), // in seconds
+    hcHeaders: varchar("hcHeaders"),
+    hcFollowRedirects: boolean("hcFollowRedirects").default(true),
+    hcMethod: varchar("hcMethod").default("GET"),
+    hcStatus: integer("hcStatus"), // http code
+    hcHealth: text("hcHealth").default("unknown") // "unknown", "healthy", "unhealthy"
+});
+
 export const exitNodes = pgTable("exitNodes", {
     exitNodeId: serial("exitNodeId").primaryKey(),
     name: varchar("name").notNull(),
@@ -689,3 +710,4 @@ export type OrgDomains = InferSelectModel<typeof orgDomains>;
 export type SiteResource = InferSelectModel<typeof siteResources>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
+export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;

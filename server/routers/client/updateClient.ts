@@ -17,7 +17,7 @@ import {
     addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "../olm/peers";
-import { sendToExitNode } from "../../lib/exitNodeComms";
+import { sendToExitNode } from "@server/lib/exitNodes";
 
 const updateClientParamsSchema = z
     .object({

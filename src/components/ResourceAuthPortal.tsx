@@ -31,27 +31,23 @@ import {
 } from "@app/components/ui/input-otp";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
-import { formatAxiosError } from "@app/lib/api";
-import { AxiosResponse } from "axios";
 import LoginForm, { LoginFormIDP } from "@app/components/LoginForm";
-import {
-    AuthWithPasswordResponse,
-    AuthWithWhitelistResponse
-} from "@server/routers/resource";
 import ResourceAccessDenied from "@app/components/ResourceAccessDenied";
 import {
     resourcePasswordProxy,
     resourcePincodeProxy,
     resourceWhitelistProxy,
-    resourceAccessProxy,
+    resourceAccessProxy
 } from "@app/actions/server";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import Link from "next/link";
 import Image from "next/image";
+import BrandingLogo from "@app/components/BrandingLogo";
 import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext";
 import { useTranslations } from "next-intl";
+import { build } from "@server/build";
 
 const pinSchema = z.object({
     pin: z
@@ -90,6 +86,7 @@ type ResourceAuthPortalProps = {
     };
     redirect: string;
     idps?: LoginFormIDP[];
+    orgId?: string;
 };
 
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
@@ -116,8 +113,6 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     const [otpState, setOtpState] = useState<"idle" | "otp_sent">("idle");
 
     const { env } = useEnvContext();
-
-    const api = createApiClient({ env });
 
     const { supporterStatus } = useSupporterStatusContext();
 
@@ -216,7 +211,8 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             console.error(e);
             setWhitelistError(
                 t("otpEmailErrorAuthenticate", {
-                    defaultValue: "An unexpected error occurred. Please try again."
+                    defaultValue:
+                        "An unexpected error occurred. Please try again."
                 })
             );
         } finally {
@@ -249,7 +245,8 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             console.error(e);
             setPincodeError(
                 t("pincodeErrorAuthenticate", {
-                    defaultValue: "An unexpected error occurred. Please try again."
+                    defaultValue:
+                        "An unexpected error occurred. Please try again."
                 })
             );
         } finally {
@@ -282,7 +279,8 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             console.error(e);
             setPasswordError(
                 t("passwordErrorAuthenticate", {
-                    defaultValue: "An unexpected error occurred. Please try again."
+                    defaultValue:
+                        "An unexpected error occurred. Please try again."
                 })
             );
         } finally {
@@ -310,34 +308,75 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     }
 
     function getTitle() {
+        if (build !== "oss" && env.branding.resourceAuthPage?.titleText) {
+            return env.branding.resourceAuthPage.titleText;
+        }
         return t("authenticationRequired");
     }
 
     function getSubtitle(resourceName: string) {
+        if (build !== "oss" && env.branding.resourceAuthPage?.subtitleText) {
+            return env.branding.resourceAuthPage.subtitleText
+                .split("{{resourceName}}")
+                .join(resourceName);
+        }
         return numMethods > 1
-            ? t("authenticationMethodChoose", { name: props.resource.name })
-            : t("authenticationRequest", { name: props.resource.name });
+            ? t("authenticationMethodChoose", { name: resourceName })
+            : t("authenticationRequest", { name: resourceName });
     }
 
     return (
         <div>
             {!accessDenied ? (
                 <div>
-                    <div className="text-center mb-2">
-                        <span className="text-sm text-muted-foreground">
-                            {t("poweredBy")}{" "}
-                            <Link
-                                href="https://github.com/fosrl/pangolin"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                            >
-                                Pangolin
-                            </Link>
-                        </span>
-                    </div>
+                    {build === "enterprise" ? (
+                        !env.branding.resourceAuthPage?.hidePoweredBy && (
+                            <div className="text-center mb-2">
+                                <span className="text-sm text-muted-foreground">
+                                    {t("poweredBy")}{" "}
+                                    <Link
+                                        href="https://digpangolin.com/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="underline"
+                                    >
+                                        {env.branding.appName || "Pangolin"}
+                                    </Link>
+                                </span>
+                            </div>
+                        )
+                    ) : (
+                        <div className="text-center mb-2">
+                            <span className="text-sm text-muted-foreground">
+                                {t("poweredBy")}{" "}
+                                <Link
+                                    href="https://digpangolin.com/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="underline"
+                                >
+                                    Pangolin
+                                </Link>
+                            </span>
+                        </div>
+                    )}
                     <Card>
                         <CardHeader>
+                            {build !== "oss" &&
+                                env.branding?.resourceAuthPage?.showLogo && (
+                                    <div className="flex flex-row items-center justify-center mb-3">
+                                        <BrandingLogo
+                                            height={
+                                                env.branding.logo?.authPage
+                                                    ?.height || 100
+                                            }
+                                            width={
+                                                env.branding.logo?.authPage
+                                                    ?.width || 100
+                                            }
+                                        />
+                                    </div>
+                                )}
                             <CardTitle>{getTitle()}</CardTitle>
                             <CardDescription>
                                 {getSubtitle(props.resource.name)}
@@ -544,6 +583,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                                         <LoginForm
                                             idps={props.idps}
                                             redirect={props.redirect}
+                                            orgId={props.orgId}
                                             onLogin={async () =>
                                                 await handleSSOAuth()
                                             }

@@ -140,6 +140,27 @@ export const targets = sqliteTable("targets", {
     rewritePathType: text("rewritePathType") // exact, prefix, regex, stripPrefix
 });
 
+export const targetHealthCheck = sqliteTable("targetHealthCheck", {
+    targetHealthCheckId: integer("targetHealthCheckId").primaryKey({ autoIncrement: true }),
+    targetId: integer("targetId")
+        .notNull()
+        .references(() => targets.targetId, { onDelete: "cascade" }),
+    hcEnabled: integer("hcEnabled", { mode: "boolean" }).notNull().default(false),
+    hcPath: text("hcPath"),
+    hcScheme: text("hcScheme"),
+    hcMode: text("hcMode").default("http"),
+    hcHostname: text("hcHostname"),
+    hcPort: integer("hcPort"),
+    hcInterval: integer("hcInterval").default(30), // in seconds
+    hcUnhealthyInterval: integer("hcUnhealthyInterval").default(30), // in seconds
+    hcTimeout: integer("hcTimeout").default(5), // in seconds
+    hcHeaders: text("hcHeaders"),
+    hcFollowRedirects: integer("hcFollowRedirects", { mode: "boolean" }).default(true),
+    hcMethod: text("hcMethod").default("GET"),
+    hcStatus: integer("hcStatus"), // http code
+    hcHealth: text("hcHealth").default("unknown") // "unknown", "healthy", "unhealthy"
+});
+
 export const exitNodes = sqliteTable("exitNodes", {
     exitNodeId: integer("exitNodeId").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
@@ -458,18 +479,6 @@ export const userResources = sqliteTable("userResources", {
         .references(() => resources.resourceId, { onDelete: "cascade" })
 });
 
-export const limitsTable = sqliteTable("limits", {
-    limitId: integer("limitId").primaryKey({ autoIncrement: true }),
-    orgId: text("orgId")
-        .references(() => orgs.orgId, {
-            onDelete: "cascade"
-        })
-        .notNull(),
-    name: text("name").notNull(),
-    value: integer("value").notNull(),
-    description: text("description")
-});
-
 export const userInvites = sqliteTable("userInvites", {
     inviteId: text("inviteId").primaryKey(),
     orgId: text("orgId")
@@ -714,7 +723,6 @@ export type RoleSite = InferSelectModel<typeof roleSites>;
 export type UserSite = InferSelectModel<typeof userSites>;
 export type RoleResource = InferSelectModel<typeof roleResources>;
 export type UserResource = InferSelectModel<typeof userResources>;
-export type Limit = InferSelectModel<typeof limitsTable>;
 export type UserInvite = InferSelectModel<typeof userInvites>;
 export type UserOrg = InferSelectModel<typeof userOrgs>;
 export type ResourceSession = InferSelectModel<typeof resourceSessions>;
@@ -739,3 +747,4 @@ export type SiteResource = InferSelectModel<typeof siteResources>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
+export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;

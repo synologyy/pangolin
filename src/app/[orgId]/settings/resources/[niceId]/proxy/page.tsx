@@ -79,6 +79,7 @@ import {
 import { ContainersSelector } from "@app/components/ContainersSelector";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
+import HealthCheckDialog from "@/components/HealthCheckDialog";
 import { DockerManager, DockerState } from "@app/lib/docker";
 import { Container } from "@server/routers/site";
 import {
@@ -98,50 +99,64 @@ import {
 } from "@app/components/ui/command";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { HeadersInput } from "@app/components/HeadersInput";
-import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
+import {
+    PathMatchDisplay,
+    PathMatchModal,
+    PathRewriteDisplay,
+    PathRewriteModal
+} from "@app/components/PathMatchRenameModal";
+import { Badge } from "@app/components/ui/badge";
 
-const addTargetSchema = z.object({
-    ip: z.string().refine(isTargetValid),
-    method: z.string().nullable(),
-    port: z.coerce.number().int().positive(),
-    siteId: z.number().int().positive(),
-    path: z.string().optional().nullable(),
-    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
-    rewritePath: z.string().optional().nullable(),
-    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
-}).refine(
-    (data) => {
-        // If path is provided, pathMatchType must be provided
-        if (data.path && !data.pathMatchType) {
-            return false;
-        }
-        // If pathMatchType is provided, path must be provided
-        if (data.pathMatchType && !data.path) {
-            return false;
-        }
-        // Validate path based on pathMatchType
-        if (data.path && data.pathMatchType) {
-            switch (data.pathMatchType) {
-                case "exact":
-                case "prefix":
-                    // Path should start with /
-                    return data.path.startsWith("/");
-                case "regex":
-                    // Validate regex
-                    try {
-                        new RegExp(data.path);
-                        return true;
-                    } catch {
-                        return false;
-                    }
+const addTargetSchema = z
+    .object({
+        ip: z.string().refine(isTargetValid),
+        method: z.string().nullable(),
+        port: z.coerce.number().int().positive(),
+        siteId: z.number().int().positive(),
+        path: z.string().optional().nullable(),
+        pathMatchType: z
+            .enum(["exact", "prefix", "regex"])
+            .optional()
+            .nullable(),
+        rewritePath: z.string().optional().nullable(),
+        rewritePathType: z
+            .enum(["exact", "prefix", "regex", "stripPrefix"])
+            .optional()
+            .nullable()
+    })
+    .refine(
+        (data) => {
+            // If path is provided, pathMatchType must be provided
+            if (data.path && !data.pathMatchType) {
+                return false;
             }
+            // If pathMatchType is provided, path must be provided
+            if (data.pathMatchType && !data.path) {
+                return false;
+            }
+            // Validate path based on pathMatchType
+            if (data.path && data.pathMatchType) {
+                switch (data.pathMatchType) {
+                    case "exact":
+                    case "prefix":
+                        // Path should start with /
+                        return data.path.startsWith("/");
+                    case "regex":
+                        // Validate regex
+                        try {
+                            new RegExp(data.path);
+                            return true;
+                        } catch {
+                            return false;
+                        }
+                }
+            }
+            return true;
+        },
+        {
+            message: "Invalid path configuration"
         }
-        return true;
-    },
-    {
-        message: "Invalid path configuration"
-    }
-)
+    )
     .refine(
         (data) => {
             // If rewritePath is provided, rewritePathType must be provided
@@ -229,6 +244,10 @@ export default function ReverseProxyTargets(props: {
     const [proxySettingsLoading, setProxySettingsLoading] = useState(false);
 
     const [pageLoading, setPageLoading] = useState(true);
+    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+    const [healthCheckDialogOpen, setHealthCheckDialogOpen] = useState(false);
+    const [selectedTargetForHealthCheck, setSelectedTargetForHealthCheck] =
+        useState<LocalTarget | null>(null);
     const router = useRouter();
 
     const proxySettingsSchema = z.object({
@@ -246,7 +265,9 @@ export default function ReverseProxyTargets(props: {
                     message: t("proxyErrorInvalidHeader")
                 }
             ),
-        headers: z.array(z.object({ name: z.string(), value: z.string() })).nullable()
+        headers: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable()
     });
 
     const tlsSettingsSchema = z.object({
@@ -280,7 +301,7 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null,
+            rewritePathType: null
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -463,7 +484,21 @@ export default function ReverseProxyTargets(props: {
             enabled: true,
             targetId: new Date().getTime(),
             new: true,
-            resourceId: resource.resourceId
+            resourceId: resource.resourceId,
+            hcEnabled: false,
+            hcPath: null,
+            hcMethod: null,
+            hcInterval: null,
+            hcTimeout: null,
+            hcHeaders: null,
+            hcScheme: null,
+            hcHostname: null,
+            hcPort: null,
+            hcFollowRedirects: null,
+            hcHealth: "unknown",
+            hcStatus: null,
+            hcMode: null,
+            hcUnhealthyInterval: null
         };
 
         setTargets([...targets, newTarget]);
@@ -474,7 +509,7 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null,
+            rewritePathType: null
         });
     }
 
@@ -494,15 +529,35 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...data,
-                        updated: true,
-                        siteType: site?.type || null
-                    }
+                          ...target,
+                          ...data,
+                          updated: true,
+                          siteType: site?.type || null
+                      }
                     : target
             )
         );
     }
+
+    function updateTargetHealthCheck(targetId: number, config: any) {
+        setTargets(
+            targets.map((target) =>
+                target.targetId === targetId
+                    ? {
+                          ...target,
+                          ...config,
+                          updated: true
+                      }
+                    : target
+            )
+        );
+    }
+
+    const openHealthCheckDialog = (target: LocalTarget) => {
+        console.log(target);
+        setSelectedTargetForHealthCheck(target);
+        setHealthCheckDialogOpen(true);
+    };
 
     async function saveAllSettings() {
         try {
@@ -518,6 +573,17 @@ export default function ReverseProxyTargets(props: {
                     method: target.method,
                     enabled: target.enabled,
                     siteId: target.siteId,
+                    hcEnabled: target.hcEnabled,
+                    hcPath: target.hcPath || null,
+                    hcScheme: target.hcScheme || null,
+                    hcHostname: target.hcHostname || null,
+                    hcPort: target.hcPort || null,
+                    hcInterval: target.hcInterval || null,
+                    hcTimeout: target.hcTimeout || null,
+                    hcHeaders: target.hcHeaders || null,
+                    hcFollowRedirects: target.hcFollowRedirects || null,
+                    hcMethod: target.hcMethod || null,
+                    hcStatus: target.hcStatus || null,
                     path: target.path,
                     pathMatchType: target.pathMatchType,
                     rewritePath: target.rewritePath,
@@ -598,16 +664,20 @@ export default function ReverseProxyTargets(props: {
             accessorKey: "path",
             header: t("matchPath"),
             cell: ({ row }) => {
-                const hasPathMatch = !!(row.original.path || row.original.pathMatchType);
+                const hasPathMatch = !!(
+                    row.original.path || row.original.pathMatchType
+                );
 
                 return hasPathMatch ? (
                     <div className="flex items-center gap-1">
                         <PathMatchModal
                             value={{
                                 path: row.original.path,
-                                pathMatchType: row.original.pathMatchType,
+                                pathMatchType: row.original.pathMatchType
                             }}
-                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            onChange={(config) =>
+                                updateTarget(row.original.targetId, config)
+                            }
                             trigger={
                                 <Button
                                     variant="outline"
@@ -616,7 +686,8 @@ export default function ReverseProxyTargets(props: {
                                     <PathMatchDisplay
                                         value={{
                                             path: row.original.path,
-                                            pathMatchType: row.original.pathMatchType,
+                                            pathMatchType:
+                                                row.original.pathMatchType
                                         }}
                                     />
                                 </Button>
@@ -646,9 +717,11 @@ export default function ReverseProxyTargets(props: {
                     <PathMatchModal
                         value={{
                             path: row.original.path,
-                            pathMatchType: row.original.pathMatchType,
+                            pathMatchType: row.original.pathMatchType
                         }}
-                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        onChange={(config) =>
+                            updateTarget(row.original.targetId, config)
+                        }
                         trigger={
                             <Button variant="outline">
                                 <Plus className="h-4 w-4 mr-2" />
@@ -657,7 +730,7 @@ export default function ReverseProxyTargets(props: {
                         }
                     />
                 );
-            },
+            }
         },
         {
             accessorKey: "siteId",
@@ -693,7 +766,7 @@ export default function ReverseProxyTargets(props: {
                                     className={cn(
                                         "justify-between flex-1",
                                         !row.original.siteId &&
-                                        "text-muted-foreground"
+                                            "text-muted-foreground"
                                     )}
                                 >
                                     {row.original.siteId
@@ -772,31 +845,31 @@ export default function ReverseProxyTargets(props: {
         },
         ...(resource.http
             ? [
-                {
-                    accessorKey: "method",
-                    header: t("method"),
-                    cell: ({ row }: { row: Row<LocalTarget> }) => (
-                        <Select
-                            defaultValue={row.original.method ?? ""}
-                            onValueChange={(value) =>
-                                updateTarget(row.original.targetId, {
-                                    ...row.original,
-                                    method: value
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                {row.original.method}
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="http">http</SelectItem>
-                                <SelectItem value="https">https</SelectItem>
-                                <SelectItem value="h2c">h2c</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )
-                }
-            ]
+                  {
+                      accessorKey: "method",
+                      header: t("method"),
+                      cell: ({ row }: { row: Row<LocalTarget> }) => (
+                          <Select
+                              defaultValue={row.original.method ?? ""}
+                              onValueChange={(value) =>
+                                  updateTarget(row.original.targetId, {
+                                      ...row.original,
+                                      method: value
+                                  })
+                              }
+                          >
+                              <SelectTrigger>
+                                  {row.original.method}
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="http">http</SelectItem>
+                                  <SelectItem value="https">https</SelectItem>
+                                  <SelectItem value="h2c">h2c</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      )
+                  }
+              ]
             : []),
         {
             accessorKey: "ip",
@@ -860,8 +933,11 @@ export default function ReverseProxyTargets(props: {
             accessorKey: "rewritePath",
             header: t("rewritePath"),
             cell: ({ row }) => {
-                const hasRewritePath = !!(row.original.rewritePath || row.original.rewritePathType);
-                const noPathMatch = !row.original.path && !row.original.pathMatchType;
+                const hasRewritePath = !!(
+                    row.original.rewritePath || row.original.rewritePathType
+                );
+                const noPathMatch =
+                    !row.original.path && !row.original.pathMatchType;
 
                 return hasRewritePath && !noPathMatch ? (
                     <div className="flex items-center gap-1">
@@ -869,9 +945,11 @@ export default function ReverseProxyTargets(props: {
                         <PathRewriteModal
                             value={{
                                 rewritePath: row.original.rewritePath,
-                                rewritePathType: row.original.rewritePathType,
+                                rewritePathType: row.original.rewritePathType
                             }}
-                            onChange={(config) => updateTarget(row.original.targetId, config)}
+                            onChange={(config) =>
+                                updateTarget(row.original.targetId, config)
+                            }
                             trigger={
                                 <Button
                                     variant="outline"
@@ -880,8 +958,10 @@ export default function ReverseProxyTargets(props: {
                                 >
                                     <PathRewriteDisplay
                                         value={{
-                                            rewritePath: row.original.rewritePath,
-                                            rewritePathType: row.original.rewritePathType,
+                                            rewritePath:
+                                                row.original.rewritePath,
+                                            rewritePathType:
+                                                row.original.rewritePathType
                                         }}
                                     />
                                 </Button>
@@ -896,7 +976,7 @@ export default function ReverseProxyTargets(props: {
                                 updateTarget(row.original.targetId, {
                                     ...row.original,
                                     rewritePath: null,
-                                    rewritePathType: null,
+                                    rewritePathType: null
                                 });
                             }}
                         >
@@ -907,9 +987,11 @@ export default function ReverseProxyTargets(props: {
                     <PathRewriteModal
                         value={{
                             rewritePath: row.original.rewritePath,
-                            rewritePathType: row.original.rewritePathType,
+                            rewritePathType: row.original.rewritePathType
                         }}
-                        onChange={(config) => updateTarget(row.original.targetId, config)}
+                        onChange={(config) =>
+                            updateTarget(row.original.targetId, config)
+                        }
                         trigger={
                             <Button variant="outline" disabled={noPathMatch}>
                                 <Plus className="h-4 w-4 mr-2" />
@@ -919,7 +1001,7 @@ export default function ReverseProxyTargets(props: {
                         disabled={noPathMatch}
                     />
                 );
-            },
+            }
         },
 
         // {
@@ -940,6 +1022,79 @@ export default function ReverseProxyTargets(props: {
         //         </Select>
         //     ),
         //         },
+        {
+            accessorKey: "healthCheck",
+            header: t("healthCheck"),
+            cell: ({ row }) => {
+                const status = row.original.hcHealth || "unknown";
+                const isEnabled = row.original.hcEnabled;
+
+                const getStatusColor = (status: string) => {
+                    switch (status) {
+                        case "healthy":
+                            return "green";
+                        case "unhealthy":
+                            return "red";
+                        case "unknown":
+                        default:
+                            return "secondary";
+                    }
+                };
+
+                const getStatusText = (status: string) => {
+                    switch (status) {
+                        case "healthy":
+                            return t("healthCheckHealthy");
+                        case "unhealthy":
+                            return t("healthCheckUnhealthy");
+                        case "unknown":
+                        default:
+                            return t("healthCheckUnknown");
+                    }
+                };
+
+                const getStatusIcon = (status: string) => {
+                    switch (status) {
+                        case "healthy":
+                            return <CircleCheck className="w-3 h-3" />;
+                        case "unhealthy":
+                            return <CircleX className="w-3 h-3" />;
+                        case "unknown":
+                        default:
+                            return null;
+                    }
+                };
+
+                return (
+                    <>
+                        {row.original.siteType === "newt" ? (
+                            <div className="flex items-center space-x-1">
+                                <Badge variant={getStatusColor(status)}>
+                                    <div className="flex items-center gap-1">
+                                        {getStatusIcon(status)}
+                                        {getStatusText(status)}
+                                    </div>
+                                </Badge>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        openHealthCheckDialog(row.original)
+                                    }
+                                    className="h-6 w-6 p-0"
+                                >
+                                    <Settings className="h-3 w-3" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <span className="text-sm text-muted-foreground">
+                                {t("healthCheckNotAvailable")}
+                            </span>
+                        )}
+                    </>
+                );
+            }
+        },
         {
             accessorKey: "enabled",
             header: t("enabled"),
@@ -1034,21 +1189,21 @@ export default function ReverseProxyTargets(props: {
                                                                     className={cn(
                                                                         "justify-between flex-1",
                                                                         !field.value &&
-                                                                        "text-muted-foreground"
+                                                                            "text-muted-foreground"
                                                                     )}
                                                                 >
                                                                     {field.value
                                                                         ? sites.find(
-                                                                            (
-                                                                                site
-                                                                            ) =>
-                                                                                site.siteId ===
-                                                                                field.value
-                                                                        )
-                                                                            ?.name
+                                                                              (
+                                                                                  site
+                                                                              ) =>
+                                                                                  site.siteId ===
+                                                                                  field.value
+                                                                          )
+                                                                              ?.name
                                                                         : t(
-                                                                            "siteSelect"
-                                                                        )}
+                                                                              "siteSelect"
+                                                                          )}
                                                                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                 </Button>
                                                             </FormControl>
@@ -1114,34 +1269,34 @@ export default function ReverseProxyTargets(props: {
                                                                 );
                                                             return selectedSite &&
                                                                 selectedSite.type ===
-                                                                "newt"
+                                                                    "newt"
                                                                 ? (() => {
-                                                                    const dockerState =
-                                                                        getDockerStateForSite(
-                                                                            selectedSite.siteId
-                                                                        );
-                                                                    return (
-                                                                        <ContainersSelector
-                                                                            site={
-                                                                                selectedSite
-                                                                            }
-                                                                            containers={
-                                                                                dockerState.containers
-                                                                            }
-                                                                            isAvailable={
-                                                                                dockerState.isAvailable
-                                                                            }
-                                                                            onContainerSelect={
-                                                                                handleContainerSelect
-                                                                            }
-                                                                            onRefresh={() =>
-                                                                                refreshContainersForSite(
-                                                                                    selectedSite.siteId
-                                                                                )
-                                                                            }
-                                                                        />
-                                                                    );
-                                                                })()
+                                                                      const dockerState =
+                                                                          getDockerStateForSite(
+                                                                              selectedSite.siteId
+                                                                          );
+                                                                      return (
+                                                                          <ContainersSelector
+                                                                              site={
+                                                                                  selectedSite
+                                                                              }
+                                                                              containers={
+                                                                                  dockerState.containers
+                                                                              }
+                                                                              isAvailable={
+                                                                                  dockerState.isAvailable
+                                                                              }
+                                                                              onContainerSelect={
+                                                                                  handleContainerSelect
+                                                                              }
+                                                                              onRefresh={() =>
+                                                                                  refreshContainersForSite(
+                                                                                      selectedSite.siteId
+                                                                                  )
+                                                                              }
+                                                                          />
+                                                                      );
+                                                                  })()
                                                                 : null;
                                                         })()}
                                                 </div>
@@ -1369,12 +1524,12 @@ export default function ReverseProxyTargets(props: {
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1544,9 +1699,7 @@ export default function ReverseProxyTargets(props: {
                                                 </FormLabel>
                                                 <FormControl>
                                                     <HeadersInput
-                                                        value={
-                                                            field.value
-                                                        }
+                                                        value={field.value}
                                                         onChange={(value) => {
                                                             field.onChange(
                                                                 value
@@ -1588,6 +1741,56 @@ export default function ReverseProxyTargets(props: {
                     {t("saveSettings")}
                 </Button>
             </div>
+
+            {selectedTargetForHealthCheck && (
+                <HealthCheckDialog
+                    open={healthCheckDialogOpen}
+                    setOpen={setHealthCheckDialogOpen}
+                    targetId={selectedTargetForHealthCheck.targetId}
+                    targetAddress={`${selectedTargetForHealthCheck.ip}:${selectedTargetForHealthCheck.port}`}
+                    targetMethod={
+                        selectedTargetForHealthCheck.method || undefined
+                    }
+                    initialConfig={{
+                        hcEnabled:
+                            selectedTargetForHealthCheck.hcEnabled || false,
+                        hcPath: selectedTargetForHealthCheck.hcPath || "/",
+                        hcMethod:
+                            selectedTargetForHealthCheck.hcMethod || "GET",
+                        hcInterval:
+                            selectedTargetForHealthCheck.hcInterval || 5,
+                        hcTimeout: selectedTargetForHealthCheck.hcTimeout || 5,
+                        hcHeaders:
+                            selectedTargetForHealthCheck.hcHeaders || undefined,
+                        hcScheme:
+                            selectedTargetForHealthCheck.hcScheme || undefined,
+                        hcHostname:
+                            selectedTargetForHealthCheck.hcHostname ||
+                            selectedTargetForHealthCheck.ip,
+                        hcPort:
+                            selectedTargetForHealthCheck.hcPort ||
+                            selectedTargetForHealthCheck.port,
+                        hcFollowRedirects:
+                            selectedTargetForHealthCheck.hcFollowRedirects ||
+                            true,
+                        hcStatus:
+                            selectedTargetForHealthCheck.hcStatus || undefined,
+                        hcMode: selectedTargetForHealthCheck.hcMode || "http",
+                        hcUnhealthyInterval:
+                            selectedTargetForHealthCheck.hcUnhealthyInterval ||
+                            30
+                    }}
+                    onChanges={async (config) => {
+                        if (selectedTargetForHealthCheck) {
+                            console.log(config);
+                            updateTargetHealthCheck(
+                                selectedTargetForHealthCheck.targetId,
+                                config
+                            );
+                        }
+                    }}
+                />
+            )}
         </SettingsContainer>
     );
 }

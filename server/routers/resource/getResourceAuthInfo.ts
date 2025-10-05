@@ -1,17 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
-import {
-    resourcePassword,
-    resourcePincode,
-    resources
-} from "@server/db";
+import { resourcePassword, resourcePincode, resources } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
+import { build } from "@server/build";
 
 const getResourceAuthInfoSchema = z
     .object({
@@ -52,19 +49,36 @@ export async function getResourceAuthInfo(
 
         const { resourceGuid } = parsedParams.data;
 
-        const [result] = await db
-            .select()
-            .from(resources)
-            .leftJoin(
-                resourcePincode,
-                eq(resourcePincode.resourceId, resources.resourceId)
-            )
-            .leftJoin(
-                resourcePassword,
-                eq(resourcePassword.resourceId, resources.resourceId)
-            )
-            .where(eq(resources.resourceGuid, resourceGuid))
-            .limit(1);
+        const isGuidInteger = /^\d+$/.test(resourceGuid);
+
+        const [result] =
+            isGuidInteger && build === "saas"
+                ? await db
+                      .select()
+                      .from(resources)
+                      .leftJoin(
+                          resourcePincode,
+                          eq(resourcePincode.resourceId, resources.resourceId)
+                      )
+                      .leftJoin(
+                          resourcePassword,
+                          eq(resourcePassword.resourceId, resources.resourceId)
+                      )
+                      .where(eq(resources.resourceId, Number(resourceGuid)))
+                      .limit(1)
+                : await db
+                      .select()
+                      .from(resources)
+                      .leftJoin(
+                          resourcePincode,
+                          eq(resourcePincode.resourceId, resources.resourceId)
+                      )
+                      .leftJoin(
+                          resourcePassword,
+                          eq(resourcePassword.resourceId, resources.resourceId)
+                      )
+                      .where(eq(resources.resourceGuid, resourceGuid))
+                      .limit(1);
 
         const resource = result?.resources;
         const pincode = result?.resourcePincode;

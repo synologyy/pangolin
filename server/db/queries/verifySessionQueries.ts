@@ -1,4 +1,4 @@
-import { db } from "@server/db";
+import { db, loginPage, LoginPage, loginPageOrg } from "@server/db";
 import {
     Resource,
     ResourcePassword,
@@ -39,7 +39,10 @@ export async function getResourceByDomain(
 ): Promise<ResourceWithAuth | null> {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/domain/${domain}`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/domain/${domain}`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -91,7 +94,10 @@ export async function getUserSessionWithUser(
 ): Promise<UserSessionWithUser | null> {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/session/${userSessionId}`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/session/${userSessionId}`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -132,7 +138,10 @@ export async function getUserSessionWithUser(
 export async function getUserOrgRole(userId: string, orgId: string) {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/org/${orgId}/role`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/org/${orgId}/role`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -154,12 +163,7 @@ export async function getUserOrgRole(userId: string, orgId: string) {
     const userOrgRole = await db
         .select()
         .from(userOrgs)
-        .where(
-            and(
-                eq(userOrgs.userId, userId),
-                eq(userOrgs.orgId, orgId)
-            )
-        )
+        .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId)))
         .limit(1);
 
     return userOrgRole.length > 0 ? userOrgRole[0] : null;
@@ -168,10 +172,16 @@ export async function getUserOrgRole(userId: string, orgId: string) {
 /**
  * Check if role has access to resource
  */
-export async function getRoleResourceAccess(resourceId: number, roleId: number) {
+export async function getRoleResourceAccess(
+    resourceId: number,
+    roleId: number
+) {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/role/${roleId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/role/${roleId}/resource/${resourceId}/access`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -207,10 +217,16 @@ export async function getRoleResourceAccess(resourceId: number, roleId: number) 
 /**
  * Check if user has direct access to resource
  */
-export async function getUserResourceAccess(userId: string, resourceId: number) {
+export async function getUserResourceAccess(
+    userId: string,
+    resourceId: number
+) {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/resource/${resourceId}/access`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/user/${userId}/resource/${resourceId}/access`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -246,10 +262,15 @@ export async function getUserResourceAccess(userId: string, resourceId: number) 
 /**
  * Get resource rules for a given resource
  */
-export async function getResourceRules(resourceId: number): Promise<ResourceRule[]> {
+export async function getResourceRules(
+    resourceId: number
+): Promise<ResourceRule[]> {
     if (config.isManagedMode()) {
         try {
-            const response = await axios.get(`${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/${resourceId}/rules`, await tokenManager.getAuthHeader());
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/resource/${resourceId}/rules`,
+                await tokenManager.getAuthHeader()
+            );
             return response.data.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -274,4 +295,51 @@ export async function getResourceRules(resourceId: number): Promise<ResourceRule
         .where(eq(resourceRules.resourceId, resourceId));
 
     return rules;
+}
+
+/**
+ * Get organization login page
+ */
+export async function getOrgLoginPage(
+    orgId: string
+): Promise<LoginPage | null> {
+    if (config.isManagedMode()) {
+        try {
+            const response = await axios.get(
+                `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/org/${orgId}/login-page`,
+                await tokenManager.getAuthHeader()
+            );
+            return response.data.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                logger.error("Error fetching config in verify session:", {
+                    message: error.message,
+                    code: error.code,
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    url: error.config?.url,
+                    method: error.config?.method
+                });
+            } else {
+                logger.error("Error fetching config in verify session:", error);
+            }
+            return null;
+        }
+    }
+
+    const [result] = await db
+        .select()
+        .from(loginPageOrg)
+        .where(eq(loginPageOrg.orgId, orgId))
+        .innerJoin(
+            loginPage,
+            eq(loginPageOrg.loginPageId, loginPage.loginPageId)
+        )
+        .limit(1);
+
+    if (!result) {
+        return null;
+    }
+
+    return result?.loginPage;
 }

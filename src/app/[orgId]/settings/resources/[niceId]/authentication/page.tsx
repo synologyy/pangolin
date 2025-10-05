@@ -58,6 +58,9 @@ import {
     SelectValue
 } from "@app/components/ui/select";
 import { Separator } from "@app/components/ui/separator";
+import { build } from "@server/build";
+import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
+import { TierId } from "@server/lib/private/billing/tiers";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -93,6 +96,9 @@ export default function ResourceAuthenticationPage() {
     const api = createApiClient({ env });
     const router = useRouter();
     const t = useTranslations();
+
+    const subscription = usePrivateSubscriptionStatusContext();
+    const subscribed = subscription?.getTier() === TierId.STANDARD;
 
     const [pageLoading, setPageLoading] = useState(true);
 
@@ -178,7 +184,7 @@ export default function ResourceAuthenticationPage() {
                         AxiosResponse<{
                             idps: { idpId: number; name: string }[];
                         }>
-                    >("/idp")
+                    >(build === "saas" ? `/org/${org?.org.orgId}/idp` : "/idp")
                 ]);
 
                 setAllRoles(
@@ -223,12 +229,23 @@ export default function ResourceAuthenticationPage() {
                     }))
                 );
 
-                setAllIdps(
-                    idpsResponse.data.data.idps.map((idp) => ({
-                        id: idp.idpId,
-                        text: idp.name
-                    }))
-                );
+                if (build === "saas") {
+                    if (subscribed) {
+                        setAllIdps(
+                            idpsResponse.data.data.idps.map((idp) => ({
+                                id: idp.idpId,
+                                text: idp.name
+                            }))
+                        );
+                    }
+                } else {
+                    setAllIdps(
+                        idpsResponse.data.data.idps.map((idp) => ({
+                            id: idp.idpId,
+                            text: idp.name
+                        }))
+                    );
+                }
 
                 if (
                     autoLoginEnabled &&

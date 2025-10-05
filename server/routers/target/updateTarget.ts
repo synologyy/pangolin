@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, targetHealthCheck } from "@server/db";
 import { newts, resources, sites, targets } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -13,6 +13,7 @@ import { addTargets } from "../newt/targets";
 import { pickPort } from "./helpers";
 import { isTargetValid } from "@server/lib/validators";
 import { OpenAPITags, registry } from "@server/openApi";
+import { vs } from "@react-email/components";
 
 const updateTargetParamsSchema = z
     .object({
@@ -27,6 +28,25 @@ const updateTargetBodySchema = z
         method: z.string().min(1).max(10).optional().nullable(),
         port: z.number().int().min(1).max(65535).optional(),
         enabled: z.boolean().optional(),
+        hcEnabled: z.boolean().optional().nullable(),
+        hcPath: z.string().min(1).optional().nullable(),
+        hcScheme: z.string().optional().nullable(),
+        hcMode: z.string().optional().nullable(),
+        hcHostname: z.string().optional().nullable(),
+        hcPort: z.number().int().positive().optional().nullable(),
+        hcInterval: z.number().int().positive().min(5).optional().nullable(),
+        hcUnhealthyInterval: z
+            .number()
+            .int()
+            .positive()
+            .min(5)
+            .optional()
+            .nullable(),
+        hcTimeout: z.number().int().positive().min(1).optional().nullable(),
+        hcHeaders: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
+        hcFollowRedirects: z.boolean().optional().nullable(),
+        hcMethod: z.string().min(1).optional().nullable(),
+        hcStatus: z.number().int().optional().nullable(),
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
         rewritePath: z.string().optional().nullable(),
@@ -171,10 +191,41 @@ export async function updateTarget(
         const [updatedTarget] = await db
             .update(targets)
             .set({
-                ...parsedBody.data,
-                internalPort
+                siteId: parsedBody.data.siteId,
+                ip: parsedBody.data.ip,
+                method: parsedBody.data.method,
+                port: parsedBody.data.port,
+                internalPort,
+                enabled: parsedBody.data.enabled,
+                path: parsedBody.data.path,
+                pathMatchType: parsedBody.data.pathMatchType
             })
             .where(eq(targets.targetId, targetId))
+            .returning();
+
+        let hcHeaders = null;
+        if (parsedBody.data.hcHeaders) {
+            hcHeaders = JSON.stringify(parsedBody.data.hcHeaders);
+        }
+
+        const [updatedHc] = await db
+            .update(targetHealthCheck)
+            .set({
+                hcEnabled: parsedBody.data.hcEnabled || false,
+                hcPath: parsedBody.data.hcPath,
+                hcScheme: parsedBody.data.hcScheme,
+                hcMode: parsedBody.data.hcMode,
+                hcHostname: parsedBody.data.hcHostname,
+                hcPort: parsedBody.data.hcPort,
+                hcInterval: parsedBody.data.hcInterval,
+                hcUnhealthyInterval: parsedBody.data.hcUnhealthyInterval,
+                hcTimeout: parsedBody.data.hcTimeout,
+                hcHeaders: hcHeaders,
+                hcFollowRedirects: parsedBody.data.hcFollowRedirects,
+                hcMethod: parsedBody.data.hcMethod,
+                hcStatus: parsedBody.data.hcStatus
+            })
+            .where(eq(targetHealthCheck.targetId, targetId))
             .returning();
 
         if (site.pubKey) {
@@ -194,13 +245,17 @@ export async function updateTarget(
                 await addTargets(
                     newt.newtId,
                     [updatedTarget],
+                    [updatedHc],
                     resource.protocol,
                     resource.proxyPort
                 );
             }
         }
         return response(res, {
-            data: updatedTarget,
+            data: {
+                ...updatedTarget,
+                ...updatedHc
+            },
             success: true,
             error: false,
             message: "Target updated successfully",

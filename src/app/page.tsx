@@ -32,7 +32,7 @@ export default async function Page(props: {
     let complete = false;
     try {
         const setupRes = await internal.get<
-        AxiosResponse<InitialSetupCompleteResponse>
+            AxiosResponse<InitialSetupCompleteResponse>
         >(`/auth/initial-setup-complete`, await authCookieHeader());
         complete = setupRes.data.data.complete;
     } catch (e) {}
@@ -83,7 +83,10 @@ export default async function Page(props: {
     if (lastOrgExists) {
         redirect(`/${lastOrgCookie}`);
     } else {
-        const ownedOrg = orgs.find((org) => org.isOwner);
+        let ownedOrg = orgs.find((org) => org.isOwner);
+        if (!ownedOrg) {
+            ownedOrg = orgs[0];
+        }
         if (ownedOrg) {
             redirect(`/${ownedOrg.orgId}`);
         } else {

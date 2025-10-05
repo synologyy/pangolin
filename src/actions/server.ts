@@ -1,6 +1,6 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers as reqHeaders } from "next/headers";
 import { ResponseT } from "@server/types/Response";
 import { pullEnv } from "@app/lib/pullEnv";
 
@@ -14,7 +14,10 @@ type CookieOptions = {
     domain?: string;
 };
 
-function parseSetCookieString(setCookie: string): {
+function parseSetCookieString(
+    setCookie: string,
+    host?: string
+): {
     name: string;
     value: string;
     options: CookieOptions;
@@ -50,16 +53,11 @@ function parseSetCookieString(setCookie: string): {
             case "max-age":
                 options.maxAge = parseInt(v, 10);
                 break;
-            case "domain":
-                options.domain = v;
-                break;
         }
     }
 
     if (!options.domain) {
-        const d = env.app.dashboardUrl
-            ? "." + new URL(env.app.dashboardUrl).hostname
-            : undefined;
+        const d = host ? host : new URL(env.app.dashboardUrl).hostname;
         if (d) {
             options.domain = d;
         }
@@ -77,6 +75,9 @@ async function makeApiRequest<T>(
     // Get existing cookies to forward
     const allCookies = await cookies();
     const cookieHeader = allCookies.toString();
+
+    const headersList = await reqHeaders();
+    const host = headersList.get("host");
 
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -107,7 +108,10 @@ async function makeApiRequest<T>(
     const rawSetCookie = res.headers.get("set-cookie");
     if (rawSetCookie) {
         try {
-            const { name, value, options } = parseSetCookieString(rawSetCookie);
+            const { name, value, options } = parseSetCookieString(
+                rawSetCookie,
+                host || undefined
+            );
             const allCookies = await cookies();
             allCookies.set(name, value, options);
         } catch (cookieError) {

@@ -3,7 +3,7 @@ import {
     GetExchangeTokenResponse
 } from "@server/routers/resource";
 import ResourceAuthPortal from "@app/components/ResourceAuthPortal";
-import { internal, priv } from "@app/lib/api";
+import { formatAxiosError, internal, priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { cache } from "react";
@@ -15,7 +15,13 @@ import AccessToken from "@app/components/AccessToken";
 import { pullEnv } from "@app/lib/pullEnv";
 import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListIdpsResponse } from "@server/routers/idp";
+import { ListOrgIdpsResponse } from "@server/routers/private/orgIdp";
 import AutoLoginHandler from "@app/components/AutoLoginHandler";
+import { build } from "@server/build";
+import { headers } from "next/headers";
+import { GetLoginPageResponse } from "@server/routers/private/loginPage";
+import { GetOrgTierResponse } from "@server/routers/private/billing";
+import { TierId } from "@server/lib/private/billing/tiers";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +59,45 @@ export default async function ResourceAuthPage(props: {
                 <ResourceNotFound />
             </div>
         );
+    }
+
+    let subscriptionStatus: GetOrgTierResponse | null = null;
+    if (build == "saas") {
+        try {
+            const getSubscription = cache(() =>
+                priv.get<AxiosResponse<GetOrgTierResponse>>(
+                    `/org/${authInfo.orgId}/billing/tier`
+                )
+            );
+            const subRes = await getSubscription();
+            subscriptionStatus = subRes.data.data;
+        } catch {}
+    }
+    const subscribed = subscriptionStatus?.tier === TierId.STANDARD;
+
+    const allHeaders = await headers();
+    const host = allHeaders.get("host");
+
+    const expectedHost = env.app.dashboardUrl.split("//")[1];
+    if (host !== expectedHost) {
+        if (build === "saas" && !subscribed) {
+            redirect(env.app.dashboardUrl);
+        }
+
+        let loginPage: GetLoginPageResponse | undefined;
+        try {
+            const res = await priv.get<AxiosResponse<GetLoginPageResponse>>(
+                `/login-page?resourceId=${authInfo.resourceId}&fullDomain=${host}`
+            );
+
+            if (res && res.status === 200) {
+                loginPage = res.data.data;
+            }
+        } catch (e) {}
+
+        if (!loginPage) {
+            redirect(env.app.dashboardUrl);
+        }
     }
 
     let redirectUrl = authInfo.url;
@@ -136,13 +181,31 @@ export default async function ResourceAuthPage(props: {
         );
     }
 
-    const idpsRes = await cache(
-        async () => await priv.get<AxiosResponse<ListIdpsResponse>>("/idp")
-    )();
-    const loginIdps = idpsRes.data.data.idps.map((idp) => ({
-        idpId: idp.idpId,
-        name: idp.name
-    })) as LoginFormIDP[];
+    let loginIdps: LoginFormIDP[] = [];
+    if (build === "saas") {
+        if (subscribed) {
+            const idpsRes = await cache(
+                async () =>
+                    await priv.get<AxiosResponse<ListOrgIdpsResponse>>(
+                        `/org/${authInfo!.orgId}/idp`
+                    )
+            )();
+            loginIdps = idpsRes.data.data.idps.map((idp) => ({
+                idpId: idp.idpId,
+                name: idp.name,
+                variant: idp.variant
+            })) as LoginFormIDP[];
+        }
+    } else {
+        const idpsRes = await cache(
+            async () => await priv.get<AxiosResponse<ListIdpsResponse>>("/idp")
+        )();
+        loginIdps = idpsRes.data.data.idps.map((idp) => ({
+            idpId: idp.idpId,
+            name: idp.name,
+            variant: idp.type
+        })) as LoginFormIDP[];
+    }
 
     if (authInfo.skipToIdpId && authInfo.skipToIdpId !== null) {
         const idp = loginIdps.find((idp) => idp.idpId === authInfo.skipToIdpId);
@@ -152,6 +215,7 @@ export default async function ResourceAuthPage(props: {
                     resourceId={authInfo.resourceId}
                     skipToIdpId={authInfo.skipToIdpId}
                     redirectUrl={redirectUrl}
+                    orgId={build == "saas" ? authInfo.orgId : undefined}
                 />
             );
         }
@@ -178,6 +242,7 @@ export default async function ResourceAuthPage(props: {
                         }}
                         redirect={redirectUrl}
                         idps={loginIdps}
+                        orgId={build === "saas" ? authInfo.orgId : undefined}
                     />
                 </div>
             )}

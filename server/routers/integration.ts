@@ -30,6 +30,7 @@ import {
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
 import { ActionsEnum } from "@server/auth/actions";
+import { build } from "@server/build";
 
 export const unauthenticated = Router();
 
@@ -596,6 +597,15 @@ authenticated.get(
     verifyApiKeyHasAction(ActionsEnum.listIdpOrgs),
     idp.listIdpOrgPolicies
 );
+
+if (build == "saas") {
+    authenticated.post(
+        `/org/:orgId/send-usage-notification`,
+        verifyApiKeyIsRoot, // We are the only ones who can use root key so its fine
+        verifyApiKeyHasAction(ActionsEnum.sendUsageNotification),
+        org.sendUsageNotification
+    );
+}
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",

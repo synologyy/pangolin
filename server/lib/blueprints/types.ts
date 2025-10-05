@@ -5,6 +5,22 @@ export const SiteSchema = z.object({
     "docker-socket-enabled": z.boolean().optional().default(true)
 });
 
+export const TargetHealthCheckSchema = z.object({
+    hostname: z.string(),
+    port: z.number().int().min(1).max(65535),
+    enabled: z.boolean().optional().default(true),
+    path: z.string().optional(),
+    scheme: z.string().optional(),
+    mode: z.string().default("http"),
+    interval: z.number().int().default(30),
+    unhealthyInterval: z.number().int().default(30),
+    timeout: z.number().int().default(5),
+    headers: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional().default(null),
+    followRedirects: z.boolean().default(true),
+    method: z.string().default("GET"),
+    status: z.number().int().optional()
+});
+
 // Schema for individual target within a resource
 export const TargetSchema = z.object({
     site: z.string().optional(),
@@ -15,6 +31,7 @@ export const TargetSchema = z.object({
     "internal-port": z.number().int().min(1).max(65535).optional(),
     path: z.string().optional(),
     "path-match": z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+    healthcheck: TargetHealthCheckSchema.optional(),
     rewritePath: z.string().optional(),
     "rewrite-match": z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
 });

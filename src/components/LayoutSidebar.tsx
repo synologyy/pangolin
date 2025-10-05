@@ -57,6 +57,16 @@ export function LayoutSidebar({
         setSidebarStateCookie(isSidebarCollapsed);
     }, [isSidebarCollapsed]);
 
+    function loadFooterLinks(): { text: string; href?: string }[] | undefined {
+        if (env.branding.footer) {
+            try {
+                return JSON.parse(env.branding.footer);
+            } catch (e) {
+                console.error("Failed to parse BRANDING_FOOTER", e);
+            }
+        }
+    }
+
     return (
         <div
             className={cn(
@@ -113,31 +123,62 @@ export function LayoutSidebar({
                 <SupporterStatus isCollapsed={isSidebarCollapsed} />
                 {!isSidebarCollapsed && (
                     <div className="space-y-2">
-                        <div className="text-xs text-muted-foreground text-center">
-                            <Link
-                                href="https://github.com/fosrl/pangolin"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-1"
-                            >
-                                {!isUnlocked()
-                                    ? t("communityEdition")
-                                    : t("commercialEdition")}
-                                <FaGithub size={12} />
-                            </Link>
-                        </div>
-                        {env?.app?.version && (
-                            <div className="text-xs text-muted-foreground text-center">
-                                <Link
-                                    href={`https://github.com/fosrl/pangolin/releases/tag/${env.app.version}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-center gap-1"
-                                >
-                                    v{env.app.version}
-                                    <ExternalLink size={12} />
-                                </Link>
-                            </div>
+                        {loadFooterLinks() ? (
+                            <>
+                                {loadFooterLinks()!.map((link, index) => (
+                                    <div
+                                        key={index}
+                                        className="whitespace-nowrap"
+                                    >
+                                        {link.href ? (
+                                            <div className="text-xs text-muted-foreground text-center">
+                                                <Link
+                                                    href={link.href}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-center gap-1"
+                                                >
+                                                    {link.text}
+                                                    <ExternalLink size={12} />
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs text-muted-foreground text-center">
+                                                {link.text}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </>
+                        ) : (
+                            <>
+                                <div className="text-xs text-muted-foreground text-center">
+                                    <Link
+                                        href="https://github.com/fosrl/pangolin"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-1"
+                                    >
+                                        {!isUnlocked()
+                                            ? t("communityEdition")
+                                            : t("commercialEdition")}
+                                        <FaGithub size={12} />
+                                    </Link>
+                                </div>
+                                {env?.app?.version && (
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        <Link
+                                            href={`https://github.com/fosrl/pangolin/releases/tag/${env.app.version}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-center gap-1"
+                                        >
+                                            v{env.app.version}
+                                            <ExternalLink size={12} />
+                                        </Link>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
