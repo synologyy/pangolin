@@ -1423,8 +1423,8 @@
     "healthScheme": "Yöntem",
     "healthSelectScheme": "Yöntem Seç",
     "healthCheckPath": "Yol",
-    "healthHostname": "IP / Host",
-    "healthPort": "Port",
+    "healthHostname": "IP / Hostname",
+    "healthPort": "Bağlantı Noktası",
     "healthCheckPathDescription": "Sağlık durumunu kontrol etmek için yol.",
     "healthyIntervalSeconds": "Sağlıklı Aralık",
     "unhealthyIntervalSeconds": "Sağlıksız Aralık",
@@ -1718,5 +1718,10 @@
     "resourceAddEntrypointsEditFile": "Dosyayı düzenle: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Dosyayı düzenle: docker-compose.yml",
     "emailVerificationRequired": "E-posta doğrulaması gereklidir. Bu adımı tamamlamak için lütfen tekrar {dashboardUrl}/auth/login üzerinden oturum açın. Sonra buraya geri dönün.",
-    "twoFactorSetupRequired": "İki faktörlü kimlik doğrulama ayarı gereklidir. Bu adımı tamamlamak için lütfen tekrar {dashboardUrl}/auth/login üzerinden oturum açın. Sonra buraya geri dönün."
+    "twoFactorSetupRequired": "İki faktörlü kimlik doğrulama ayarı gereklidir. Bu adımı tamamlamak için lütfen tekrar {dashboardUrl}/auth/login üzerinden oturum açın. Sonra buraya geri dönün.",
+    "authPageErrorUpdateMessage": "Kimlik doğrulama sayfası ayarları güncellenirken bir hata oluştu.",
+    "authPageUpdated": "Kimlik doğrulama sayfası başarıyla güncellendi",
+    "healthCheckNotAvailable": "Yerel",
+    "rewritePath": "Yolu Yeniden Yaz",
+    "rewritePathDescription": "Seçenek olarak hedefe iletmeden önce yolu yeniden yazın."
 }

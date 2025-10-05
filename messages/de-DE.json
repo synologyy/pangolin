@@ -1545,7 +1545,7 @@
     "autoLoginErrorGeneratingUrl": "Fehler beim Generieren der Authentifizierungs-URL.",
     "remoteExitNodeManageRemoteExitNodes": "Selbst-Hosted verwalten",
     "remoteExitNodeDescription": "Knoten verwalten, um die Netzwerkverbindung zu erweitern",
-    "remoteExitNodes": "Nodes",
+    "remoteExitNodes": "Knoten",
     "searchRemoteExitNodes": "Knoten suchen...",
     "remoteExitNodeAdd": "Knoten hinzufügen",
     "remoteExitNodeErrorDelete": "Fehler beim Löschen des Knotens",
@@ -1554,7 +1554,7 @@
     "remoteExitNodeMessageConfirm": "Um zu bestätigen, geben Sie bitte den Namen des Knotens unten ein.",
     "remoteExitNodeConfirmDelete": "Löschknoten bestätigen",
     "remoteExitNodeDelete": "Knoten löschen",
-    "sidebarRemoteExitNodes": "Nodes",
+    "sidebarRemoteExitNodes": "Knoten",
     "remoteExitNodeCreate": {
         "title": "Knoten erstellen",
         "description": "Erstellen Sie einen neuen Knoten, um Ihre Netzwerkverbindung zu erweitern",
@@ -1663,7 +1663,7 @@
     "idpGoogleClientSecretDescription": "Ihr Google OAuth2 Client Secret",
     "idpAzureConfiguration": "Azure Entra ID Konfiguration",
     "idpAzureConfigurationDescription": "Konfigurieren Sie Ihre Azure Entra ID OAuth2 Zugangsdaten",
-    "idpTenantId": "Tenant ID",
+    "idpTenantId": "Mandanten-ID",
     "idpTenantIdPlaceholder": "deine Mandant-ID",
     "idpAzureTenantIdDescription": "Ihre Azure Mieter-ID (gefunden in Azure Active Directory Übersicht)",
     "idpAzureClientIdDescription": "Ihre Azure App Registration Client ID",
@@ -1674,7 +1674,7 @@
     "idpAzureAlt": "Azure",
     "idpGoogleConfigurationTitle": "Google-Konfiguration",
     "idpAzureConfigurationTitle": "Azure Entra ID Konfiguration",
-    "idpTenantIdLabel": "Tenant ID",
+    "idpTenantIdLabel": "Mandanten-ID",
     "idpAzureClientIdDescription2": "Ihre Azure App Registration Client ID",
     "idpAzureClientSecretDescription2": "Ihr Azure App Registration Client Secret",
     "idpGoogleDescription": "Google OAuth2/OIDC Provider",
@@ -1718,5 +1718,10 @@
     "resourceAddEntrypointsEditFile": "Datei bearbeiten: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Datei bearbeiten: docker-compose.yml",
     "emailVerificationRequired": "E-Mail-Verifizierung ist erforderlich. Bitte melden Sie sich erneut über {dashboardUrl}/auth/login an. Kommen Sie dann wieder hierher.",
-    "twoFactorSetupRequired": "Die Zwei-Faktor-Authentifizierung ist erforderlich. Bitte melden Sie sich erneut über {dashboardUrl}/auth/login an. Dann kommen Sie hierher zurück."
+    "twoFactorSetupRequired": "Die Zwei-Faktor-Authentifizierung ist erforderlich. Bitte melden Sie sich erneut über {dashboardUrl}/auth/login an. Dann kommen Sie hierher zurück.",
+    "authPageErrorUpdateMessage": "Beim Aktualisieren der Auth-Seiten-Einstellungen ist ein Fehler aufgetreten",
+    "authPageUpdated": "Auth-Seite erfolgreich aktualisiert",
+    "healthCheckNotAvailable": "Lokal",
+    "rewritePath": "Pfad neu schreiben",
+    "rewritePathDescription": "Optional den Pfad umschreiben, bevor er an das Ziel weitergeleitet wird."
 }

@@ -1545,7 +1545,7 @@
     "autoLoginErrorGeneratingUrl": "Échec de la génération de l'URL d'authentification.",
     "remoteExitNodeManageRemoteExitNodes": "Gérer auto-hébergé",
     "remoteExitNodeDescription": "Gérer les nœuds pour étendre votre connectivité réseau",
-    "remoteExitNodes": "Nodes",
+    "remoteExitNodes": "Nœuds",
     "searchRemoteExitNodes": "Rechercher des nœuds...",
     "remoteExitNodeAdd": "Ajouter un noeud",
     "remoteExitNodeErrorDelete": "Erreur lors de la suppression du noeud",
@@ -1554,7 +1554,7 @@
     "remoteExitNodeMessageConfirm": "Pour confirmer, veuillez saisir le nom du noeud ci-dessous.",
     "remoteExitNodeConfirmDelete": "Confirmer la suppression du noeud",
     "remoteExitNodeDelete": "Supprimer le noeud",
-    "sidebarRemoteExitNodes": "Nodes",
+    "sidebarRemoteExitNodes": "Nœuds",
     "remoteExitNodeCreate": {
         "title": "Créer un noeud",
         "description": "Créer un nouveau nœud pour étendre votre connectivité réseau",
@@ -1663,7 +1663,7 @@
     "idpGoogleClientSecretDescription": "Votre secret client Google OAuth2",
     "idpAzureConfiguration": "Configuration de l'entra ID Azure",
     "idpAzureConfigurationDescription": "Configurer vos identifiants OAuth2 Azure Entra",
-    "idpTenantId": "Tenant ID",
+    "idpTenantId": "ID du locataire",
     "idpTenantIdPlaceholder": "votre-locataire-id",
     "idpAzureTenantIdDescription": "Votre ID de locataire Azure (trouvé dans l'aperçu Azure Active Directory)",
     "idpAzureClientIdDescription": "Votre ID client d'enregistrement de l'application Azure",
@@ -1674,7 +1674,7 @@
     "idpAzureAlt": "Azure",
     "idpGoogleConfigurationTitle": "Configuration Google",
     "idpAzureConfigurationTitle": "Configuration de l'entra ID Azure",
-    "idpTenantIdLabel": "Tenant ID",
+    "idpTenantIdLabel": "ID du locataire",
     "idpAzureClientIdDescription2": "Votre ID client d'enregistrement de l'application Azure",
     "idpAzureClientSecretDescription2": "Le secret de votre client d'enregistrement Azure App",
     "idpGoogleDescription": "Fournisseur Google OAuth2/OIDC",
@@ -1718,5 +1718,10 @@
     "resourceAddEntrypointsEditFile": "Modifier le fichier : config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Modifier le fichier : docker-compose.yml",
     "emailVerificationRequired": "La vérification de l'e-mail est requise. Veuillez vous reconnecter via {dashboardUrl}/auth/login terminé cette étape. Puis revenez ici.",
-    "twoFactorSetupRequired": "La configuration d'authentification à deux facteurs est requise. Veuillez vous reconnecter via {dashboardUrl}/auth/login terminé cette étape. Puis revenez ici."
+    "twoFactorSetupRequired": "La configuration d'authentification à deux facteurs est requise. Veuillez vous reconnecter via {dashboardUrl}/auth/login terminé cette étape. Puis revenez ici.",
+    "authPageErrorUpdateMessage": "Une erreur s'est produite lors de la mise à jour de la page d\u000027authentification",
+    "authPageUpdated": "Page d\u000027authentification mise à jour avec succès",
+    "healthCheckNotAvailable": "Locale",
+    "rewritePath": "Réécrire le chemin",
+    "rewritePathDescription": "Réécrivez éventuellement le chemin avant de le transmettre à la cible."
 }

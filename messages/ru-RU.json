@@ -1545,7 +1545,7 @@
     "autoLoginErrorGeneratingUrl": "Не удалось сгенерировать URL-адрес аутентификации.",
     "remoteExitNodeManageRemoteExitNodes": "Управление самоуправляемым",
     "remoteExitNodeDescription": "Управляйте узлами для расширения сетевого подключения",
-    "remoteExitNodes": "Nodes",
+    "remoteExitNodes": "Узлы",
     "searchRemoteExitNodes": "Поиск узлов...",
     "remoteExitNodeAdd": "Добавить узел",
     "remoteExitNodeErrorDelete": "Ошибка удаления узла",
@@ -1554,7 +1554,7 @@
     "remoteExitNodeMessageConfirm": "Для подтверждения введите имя узла ниже.",
     "remoteExitNodeConfirmDelete": "Подтвердите удаление узла",
     "remoteExitNodeDelete": "Удалить узел",
-    "sidebarRemoteExitNodes": "Nodes",
+    "sidebarRemoteExitNodes": "Узлы",
     "remoteExitNodeCreate": {
         "title": "Создать узел",
         "description": "Создайте новый узел, чтобы расширить сетевое подключение",
@@ -1663,7 +1663,7 @@
     "idpGoogleClientSecretDescription": "Ваш Google OAuth2 Секрет",
     "idpAzureConfiguration": "Конфигурация Azure Entra ID",
     "idpAzureConfigurationDescription": "Настройте учетные данные Azure Entra ID OAuth2",
-    "idpTenantId": "Tenant ID",
+    "idpTenantId": "Идентификатор арендатора",
     "idpTenantIdPlaceholder": "ваш тенант-id",
     "idpAzureTenantIdDescription": "Идентификатор арендатора Azure (найден в обзоре Active Directory Azure)",
     "idpAzureClientIdDescription": "Ваш идентификатор клиента Azure App",
@@ -1674,7 +1674,7 @@
     "idpAzureAlt": "Azure",
     "idpGoogleConfigurationTitle": "Конфигурация Google",
     "idpAzureConfigurationTitle": "Конфигурация Azure Entra ID",
-    "idpTenantIdLabel": "Tenant ID",
+    "idpTenantIdLabel": "Идентификатор арендатора",
     "idpAzureClientIdDescription2": "Ваш идентификатор клиента Azure App",
     "idpAzureClientSecretDescription2": "Секрет регистрации клиента Azure App",
     "idpGoogleDescription": "Google OAuth2/OIDC провайдер",
@@ -1718,5 +1718,10 @@
     "resourceAddEntrypointsEditFile": "Редактировать файл: config/traefik/traefik_config.yml",
     "resourceExposePortsEditFile": "Редактировать файл: docker-compose.yml",
     "emailVerificationRequired": "Требуется подтверждение адреса электронной почты. Пожалуйста, войдите снова через {dashboardUrl}/auth/login завершить этот шаг. Затем вернитесь сюда.",
-    "twoFactorSetupRequired": "Требуется настройка двухфакторной аутентификации. Пожалуйста, войдите снова через {dashboardUrl}/auth/login завершить этот шаг. Затем вернитесь сюда."
+    "twoFactorSetupRequired": "Требуется настройка двухфакторной аутентификации. Пожалуйста, войдите снова через {dashboardUrl}/auth/login завершить этот шаг. Затем вернитесь сюда.",
+    "authPageErrorUpdateMessage": "Произошла ошибка при обновлении настроек страницы авторизации",
+    "authPageUpdated": "Страница авторизации успешно обновлена",
+    "healthCheckNotAvailable": "Локальный",
+    "rewritePath": "Переписать путь",
+    "rewritePathDescription": "При необходимости, измените путь перед пересылкой к целевому адресу."
 }
