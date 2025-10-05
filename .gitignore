@@ -47,3 +47,4 @@ server/build.ts
 postgres/
 dynamic/
 *.mmdb
+config/config.yml
