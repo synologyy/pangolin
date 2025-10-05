@@ -51,14 +51,16 @@ export function getFeatureIdByMetricId(metricId: string): FeatureId | undefined 
 }
 
 export type FeaturePriceSet = {
-    [key in FeatureId]: string;
+    [key in Exclude<FeatureId, FeatureId.DOMAINS>]: string;
+} & {
+    [FeatureId.DOMAINS]?: string; // Optional since domains are not billed
 };
 
 export const standardFeaturePriceSet: FeaturePriceSet = { // Free tier matches the freeLimitSet
     [FeatureId.SITE_UPTIME]: "price_1RrQc4D3Ee2Ir7WmaJGZ3MtF",
     [FeatureId.USERS]: "price_1RrQeJD3Ee2Ir7WmgveP3xea",
     [FeatureId.EGRESS_DATA_MB]: "price_1RrQXFD3Ee2Ir7WmvGDlgxQk",
-    [FeatureId.DOMAINS]: "price_1Rz3tMD3Ee2Ir7Wm5qLeASzC",
+    // [FeatureId.DOMAINS]: "price_1Rz3tMD3Ee2Ir7Wm5qLeASzC",
     [FeatureId.REMOTE_EXIT_NODES]: "price_1S46weD3Ee2Ir7Wm94KEHI4h"
 };
 
@@ -66,7 +68,7 @@ export const standardFeaturePriceSetSandbox: FeaturePriceSet = { // Free tier ma
     [FeatureId.SITE_UPTIME]: "price_1RefFBDCpkOb237BPrKZ8IEU",
     [FeatureId.USERS]: "price_1ReNa4DCpkOb237Bc67G5muF",
     [FeatureId.EGRESS_DATA_MB]: "price_1Rfp9LDCpkOb237BwuN5Oiu0",
-    [FeatureId.DOMAINS]: "price_1Ryi88DCpkOb237B2D6DM80b",
+    // [FeatureId.DOMAINS]: "price_1Ryi88DCpkOb237B2D6DM80b",
     [FeatureId.REMOTE_EXIT_NODES]: "price_1RyiZvDCpkOb237BXpmoIYJL"
 };
 
