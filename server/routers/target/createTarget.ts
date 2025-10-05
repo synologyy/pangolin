@@ -211,7 +211,10 @@ export async function createTarget(
                     internalPort,
                     enabled: targetData.enabled,
                     path: targetData.path,
-                    pathMatchType: targetData.pathMatchType
+                    pathMatchType: targetData.pathMatchType,
+                    rewritePath: targetData.rewritePath,
+                    rewritePathType: targetData.rewritePathType,
+                    priority: targetData.priority
                 })
                 .returning();
 

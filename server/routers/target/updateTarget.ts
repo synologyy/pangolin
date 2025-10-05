@@ -199,7 +199,10 @@ export async function updateTarget(
                 internalPort,
                 enabled: parsedBody.data.enabled,
                 path: parsedBody.data.path,
-                pathMatchType: parsedBody.data.pathMatchType
+                pathMatchType: parsedBody.data.pathMatchType,
+                priority: parsedBody.data.priority,
+                rewritePath: parsedBody.data.rewritePath,
+                rewritePathType: parsedBody.data.rewritePathType
             })
             .where(eq(targets.targetId, targetId))
             .returning();
