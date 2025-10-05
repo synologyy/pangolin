@@ -57,7 +57,7 @@ function parseSetCookieString(
     }
 
     if (!options.domain) {
-        const d = host ? host : new URL(env.app.dashboardUrl).hostname;
+        const d = host ? new URL(env.app.dashboardUrl).hostname : undefined;
         if (d) {
             options.domain = d;
         }
