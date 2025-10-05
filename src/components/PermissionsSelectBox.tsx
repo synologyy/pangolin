@@ -149,7 +149,7 @@ function getActionsCategories(root: boolean) {
         if (build == "saas") {
             actionsByCategory["SAAS"] = {
                 ["Send Usage Notification Email"]: "sendUsageNotification",
-            }
+            };
         }
     }
 

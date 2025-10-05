@@ -651,7 +651,7 @@ export class UsageService {
                 }
             }
 
-            return result
+            return result;
         } catch (error) {
             logger.error(
                 `Failed to get usage for ${orgId}/${featureId}:`,

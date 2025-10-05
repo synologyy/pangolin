@@ -47,8 +47,8 @@ export async function updateProxyResources(
     for (const [resourceNiceId, resourceData] of Object.entries(
         config["proxy-resources"]
     )) {
-        let targetsToUpdate: Target[] = [];
-        let healthchecksToUpdate: TargetHealthCheck[] = [];
+        const targetsToUpdate: Target[] = [];
+        const healthchecksToUpdate: TargetHealthCheck[] = [];
         let resource: Resource;
 
         async function createTarget( // reusable function to create a target

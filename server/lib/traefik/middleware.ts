@@ -24,7 +24,7 @@ export default function createPathRewriteMiddleware(
     switch (rewritePathType) {
         case "exact":
             // Replace the path with the exact rewrite path
-            let exactPattern = `^${escapeRegex(path)}$`;
+            const exactPattern = `^${escapeRegex(path)}$`;
             middlewares[middlewareName] = {
                 replacePathRegex: {
                     regex: exactPattern,

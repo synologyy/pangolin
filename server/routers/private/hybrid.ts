@@ -53,7 +53,7 @@ import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { getTraefikConfig } from "../../lib/traefik"
+import { getTraefikConfig } from "../../lib/traefik";
 import {
     generateGerbilConfig,
     generateRelayMappings,

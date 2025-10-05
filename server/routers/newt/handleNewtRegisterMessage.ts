@@ -28,7 +28,7 @@ export type ExitNodePingResult = {
     wasPreviouslyConnected: boolean;
 };
 
-let numTimesLimitExceededForId: Record<string, number> = {};
+const numTimesLimitExceededForId: Record<string, number> = {};
 
 export const handleNewtRegisterMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;
@@ -323,7 +323,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
         const hcHeadersParse = target.hcHeaders
             ? JSON.parse(target.hcHeaders)
             : null;
-        let hcHeadersSend: { [key: string]: string } = {};
+        const hcHeadersSend: { [key: string]: string } = {};
         if (hcHeadersParse) {
             hcHeadersParse.forEach(
                 (header: { name: string; value: string }) => {

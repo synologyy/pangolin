@@ -82,13 +82,13 @@ export async function getOrgUsage(
         }
 
         // Get usage for org
-        let usageData = [];
+        const usageData = [];
 
-        const siteUptime = await usageService.getUsage(orgId, FeatureId.SITE_UPTIME)
-        const users = await usageService.getUsageDaily(orgId, FeatureId.USERS)
-        const domains = await usageService.getUsageDaily(orgId, FeatureId.DOMAINS)
-        const remoteExitNodes = await usageService.getUsageDaily(orgId, FeatureId.REMOTE_EXIT_NODES)
-        const egressData = await usageService.getUsage(orgId, FeatureId.EGRESS_DATA_MB)
+        const siteUptime = await usageService.getUsage(orgId, FeatureId.SITE_UPTIME);
+        const users = await usageService.getUsageDaily(orgId, FeatureId.USERS);
+        const domains = await usageService.getUsageDaily(orgId, FeatureId.DOMAINS);
+        const remoteExitNodes = await usageService.getUsageDaily(orgId, FeatureId.REMOTE_EXIT_NODES);
+        const egressData = await usageService.getUsage(orgId, FeatureId.EGRESS_DATA_MB);
 
         if (siteUptime) {
             usageData.push(siteUptime);

@@ -102,7 +102,7 @@ export async function removeTargets(
     });
 
     const healthCheckTargets = targets.map((target) => {
-        return target.targetId
+        return target.targetId;
     });
 
     await sendToClient(newtId, {

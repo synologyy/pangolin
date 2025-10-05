@@ -44,7 +44,7 @@ class RedisManager {
     constructor() {
         if (build == "oss") {
             this.isEnabled = false;
-            return
+            return;
         }
         this.isEnabled = config.getRawPrivateConfig().flags?.enable_redis || false;
         if (this.isEnabled) {

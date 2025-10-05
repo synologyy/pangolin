@@ -59,7 +59,7 @@ export async function moveEmailToAudience(
     if (data) {
         logger.debug(
             `Added email ${email} to audience ${audienceId} with contact ID ${data.id}`
-        )
+        );
     }
 
     const otherAudiences = Object.values(AudienceIds).filter(

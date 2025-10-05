@@ -183,7 +183,6 @@ export async function quickStart(
         let secret: string;
         let fullDomain: string;
         let resource: Resource;
-        let orgId: string;
         let completeSignUpLink: string;
 
         await db.transaction(async (trx) => {
@@ -216,7 +215,7 @@ export async function quickStart(
             throw new Error("Failed to create user account and organization");
         }
 
-        orgId = org.orgId;
+        const orgId = org.orgId;
 
         await db.transaction(async (trx) => {
             const token = generateRandomString(
@@ -251,7 +250,6 @@ export async function quickStart(
             // Create the sandbox site
             const siteNiceId = await getUniqueSiteName(orgId);
             const siteName = `First Site`;
-            let siteId: number | undefined;
 
             // pick a random exit node
             const exitNodesList = await listExitNodes(orgId);
@@ -277,7 +275,7 @@ export async function quickStart(
                 })
                 .returning();
 
-            siteId = newSite.siteId;
+            const siteId = newSite.siteId;
 
             const adminRole = await trx
                 .select()

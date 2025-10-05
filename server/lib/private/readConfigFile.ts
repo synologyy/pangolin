@@ -155,7 +155,7 @@ export const privateConfigSchema = z
                 localFilePath: z.string()
             })
             .optional(),
-    })
+    });
 
 export function readPrivateConfigFile() {
     if (build == "oss") {

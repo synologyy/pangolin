@@ -198,7 +198,7 @@ const processPendingMessages = async (
         `Processing ${ws.pendingMessages.length} pending messages for ${clientType.toUpperCase()} ID: ${clientId}`
     );
 
-    let jobs = [];
+    const jobs = [];
     for (const messageData of ws.pendingMessages) {
         jobs.push(processMessage(ws, messageData, clientId, clientType));
     }
@@ -216,7 +216,7 @@ const NODE_ID = uuidv4();
 const REDIS_CHANNEL = "websocket_messages";
 
 // Client tracking map (local to this node)
-let connectedClients: Map<string, AuthenticatedWebSocket[]> = new Map();
+const connectedClients: Map<string, AuthenticatedWebSocket[]> = new Map();
 
 // Recovery tracking
 let isRedisRecoveryInProgress = false;
