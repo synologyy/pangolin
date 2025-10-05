@@ -78,6 +78,13 @@ export function corsWithLoginPageSupport(corsConfig: any) {
                     return callback(null, true);
                 }
 
+                if (
+                    corsConfig?.origins &&
+                    corsConfig.origins.includes(origin)
+                ) {
+                    return callback(null, true);
+                }
+
                 // If origin doesn't match dashboard URL, check if it's a valid loginPage domain
                 const isValidDomain = await isValidLoginPageDomain(originHost);
 

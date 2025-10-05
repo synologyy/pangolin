@@ -62,7 +62,6 @@ function parseSetCookieString(
             : new URL(env.app.dashboardUrl).hostname;
         if (d) {
             options.domain = d;
-            console.log("Setting cookie domain to:", d);
         }
     }
 
