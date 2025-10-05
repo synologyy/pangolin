@@ -25,14 +25,12 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Curl used for the health checks
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl tzdata
 
 # COPY package.json package-lock.json ./
 COPY package*.json ./
 
-# 'npm ci --omit=dev' with 'npm install --omit=dev' to fix Alpine build failure
-# RUN npm ci --omit=dev && npm cache clean --force
-RUN npm install --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
