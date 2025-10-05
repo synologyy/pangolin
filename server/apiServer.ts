@@ -21,6 +21,7 @@ import HttpCode from "./types/HttpCode";
 import requestTimeoutMiddleware from "./middlewares/requestTimeout";
 import { createStore } from "@server/lib/private/rateLimitStore";
 import hybridRouter from "@server/routers/private/hybrid";
+import { stripDuplicateSesions } from "./middlewares/stripDuplicateSessions";
 
 const dev = config.isDev;
 const externalPort = config.getRawConfig().server.external_port;
@@ -73,6 +74,7 @@ export function createApiServer() {
         apiServer.use(csrfProtectionMiddleware);
     }
 
+    apiServer.use(stripDuplicateSesions);
     apiServer.use(cookieParser());
     apiServer.use(express.json());
 
