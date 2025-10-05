@@ -49,9 +49,7 @@ const updateTargetBodySchema = z
         hcStatus: z.number().int().optional().nullable(),
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
-        rewritePath: z.string().optional().nullable(),
-        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
-        priority: z.number().int().min(1).max(1000).default(100)
+        priority: z.number().int().min(1).max(1000).optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {

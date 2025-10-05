@@ -113,8 +113,12 @@ export async function updateProxyResources(
                     internalPort: internalPortToCreate,
                     path: targetData.path,
                     pathMatchType: targetData["path-match"],
+<<<<<<< HEAD
                     rewritePath: targetData.rewritePath,
                     rewritePathType: targetData["rewrite-match"]
+=======
+                    priority: targetData.priority
+>>>>>>> b8d96345 (priority add for traefik config setup)
                 })
                 .returning();
 
@@ -362,8 +366,12 @@ export async function updateProxyResources(
                             enabled: targetData.enabled,
                             path: targetData.path,
                             pathMatchType: targetData["path-match"],
+<<<<<<< HEAD
                             rewritePath: targetData.rewritePath,
                             rewritePathType: targetData["rewrite-match"]
+=======
+                            priority: targetData.priority
+>>>>>>> b8d96345 (priority add for traefik config setup)
                         })
                         .where(eq(targets.targetId, existingTarget.targetId))
                         .returning();

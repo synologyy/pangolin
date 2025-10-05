@@ -305,7 +305,8 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null
+            rewritePathType: null,
+            priority: 100
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -514,7 +515,8 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null
+            rewritePathType: null,
+            priority: 100,
         });
     }
 
@@ -592,7 +594,8 @@ export default function ReverseProxyTargets(props: {
                     path: target.path,
                     pathMatchType: target.pathMatchType,
                     rewritePath: target.rewritePath,
-                    rewritePathType: target.rewritePathType
+                    rewritePathType: target.rewritePathType,
+                    priority: target.priority
                 };
 
                 if (target.new) {
@@ -676,7 +679,7 @@ export default function ReverseProxyTargets(props: {
                                 <Info className="h-4 w-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                                <p>Higher priority routes are evaluated first. Use this to ensure specific paths like /api/v1 are checked before catch-all routes like /</p>
+                                <p>Higher priority routes are evaluated first. Priority = 100 means automatic ordering (system decides). Use another number to enforce manual priority.</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
