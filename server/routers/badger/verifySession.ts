@@ -7,22 +7,21 @@ import {
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import {
     getResourceByDomain,
-    getUserSessionWithUser,
-    getUserOrgRole,
-    getRoleResourceAccess,
-    getUserResourceAccess,
     getResourceRules,
-    getOrgLoginPage
+    getRoleResourceAccess,
+    getUserOrgRole,
+    getUserResourceAccess,
+    getOrgLoginPage,
+    getUserSessionWithUser
 } from "@server/db/queries/verifySessionQueries";
 import {
     LoginPage,
     Resource,
     ResourceAccessToken,
+    ResourceHeaderAuth,
     ResourcePassword,
     ResourcePincode,
-    ResourceRule,
-    sessions,
-    users
+    ResourceRule
 } from "@server/db";
 import config from "@server/lib/config";
 import { isIpInCidr } from "@server/lib/ip";
@@ -37,6 +36,7 @@ import { fromError } from "zod-validation-error";
 import { getCountryCodeForIp, remoteGetCountryCodeForIp } from "@server/lib/geoip";
 import { getOrgTierData } from "@server/routers/private/billing";
 import { TierId } from "@server/lib/private/billing/tiers";
+import { verifyPassword } from "@server/auth/password";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -101,25 +101,28 @@ export async function verifyResourceSession(
             query
         } = parsedBody.data;
 
+        // Extract HTTP Basic Auth credentials if present
+        const clientHeaderAuth = extractBasicAuth(headers);
+
         const clientIp = requestIp
             ? (() => {
-                  logger.debug("Request IP:", { requestIp });
-                  if (requestIp.startsWith("[") && requestIp.includes("]")) {
-                      // if brackets are found, extract the IPv6 address from between the brackets
-                      const ipv6Match = requestIp.match(/\[(.*?)\]/);
-                      if (ipv6Match) {
-                          return ipv6Match[1];
-                      }
-                  }
+                logger.debug("Request IP:", { requestIp });
+                if (requestIp.startsWith("[") && requestIp.includes("]")) {
+                    // if brackets are found, extract the IPv6 address from between the brackets
+                    const ipv6Match = requestIp.match(/\[(.*?)\]/);
+                    if (ipv6Match) {
+                        return ipv6Match[1];
+                    }
+                }
 
-                  // ivp4
-                  // split at last colon
-                  const lastColonIndex = requestIp.lastIndexOf(":");
-                  if (lastColonIndex !== -1) {
-                      return requestIp.substring(0, lastColonIndex);
-                  }
-                  return requestIp;
-              })()
+                // ivp4
+                // split at last colon
+                const lastColonIndex = requestIp.lastIndexOf(":");
+                if (lastColonIndex !== -1) {
+                    return requestIp.substring(0, lastColonIndex);
+                }
+                return requestIp;
+            })()
             : undefined;
 
         logger.debug("Client IP:", { clientIp });
@@ -134,10 +137,11 @@ export async function verifyResourceSession(
         const resourceCacheKey = `resource:${cleanHost}`;
         let resourceData:
             | {
-                  resource: Resource | null;
-                  pincode: ResourcePincode | null;
-                  password: ResourcePassword | null;
-              }
+                resource: Resource | null;
+                pincode: ResourcePincode | null;
+                password: ResourcePassword | null;
+                headerAuth: ResourceHeaderAuth | null;
+            }
             | undefined = cache.get(resourceCacheKey);
 
         if (!resourceData) {
@@ -152,7 +156,7 @@ export async function verifyResourceSession(
             cache.set(resourceCacheKey, resourceData);
         }
 
-        const { resource, pincode, password } = resourceData;
+        const { resource, pincode, password, headerAuth } = resourceData;
 
         if (!resource) {
             logger.debug(`Resource not found ${cleanHost}`);
@@ -209,21 +213,21 @@ export async function verifyResourceSession(
             headers &&
             headers[
                 config.getRawConfig().server.resource_access_token_headers.id
-            ] &&
+                ] &&
             headers[
                 config.getRawConfig().server.resource_access_token_headers.token
-            ]
+                ]
         ) {
             const accessTokenId =
                 headers[
                     config.getRawConfig().server.resource_access_token_headers
                         .id
-                ];
+                    ];
             const accessToken =
                 headers[
                     config.getRawConfig().server.resource_access_token_headers
                         .token
-                ];
+                    ];
 
             const { valid, error, tokenItem } = await verifyResourceAccessToken(
                 {
@@ -284,6 +288,18 @@ export async function verifyResourceSession(
             }
 
             if (valid && tokenItem) {
+                return allowed(res);
+            }
+        }
+
+        // check for HTTP Basic Auth header
+        if (headerAuth && clientHeaderAuth) {
+            if(cache.get(clientHeaderAuth)) {
+                logger.debug("Resource allowed because header auth is valid (cached)");
+                return allowed(res);
+            }else if(await verifyPassword(clientHeaderAuth, headerAuth.headerAuthHash)){
+                cache.set(clientHeaderAuth, clientHeaderAuth);
+                logger.debug("Resource allowed because header auth is valid");
                 return allowed(res);
             }
         }
@@ -799,4 +815,26 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
 
     return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
+}
+
+function extractBasicAuth(headers: Record<string, string> | undefined): string | undefined {
+    if (!headers || (!headers.authorization && !headers.Authorization)) {
+        return;
+    }
+
+    const authHeader = headers.authorization || headers.Authorization;
+
+    // Check if it's Basic Auth
+    if (!authHeader.startsWith("Basic ")) {
+        logger.debug("Authorization header is not Basic Auth");
+        return;
+    }
+
+    try {
+        // Extract the base64 encoded credentials
+        return authHeader.slice("Basic ".length);
+
+    } catch (error) {
+        logger.debug("Basic Auth: Failed to decode credentials", { error: error instanceof Error ? error.message : "Unknown error" });
+    }
 }

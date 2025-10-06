@@ -24,8 +24,7 @@ import {
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
     verifyClientsEnabled,
-    verifyApiKeySiteResourceAccess,
-    verifyOrgAccess
+    verifyApiKeySiteResourceAccess
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -399,6 +398,13 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourcePincode),
     resource.setResourcePincode
+);
+
+authenticated.post(
+    `/resource/:resourceId/header-auth`,
+    verifyApiKeyResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceHeaderAuth),
+    resource.setResourceHeaderAuth
 );
 
 authenticated.post(

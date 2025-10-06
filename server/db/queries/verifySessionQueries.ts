@@ -6,6 +6,8 @@ import {
     ResourceRule,
     resourcePassword,
     resourcePincode,
+    resourceHeaderAuth,
+    ResourceHeaderAuth,
     resourceRules,
     resources,
     roleResources,
@@ -24,6 +26,7 @@ export type ResourceWithAuth = {
     resource: Resource | null;
     pincode: ResourcePincode | null;
     password: ResourcePassword | null;
+    headerAuth: ResourceHeaderAuth | null;
 };
 
 export type UserSessionWithUser = {
@@ -72,6 +75,10 @@ export async function getResourceByDomain(
             resourcePassword,
             eq(resourcePassword.resourceId, resources.resourceId)
         )
+        .leftJoin(
+            resourceHeaderAuth,
+            eq(resourceHeaderAuth.resourceId, resources.resourceId)
+        )
         .where(eq(resources.fullDomain, domain))
         .limit(1);
 
@@ -82,7 +89,8 @@ export async function getResourceByDomain(
     return {
         resource: result.resources,
         pincode: result.resourcePincode,
-        password: result.resourcePassword
+        password: result.resourcePassword,
+        headerAuth: result.resourceHeaderAuth
     };
 }
 

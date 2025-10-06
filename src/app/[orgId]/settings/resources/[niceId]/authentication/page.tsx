@@ -13,7 +13,7 @@ import {
     ListResourceUsersResponse
 } from "@server/routers/resource";
 import { Button } from "@app/components/ui/button";
-import { set, z } from "zod";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,9 +26,10 @@ import {
     FormMessage
 } from "@app/components/ui/form";
 import { ListUsersResponse } from "@server/routers/user";
-import { Binary, Key } from "lucide-react";
+import { Binary, Key, Bot } from "lucide-react";
 import SetResourcePasswordForm from "../../../../../../components/SetResourcePasswordForm";
 import SetResourcePincodeForm from "../../../../../../components/SetResourcePincodeForm";
+import SetResourceHeaderAuthForm from "../../../../../../components/SetResourceHeaderAuthForm";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
@@ -57,10 +58,13 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
+<<<<<<< HEAD
 import { Separator } from "@app/components/ui/separator";
 import { build } from "@server/build";
 import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
 import { TierId } from "@server/lib/private/billing/tiers";
+=======
+>>>>>>> 6f6c351f (Adding HTTP Header Authentication)
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -140,9 +144,12 @@ export default function ResourceAuthenticationPage() {
         useState(false);
     const [loadingRemoveResourcePincode, setLoadingRemoveResourcePincode] =
         useState(false);
+    const [loadingRemoveResourceHeaderAuth, setLoadingRemoveResourceHeaderAuth] =
+        useState(false);
 
     const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
     const [isSetPincodeOpen, setIsSetPincodeOpen] = useState(false);
+    const [isSetHeaderAuthOpen, setIsSetHeaderAuthOpen] = useState(false);
 
     const usersRolesForm = useForm({
         resolver: zodResolver(UsersRolesFormSchema),
@@ -429,6 +436,37 @@ export default function ResourceAuthenticationPage() {
             .finally(() => setLoadingRemoveResourcePincode(false));
     }
 
+    function removeResourceHeaderAuth() {
+        setLoadingRemoveResourceHeaderAuth(true);
+
+        api.post(`/resource/${resource.resourceId}/header-auth`, {
+            user: null,
+            password: null
+        })
+            .then(() => {
+                toast({
+                    title: t("resourceHeaderAuthRemove"),
+                    description: t("resourceHeaderAuthRemoveDescription")
+                });
+
+                updateAuthInfo({
+                    headerAuth: false
+                });
+                router.refresh();
+            })
+            .catch((e) => {
+                toast({
+                    variant: "destructive",
+                    title: t("resourceErrorHeaderAuthRemove"),
+                    description: formatAxiosError(
+                        e,
+                        t("resourceErrorHeaderAuthRemoveDescription")
+                    )
+                });
+            })
+            .finally(() => setLoadingRemoveResourceHeaderAuth(false));
+    }
+
     if (pageLoading) {
         return <></>;
     }
@@ -458,6 +496,20 @@ export default function ResourceAuthenticationPage() {
                         setIsSetPincodeOpen(false);
                         updateAuthInfo({
                             pincode: true
+                        });
+                    }}
+                />
+            )}
+
+            {isSetHeaderAuthOpen && (
+                <SetResourceHeaderAuthForm
+                    open={isSetHeaderAuthOpen}
+                    setOpen={setIsSetHeaderAuthOpen}
+                    resourceId={resource.resourceId}
+                    onSetHeaderAuth={() => {
+                        setIsSetHeaderAuthOpen(false);
+                        updateAuthInfo({
+                            headerAuth: true
                         });
                     }}
                 />
@@ -776,6 +828,36 @@ export default function ResourceAuthenticationPage() {
                                     {authInfo.pincode
                                         ? t("pincodeRemove")
                                         : t("pincodeAdd")}
+                                </Button>
+                            </div>
+
+                            {/* Header Authentication Protection */}
+                            <div className="flex items-center justify-between border rounded-md p-2">
+                                <div
+                                    className={`flex items-center ${!authInfo.headerAuth ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                >
+                                    <Bot size="14" />
+                                    <span>
+                                        {t("resourceHeaderAuthProtection", {
+                                            status: authInfo.headerAuth
+                                                ? t("enabled")
+                                                : t("disabled")
+                                        })}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={
+                                        authInfo.headerAuth
+                                            ? removeResourceHeaderAuth
+                                            : () => setIsSetHeaderAuthOpen(true)
+                                    }
+                                    loading={loadingRemoveResourceHeaderAuth}
+                                >
+                                    {authInfo.headerAuth
+                                        ? t("headerAuthRemove")
+                                        : t("headerAuthAdd")}
                                 </Button>
                             </div>
                         </SettingsSectionForm>
