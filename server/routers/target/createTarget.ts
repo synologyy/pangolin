@@ -53,7 +53,8 @@ const createTargetSchema = z
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
         rewritePath: z.string().optional().nullable(),
-        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
+        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
+        priority: z.number().int().min(1).max(1000)
     })
     .strict();
 
@@ -210,7 +211,10 @@ export async function createTarget(
                     internalPort,
                     enabled: targetData.enabled,
                     path: targetData.path,
-                    pathMatchType: targetData.pathMatchType
+                    pathMatchType: targetData.pathMatchType,
+                    rewritePath: targetData.rewritePath,
+                    rewritePathType: targetData.rewritePathType,
+                    priority: targetData.priority
                 })
                 .returning();
 

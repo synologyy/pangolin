@@ -58,7 +58,7 @@ import {
 } from "@app/components/ui/popover";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { cn } from "@app/lib/cn";
-import { ArrowRight, MoveRight, Plus, SquareArrowOutUpRight } from "lucide-react";
+import { ArrowRight, Info, MoveRight, Plus, SquareArrowOutUpRight } from "lucide-react";
 import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -92,6 +92,7 @@ import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { toASCII, toUnicode } from 'punycode';
 import { DomainRow } from "../../../../../components/DomainsTable";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
 import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
 
 
@@ -119,7 +120,8 @@ const addTargetSchema = z.object({
     path: z.string().optional().nullable(),
     pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
     rewritePath: z.string().optional().nullable(),
-    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
+    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
+    priority: z.number().int().min(1).max(1000)
 }).refine(
     (data) => {
         // If path is provided, pathMatchType must be provided
@@ -262,6 +264,7 @@ export default function Page() {
             pathMatchType: null,
             rewritePath: null,
             rewritePathType: null,
+            priority: 100,
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -341,6 +344,7 @@ export default function Page() {
             targetId: new Date().getTime(),
             new: true,
             resourceId: 0, // Will be set when resource is created
+            priority: 100, // Default priority
             hcEnabled: false,
             hcPath: null,
             hcMethod: null,
@@ -366,6 +370,7 @@ export default function Page() {
             pathMatchType: null,
             rewritePath: null,
             rewritePathType: null,
+            priority: 100,
         });
     }
 
@@ -475,7 +480,8 @@ export default function Page() {
                                 path: target.path,
                                 pathMatchType: target.pathMatchType,
                                 rewritePath: target.rewritePath,
-                                rewritePathType: target.rewritePathType
+                                rewritePathType: target.rewritePathType,
+                                priority: target.priority
                             };
 
                             await api.put(`/resource/${id}/target`, data);
@@ -598,6 +604,46 @@ export default function Page() {
     }, []);
 
     const columns: ColumnDef<LocalTarget>[] = [
+        {
+            id: "priority",
+            header: () => (
+                <div className="flex items-center gap-2">
+                    Priority
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                                <p>Higher priority routes are evaluated first. Priority = 100 means automatic ordering (system decides). Use another number to enforce manual priority.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+            ),
+            cell: ({ row }) => {
+                return (
+                    <div className="flex items-center gap-2">
+                        <Input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            defaultValue={row.original.priority || 100}
+                            className="w-20"
+                            onBlur={(e) => {
+                                const value = parseInt(e.target.value, 10);
+                                if (value >= 1 && value <= 1000) {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        priority: value
+                                    });
+                                }
+                            }}
+                        />
+                    </div>
+                );
+            }
+        },
         {
             accessorKey: "path",
             header: t("matchPath"),

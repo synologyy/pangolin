@@ -74,7 +74,10 @@ import {
     CircleX,
     ArrowRight,
     Plus,
-    MoveRight
+    MoveRight,
+    ArrowUp,
+    Info,
+    ArrowDown
 } from "lucide-react";
 import { ContainersSelector } from "@app/components/ContainersSelector";
 import { useTranslations } from "next-intl";
@@ -106,6 +109,7 @@ import {
     PathRewriteModal
 } from "@app/components/PathMatchRenameModal";
 import { Badge } from "@app/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
 
 const addTargetSchema = z
     .object({
@@ -122,7 +126,8 @@ const addTargetSchema = z
         rewritePathType: z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
-            .nullable()
+            .nullable(),
+        priority: z.number().int().min(1).max(1000)
     })
     .refine(
         (data) => {
@@ -301,7 +306,8 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null
+            rewritePathType: null,
+            priority: 100
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -485,6 +491,7 @@ export default function ReverseProxyTargets(props: {
             targetId: new Date().getTime(),
             new: true,
             resourceId: resource.resourceId,
+            priority: 100,
             hcEnabled: false,
             hcPath: null,
             hcMethod: null,
@@ -509,7 +516,8 @@ export default function ReverseProxyTargets(props: {
             path: null,
             pathMatchType: null,
             rewritePath: null,
-            rewritePathType: null
+            rewritePathType: null,
+            priority: 100,
         });
     }
 
@@ -587,7 +595,8 @@ export default function ReverseProxyTargets(props: {
                     path: target.path,
                     pathMatchType: target.pathMatchType,
                     rewritePath: target.rewritePath,
-                    rewritePathType: target.rewritePathType
+                    rewritePathType: target.rewritePathType,
+                    priority: target.priority
                 };
 
                 if (target.new) {
@@ -660,6 +669,46 @@ export default function ReverseProxyTargets(props: {
     }
 
     const columns: ColumnDef<LocalTarget>[] = [
+        {
+            id: "priority",
+            header: () => (
+                <div className="flex items-center gap-2">
+                    Priority
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                                <p>Higher priority routes are evaluated first. Priority = 100 means automatic ordering (system decides). Use another number to enforce manual priority.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+            ),
+            cell: ({ row }) => {
+                return (
+                    <div className="flex items-center gap-2">
+                        <Input
+                            type="number"
+                            min="1"
+                            max="1000"
+                            defaultValue={row.original.priority || 100}
+                            className="w-20"
+                            onBlur={(e) => {
+                                const value = parseInt(e.target.value, 10);
+                                if (value >= 1 && value <= 1000) {
+                                    updateTarget(row.original.targetId, {
+                                        ...row.original,
+                                        priority: value
+                                    });
+                                }
+                            }}
+                        />
+                    </div>
+                );
+            }
+        },
         {
             accessorKey: "path",
             header: t("matchPath"),
