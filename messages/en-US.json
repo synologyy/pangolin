@@ -1891,5 +1891,9 @@
     "cannotbeUndone": "This can not be undone.",
     "toConfirm": "to confirm",
     "deleteClientQuestion": "Are you sure you want to remove the client from the site and organization?",
-    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site."
+    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site.",
+    "certResolver": "Certificate Resolver",
+    "certResolverDescription": "Select the certificate resolver to use for this resource.",
+    "selectCertResolver": "Select Certificate Resolver",
+    "enterCustomResolver": "Enter Custom Resolver"
 }
