@@ -5,76 +5,10 @@ import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
 import { build } from "@server/build";
 import createPathRewriteMiddleware from "./middleware";
+import { sanitize, validatePathRewriteConfig } from "./utils";
 
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const badgerMiddlewareName = "badger";
-
-
-function validatePathRewriteConfig(
-    path: string | null,
-    pathMatchType: string | null,
-    rewritePath: string | null,
-    rewritePathType: string | null
-): { isValid: boolean; error?: string } {
-    // If no path matching is configured, no rewriting is possible
-    if (!path || !pathMatchType) {
-        if (rewritePath || rewritePathType) {
-            return {
-                isValid: false,
-                error: "Path rewriting requires path matching to be configured"
-            };
-        }
-        return { isValid: true };
-    }
-
-    if (rewritePathType !== "stripPrefix") {
-        if ((rewritePath && !rewritePathType) || (!rewritePath && rewritePathType)) {
-            return { isValid: false, error: "Both rewritePath and rewritePathType must be specified together" };
-        }
-    }
-
-
-    if (!rewritePath || !rewritePathType) {
-        return { isValid: true };
-    }
-
-    const validPathMatchTypes = ["exact", "prefix", "regex"];
-    if (!validPathMatchTypes.includes(pathMatchType)) {
-        return {
-            isValid: false,
-            error: `Invalid pathMatchType: ${pathMatchType}. Must be one of: ${validPathMatchTypes.join(", ")}`
-        };
-    }
-
-    const validRewritePathTypes = ["exact", "prefix", "regex", "stripPrefix"];
-    if (!validRewritePathTypes.includes(rewritePathType)) {
-        return {
-            isValid: false,
-            error: `Invalid rewritePathType: ${rewritePathType}. Must be one of: ${validRewritePathTypes.join(", ")}`
-        };
-    }
-
-    if (pathMatchType === "regex") {
-        try {
-            new RegExp(path);
-        } catch (e) {
-            return {
-                isValid: false,
-                error: `Invalid regex pattern in path: ${path}`
-            };
-        }
-    }
-
-
-    // Additional validation for stripPrefix
-    if (rewritePathType === "stripPrefix") {
-        if (pathMatchType !== "prefix") {
-            logger.warn(`stripPrefix rewrite type is most effective with prefix path matching. Current match type: ${pathMatchType}`);
-        }
-    }
-
-    return { isValid: true };
-}
 
 export async function getTraefikConfig(
     exitNodeId: number,
@@ -99,6 +33,7 @@ export async function getTraefikConfig(
         .select({
             // Resource fields
             resourceId: resources.resourceId,
+            resourceName: resources.name,
             fullDomain: resources.fullDomain,
             ssl: resources.ssl,
             http: resources.http,
@@ -162,7 +97,8 @@ export async function getTraefikConfig(
 
     resourcesWithTargetsAndSites.forEach((row) => {
         const resourceId = row.resourceId;
-        const targetPath = sanitizePath(row.path) || ""; // Handle null/undefined paths
+        const resourceName = sanitize(row.resourceName) || "";
+        const targetPath = sanitize(row.path) || ""; // Handle null/undefined paths
         const pathMatchType = row.pathMatchType || "";
         const rewritePath = row.rewritePath || "";
         const rewritePathType = row.rewritePathType || "";
@@ -173,8 +109,9 @@ export async function getTraefikConfig(
             .filter(Boolean)
             .join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
+        const key = sanitize(mapKey);
 
-        if (!resourcesMap.has(mapKey)) {
+        if (!resourcesMap.has(key)) {
             const validation = validatePathRewriteConfig(
                 row.path,
                 row.pathMatchType,
@@ -187,8 +124,9 @@ export async function getTraefikConfig(
                 return;
             }
 
-            resourcesMap.set(mapKey, {
+            resourcesMap.set(key, {
                 resourceId: row.resourceId,
+                name: resourceName, 
                 fullDomain: row.fullDomain,
                 ssl: row.ssl,
                 http: row.http,
@@ -212,7 +150,7 @@ export async function getTraefikConfig(
         }
 
         // Add target with its associated site data
-        resourcesMap.get(mapKey).targets.push({
+        resourcesMap.get(key).targets.push({
             resourceId: row.resourceId,
             targetId: row.targetId,
             ip: row.ip,
@@ -254,13 +192,11 @@ export async function getTraefikConfig(
     for (const [key, resource] of resourcesMap.entries()) {
         const targets = resource.targets;
 
-        const sanatizedKey = sanitizeForMiddlewareName(key);
-
-        const routerName = `${sanatizedKey}-router`;
-        const serviceName = `${sanatizedKey}-service`;
+        const routerName = `${key}-${resource.name}-router`;
+        const serviceName = `${key}-${resource.name}-service`;
         const fullDomain = `${resource.fullDomain}`;
-        const transportName = `${sanatizedKey}-transport`;
-        const headersMiddlewareName = `${sanatizedKey}-headers-middleware`;
+        const transportName = `${key}-transport`;
+        const headersMiddlewareName = `${key}-headers-middleware`;
 
         if (!resource.enabled) {
             continue;
@@ -334,7 +270,7 @@ export async function getTraefikConfig(
                 resource.rewritePathType) {
 
                 // Create a unique middleware name
-                const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${sanitizeForMiddlewareName(key)}`;
+                const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${key}`;
 
                 try {
                     const rewriteResult = createPathRewriteMiddleware(
@@ -667,25 +603,4 @@ export async function getTraefikConfig(
         }
     }
     return config_output;
-}
-
-function sanitizePath(path: string | null | undefined): string | undefined {
-    if (!path) return undefined;
-
-    const trimmed = path.trim();
-    if (!trimmed) return undefined;
-
-    // Preserve path structure for rewriting, only warn if very long
-    if (trimmed.length > 1000) {
-        logger.warn(`Path exceeds 1000 characters: ${trimmed.substring(0, 100)}...`);
-        return trimmed.substring(0, 1000);
-    }
-
-    return trimmed;
-}
-
-function sanitizeForMiddlewareName(str: string): string {
-    // Replace any characters that aren't alphanumeric or dash with dash
-    // and remove consecutive dashes
-    return str.replace(/[^a-zA-Z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 }
