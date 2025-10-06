@@ -58,13 +58,10 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
-<<<<<<< HEAD
 import { Separator } from "@app/components/ui/separator";
 import { build } from "@server/build";
 import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
 import { TierId } from "@server/lib/private/billing/tiers";
-=======
->>>>>>> 6f6c351f (Adding HTTP Header Authentication)
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
