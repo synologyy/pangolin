@@ -13,6 +13,12 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+
+    env:
+      TAG_URL: https://hub.docker.com/r/${{ vars.DOCKER_HUB_REPO }}/tags
+      TAG: ${{ vars.DOCKER_HUB_REPO }}:dev-pr${{ github.event.pull_request.number }}
+      TAG_PG: ${{ vars.DOCKER_HUB_REPO }}:postgresql-dev-pr${{ github.event.pull_request.number }}
+    
     steps:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -28,9 +34,9 @@ jobs:
         with:
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKER_HUB_REPO }}:dev-pr${{ github.event.pull_request.number }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_REPO }}:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_REPO }}:buildcache,mode=max
+          tags: ${{ env.TAG }}
+          cache-from: type=registry,ref=${{ vars.DOCKER_HUB_REPO }}:buildcache
+          cache-to: type=registry,ref=${{ vars.DOCKER_HUB_REPO }}:buildcache,mode=max
           build-args: DATABASE=sqlite
             
       - name: Build and push Docker image PG
@@ -38,33 +44,32 @@ jobs:
         with:
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKER_HUB_REPO }}:postgresql-dev-pr${{ github.event.pull_request.number }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_REPO }}:buildcache-pg
-          cache-to: type=registry,ref=${{ secrets.DOCKER_HUB_REPO }}:buildcache-pg,mode=max
+          tags: ${{ env.TAG_PG }}
+          cache-from: type=registry,ref=${{ vars.DOCKER_HUB_REPO }}:buildcache-pg
+          cache-to: type=registry,ref=${{ vars.DOCKER_HUB_REPO }}:buildcache-pg,mode=max
           build-args: DATABASE=pg
           
       - uses: actions/github-script@v8
-        env:
-          REPO: https://hub.docker.com/r/${{ secrets.DOCKER_HUB_REPO }}/tags
-          DEV_PR: ${{ secrets.DOCKER_HUB_REPO }}:dev-pr${{ github.event.pull_request.number }}
-          DEV_PR_PG: ${{ secrets.DOCKER_HUB_REPO }}:postgresql-dev-pr${{ github.event.pull_request.number }}
         with:
           script: |
-            const repo = process.env.REPO;
-            const devPr = process.env.DEV_PR;
-            const devPrPg = process.env.DEV_PR_PG;
+            const repoUrl = process.env.TAG_URL;
+            const tag = process.env.TAG;
+            const tagPg = process.env.TAG_PG;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `👋 Thanks for your PR!  
-              Dev images for this PR are now available on [docker hub](${repo}):
-              **SQLITE Image**
+              Dev images for this PR are now available on [docker hub](${repoUrl}):
+              
+              **SQLITE Image:**
               \`\`\`
-              ${devPr}
+              ${tag}
               \`\`\`
-              **Postgresql Image**
+              
+              **Postgresql Image:**
               \`\`\`
-              ${devPrPg}
+              ${tagPg}
               \`\`\``
             })
+            
