@@ -1333,7 +1333,7 @@
     "twoFactorRequired": "Tweestapsverificatie is vereist om een beveiligingssleutel te registreren.",
     "twoFactor": "Tweestapsverificatie",
     "adminEnabled2FaOnYourAccount": "Je beheerder heeft tweestapsverificatie voor {email} ingeschakeld. Voltooi het instellingsproces om verder te gaan.",
-    "continueToApplication": "Doorgaan naar de applicatie",
+    "continueToApplication": "Doorgaan naar applicatie",
     "securityKeyAdd": "Beveiligingssleutel toevoegen",
     "securityKeyRegisterTitle": "Nieuwe beveiligingssleutel registreren",
     "securityKeyRegisterDescription": "Verbind je beveiligingssleutel en voer een naam in om deze te identificeren",

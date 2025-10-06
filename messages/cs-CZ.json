@@ -1333,7 +1333,7 @@
     "twoFactorRequired": "Pro registraci bezpečnostního klíče je nutné dvoufaktorové ověření.",
     "twoFactor": "Dvoufaktorové ověření",
     "adminEnabled2FaOnYourAccount": "Váš správce povolil dvoufaktorové ověřování pro {email}. Chcete-li pokračovat, dokončete proces nastavení.",
-    "continueToApplication": "Pokračovat do aplikace",
+    "continueToApplication": "Pokračovat v aplikaci",
     "securityKeyAdd": "Přidat bezpečnostní klíč",
     "securityKeyRegisterTitle": "Registrovat nový bezpečnostní klíč",
     "securityKeyRegisterDescription": "Připojte svůj bezpečnostní klíč a zadejte jméno pro jeho identifikaci",
