@@ -11,7 +11,6 @@
  * This file is not licensed under the AGPLv3.
  */
 
-import { Request, Response } from "express";
 import {
     certificates,
     db,
@@ -26,6 +25,7 @@ import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
 import { build } from "@server/build";
+import { sanitize } from "./utils";
 
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const redirectToRootMiddlewareName = "redirect-to-root";
@@ -137,9 +137,10 @@ export async function getTraefikConfig(
         // Create a unique key combining resourceId and path+pathMatchType
         const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
+        const key = sanitize(mapKey);
 
-        if (!resourcesMap.has(mapKey)) {
-            resourcesMap.set(mapKey, {
+        if (!resourcesMap.has(key)) {
+            resourcesMap.set(key, {
                 resourceId: row.resourceId,
                 name: resourceName,
                 fullDomain: row.fullDomain,
@@ -163,7 +164,7 @@ export async function getTraefikConfig(
         }
 
         // Add target with its associated site data
-        resourcesMap.get(mapKey).targets.push({
+        resourcesMap.get(key).targets.push({
             resourceId: row.resourceId,
             targetId: row.targetId,
             ip: row.ip,
@@ -682,14 +683,4 @@ export async function getTraefikConfig(
     }
 
     return config_output;
-}
-
-function sanitize(input: string | null | undefined): string | undefined {
-    if (!input) return undefined;
-    // clean any non alphanumeric characters from the input and replace with dashes
-    // the input cant be too long either, so limit to 50 characters
-    if (input.length > 50) {
-        input = input.substring(0, 50);
-    }
-    return input.replace(/[^a-zA-Z0-9]/g, "");
 }
