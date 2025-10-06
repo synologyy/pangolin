@@ -35,6 +35,9 @@ jobs:
       - name: Apply database migrations
         run: npm run db:sqlite:push
 
+      - name: Test with tsc
+        run: npx tsc --noEmit
+
       - name: Start app in background
         run: nohup npm run dev &
 
