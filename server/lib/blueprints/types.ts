@@ -41,6 +41,10 @@ export const AuthSchema = z.object({
     // pincode has to have 6 digits
     pincode: z.number().min(100000).max(999999).optional(),
     password: z.string().min(1).optional(),
+    "basic-auth": z.object({
+        user: z.string().min(1),
+        password: z.string().min(1)
+    }).optional(),
     "sso-enabled": z.boolean().optional().default(false),
     "sso-roles": z
         .array(z.string())

@@ -57,6 +57,7 @@ function getActionsCategories(root: boolean) {
             [t('actionListAllowedResourceRoles')]: "listResourceRoles",
             [t('actionSetResourcePassword')]: "setResourcePassword",
             [t('actionSetResourcePincode')]: "setResourcePincode",
+            [t('actionSetResourceHeaderAuth')]: "setResourceHeaderAuth",
             [t('actionSetResourceEmailWhitelist')]: "setResourceWhitelist",
             [t('actionGetResourceEmailWhitelist')]: "getResourceWhitelist",
             [t('actionCreateSiteResource')]: "createSiteResource",

@@ -513,6 +513,16 @@ export const resourcePassword = sqliteTable("resourcePassword", {
     passwordHash: text("passwordHash").notNull()
 });
 
+export const resourceHeaderAuth = sqliteTable("resourceHeaderAuth", {
+    headerAuthId: integer("headerAuthId").primaryKey({
+        autoIncrement: true
+    }),
+    resourceId: integer("resourceId")
+        .notNull()
+        .references(() => resources.resourceId, { onDelete: "cascade" }),
+    headerAuthHash: text("headerAuthHash").notNull()
+});
+
 export const resourceAccessToken = sqliteTable("resourceAccessToken", {
     accessTokenId: text("accessTokenId").primaryKey(),
     orgId: text("orgId")
@@ -728,6 +738,7 @@ export type UserOrg = InferSelectModel<typeof userOrgs>;
 export type ResourceSession = InferSelectModel<typeof resourceSessions>;
 export type ResourcePincode = InferSelectModel<typeof resourcePincode>;
 export type ResourcePassword = InferSelectModel<typeof resourcePassword>;
+export type ResourceHeaderAuth = InferSelectModel<typeof resourceHeaderAuth>;
 export type ResourceOtp = InferSelectModel<typeof resourceOtp>;
 export type ResourceAccessToken = InferSelectModel<typeof resourceAccessToken>;
 export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;

@@ -380,6 +380,14 @@ export const resourcePassword = pgTable("resourcePassword", {
     passwordHash: varchar("passwordHash").notNull()
 });
 
+export const resourceHeaderAuth = pgTable("resourceHeaderAuth", {
+    headerAuthId: serial("headerAuthId").primaryKey(),
+    resourceId: integer("resourceId")
+        .notNull()
+        .references(() => resources.resourceId, { onDelete: "cascade" }),
+    headerAuthHash: varchar("headerAuthHash").notNull()
+});
+
 export const resourceAccessToken = pgTable("resourceAccessToken", {
     accessTokenId: varchar("accessTokenId").primaryKey(),
     orgId: varchar("orgId")
@@ -689,6 +697,7 @@ export type UserOrg = InferSelectModel<typeof userOrgs>;
 export type ResourceSession = InferSelectModel<typeof resourceSessions>;
 export type ResourcePincode = InferSelectModel<typeof resourcePincode>;
 export type ResourcePassword = InferSelectModel<typeof resourcePassword>;
+export type ResourceHeaderAuth = InferSelectModel<typeof resourceHeaderAuth>;
 export type ResourceOtp = InferSelectModel<typeof resourceOtp>;
 export type ResourceAccessToken = InferSelectModel<typeof resourceAccessToken>;
 export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;

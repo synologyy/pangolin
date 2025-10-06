@@ -61,6 +61,7 @@ export enum ActionsEnum {
     getUser = "getUser",
     setResourcePassword = "setResourcePassword",
     setResourcePincode = "setResourcePincode",
+    setResourceHeaderAuth = "setResourceHeaderAuth",
     setResourceWhitelist = "setResourceWhitelist",
     getResourceWhitelist = "getResourceWhitelist",
     generateAccessToken = "generateAccessToken",
@@ -194,7 +195,6 @@ export async function checkUserActionPermission(
 
         return roleActionPermission.length > 0;
 
-        return false;
     } catch (error) {
         console.error("Error checking user action permission:", error);
         throw createHttpError(

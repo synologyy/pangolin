@@ -1,4 +1,3 @@
-
 {
     "setupCreate": "Create your organization, site, and resources",
     "setupNewOrg": "New Organization",
@@ -1725,5 +1724,20 @@
     "healthCheckNotAvailable": "Local",
     "rewritePath": "Rewrite Path",
     "rewritePathDescription": "Optionally rewrite the path before forwarding to the target.",
-    "continueToApplication": "Continue to application"
+    "setResourceHeaderAuth": "setResourceHeaderAuth",
+    "resourceHeaderAuthRemove": "Remove Header Auth",
+    "resourceHeaderAuthRemoveDescription": "Header authentication removed successfully.",
+    "resourceErrorHeaderAuthRemove": "Failed to remove Header Authentication",
+    "resourceErrorHeaderAuthRemoveDescription": "Could not remove header authentication for the resource.",
+    "resourceHeaderAuthProtection": "Header Authentication Protection: {{status}}",
+    "headerAuthRemove": "Remove",
+    "headerAuthAdd": "Add",
+    "resourceErrorHeaderAuthSetup": "Failed to set Header Authentication",
+    "resourceErrorHeaderAuthSetupDescription": "Could not set header authentication for the resource.",
+    "resourceHeaderAuthSetup": "Header Authentication set successfully",
+    "resourceHeaderAuthSetupDescription": "Header authentication has been successfully set.",
+    "resourceHeaderAuthSetupTitle": "Set Header Authentication",
+    "resourceHeaderAuthSetupTitleDescription": "Set the basic auth credentials (username and password) to protect this resource with HTTP Header Authentication. Leave both fields blank to remove existing header authentication.",
+    "resourceHeaderAuthSubmit": "Set Header Authentication",
+    "actionSetResourceHeaderAuth": "Set Header Authentication"
 }
