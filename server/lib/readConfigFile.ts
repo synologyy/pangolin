@@ -64,7 +64,7 @@ export const configSchema = z
         server: z.object({
             integration_port: portSchema
                 .optional()
-                .default(3004)
+                .default(3003)
                 .transform(stoi)
                 .pipe(portSchema.optional()),
             external_port: portSchema
@@ -158,7 +158,21 @@ export const configSchema = z
                             connection_string: z.string()
                         })
                     )
+                    .optional(),
+                pool: z
+                    .object({
+                        max_connections: z.number().positive().optional().default(20),
+                        max_replica_connections: z.number().positive().optional().default(10),
+                        idle_timeout_ms: z.number().positive().optional().default(30000),
+                        connection_timeout_ms: z.number().positive().optional().default(5000)
+                    })
                     .optional()
+                    .default({
+                        max_connections: 20,
+                        max_replica_connections: 10,
+                        idle_timeout_ms: 30000,
+                        connection_timeout_ms: 5000
+                    })
             })
             .optional(),
         traefik: z

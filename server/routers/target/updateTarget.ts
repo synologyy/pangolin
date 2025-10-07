@@ -50,7 +50,8 @@ const updateTargetBodySchema = z
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
         rewritePath: z.string().optional().nullable(),
-        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable()
+        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
+        priority: z.number().int().min(1).max(1000).optional(),
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -198,7 +199,10 @@ export async function updateTarget(
                 internalPort,
                 enabled: parsedBody.data.enabled,
                 path: parsedBody.data.path,
-                pathMatchType: parsedBody.data.pathMatchType
+                pathMatchType: parsedBody.data.pathMatchType,
+                priority: parsedBody.data.priority,
+                rewritePath: parsedBody.data.rewritePath,
+                rewritePathType: parsedBody.data.rewritePathType
             })
             .where(eq(targets.targetId, targetId))
             .returning();

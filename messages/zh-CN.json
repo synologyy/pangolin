@@ -1333,7 +1333,7 @@
     "twoFactorRequired": "注册安全密钥需要两步验证。",
     "twoFactor": "两步验证",
     "adminEnabled2FaOnYourAccount": "管理员已为{email}启用两步验证。请完成设置以继续。",
-    "continueToApplication": "继续到应用程序",
+    "continueToApplication": "继续应用",
     "securityKeyAdd": "添加安全密钥",
     "securityKeyRegisterTitle": "注册新安全密钥",
     "securityKeyRegisterDescription": "连接您的安全密钥并输入名称以便识别",

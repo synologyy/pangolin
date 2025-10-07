@@ -115,7 +115,8 @@ export async function updateProxyResources(
                     path: targetData.path,
                     pathMatchType: targetData["path-match"],
                     rewritePath: targetData.rewritePath,
-                    rewritePathType: targetData["rewrite-match"]
+                    rewritePathType: targetData["rewrite-match"],
+                    priority: targetData.priority
                 })
                 .returning();
 
@@ -392,7 +393,8 @@ export async function updateProxyResources(
                             path: targetData.path,
                             pathMatchType: targetData["path-match"],
                             rewritePath: targetData.rewritePath,
-                            rewritePathType: targetData["rewrite-match"]
+                            rewritePathType: targetData["rewrite-match"],
+                            priority: targetData.priority
                         })
                         .where(eq(targets.targetId, existingTarget.targetId))
                         .returning();

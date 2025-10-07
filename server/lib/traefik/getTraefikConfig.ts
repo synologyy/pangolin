@@ -1,5 +1,5 @@
 import { db, exitNodes, targetHealthCheck } from "@server/db";
-import { and, eq, inArray, or, isNull, ne, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
 import logger from "@server/logger";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
@@ -59,6 +59,8 @@ export async function getTraefikConfig(
             pathMatchType: targets.pathMatchType,
             rewritePath: targets.rewritePath,
             rewritePathType: targets.rewritePathType,
+            priority: targets.priority,
+
             // Site fields
             siteId: sites.siteId,
             siteType: sites.type,
@@ -87,7 +89,8 @@ export async function getTraefikConfig(
                     ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
                     : eq(resources.http, true)
             )
-        );
+        )
+        .orderBy(desc(targets.priority), targets.targetId); // stable ordering
 
     // Group by resource and include targets with their unique site data
     const resourcesMap = new Map();
@@ -99,6 +102,7 @@ export async function getTraefikConfig(
         const pathMatchType = row.pathMatchType || "";
         const rewritePath = row.rewritePath || "";
         const rewritePathType = row.rewritePathType || "";
+        const priority = row.priority ?? 100;
 
         // Create a unique key combining resourceId, path config, and rewrite config
         const pathKey = [targetPath, pathMatchType, rewritePath, rewritePathType]
@@ -140,7 +144,8 @@ export async function getTraefikConfig(
                 path: row.path, // the targets will all have the same path
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
                 rewritePath: row.rewritePath,
-                rewritePathType: row.rewritePathType
+                rewritePathType: row.rewritePathType,
+                priority: priority // may be null, we fallback later
             });
         }
 
@@ -155,6 +160,7 @@ export async function getTraefikConfig(
             enabled: row.targetEnabled,
             rewritePath: row.rewritePath,
             rewritePathType: row.rewritePathType,
+            priority: row.priority,
             site: {
                 siteId: row.siteId,
                 type: row.siteType,
@@ -338,10 +344,30 @@ export async function getTraefikConfig(
 
             // Build routing rules
             let rule = `Host(\`${fullDomain}\`)`;
-            let priority = 100;
+
+            // priority logic
+            let priority: number;
+            if (resource.priority && resource.priority != 100) {
+                priority = resource.priority;
+            } else {
+                priority = 100;
+                if (resource.path && resource.pathMatchType) {
+                    priority += 10;
+                    if (resource.pathMatchType === "exact") {
+                        priority += 5;
+                    } else if (resource.pathMatchType === "prefix") {
+                        priority += 3;
+                    } else if (resource.pathMatchType === "regex") {
+                        priority += 2;
+                    }
+                    if (resource.path === "/") {
+                        priority = 1; // lowest for catch-all
+                    }
+                }
+            }
 
             if (resource.path && resource.pathMatchType) {
-                priority += 1;
+                // priority += 1;
                 // add path to rule based on match type
                 let path = resource.path;
                 // if the path doesn't start with a /, add it

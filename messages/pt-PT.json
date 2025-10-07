@@ -1333,7 +1333,7 @@
     "twoFactorRequired": "A autenticação de dois fatores é necessária para registrar uma chave de segurança.",
     "twoFactor": "Autenticação de Dois Fatores",
     "adminEnabled2FaOnYourAccount": "Seu administrador ativou a autenticação de dois fatores para {email}. Complete o processo de configuração para continuar.",
-    "continueToApplication": "Continuar para Aplicativo",
+    "continueToApplication": "Continuar para o aplicativo",
     "securityKeyAdd": "Adicionar Chave de Segurança",
     "securityKeyRegisterTitle": "Registrar Nova Chave de Segurança",
     "securityKeyRegisterDescription": "Conecte sua chave de segurança e insira um nome para identificá-la",
