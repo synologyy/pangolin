@@ -2,6 +2,7 @@ import {
     domains,
     orgDomains,
     Resource,
+    resourceHeaderAuth,
     resourcePincode,
     resourceRules,
     resourceWhitelist,
@@ -123,7 +124,9 @@ export async function updateProxyResources(
 
             const healthcheckData = targetData.healthcheck;
 
-            const hcHeaders = healthcheckData?.headers ? JSON.stringify(healthcheckData.headers) : null;
+            const hcHeaders = healthcheckData?.headers
+                ? JSON.stringify(healthcheckData.headers)
+                : null;
 
             const [newHealthcheck] = await trx
                 .insert(targetHealthCheck)
@@ -262,6 +265,32 @@ export async function updateProxyResources(
                         pincodeHash,
                         digitLength: 6
                     });
+                }
+
+                await trx
+                    .delete(resourceHeaderAuth)
+                    .where(
+                        eq(
+                            resourceHeaderAuth.resourceId,
+                            existingResource.resourceId
+                        )
+                    );
+                if (resourceData.auth?.["basic-auth"]) {
+                    const headerAuthUser =
+                        resourceData.auth?.["basic-auth"]?.user;
+                    const headerAuthPassword =
+                        resourceData.auth?.["basic-auth"]?.password;
+                    if (headerAuthUser && headerAuthPassword) {
+                        const headerAuthHash = await hashPassword(
+                            Buffer.from(
+                                `${headerAuthUser}:${headerAuthPassword}`
+                            ).toString("base64")
+                        );
+                        await trx.insert(resourceHeaderAuth).values({
+                            resourceId: existingResource.resourceId,
+                            headerAuthHash
+                        });
+                    }
                 }
 
                 if (resourceData.auth?.["sso-roles"]) {
@@ -408,7 +437,9 @@ export async function updateProxyResources(
                         )
                         .limit(1);
 
-                    const hcHeaders = healthcheckData?.headers ? JSON.stringify(healthcheckData.headers) : null;
+                    const hcHeaders = healthcheckData?.headers
+                        ? JSON.stringify(healthcheckData.headers)
+                        : null;
 
                     const [newHealthcheck] = await trx
                         .update(targetHealthCheck)
@@ -591,6 +622,25 @@ export async function updateProxyResources(
                     pincodeHash,
                     digitLength: 6
                 });
+            }
+
+            if (resourceData.auth?.["basic-auth"]) {
+                const headerAuthUser = resourceData.auth?.["basic-auth"]?.user;
+                const headerAuthPassword =
+                    resourceData.auth?.["basic-auth"]?.password;
+
+                if (headerAuthUser && headerAuthPassword) {
+                    const headerAuthHash = await hashPassword(
+                        Buffer.from(
+                            `${headerAuthUser}:${headerAuthPassword}`
+                        ).toString("base64")
+                    );
+
+                    await trx.insert(resourceHeaderAuth).values({
+                        resourceId: newResource.resourceId,
+                        headerAuthHash
+                    });
+                }
             }
 
             resource = newResource;

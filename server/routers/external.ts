@@ -542,6 +542,13 @@ authenticated.post(
 );
 
 authenticated.post(
+    `/resource/:resourceId/header-auth`,
+    verifyResourceAccess,
+    verifyUserHasAction(ActionsEnum.setResourceHeaderAuth),
+    resource.setResourceHeaderAuth
+);
+
+authenticated.post(
     `/resource/:resourceId/whitelist`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourceWhitelist),
