@@ -103,17 +103,17 @@ export async function getResourceAuthInfo(
                       .limit(1);
 
         const resource = result?.resources;
-        const pincode = result?.resourcePincode;
-        const password = result?.resourcePassword;
-        const headerAuth = result?.resourceHeaderAuth;
-
-        const url = `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`;
-
         if (!resource) {
             return next(
                 createHttpError(HttpCode.NOT_FOUND, "Resource not found")
             );
         }
+
+        const pincode = result?.resourcePincode;
+        const password = result?.resourcePassword;
+        const headerAuth = result?.resourceHeaderAuth;
+
+        const url = `${resource.ssl ? "https" : "http"}://${resource.fullDomain}`;
 
         return response<GetResourceAuthInfoResponse>(res, {
             data: {
