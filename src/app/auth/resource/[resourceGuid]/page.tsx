@@ -207,7 +207,7 @@ export default async function ResourceAuthPage(props: {
         })) as LoginFormIDP[];
     }
 
-    if (authInfo.skipToIdpId && authInfo.skipToIdpId !== null) {
+    if (!userIsUnauthorized && isSSOOnly && authInfo.skipToIdpId && authInfo.skipToIdpId !== null) {
         const idp = loginIdps.find((idp) => idp.idpId === authInfo.skipToIdpId);
         if (idp) {
             return (
