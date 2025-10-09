@@ -144,7 +144,7 @@ export default function GeneralPage() {
     };
 
     const form = useForm<GeneralFormValues>({
-        resolver: zodResolver(getFormSchema()) as any, // is this right? 
+        resolver: zodResolver(getFormSchema()) as any, // is this right?
         defaultValues: {
             name: "",
             clientId: "",
@@ -236,17 +236,11 @@ export default function GeneralPage() {
                     let tenantId = "";
                     if (idpVariant === "azure" && data.idpOidcConfig?.authUrl) {
                         // Azure URL format: https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize
-                        console.log(
-                            "Azure authUrl:",
-                            data.idpOidcConfig.authUrl
-                        );
                         const tenantMatch = data.idpOidcConfig.authUrl.match(
                             /login\.microsoftonline\.com\/([^\/]+)\/oauth2/
                         );
-                        console.log("Tenant match:", tenantMatch);
                         if (tenantMatch) {
                             tenantId = tenantMatch[1];
-                            console.log("Extracted tenantId:", tenantId);
                         }
                     }
 
@@ -262,8 +256,6 @@ export default function GeneralPage() {
                             : matchingRoleId || null
                     };
 
-                    console.log(formData);
-
                     // Add variant-specific fields
                     if (idpVariant === "oidc") {
                         formData.authUrl = data.idpOidcConfig.authUrl;
@@ -276,7 +268,6 @@ export default function GeneralPage() {
                         formData.scopes = data.idpOidcConfig.scopes;
                     } else if (idpVariant === "azure") {
                         formData.tenantId = tenantId;
-                        console.log("Setting tenantId in formData:", tenantId);
                     }
 
                     form.reset(formData);
@@ -284,7 +275,7 @@ export default function GeneralPage() {
                     // Set the role mapping mode based on the data
                     // Default to "expression" unless it's a simple roleId or basic '{role name}' pattern
                     setRoleMappingMode(
-                        isRoleId || isRoleName ? "role" : "expression"
+                        matchingRoleId && isRoleName ? "role" : "expression"
                     );
                 }
             } catch (e) {
