@@ -48,3 +48,4 @@ server/build.ts
 postgres/
 dynamic/
 *.mmdb
+scratch/
