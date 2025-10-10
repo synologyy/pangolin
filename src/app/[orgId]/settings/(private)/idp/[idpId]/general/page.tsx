@@ -829,7 +829,7 @@ export default function GeneralPage() {
                                                 <AlertDescription>
                                                     {t(
                                                         "idpJmespathAboutDescription"
-                                                    )}
+                                                    )}{" "}
                                                     <a
                                                         href="https://jmespath.org"
                                                         target="_blank"
