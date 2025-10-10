@@ -8,12 +8,12 @@ import { db, exitNodes } from "@server/db";
 import { eq } from "drizzle-orm";
 import { tokenManager } from "../tokenManager";
 import { getCurrentExitNodeId } from "@server/lib/exitNodes";
-import { getTraefikConfig } from "./";
+import { getTraefikConfig } from "#dynamic/lib/traefik";
 import {
     getValidCertificatesForDomains,
     getValidCertificatesForDomainsHybrid
-} from "../remoteCertificates";
-import { sendToExitNode } from "../exitNodes";
+} from "#dynamic/lib/certificates";
+import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
 
 export class TraefikConfigManager {

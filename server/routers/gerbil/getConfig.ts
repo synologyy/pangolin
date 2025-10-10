@@ -1,19 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { sites, resources, targets, exitNodes, ExitNode } from "@server/db";
+import { sites, exitNodes, ExitNode } from "@server/db";
 import { db } from "@server/db";
 import { eq, isNotNull, and } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { getUniqueExitNodeEndpointName } from "../../db/names";
-import { findNextAvailableCidr } from "@server/lib/ip";
 import { fromError } from "zod-validation-error";
 import { getAllowedIps } from "../target/helpers";
 import { proxyToRemote } from "@server/lib/remoteProxy";
-import { getNextAvailableSubnet } from "@server/lib/exitNodes";
-import { createExitNode } from "./privateCreateExitNode";
+import { createExitNode } from "#dynamic/routers/gerbil/createExitNode";
 
 // Define Zod schema for request validation
 const getConfigSchema = z.object({

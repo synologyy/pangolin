@@ -3,6 +3,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
+import privateConfig from "#private/lib/config";
 import config from "@server/lib/config";
 import { db } from "@server/db";
 import { count } from "drizzle-orm";
@@ -45,7 +46,7 @@ export async function isSupporterKeyVisible(
             }
         }
 
-        if (config.getRawPrivateConfig().flags?.hide_supporter_key && build != "oss") {
+        if (build != "oss") {
             visible = false;
         }
 

@@ -3,8 +3,6 @@ import { z } from "zod";
 import { db } from "@server/db";
 import { eq } from "drizzle-orm";
 import {
-    apiKeyOrg,
-    apiKeys,
     domains,
     Org,
     orgDomains,
@@ -24,9 +22,9 @@ import { fromError } from "zod-validation-error";
 import { defaultRoleAllowedActions } from "../role";
 import { OpenAPITags, registry } from "@server/openApi";
 import { isValidCIDR } from "@server/lib/validators";
-import { createCustomer } from "@server/routers/private/billing/createCustomer";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { createCustomer } from "#dynamic/lib/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 
 const createOrgSchema = z

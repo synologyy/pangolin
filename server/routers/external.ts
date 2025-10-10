@@ -38,25 +38,13 @@ import {
     verifyUserIsOrgOwner,
     verifySiteResourceAccess
 } from "@server/middlewares";
-import {
-    verifyCertificateAccess,
-    verifyRemoteExitNodeAccess,
-    verifyIdpAccess,
-    verifyLoginPageAccess
-} from "@server/middlewares/private";
-import { createStore } from "@server/lib/private/rateLimitStore";
 import { ActionsEnum } from "@server/auth/actions";
 import { createNewt, getNewtToken } from "./newt";
 import { getOlmToken } from "./olm";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
-import * as certificates from "./private/certificates";
-import * as billing from "@server/routers/private/billing";
-import { quickStart } from "./auth/privateQuickStart";
 import { build } from "@server/build";
-import * as remoteExitNode from "@server/routers/private/remoteExitNode";
-import * as loginPage from "@server/routers/private/loginPage";
-import * as orgIdp from "@server/routers/private/orgIdp";
+import { createStore } from "#dynamic/lib/rateLimitStore";
 
 // Root routes
 export const unauthenticated = Router();
@@ -64,45 +52,6 @@ export const unauthenticated = Router();
 unauthenticated.get("/", (_, res) => {
     res.status(HttpCode.OK).json({ message: "Healthy" });
 });
-
-if (build === "saas") {
-    unauthenticated.post(
-        "/quick-start",
-        rateLimit({
-            windowMs: 15 * 60 * 1000,
-            max: 100,
-            keyGenerator: (req) => req.path,
-            handler: (req, res, next) => {
-                const message = `We're too busy right now. Please try again later.`;
-                return next(
-                    createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
-                );
-            },
-            store: createStore()
-        }),
-        quickStart
-    );
-}
-
-if (build !== "oss") {
-    unauthenticated.post(
-        "/remote-exit-node/quick-start",
-        rateLimit({
-            windowMs: 60 * 60 * 1000,
-            max: 5,
-            keyGenerator: (req) =>
-                `${req.path}:${ipKeyGenerator(req.ip || "")}`,
-            handler: (req, res, next) => {
-                const message = `You can only create 5 remote exit nodes every hour. Please try again later.`;
-                return next(
-                    createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
-                );
-            },
-            store: createStore()
-        }),
-        remoteExitNode.quickStartRemoteExitNode
-    );
-}
 
 // Authenticated Root routes
 export const authenticated = Router();
@@ -727,45 +676,7 @@ authenticated.post(
     idp.updateOidcIdp
 );
 
-if (build !== "oss") {
-    authenticated.put(
-        "/org/:orgId/idp/oidc",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.createIdp),
-        orgIdp.createOrgOidcIdp
-    );
 
-    authenticated.post(
-        "/org/:orgId/idp/:idpId/oidc",
-        verifyOrgAccess,
-        verifyIdpAccess,
-        verifyUserHasAction(ActionsEnum.updateIdp),
-        orgIdp.updateOrgOidcIdp
-    );
-
-    authenticated.delete(
-        "/org/:orgId/idp/:idpId",
-        verifyOrgAccess,
-        verifyIdpAccess,
-        verifyUserHasAction(ActionsEnum.deleteIdp),
-        idp.deleteIdp
-    );
-
-    authenticated.get(
-        "/org/:orgId/idp/:idpId",
-        verifyOrgAccess,
-        verifyIdpAccess,
-        verifyUserHasAction(ActionsEnum.getIdp),
-        orgIdp.getOrgIdp
-    );
-
-    authenticated.get(
-        "/org/:orgId/idp",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.listIdps),
-        orgIdp.listOrgIdps
-    );
-}
 
 authenticated.delete("/idp/:idpId", verifyUserIsServerAdmin, idp.deleteIdp);
 
@@ -795,9 +706,7 @@ authenticated.get(
     idp.listIdpOrgPolicies
 );
 
-if (build !== "oss") {
-    authenticated.get("/org/:orgId/idp", orgIdp.listOrgIdps); // anyone can see this; it's just a list of idp names and ids
-}
+
 authenticated.get("/idp", idp.listIdps); // anyone can see this; it's just a list of idp names and ids
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
 
@@ -930,126 +839,6 @@ authenticated.delete(
     domain.deleteAccountDomain
 );
 
-if (build !== "oss") {
-    authenticated.get(
-        "/org/:orgId/certificate/:domainId/:domain",
-        verifyOrgAccess,
-        verifyCertificateAccess,
-        verifyUserHasAction(ActionsEnum.getCertificate),
-        certificates.getCertificate
-    );
-
-    authenticated.post(
-        "/org/:orgId/certificate/:certId/restart",
-        verifyOrgAccess,
-        verifyCertificateAccess,
-        verifyUserHasAction(ActionsEnum.restartCertificate),
-        certificates.restartCertificate
-    );
-
-    authenticated.post(
-        "/org/:orgId/billing/create-checkout-session",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.billing),
-        billing.createCheckoutSession
-    );
-
-    authenticated.post(
-        "/org/:orgId/billing/create-portal-session",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.billing),
-        billing.createPortalSession
-    );
-
-    authenticated.get(
-        "/org/:orgId/billing/subscription",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.billing),
-        billing.getOrgSubscription
-    );
-
-    authenticated.get(
-        "/org/:orgId/billing/usage",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.billing),
-        billing.getOrgUsage
-    );
-
-    authenticated.get("/domain/namespaces", domain.listDomainNamespaces);
-
-    authenticated.get(
-        "/domain/check-namespace-availability",
-        domain.checkDomainNamespaceAvailability
-    );
-
-    authenticated.put(
-        "/org/:orgId/remote-exit-node",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.createRemoteExitNode),
-        remoteExitNode.createRemoteExitNode
-    );
-
-    authenticated.get(
-        "/org/:orgId/remote-exit-nodes",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.listRemoteExitNode),
-        remoteExitNode.listRemoteExitNodes
-    );
-
-    authenticated.get(
-        "/org/:orgId/remote-exit-node/:remoteExitNodeId",
-        verifyOrgAccess,
-        verifyRemoteExitNodeAccess,
-        verifyUserHasAction(ActionsEnum.getRemoteExitNode),
-        remoteExitNode.getRemoteExitNode
-    );
-
-    authenticated.get(
-        "/org/:orgId/pick-remote-exit-node-defaults",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.createRemoteExitNode),
-        remoteExitNode.pickRemoteExitNodeDefaults
-    );
-
-    authenticated.delete(
-        "/org/:orgId/remote-exit-node/:remoteExitNodeId",
-        verifyOrgAccess,
-        verifyRemoteExitNodeAccess,
-        verifyUserHasAction(ActionsEnum.deleteRemoteExitNode),
-        remoteExitNode.deleteRemoteExitNode
-    );
-
-    authenticated.put(
-        "/org/:orgId/login-page",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.createLoginPage),
-        loginPage.createLoginPage
-    );
-
-    authenticated.post(
-        "/org/:orgId/login-page/:loginPageId",
-        verifyOrgAccess,
-        verifyLoginPageAccess,
-        verifyUserHasAction(ActionsEnum.updateLoginPage),
-        loginPage.updateLoginPage
-    );
-
-    authenticated.delete(
-        "/org/:orgId/login-page/:loginPageId",
-        verifyOrgAccess,
-        verifyLoginPageAccess,
-        verifyUserHasAction(ActionsEnum.deleteLoginPage),
-        loginPage.deleteLoginPage
-    );
-
-    authenticated.get(
-        "/org/:orgId/login-page",
-        verifyOrgAccess,
-        verifyUserHasAction(ActionsEnum.getLoginPage),
-        loginPage.getLoginPage
-    );
-}
-
 // Auth routes
 export const authRouter = Router();
 unauthenticated.use("/auth", authRouter);
@@ -1128,26 +917,6 @@ authRouter.post(
     }),
     getOlmToken
 );
-
-if (build !== "oss") {
-    authRouter.post(
-        "/remoteExitNode/get-token",
-        rateLimit({
-            windowMs: 15 * 60 * 1000,
-            max: 900,
-            keyGenerator: (req) =>
-                `remoteExitNodeGetToken:${req.body.newtId || ipKeyGenerator(req.ip || "")}`,
-            handler: (req, res, next) => {
-                const message = `You can only request an remoteExitNodeToken token ${900} times every ${15} minutes. Please try again later.`;
-                return next(
-                    createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
-                );
-            },
-            store: createStore()
-        }),
-        remoteExitNode.getRemoteExitNodeToken
-    );
-}
 
 authRouter.post(
     "/2fa/enable",
@@ -1315,26 +1084,6 @@ authRouter.post(
     }),
     resource.authWithWhitelist
 );
-
-if (build !== "oss") {
-    authRouter.post(
-        "/transfer-session-token",
-        rateLimit({
-            windowMs: 1 * 60 * 1000,
-            max: 60,
-            keyGenerator: (req) =>
-                `transferSessionToken:${ipKeyGenerator(req.ip || "")}`,
-            handler: (req, res, next) => {
-                const message = `You can only transfer a session token ${5} times every ${1} minute. Please try again later.`;
-                return next(
-                    createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
-                );
-            },
-            store: createStore()
-        }),
-        auth.transferSession
-    );
-}
 
 authRouter.post(
     "/resource/:resourceId/access-token",

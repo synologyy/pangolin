@@ -1,16 +1,3 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
 import { internal, priv } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
@@ -22,8 +9,8 @@ import { cache } from "react";
 import {
     GetOrgSubscriptionResponse,
     GetOrgTierResponse
-} from "@server/routers/private/billing";
-import { TierId } from "@server/lib/private/billing/tiers";
+} from "#private/routers/billing";
+import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
 
 type OrgIdpPageProps = {

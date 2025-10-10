@@ -110,10 +110,12 @@ export async function requestTotpSecret(
             );
         }
 
+        const appName = process.env.BRANDING_APP_NAME || "Pangolin"; // From the private config loading into env vars to seperate away the private config
+
         const hex = crypto.getRandomValues(new Uint8Array(20));
         const secret = encodeHex(hex);
         const uri = createTOTPKeyURI(
-            config.getRawPrivateConfig().branding?.app_name || "Pangolin",
+            appName,
             user.email!,
             hex
         );

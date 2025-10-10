@@ -6,7 +6,7 @@ import { AxiosResponse } from "axios";
 import { GetIdpResponse } from "@server/routers/idp";
 import { getTranslations } from "next-intl/server";
 import { pullEnv } from "@app/lib/pullEnv";
-import { LoadLoginPageResponse } from "@server/routers/private/loginPage";
+import { LoadLoginPageResponse } from "#private/routers/loginPage";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";

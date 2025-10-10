@@ -1,16 +1,3 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
 import { formatAxiosError, priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { authCookieHeader } from "@app/lib/api/cookies";
@@ -19,13 +6,13 @@ import { verifySession } from "@app/lib/auth/verifySession";
 import { redirect } from "next/navigation";
 import { pullEnv } from "@app/lib/pullEnv";
 import { LoginFormIDP } from "@app/components/LoginForm";
-import { ListOrgIdpsResponse } from "@server/routers/private/orgIdp";
+import { ListOrgIdpsResponse } from "#private/routers/orgIdp";
 import { build } from "@server/build";
 import { headers } from "next/headers";
 import {
     GetLoginPageResponse,
     LoadLoginPageResponse
-} from "@server/routers/private/loginPage";
+} from "#private/routers/loginPage";
 import IdpLoginButtons from "@app/components/private/IdpLoginButtons";
 import {
     Card,
@@ -37,11 +24,10 @@ import {
 import { Button } from "@app/components/ui/button";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { GetSessionTransferTokenRenponse } from "@server/routers/auth/privateGetSessionTransferToken";
-import { TransferSessionResponse } from "@server/routers/auth/privateTransferSession";
+import { GetSessionTransferTokenRenponse } from "#private/routers/auth/getSessionTransferToken";
 import ValidateSessionTransferToken from "@app/components/private/ValidateSessionTransferToken";
-import { GetOrgTierResponse } from "@server/routers/private/billing";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { GetOrgTierResponse } from "#private/routers/billing";
+import { TierId } from "@server/lib/billing/tiers";
 
 export const dynamic = "force-dynamic";
 

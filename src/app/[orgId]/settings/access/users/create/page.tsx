@@ -47,8 +47,8 @@ import { ListIdpsResponse } from "@server/routers/idp";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import Image from "next/image";
-import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { TierId } from "@server/lib/billing/tiers";
 
 type UserType = "internal" | "oidc";
 
@@ -76,7 +76,7 @@ export default function Page() {
     const api = createApiClient({ env });
     const t = useTranslations();
 
-    const subscription = usePrivateSubscriptionStatusContext();
+    const subscription = useSubscriptionStatusContext();
     const subscribed = subscription?.getTier() === TierId.STANDARD;
 
     const [selectedOption, setSelectedOption] = useState<string | null>("internal");

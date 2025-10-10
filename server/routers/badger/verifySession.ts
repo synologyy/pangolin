@@ -34,8 +34,8 @@ import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { getCountryCodeForIp, remoteGetCountryCodeForIp } from "@server/lib/geoip";
-import { getOrgTierData } from "@server/routers/private/billing";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { getOrgTierData } from "#dynamic/lib/billing";
+import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
 
 // We'll see if this speeds anything up

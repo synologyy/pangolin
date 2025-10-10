@@ -12,6 +12,7 @@ import config from "@server/lib/config";
 import { setHostMeta } from "@server/lib/hostMeta";
 import { initTelemetryClient } from "./lib/telemetry.js";
 import { TraefikConfigManager } from "./lib/traefik/TraefikConfigManager.js";
+import { initCleanup } from "#dynamic/cleanup";
 
 async function startServers() {
     await setHostMeta();
@@ -41,6 +42,8 @@ async function startServers() {
     if (config.getRawConfig().flags?.enable_integration_api) {
         integrationServer = createIntegrationApiServer();
     }
+
+    await initCleanup();
 
     return {
         apiServer,

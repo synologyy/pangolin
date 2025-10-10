@@ -18,7 +18,11 @@
             "@test/*": ["../test/*"],
             "@app/*": ["*"],
             "@cli/*": ["../cli/*"],
-            "@/*": ["./*"]
+            "@/*": ["./*"],
+            "#private/*": ["../server/private/*"],
+            "#open/*": ["../server/*"],
+            "#closed/*": ["../server/private/*"],
+            "#dynamic/*": ["../server/*"]
         },
         "plugins": [
             {

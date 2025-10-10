@@ -30,8 +30,8 @@ import {
 } from "@server/auth/sessions/app";
 import { decrypt } from "@server/lib/crypto";
 import { UserType } from "@server/types/UserTypes";
-import { FeatureId } from "@server/lib/private/billing";
-import { usageService } from "@server/lib/private/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
+import { usageService } from "@server/lib/billing/usageService";
 
 const ensureTrailingSlash = (url: string): string => {
     return url;

@@ -9,8 +9,8 @@ import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import SetLastOrgCookie from "@app/components/SetLastOrgCookie";
-import PrivateSubscriptionStatusProvider from "@app/providers/PrivateSubscriptionStatusProvider";
-import { GetOrgSubscriptionResponse } from "@server/routers/private/billing/getOrgSubscription";
+import PrivateSubscriptionStatusProvider from "@app/providers/SubscriptionStatusProvider";
+import { GetOrgSubscriptionResponse } from "#private/routers/billing/getOrgSubscription";
 import { pullEnv } from "@app/lib/pullEnv";
 import { build } from "@server/build";
 

@@ -60,8 +60,8 @@ import {
 } from "@app/components/ui/select";
 import { Separator } from "@app/components/ui/separator";
 import { build } from "@server/build";
-import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { TierId } from "@server/lib/billing/tiers";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -98,7 +98,7 @@ export default function ResourceAuthenticationPage() {
     const router = useRouter();
     const t = useTranslations();
 
-    const subscription = usePrivateSubscriptionStatusContext();
+    const subscription = useSubscriptionStatusContext();
     const subscribed = subscription?.getTier() === TierId.STANDARD;
 
     const [pageLoading, setPageLoading] = useState(true);

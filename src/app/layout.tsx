@@ -4,7 +4,7 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@app/providers/ThemeProvider";
 import EnvProvider from "@app/providers/EnvProvider";
 import { pullEnv } from "@app/lib/pullEnv";
-import ThemeDataProvider from "@app/providers/PrivateThemeDataProvider";
+import ThemeDataProvider from "@app/providers/ThemeDataProvider";
 import SplashImage from "@app/components/private/SplashImage";
 import SupportStatusProvider from "@app/providers/SupporterStatusProvider";
 import { priv } from "@app/lib/api";

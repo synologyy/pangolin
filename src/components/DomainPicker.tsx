@@ -32,7 +32,7 @@ import { createApiClient, formatAxiosError } from "@/lib/api";
 import { useEnvContext } from "@/hooks/useEnvContext";
 import { toast } from "@/hooks/useToast";
 import { ListDomainsResponse } from "@server/routers/domain/listDomains";
-import { CheckDomainAvailabilityResponse } from "@server/routers/domain/privateCheckDomainNamespaceAvailability";
+import { CheckDomainAvailabilityResponse } from "#private/routers/domain/checkDomainNamespaceAvailability";
 import { AxiosResponse } from "axios";
 import { cn } from "@/lib/cn";
 import { useTranslations } from "next-intl";

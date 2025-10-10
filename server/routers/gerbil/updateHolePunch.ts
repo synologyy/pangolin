@@ -18,8 +18,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { validateNewtSessionToken } from "@server/auth/sessions/newt";
 import { validateOlmSessionToken } from "@server/auth/sessions/olm";
-import axios from "axios";
-import { checkExitNodeOrg } from "@server/lib/exitNodes";
+import { checkExitNodeOrg } from "#dynamic/lib/exitNodes";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({

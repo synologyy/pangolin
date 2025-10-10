@@ -1,5 +1,5 @@
 import { db, targets, resources, sites, targetHealthCheck } from "@server/db";
-import { MessageHandler } from "../ws";
+import { MessageHandler } from "@server/routers/ws";
 import { Newt } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import logger from "@server/logger";

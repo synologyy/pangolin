@@ -8,7 +8,7 @@ import {
     errorHandlerMiddleware,
     notFoundMiddleware
 } from "@server/middlewares";
-import internal from "@server/routers/internal";
+import { internalRouter } from "#dynamic/routers/internal";
 import { stripDuplicateSesions } from "./middlewares/stripDuplicateSessions";
 
 const internalPort = config.getRawConfig().server.internal_port;
@@ -23,7 +23,7 @@ export function createInternalServer() {
     internalServer.use(express.json());
 
     const prefix = `/api/v1`;
-    internalServer.use(prefix, internal);
+    internalServer.use(prefix, internalRouter);
 
     internalServer.use(notFoundMiddleware);
     internalServer.use(errorHandlerMiddleware);

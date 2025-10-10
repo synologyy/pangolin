@@ -1,16 +1,3 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
 "use client";
 import { Button } from "@app/components/ui/button";
 import { useOrgContext } from "@app/hooks/useOrgContext";
@@ -43,7 +30,7 @@ import {
     SettingsSectionForm
 } from "@app/components/Settings";
 import { useTranslations } from "next-intl";
-import { GetLoginPageResponse } from "@server/routers/private/loginPage";
+import { GetLoginPageResponse } from "#private/routers/loginPage";
 import { ListDomainsResponse } from "@server/routers/domain";
 import { DomainRow } from "@app/components/DomainsTable";
 import { toUnicode } from "punycode";
@@ -63,8 +50,8 @@ import DomainPicker from "@app/components/DomainPicker";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 import { InfoPopup } from "@app/components/ui/info-popup";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
-import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
 
 // Auth page form schema
@@ -94,7 +81,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
     const router = useRouter();
     const t = useTranslations();
 
-    const subscription = usePrivateSubscriptionStatusContext();
+    const subscription = useSubscriptionStatusContext();
     const subscribed = subscription?.getTier() === TierId.STANDARD;
 
     // Auth page domain state

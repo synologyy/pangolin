@@ -7,7 +7,6 @@ import * as auth from "@server/routers/auth";
 import * as supporterKey from "@server/routers/supporterKey";
 import * as license from "@server/routers/license";
 import * as idp from "@server/routers/idp";
-import * as loginPage from "@server/routers/private/loginPage";
 import { proxyToRemote } from "@server/lib/remoteProxy";
 import config from "@server/lib/config";
 import HttpCode from "@server/types/HttpCode";
@@ -15,12 +14,9 @@ import {
     verifyResourceAccess,
     verifySessionUserMiddleware
 } from "@server/middlewares";
-import { build } from "@server/build";
-import * as billing from "@server/routers/private/billing";
-import * as orgIdp from "@server/routers/private/orgIdp";
 
 // Root routes
-const internalRouter = Router();
+export const internalRouter = Router();
 
 internalRouter.get("/", (_, res) => {
     res.status(HttpCode.OK).json({ message: "Healthy" });
@@ -50,12 +46,6 @@ internalRouter.get(`/license/status`, license.getLicenseStatus);
 internalRouter.get("/idp", idp.listIdps);
 
 internalRouter.get("/idp/:idpId", idp.getIdp);
-
-if (build !== "oss") {
-    internalRouter.get("/org/:orgId/idp", orgIdp.listOrgIdps);
-    
-    internalRouter.get("/org/:orgId/billing/tier", billing.getOrgTier);
-}
 
 // Gerbil routes
 const gerbilRouter = Router();
@@ -107,15 +97,3 @@ if (config.isManagedMode()) {
 } else {
     badgerRouter.post("/exchange-session", badger.exchangeSession);
 }
-
-if (build !== "oss") {
-    internalRouter.get("/login-page", loginPage.loadLoginPage);
-
-    internalRouter.post(
-        "/get-session-transfer-token",
-        verifySessionUserMiddleware,
-        auth.getSessionTransferToken
-    );
-}
-
-export default internalRouter;

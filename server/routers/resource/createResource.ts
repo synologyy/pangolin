@@ -21,7 +21,7 @@ import { subdomainSchema } from "@server/lib/schemas";
 import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
-import { createCertificate } from "../private/certificates/createCertificate";
+import { createCertificate } from "#dynamic/routers/certificates/createCertificate";
 import { getUniqueResourceName } from "@server/db/names";
 import { validateAndConstructDomain } from "@server/lib/domainUtils";
 

@@ -2,7 +2,6 @@ import { render } from "@react-email/render";
 import { ReactElement } from "react";
 import emailClient from "@server/emails";
 import logger from "@server/logger";
-import config from "@server/lib/config";
 
 export async function sendEmail(
     template: ReactElement,
@@ -25,7 +24,7 @@ export async function sendEmail(
 
     const emailHtml = await render(template);
 
-    const appName = config.getRawPrivateConfig().branding?.app_name || "Pangolin";
+    const appName = process.env.BRANDING_APP_NAME || "Pangolin"; // From the private config loading into env vars to seperate away the private config
 
     await emailClient.sendMail({
         from: {
