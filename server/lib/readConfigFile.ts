@@ -39,15 +39,6 @@ export const configSchema = z
                 anonymous_usage: true
             }
         }),
-        managed: z
-            .object({
-                name: z.string().optional(),
-                id: z.string().optional(),
-                secret: z.string().optional(),
-                endpoint: z.string().optional().default("https://pangolin.fossorial.io"),
-                redirect_endpoint: z.string().optional()
-            })
-            .optional(),
         domains: z
             .record(
                 z.string(),
@@ -320,10 +311,7 @@ export const configSchema = z
             if (data.flags?.disable_config_managed_domains) {
                 return true;
             }
-            // If hybrid is defined, domains are not required
-            if (data.managed) {
-                return true;
-            }
+
             if (keys.length === 0) {
                 return false;
             }
@@ -335,10 +323,6 @@ export const configSchema = z
     )
     .refine(
         (data) => {
-            // If hybrid is defined, server secret is not required
-            if (data.managed) {
-                return true;
-            }
             // If hybrid is not defined, server secret must be defined. If its not defined already then pull it from env
             if (data.server?.secret === undefined) {
                 data.server.secret = process.env.SERVER_SECRET;
@@ -351,10 +335,6 @@ export const configSchema = z
     )
     .refine(
         (data) => {
-            // If hybrid is defined, dashboard_url is not required
-            if (data.managed) {
-                return true;
-            }
             // If hybrid is not defined, dashboard_url must be defined
             return data.app.dashboard_url !== undefined && data.app.dashboard_url.length > 0;
         },

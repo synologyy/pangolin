@@ -6,12 +6,10 @@ import * as yaml from "js-yaml";
 import axios from "axios";
 import { db, exitNodes } from "@server/db";
 import { eq } from "drizzle-orm";
-import { tokenManager } from "../tokenManager";
 import { getCurrentExitNodeId } from "@server/lib/exitNodes";
 import { getTraefikConfig } from "#dynamic/lib/traefik";
 import {
     getValidCertificatesForDomains,
-    getValidCertificatesForDomainsHybrid
 } from "#dynamic/lib/certificates";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
@@ -348,17 +346,8 @@ export class TraefikConfigManager {
 
                 if (domainsToFetch.size > 0) {
                     // Get valid certificates for domains not covered by wildcards
-                    if (config.isManagedMode()) {
-                        validCertificates =
-                            await getValidCertificatesForDomainsHybrid(
-                                domainsToFetch
-                            );
-                    } else { 
-                        validCertificates =
-                            await getValidCertificatesForDomains(
-                                domainsToFetch
-                            );
-                    }
+                    validCertificates =
+                        await getValidCertificatesForDomains(domainsToFetch);
                     this.lastCertificateFetch = new Date();
                     this.lastKnownDomains = new Set(domains);
 
@@ -448,32 +437,15 @@ export class TraefikConfigManager {
     } | null> {
         let traefikConfig;
         try {
-            if (config.isManagedMode()) {
-                const resp = await axios.get(
-                    `${config.getRawConfig().managed?.endpoint}/api/v1/hybrid/traefik-config`,
-                    await tokenManager.getAuthHeader()
-                );
-
-                if (resp.status !== 200) {
-                    logger.error(
-                        `Failed to fetch traefik config: ${resp.status} ${resp.statusText}`,
-                        { responseData: resp.data }
-                    );
-                    return null;
-                }
-
-                traefikConfig = resp.data.data;
-            } else {
-                const currentExitNode = await getCurrentExitNodeId();
-                // logger.debug(`Fetching traefik config for exit node: ${currentExitNode}`);
-                traefikConfig = await getTraefikConfig(
-                    // this is called by the local exit node to get its own config
-                    currentExitNode,
-                    config.getRawConfig().traefik.site_types,
-                    build == "oss", // filter out the namespace domains in open source
-                    build != "oss" // generate the login pages on the cloud and hybrid
-                );
-            }
+            const currentExitNode = await getCurrentExitNodeId();
+            // logger.debug(`Fetching traefik config for exit node: ${currentExitNode}`);
+            traefikConfig = await getTraefikConfig(
+                // this is called by the local exit node to get its own config
+                currentExitNode,
+                config.getRawConfig().traefik.site_types,
+                build == "oss", // filter out the namespace domains in open source
+                build != "oss" // generate the login pages on the cloud and hybrid
+            );
 
             const domains = new Set<string>();
 
@@ -842,7 +814,9 @@ export class TraefikConfigManager {
                 const lastUpdateStr = fs
                     .readFileSync(lastUpdatePath, "utf8")
                     .trim();
-                lastUpdateTime = Math.floor(new Date(lastUpdateStr).getTime() / 1000);
+                lastUpdateTime = Math.floor(
+                    new Date(lastUpdateStr).getTime() / 1000
+                );
             } catch {
                 lastUpdateTime = null;
             }
