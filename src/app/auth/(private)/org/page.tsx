@@ -23,7 +23,7 @@ import {
 import { Button } from "@app/components/ui/button";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { GetSessionTransferTokenRenponse } from "#private/routers/auth/getSessionTransferToken";
+import { GetSessionTransferTokenRenponse } from "@server/routers/auth/types";
 import ValidateSessionTransferToken from "@app/components/private/ValidateSessionTransferToken";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";

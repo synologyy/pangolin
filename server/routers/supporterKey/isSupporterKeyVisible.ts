@@ -3,7 +3,6 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
-import privateConfig from "#private/lib/config";
 import config from "@server/lib/config";
 import { db } from "@server/db";
 import { count } from "drizzle-orm";
