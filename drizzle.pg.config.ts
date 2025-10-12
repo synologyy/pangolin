@@ -4,7 +4,7 @@ import { build } from "@server/build";
 
 const schema = [
     path.join("server", "db", "pg", "schema.ts"),
-    path.join("server", "db", "pg", "pSchema.ts")
+    path.join("server", "db", "pg", "privateSchema.ts")
 ];
 
 export default defineConfig({

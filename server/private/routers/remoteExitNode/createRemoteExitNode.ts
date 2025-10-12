@@ -84,30 +84,25 @@ export async function createRemoteExitNode(
             orgId,
             FeatureId.REMOTE_EXIT_NODES
         );
-        if (!usage) {
-            return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    "No usage data found for this organization"
-                )
+        if (usage) {
+            const rejectRemoteExitNodes = await usageService.checkLimitSet(
+                orgId,
+                false,
+                FeatureId.REMOTE_EXIT_NODES,
+                {
+                    ...usage,
+                    instantaneousValue: (usage.instantaneousValue || 0) + 1
+                } // We need to add one to know if we are violating the limit
             );
-        }
-        const rejectRemoteExitNodes = await usageService.checkLimitSet(
-            orgId,
-            false,
-            FeatureId.REMOTE_EXIT_NODES,
-            {
-                ...usage,
-                instantaneousValue: (usage.instantaneousValue || 0) + 1
-            } // We need to add one to know if we are violating the limit
-        );
-        if (rejectRemoteExitNodes) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    "Remote exit node limit exceeded. Please upgrade your plan or contact us at support@fossorial.io"
-                )
-            );
+
+            if (rejectRemoteExitNodes) {
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Remote exit node limit exceeded. Please upgrade your plan or contact us at support@fossorial.io"
+                    )
+                );
+            }
         }
 
         const secretHash = await hashPassword(secret);

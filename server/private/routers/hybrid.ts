@@ -68,10 +68,11 @@ import { decryptData } from "@server/lib/encryption";
 import config from "@server/lib/config";
 import privateConfig from "#private/lib/config";
 import * as fs from "fs";
-import { exchangeSession } from "@server/routers/badger";   
+import { exchangeSession } from "@server/routers/badger";
 import { validateResourceSessionToken } from "@server/auth/sessions/resource";
 import { checkExitNodeOrg, resolveExitNodes } from "#private/lib/exitNodes";
 import { maxmindLookup } from "@server/db/maxmind";
+import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 
 // Zod schemas for request validation
 const getResourceByDomainParamsSchema = z
@@ -162,6 +163,14 @@ const validateResourceSessionTokenBodySchema = z
     })
     .strict();
 
+const validateResourceAccessTokenBodySchema = z
+    .object({
+        accessTokenId: z.string().optional(),
+        resourceId: z.number().optional(),
+        accessToken: z.string()
+    })
+    .strict();
+
 // Certificates by domains query validation
 const getCertificatesByDomainsQuerySchema = z
     .object({
@@ -214,6 +223,33 @@ export type UserSessionWithUser = {
 // Root routes
 export const hybridRouter = Router();
 hybridRouter.use(verifySessionRemoteExitNodeMiddleware);
+
+hybridRouter.get(
+    "/general-config",
+    async (req: Request, res: Response, next: NextFunction) => {
+        return response(res, {
+            data: {
+                resource_session_request_param:
+                    config.getRawConfig().server.resource_session_request_param,
+                resource_access_token_headers:
+                    config.getRawConfig().server.resource_access_token_headers,
+                resource_access_token_param:
+                    config.getRawConfig().server.resource_access_token_param,
+                session_cookie_name:
+                    config.getRawConfig().server.session_cookie_name,
+                require_email_verification:
+                    config.getRawConfig().flags?.require_email_verification ||
+                    false,
+                resource_session_length_hours:
+                    config.getRawConfig().server.resource_session_length_hours
+            },
+            success: true,
+            error: false,
+            message: "General config retrieved successfully",
+            status: HttpCode.OK
+        });
+    }
+);
 
 hybridRouter.get(
     "/traefik-config",
@@ -1087,6 +1123,52 @@ hybridRouter.post(
                 message: result.resourceSession
                     ? "Resource session token is valid"
                     : "Resource session token is invalid or expired",
+                status: HttpCode.OK
+            });
+        } catch (error) {
+            logger.error(error);
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Failed to validate resource session token"
+                )
+            );
+        }
+    }
+);
+
+// Validate resource session token
+hybridRouter.post(
+    "/resource/:resourceId/access-token/verify",
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const parsedBody = validateResourceAccessTokenBodySchema.safeParse(
+                req.body
+            );
+            if (!parsedBody.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedBody.error).toString()
+                    )
+                );
+            }
+
+            const { accessToken, resourceId, accessTokenId } = parsedBody.data;
+
+            const result = await verifyResourceAccessToken({
+                accessTokenId,
+                accessToken,
+                resourceId
+            });
+
+            return response(res, {
+                data: result,
+                success: true,
+                error: false,
+                message: result.valid
+                    ? "Resource access token is valid"
+                    : "Resource access token is invalid or expired",
                 status: HttpCode.OK
             });
         } catch (error) {
