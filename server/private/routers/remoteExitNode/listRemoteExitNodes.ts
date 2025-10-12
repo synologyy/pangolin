@@ -21,6 +21,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { ListRemoteExitNodesResponse } from "@server/routers/remoteExitNode/types";
 
 const listRemoteExitNodesParamsSchema = z
     .object({
@@ -43,7 +44,7 @@ const listRemoteExitNodesSchema = z.object({
         .pipe(z.number().int().nonnegative())
 });
 
-function queryRemoteExitNodes(orgId: string) {
+export function queryRemoteExitNodes(orgId: string) {
     return db
         .select({
             remoteExitNodeId: remoteExitNodes.remoteExitNodeId,
@@ -64,11 +65,6 @@ function queryRemoteExitNodes(orgId: string) {
             eq(remoteExitNodes.exitNodeId, exitNodeOrgs.exitNodeId)
         );
 }
-
-export type ListRemoteExitNodesResponse = {
-    remoteExitNodes: Awaited<ReturnType<typeof queryRemoteExitNodes>>;
-    pagination: { total: number; limit: number; offset: number };
-};
 
 export async function listRemoteExitNodes(
     req: Request,

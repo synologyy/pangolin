@@ -21,6 +21,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 
 const getRemoteExitNodeSchema = z
     .object({
@@ -51,8 +52,6 @@ async function query(remoteExitNodeId: string) {
         .limit(1);
     return remoteExitNode;
 }
-
-export type GetRemoteExitNodeResponse = Awaited<ReturnType<typeof query>>;
 
 export async function getRemoteExitNode(
     req: Request,

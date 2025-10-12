@@ -29,16 +29,11 @@ import { and, eq } from "drizzle-orm";
 import { getNextAvailableSubnet } from "@server/lib/exitNodes";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
+import { CreateRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 
 export const paramsSchema = z.object({
     orgId: z.string()
 });
-
-export type CreateRemoteExitNodeResponse = {
-    token: string;
-    remoteExitNodeId: string;
-    secret: string;
-};
 
 const bodySchema = z
     .object({

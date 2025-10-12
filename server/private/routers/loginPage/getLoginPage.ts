@@ -20,6 +20,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { GetLoginPageResponse } from "@server/routers/loginPage/types";
 
 const paramsSchema = z
     .object({
@@ -39,10 +40,6 @@ async function query(orgId: string) {
         .limit(1);
     return res?.loginPage;
 }
-
-export type GetLoginPageResponse = NonNullable<
-    Awaited<ReturnType<typeof query>>
->;
 
 export async function getLoginPage(
     req: Request,

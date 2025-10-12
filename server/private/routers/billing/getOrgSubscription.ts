@@ -22,6 +22,8 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { GetOrgSubscriptionResponse } from "@server/routers/billing/types";
+
 // Import tables for billing
 import {
     customers,
@@ -36,11 +38,6 @@ const getOrgSchema = z
         orgId: z.string()
     })
     .strict();
-
-export type GetOrgSubscriptionResponse = {
-    subscription: Subscription | null;
-    items: SubscriptionItem[];
-};
 
 registry.registerPath({
     method: "get",

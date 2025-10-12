@@ -20,6 +20,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, and } from "drizzle-orm";
+import { DeleteLoginPageResponse } from "@server/routers/loginPage/types";
 
 const paramsSchema = z
     .object({
@@ -27,8 +28,6 @@ const paramsSchema = z
         loginPageId: z.coerce.number()
     })
     .strict();
-
-export type DeleteLoginPageResponse = LoginPage;
 
 export async function deleteLoginPage(
     req: Request,

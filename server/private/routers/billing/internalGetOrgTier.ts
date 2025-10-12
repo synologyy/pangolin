@@ -19,17 +19,13 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { getOrgTierData } from "#private/lib/billing";
+import { GetOrgTierResponse } from "@server/routers/billing/types";
 
 const getOrgSchema = z
     .object({
         orgId: z.string()
     })
     .strict();
-
-export type GetOrgTierResponse = {
-    tier: string | null;
-    active: boolean;
-};
 
 export async function getOrgTier(
     req: Request,

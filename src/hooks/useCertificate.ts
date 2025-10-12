@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { AxiosResponse } from "axios";
-import { GetCertificateResponse } from "#private/routers/certificates";
+import { GetCertificateResponse } from "@server/routers/certificates/types";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 

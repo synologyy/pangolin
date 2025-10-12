@@ -35,8 +35,6 @@ export const remoteExitNodeGetTokenBodySchema = z.object({
     token: z.string().optional()
 });
 
-export type RemoteExitNodeGetTokenBody = z.infer<typeof remoteExitNodeGetTokenBodySchema>;
-
 export async function getRemoteExitNodeToken(
     req: Request,
     res: Response,

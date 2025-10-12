@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TransferSessionResponse } from "#private/routers/auth/transferSession";
+import { TransferSessionResponse } from "@server/routers/auth/types";
 
 type ValidateSessionTransferTokenParams = {
     token: string;

@@ -37,7 +37,7 @@ import { InfoPopup } from "@/components/ui/info-popup";
 import {
     GetOrgSubscriptionResponse,
     GetOrgUsageResponse
-} from "#private/routers/billing";
+} from "@server/routers/billing/types";
 import { useTranslations } from "use-intl";
 import Link from "next/link";
 

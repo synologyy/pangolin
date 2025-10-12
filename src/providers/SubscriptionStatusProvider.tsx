@@ -2,7 +2,7 @@
 
 import SubscriptionStatusContext from "@app/contexts/subscriptionStatusContext";
 import { getTierPriceSet } from "@server/lib/billing/tiers";
-import { GetOrgSubscriptionResponse } from "#private/routers/billing";
+import { GetOrgSubscriptionResponse } from "@server/routers/billing/types";
 import { useState } from "react";
 
 interface ProviderProps {

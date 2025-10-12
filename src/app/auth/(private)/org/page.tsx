@@ -6,13 +6,12 @@ import { verifySession } from "@app/lib/auth/verifySession";
 import { redirect } from "next/navigation";
 import { pullEnv } from "@app/lib/pullEnv";
 import { LoginFormIDP } from "@app/components/LoginForm";
-import { ListOrgIdpsResponse } from "#private/routers/orgIdp";
+import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import { build } from "@server/build";
 import { headers } from "next/headers";
 import {
-    GetLoginPageResponse,
     LoadLoginPageResponse
-} from "#private/routers/loginPage";
+} from "@server/routers/loginPage/types";
 import IdpLoginButtons from "@app/components/private/IdpLoginButtons";
 import {
     Card,
@@ -26,7 +25,7 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { GetSessionTransferTokenRenponse } from "#private/routers/auth/getSessionTransferToken";
 import ValidateSessionTransferToken from "@app/components/private/ValidateSessionTransferToken";
-import { GetOrgTierResponse } from "#private/routers/billing";
+import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 
 export const dynamic = "force-dynamic";

@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import SetLastOrgCookie from "@app/components/SetLastOrgCookie";
 import PrivateSubscriptionStatusProvider from "@app/providers/SubscriptionStatusProvider";
-import { GetOrgSubscriptionResponse } from "#private/routers/billing/getOrgSubscription";
+import { GetOrgSubscriptionResponse } from "@server/routers/billing/types";
 import { pullEnv } from "@app/lib/pullEnv";
 import { build } from "@server/build";
 

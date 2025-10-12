@@ -1,7 +1,7 @@
 "use client";
 
 import RemoteExitNodeContext from "@app/contexts/remoteExitNodeContext";
-import { GetRemoteExitNodeResponse } from "#private/routers/remoteExitNode";
+import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 

@@ -1,4 +1,4 @@
-import { GetOrgSubscriptionResponse } from "#private/routers/billing";
+import { GetOrgSubscriptionResponse } from "@server/routers/billing/types";
 import { createContext } from "react";
 
 type SubscriptionStatusContextType = {

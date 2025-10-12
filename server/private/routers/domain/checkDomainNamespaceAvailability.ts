@@ -21,6 +21,7 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { db, domainNamespaces, resources } from "@server/db";
 import { inArray } from "drizzle-orm";
+import { CheckDomainAvailabilityResponse } from "@server/routers/domain/types";
 
 const paramsSchema = z.object({}).strict();
 
@@ -29,15 +30,6 @@ const querySchema = z
         subdomain: z.string()
     })
     .strict();
-
-export type CheckDomainAvailabilityResponse = {
-    available: boolean;
-    options: {
-        domainNamespaceId: string;
-        domainId: string;
-        fullDomain: string;
-    }[];
-};
 
 registry.registerPath({
     method: "get",

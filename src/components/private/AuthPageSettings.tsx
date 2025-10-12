@@ -30,7 +30,7 @@ import {
     SettingsSectionForm
 } from "@app/components/Settings";
 import { useTranslations } from "next-intl";
-import { GetLoginPageResponse } from "#private/routers/loginPage";
+import { GetLoginPageResponse } from "@server/routers/loginPage/types";
 import { ListDomainsResponse } from "@server/routers/domain";
 import { DomainRow } from "@app/components/DomainsTable";
 import { toUnicode } from "punycode";

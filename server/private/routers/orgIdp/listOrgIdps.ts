@@ -22,6 +22,7 @@ import { eq, sql } from "drizzle-orm";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 
 const querySchema = z
     .object({
@@ -64,15 +65,6 @@ async function query(orgId: string, limit: number, offset: number) {
         .offset(offset);
     return res;
 }
-
-export type ListOrgIdpsResponse = {
-    idps: Awaited<ReturnType<typeof query>>;
-    pagination: {
-        total: number;
-        limit: number;
-        offset: number;
-    };
-};
 
 // registry.registerPath({
 //     method: "get",

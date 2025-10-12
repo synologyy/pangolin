@@ -26,17 +26,13 @@ import { sha256 } from "@oslojs/crypto/sha2";
 import { serializeSessionCookie } from "@server/auth/sessions/app";
 import { decrypt } from "@server/lib/crypto";
 import config from "@server/lib/config";
+import { TransferSessionResponse } from "@server/routers/auth/types";
 
 const bodySchema = z.object({
     token: z.string()
 });
 
 export type TransferSessionBodySchema = z.infer<typeof bodySchema>;
-
-export type TransferSessionResponse = {
-    valid: boolean;
-    cookie?: string;
-};
 
 export async function transferSession(
     req: Request,
