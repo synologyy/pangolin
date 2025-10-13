@@ -93,6 +93,10 @@ export default function DomainPicker2({
     const api = createApiClient({ env });
     const t = useTranslations();
 
+    if (!env.flags.usePangolinDns) {
+        hideFreeDomain = true;
+    }
+
     const [subdomainInput, setSubdomainInput] = useState<string>("");
     const [selectedBaseDomain, setSelectedBaseDomain] =
         useState<DomainOption | null>(null);
