@@ -146,9 +146,9 @@ export class PrivateConfig {
             if (parsedPrivateConfig.stripe?.s3Region) {
                 process.env.S3_REGION = parsedPrivateConfig.stripe.s3Region;
             }
-            if (parsedPrivateConfig.flags?.generate_own_certificates) {
+            if (parsedPrivateConfig.flags.use_pangolin_dns) {
                 process.env.GENERATE_OWN_CERTIFICATES =
-                    parsedPrivateConfig.flags.generate_own_certificates.toString();
+                    parsedPrivateConfig.flags.use_pangolin_dns.toString();
             }
         }
 
