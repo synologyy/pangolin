@@ -147,7 +147,7 @@ export class PrivateConfig {
                 process.env.S3_REGION = parsedPrivateConfig.stripe.s3Region;
             }
             if (parsedPrivateConfig.flags.use_pangolin_dns) {
-                process.env.GENERATE_OWN_CERTIFICATES =
+                process.env.USE_PANGOLIN_DNS =
                     parsedPrivateConfig.flags.use_pangolin_dns.toString();
             }
         }

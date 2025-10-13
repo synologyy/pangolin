@@ -31,11 +31,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
             <AlertDescription>
                 {/* 4 cols because of the certs */}
                 <InfoSections
-                    cols={
-                        resource.http && env.flags.usePangolinDns
-                            ? 4
-                            : 3
-                    }
+                    cols={resource.http && env.flags.usePangolinDns ? 4 : 3}
                 >
                     {resource.http ? (
                         <>
@@ -137,8 +133,7 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                     {resource.http &&
                         resource.domainId &&
                         resource.fullDomain &&
-                        env.flags.usePangolinDns &&
-                        build != "oss" && (
+                        env.flags.usePangolinDns && (
                             <InfoSection>
                                 <InfoSectionTitle>
                                     {t("certificateStatus", {
