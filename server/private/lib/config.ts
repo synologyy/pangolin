@@ -146,6 +146,10 @@ export class PrivateConfig {
             if (parsedPrivateConfig.stripe?.s3Region) {
                 process.env.S3_REGION = parsedPrivateConfig.stripe.s3Region;
             }
+            if (parsedPrivateConfig.flags?.generate_own_certificates) {
+                process.env.GENERATE_OWN_CERTIFICATES =
+                    parsedPrivateConfig.flags.generate_own_certificates.toString();
+            }
         }
 
         this.rawPrivateConfig = parsedPrivateConfig;

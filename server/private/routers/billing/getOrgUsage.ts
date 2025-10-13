@@ -25,17 +25,13 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { Limit, limits, Usage, usage } from "@server/db";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
+import { GetOrgUsageResponse } from "@server/routers/billing/types";
 
 const getOrgSchema = z
     .object({
         orgId: z.string()
     })
     .strict();
-
-export type GetOrgUsageResponse = {
-    usage: Usage[];
-    limits: Limit[];
-};
 
 registry.registerPath({
     method: "get",

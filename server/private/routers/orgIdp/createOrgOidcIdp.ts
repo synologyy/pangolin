@@ -27,6 +27,7 @@ import config from "@server/lib/config";
 import { build } from "@server/build";
 import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
+import { CreateOrgIdpResponse } from "@server/routers/orgIdp/types";
 
 const paramsSchema = z.object({ orgId: z.string().nonempty() }).strict();
 
@@ -46,11 +47,6 @@ const bodySchema = z
         roleMapping: z.string().optional()
     })
     .strict();
-
-export type CreateOrgIdpResponse = {
-    idpId: number;
-    redirectUrl: string;
-};
 
 // registry.registerPath({
 //     method: "put",

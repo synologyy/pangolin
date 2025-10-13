@@ -39,16 +39,17 @@ import {
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
-
-import {
-    unauthenticated as ua,
-    authenticated as a
-} from "@server/routers/external";
 import { verifyValidLicense } from "../middlewares/verifyValidLicense";
 import { build } from "@server/build";
+import {
+    unauthenticated as ua,
+    authenticated as a,
+    authRouter as aa
+} from "@server/routers/external";
 
 export const authenticated = a;
 export const unauthenticated = ua;
+export const authRouter = aa;
 
 unauthenticated.post(
     "/remote-exit-node/quick-start",
@@ -275,8 +276,6 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.getLoginPage),
     loginPage.getLoginPage
 );
-
-export const authRouter = Router();
 
 authRouter.post(
     "/remoteExitNode/get-token",

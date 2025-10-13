@@ -12,7 +12,7 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { db, exitNodes, exitNodeOrgs } from "@server/db";
+import { db } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { remoteExitNodes } from "@server/db";
 import createHttpError from "http-errors";
@@ -24,11 +24,7 @@ import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import z from "zod";
 import { fromError } from "zod-validation-error";
-
-export type QuickStartRemoteExitNodeResponse = {
-    remoteExitNodeId: string;
-    secret: string;
-};
+import { QuickStartRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 
 const INSTALLER_KEY = "af4e4785-7e09-11f0-b93a-74563c4e2a7e";
 

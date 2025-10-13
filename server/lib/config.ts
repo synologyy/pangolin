@@ -102,10 +102,7 @@ export class Config {
         if (!this.rawConfig) {
             throw new Error("Config not loaded. Call load() first.");
         }
-        if (this.rawConfig.managed) {
-            // LETS NOT WORRY ABOUT THE SERVER SECRET WHEN MANAGED
-            return;
-        }
+
         license.setServerSecret(this.rawConfig.server.secret!);
 
         await this.checkKeyStatus();
@@ -156,10 +153,6 @@ export class Config {
         }
 
         return false;
-    }
-
-    public isManagedMode() {
-        return typeof this.rawConfig?.managed === "object";
     }
 
     public async checkSupporterKey() {

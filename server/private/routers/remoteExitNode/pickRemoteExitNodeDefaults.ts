@@ -19,11 +19,7 @@ import logger from "@server/logger";
 import { generateId } from "@server/auth/sessions/app";
 import { fromError } from "zod-validation-error";
 import { z } from "zod";
-
-export type PickRemoteExitNodeDefaultsResponse = {
-    remoteExitNodeId: string;
-    secret: string;
-};
+import { PickRemoteExitNodeDefaultsResponse } from "@server/routers/remoteExitNode/types";
 
 const paramsSchema = z
     .object({

@@ -1,4 +1,4 @@
-import { GetRemoteExitNodeResponse } from "#private/routers/remoteExitNode";
+import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { createContext } from "react";
 
 type RemoteExitNodeContextType = {

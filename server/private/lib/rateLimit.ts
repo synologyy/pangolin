@@ -12,7 +12,7 @@
  */
 
 import logger from "@server/logger";
-import redisManager from "@server/private/lib/redis";
+import redisManager from "#private/lib/redis";
 import { build } from "@server/build";
 
 // Rate limiting configuration

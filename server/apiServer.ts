@@ -44,27 +44,25 @@ export function createApiServer() {
     }
 
     const corsConfig = config.getRawConfig().server.cors;
+    const options = {
+        ...(corsConfig?.origins
+            ? { origin: corsConfig.origins }
+            : {
+                  origin: (origin: any, callback: any) => {
+                      callback(null, true);
+                  }
+              }),
+        ...(corsConfig?.methods && { methods: corsConfig.methods }),
+        ...(corsConfig?.allowed_headers && {
+            allowedHeaders: corsConfig.allowed_headers
+        }),
+        credentials: !(corsConfig?.credentials === false)
+    };
 
-    if (build == "oss") {
-        const options = {
-            ...(corsConfig?.origins
-                ? { origin: corsConfig.origins }
-                : {
-                      origin: (origin: any, callback: any) => {
-                          callback(null, true);
-                      }
-                  }),
-            ...(corsConfig?.methods && { methods: corsConfig.methods }),
-            ...(corsConfig?.allowed_headers && {
-                allowedHeaders: corsConfig.allowed_headers
-            }),
-            credentials: !(corsConfig?.credentials === false)
-        };
-
+    if (build == "oss" || !corsConfig) {
         logger.debug("Using CORS options", options);
-
         apiServer.use(cors(options));
-    } else {
+    } else if (corsConfig) {
         // Use the custom CORS middleware with loginPage support
         apiServer.use(corsWithLoginPageSupport(corsConfig));
     }

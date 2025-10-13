@@ -721,3 +721,4 @@ export type SiteResource = InferSelectModel<typeof siteResources>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
+export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;

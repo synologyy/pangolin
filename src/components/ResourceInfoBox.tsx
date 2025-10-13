@@ -13,12 +13,14 @@ import {
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import CertificateStatus from "@app/components/private/CertificateStatus";
-import { toUnicode } from 'punycode';
+import { toUnicode } from "punycode";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 
 type ResourceInfoBoxType = {};
 
-export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
+export default function ResourceInfoBox({}: ResourceInfoBoxType) {
     const { resource, authInfo } = useResourceContext();
+    const { env } = useEnvContext();
 
     const t = useTranslations();
 
@@ -28,7 +30,13 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
         <Alert>
             <AlertDescription>
                 {/* 4 cols because of the certs */}
-                <InfoSections cols={resource.http && build != "oss" ? 4 : 3}>
+                <InfoSections
+                    cols={
+                        resource.http && env.flags.generateOwnCertificates
+                            ? 4
+                            : 3
+                    }
+                >
                     {resource.http ? (
                         <>
                             <InfoSection>
@@ -37,9 +45,9 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {authInfo.password ||
-                                        authInfo.pincode ||
-                                        authInfo.sso ||
-                                        authInfo.whitelist ? (
+                                    authInfo.pincode ||
+                                    authInfo.sso ||
+                                    authInfo.whitelist ? (
                                         <div className="flex items-start space-x-2 text-green-500">
                                             <ShieldCheck className="w-4 h-4 mt-0.5" />
                                             <span>{t("protected")}</span>
@@ -126,25 +134,28 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
                     {/*     </InfoSectionContent> */}
                     {/* </InfoSection> */}
                     {/* Certificate Status Column */}
-                    {resource.http && resource.domainId && resource.fullDomain && build != "oss" && (
-                        <InfoSection>
-                            <InfoSectionTitle>
-                                {t("certificateStatus", {
-                                    defaultValue: "Certificate"
-                                })}
-                            </InfoSectionTitle>
-                            <InfoSectionContent>
-                                <CertificateStatus
-                                    orgId={resource.orgId}
-                                    domainId={resource.domainId}
-                                    fullDomain={resource.fullDomain}
-                                    autoFetch={true}
-                                    showLabel={false}
-                                    polling={true}
-                                />
-                            </InfoSectionContent>
-                        </InfoSection>
-                    )}
+                    {resource.http &&
+                        resource.domainId &&
+                        resource.fullDomain &&
+                        build != "oss" && (
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("certificateStatus", {
+                                        defaultValue: "Certificate"
+                                    })}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    <CertificateStatus
+                                        orgId={resource.orgId}
+                                        domainId={resource.domainId}
+                                        fullDomain={resource.fullDomain}
+                                        autoFetch={true}
+                                        showLabel={false}
+                                        polling={true}
+                                    />
+                                </InfoSectionContent>
+                            </InfoSection>
+                        )}
                     <InfoSection>
                         <InfoSectionTitle>{t("visibility")}</InfoSectionTitle>
                         <InfoSectionContent>

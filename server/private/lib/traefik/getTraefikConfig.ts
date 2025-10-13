@@ -21,11 +21,10 @@ import {
 } from "@server/db";
 import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
 import logger from "@server/logger";
-import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
-import { build } from "@server/build";
 import { sanitize } from "@server/lib/traefik/utils";
+import privateConfig from "#private/lib/config";
 
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const redirectToRootMiddlewareName = "redirect-to-root";
@@ -79,7 +78,7 @@ export async function getTraefikConfig(
             path: targets.path,
             pathMatchType: targets.pathMatchType,
             priority: targets.priority,
-            
+
             // Site fields
             siteId: sites.siteId,
             siteType: sites.type,
@@ -234,12 +233,13 @@ export async function getTraefikConfig(
                 continue;
             }
 
-            if (resource.certificateStatus !== "valid") {
-                logger.debug(
-                    `Resource ${resource.resourceId} has certificate stats ${resource.certificateStats}`
-                );
-                continue;
-            }
+            // TODO: for now dont filter it out because if you have multiple domain ids and one is failed it causes all of them to fail
+            // if (resource.certificateStatus !== "valid" && privateConfig.getRawPrivateConfig().flags.generate_own_certificates) {
+            //     logger.debug(
+            //         `Resource ${resource.resourceId} has certificate stats ${resource.certificateStats}`
+            //     );
+            //     continue;
+            // }
 
             // add routers and services empty objects if they don't exist
             if (!config_output.http.routers) {
@@ -264,18 +264,21 @@ export async function getTraefikConfig(
 
             const configDomain = config.getDomain(resource.domainId);
 
-            let certResolver: string, preferWildcardCert: boolean;
-            if (!configDomain) {
-                certResolver = config.getRawConfig().traefik.cert_resolver;
-                preferWildcardCert =
-                    config.getRawConfig().traefik.prefer_wildcard_cert;
-            } else {
-                certResolver = configDomain.cert_resolver;
-                preferWildcardCert = configDomain.prefer_wildcard_cert;
-            }
-
             let tls = {};
-            if (build == "oss") {
+            if (
+                !privateConfig.getRawPrivateConfig().flags
+                    .generate_own_certificates
+            ) {
+                let certResolver: string, preferWildcardCert: boolean;
+                if (!configDomain) {
+                    certResolver = config.getRawConfig().traefik.cert_resolver;
+                    preferWildcardCert =
+                        config.getRawConfig().traefik.prefer_wildcard_cert;
+                } else {
+                    certResolver = configDomain.cert_resolver;
+                    preferWildcardCert = configDomain.prefer_wildcard_cert;
+                }
+
                 tls = {
                     certResolver: certResolver,
                     ...(preferWildcardCert
@@ -419,7 +422,7 @@ export async function getTraefikConfig(
 
                         return (
                             (targets as TargetWithSite[])
-                            .filter((target: TargetWithSite) => {
+                                .filter((target: TargetWithSite) => {
                                     if (!target.enabled) {
                                         return false;
                                     }
@@ -440,7 +443,7 @@ export async function getTraefikConfig(
                                         ) {
                                             return false;
                                         }
-                                } else if (target.site.type === "newt") {
+                                    } else if (target.site.type === "newt") {
                                         if (
                                             !target.internalPort ||
                                             !target.method ||
@@ -448,10 +451,10 @@ export async function getTraefikConfig(
                                         ) {
                                             return false;
                                         }
-                                }
-                                return true;
-                            })
-                            .map((target: TargetWithSite) => {
+                                    }
+                                    return true;
+                                })
+                                .map((target: TargetWithSite) => {
                                     if (
                                         target.site.type === "local" ||
                                         target.site.type === "wireguard"
@@ -459,14 +462,14 @@ export async function getTraefikConfig(
                                         return {
                                             url: `${target.method}://${target.ip}:${target.port}`
                                         };
-                                } else if (target.site.type === "newt") {
+                                    } else if (target.site.type === "newt") {
                                         const ip =
                                             target.site.subnet!.split("/")[0];
                                         return {
                                             url: `${target.method}://${ip}:${target.internalPort}`
                                         };
-                                }
-                            })
+                                    }
+                                })
                                 // filter out duplicates
                                 .filter(
                                     (v, i, a) =>

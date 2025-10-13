@@ -20,6 +20,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
 
 const querySchema = z.object({
     resourceId: z.coerce.number().int().positive().optional(),
@@ -69,10 +70,6 @@ async function query(orgId: string | undefined, fullDomain: string) {
         orgId: orgLink.orgId
     };
 }
-
-export type LoadLoginPageResponse = NonNullable<
-    Awaited<ReturnType<typeof query>>
-> & { orgId: string };
 
 export async function loadLoginPage(
     req: Request,

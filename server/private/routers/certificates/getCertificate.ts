@@ -21,6 +21,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { registry } from "@server/openApi";
+import { GetCertificateResponse } from "@server/routers/certificates/types";
 
 const getCertificateSchema = z
     .object({
@@ -94,20 +95,6 @@ async function query(domainId: string, domain: string) {
     }
 
     return existing.length > 0 ? existing[0] : null;
-}
-
-export type GetCertificateResponse = {
-    certId: number;
-    domain: string;
-    domainId: string;
-    wildcard: boolean;
-    status: string; // pending, requested, valid, expired, failed
-    expiresAt: string | null;
-    lastRenewalAttempt: Date | null;
-    createdAt: string;
-    updatedAt: string;
-    errorMessage?: string | null;
-    renewalCount: number;
 }
 
 registry.registerPath({

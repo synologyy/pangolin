@@ -9,7 +9,6 @@ import logger from "@server/logger";
 import config from "@server/lib/config";
 import { fromError } from "zod-validation-error";
 import { getAllowedIps } from "../target/helpers";
-import { proxyToRemote } from "@server/lib/remoteProxy";
 import { createExitNode } from "#dynamic/routers/gerbil/createExitNode";
 
 // Define Zod schema for request validation
@@ -61,16 +60,6 @@ export async function getConfig(
                     "Failed to create exit node"
                 )
             );
-        }
-
-        // STOP HERE IN HYBRID MODE
-        if (config.isManagedMode()) {
-            req.body = {
-                ...req.body,
-                endpoint: exitNode.endpoint,
-                listenPort: exitNode.listenPort
-            };
-            return proxyToRemote(req, res, next, "hybrid/gerbil/get-config");
         }
 
         const configResponse = await generateGerbilConfig(exitNode);

@@ -25,6 +25,7 @@ import { OpenAPITags, registry } from "@server/openApi";
 import config from "@server/lib/config";
 import { decrypt } from "@server/lib/crypto";
 import { generateOidcRedirectUrl } from "@server/lib/idp/generateRedirectUrl";
+import { GetOrgIdpResponse } from "@server/routers/orgIdp/types";
 
 const paramsSchema = z
     .object({
@@ -46,10 +47,6 @@ async function query(idpId: number, orgId: string) {
         .limit(1);
     return res;
 }
-
-export type GetOrgIdpResponse = NonNullable<
-    Awaited<ReturnType<typeof query>>
-> & { redirectUrl: string };
 
 // registry.registerPath({
 //     method: "get",

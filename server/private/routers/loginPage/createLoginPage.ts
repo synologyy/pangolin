@@ -33,6 +33,7 @@ import { createCertificate } from "#private/routers/certificates/createCertifica
 import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
+import { CreateLoginPageResponse } from "@server/routers/loginPage/types";
 
 const paramsSchema = z
     .object({
@@ -48,8 +49,6 @@ const bodySchema = z
     .strict();
 
 export type CreateLoginPageBody = z.infer<typeof bodySchema>;
-
-export type CreateLoginPageResponse = LoginPage;
 
 export async function createLoginPage(
     req: Request,

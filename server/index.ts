@@ -5,9 +5,15 @@ import { runSetupFunctions } from "./setup";
 import { createApiServer } from "./apiServer";
 import { createNextServer } from "./nextServer";
 import { createInternalServer } from "./internalServer";
-import { ApiKey, ApiKeyOrg, RemoteExitNode, Session, User, UserOrg } from "@server/db";
+import {
+    ApiKey,
+    ApiKeyOrg,
+    RemoteExitNode,
+    Session,
+    User,
+    UserOrg
+} from "@server/db";
 import { createIntegrationApiServer } from "./integrationApiServer";
-import { createHybridClientServer } from "./hybridServer";
 import config from "@server/lib/config";
 import { setHostMeta } from "@server/lib/hostMeta";
 import { initTelemetryClient } from "./lib/telemetry.js";
@@ -26,16 +32,11 @@ async function startServers() {
     const apiServer = createApiServer();
     const internalServer = createInternalServer();
 
-    let hybridClientServer;
     let nextServer;
-    if (config.isManagedMode()) {
-        hybridClientServer = await createHybridClientServer();
-    } else {
-        nextServer = await createNextServer();
-        if (config.getRawConfig().traefik.file_mode) {
-            const monitor = new TraefikConfigManager();
-            await monitor.start();
-        }
+    nextServer = await createNextServer();
+    if (config.getRawConfig().traefik.file_mode) {
+        const monitor = new TraefikConfigManager();
+        await monitor.start();
     }
 
     let integrationServer;
@@ -49,8 +50,7 @@ async function startServers() {
         apiServer,
         nextServer,
         internalServer,
-        integrationServer,
-        hybridClientServer
+        integrationServer
     };
 }
 

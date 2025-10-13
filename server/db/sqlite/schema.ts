@@ -760,3 +760,4 @@ export type OrgDomains = InferSelectModel<typeof orgDomains>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
+export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;

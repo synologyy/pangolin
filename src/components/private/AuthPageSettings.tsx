@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@app/components/ui/button";
 import { useOrgContext } from "@app/hooks/useOrgContext";
 import { toast } from "@app/hooks/useToast";
@@ -30,7 +31,7 @@ import {
     SettingsSectionForm
 } from "@app/components/Settings";
 import { useTranslations } from "next-intl";
-import { GetLoginPageResponse } from "#private/routers/loginPage";
+import { GetLoginPageResponse } from "@server/routers/loginPage/types";
 import { ListDomainsResponse } from "@server/routers/domain";
 import { DomainRow } from "@app/components/DomainsTable";
 import { toUnicode } from "punycode";
@@ -78,6 +79,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
         const api = createApiClient(useEnvContext());
         const router = useRouter();
         const t = useTranslations();
+        const { env } = useEnvContext();
 
         const subscription = useSubscriptionStatusContext();
 
@@ -447,10 +449,21 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                                 </div>
                                             </div>
 
-                                            {/* Certificate Status */}
-                                            {(build === "enterprise" ||
-                                                (build === "saas" &&
-                                                    subscription?.subscribed)) &&
+                                            {!form.watch(
+                                                "authPageDomainId"
+                                            ) && (
+                                                <div className="text-sm text-muted-foreground">
+                                                    {t(
+                                                        "addDomainToEnableCustomAuthPages"
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {env.flags
+                                                .generateOwnCertificates &&
+                                                (build === "enterprise" ||
+                                                    (build === "saas" &&
+                                                        subscription?.subscribed)) &&
                                                 loginPage?.domainId &&
                                                 loginPage?.fullDomain &&
                                                 !hasUnsavedChanges && (
@@ -469,16 +482,6 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                                         polling={true}
                                                     />
                                                 )}
-
-                                            {!form.watch(
-                                                "authPageDomainId"
-                                            ) && (
-                                                <div className="text-sm text-muted-foreground">
-                                                    {t(
-                                                        "addDomainToEnableCustomAuthPages"
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                     </form>
                                 </Form>

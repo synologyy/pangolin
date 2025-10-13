@@ -30,7 +30,7 @@ import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
     QuickStartRemoteExitNodeResponse,
     PickRemoteExitNodeDefaultsResponse
-} from "#private/routers/remoteExitNode";
+} from "@server/routers/remoteExitNode/types";
 import { toast } from "@app/hooks/useToast";
 import { AxiosResponse } from "axios";
 import { useParams, useRouter, useSearchParams } from "next/navigation";

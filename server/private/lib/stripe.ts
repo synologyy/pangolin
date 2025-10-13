@@ -14,10 +14,10 @@
 import Stripe from "stripe";
 import privateConfig from "#private/lib/config";
 import logger from "@server/logger";
-import { build } from "@server/build";
+import { noop } from "@server/lib/billing/usageService";
 
 let stripe: Stripe | undefined = undefined;
-if (build == "saas") {
+if (!noop()) {
     const stripeApiKey = privateConfig.getRawPrivateConfig().stripe?.secret_key;
     if (!stripeApiKey) {
         logger.error("Stripe secret key is not configured");

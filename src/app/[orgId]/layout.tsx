@@ -1,8 +1,6 @@
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import ProfileIcon from "@app/components/ProfileIcon";
 import { verifySession } from "@app/lib/auth/verifySession";
-import UserProvider from "@app/providers/UserProvider";
 import { GetOrgResponse } from "@server/routers/org";
 import { GetOrgUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
@@ -10,7 +8,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import SetLastOrgCookie from "@app/components/SetLastOrgCookie";
 import SubscriptionStatusProvider from "@app/providers/SubscriptionStatusProvider";
-import { GetOrgSubscriptionResponse } from "#private/routers/billing/getOrgSubscription";
+import { GetOrgSubscriptionResponse } from "@server/routers/billing/types";
 import { pullEnv } from "@app/lib/pullEnv";
 import { build } from "@server/build";
 

@@ -1,5 +1,5 @@
 import { internal } from "@app/lib/api";
-import { GetRemoteExitNodeResponse } from "#private/routers/remoteExitNode";
+import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { authCookieHeader } from "@app/lib/api/cookies";

@@ -53,7 +53,7 @@ import {
     CreateSiteResponse,
     PickSiteDefaultsResponse
 } from "@server/routers/site";
-import { ListRemoteExitNodesResponse } from "#private/routers/remoteExitNode";
+import { ListRemoteExitNodesResponse } from "@server/routers/remoteExitNode/types";
 import { toast } from "@app/hooks/useToast";
 import { AxiosResponse } from "axios";
 import { useParams, useRouter } from "next/navigation";

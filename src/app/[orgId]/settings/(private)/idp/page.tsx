@@ -9,7 +9,7 @@ import { cache } from "react";
 import {
     GetOrgSubscriptionResponse,
     GetOrgTierResponse
-} from "#private/routers/billing";
+} from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
 
