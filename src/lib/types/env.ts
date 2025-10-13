@@ -28,7 +28,7 @@ export type Env = {
         disableBasicWireguardSites: boolean;
         enableClients: boolean;
         hideSupporterKey: boolean;
-        generateOwnCertificates: boolean;
+        usePangolinDns: boolean;
     },
     branding: {
         appName?: string;

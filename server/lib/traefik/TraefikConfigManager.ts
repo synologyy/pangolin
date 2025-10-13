@@ -310,7 +310,7 @@ export class TraefikConfigManager {
             }
 
             if (
-                process.env.GENERATE_OWN_CERTIFICATES === "true" &&
+                process.env.USE_PANGOLIN_DNS === "true" &&
                 build != "oss"
             ) {
                 // Scan current local certificate state

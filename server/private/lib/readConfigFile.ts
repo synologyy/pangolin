@@ -83,7 +83,7 @@ export const privateConfigSchema = z.object({
     flags: z
         .object({
             enable_redis: z.boolean().optional().default(false),
-            generate_own_certificates: z.boolean().optional().default(false)
+            use_pangolin_dns: z.boolean().optional().default(false)
         })
         .optional()
         .default({}),

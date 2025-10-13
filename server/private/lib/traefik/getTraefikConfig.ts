@@ -234,7 +234,7 @@ export async function getTraefikConfig(
             }
 
             // TODO: for now dont filter it out because if you have multiple domain ids and one is failed it causes all of them to fail
-            // if (resource.certificateStatus !== "valid" && privateConfig.getRawPrivateConfig().flags.generate_own_certificates) {
+            // if (resource.certificateStatus !== "valid" && privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
             //     logger.debug(
             //         `Resource ${resource.resourceId} has certificate stats ${resource.certificateStats}`
             //     );
@@ -267,7 +267,7 @@ export async function getTraefikConfig(
             let tls = {};
             if (
                 !privateConfig.getRawPrivateConfig().flags
-                    .generate_own_certificates
+                    .use_pangolin_dns
             ) {
                 let certResolver: string, preferWildcardCert: boolean;
                 if (!configDomain) {

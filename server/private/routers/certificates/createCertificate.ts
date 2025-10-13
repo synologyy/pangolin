@@ -27,7 +27,7 @@ export async function createCertificate(
     domain: string,
     trx: Transaction | typeof db
 ) {
-    if (!privateConfig.getRawPrivateConfig().flags.generate_own_certificates) {
+    if (!privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
         return;
     }
 

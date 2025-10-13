@@ -49,8 +49,8 @@ export function pullEnv(): Env {
                 process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
             hideSupporterKey:
                 process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
-            generateOwnCertificates:
-                process.env.GENERATE_OWN_CERTIFICATES === "true"
+            usePangolinDns:
+                process.env.USE_PANGOLIN_DNS === "true"
                     ? true
                     : false
         },
