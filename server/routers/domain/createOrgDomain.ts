@@ -254,7 +254,7 @@ export async function createOrgDomain(
                     domainId,
                     baseDomain,
                     type,
-                    verified: build == "oss" ? true : false
+                    verified: type === "wildcard" ? true : false
                 })
                 .returning();
 
