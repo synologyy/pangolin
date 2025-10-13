@@ -460,7 +460,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                             )}
 
                                             {env.flags
-                                                .generateOwnCertificates &&
+                                                .usePangolinDns &&
                                                 (build === "enterprise" ||
                                                     (build === "saas" &&
                                                         subscription?.subscribed)) &&
