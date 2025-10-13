@@ -203,9 +203,6 @@ export async function getTraefikConfig(
             port: row.port,
             internalPort: row.internalPort,
             enabled: row.targetEnabled,
-            rewritePath: row.rewritePath,
-            rewritePathType: row.rewritePathType,
-            priority: row.priority,
             site: {
                 siteId: row.siteId,
                 type: row.siteType,
@@ -330,8 +327,8 @@ export async function getTraefikConfig(
 
             // Handle path rewriting middleware
             if (
-                resource.rewritePath &&
-                resource.path &&
+                resource.rewritePath !== null &&
+                resource.path !== null &&
                 resource.pathMatchType &&
                 resource.rewritePathType
             ) {
