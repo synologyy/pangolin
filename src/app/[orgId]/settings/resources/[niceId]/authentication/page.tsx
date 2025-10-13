@@ -836,11 +836,11 @@ export default function ResourceAuthenticationPage() {
                                 >
                                     <Bot size="14" />
                                     <span>
-                                        {t("resourceHeaderAuthProtection", {
-                                            status: authInfo.headerAuth
-                                                ? t("enabled")
-                                                : t("disabled")
-                                        })}
+                                        {authInfo.headerAuth
+                                            ? t("resourceHeaderAuthProtection")
+                                            : t(
+                                                  "resourceHeaderAuthProtectionDisabled"
+                                              )}
                                     </span>
                                 </div>
                                 <Button
