@@ -11,5 +11,5 @@ export async function moveEmailToAudience(
     email: string,
     audienceId: AudienceIds
 ) {
-    return
+    return;
 }
