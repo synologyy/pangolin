@@ -23,8 +23,9 @@ import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
 import logger from "@server/logger";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
-import { sanitize } from "@server/lib/traefik/utils";
+import { sanitize, validatePathRewriteConfig } from "@server/lib/traefik/utils";
 import privateConfig from "#private/lib/config";
+import createPathRewriteMiddleware from "@server/lib/traefik/middleware";
 
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const redirectToRootMiddlewareName = "redirect-to-root";
@@ -77,6 +78,8 @@ export async function getTraefikConfig(
             hcHealth: targetHealthCheck.hcHealth,
             path: targets.path,
             pathMatchType: targets.pathMatchType,
+            rewritePath: targets.rewritePath,
+            rewritePathType: targets.rewritePathType,
             priority: targets.priority,
 
             // Site fields
@@ -130,18 +133,41 @@ export async function getTraefikConfig(
         const resourceName = sanitize(row.resourceName) || "";
         const targetPath = sanitize(row.path) || ""; // Handle null/undefined paths
         const pathMatchType = row.pathMatchType || "";
+        const rewritePath = row.rewritePath || "";
+        const rewritePathType = row.rewritePathType || "";
         const priority = row.priority ?? 100;
 
         if (filterOutNamespaceDomains && row.domainNamespaceId) {
             return;
         }
 
-        // Create a unique key combining resourceId and path+pathMatchType
-        const pathKey = [targetPath, pathMatchType].filter(Boolean).join("-");
+        // Create a unique key combining resourceId, path config, and rewrite config
+        const pathKey = [
+            targetPath,
+            pathMatchType,
+            rewritePath,
+            rewritePathType
+        ]
+            .filter(Boolean)
+            .join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
         const key = sanitize(mapKey);
 
         if (!resourcesMap.has(key)) {
+            const validation = validatePathRewriteConfig(
+                row.path,
+                row.pathMatchType,
+                row.rewritePath,
+                row.rewritePathType
+            );
+
+            if (!validation.isValid) {
+                logger.error(
+                    `Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`
+                );
+                return;
+            }
+
             resourcesMap.set(key, {
                 resourceId: row.resourceId,
                 name: resourceName,
@@ -162,6 +188,8 @@ export async function getTraefikConfig(
                 headers: row.headers,
                 path: row.path, // the targets will all have the same path
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
+                rewritePath: row.rewritePath,
+                rewritePathType: row.rewritePathType,
                 priority: priority // may be null, we fallback later
             });
         }
@@ -175,6 +203,8 @@ export async function getTraefikConfig(
             port: row.port,
             internalPort: row.internalPort,
             enabled: row.targetEnabled,
+            rewritePath: row.rewritePath,
+            rewritePathType: row.rewritePathType,
             priority: row.priority,
             site: {
                 siteId: row.siteId,
@@ -265,10 +295,7 @@ export async function getTraefikConfig(
             const configDomain = config.getDomain(resource.domainId);
 
             let tls = {};
-            if (
-                !privateConfig.getRawPrivateConfig().flags
-                    .use_pangolin_dns
-            ) {
+            if (!privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
                 let certResolver: string, preferWildcardCert: boolean;
                 if (!configDomain) {
                     certResolver = config.getRawConfig().traefik.cert_resolver;
@@ -300,6 +327,55 @@ export async function getTraefikConfig(
                 badgerMiddlewareName,
                 ...additionalMiddlewares
             ];
+
+            // Handle path rewriting middleware
+            if (
+                resource.rewritePath &&
+                resource.path &&
+                resource.pathMatchType &&
+                resource.rewritePathType
+            ) {
+                // Create a unique middleware name
+                const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${key}`;
+
+                try {
+                    const rewriteResult = createPathRewriteMiddleware(
+                        rewriteMiddlewareName,
+                        resource.path,
+                        resource.pathMatchType,
+                        resource.rewritePath,
+                        resource.rewritePathType
+                    );
+
+                    // Initialize middlewares object if it doesn't exist
+                    if (!config_output.http.middlewares) {
+                        config_output.http.middlewares = {};
+                    }
+
+                    // the middleware to the config
+                    Object.assign(
+                        config_output.http.middlewares,
+                        rewriteResult.middlewares
+                    );
+
+                    // middlewares to the router middleware chain
+                    if (rewriteResult.chain) {
+                        // For chained middlewares (like stripPrefix + addPrefix)
+                        routerMiddlewares.push(...rewriteResult.chain);
+                    } else {
+                        // Single middleware
+                        routerMiddlewares.push(rewriteMiddlewareName);
+                    }
+
+                    logger.debug(
+                        `Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`
+                    );
+                } catch (error) {
+                    logger.error(
+                        `Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`
+                    );
+                }
+            }
 
             if (resource.headers || resource.setHostHeader) {
                 // if there are headers, parse them into an object

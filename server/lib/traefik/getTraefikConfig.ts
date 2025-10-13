@@ -1,9 +1,8 @@
-import { db, exitNodes, targetHealthCheck } from "@server/db";
+import { db, targetHealthCheck } from "@server/db";
 import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { orgs, resources, sites, Target, targets } from "@server/db";
-import { build } from "@server/build";
+import { resources, sites, Target, targets } from "@server/db";
 import createPathRewriteMiddleware from "./middleware";
 import { sanitize, validatePathRewriteConfig } from "./utils";
 
