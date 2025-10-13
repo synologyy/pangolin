@@ -7,7 +7,7 @@ import { useState, ReactNode } from "react";
 export interface StrategyOption<TValue extends string> {
     id: TValue;
     title: string;
-    description: string;
+    description: string | ReactNode;
     disabled?: boolean;
     icon?: ReactNode;
 }
@@ -68,7 +68,7 @@ export function StrategySelect<TValue extends string>({
                         <div className="flex-1">
                             <div className="font-medium">{option.title}</div>
                             <div className="text-sm text-muted-foreground">
-                                {option.description}
+                                {typeof option.description === 'string' ? option.description : option.description}
                             </div>
                         </div>
                     </div>

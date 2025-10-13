@@ -36,6 +36,7 @@ export const privateConfigSchema = z
                 .pipe(z.string().min(8)),
             resend_api_key: z.string().optional(),
             reo_client_id: z.string().optional(),
+            fossorial_api_key: z.string().optional()
         }).optional().default({
             encryption_key_path: "./config/encryption.pem"
         }),
@@ -164,6 +165,9 @@ export function readPrivateConfigFile() {
     const loadConfig = (configPath: string) => {
         try {
             const yamlContent = fs.readFileSync(configPath, "utf8");
+            if (yamlContent.trim() === "") {
+                return {};
+            }
             const config = yaml.load(yamlContent);
             return config;
         } catch (error) {
@@ -176,7 +180,7 @@ export function readPrivateConfigFile() {
         }
     };
 
-    let environment: any;
+    let environment: any = {};
     if (fs.existsSync(privateConfigFilePath1)) {
         environment = loadConfig(privateConfigFilePath1);
     }

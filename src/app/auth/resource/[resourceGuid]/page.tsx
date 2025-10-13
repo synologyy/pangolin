@@ -73,7 +73,10 @@ export default async function ResourceAuthPage(props: {
             subscriptionStatus = subRes.data.data;
         } catch {}
     }
-    const subscribed = subscriptionStatus?.tier === TierId.STANDARD;
+    const subscribed =
+        build === "enterprise"
+            ? true
+            : subscriptionStatus?.tier === TierId.STANDARD;
 
     const allHeaders = await headers();
     const host = allHeaders.get("host");
@@ -207,7 +210,12 @@ export default async function ResourceAuthPage(props: {
         })) as LoginFormIDP[];
     }
 
-    if (!userIsUnauthorized && isSSOOnly && authInfo.skipToIdpId && authInfo.skipToIdpId !== null) {
+    if (
+        !userIsUnauthorized &&
+        isSSOOnly &&
+        authInfo.skipToIdpId &&
+        authInfo.skipToIdpId !== null
+    ) {
         const idp = loginIdps.find((idp) => idp.idpId === authInfo.skipToIdpId);
         if (idp) {
             return (

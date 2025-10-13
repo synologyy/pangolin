@@ -99,7 +99,6 @@ export default function ResourceAuthenticationPage() {
     const t = useTranslations();
 
     const subscription = useSubscriptionStatusContext();
-    const subscribed = subscription?.getTier() === TierId.STANDARD;
 
     const [pageLoading, setPageLoading] = useState(true);
 
@@ -141,8 +140,10 @@ export default function ResourceAuthenticationPage() {
         useState(false);
     const [loadingRemoveResourcePincode, setLoadingRemoveResourcePincode] =
         useState(false);
-    const [loadingRemoveResourceHeaderAuth, setLoadingRemoveResourceHeaderAuth] =
-        useState(false);
+    const [
+        loadingRemoveResourceHeaderAuth,
+        setLoadingRemoveResourceHeaderAuth
+    ] = useState(false);
 
     const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
     const [isSetPincodeOpen, setIsSetPincodeOpen] = useState(false);
@@ -234,7 +235,7 @@ export default function ResourceAuthenticationPage() {
                 );
 
                 if (build === "saas") {
-                    if (subscribed) {
+                    if (subscription?.subscribed) {
                         setAllIdps(
                             idpsResponse.data.data.idps.map((idp) => ({
                                 id: idp.idpId,

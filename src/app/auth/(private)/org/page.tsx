@@ -74,16 +74,21 @@ export default async function OrgAuthPage(props: {
         }
 
         let subscriptionStatus: GetOrgTierResponse | null = null;
-        try {
-            const getSubscription = cache(() =>
-                priv.get<AxiosResponse<GetOrgTierResponse>>(
-                    `/org/${loginPage!.orgId}/billing/tier`
-                )
-            );
-            const subRes = await getSubscription();
-            subscriptionStatus = subRes.data.data;
-        } catch {}
-        const subscribed = subscriptionStatus?.tier === TierId.STANDARD;
+        if (build === "saas") {
+            try {
+                const getSubscription = cache(() =>
+                    priv.get<AxiosResponse<GetOrgTierResponse>>(
+                        `/org/${loginPage!.orgId}/billing/tier`
+                    )
+                );
+                const subRes = await getSubscription();
+                subscriptionStatus = subRes.data.data;
+            } catch {}
+        }
+        const subscribed =
+            build === "enterprise"
+                ? true
+                : subscriptionStatus?.tier === TierId.STANDARD;
 
         if (build === "saas" && !subscribed) {
             redirect(env.app.dashboardUrl);

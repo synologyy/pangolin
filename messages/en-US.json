@@ -715,7 +715,7 @@
     "pangolinServerAdmin": "Server Admin - Pangolin",
     "licenseTierProfessional": "Professional License",
     "licenseTierEnterprise": "Enterprise License",
-    "licenseTierCommercial": "Commercial License",
+    "licenseTierPersonal": "Personal License",
     "licensed": "Licensed",
     "yes": "Yes",
     "no": "No",
@@ -750,7 +750,7 @@
     "idpDisplayName": "A display name for this identity provider",
     "idpAutoProvisionUsers": "Auto Provision Users",
     "idpAutoProvisionUsersDescription": "When enabled, users will be automatically created in the system upon first login with the ability to map users to roles and organizations.",
-    "licenseBadge": "Professional",
+    "licenseBadge": "EE",
     "idpType": "Provider Type",
     "idpTypeDescription": "Select the type of identity provider you want to configure",
     "idpOidcConfigure": "OAuth2/OIDC Configuration",
@@ -1084,7 +1084,6 @@
     "navbar": "Navigation Menu",
     "navbarDescription": "Main navigation menu for the application",
     "navbarDocsLink": "Documentation",
-    "commercialEdition": "Commercial Edition",
     "otpErrorEnable": "Unable to enable 2FA",
     "otpErrorEnableDescription": "An error occurred while enabling 2FA",
     "otpSetupCheckCode": "Please enter a 6-digit code",
@@ -1140,7 +1139,7 @@
     "sidebarAllUsers": "All Users",
     "sidebarIdentityProviders": "Identity Providers",
     "sidebarLicense": "License",
-    "sidebarClients": "Clients (Beta)",
+    "sidebarClients": "Clients",
     "sidebarDomains": "Domains",
     "enableDockerSocket": "Enable Docker Blueprint",
     "enableDockerSocketDescription": "Enable Docker Socket label scraping for blueprint labels. Socket path must be provided to Newt.",
@@ -1216,7 +1215,7 @@
     "refreshError": "Failed to refresh data",
     "verified": "Verified",
     "pending": "Pending",
-    "sidebarBilling": "Billing",
+    "sidebarBilling": "Payment & Billing",
     "billing": "Billing",
     "orgBillingDescription": "Manage your billing information and subscriptions",
     "github": "GitHub",
@@ -1740,5 +1739,106 @@
     "resourceHeaderAuthSetupTitle": "Set Header Authentication",
     "resourceHeaderAuthSetupTitleDescription": "Set the basic auth credentials (username and password) to protect this resource with HTTP Header Authentication. Leave both fields blank to remove existing header authentication.",
     "resourceHeaderAuthSubmit": "Set Header Authentication",
-    "actionSetResourceHeaderAuth": "Set Header Authentication"
+    "actionSetResourceHeaderAuth": "Set Header Authentication",
+    "enterpriseEdition": "Enterprise Edition",
+    "unlicensed": "Unlicensed",
+    "beta": "Beta",
+    "manageClients": "Manage Clients",
+    "manageClientsDescription": "Clients are devices that can connect to your sites",
+    "licenseTableValidUntil": "Valid Until",
+    "saasLicenseKeysSettingsTitle": "Enterprise Licenses",
+    "saasLicenseKeysSettingsDescription": "Generate and manage Enterprise license keys for self-hosted Pangolin instances",
+    "sidebarEnterpriseLicenses": "Enterprise Licenses",
+    "generateLicenseKey": "Generate License Key",
+    "generateLicenseKeyForm": {
+        "validation": {
+            "emailRequired": "Please enter a valid email address",
+            "useCaseTypeRequired": "Please select a use case type",
+            "firstNameRequired": "First name is required",
+            "lastNameRequired": "Last name is required",
+            "primaryUseRequired": "Please describe your primary use",
+            "jobTitleRequiredBusiness": "Job title is required for business use",
+            "industryRequiredBusiness": "Industry is required for business use",
+            "stateProvinceRegionRequired": "State/Province/Region is required",
+            "postalZipCodeRequired": "Postal/ZIP Code is required",
+            "companyNameRequiredBusiness": "Company name is required for business use",
+            "countryOfResidenceRequiredBusiness": "Country of residence is required for business use",
+            "countryRequiredPersonal": "Country is required for personal use",
+            "agreeToTermsRequired": "You must agree to the terms",
+            "complianceConfirmationRequired": "You must confirm compliance with the Fossorial Commercial License"
+        },
+        "useCaseOptions": {
+            "personal": {
+                "title": "Personal Use",
+                "description": "For individual, non-commercial use such as learning, personal projects, or experimentation."
+            },
+            "business": {
+                "title": "Business Use",
+                "description": "For use within organizations, companies, or any commercial or revenue-generating activities."
+            }
+        },
+        "steps": {
+            "emailLicenseType": {
+                "title": "Email & License Type",
+                "description": "Enter your email and choose your license type"
+            },
+            "personalInformation": {
+                "title": "Personal Information",
+                "description": "Tell us about yourself"
+            },
+            "contactInformation": {
+                "title": "Contact Information",
+                "description": "Your contact details"
+            },
+            "termsGenerate": {
+                "title": "Terms & Generate",
+                "description": "Review and accept terms to generate your license"
+            }
+        },
+        "alerts": {
+            "commercialUseDisclosure": {
+                "title": "Usage Disclosure",
+                "description": "Select the license type that accurately reflects your intended use. Pangolin Enterprise is free for personal, non-commercial use only — limited to individuals generating less than $100,000 USD annually and not used in primary employment, business operations, or other commercial environments. All business or revenue-generating use requires a valid Business License and payment of the applicable licensing fee. Both personal and business users must comply with the Fossorial Commercial License Terms."
+            },
+            "trialPeriodInformation": {
+                "title": "Trial Period Information",
+                "description": "This license key is valid for 7 days as a trial period. For a long-term license key, please contact sales@fossorial.io."
+            }
+        },
+        "form": {
+            "useCaseQuestion": "Are you using Pangolin for personal or business use?",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "jobTitle": "Job Title",
+            "primaryUseQuestion": "What do you primarily plan to use Pangolin for?",
+            "industryQuestion": "What is your industry?",
+            "prospectiveUsersQuestion": "How many prospective users do you expect to have?",
+            "prospectiveSitesQuestion": "How many prospective sites (tunnels) do you expect to have?",
+            "companyName": "Company name",
+            "countryOfResidence": "Country of residence",
+            "stateProvinceRegion": "State / Province / Region",
+            "postalZipCode": "Postal / ZIP Code",
+            "companyWebsite": "Company website",
+            "companyPhoneNumber": "Company phone number",
+            "country": "Country",
+            "phoneNumberOptional": "Phone number (optional)",
+            "complianceConfirmation": "I confirm that I am in compliance with the Fossorial Commercial License and that reporting inaccurate information or misidentifying use of the product is a violation of the license."
+        },
+        "buttons": {
+            "close": "Close",
+            "previous": "Previous",
+            "next": "Next",
+            "generateLicenseKey": "Generate License Key"
+        },
+        "toasts": {
+            "success": {
+                "title": "License key generated successfully",
+                "description": "Your license key has been generated and is ready to use."
+            },
+            "error": {
+                "title": "Failed to generate license key",
+                "description": "An error occurred while generating the license key."
+            }
+        }
+    }
 }

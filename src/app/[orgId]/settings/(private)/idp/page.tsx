@@ -45,7 +45,10 @@ export default async function OrgIdpPage(props: OrgIdpPageProps) {
         const subRes = await getSubscription();
         subscriptionStatus = subRes.data.data;
     } catch {}
-    const subscribed = subscriptionStatus?.tier === TierId.STANDARD;
+    const subscribed =
+        build === "enterprise"
+            ? true
+            : subscriptionStatus?.tier === TierId.STANDARD;
 
     return (
         <>

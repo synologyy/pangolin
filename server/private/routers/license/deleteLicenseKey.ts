@@ -8,9 +8,8 @@ import { fromError } from "zod-validation-error";
 import { db } from "@server/db";
 import { eq } from "drizzle-orm";
 import { licenseKey } from "@server/db";
-import license, { LicenseStatus } from "@server/license/license";
-import { encrypt } from "@server/lib/crypto";
-import config from "@server/lib/config";
+import license from "#private/license/license";
+import { LicenseStatus } from "@server/license/license";
 
 const paramsSchema = z
     .object({

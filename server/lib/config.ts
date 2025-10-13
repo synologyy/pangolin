@@ -3,10 +3,11 @@ import { __DIRNAME, APP_VERSION } from "@server/lib/consts";
 import { db } from "@server/db";
 import { SupporterKey, supporterKey } from "@server/db";
 import { eq } from "drizzle-orm";
-import { license } from "@server/license/license";
+import { license } from "#dynamic/license/license";
 import { configSchema, readConfigFile } from "./readConfigFile";
 import { fromError } from "zod-validation-error";
 import { build } from "@server/build";
+import logger from "@server/logger";
 
 export class Config {
     private rawConfig!: z.infer<typeof configSchema>;
@@ -111,11 +112,11 @@ export class Config {
     }
 
     private async checkKeyStatus() {
-        const licenseStatus = await license.check();
-        if (
-            build != "oss" &&
-            !licenseStatus.isHostLicensed
-        ) {
+        if (build === "enterprise") {
+            await license.check();
+        }
+
+        if (build == "oss") {
             this.checkSupporterKey();
         }
     }

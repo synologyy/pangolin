@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
-import license from "@server/license/license";
+import license from "#private/license/license";
+import { build } from "@server/build";
 
 export async function verifyValidLicense(
     req: Request,
@@ -9,6 +10,10 @@ export async function verifyValidLicense(
     next: NextFunction
 ) {
     try {
+        if (build !== "saas") {
+            return next();
+        }
+
         const unlocked = await license.isUnlocked();
         if (!unlocked) {
             return next(

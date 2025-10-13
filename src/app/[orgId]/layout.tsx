@@ -9,7 +9,7 @@ import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import SetLastOrgCookie from "@app/components/SetLastOrgCookie";
-import PrivateSubscriptionStatusProvider from "@app/providers/SubscriptionStatusProvider";
+import SubscriptionStatusProvider from "@app/providers/SubscriptionStatusProvider";
 import { GetOrgSubscriptionResponse } from "#private/routers/billing/getOrgSubscription";
 import { pullEnv } from "@app/lib/pullEnv";
 import { build } from "@server/build";
@@ -56,7 +56,7 @@ export default async function OrgLayout(props: {
     }
 
     let subscriptionStatus = null;
-    if (build != "oss") {
+    if (build === "saas") {
         try {
             const getSubscription = cache(() =>
                 internal.get<AxiosResponse<GetOrgSubscriptionResponse>>(
@@ -73,13 +73,13 @@ export default async function OrgLayout(props: {
     }
 
     return (
-        <PrivateSubscriptionStatusProvider
+        <SubscriptionStatusProvider
             subscriptionStatus={subscriptionStatus}
             env={env.app.environment}
             sandbox_mode={env.app.sandbox_mode}
         >
             {props.children}
             <SetLastOrgCookie orgId={orgId} />
-        </PrivateSubscriptionStatusProvider>
+        </SubscriptionStatusProvider>
     );
 }

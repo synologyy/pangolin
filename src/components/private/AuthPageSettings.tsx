@@ -72,454 +72,475 @@ export interface AuthPageSettingsRef {
     hasUnsavedChanges: () => boolean;
 }
 
-const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(({ 
-    onSaveSuccess, 
-    onSaveError 
-}, ref) => {
-    const { org } = useOrgContext();
-    const api = createApiClient(useEnvContext());
-    const router = useRouter();
-    const t = useTranslations();
+const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
+    ({ onSaveSuccess, onSaveError }, ref) => {
+        const { org } = useOrgContext();
+        const api = createApiClient(useEnvContext());
+        const router = useRouter();
+        const t = useTranslations();
 
-    const subscription = useSubscriptionStatusContext();
-    const subscribed = subscription?.getTier() === TierId.STANDARD;
+        const subscription = useSubscriptionStatusContext();
 
-    // Auth page domain state
-    const [loginPage, setLoginPage] = useState<GetLoginPageResponse | null>(
-        null
-    );
-    const [loginPageExists, setLoginPageExists] = useState(false);
-    const [editDomainOpen, setEditDomainOpen] = useState(false);
-    const [baseDomains, setBaseDomains] = useState<DomainRow[]>([]);
-    const [selectedDomain, setSelectedDomain] = useState<{
-        domainId: string;
-        subdomain?: string;
-        fullDomain: string;
-        baseDomain: string;
-    } | null>(null);
-    const [loadingLoginPage, setLoadingLoginPage] = useState(true);
-    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-    const [loadingSave, setLoadingSave] = useState(false);
+        // Auth page domain state
+        const [loginPage, setLoginPage] = useState<GetLoginPageResponse | null>(
+            null
+        );
+        const [loginPageExists, setLoginPageExists] = useState(false);
+        const [editDomainOpen, setEditDomainOpen] = useState(false);
+        const [baseDomains, setBaseDomains] = useState<DomainRow[]>([]);
+        const [selectedDomain, setSelectedDomain] = useState<{
+            domainId: string;
+            subdomain?: string;
+            fullDomain: string;
+            baseDomain: string;
+        } | null>(null);
+        const [loadingLoginPage, setLoadingLoginPage] = useState(true);
+        const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+        const [loadingSave, setLoadingSave] = useState(false);
 
-    const form = useForm({
-        resolver: zodResolver(AuthPageFormSchema),
-        defaultValues: {
-            authPageDomainId: loginPage?.domainId || "",
-            authPageSubdomain: loginPage?.subdomain || ""
-        },
-        mode: "onChange"
-    });
+        const form = useForm({
+            resolver: zodResolver(AuthPageFormSchema),
+            defaultValues: {
+                authPageDomainId: loginPage?.domainId || "",
+                authPageSubdomain: loginPage?.subdomain || ""
+            },
+            mode: "onChange"
+        });
 
-    // Expose save function to parent component
-    useImperativeHandle(ref, () => ({
-        saveAuthSettings: async () => {
-            await form.handleSubmit(onSubmit)();
-        },
-        hasUnsavedChanges: () => hasUnsavedChanges
-    }), [form, hasUnsavedChanges]);
+        // Expose save function to parent component
+        useImperativeHandle(
+            ref,
+            () => ({
+                saveAuthSettings: async () => {
+                    await form.handleSubmit(onSubmit)();
+                },
+                hasUnsavedChanges: () => hasUnsavedChanges
+            }),
+            [form, hasUnsavedChanges]
+        );
 
-    // Fetch login page and domains data
-    useEffect(() => {
-        if (build !== "saas") { 
-            return;
-        }
-
-        const fetchLoginPage = async () => {
-            try {
-                const res = await api.get<AxiosResponse<GetLoginPageResponse>>(
-                    `/org/${org?.org.orgId}/login-page`
-                );
-                if (res.status === 200) {
-                    setLoginPage(res.data.data);
-                    setLoginPageExists(true);
-                    // Update form with login page data
-                    form.setValue(
-                        "authPageDomainId",
-                        res.data.data.domainId || ""
-                    );
-                    form.setValue(
-                        "authPageSubdomain",
-                        res.data.data.subdomain || ""
-                    );
-                }
-            } catch (err) {
-                // Login page doesn't exist yet, that's okay
-                setLoginPage(null);
-                setLoginPageExists(false);
-            } finally {
-                setLoadingLoginPage(false);
-            }
-        };
-
-        const fetchDomains = async () => {
-            try {
-                const res = await api.get<AxiosResponse<ListDomainsResponse>>(
-                    `/org/${org?.org.orgId}/domains/`
-                );
-                if (res.status === 200) {
-                    const rawDomains = res.data.data.domains as DomainRow[];
-                    const domains = rawDomains.map((domain) => ({
-                        ...domain,
-                        baseDomain: toUnicode(domain.baseDomain)
-                    }));
-                    setBaseDomains(domains);
-                }
-            } catch (err) {
-                console.error("Failed to fetch domains:", err);
-            }
-        };
-
-        if (org?.org.orgId) {
-            fetchLoginPage();
-            fetchDomains();
-        }
-    }, []);
-
-    // Handle domain selection from modal
-    function handleDomainSelection(domain: {
-        domainId: string;
-        subdomain?: string;
-        fullDomain: string;
-        baseDomain: string;
-    }) {
-        form.setValue("authPageDomainId", domain.domainId);
-        form.setValue("authPageSubdomain", domain.subdomain || "");
-        setEditDomainOpen(false);
-
-        // Update loginPage state to show the selected domain immediately
-        const sanitizedSubdomain = domain.subdomain
-            ? finalizeSubdomainSanitize(domain.subdomain)
-            : "";
-
-        const sanitizedFullDomain = sanitizedSubdomain
-            ? `${sanitizedSubdomain}.${domain.baseDomain}`
-            : domain.baseDomain;
-
-        // Only update loginPage state if a login page already exists
-        if (loginPageExists && loginPage) {
-            setLoginPage({
-                ...loginPage,
-                domainId: domain.domainId,
-                subdomain: sanitizedSubdomain,
-                fullDomain: sanitizedFullDomain
-            });
-        }
-
-        setHasUnsavedChanges(true);
-    }
-
-    // Clear auth page domain
-    function clearAuthPageDomain() {
-        form.setValue("authPageDomainId", "");
-        form.setValue("authPageSubdomain", "");
-        setLoginPage(null);
-        setHasUnsavedChanges(true);
-    }
-
-    async function onSubmit(data: AuthPageFormValues) {
-        setLoadingSave(true);
-
-        try {
-            // Handle auth page domain
-            if (data.authPageDomainId) {
-                if (build !== "saas" || (build === "saas" && subscribed)) {
-                    const sanitizedSubdomain = data.authPageSubdomain
-                        ? finalizeSubdomainSanitize(data.authPageSubdomain)
-                        : "";
-
-                    if (loginPageExists) {
-                        // Login page exists on server - need to update it
-                        // First, we need to get the loginPageId from the server since loginPage might be null locally
-                        let loginPageId: number;
-
-                        if (loginPage) {
-                            // We have the loginPage data locally
-                            loginPageId = loginPage.loginPageId;
-                        } else {
-                            // User cleared selection locally, but login page still exists on server
-                            // We need to fetch it to get the loginPageId
-                            const fetchRes = await api.get<
-                                AxiosResponse<GetLoginPageResponse>
-                            >(`/org/${org?.org.orgId}/login-page`);
-                            loginPageId = fetchRes.data.data.loginPageId;
-                        }
-
-                        // Update existing auth page domain
-                        const updateRes = await api.post(
-                            `/org/${org?.org.orgId}/login-page/${loginPageId}`,
-                            {
-                                domainId: data.authPageDomainId,
-                                subdomain: sanitizedSubdomain || null
-                            }
-                        );
-
-                        if (updateRes.status === 201) {
-                            setLoginPage(updateRes.data.data);
-                            setLoginPageExists(true);
-                        }
-                    } else {
-                        // No login page exists on server - create new one
-                        const createRes = await api.put(
-                            `/org/${org?.org.orgId}/login-page`,
-                            {
-                                domainId: data.authPageDomainId,
-                                subdomain: sanitizedSubdomain || null
-                            }
-                        );
-
-                        if (createRes.status === 201) {
-                            setLoginPage(createRes.data.data);
-                            setLoginPageExists(true);
-                        }
-                    }
-                }
-            } else if (loginPageExists) {
-                // Delete existing auth page domain if no domain selected
-                let loginPageId: number;
-
-                if (loginPage) {
-                    // We have the loginPage data locally
-                    loginPageId = loginPage.loginPageId;
-                } else {
-                    // User cleared selection locally, but login page still exists on server
-                    // We need to fetch it to get the loginPageId
-                    const fetchRes = await api.get<
+        // Fetch login page and domains data
+        useEffect(() => {
+            const fetchLoginPage = async () => {
+                try {
+                    const res = await api.get<
                         AxiosResponse<GetLoginPageResponse>
                     >(`/org/${org?.org.orgId}/login-page`);
-                    loginPageId = fetchRes.data.data.loginPageId;
+                    if (res.status === 200) {
+                        setLoginPage(res.data.data);
+                        setLoginPageExists(true);
+                        // Update form with login page data
+                        form.setValue(
+                            "authPageDomainId",
+                            res.data.data.domainId || ""
+                        );
+                        form.setValue(
+                            "authPageSubdomain",
+                            res.data.data.subdomain || ""
+                        );
+                    }
+                } catch (err) {
+                    // Login page doesn't exist yet, that's okay
+                    setLoginPage(null);
+                    setLoginPageExists(false);
+                } finally {
+                    setLoadingLoginPage(false);
                 }
+            };
 
-                await api.delete(
-                    `/org/${org?.org.orgId}/login-page/${loginPageId}`
-                );
-                setLoginPage(null);
-                setLoginPageExists(false);
+            const fetchDomains = async () => {
+                try {
+                    const res = await api.get<
+                        AxiosResponse<ListDomainsResponse>
+                    >(`/org/${org?.org.orgId}/domains/`);
+                    if (res.status === 200) {
+                        const rawDomains = res.data.data.domains as DomainRow[];
+                        const domains = rawDomains.map((domain) => ({
+                            ...domain,
+                            baseDomain: toUnicode(domain.baseDomain)
+                        }));
+                        setBaseDomains(domains);
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch domains:", err);
+                }
+            };
+
+            if (org?.org.orgId) {
+                fetchLoginPage();
+                fetchDomains();
+            }
+        }, []);
+
+        // Handle domain selection from modal
+        function handleDomainSelection(domain: {
+            domainId: string;
+            subdomain?: string;
+            fullDomain: string;
+            baseDomain: string;
+        }) {
+            form.setValue("authPageDomainId", domain.domainId);
+            form.setValue("authPageSubdomain", domain.subdomain || "");
+            setEditDomainOpen(false);
+
+            // Update loginPage state to show the selected domain immediately
+            const sanitizedSubdomain = domain.subdomain
+                ? finalizeSubdomainSanitize(domain.subdomain)
+                : "";
+
+            const sanitizedFullDomain = sanitizedSubdomain
+                ? `${sanitizedSubdomain}.${domain.baseDomain}`
+                : domain.baseDomain;
+
+            // Only update loginPage state if a login page already exists
+            if (loginPageExists && loginPage) {
+                setLoginPage({
+                    ...loginPage,
+                    domainId: domain.domainId,
+                    subdomain: sanitizedSubdomain,
+                    fullDomain: sanitizedFullDomain
+                });
             }
 
-            setHasUnsavedChanges(false);
-            router.refresh();
-            onSaveSuccess?.();
-        } catch (e) {
-            toast({
-                variant: "destructive",
-                title: t("authPageErrorUpdate"),
-                description: formatAxiosError(e, t("authPageErrorUpdateMessage"))
-            });
-            onSaveError?.(e);
-        } finally {
-            setLoadingSave(false);
+            setHasUnsavedChanges(true);
         }
-    }
 
-    return (
-        <>
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("authPage")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("authPageDescription")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
-                <SettingsSectionBody>
-                    {build === "saas" && !subscribed ? (
-                        <Alert variant="info" className="mb-6">
-                            <AlertDescription>
-                                {t("orgAuthPageDisabled")}{" "}
-                                {t("subscriptionRequiredToUse")}
-                            </AlertDescription>
-                        </Alert>
-                    ) : null}
+        // Clear auth page domain
+        function clearAuthPageDomain() {
+            form.setValue("authPageDomainId", "");
+            form.setValue("authPageSubdomain", "");
+            setLoginPage(null);
+            setHasUnsavedChanges(true);
+        }
 
-                    <SettingsSectionForm>
-                        {loadingLoginPage ? (
-                            <div className="flex items-center justify-center py-8">
-                                <div className="text-sm text-muted-foreground">
-                                    {t("loading")}
+        async function onSubmit(data: AuthPageFormValues) {
+            setLoadingSave(true);
+
+            try {
+                // Handle auth page domain
+                if (data.authPageDomainId) {
+                    if (
+                        build === "enterprise" ||
+                        (build === "saas" && subscription?.subscribed)
+                    ) {
+                        const sanitizedSubdomain = data.authPageSubdomain
+                            ? finalizeSubdomainSanitize(data.authPageSubdomain)
+                            : "";
+
+                        if (loginPageExists) {
+                            // Login page exists on server - need to update it
+                            // First, we need to get the loginPageId from the server since loginPage might be null locally
+                            let loginPageId: number;
+
+                            if (loginPage) {
+                                // We have the loginPage data locally
+                                loginPageId = loginPage.loginPageId;
+                            } else {
+                                // User cleared selection locally, but login page still exists on server
+                                // We need to fetch it to get the loginPageId
+                                const fetchRes = await api.get<
+                                    AxiosResponse<GetLoginPageResponse>
+                                >(`/org/${org?.org.orgId}/login-page`);
+                                loginPageId = fetchRes.data.data.loginPageId;
+                            }
+
+                            // Update existing auth page domain
+                            const updateRes = await api.post(
+                                `/org/${org?.org.orgId}/login-page/${loginPageId}`,
+                                {
+                                    domainId: data.authPageDomainId,
+                                    subdomain: sanitizedSubdomain || null
+                                }
+                            );
+
+                            if (updateRes.status === 201) {
+                                setLoginPage(updateRes.data.data);
+                                setLoginPageExists(true);
+                            }
+                        } else {
+                            // No login page exists on server - create new one
+                            const createRes = await api.put(
+                                `/org/${org?.org.orgId}/login-page`,
+                                {
+                                    domainId: data.authPageDomainId,
+                                    subdomain: sanitizedSubdomain || null
+                                }
+                            );
+
+                            if (createRes.status === 201) {
+                                setLoginPage(createRes.data.data);
+                                setLoginPageExists(true);
+                            }
+                        }
+                    }
+                } else if (loginPageExists) {
+                    // Delete existing auth page domain if no domain selected
+                    let loginPageId: number;
+
+                    if (loginPage) {
+                        // We have the loginPage data locally
+                        loginPageId = loginPage.loginPageId;
+                    } else {
+                        // User cleared selection locally, but login page still exists on server
+                        // We need to fetch it to get the loginPageId
+                        const fetchRes = await api.get<
+                            AxiosResponse<GetLoginPageResponse>
+                        >(`/org/${org?.org.orgId}/login-page`);
+                        loginPageId = fetchRes.data.data.loginPageId;
+                    }
+
+                    await api.delete(
+                        `/org/${org?.org.orgId}/login-page/${loginPageId}`
+                    );
+                    setLoginPage(null);
+                    setLoginPageExists(false);
+                }
+
+                setHasUnsavedChanges(false);
+                router.refresh();
+                onSaveSuccess?.();
+            } catch (e) {
+                toast({
+                    variant: "destructive",
+                    title: t("authPageErrorUpdate"),
+                    description: formatAxiosError(
+                        e,
+                        t("authPageErrorUpdateMessage")
+                    )
+                });
+                onSaveError?.(e);
+            } finally {
+                setLoadingSave(false);
+            }
+        }
+
+        return (
+            <>
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("authPage")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("authPageDescription")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <SettingsSectionBody>
+                        {build === "saas" && !subscription?.subscribed ? (
+                            <Alert variant="info" className="mb-6">
+                                <AlertDescription>
+                                    {t("orgAuthPageDisabled")}{" "}
+                                    {t("subscriptionRequiredToUse")}
+                                </AlertDescription>
+                            </Alert>
+                        ) : null}
+
+                        <SettingsSectionForm>
+                            {loadingLoginPage ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="text-sm text-muted-foreground">
+                                        {t("loading")}
+                                    </div>
                                 </div>
-                            </div>
-                        ) : (
-                            <Form {...form}>
-                                <form
-                                    onSubmit={form.handleSubmit(onSubmit)}
-                                    className="space-y-4"
-                                    id="auth-page-settings-form"
-                                >
-                                    <div className="space-y-3">
-                                        <Label>{t("authPageDomain")}</Label>
-                                        <div className="border p-2 rounded-md flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground flex items-center gap-2">
-                                                <Globe size="14" />
-                                                {loginPage &&
-                                                !loginPage.domainId ? (
-                                                    <InfoPopup
-                                                        info={t(
-                                                            "domainNotFoundDescription"
-                                                        )}
-                                                        text={t("domainNotFound")}
-                                                    />
-                                                ) : loginPage?.fullDomain ? (
-                                                    <a
-                                                        href={`${window.location.protocol}//${loginPage.fullDomain}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="hover:underline"
-                                                    >
-                                                        {`${window.location.protocol}//${loginPage.fullDomain}`}
-                                                    </a>
-                                                ) : form.watch(
-                                                      "authPageDomainId"
-                                                  ) ? (
-                                                    // Show selected domain from form state when no loginPage exists yet
-                                                    (() => {
-                                                        const selectedDomainId =
-                                                            form.watch(
-                                                                "authPageDomainId"
+                            ) : (
+                                <Form {...form}>
+                                    <form
+                                        onSubmit={form.handleSubmit(onSubmit)}
+                                        className="space-y-4"
+                                        id="auth-page-settings-form"
+                                    >
+                                        <div className="space-y-3">
+                                            <Label>{t("authPageDomain")}</Label>
+                                            <div className="border p-2 rounded-md flex items-center justify-between">
+                                                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <Globe size="14" />
+                                                    {loginPage &&
+                                                    !loginPage.domainId ? (
+                                                        <InfoPopup
+                                                            info={t(
+                                                                "domainNotFoundDescription"
+                                                            )}
+                                                            text={t(
+                                                                "domainNotFound"
+                                                            )}
+                                                        />
+                                                    ) : loginPage?.fullDomain ? (
+                                                        <a
+                                                            href={`${window.location.protocol}//${loginPage.fullDomain}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="hover:underline"
+                                                        >
+                                                            {`${window.location.protocol}//${loginPage.fullDomain}`}
+                                                        </a>
+                                                    ) : form.watch(
+                                                          "authPageDomainId"
+                                                      ) ? (
+                                                        // Show selected domain from form state when no loginPage exists yet
+                                                        (() => {
+                                                            const selectedDomainId =
+                                                                form.watch(
+                                                                    "authPageDomainId"
+                                                                );
+                                                            const selectedSubdomain =
+                                                                form.watch(
+                                                                    "authPageSubdomain"
+                                                                );
+                                                            const domain =
+                                                                baseDomains.find(
+                                                                    (d) =>
+                                                                        d.domainId ===
+                                                                        selectedDomainId
+                                                                );
+                                                            if (domain) {
+                                                                const sanitizedSubdomain =
+                                                                    selectedSubdomain
+                                                                        ? finalizeSubdomainSanitize(
+                                                                              selectedSubdomain
+                                                                          )
+                                                                        : "";
+                                                                const fullDomain =
+                                                                    sanitizedSubdomain
+                                                                        ? `${sanitizedSubdomain}.${domain.baseDomain}`
+                                                                        : domain.baseDomain;
+                                                                return fullDomain;
+                                                            }
+                                                            return t(
+                                                                "noDomainSet"
                                                             );
-                                                        const selectedSubdomain =
-                                                            form.watch(
-                                                                "authPageSubdomain"
-                                                            );
-                                                        const domain =
-                                                            baseDomains.find(
-                                                                (d) =>
-                                                                    d.domainId ===
-                                                                    selectedDomainId
-                                                            );
-                                                        if (domain) {
-                                                            const sanitizedSubdomain =
-                                                                selectedSubdomain
-                                                                    ? finalizeSubdomainSanitize(
-                                                                          selectedSubdomain
-                                                                      )
-                                                                    : "";
-                                                            const fullDomain =
-                                                                sanitizedSubdomain
-                                                                    ? `${sanitizedSubdomain}.${domain.baseDomain}`
-                                                                    : domain.baseDomain;
-                                                            return fullDomain;
-                                                        }
-                                                        return t("noDomainSet");
-                                                    })()
-                                                ) : (
-                                                    t("noDomainSet")
-                                                )}
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="secondary"
-                                                    type="button"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        setEditDomainOpen(true)
-                                                    }
-                                                >
-                                                    {form.watch("authPageDomainId")
-                                                        ? t("changeDomain")
-                                                        : t("selectDomain")}
-                                                </Button>
-                                                {form.watch("authPageDomainId") && (
+                                                        })()
+                                                    ) : (
+                                                        t("noDomainSet")
+                                                    )}
+                                                </span>
+                                                <div className="flex items-center gap-2">
                                                     <Button
-                                                        variant="destructive"
+                                                        variant="secondary"
                                                         type="button"
                                                         size="sm"
-                                                        onClick={
-                                                            clearAuthPageDomain
+                                                        onClick={() =>
+                                                            setEditDomainOpen(
+                                                                true
+                                                            )
                                                         }
                                                     >
-                                                        <Trash2 size="14" />
+                                                        {form.watch(
+                                                            "authPageDomainId"
+                                                        )
+                                                            ? t("changeDomain")
+                                                            : t("selectDomain")}
                                                     </Button>
-                                                )}
+                                                    {form.watch(
+                                                        "authPageDomainId"
+                                                    ) && (
+                                                        <Button
+                                                            variant="destructive"
+                                                            type="button"
+                                                            size="sm"
+                                                            onClick={
+                                                                clearAuthPageDomain
+                                                            }
+                                                        >
+                                                            <Trash2 size="14" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        {/* Certificate Status */}
-                                        {(build !== "saas" ||
-                                            (build === "saas" && subscribed)) &&
-                                            loginPage?.domainId &&
-                                            loginPage?.fullDomain &&
-                                            !hasUnsavedChanges && (
-                                                <CertificateStatus
-                                                    orgId={org?.org.orgId || ""}
-                                                    domainId={loginPage.domainId}
-                                                    fullDomain={
-                                                        loginPage.fullDomain
-                                                    }
-                                                    autoFetch={true}
-                                                    showLabel={true}
-                                                    polling={true}
-                                                />
+                                            {/* Certificate Status */}
+                                            {(build === "enterprise" ||
+                                                (build === "saas" &&
+                                                    subscription?.subscribed)) &&
+                                                loginPage?.domainId &&
+                                                loginPage?.fullDomain &&
+                                                !hasUnsavedChanges && (
+                                                    <CertificateStatus
+                                                        orgId={
+                                                            org?.org.orgId || ""
+                                                        }
+                                                        domainId={
+                                                            loginPage.domainId
+                                                        }
+                                                        fullDomain={
+                                                            loginPage.fullDomain
+                                                        }
+                                                        autoFetch={true}
+                                                        showLabel={true}
+                                                        polling={true}
+                                                    />
+                                                )}
+
+                                            {!form.watch(
+                                                "authPageDomainId"
+                                            ) && (
+                                                <div className="text-sm text-muted-foreground">
+                                                    {t(
+                                                        "addDomainToEnableCustomAuthPages"
+                                                    )}
+                                                </div>
                                             )}
+                                        </div>
+                                    </form>
+                                </Form>
+                            )}
+                        </SettingsSectionForm>
+                    </SettingsSectionBody>
+                </SettingsSection>
 
-                                        {!form.watch("authPageDomainId") && (
-                                            <div className="text-sm text-muted-foreground">
-                                                {t(
-                                                    "addDomainToEnableCustomAuthPages"
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </form>
-                            </Form>
-                        )}
-                    </SettingsSectionForm>
-                </SettingsSectionBody>
-            </SettingsSection>
+                {/* Domain Picker Modal */}
+                <Credenza
+                    open={editDomainOpen}
+                    onOpenChange={(setOpen) => setEditDomainOpen(setOpen)}
+                >
+                    <CredenzaContent>
+                        <CredenzaHeader>
+                            <CredenzaTitle>
+                                {loginPage
+                                    ? t("editAuthPageDomain")
+                                    : t("setAuthPageDomain")}
+                            </CredenzaTitle>
+                            <CredenzaDescription>
+                                {t("selectDomainForOrgAuthPage")}
+                            </CredenzaDescription>
+                        </CredenzaHeader>
+                        <CredenzaBody>
+                            <DomainPicker
+                                hideFreeDomain={true}
+                                orgId={org?.org.orgId as string}
+                                cols={1}
+                                onDomainChange={(res) => {
+                                    const selected = {
+                                        domainId: res.domainId,
+                                        subdomain: res.subdomain,
+                                        fullDomain: res.fullDomain,
+                                        baseDomain: res.baseDomain
+                                    };
+                                    setSelectedDomain(selected);
+                                }}
+                            />
+                        </CredenzaBody>
+                        <CredenzaFooter>
+                            <CredenzaClose asChild>
+                                <Button variant="outline">{t("cancel")}</Button>
+                            </CredenzaClose>
+                            <Button
+                                onClick={() => {
+                                    if (selectedDomain) {
+                                        handleDomainSelection(selectedDomain);
+                                    }
+                                }}
+                                disabled={!selectedDomain}
+                            >
+                                {t("selectDomain")}
+                            </Button>
+                        </CredenzaFooter>
+                    </CredenzaContent>
+                </Credenza>
+            </>
+        );
+    }
+);
 
-            {/* Domain Picker Modal */}
-            <Credenza
-                open={editDomainOpen}
-                onOpenChange={(setOpen) => setEditDomainOpen(setOpen)}
-            >
-                <CredenzaContent>
-                    <CredenzaHeader>
-                        <CredenzaTitle>
-                            {loginPage
-                                ? t("editAuthPageDomain")
-                                : t("setAuthPageDomain")}
-                        </CredenzaTitle>
-                        <CredenzaDescription>
-                            {t("selectDomainForOrgAuthPage")}
-                        </CredenzaDescription>
-                    </CredenzaHeader>
-                    <CredenzaBody>
-                        <DomainPicker
-                            hideFreeDomain={true}
-                            orgId={org?.org.orgId as string}
-                            cols={1}
-                            onDomainChange={(res) => {
-                                const selected = {
-                                    domainId: res.domainId,
-                                    subdomain: res.subdomain,
-                                    fullDomain: res.fullDomain,
-                                    baseDomain: res.baseDomain
-                                };
-                                setSelectedDomain(selected);
-                            }}
-                        />
-                    </CredenzaBody>
-                    <CredenzaFooter>
-                        <CredenzaClose asChild>
-                            <Button variant="outline">{t("cancel")}</Button>
-                        </CredenzaClose>
-                        <Button
-                            onClick={() => {
-                                if (selectedDomain) {
-                                    handleDomainSelection(selectedDomain);
-                                }
-                            }}
-                            disabled={!selectedDomain}
-                        >
-                            {t("selectDomain")}
-                        </Button>
-                    </CredenzaFooter>
-                </CredenzaContent>
-            </Credenza>
-        </>
-    );
-});
-
-AuthPageSettings.displayName = 'AuthPageSettings';
+AuthPageSettings.displayName = "AuthPageSettings";
 
 export default AuthPageSettings;

@@ -1,19 +1,26 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@app/components/ui/data-table";
-import { Button } from "@app/components/ui/button";
-import { Badge } from "@app/components/ui/badge";
-import { LicenseKeyCache } from "@server/license/license";
-import { ArrowUpDown } from "lucide-react";
-import CopyToClipboard from "@app/components/CopyToClipboard";
 import { useTranslations } from "next-intl";
+import { ColumnDef } from "@tanstack/react-table";
+import { Button } from "./ui/button";
+import { ArrowUpDown } from "lucide-react";
+import CopyToClipboard from "./CopyToClipboard";
+import { Badge } from "./ui/badge";
 import moment from "moment";
+import { DataTable } from "./ui/data-table";
+import { GeneratedLicenseKey } from "@server/private/routers/generatedLicense";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { AxiosResponse } from "axios";
+import { GenerateNewLicenseResponse } from "@server/private/routers/generatedLicense/generateNewLicense";
+import GenerateLicenseKeyForm from "./GenerateLicenseKeyForm";
 
-type LicenseKeysDataTableProps = {
-    licenseKeys: LicenseKeyCache[];
-    onDelete: (key: LicenseKeyCache) => void;
-    onCreate: () => void;
+type GnerateLicenseKeysTableProps = {
+    licenseKeys: GeneratedLicenseKey[];
+    orgId: string;
 };
 
 function obfuscateLicenseKey(key: string): string {
@@ -23,14 +30,42 @@ function obfuscateLicenseKey(key: string): string {
     return `${firstPart}••••••••••••••••••••${lastPart}`;
 }
 
-export function LicenseKeysDataTable({
+export default function GenerateLicenseKeysTable({
     licenseKeys,
-    onDelete,
-    onCreate
-}: LicenseKeysDataTableProps) {
+    orgId
+}: GnerateLicenseKeysTableProps) {
     const t = useTranslations();
+    const router = useRouter();
 
-    const columns: ColumnDef<LicenseKeyCache>[] = [
+    const { env } = useEnvContext();
+    const api = createApiClient({ env });
+
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [showGenerateForm, setShowGenerateForm] = useState(false);
+
+    const handleLicenseGenerated = () => {
+        // Refresh the data after license is generated
+        refreshData();
+    };
+
+    const refreshData = async () => {
+        console.log("Data refreshed");
+        setIsRefreshing(true);
+        try {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            router.refresh();
+        } catch (error) {
+            toast({
+                title: t("error"),
+                description: t("refreshError"),
+                variant: "destructive"
+            });
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    const columns: ColumnDef<GeneratedLicenseKey>[] = [
         {
             accessorKey: "licenseKey",
             header: ({ column }) => {
@@ -57,6 +92,12 @@ export function LicenseKeysDataTable({
             }
         },
         {
+            accessorKey: "instanceName",
+            cell: ({ row }) => {
+                return row.original.instanceName || "-";
+            }
+        },
+        {
             accessorKey: "valid",
             header: ({ column }) => {
                 return (
@@ -72,7 +113,7 @@ export function LicenseKeysDataTable({
                 );
             },
             cell: ({ row }) => {
-                return row.original.valid ? (
+                return row.original.isValid ? (
                     <Badge variant="green">{t("yes")}</Badge>
                 ) : (
                     <Badge variant="red">{t("no")}</Badge>
@@ -96,7 +137,7 @@ export function LicenseKeysDataTable({
             },
             cell: ({ row }) => {
                 const tier = row.original.tier;
-                tier === "enterprise"
+                return tier === "enterprise"
                     ? t("licenseTierEnterprise")
                     : t("licenseTierPersonal");
             }
@@ -117,35 +158,35 @@ export function LicenseKeysDataTable({
                 );
             },
             cell: ({ row }) => {
-                const termianteAt = row.original.terminateAt;
+                const termianteAt = row.original.expiresAt;
                 return moment(termianteAt).format("lll");
             }
-        },
-        {
-            id: "delete",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end space-x-2">
-                    <Button
-                        variant="secondary"
-                        onClick={() => onDelete(row.original)}
-                    >
-                        {t("delete")}
-                    </Button>
-                </div>
-            )
         }
     ];
 
     return (
-        <DataTable
-            columns={columns}
-            data={licenseKeys}
-            persistPageSize="licenseKeys-table"
-            title={t("licenseKeys")}
-            searchPlaceholder={t("licenseKeySearch")}
-            searchColumn="licenseKey"
-            onAdd={onCreate}
-            addButtonText={t("licenseKeyAdd")}
-        />
+        <>
+            <DataTable
+                columns={columns}
+                data={licenseKeys}
+                persistPageSize="licenseKeys-table"
+                title={t("licenseKeys")}
+                searchPlaceholder={t("licenseKeySearch")}
+                searchColumn="licenseKey"
+                onRefresh={refreshData}
+                isRefreshing={isRefreshing}
+                addButtonText={t("generateLicenseKey")}
+                onAdd={() => {
+                    setShowGenerateForm(true);
+                }}
+            />
+
+            <GenerateLicenseKeyForm
+                open={showGenerateForm}
+                setOpen={setShowGenerateForm}
+                orgId={orgId}
+                onGenerated={handleLicenseGenerated}
+            />
+        </>
     );
 }

@@ -3,7 +3,8 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
-import license, { LicenseKeyCache } from "@server/license/license";
+import license from "#private/license/license";
+import { LicenseKeyCache } from "@server/license/license";
 
 export type ListLicenseKeysResponse = LicenseKeyCache[];
 

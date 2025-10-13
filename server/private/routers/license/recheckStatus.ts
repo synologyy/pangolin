@@ -3,43 +3,24 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
-import license, { LicenseStatus } from "@server/license/license";
-import { z } from "zod";
-import { fromError } from "zod-validation-error";
+import license from "#private/license/license";
+import { LicenseStatus } from "@server/license/license";
 
-const bodySchema = z
-    .object({
-        licenseKey: z.string().min(1).max(255)
-    })
-    .strict();
+export type RecheckStatusResponse = LicenseStatus;
 
-export type ActivateLicenseStatus = LicenseStatus;
-
-export async function activateLicense(
+export async function recheckStatus(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = bodySchema.safeParse(req.body);
-        if (!parsedBody.success) {
-            return next(
-                createHttpError(
-                    HttpCode.BAD_REQUEST,
-                    fromError(parsedBody.error).toString()
-                )
-            );
-        }
-
-        const { licenseKey } = parsedBody.data;
-
         try {
-            const status = await license.activateLicenseKey(licenseKey);
+            const status = await license.forceRecheck();
             return sendResponse(res, {
                 data: status,
                 success: true,
                 error: false,
-                message: "License key activated successfully",
+                message: "License status rechecked successfully",
                 status: HttpCode.OK
             });
         } catch (e) {

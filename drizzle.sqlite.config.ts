@@ -1,11 +1,10 @@
-import { build } from "@server/build";
 import { APP_PATH } from "@server/lib/consts";
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
 const schema = [
     path.join("server", "db", "sqlite", "schema.ts"),
-    path.join("server", "db", "sqlite", "pSchema.ts")
+    path.join("server", "db", "sqlite", "privateSchema.ts")
 ];
 
 export default defineConfig({

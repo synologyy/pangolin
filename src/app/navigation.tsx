@@ -54,7 +54,8 @@ export const orgNavSections = (
                       {
                           title: "sidebarClients",
                           href: "/{orgId}/settings/clients",
-                          icon: <MonitorUp className="h-4 w-4" />
+                          icon: <MonitorUp className="h-4 w-4" />,
+                          isBeta: true
                       }
                   ]
                 : []),
@@ -63,7 +64,8 @@ export const orgNavSections = (
                       {
                           title: "sidebarRemoteExitNodes",
                           href: "/{orgId}/settings/remote-exit-nodes",
-                          icon: <Server className="h-4 w-4" />
+                          icon: <Server className="h-4 w-4" />,
+                          showEE: true
                       }
                   ]
                 : []),
@@ -97,7 +99,8 @@ export const orgNavSections = (
                       {
                           title: "sidebarIdentityProviders",
                           href: "/{orgId}/settings/idp",
-                          icon: <Fingerprint className="h-4 w-4" />
+                          icon: <Fingerprint className="h-4 w-4" />,
+                          showEE: true
                       }
                   ]
                 : []),
@@ -116,15 +119,6 @@ export const orgNavSections = (
                 href: "/{orgId}/settings/api-keys",
                 icon: <KeyRound className="h-4 w-4" />
             },
-            ...(build == "saas"
-                ? [
-                      {
-                          title: "sidebarBilling",
-                          href: "/{orgId}/settings/billing",
-                          icon: <TicketCheck className="h-4 w-4" />
-                      }
-                  ]
-                : []),
             {
                 title: "sidebarSettings",
                 href: "/{orgId}/settings/general",
@@ -138,15 +132,6 @@ export const adminNavSections: SidebarNavSection[] = [
     {
         heading: "Admin",
         items: [
-            ...(build == "oss"
-                ? [
-                      {
-                          title: "managedSelfhosted",
-                          href: "/admin/managed",
-                          icon: <Zap className="h-4 w-4" />
-                      }
-                  ]
-                : []),
             {
                 title: "sidebarAllUsers",
                 href: "/admin/users",

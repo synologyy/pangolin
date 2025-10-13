@@ -13,7 +13,6 @@ import * as siteResource from "./siteResource";
 import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
-import * as license from "./license";
 import * as apiKeys from "./apiKeys";
 import HttpCode from "@server/types/HttpCode";
 import {
@@ -709,30 +708,6 @@ authenticated.get(
 
 authenticated.get("/idp", idp.listIdps); // anyone can see this; it's just a list of idp names and ids
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
-
-authenticated.post(
-    "/license/activate",
-    verifyUserIsServerAdmin,
-    license.activateLicense
-);
-
-authenticated.get(
-    "/license/keys",
-    verifyUserIsServerAdmin,
-    license.listLicenseKeys
-);
-
-authenticated.delete(
-    "/license/:licenseKey",
-    verifyUserIsServerAdmin,
-    license.deleteLicenseKey
-);
-
-authenticated.post(
-    "/license/recheck",
-    verifyUserIsServerAdmin,
-    license.recheckStatus
-);
 
 authenticated.get(
     `/api-key/:apiKeyId`,

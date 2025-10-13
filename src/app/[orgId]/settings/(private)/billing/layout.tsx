@@ -60,13 +60,6 @@ export default async function BillingSettingsPage({
 
     const t = await getTranslations();
 
-    const navItems = [
-        {
-            title: t('billing'),
-            href: `/{orgId}/settings/billing`,
-        },
-    ];
-
     return (
         <>
             <OrgProvider org={org}>
