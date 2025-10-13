@@ -50,6 +50,7 @@ export async function createExitNode(
                 endpoint: `${subEndpoint}${subEndpoint != "" ? "." : ""}${config.getRawConfig().gerbil.base_endpoint}`,
                 address,
                 listenPort,
+                online: true,
                 reachableAt,
                 name: exitNodeName
             })

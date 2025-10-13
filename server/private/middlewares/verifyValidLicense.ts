@@ -10,7 +10,7 @@ export async function verifyValidLicense(
     next: NextFunction
 ) {
     try {
-        if (build !== "saas") {
+        if (build != "enterprise") {
             return next();
         }
 
