@@ -229,7 +229,7 @@ export default function Page() {
 
     const [isAdvancedMode, setIsAdvancedMode] = useState(() => {
         if (typeof window !== "undefined") {
-            const saved = localStorage.getItem("proxy-advanced-mode");
+            const saved = localStorage.getItem("create-advanced-mode");
             return saved === "true";
         }
         return false;
@@ -705,7 +705,7 @@ export default function Page() {
             id: "priority",
             header: () => (
                 <div className="flex items-center gap-2">
-                    Priority
+                    {t("priority")}
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger>
@@ -713,10 +713,7 @@ export default function Page() {
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                                 <p>
-                                    Higher priority routes are evaluated first.
-                                    Priority = 100 means automatic ordering
-                                    (system decides). Use another number to
-                                    enforce manual priority.
+                                    {t("priorityDescription")}
                                 </p>
                             </TooltipContent>
                         </Tooltip>

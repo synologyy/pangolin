@@ -819,7 +819,7 @@ export default function ReverseProxyTargets(props: {
             id: "priority",
             header: () => (
                 <div className="flex items-center gap-2">
-                    Priority
+                    {t("priority")}
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger>
@@ -827,10 +827,7 @@ export default function ReverseProxyTargets(props: {
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                                 <p>
-                                    Higher priority routes are evaluated first.
-                                    Priority = 100 means automatic ordering
-                                    (system decides). Use another number to
-                                    enforce manual priority.
+                                    {t("priorityDescription")}
                                 </p>
                             </TooltipContent>
                         </Tooltip>
