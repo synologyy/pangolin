@@ -70,7 +70,7 @@ export function PathMatchModal({
             Set up how incoming requests should be matched based on their path.
           </CredenzaDescription>
         </CredenzaHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="match-type">Match Type</Label>
             <Select value={matchType} onValueChange={setMatchType}>
@@ -181,7 +181,7 @@ export function PathRewriteModal({
             Transform the matched path before forwarding to the target.
           </CredenzaDescription>
         </CredenzaHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="rewrite-type">Rewrite Type</Label>
             <Select value={rewriteType} onValueChange={setRewriteType}>
