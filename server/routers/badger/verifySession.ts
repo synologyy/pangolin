@@ -314,6 +314,11 @@ export async function verifyResourceSession(
                 logger.debug("Resource allowed because header auth is valid");
                 return allowed(res);
             }
+
+            // if there are no other auth methods we need to return unauthorized here
+            if (!sso && !pincode && !password && !resource.emailWhitelistEnabled) {
+                return notAllowed(res);
+            }
         }
 
         if (!sessions) {

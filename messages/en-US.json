@@ -1754,7 +1754,7 @@
     "resourceHeaderAuthSetup": "Header Authentication set successfully",
     "resourceHeaderAuthSetupDescription": "Header authentication has been successfully set.",
     "resourceHeaderAuthSetupTitle": "Set Header Authentication",
-    "resourceHeaderAuthSetupTitleDescription": "Set the basic auth credentials (username and password) to protect this resource with HTTP Header Authentication. Leave both fields blank to remove existing header authentication.",
+    "resourceHeaderAuthSetupTitleDescription": "Set the basic auth credentials (username and password) to protect this resource with HTTP Header Authentication. Access it using the format https://username:password@resource.example.com",
     "resourceHeaderAuthSubmit": "Set Header Authentication",
     "actionSetResourceHeaderAuth": "Set Header Authentication",
     "enterpriseEdition": "Enterprise Edition",
