@@ -837,7 +837,7 @@ export default function ResourceAuthenticationPage() {
                                     <Bot size="14" />
                                     <span>
                                         {authInfo.headerAuth
-                                            ? t("resourceHeaderAuthProtection")
+                                            ? t("resourceHeaderAuthProtectionEnabled")
                                             : t(
                                                   "resourceHeaderAuthProtectionDisabled"
                                               )}

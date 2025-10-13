@@ -43,7 +43,8 @@ export default function ResourceInfoBox({}: ResourceInfoBoxType) {
                                     {authInfo.password ||
                                     authInfo.pincode ||
                                     authInfo.sso ||
-                                    authInfo.whitelist ? (
+                                    authInfo.whitelist ||
+                                    authInfo.headerAuth ? (
                                         <div className="flex items-start space-x-2 text-green-500">
                                             <ShieldCheck className="w-4 h-4 mt-0.5" />
                                             <span>{t("protected")}</span>
