@@ -57,13 +57,13 @@ export async function sendToExitNode(
     } else {
         let hostname = exitNode.reachableAt;
 
-        logger.debug(`Exit node details:`, {
-            type: exitNode.type,
-            name: exitNode.name,
-            reachableAt: exitNode.reachableAt,
-        });
+        // logger.debug(`Exit node details:`, {
+        //     type: exitNode.type,
+        //     name: exitNode.name,
+        //     reachableAt: exitNode.reachableAt,
+        // });
 
-        logger.debug(`Configured local exit node name: ${config.getRawConfig().gerbil.exit_node_name}`);
+        // logger.debug(`Configured local exit node name: ${config.getRawConfig().gerbil.exit_node_name}`);
 
         if (exitNode.name == config.getRawConfig().gerbil.exit_node_name) {
             hostname = privateConfig.getRawPrivateConfig().gerbil.local_exit_node_reachable_at;
@@ -75,10 +75,10 @@ export async function sendToExitNode(
             );
         }
 
-        logger.debug(`Sending request to exit node at ${hostname}`, {
-            type: request.remoteType,
-            data: request.data
-        });
+        // logger.debug(`Sending request to exit node at ${hostname}`, {
+        //     type: request.remoteType,
+        //     data: request.data
+        // });
 
         // Handle local exit node with HTTP API
         const method = request.method || "POST";

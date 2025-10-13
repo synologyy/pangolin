@@ -24,6 +24,7 @@
         "set:enterprise": "echo 'export const build = \"enterprise\" as any;' > server/build.ts",
         "set:sqlite": "echo 'export * from \"./sqlite\";' > server/db/index.ts",
         "set:pg": "echo 'export * from \"./pg\";' > server/db/index.ts",
+        "next:build": "next build",
         "build:sqlite": "mkdir -p dist && next build && node esbuild.mjs -e server/index.ts -o dist/server.mjs && node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs",
         "build:pg": "mkdir -p dist && next build && node esbuild.mjs -e server/index.ts -o dist/server.mjs && node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs",
         "start": "ENVIRONMENT=prod node dist/migrations.mjs && ENVIRONMENT=prod NODE_ENV=development node --enable-source-maps dist/server.mjs",

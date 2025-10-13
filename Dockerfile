@@ -15,9 +15,20 @@ RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
 
 RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
+# if the build is oss then remove the server/private directory
+RUN if [ "$BUILD" = "oss" ]; then rm -rf server/private; fi
+
 RUN if [ "$DATABASE" = "pg" ]; then npx drizzle-kit generate --dialect postgresql --schema ./server/db/pg/schema.ts --out init; else npx drizzle-kit generate --dialect $DATABASE --schema ./server/db/$DATABASE/schema.ts --out init; fi
 
-RUN npm run build:$DATABASE
+RUN mkdir -p dist 
+RUN npm run next:build
+RUN node esbuild.mjs -e server/index.ts -o dist/server.mjs -b $BUILD
+RUN if [ "$DATABASE" = "pg" ]; then \
+        node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs; \
+    else \
+        node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs; \
+    fi
+
 RUN npm run build:cli
 
 FROM node:22-alpine AS runner
