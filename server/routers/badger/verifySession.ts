@@ -33,9 +33,7 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import {
-    getCountryCodeForIp,
-} from "@server/lib/geoip";
+import { getCountryCodeForIp } from "@server/lib/geoip";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
@@ -198,7 +196,7 @@ export async function verifyResourceSession(
 
         // IMPORTANT: ADD NEW AUTH CHECKS HERE OR WHEN TURNING OFF ALL OTHER AUTH METHODS IT WILL JUST PASS
         if (
-            !resource.sso &&
+            !sso &&
             !pincode &&
             !password &&
             !resource.emailWhitelistEnabled &&
@@ -315,8 +313,22 @@ export async function verifyResourceSession(
                 return allowed(res);
             }
 
-            // if there are no other auth methods we need to return unauthorized here
-            if (!sso && !pincode && !password && !resource.emailWhitelistEnabled) {
+            if ( // we dont want to redirect if this is the only auth method and we did not pass here
+                !sso &&
+                !pincode &&
+                !password &&
+                !resource.emailWhitelistEnabled
+            ) {
+                return notAllowed(res);
+            }
+        } else if (headerAuth) {
+            // if there are no other auth methods we need to return unauthorized if nothing is provided
+            if (
+                !sso &&
+                !pincode &&
+                !password &&
+                !resource.emailWhitelistEnabled
+            ) {
                 return notAllowed(res);
             }
         }
