@@ -80,6 +80,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
     const api = createApiClient(useEnvContext());
     const router = useRouter();
     const t = useTranslations();
+    const { env } = useEnvContext();
 
     const subscription = useSubscriptionStatusContext();
     const subscribed = subscription?.getTier() === TierId.STANDARD;
@@ -435,8 +436,8 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                         </div>
 
                                         {/* Certificate Status */}
-                                        {(build !== "saas" ||
-                                            (build === "saas" && subscribed)) &&
+                                        {(
+                                            (env.flags.generateOwnCertificates && subscribed)) &&
                                             loginPage?.domainId &&
                                             loginPage?.fullDomain &&
                                             !hasUnsavedChanges && (

@@ -28,6 +28,7 @@ export type Env = {
         disableBasicWireguardSites: boolean;
         enableClients: boolean;
         hideSupporterKey: boolean;
+        generateOwnCertificates: boolean;
     },
     branding: {
         appName?: string;

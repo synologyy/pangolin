@@ -8,9 +8,7 @@ import { db, exitNodes } from "@server/db";
 import { eq } from "drizzle-orm";
 import { getCurrentExitNodeId } from "@server/lib/exitNodes";
 import { getTraefikConfig } from "#dynamic/lib/traefik";
-import {
-    getValidCertificatesForDomains,
-} from "#dynamic/lib/certificates";
+import { getValidCertificatesForDomains } from "#dynamic/lib/certificates";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
 
@@ -311,83 +309,91 @@ export class TraefikConfigManager {
                 this.lastActiveDomains = new Set(domains);
             }
 
-            // Scan current local certificate state
-            this.lastLocalCertificateState =
-                await this.scanLocalCertificateState();
+            if (
+                process.env.GENERATE_OWN_CERTIFICATES === "true" &&
+                build != "oss"
+            ) {
+                // Scan current local certificate state
+                this.lastLocalCertificateState =
+                    await this.scanLocalCertificateState();
 
-            // Only fetch certificates if needed (domain changes, missing certs, or daily renewal check)
-            let validCertificates: Array<{
-                id: number;
-                domain: string;
-                wildcard: boolean | null;
-                certFile: string | null;
-                keyFile: string | null;
-                expiresAt: number | null;
-                updatedAt?: number | null;
-            }> = [];
+                // Only fetch certificates if needed (domain changes, missing certs, or daily renewal check)
+                let validCertificates: Array<{
+                    id: number;
+                    domain: string;
+                    wildcard: boolean | null;
+                    certFile: string | null;
+                    keyFile: string | null;
+                    expiresAt: number | null;
+                    updatedAt?: number | null;
+                }> = [];
 
-            if (this.shouldFetchCertificates(domains)) {
-                // Filter out domains that are already covered by wildcard certificates
-                const domainsToFetch = new Set<string>();
-                for (const domain of domains) {
-                    if (
-                        !isDomainCoveredByWildcard(
-                            domain,
-                            this.lastLocalCertificateState
-                        )
-                    ) {
-                        domainsToFetch.add(domain);
-                    } else {
-                        logger.debug(
-                            `Domain ${domain} is covered by existing wildcard certificate, skipping fetch`
-                        );
+                if (this.shouldFetchCertificates(domains)) {
+                    // Filter out domains that are already covered by wildcard certificates
+                    const domainsToFetch = new Set<string>();
+                    for (const domain of domains) {
+                        if (
+                            !isDomainCoveredByWildcard(
+                                domain,
+                                this.lastLocalCertificateState
+                            )
+                        ) {
+                            domainsToFetch.add(domain);
+                        } else {
+                            logger.debug(
+                                `Domain ${domain} is covered by existing wildcard certificate, skipping fetch`
+                            );
+                        }
                     }
-                }
 
-                if (domainsToFetch.size > 0) {
-                    // Get valid certificates for domains not covered by wildcards
-                    validCertificates =
-                        await getValidCertificatesForDomains(domainsToFetch);
-                    this.lastCertificateFetch = new Date();
-                    this.lastKnownDomains = new Set(domains);
+                    if (domainsToFetch.size > 0) {
+                        // Get valid certificates for domains not covered by wildcards
+                        validCertificates =
+                            await getValidCertificatesForDomains(
+                                domainsToFetch
+                            );
+                        this.lastCertificateFetch = new Date();
+                        this.lastKnownDomains = new Set(domains);
 
-                    logger.info(
-                        `Fetched ${validCertificates.length} certificates from remote (${domains.size - domainsToFetch.size} domains covered by wildcards)`
-                    );
+                        logger.info(
+                            `Fetched ${validCertificates.length} certificates from remote (${domains.size - domainsToFetch.size} domains covered by wildcards)`
+                        );
 
-                    // Download and decrypt new certificates
-                    await this.processValidCertificates(validCertificates);
+                        // Download and decrypt new certificates
+                        await this.processValidCertificates(validCertificates);
+                    } else {
+                        logger.info(
+                            "All domains are covered by existing wildcard certificates, no fetch needed"
+                        );
+                        this.lastCertificateFetch = new Date();
+                        this.lastKnownDomains = new Set(domains);
+                    }
+
+                    // Always ensure all existing certificates (including wildcards) are in the config
+                    await this.updateDynamicConfigFromLocalCerts(domains);
                 } else {
-                    logger.info(
-                        "All domains are covered by existing wildcard certificates, no fetch needed"
-                    );
-                    this.lastCertificateFetch = new Date();
-                    this.lastKnownDomains = new Set(domains);
+                    const timeSinceLastFetch = this.lastCertificateFetch
+                        ? Math.round(
+                              (Date.now() -
+                                  this.lastCertificateFetch.getTime()) /
+                                  (1000 * 60)
+                          )
+                        : 0;
+
+                    // logger.debug(
+                    //     `Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`
+                    // );
+
+                    // Still need to ensure config is up to date with existing certificates
+                    await this.updateDynamicConfigFromLocalCerts(domains);
                 }
 
-                // Always ensure all existing certificates (including wildcards) are in the config
-                await this.updateDynamicConfigFromLocalCerts(domains);
-            } else {
-                const timeSinceLastFetch = this.lastCertificateFetch
-                    ? Math.round(
-                          (Date.now() - this.lastCertificateFetch.getTime()) /
-                              (1000 * 60)
-                      )
-                    : 0;
+                // Clean up certificates for domains no longer in use
+                await this.cleanupUnusedCertificates(domains);
 
-                // logger.debug(
-                //     `Skipping certificate fetch - no changes detected and within 24-hour window (last fetch: ${timeSinceLastFetch} minutes ago)`
-                // );
-
-                // Still need to ensure config is up to date with existing certificates
-                await this.updateDynamicConfigFromLocalCerts(domains);
+                // wait 1 second for traefik to pick up the new certificates
+                await new Promise((resolve) => setTimeout(resolve, 500));
             }
-
-            // Clean up certificates for domains no longer in use
-            await this.cleanupUnusedCertificates(domains);
-
-            // wait 1 second for traefik to pick up the new certificates
-            await new Promise((resolve) => setTimeout(resolve, 500));
 
             // Write traefik config as YAML to a second dynamic config file if changed
             await this.writeTraefikDynamicConfig(traefikConfig);
@@ -690,7 +696,12 @@ export class TraefikConfigManager {
 
         for (const cert of validCertificates) {
             try {
-                if (!cert.certFile || !cert.keyFile) {
+                if (
+                    !cert.certFile ||
+                    !cert.keyFile ||
+                    cert.certFile.length === 0 ||
+                    cert.keyFile.length === 0
+                ) {
                     logger.warn(
                         `Certificate for domain ${cert.domain} is missing cert or key file`
                     );

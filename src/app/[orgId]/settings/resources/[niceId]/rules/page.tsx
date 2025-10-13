@@ -117,8 +117,8 @@ export default function ResourceRules(props: {
     const [openAddRuleCountrySelect, setOpenAddRuleCountrySelect] = useState(false);
     const router = useRouter();
     const t = useTranslations();
-    const env = useEnvContext();
-    const isMaxmindAvailable = env.env.server.maxmind_db_path && env.env.server.maxmind_db_path.length > 0;
+    const { env } = useEnvContext();
+    const isMaxmindAvailable = env.server.maxmind_db_path && env.server.maxmind_db_path.length > 0;
 
     const RuleAction = {
         ACCEPT: t('alwaysAllow'),

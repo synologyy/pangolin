@@ -46,7 +46,7 @@ class RedisManager {
             this.isEnabled = false;
             return;
         }
-        this.isEnabled = privateConfig.getRawPrivateConfig().flags?.enable_redis || false;
+        this.isEnabled = privateConfig.getRawPrivateConfig().flags.enable_redis || false;
         if (this.isEnabled) {
             this.initializeClients();
         }

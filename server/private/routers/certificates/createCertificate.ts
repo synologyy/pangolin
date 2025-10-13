@@ -15,15 +15,19 @@ import { Certificate, certificates, db, domains } from "@server/db";
 import logger from "@server/logger";
 import { Transaction } from "@server/db";
 import { eq, or, and, like } from "drizzle-orm";
-import { build } from "@server/build";
+import privateConfig from "#private/lib/config";
 
 /**
  * Checks if a certificate exists for the given domain.
  * If not, creates a new certificate in 'pending' state.
  * Wildcard certs cover subdomains.
  */
-export async function createCertificate(domainId: string, domain: string, trx: Transaction | typeof db) {
-    if (build !== "saas") {
+export async function createCertificate(
+    domainId: string,
+    domain: string,
+    trx: Transaction | typeof db
+) {
+    if (!privateConfig.getRawPrivateConfig().flags.generate_own_certificates) {
         return;
     }
 
@@ -39,7 +43,7 @@ export async function createCertificate(domainId: string, domain: string, trx: T
 
     let existing: Certificate[] = [];
     if (domainRecord.type == "ns") {
-        const domainLevelDown = domain.split('.').slice(1).join('.');
+        const domainLevelDown = domain.split(".").slice(1).join(".");
         existing = await trx
             .select()
             .from(certificates)
@@ -49,7 +53,7 @@ export async function createCertificate(domainId: string, domain: string, trx: T
                     eq(certificates.wildcard, true), // only NS domains can have wildcard certs
                     or(
                         eq(certificates.domain, domain),
-                        eq(certificates.domain, domainLevelDown), 
+                        eq(certificates.domain, domainLevelDown)
                     )
                 )
             );
@@ -67,9 +71,7 @@ export async function createCertificate(domainId: string, domain: string, trx: T
     }
 
     if (existing.length > 0) {
-        logger.info(
-            `Certificate already exists for domain ${domain}`
-        );
+        logger.info(`Certificate already exists for domain ${domain}`);
         return;
     }
 

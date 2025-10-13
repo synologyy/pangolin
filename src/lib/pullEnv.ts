@@ -48,7 +48,11 @@ export function pullEnv(): Env {
             enableClients:
                 process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
             hideSupporterKey:
-                process.env.HIDE_SUPPORTER_KEY === "true" ? true : false
+                process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
+            generateOwnCertificates:
+                process.env.GENERATE_OWN_CERTIFICATES === "true"
+                    ? true
+                    : false
         },
 
         branding: {
