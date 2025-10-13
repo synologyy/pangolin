@@ -3,8 +3,7 @@ import { defineConfig } from "drizzle-kit";
 import path from "path";
 
 const schema = [
-    path.join("server", "db", "sqlite", "schema.ts"),
-    path.join("server", "db", "sqlite", "privateSchema.ts")
+    path.join("server", "db", "sqlite", "schema"),
 ];
 
 export default defineConfig({

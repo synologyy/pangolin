@@ -2,8 +2,7 @@ import { defineConfig } from "drizzle-kit";
 import path from "path";
 
 const schema = [
-    path.join("server", "db", "pg", "schema.ts"),
-    path.join("server", "db", "pg", "privateSchema.ts")
+    path.join("server", "db", "pg", "schema"),
 ];
 
 export default defineConfig({

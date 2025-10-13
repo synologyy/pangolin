@@ -18,9 +18,9 @@ RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 # if the build is oss then remove the server/private directory
 RUN if [ "$BUILD" = "oss" ]; then rm -rf server/private; fi
 
-RUN if [ "$DATABASE" = "pg" ]; then npx drizzle-kit generate --dialect postgresql --schema ./server/db/pg/schema.ts --out init; else npx drizzle-kit generate --dialect $DATABASE --schema ./server/db/$DATABASE/schema.ts --out init; fi
+RUN if [ "$DATABASE" = "pg" ]; then npx drizzle-kit generate --dialect postgresql --schema ./server/db/pg/schema --out init; else npx drizzle-kit generate --dialect $DATABASE --schema ./server/db/$DATABASE/schema --out init; fi
 
-RUN mkdir -p dist 
+RUN mkdir -p dist
 RUN npm run next:build
 RUN node esbuild.mjs -e server/index.ts -o dist/server.mjs -b $BUILD
 RUN if [ "$DATABASE" = "pg" ]; then \
