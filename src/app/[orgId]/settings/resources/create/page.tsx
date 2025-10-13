@@ -478,7 +478,7 @@ export default function Page() {
 
         const baseData = baseForm.getValues();
         const isHttp = baseData.http;
-        const stickySessionData = targetsSettingsForm.getValues()
+        const stickySessionData = targetsSettingsForm.getValues();
 
         try {
             const payload = {
