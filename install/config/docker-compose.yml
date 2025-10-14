@@ -33,7 +33,7 @@ services:
     ports:
       - 51820:51820/udp
       - 21820:21820/udp
-      - 443:{{if .HybridMode}}8443{{else}}443{{end}}
+      - 443:443
       - 80:80
 {{end}}
   traefik:
