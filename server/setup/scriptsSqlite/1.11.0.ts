@@ -307,7 +307,7 @@ export default async function migration() {
         ).run();
 
         // 2. Select all rows
-        const rows = db.prepare(`SELECT resourceId FROM resources`).all() as {
+        const resources = db.prepare(`SELECT resourceId FROM resources`).all() as {
             resourceId: number;
         }[];
 
@@ -316,15 +316,26 @@ export default async function migration() {
             `UPDATE resources SET resourceGuid = ? WHERE resourceId = ?`
         );
 
-        for (const row of rows) {
+        for (const row of resources) {
             updateStmt.run(randomUUID(), row.resourceId);
+        }
+
+        // get all of the targets
+        const targets = db.prepare(`SELECT targetId FROM targets`).all() as {
+            targetId: number;
+        }[];
+
+        const insertTargetHealthCheckStmt = db.prepare(
+            `INSERT INTO targetHealthCheck (targetId) VALUES (?)`
+        );
+
+        for (const target of targets) {
+            insertTargetHealthCheckStmt.run(target.targetId);
         }
 
         db.prepare(
             `CREATE UNIQUE INDEX resources_resourceGuid_unique ON resources ('resourceGuid');`
         ).run();
-
-        db.prepare(`ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "settings" text`).run();
     })();
 
     console.log(`${version} migration complete`);

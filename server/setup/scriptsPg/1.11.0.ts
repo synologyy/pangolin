@@ -222,31 +222,81 @@ export default async function migration() {
         `);
 
         await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "settings" text;`);
-        await db.execute(sql`ALTER TABLE "targets" ADD COLUMN "rewritePath" text;`);
-        await db.execute(sql`ALTER TABLE "targets" ADD COLUMN "rewritePathType" text;`);
-        await db.execute(sql`ALTER TABLE "targets" ADD COLUMN "priority" integer DEFAULT 100 NOT NULL;`);
-        await db.execute(sql`ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "accountDomains" ADD CONSTRAINT "accountDomains_accountId_account_accountId_fk" FOREIGN KEY ("accountId") REFERENCES "public"."account"("accountId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "accountDomains" ADD CONSTRAINT "accountDomains_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "certificates" ADD CONSTRAINT "certificates_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "customers" ADD CONSTRAINT "customers_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "domainNamespaces" ADD CONSTRAINT "domainNamespaces_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE set null ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "exitNodeOrgs" ADD CONSTRAINT "exitNodeOrgs_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "exitNodeOrgs" ADD CONSTRAINT "exitNodeOrgs_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "limits" ADD CONSTRAINT "limits_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "loginPage" ADD CONSTRAINT "loginPage_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE set null ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "loginPage" ADD CONSTRAINT "loginPage_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE set null ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "loginPageOrg" ADD CONSTRAINT "loginPageOrg_loginPageId_loginPage_loginPageId_fk" FOREIGN KEY ("loginPageId") REFERENCES "public"."loginPage"("loginPageId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "loginPageOrg" ADD CONSTRAINT "loginPageOrg_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "remoteExitNodeSession" ADD CONSTRAINT "remoteExitNodeSession_remoteExitNodeId_remoteExitNode_id_fk" FOREIGN KEY ("remoteExitNodeId") REFERENCES "public"."remoteExitNode"("id") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "remoteExitNode" ADD CONSTRAINT "remoteExitNode_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "sessionTransferToken" ADD CONSTRAINT "sessionTransferToken_sessionId_session_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."session"("id") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "subscriptionItems" ADD CONSTRAINT "subscriptionItems_subscriptionId_subscriptions_subscriptionId_fk" FOREIGN KEY ("subscriptionId") REFERENCES "public"."subscriptions"("subscriptionId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_customerId_customers_customerId_fk" FOREIGN KEY ("customerId") REFERENCES "public"."customers"("customerId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "usage" ADD CONSTRAINT "usage_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "usageNotifications" ADD CONSTRAINT "usageNotifications_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "resourceHeaderAuth" ADD CONSTRAINT "resourceHeaderAuth_resourceId_resources_resourceId_fk" FOREIGN KEY ("resourceId") REFERENCES "public"."resources"("resourceId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "targetHealthCheck" ADD CONSTRAINT "targetHealthCheck_targetId_targets_targetId_fk" FOREIGN KEY ("targetId") REFERENCES "public"."targets"("targetId") ON DELETE cascade ON UPDATE no action;`);
+        await db.execute(
+            sql`ALTER TABLE "targets" ADD COLUMN "rewritePath" text;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "targets" ADD COLUMN "rewritePathType" text;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "targets" ADD COLUMN "priority" integer DEFAULT 100 NOT NULL;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "account" ADD CONSTRAINT "account_userId_user_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "accountDomains" ADD CONSTRAINT "accountDomains_accountId_account_accountId_fk" FOREIGN KEY ("accountId") REFERENCES "public"."account"("accountId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "accountDomains" ADD CONSTRAINT "accountDomains_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "certificates" ADD CONSTRAINT "certificates_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "customers" ADD CONSTRAINT "customers_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "domainNamespaces" ADD CONSTRAINT "domainNamespaces_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE set null ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "exitNodeOrgs" ADD CONSTRAINT "exitNodeOrgs_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "exitNodeOrgs" ADD CONSTRAINT "exitNodeOrgs_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "limits" ADD CONSTRAINT "limits_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "loginPage" ADD CONSTRAINT "loginPage_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE set null ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "loginPage" ADD CONSTRAINT "loginPage_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE set null ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "loginPageOrg" ADD CONSTRAINT "loginPageOrg_loginPageId_loginPage_loginPageId_fk" FOREIGN KEY ("loginPageId") REFERENCES "public"."loginPage"("loginPageId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "loginPageOrg" ADD CONSTRAINT "loginPageOrg_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "remoteExitNodeSession" ADD CONSTRAINT "remoteExitNodeSession_remoteExitNodeId_remoteExitNode_id_fk" FOREIGN KEY ("remoteExitNodeId") REFERENCES "public"."remoteExitNode"("id") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "remoteExitNode" ADD CONSTRAINT "remoteExitNode_exitNodeId_exitNodes_exitNodeId_fk" FOREIGN KEY ("exitNodeId") REFERENCES "public"."exitNodes"("exitNodeId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "sessionTransferToken" ADD CONSTRAINT "sessionTransferToken_sessionId_session_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."session"("id") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "subscriptionItems" ADD CONSTRAINT "subscriptionItems_subscriptionId_subscriptions_subscriptionId_fk" FOREIGN KEY ("subscriptionId") REFERENCES "public"."subscriptions"("subscriptionId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_customerId_customers_customerId_fk" FOREIGN KEY ("customerId") REFERENCES "public"."customers"("customerId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "usage" ADD CONSTRAINT "usage_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "usageNotifications" ADD CONSTRAINT "usageNotifications_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resourceHeaderAuth" ADD CONSTRAINT "resourceHeaderAuth_resourceId_resources_resourceId_fk" FOREIGN KEY ("resourceId") REFERENCES "public"."resources"("resourceId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "targetHealthCheck" ADD CONSTRAINT "targetHealthCheck_targetId_targets_targetId_fk" FOREIGN KEY ("targetId") REFERENCES "public"."targets"("targetId") ON DELETE cascade ON UPDATE no action;`
+        );
 
         const webauthnCredentialsQuery = await db.execute(
             sql`SELECT "credentialId", "publicKey", "userId", "signCount", "transports", "name", "lastUsed", "dateCreated" FROM "webauthnCredentials"`
@@ -308,13 +358,26 @@ export default async function migration() {
             `);
         }
 
+        // get all of the targets
+        const targetsQuery = await db.execute(
+            sql`SELECT "targetId" FROM "targets"`
+        );
+        const targets = targetsQuery.rows as {
+            targetId: number;
+        }[];
+
+        for (const target of targets) {
+            await db.execute(sql`
+            INSERT INTO "targetHealthCheck" ("targetId") 
+            VALUES (${target.targetId})
+            `);
+        }
+
         // 3. Add UNIQUE constraint now that values are filled
         await db.execute(sql`
             ALTER TABLE "resources"
             ADD CONSTRAINT "resources_resourceGuid_unique" UNIQUE("resourceGuid")
         `);
-
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN IF NOT EXISTS "settings" text`);
 
         await db.execute(sql`COMMIT`);
         console.log(`Updated credentialId and publicKey`);
