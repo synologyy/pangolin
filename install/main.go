@@ -160,6 +160,31 @@ func main() {
 	} else {
 		alreadyInstalled = true
 		fmt.Println("Looks like you already installed Pangolin!")
+		
+		// Check if MaxMind database exists and offer to update it
+		fmt.Println("\n=== MaxMind Database Update ===")
+		if _, err := os.Stat("config/GeoLite2-Country.mmdb"); err == nil {
+			fmt.Println("MaxMind GeoLite2 Country database found.")
+			if readBool(reader, "Would you like to update the MaxMind database to the latest version?", false) {
+				if err := downloadMaxMindDatabase(); err != nil {
+					fmt.Printf("Error updating MaxMind database: %v\n", err)
+					fmt.Println("You can try updating it manually later if needed.")
+				}
+			}
+		} else {
+			fmt.Println("MaxMind GeoLite2 Country database not found.")
+			if readBool(reader, "Would you like to download the MaxMind GeoLite2 database for geoblocking functionality?", false) {
+				if err := downloadMaxMindDatabase(); err != nil {
+					fmt.Printf("Error downloading MaxMind database: %v\n", err)
+					fmt.Println("You can try downloading it manually later if needed.")
+				}
+				// Now you need to update your config file accordingly to enable geoblocking
+				fmt.Println("Please remember to update your config/config.yml file to enable geoblocking! \n")
+				// add   maxmind_db_path: "./config/GeoLite2-Country.mmdb" under server
+				fmt.Println("Add the following line under the 'server' section:")
+				fmt.Println("  maxmind_db_path: \"./config/GeoLite2-Country.mmdb\"")
+			}
+		}
 	}
 
 	if !checkIsCrowdsecInstalledInCompose() {
