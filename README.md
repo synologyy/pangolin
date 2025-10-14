@@ -43,7 +43,7 @@ Check out the [quick install guide](https://docs.digpangolin.com) for how to ins
 
 ## Deployment Options
 
-| Deployment Type | Description |
+| <img width=500 /> | Description |
 |-----------------|--------------|
 | **Self-Host: Community Edition** | Free, open source, and AGPL-3 compliant. |
 | **Self-Host: Enterprise Edition** | Licensed under Fossorial Commercial License. Free for personal and hobbyist use, and for businesses earning under \$100K USD annually. |
