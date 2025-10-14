@@ -59,7 +59,8 @@ type TokenPayload = {
 };
 
 export class License {
-    private phoneHomeInterval = 6 * 60 * 60; // 6 hours = 6 * 60 * 60 = 21600 seconds
+    // private phoneHomeInterval = 6 * 60 * 60; // 6 hours = 6 * 60 * 60 = 21600 seconds
+    private phoneHomeInterval = 30; // 30 seconds for testing
     private serverBaseUrl = "https://api.fossorial.io";
     private validationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/validate`;
     private activationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/activate`;
@@ -255,6 +256,7 @@ LQIDAQAB
                     cached.type = payload.type;
                     cached.tier = payload.tier;
                     cached.iat = new Date(payload.iat * 1000);
+                    cached.terminateAt = new Date(payload.terminateAt);
 
                     // Encrypt the updated token before storing
                     const encryptedKey = encrypt(

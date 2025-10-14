@@ -125,7 +125,7 @@ export default function CreateDomainForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             baseDomain: "",
-            type: build == "oss" ? "wildcard" : "ns"
+            type: build == "oss" || !env.flags.usePangolinDns ? "wildcard" : "ns"
         }
     });
 

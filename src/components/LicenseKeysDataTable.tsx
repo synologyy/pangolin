@@ -80,7 +80,7 @@ export function LicenseKeysDataTable({
             }
         },
         {
-            accessorKey: "type",
+            accessorKey: "tier",
             header: ({ column }) => {
                 return (
                     <Button
