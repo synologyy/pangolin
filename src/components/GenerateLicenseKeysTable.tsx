@@ -105,6 +105,9 @@ export default function GenerateLicenseKeysTable({
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
+            },
+            cell: ({ row }) => {
+                return row.original.instanceName || "-";
             }
         },
         {

@@ -130,64 +130,6 @@ export function LayoutSidebar({
             </div>
 
             <div className="p-4 space-y-4 shrink-0">
-                {build === "saas" && (
-                    <div className="mb-3 pt-4">
-                        <div className="space-y-1">
-                            <Link
-                                href={`/${orgId}/settings/billing`}
-                                className={cn(
-                                    "flex items-center rounded transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
-                                    isSidebarCollapsed
-                                        ? "px-2 py-2 justify-center"
-                                        : "px-3 py-1.5"
-                                )}
-                                title={
-                                    isSidebarCollapsed
-                                        ? t("sidebarBilling")
-                                        : undefined
-                                }
-                            >
-                                <span
-                                    className={cn(
-                                        "flex-shrink-0",
-                                        !isSidebarCollapsed && "mr-2"
-                                    )}
-                                >
-                                    <CreditCard className="h-4 w-4" />
-                                </span>
-                                {!isSidebarCollapsed && (
-                                    <span>{t("sidebarBilling")}</span>
-                                )}
-                            </Link>
-                            <Link
-                                href={`/${orgId}/settings/license`}
-                                className={cn(
-                                    "flex items-center rounded transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
-                                    isSidebarCollapsed
-                                        ? "px-2 py-2 justify-center"
-                                        : "px-3 py-1.5"
-                                )}
-                                title={
-                                    isSidebarCollapsed
-                                        ? t("sidebarEnterpriseLicenses")
-                                        : undefined
-                                }
-                            >
-                                <span
-                                    className={cn(
-                                        "flex-shrink-0",
-                                        !isSidebarCollapsed && "mr-2"
-                                    )}
-                                >
-                                    <TicketCheck className="h-4 w-4" />
-                                </span>
-                                {!isSidebarCollapsed && (
-                                    <span>{t("sidebarEnterpriseLicenses")}</span>
-                                )}
-                            </Link>
-                        </div>
-                    </div>
-                )}
                 {build === "enterprise" && (
                     <div className="mb-3">
                         <SidebarLicenseButton

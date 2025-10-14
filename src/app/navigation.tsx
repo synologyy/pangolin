@@ -15,7 +15,8 @@ import {
     Globe, // Added from 'dev' branch
     MonitorUp, // Added from 'dev' branch
     Server,
-    Zap
+    Zap,
+    CreditCard
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -119,6 +120,24 @@ export const orgNavSections = (
                 href: "/{orgId}/settings/api-keys",
                 icon: <KeyRound className="h-4 w-4" />
             },
+            ...(build == "saas"
+                ? [
+                      {
+                          title: "sidebarBilling",
+                          href: "/{orgId}/settings/billing",
+                          icon: <CreditCard className="h-4 w-4" />
+                      }
+                  ]
+                : []),
+            ...(build == "saas"
+                ? [
+                      {
+                          title: "sidebarEnterpriseLicenses",
+                          href: "/{orgId}/settings/license",
+                          icon: <TicketCheck className="h-4 w-4" />
+                      }
+                  ]
+                : []),
             {
                 title: "sidebarSettings",
                 href: "/{orgId}/settings/general",

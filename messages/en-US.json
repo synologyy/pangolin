@@ -1230,7 +1230,7 @@
     "refreshError": "Failed to refresh data",
     "verified": "Verified",
     "pending": "Pending",
-    "sidebarBilling": "Payment & Billing",
+    "sidebarBilling": "Billing",
     "billing": "Billing",
     "orgBillingDescription": "Manage your billing information and subscriptions",
     "github": "GitHub",
@@ -1765,7 +1765,7 @@
     "licenseTableValidUntil": "Valid Until",
     "saasLicenseKeysSettingsTitle": "Enterprise Licenses",
     "saasLicenseKeysSettingsDescription": "Generate and manage Enterprise license keys for self-hosted Pangolin instances",
-    "sidebarEnterpriseLicenses": "Enterprise Licenses",
+    "sidebarEnterpriseLicenses": "Licenses",
     "generateLicenseKey": "Generate License Key",
     "generateLicenseKeyForm": {
         "validation": {
