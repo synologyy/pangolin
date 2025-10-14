@@ -29,6 +29,9 @@ RUN if [ "$DATABASE" = "pg" ]; then \
         node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs; \
     fi
 
+# test to make sure the build output is there and error if not
+RUN test -f dist/server.mjs
+
 RUN npm run build:cli
 
 FROM node:22-alpine AS runner

@@ -17,7 +17,6 @@ import * as orgIdp from "#private/routers/orgIdp";
 import * as billing from "#private/routers/billing";
 import * as license from "#private/routers/license";
 
-import { Router } from "express";
 import { verifySessionUserMiddleware } from "@server/middlewares";
 
 import { internalRouter as ir } from "@server/routers/internal";

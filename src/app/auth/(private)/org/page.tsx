@@ -69,6 +69,9 @@ export default async function OrgAuthPage(props: {
         } catch (e) {}
 
         if (!loginPage) {
+            console.debug(
+                `No login page found for host ${host}, redirecting to dashboard`
+            );
             redirect(env.app.dashboardUrl);
         }
 
@@ -90,6 +93,9 @@ export default async function OrgAuthPage(props: {
                 : subscriptionStatus?.tier === TierId.STANDARD;
 
         if (build === "saas" && !subscribed) {
+            console.log(
+                `Org ${loginPage.orgId} is not subscribed, redirecting to dashboard`
+            );
             redirect(env.app.dashboardUrl);
         }
 
@@ -116,6 +122,7 @@ export default async function OrgAuthPage(props: {
             }
         }
     } else {
+        console.log(`Host ${host} is the same`);
         redirect(env.app.dashboardUrl);
     }
 

@@ -113,11 +113,11 @@ export function PathMatchModal({
                     </div>
                 </div>
                 <CredenzaFooter className="gap-2">
-                    {value?.path && (
+                    {/* {value?.path && (
+                        )} */}
                         <Button variant="outline" onClick={handleClear}>
                             {t("clear")}
                         </Button>
-                    )}
                     <Button onClick={handleSave} disabled={!path.trim()}>
                         {t("saveChanges")}
                     </Button>
