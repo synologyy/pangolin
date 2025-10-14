@@ -96,7 +96,7 @@
     "siteWgDescription": "Use any WireGuard client to establish a tunnel. Manual NAT setup required.",
     "siteWgDescriptionSaas": "Use any WireGuard client to establish a tunnel. Manual NAT setup required.",
     "siteLocalDescription": "Local resources only. No tunneling.",
-    "siteLocalDescriptionSaas": "Local resources only. No tunneling.",
+    "siteLocalDescriptionSaas": "Local resources only. No tunneling. Only available on remote nodes.",
     "siteSeeAll": "See All Sites",
     "siteTunnelDescription": "Determine how you want to connect to your site",
     "siteNewtCredentials": "Newt Credentials",

@@ -15,7 +15,8 @@ import {
 } from "@server/db";
 import { eq } from "drizzle-orm";
 import { defaultRoleAllowedActions } from "@server/routers/role";
-import { FeatureId, limitsService, sandboxLimitSet, createCustomer } from "@server/lib/billing";
+import { FeatureId, limitsService, sandboxLimitSet } from "@server/lib/billing";
+import { createCustomer } from "#dynamic/lib/billing";
 import { usageService } from "@server/lib/billing/usageService";
 
 export async function createUserAccountOrg(
