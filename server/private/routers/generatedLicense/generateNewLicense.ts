@@ -4,25 +4,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
 import privateConfig from "@server/private/lib/config";
-
-export type NewLicenseKey = {
-    licenseKey: {
-        id: number;
-        instanceName: string | null;
-        instanceId: string;
-        licenseKey: string;
-        tier: string;
-        type: string;
-        quantity: number;
-        isValid: boolean;
-        updatedAt: string;
-        createdAt: string;
-        expiresAt: string;
-        orgId: string;
-    };
-};
-
-export type GenerateNewLicenseResponse = NewLicenseKey;
+import { GenerateNewLicenseResponse } from "@server/routers/generatedLicense/types";
 
 async function createNewLicense(orgId: string, licenseData: any): Promise<any> {
     try {

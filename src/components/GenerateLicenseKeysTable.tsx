@@ -8,14 +8,12 @@ import CopyToClipboard from "./CopyToClipboard";
 import { Badge } from "./ui/badge";
 import moment from "moment";
 import { DataTable } from "./ui/data-table";
-import { GeneratedLicenseKey } from "@server/private/routers/generatedLicense";
+import { GeneratedLicenseKey } from "@server/routers/generatedLicense/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { AxiosResponse } from "axios";
-import { GenerateNewLicenseResponse } from "@server/private/routers/generatedLicense/generateNewLicense";
 import GenerateLicenseKeyForm from "./GenerateLicenseKeyForm";
 
 type GnerateLicenseKeysTableProps = {

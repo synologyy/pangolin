@@ -4,9 +4,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
 import license from "#private/license/license";
-import { LicenseKeyCache } from "@server/license/license";
-
-export type ListLicenseKeysResponse = LicenseKeyCache[];
+import { ListLicenseKeysResponse } from "@server/routers/license/types";
 
 export async function listLicenseKeys(
     req: Request,

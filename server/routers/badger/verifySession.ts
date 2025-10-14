@@ -560,39 +560,6 @@ function allowed(res: Response, userData?: BasicUserData) {
     return response<VerifyUserResponse>(res, data);
 }
 
-async function createAccessTokenSession(
-    res: Response,
-    resource: Resource,
-    tokenItem: ResourceAccessToken
-) {
-    const token = generateSessionToken();
-    const sess = await createResourceSession({
-        resourceId: resource.resourceId,
-        token,
-        accessTokenId: tokenItem.accessTokenId,
-        sessionLength: tokenItem.sessionLength,
-        expiresAt: tokenItem.expiresAt,
-        doNotExtend: tokenItem.expiresAt ? true : false
-    });
-    const cookieName = `${config.getRawConfig().server.session_cookie_name}`;
-    const cookie = serializeResourceSessionCookie(
-        cookieName,
-        resource.fullDomain!,
-        token,
-        !resource.ssl,
-        new Date(sess.expiresAt)
-    );
-    res.appendHeader("Set-Cookie", cookie);
-    logger.debug("Access token is valid, creating new session");
-    return response<VerifyUserResponse>(res, {
-        data: { valid: true },
-        success: true,
-        error: false,
-        message: "Access allowed",
-        status: HttpCode.OK
-    });
-}
-
 async function isUserAllowedToAccessResource(
     userSessionId: string,
     resource: Resource

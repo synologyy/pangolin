@@ -4,9 +4,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
 import license from "#private/license/license";
-import { LicenseStatus } from "@server/license/license";
-
-export type GetLicenseStatusResponse = LicenseStatus;
+import { GetLicenseStatusResponse } from "@server/routers/license/types";
 
 export async function getLicenseStatus(
     req: Request,

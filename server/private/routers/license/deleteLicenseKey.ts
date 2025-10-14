@@ -9,15 +9,12 @@ import { db } from "@server/db";
 import { eq } from "drizzle-orm";
 import { licenseKey } from "@server/db";
 import license from "#private/license/license";
-import { LicenseStatus } from "@server/license/license";
 
 const paramsSchema = z
     .object({
         licenseKey: z.string().min(1).max(255)
     })
     .strict();
-
-export type DeleteLicenseKeyResponse = LicenseStatus;
 
 export async function deleteLicenseKey(
     req: Request,

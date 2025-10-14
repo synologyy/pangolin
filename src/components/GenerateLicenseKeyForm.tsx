@@ -10,13 +10,6 @@ import {
     FormMessage
 } from "@app/components/ui/form";
 import { Input } from "@app/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@app/components/ui/select";
 import { Checkbox } from "@app/components/ui/checkbox";
 import { toast } from "@app/hooks/useToast";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,7 +31,7 @@ import {
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { GenerateNewLicenseResponse } from "@server/private/routers/generatedLicense/generateNewLicense";
+import { GenerateNewLicenseResponse } from "@server/routers/generatedLicense/types";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { StrategySelect, StrategyOption } from "./StrategySelect";

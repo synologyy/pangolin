@@ -11,7 +11,7 @@ import { priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { IsSupporterKeyVisibleResponse } from "@server/routers/supporterKey";
 import LicenseStatusProvider from "@app/providers/LicenseStatusProvider";
-import { GetLicenseStatusResponse } from "#private/routers/license";
+import { GetLicenseStatusResponse } from "@server/routers/license/types";
 import LicenseViolation from "@app/components/LicenseViolation";
 import { cache } from "react";
 import { NextIntlClientProvider } from "next-intl";

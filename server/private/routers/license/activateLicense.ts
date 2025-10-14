@@ -6,15 +6,12 @@ import { response as sendResponse } from "@server/lib/response";
 import license from "#private/license/license";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { LicenseStatus } from "@server/license/license";
 
 const bodySchema = z
     .object({
         licenseKey: z.string().min(1).max(255)
     })
     .strict();
-
-export type ActivateLicenseStatus = LicenseStatus;
 
 export async function activateLicense(
     req: Request,
