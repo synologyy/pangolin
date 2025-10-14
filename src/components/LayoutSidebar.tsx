@@ -182,7 +182,9 @@ export function LayoutSidebar({
                                     >
                                         {build === "oss"
                                             ? t("communityEdition")
-                                            : t("enterpriseEdition")}
+                                            : build === "enterprise"
+                                              ? t("enterpriseEdition")
+                                              : "Pangolin Cloud"}
                                         <FaGithub size={12} />
                                     </Link>
                                 </div>

@@ -1791,7 +1791,7 @@
             },
             "business": {
                 "title": "Business Use",
-                "description": "For use within organizations, companies, or any commercial or revenue-generating activities."
+                "description": "For use within organizations, companies, or commercial or revenue-generating activities."
             }
         },
         "steps": {
@@ -1815,11 +1815,11 @@
         "alerts": {
             "commercialUseDisclosure": {
                 "title": "Usage Disclosure",
-                "description": "Select the license type that accurately reflects your intended use. Pangolin Enterprise is free for personal, non-commercial use only — limited to individuals generating less than $100,000 USD annually and not used in primary employment, business operations, or other commercial environments. All business or revenue-generating use requires a valid Business License and payment of the applicable licensing fee. Both personal and business users must comply with the Fossorial Commercial License Terms."
+                "description": "Select the license tier that accurately reflects your intended use. The Personal License permits free use of the Software for individual, non-commercial or small-scale commercial activities with annual gross revenue under $100,000 USD. Any use beyond these limits — including use within a business, organization, or other revenue-generating environment — requires a valid Enterprise License and payment of the applicable licensing fee. All users, whether Personal or Enterprise, must comply with the Fossorial Commercial License Terms."
             },
             "trialPeriodInformation": {
                 "title": "Trial Period Information",
-                "description": "This license key is valid for 7 days as a trial period. For a long-term license key, please contact sales@fossorial.io."
+                "description": "This License Key enables Enterprise features for a 7-day evaluation period. Continued access to Paid Features beyond the evaluation period requires activation under a valid Personal or Enterprise License. For Enterprise licensing, contact sales@fossorial.io."
             }
         },
         "form": {

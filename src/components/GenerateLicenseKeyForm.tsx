@@ -767,7 +767,21 @@ export default function GenerateLicenseKeyForm({
                             <AlertDescription>
                                 {t(
                                     "generateLicenseKeyForm.alerts.commercialUseDisclosure.description"
-                                )}
+                                ).split("Fossorial Commercial License Terms").map((part, index) => (
+                                    <span key={index}>
+                                        {part}
+                                        {index === 0 && (
+                                            <a
+                                                href="https://digpangolin.com/fcl.html"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-primary hover:underline"
+                                            >
+                                                Fossorial Commercial License Terms
+                                            </a>
+                                        )}
+                                    </span>
+                                ))}
                             </AlertDescription>
                         </Alert>
 
@@ -1229,7 +1243,7 @@ export default function GenerateLicenseKeyForm({
                                             <div>
                                                 I confirm that I am in compliance with the{" "}
                                                 <a
-                                                    href="https://digpangolin.com/fossorial-commercial-license.html"
+                                                    href="https://digpangolin.com/fcl.html"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-primary hover:underline"
