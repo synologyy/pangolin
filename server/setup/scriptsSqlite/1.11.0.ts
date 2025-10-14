@@ -51,8 +51,9 @@ export default async function migration() {
         );
         `).run();
 
+        db.prepare(`CREATE UNIQUE INDEX 'certificates_domain_unique' ON 'certificates' ('domain');`).run();
+
         db.prepare(`
-        CREATE UNIQUE INDEX 'certificates_domain_unique' ON 'certificates' ('domain');--> statement-breakpoint
         CREATE TABLE 'customers' (
             'customerId' text PRIMARY KEY NOT NULL,
             'orgId' text NOT NULL,

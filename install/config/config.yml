@@ -1,5 +1,5 @@
 # To see all available options, please visit the docs:
-# https://docs.digpangolin.com/self-host/advanced/config-file 
+# https://docs.digpangolin.com/
 
 gerbil:
     start_port: 51820
