@@ -1558,7 +1558,7 @@
     "autoLoginErrorNoRedirectUrl": "No redirect URL received from the identity provider.",
     "autoLoginErrorGeneratingUrl": "Failed to generate authentication URL.",
     "remoteExitNodeManageRemoteExitNodes": "Remote Nodes",
-    "remoteExitNodeDescription": "Self-host one or more remote nodes for tunnel exit servers",
+    "remoteExitNodeDescription": "Self-host one or more remote nodes to extend your network connectivity and reduce reliance on the cloud",
     "remoteExitNodes": "Nodes",
     "searchRemoteExitNodes": "Search nodes...",
     "remoteExitNodeAdd": "Add Node",
