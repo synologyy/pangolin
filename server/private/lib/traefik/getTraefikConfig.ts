@@ -213,11 +213,6 @@ export async function getTraefikConfig(
         });
     });
 
-    // make sure we have at least one resource
-    if (resourcesMap.size === 0) {
-        return {};
-    }
-
     const config_output: any = {
         http: {
             middlewares: {

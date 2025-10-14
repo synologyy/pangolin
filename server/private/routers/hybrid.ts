@@ -273,35 +273,6 @@ hybridRouter.get(
                 false // Dont include login pages
             );
 
-            const badgerMiddlewareName = "badger";
-            if (traefikConfig?.http?.middlewares) {
-                traefikConfig.http.middlewares[badgerMiddlewareName] = {
-                    plugin: {
-                        [badgerMiddlewareName]: {
-                            apiBaseUrl: new URL(
-                                "/api/v1",
-                                `http://${
-                                    config.getRawConfig().server
-                                        .internal_hostname
-                                }:${config.getRawConfig().server.internal_port}`
-                            ).href,
-                            userSessionCookieName:
-                                config.getRawConfig().server
-                                    .session_cookie_name,
-
-                            // deprecated
-                            accessTokenQueryParam:
-                                config.getRawConfig().server
-                                    .resource_access_token_param,
-
-                            resourceSessionRequestParam:
-                                config.getRawConfig().server
-                                    .resource_session_request_param
-                        }
-                    }
-                };
-            }
-
             return response(res, {
                 data: traefikConfig,
                 success: true,
