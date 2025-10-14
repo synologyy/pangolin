@@ -49,3 +49,4 @@ postgres/
 dynamic/
 *.mmdb
 scratch/
+tsconfig.json

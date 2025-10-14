@@ -15,6 +15,12 @@ RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
 
 RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
 
+# Copy the appropriate TypeScript configuration based on build type
+RUN if [ "$BUILD" = "oss" ]; then cp tsconfig.oss.json tsconfig.json; \
+    elif [ "$BUILD" = "saas" ]; then cp tsconfig.saas.json tsconfig.json; \
+    elif [ "$BUILD" = "enterprise" ]; then cp tsconfig.enterprise.json tsconfig.json; \
+    fi
+
 # if the build is oss then remove the server/private directory
 RUN if [ "$BUILD" = "oss" ]; then rm -rf server/private; fi
 

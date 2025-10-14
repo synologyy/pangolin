@@ -19,9 +19,9 @@
         "db:sqlite:studio": "drizzle-kit studio --config=./drizzle.sqlite.config.ts",
         "db:pg:studio": "drizzle-kit studio --config=./drizzle.pg.config.ts",
         "db:clear-migrations": "rm -rf server/migrations",
-        "set:oss": "echo 'export const build = \"oss\" as any;' > server/build.ts",
-        "set:saas": "echo 'export const build = \"saas\" as any;' > server/build.ts",
-        "set:enterprise": "echo 'export const build = \"enterprise\" as any;' > server/build.ts",
+        "set:oss": "echo 'export const build = \"oss\" as any;' > server/build.ts && cp tsconfig.oss.json tsconfig.json",
+        "set:saas": "echo 'export const build = \"saas\" as any;' > server/build.ts && cp tsconfig.saas.json tsconfig.json",
+        "set:enterprise": "echo 'export const build = \"enterprise\" as any;' > server/build.ts && cp tsconfig.enterprise.json tsconfig.json",
         "set:sqlite": "echo 'export * from \"./sqlite\";' > server/db/index.ts",
         "set:pg": "echo 'export * from \"./pg\";' > server/db/index.ts",
         "next:build": "next build",
@@ -29,8 +29,7 @@
         "build:pg": "mkdir -p dist && next build && node esbuild.mjs -e server/index.ts -o dist/server.mjs && node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs",
         "start": "ENVIRONMENT=prod node dist/migrations.mjs && ENVIRONMENT=prod NODE_ENV=development node --enable-source-maps dist/server.mjs",
         "email": "email dev --dir server/emails/templates --port 3005",
-        "build:cli": "node esbuild.mjs -e cli/index.ts -o dist/cli.mjs",
-        "db:sqlite:seed-exit-node": "sqlite3 config/db/db.sqlite \"INSERT INTO exitNodes (exitNodeId, name, address, endpoint, publicKey, listenPort, reachableAt, maxConnections, online, lastPing, type, region) VALUES (null, 'test', '10.0.0.1/24', 'localhost', 'MJ44MpnWGxMZURgxW/fWXDFsejhabnEFYDo60LQwK3A=', 1234, 'http://localhost:3003', 123, 1, null, 'gerbil', null);\""
+        "build:cli": "node esbuild.mjs -e cli/index.ts -o dist/cli.mjs"
     },
     "dependencies": {
         "@asteasolutions/zod-to-openapi": "^7.3.4",
