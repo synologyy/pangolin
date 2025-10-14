@@ -826,9 +826,7 @@ export default function ReverseProxyTargets(props: {
                                 <Info className="h-4 w-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                                <p>
-                                    {t("priorityDescription")}
-                                </p>
+                                <p>{t("priorityDescription")}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -1022,6 +1020,31 @@ export default function ReverseProxyTargets(props: {
                 return (
                     <div className="flex items-center w-full">
                         <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input shadow-2xs rounded-md">
+                            {selectedSite &&
+                                selectedSite.type === "newt" &&
+                                (() => {
+                                    const dockerState = getDockerStateForSite(
+                                        selectedSite.siteId
+                                    );
+                                    return (
+                                        <ContainersSelector
+                                            site={selectedSite}
+                                            containers={dockerState.containers}
+                                            isAvailable={
+                                                dockerState.isAvailable
+                                            }
+                                            onContainerSelect={
+                                                handleContainerSelectForTarget
+                                            }
+                                            onRefresh={() =>
+                                                refreshContainersForSite(
+                                                    selectedSite.siteId
+                                                )
+                                            }
+                                        />
+                                    );
+                                })()}
+
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -1083,30 +1106,6 @@ export default function ReverseProxyTargets(props: {
                                     </Command>
                                 </PopoverContent>
                             </Popover>
-                            {selectedSite &&
-                                selectedSite.type === "newt" &&
-                                (() => {
-                                    const dockerState = getDockerStateForSite(
-                                        selectedSite.siteId
-                                    );
-                                    return (
-                                        <ContainersSelector
-                                            site={selectedSite}
-                                            containers={dockerState.containers}
-                                            isAvailable={
-                                                dockerState.isAvailable
-                                            }
-                                            onContainerSelect={
-                                                handleContainerSelectForTarget
-                                            }
-                                            onRefresh={() =>
-                                                refreshContainersForSite(
-                                                    selectedSite.siteId
-                                                )
-                                            }
-                                        />
-                                    );
-                                })()}
 
                             <Select
                                 defaultValue={row.original.method ?? "http"}
