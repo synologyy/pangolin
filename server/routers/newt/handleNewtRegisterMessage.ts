@@ -1,5 +1,5 @@
 import { db, exitNodeOrgs, newts } from "@server/db";
-import { MessageHandler } from "../ws";
+import { MessageHandler } from "@server/routers/ws";
 import { exitNodes, Newt, resources, sites, Target, targets } from "@server/db";
 import { targetHealthCheck } from "@server/db";
 import { eq, and, sql, inArray } from "drizzle-orm";
@@ -10,12 +10,12 @@ import {
     findNextAvailableCidr,
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 import {
     selectBestExitNode,
     verifyExitNodeOrgAccess
-} from "@server/lib/exitNodes";
+} from "#dynamic/lib/exitNodes";
 import { fetchContainers } from "./dockerSocket";
 
 export type ExitNodePingResult = {

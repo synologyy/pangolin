@@ -17,8 +17,8 @@ import { sendEmail } from "@server/emails";
 import SendInviteLink from "@server/emails/templates/SendInviteLink";
 import { OpenAPITags, registry } from "@server/openApi";
 import { UserType } from "@server/types/UserTypes";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 
 const regenerateTracker = new NodeCache({ stdTTL: 3600, checkperiod: 600 });

@@ -17,7 +17,7 @@ import {
     addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "../olm/peers";
-import { sendToExitNode } from "@server/lib/exitNodes";
+import { sendToExitNode } from "#dynamic/lib/exitNodes";
 
 const updateClientParamsSchema = z
     .object({
@@ -29,7 +29,7 @@ const updateClientSchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
         siteIds: z
-            .array(z.string().transform(Number).pipe(z.number()))
+            .array(z.number().int().positive())
             .optional()
     })
     .strict();

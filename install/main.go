@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"embed"
 	"fmt"
 	"io"
@@ -48,10 +47,8 @@ type Config struct {
 	InstallGerbil             bool
 	TraefikBouncerKey         string
 	DoCrowdsecInstall         bool
+	EnableGeoblocking         bool
 	Secret                    string
-	HybridMode                bool
-	HybridId                  string
-	HybridSecret              string
 }
 
 type SupportedContainer string
@@ -98,24 +95,6 @@ func main() {
 
 		fmt.Println("\n=== Generating Configuration Files ===")
 
-		// If the secret and id are not generated then generate them
-		if config.HybridMode && (config.HybridId == "" || config.HybridSecret == "") {
-			// fmt.Println("Requesting hybrid credentials from cloud...")
-			credentials, err := requestHybridCredentials()
-			if err != nil {
-				fmt.Printf("Error requesting hybrid credentials: %v\n", err)
-				fmt.Println("Please obtain credentials manually from the dashboard and run the installer again.")
-				os.Exit(1)
-			}
-			config.HybridId = credentials.RemoteExitNodeId
-			config.HybridSecret = credentials.Secret
-			fmt.Printf("Your managed credentials have been obtained successfully.\n")
-			fmt.Printf("	ID:     %s\n", config.HybridId)
-			fmt.Printf("	Secret: %s\n", config.HybridSecret)
-			fmt.Println("Take these to the Pangolin dashboard https://pangolin.fossorial.io to adopt your node.")
-			readBool(reader, "Have you adopted your node?", true)
-		}
-
 		if err := createConfigFiles(config); err != nil {
 			fmt.Printf("Error creating config files: %v\n", err)
 			os.Exit(1)
@@ -124,6 +103,15 @@ func main() {
 		moveFile("config/docker-compose.yml", "docker-compose.yml")
 
 		fmt.Println("\nConfiguration files created successfully!")
+
+		// Download MaxMind database if requested
+		if config.EnableGeoblocking {
+			fmt.Println("\n=== Downloading MaxMind Database ===")
+			if err := downloadMaxMindDatabase(); err != nil {
+				fmt.Printf("Error downloading MaxMind database: %v\n", err)
+				fmt.Println("You can download it manually later if needed.")
+			}
+		}
 
 		fmt.Println("\n=== Starting installation ===")
 
@@ -172,9 +160,34 @@ func main() {
 	} else {
 		alreadyInstalled = true
 		fmt.Println("Looks like you already installed Pangolin!")
+		
+		// Check if MaxMind database exists and offer to update it
+		fmt.Println("\n=== MaxMind Database Update ===")
+		if _, err := os.Stat("config/GeoLite2-Country.mmdb"); err == nil {
+			fmt.Println("MaxMind GeoLite2 Country database found.")
+			if readBool(reader, "Would you like to update the MaxMind database to the latest version?", false) {
+				if err := downloadMaxMindDatabase(); err != nil {
+					fmt.Printf("Error updating MaxMind database: %v\n", err)
+					fmt.Println("You can try updating it manually later if needed.")
+				}
+			}
+		} else {
+			fmt.Println("MaxMind GeoLite2 Country database not found.")
+			if readBool(reader, "Would you like to download the MaxMind GeoLite2 database for geoblocking functionality?", false) {
+				if err := downloadMaxMindDatabase(); err != nil {
+					fmt.Printf("Error downloading MaxMind database: %v\n", err)
+					fmt.Println("You can try downloading it manually later if needed.")
+				}
+				// Now you need to update your config file accordingly to enable geoblocking
+				fmt.Println("Please remember to update your config/config.yml file to enable geoblocking! \n")
+				// add   maxmind_db_path: "./config/GeoLite2-Country.mmdb" under server
+				fmt.Println("Add the following line under the 'server' section:")
+				fmt.Println("  maxmind_db_path: \"./config/GeoLite2-Country.mmdb\"")
+			}
+		}
 	}
 
-	if !checkIsCrowdsecInstalledInCompose() && !checkIsPangolinInstalledWithHybrid() {
+	if !checkIsCrowdsecInstalledInCompose() {
 		fmt.Println("\n=== CrowdSec Install ===")
 		// check if crowdsec is installed
 		if readBool(reader, "Would you like to install CrowdSec?", false) {
@@ -230,7 +243,7 @@ func main() {
 		}
 	}
 
-	if !config.HybridMode && !alreadyInstalled {
+	if !alreadyInstalled {
 		// Setup Token Section
 		fmt.Println("\n=== Setup Token ===")
 
@@ -251,9 +264,7 @@ func main() {
 
 	fmt.Println("\nInstallation complete!")
 
-	if !config.HybridMode && !checkIsPangolinInstalledWithHybrid() {
-		fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
-	}
+	fmt.Printf("\nTo complete the initial setup, please visit:\nhttps://%s/auth/initial-setup\n", config.DashboardDomain)
 }
 
 func podmanOrDocker(reader *bufio.Reader) SupportedContainer {
@@ -328,66 +339,38 @@ func collectUserInput(reader *bufio.Reader) Config {
 
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
-	for {
-		response := readString(reader, "Do you want to install Pangolin as a cloud-managed (beta) node? (yes/no)", "")
-		if strings.EqualFold(response, "yes") || strings.EqualFold(response, "y") {
-			config.HybridMode = true
-			break
-		} else if strings.EqualFold(response, "no") || strings.EqualFold(response, "n") {
-			config.HybridMode = false
-			break
-		}
-		fmt.Println("Please answer 'yes' or 'no'")
+
+	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
+
+	// Set default dashboard domain after base domain is collected
+	defaultDashboardDomain := ""
+	if config.BaseDomain != "" {
+		defaultDashboardDomain = "pangolin." + config.BaseDomain
+	}
+	config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
+	config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
+	config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
+
+	// Email configuration
+	fmt.Println("\n=== Email Configuration ===")
+	config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
+
+	if config.EnableEmail {
+		config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
+		config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
+		config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
+		config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
+		config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
 	}
 
-	if config.HybridMode {
-		alreadyHaveCreds := readBool(reader, "Do you already have credentials from the dashboard? If not, we will create them later", false)
-
-		if alreadyHaveCreds {
-			config.HybridId = readString(reader, "Enter your ID", "")
-			config.HybridSecret = readString(reader, "Enter your secret", "")
-		}
-
-		// Try to get public IP as default
-		publicIP := getPublicIP()
-		if publicIP != "" {
-			fmt.Printf("Detected public IP: %s\n", publicIP)
-		}
-		config.DashboardDomain = readString(reader, "The public addressable IP address for this node or a domain pointing to it", publicIP)
-		config.InstallGerbil = true
-	} else {
-		config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
-
-		// Set default dashboard domain after base domain is collected
-		defaultDashboardDomain := ""
-		if config.BaseDomain != "" {
-			defaultDashboardDomain = "pangolin." + config.BaseDomain
-		}
-		config.DashboardDomain = readString(reader, "Enter the domain for the Pangolin dashboard", defaultDashboardDomain)
-		config.LetsEncryptEmail = readString(reader, "Enter email for Let's Encrypt certificates", "")
-		config.InstallGerbil = readBool(reader, "Do you want to use Gerbil to allow tunneled connections", true)
-
-		// Email configuration
-		fmt.Println("\n=== Email Configuration ===")
-		config.EnableEmail = readBool(reader, "Enable email functionality (SMTP)", false)
-
-		if config.EnableEmail {
-			config.EmailSMTPHost = readString(reader, "Enter SMTP host", "")
-			config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
-			config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
-			config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
-			config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
-		}
-
-		// Validate required fields
-		if config.BaseDomain == "" {
-			fmt.Println("Error: Domain name is required")
-			os.Exit(1)
-		}
-		if config.LetsEncryptEmail == "" {
-			fmt.Println("Error: Let's Encrypt email is required")
-			os.Exit(1)
-		}
+	// Validate required fields
+	if config.BaseDomain == "" {
+		fmt.Println("Error: Domain name is required")
+		os.Exit(1)
+	}
+	if config.LetsEncryptEmail == "" {
+		fmt.Println("Error: Let's Encrypt email is required")
+		os.Exit(1)
 	}
 
 	// Advanced configuration
@@ -395,6 +378,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 	fmt.Println("\n=== Advanced Configuration ===")
 
 	config.EnableIPv6 = readBool(reader, "Is your server IPv6 capable?", true)
+	config.EnableGeoblocking = readBool(reader, "Do you want to download the MaxMind GeoLite2 database for geoblocking functionality?", false)
 
 	if config.DashboardDomain == "" {
 		fmt.Println("Error: Dashboard Domain name is required")
@@ -426,11 +410,6 @@ func createConfigFiles(config Config) error {
 		}
 
 		if config.DoCrowdsecInstall && !strings.Contains(path, "crowdsec") {
-			return nil
-		}
-
-		// the hybrid does not need the dynamic config
-		if config.HybridMode && strings.Contains(path, "dynamic_config.yml") {
 			return nil
 		}
 
@@ -663,18 +642,30 @@ func checkPortsAvailable(port int) error {
 	return nil
 }
 
-func checkIsPangolinInstalledWithHybrid() bool {
-	// Check if config/config.yml exists and contains hybrid section
-	if _, err := os.Stat("config/config.yml"); err != nil {
-		return false
+func downloadMaxMindDatabase() error {
+	fmt.Println("Downloading MaxMind GeoLite2 Country database...")
+	
+	// Download the GeoLite2 Country database
+	if err := run("curl", "-L", "-o", "GeoLite2-Country.tar.gz", 
+		"https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-Country.tar.gz"); err != nil {
+		return fmt.Errorf("failed to download GeoLite2 database: %v", err)
 	}
-
-	// Read config file to check for hybrid section
-	content, err := os.ReadFile("config/config.yml")
-	if err != nil {
-		return false
+	
+	// Extract the database
+	if err := run("tar", "-xzf", "GeoLite2-Country.tar.gz"); err != nil {
+		return fmt.Errorf("failed to extract GeoLite2 database: %v", err)
 	}
-
-	// Check for hybrid section
-	return bytes.Contains(content, []byte("managed:"))
+	
+	// Find the .mmdb file and move it to the config directory
+	if err := run("bash", "-c", "mv GeoLite2-Country_*/GeoLite2-Country.mmdb config/"); err != nil {
+		return fmt.Errorf("failed to move GeoLite2 database to config directory: %v", err)
+	}
+	
+	// Clean up the downloaded files
+	if err := run("rm", "-rf", "GeoLite2-Country.tar.gz", "GeoLite2-Country_*"); err != nil {
+		fmt.Printf("Warning: failed to clean up temporary files: %v\n", err)
+	}
+	
+	fmt.Println("MaxMind GeoLite2 Country database downloaded successfully!")
+	return nil
 }

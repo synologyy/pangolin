@@ -10,11 +10,11 @@ import { db, UserOrg } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import { idp, idpOidcConfig, roles, userOrgs, users } from "@server/db";
 import { generateId } from "@server/auth/sessions/app";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
-import { getOrgTierData } from "@server/routers/private/billing";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { getOrgTierData } from "#dynamic/lib/billing";
+import { TierId } from "@server/lib/billing/tiers";
 
 const paramsSchema = z
     .object({

@@ -20,7 +20,7 @@ import { tlsNameSchema } from "@server/lib/schemas";
 import { subdomainSchema } from "@server/lib/schemas";
 import { registry } from "@server/openApi";
 import { OpenAPITags } from "@server/openApi";
-import { createCertificate } from "../private/certificates/createCertificate";
+import { createCertificate } from "#dynamic/routers/certificates/createCertificate";
 import { validateAndConstructDomain } from "@server/lib/domainUtils";
 import { validateHeaders } from "@server/lib/validators";
 import { build } from "@server/build";

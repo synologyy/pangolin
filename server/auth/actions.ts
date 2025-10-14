@@ -4,7 +4,6 @@ import { userActions, roleActions, userOrgs } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
-import { sendUsageNotification } from "@server/routers/org";
 
 export enum ActionsEnum {
     createOrgUser = "createOrgUser",

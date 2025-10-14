@@ -1,10 +1,9 @@
 import { db, sites } from "@server/db";
-import { MessageHandler } from "../ws";
+import { MessageHandler } from "@server/routers/ws";
 import { exitNodes, Newt } from "@server/db";
 import logger from "@server/logger";
-import config from "@server/lib/config";
 import { ne, eq, or, and, count } from "drizzle-orm";
-import { listExitNodes } from "@server/lib/exitNodes";
+import { listExitNodes } from "#dynamic/lib/exitNodes";
 
 export const handleNewtPingRequestMessage: MessageHandler = async (context) => {
     const { message, client, sendToClient } = context;

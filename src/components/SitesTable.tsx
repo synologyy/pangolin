@@ -303,7 +303,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 return (
                     <div className="flex items-center space-x-2">
                         <span>{originalRow.exitNodeName}</span>
-                        {build == "saas" && originalRow.exitNodeName && 
+                        {build == "saas" && originalRow.exitNodeName &&
                          ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(originalRow.exitNodeName.toLowerCase()) && (
                             <Badge variant="secondary">Cloud</Badge>
                         )}

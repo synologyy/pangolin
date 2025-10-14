@@ -1,19 +1,6 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import { ListRemoteExitNodesResponse } from "@server/routers/private/remoteExitNode";
+import { ListRemoteExitNodesResponse } from "@server/routers/remoteExitNode/types";
 import { AxiosResponse } from "axios";
 import ExitNodesTable, { RemoteExitNodeRow } from "./ExitNodesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";

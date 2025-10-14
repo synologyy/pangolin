@@ -33,9 +33,9 @@ import createHttpError from "http-errors";
 import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
-import { getCountryCodeForIp, remoteGetCountryCodeForIp } from "@server/lib/geoip";
-import { getOrgTierData } from "@server/routers/private/billing";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { getCountryCodeForIp } from "@server/lib/geoip";
+import { getOrgTierData } from "#dynamic/lib/billing";
+import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
 
 // We'll see if this speeds anything up
@@ -106,23 +106,23 @@ export async function verifyResourceSession(
 
         const clientIp = requestIp
             ? (() => {
-                logger.debug("Request IP:", { requestIp });
-                if (requestIp.startsWith("[") && requestIp.includes("]")) {
-                    // if brackets are found, extract the IPv6 address from between the brackets
-                    const ipv6Match = requestIp.match(/\[(.*?)\]/);
-                    if (ipv6Match) {
-                        return ipv6Match[1];
-                    }
-                }
+                  logger.debug("Request IP:", { requestIp });
+                  if (requestIp.startsWith("[") && requestIp.includes("]")) {
+                      // if brackets are found, extract the IPv6 address from between the brackets
+                      const ipv6Match = requestIp.match(/\[(.*?)\]/);
+                      if (ipv6Match) {
+                          return ipv6Match[1];
+                      }
+                  }
 
-                // ivp4
-                // split at last colon
-                const lastColonIndex = requestIp.lastIndexOf(":");
-                if (lastColonIndex !== -1) {
-                    return requestIp.substring(0, lastColonIndex);
-                }
-                return requestIp;
-            })()
+                  // ivp4
+                  // split at last colon
+                  const lastColonIndex = requestIp.lastIndexOf(":");
+                  if (lastColonIndex !== -1) {
+                      return requestIp.substring(0, lastColonIndex);
+                  }
+                  return requestIp;
+              })()
             : undefined;
 
         logger.debug("Client IP:", { clientIp });
@@ -137,11 +137,11 @@ export async function verifyResourceSession(
         const resourceCacheKey = `resource:${cleanHost}`;
         let resourceData:
             | {
-                resource: Resource | null;
-                pincode: ResourcePincode | null;
-                password: ResourcePassword | null;
-                headerAuth: ResourceHeaderAuth | null;
-            }
+                  resource: Resource | null;
+                  pincode: ResourcePincode | null;
+                  password: ResourcePassword | null;
+                  headerAuth: ResourceHeaderAuth | null;
+              }
             | undefined = cache.get(resourceCacheKey);
 
         if (!resourceData) {
@@ -194,11 +194,13 @@ export async function verifyResourceSession(
             // otherwise its undefined and we pass
         }
 
+        // IMPORTANT: ADD NEW AUTH CHECKS HERE OR WHEN TURNING OFF ALL OTHER AUTH METHODS IT WILL JUST PASS
         if (
-            !resource.sso &&
+            !sso &&
             !pincode &&
             !password &&
-            !resource.emailWhitelistEnabled
+            !resource.emailWhitelistEnabled &&
+            !headerAuth
         ) {
             logger.debug("Resource allowed because no auth");
             return allowed(res);
@@ -213,21 +215,21 @@ export async function verifyResourceSession(
             headers &&
             headers[
                 config.getRawConfig().server.resource_access_token_headers.id
-                ] &&
+            ] &&
             headers[
                 config.getRawConfig().server.resource_access_token_headers.token
-                ]
+            ]
         ) {
             const accessTokenId =
                 headers[
                     config.getRawConfig().server.resource_access_token_headers
                         .id
-                    ];
+                ];
             const accessToken =
                 headers[
                     config.getRawConfig().server.resource_access_token_headers
                         .token
-                    ];
+                ];
 
             const { valid, error, tokenItem } = await verifyResourceAccessToken(
                 {
@@ -293,14 +295,41 @@ export async function verifyResourceSession(
         }
 
         // check for HTTP Basic Auth header
+        const clientHeaderAuthKey = `headerAuth:${clientHeaderAuth}`;
         if (headerAuth && clientHeaderAuth) {
-            if(cache.get(clientHeaderAuth)) {
-                logger.debug("Resource allowed because header auth is valid (cached)");
+            if (cache.get(clientHeaderAuthKey)) {
+                logger.debug(
+                    "Resource allowed because header auth is valid (cached)"
+                );
                 return allowed(res);
-            }else if(await verifyPassword(clientHeaderAuth, headerAuth.headerAuthHash)){
-                cache.set(clientHeaderAuth, clientHeaderAuth);
+            } else if (
+                await verifyPassword(
+                    clientHeaderAuth,
+                    headerAuth.headerAuthHash
+                )
+            ) {
+                cache.set(clientHeaderAuthKey, clientHeaderAuth);
                 logger.debug("Resource allowed because header auth is valid");
                 return allowed(res);
+            }
+
+            if ( // we dont want to redirect if this is the only auth method and we did not pass here
+                !sso &&
+                !pincode &&
+                !password &&
+                !resource.emailWhitelistEnabled
+            ) {
+                return notAllowed(res);
+            }
+        } else if (headerAuth) {
+            // if there are no other auth methods we need to return unauthorized if nothing is provided
+            if (
+                !sso &&
+                !pincode &&
+                !password &&
+                !resource.emailWhitelistEnabled
+            ) {
+                return notAllowed(res);
             }
         }
 
@@ -477,7 +506,11 @@ function extractResourceSessionToken(
     return latest.token;
 }
 
-async function notAllowed(res: Response, redirectPath?: string, orgId?: string) {
+async function notAllowed(
+    res: Response,
+    redirectPath?: string,
+    orgId?: string
+) {
     let loginPage: LoginPage | null = null;
     if (orgId) {
         const { tier } = await getOrgTierData(orgId); // returns null in oss
@@ -491,14 +524,11 @@ async function notAllowed(res: Response, redirectPath?: string, orgId?: string) 
         let endpoint: string;
 
         if (loginPage && loginPage.domainId && loginPage.fullDomain) {
-            const secure = config.getRawConfig().app.dashboard_url?.startsWith("https");
+            const secure = config
+                .getRawConfig()
+                .app.dashboard_url?.startsWith("https");
             const method = secure ? "https" : "http";
             endpoint = `${method}://${loginPage.fullDomain}`;
-        } else if (config.isManagedMode()) {
-            endpoint =
-                config.getRawConfig().managed?.redirect_endpoint ||
-                config.getRawConfig().managed?.endpoint ||
-                "";
         } else {
             endpoint = config.getRawConfig().app.dashboard_url!;
         }
@@ -528,39 +558,6 @@ function allowed(res: Response, userData?: BasicUserData) {
         status: HttpCode.OK
     };
     return response<VerifyUserResponse>(res, data);
-}
-
-async function createAccessTokenSession(
-    res: Response,
-    resource: Resource,
-    tokenItem: ResourceAccessToken
-) {
-    const token = generateSessionToken();
-    const sess = await createResourceSession({
-        resourceId: resource.resourceId,
-        token,
-        accessTokenId: tokenItem.accessTokenId,
-        sessionLength: tokenItem.sessionLength,
-        expiresAt: tokenItem.expiresAt,
-        doNotExtend: tokenItem.expiresAt ? true : false
-    });
-    const cookieName = `${config.getRawConfig().server.session_cookie_name}`;
-    const cookie = serializeResourceSessionCookie(
-        cookieName,
-        resource.fullDomain!,
-        token,
-        !resource.ssl,
-        new Date(sess.expiresAt)
-    );
-    res.appendHeader("Set-Cookie", cookie);
-    logger.debug("Access token is valid, creating new session");
-    return response<VerifyUserResponse>(res, {
-        data: { valid: true },
-        success: true,
-        error: false,
-        message: "Access allowed",
-        status: HttpCode.OK
-    });
 }
 
 async function isUserAllowedToAccessResource(
@@ -803,11 +800,7 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
 
     if (!cachedCountryCode) {
-        if (config.isManagedMode()) {
-            cachedCountryCode = await remoteGetCountryCodeForIp(ip);
-        } else {
-            cachedCountryCode = await getCountryCodeForIp(ip); // do it locally
-        }
+        cachedCountryCode = await getCountryCodeForIp(ip); // do it locally
         // Cache for longer since IP geolocation doesn't change frequently
         cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
     }
@@ -817,7 +810,9 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
     return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
 }
 
-function extractBasicAuth(headers: Record<string, string> | undefined): string | undefined {
+function extractBasicAuth(
+    headers: Record<string, string> | undefined
+): string | undefined {
     if (!headers || (!headers.authorization && !headers.Authorization)) {
         return;
     }
@@ -833,8 +828,9 @@ function extractBasicAuth(headers: Record<string, string> | undefined): string |
     try {
         // Extract the base64 encoded credentials
         return authHeader.slice("Basic ".length);
-
     } catch (error) {
-        logger.debug("Basic Auth: Failed to decode credentials", { error: error instanceof Error ? error.message : "Unknown error" });
+        logger.debug("Basic Auth: Failed to decode credentials", {
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
     }
 }

@@ -4,9 +4,9 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
-import { resolveExitNodes } from "@server/lib/exitNodes";
-import config from "@server/lib/config";
+import { resolveExitNodes } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
+import config from "@server/lib/config";
 
 // Define Zod schema for request validation
 const getResolvedHostnameSchema = z.object({
@@ -36,7 +36,15 @@ export async function getResolvedHostname(
 
             const { hostname, publicKey } = parsedParams.data;
 
-            const baseDomain = config.getRawPrivateConfig().app.base_domain;
+            const dashboardUrl = config.getRawConfig().app.dashboard_url;
+
+            // extract the domain removing the http and stuff
+            const baseDomain = dashboardUrl
+                ? dashboardUrl
+                      .replace("http://", "")
+                      .replace("https://", "")
+                      .split("/")[0]
+                : null;
 
             // if the hostname ends with the base domain then send back a empty array
             if (baseDomain && hostname.endsWith(baseDomain)) {
@@ -49,6 +57,13 @@ export async function getResolvedHostname(
                 hostname,
                 publicKey
             );
+
+            if (resourceExitNodes.length === 0) {
+                // no exit nodes found, return empty array to force local routing
+                return res.status(HttpCode.OK).send({
+                    endpoints: [] // this should force to route locally
+                });
+            }
 
             endpoints = resourceExitNodes.map((node) => node.endpoint);
         }

@@ -555,13 +555,6 @@ authenticated.post(
     idp.updateOidcIdp
 );
 
-authenticated.delete(
-    "/idp/:idpId",
-    verifyApiKeyIsRoot,
-    verifyApiKeyHasAction(ActionsEnum.deleteIdp),
-    idp.deleteIdp
-);
-
 authenticated.get(
     "/idp",
     verifyApiKeyIsRoot,
@@ -603,15 +596,6 @@ authenticated.get(
     verifyApiKeyHasAction(ActionsEnum.listIdpOrgs),
     idp.listIdpOrgPolicies
 );
-
-if (build == "saas") {
-    authenticated.post(
-        `/org/:orgId/send-usage-notification`,
-        verifyApiKeyIsRoot, // We are the only ones who can use root key so its fine
-        verifyApiKeyHasAction(ActionsEnum.sendUsageNotification),
-        org.sendUsageNotification
-    );
-}
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",

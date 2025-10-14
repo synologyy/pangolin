@@ -21,7 +21,7 @@ import { subdomainSchema } from "@server/lib/schemas";
 import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
-import { createCertificate } from "../private/certificates/createCertificate";
+import { createCertificate } from "#dynamic/routers/certificates/createCertificate";
 import { getUniqueResourceName } from "@server/db/names";
 import { validateAndConstructDomain } from "@server/lib/domainUtils";
 
@@ -37,7 +37,8 @@ const createHttpResourceSchema = z
         subdomain: z.string().nullable().optional(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
-        domainId: z.string()
+        domainId: z.string(),
+        stickySession: z.boolean().optional(),
     })
     .strict()
     .refine(
@@ -191,6 +192,7 @@ async function createHttpResource(
 
     const { name, domainId } = parsedBody.data;
     const subdomain = parsedBody.data.subdomain;
+    const stickySession=parsedBody.data.stickySession;
 
     // Validate domain and construct full domain
     const domainResult = await validateAndConstructDomain(
@@ -254,7 +256,8 @@ async function createHttpResource(
                 subdomain: finalSubdomain,
                 http: true,
                 protocol: "tcp",
-                ssl: true
+                ssl: true,
+                stickySession: stickySession
             })
             .returning();
 

@@ -25,7 +25,7 @@ import {
     TargetData
 } from "./types";
 import logger from "@server/logger";
-import { createCertificate } from "@server/routers/private/certificates/createCertificate";
+import { createCertificate } from "#dynamic/routers/certificates/createCertificate";
 import { pickPort } from "@server/routers/target/helpers";
 import { resourcePassword } from "@server/db";
 import { hashPassword } from "@server/auth/password";

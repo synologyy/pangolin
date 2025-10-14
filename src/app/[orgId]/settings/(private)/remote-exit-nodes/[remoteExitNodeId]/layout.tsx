@@ -1,24 +1,11 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
 import { internal } from "@app/lib/api";
-import { GetRemoteExitNodeResponse } from "@server/routers/private/remoteExitNode";
+import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { getTranslations } from "next-intl/server";
-import RemoteExitNodeProvider from "@app/providers/PrivateRemoteExitNodeProvider";
+import RemoteExitNodeProvider from "@app/providers/RemoteExitNodeProvider";
 
 interface SettingsLayoutProps {
     children: React.ReactNode;

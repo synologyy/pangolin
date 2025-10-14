@@ -1,9 +1,8 @@
-import { db, exitNodes, targetHealthCheck } from "@server/db";
+import { db, targetHealthCheck } from "@server/db";
 import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { orgs, resources, sites, Target, targets } from "@server/db";
-import { build } from "@server/build";
+import { resources, sites, Target, targets } from "@server/db";
 import createPathRewriteMiddleware from "./middleware";
 import { sanitize, validatePathRewriteConfig } from "./utils";
 
@@ -105,7 +104,12 @@ export async function getTraefikConfig(
         const priority = row.priority ?? 100;
 
         // Create a unique key combining resourceId, path config, and rewrite config
-        const pathKey = [targetPath, pathMatchType, rewritePath, rewritePathType]
+        const pathKey = [
+            targetPath,
+            pathMatchType,
+            rewritePath,
+            rewritePathType
+        ]
             .filter(Boolean)
             .join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
@@ -120,13 +124,15 @@ export async function getTraefikConfig(
             );
 
             if (!validation.isValid) {
-                logger.error(`Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`);
+                logger.error(
+                    `Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`
+                );
                 return;
             }
 
             resourcesMap.set(key, {
                 resourceId: row.resourceId,
-                name: resourceName, 
+                name: resourceName,
                 fullDomain: row.fullDomain,
                 ssl: row.ssl,
                 http: row.http,
@@ -158,9 +164,6 @@ export async function getTraefikConfig(
             port: row.port,
             internalPort: row.internalPort,
             enabled: row.targetEnabled,
-            rewritePath: row.rewritePath,
-            rewritePathType: row.rewritePathType,
-            priority: row.priority,
             site: {
                 siteId: row.siteId,
                 type: row.siteType,
@@ -239,21 +242,18 @@ export async function getTraefikConfig(
                 preferWildcardCert = configDomain.prefer_wildcard_cert;
             }
 
-            let tls = {};
-            if (build == "oss") {
-                tls = {
-                    certResolver: certResolver,
-                    ...(preferWildcardCert
-                        ? {
-                            domains: [
-                                {
-                                    main: wildCard
-                                }
-                            ]
-                        }
-                        : {})
-                };
-            }
+            const tls = {
+                certResolver: certResolver,
+                ...(preferWildcardCert
+                    ? {
+                          domains: [
+                              {
+                                  main: wildCard
+                              }
+                          ]
+                      }
+                    : {})
+            };
 
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
@@ -264,11 +264,12 @@ export async function getTraefikConfig(
             ];
 
             // Handle path rewriting middleware
-            if (resource.rewritePath &&
-                resource.path &&
+            if (
+                resource.rewritePath !== null &&
+                resource.path !== null &&
                 resource.pathMatchType &&
-                resource.rewritePathType) {
-
+                resource.rewritePathType
+            ) {
                 // Create a unique middleware name
                 const rewriteMiddlewareName = `rewrite-r${resource.resourceId}-${key}`;
 
@@ -287,7 +288,10 @@ export async function getTraefikConfig(
                     }
 
                     // the middleware to the config
-                    Object.assign(config_output.http.middlewares, rewriteResult.middlewares);
+                    Object.assign(
+                        config_output.http.middlewares,
+                        rewriteResult.middlewares
+                    );
 
                     // middlewares to the router middleware chain
                     if (rewriteResult.chain) {
@@ -298,9 +302,13 @@ export async function getTraefikConfig(
                         routerMiddlewares.push(rewriteMiddlewareName);
                     }
 
-                    logger.debug(`Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`);
+                    logger.debug(
+                        `Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`
+                    );
                 } catch (error) {
-                    logger.error(`Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`);
+                    logger.error(
+                        `Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`
+                    );
                 }
             }
 
@@ -316,7 +324,9 @@ export async function getTraefikConfig(
                             value: string;
                         }[];
                     } catch (e) {
-                        logger.warn(`Failed to parse headers for resource ${resource.resourceId}: ${e}`);
+                        logger.warn(
+                            `Failed to parse headers for resource ${resource.resourceId}: ${e}`
+                        );
                     }
 
                     headersArr.forEach((header) => {
@@ -482,14 +492,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                cookie: {
-                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                    secure: resource.ssl,
-                                    httpOnly: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  cookie: {
+                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                      secure: resource.ssl,
+                                      httpOnly: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };
@@ -590,13 +600,13 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                ipStrategy: {
-                                    depth: 0,
-                                    sourcePort: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  ipStrategy: {
+                                      depth: 0,
+                                      sourcePort: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };

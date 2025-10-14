@@ -1,6 +1,8 @@
 "use client";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import AuthPageSettings, { AuthPageSettingsRef } from "@app/components/private/AuthPageSettings";
+import AuthPageSettings, {
+    AuthPageSettingsRef
+} from "@app/components/private/AuthPageSettings";
 
 import { Button } from "@app/components/ui/button";
 import { useOrgContext } from "@app/hooks/useOrgContext";
@@ -134,7 +136,10 @@ export default function GeneralPage() {
             });
 
             // Also save auth page settings if they have unsaved changes
-            if (build === "saas" && authPageSettingsRef.current?.hasUnsavedChanges()) {
+            if (
+                build === "saas" &&
+                authPageSettingsRef.current?.hasUnsavedChanges()
+            ) {
                 await authPageSettingsRef.current.saveAuthSettings();
             }
 
@@ -239,7 +244,9 @@ export default function GeneralPage() {
                 </SettingsSectionBody>
             </SettingsSection>
 
-            {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
+            {(build === "saas") && (
+                <AuthPageSettings ref={authPageSettingsRef} />
+            )}
 
             {/* Save Button */}
             <div className="flex justify-end">
@@ -276,7 +283,6 @@ export default function GeneralPage() {
                     </SettingsSectionFooter>
                 </SettingsSection>
             )}
-
         </SettingsContainer>
     );
 }

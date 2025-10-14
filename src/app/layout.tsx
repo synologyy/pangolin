@@ -4,19 +4,20 @@ import { Inter } from "next/font/google";
 import { ThemeProvider } from "@app/providers/ThemeProvider";
 import EnvProvider from "@app/providers/EnvProvider";
 import { pullEnv } from "@app/lib/pullEnv";
-import ThemeDataProvider from "@app/providers/PrivateThemeDataProvider";
+import ThemeDataProvider from "@app/providers/ThemeDataProvider";
 import SplashImage from "@app/components/private/SplashImage";
 import SupportStatusProvider from "@app/providers/SupporterStatusProvider";
 import { priv } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import { IsSupporterKeyVisibleResponse } from "@server/routers/supporterKey";
 import LicenseStatusProvider from "@app/providers/LicenseStatusProvider";
-import { GetLicenseStatusResponse } from "@server/routers/license";
+import { GetLicenseStatusResponse } from "@server/routers/license/types";
 import LicenseViolation from "@app/components/LicenseViolation";
 import { cache } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { Toaster } from "@app/components/ui/toaster";
+import { build } from "@server/build";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -57,13 +58,22 @@ export default async function RootLayout({
     supporterData.visible = res.data.data.visible;
     supporterData.tier = res.data.data.tier;
 
-    const licenseStatusRes = await cache(
-        async () =>
+    let licenseStatus: GetLicenseStatusResponse;
+    if (build === "enterprise") {
+        const licenseStatusRes = await cache(
+            async () =>
             await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
                 "/license/status"
             )
-    )();
-    const licenseStatus = licenseStatusRes.data.data;
+        )();
+        licenseStatus = licenseStatusRes.data.data;
+    } else {
+        licenseStatus = {
+            isHostLicensed: false,
+            isLicenseValid: false,
+            hostId: ""
+        };
+    }
 
     return (
         <html suppressHydrationWarning lang={locale}>

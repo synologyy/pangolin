@@ -10,7 +10,7 @@ import { eq } from "drizzle-orm";
 import { isWithinExpirationDate } from "oslo";
 import config from "@server/lib/config";
 import logger from "@server/logger";
-import { freeLimitSet, limitsService } from "@server/lib/private/billing";
+import { freeLimitSet, limitsService } from "@server/lib/billing";
 import { build } from "@server/build";
 
 export const verifyEmailBody = z

@@ -60,8 +60,8 @@ import {
 } from "@app/components/ui/select";
 import { Separator } from "@app/components/ui/separator";
 import { build } from "@server/build";
-import { usePrivateSubscriptionStatusContext } from "@app/hooks/privateUseSubscriptionStatusContext";
-import { TierId } from "@server/lib/private/billing/tiers";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { TierId } from "@server/lib/billing/tiers";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -98,8 +98,7 @@ export default function ResourceAuthenticationPage() {
     const router = useRouter();
     const t = useTranslations();
 
-    const subscription = usePrivateSubscriptionStatusContext();
-    const subscribed = subscription?.getTier() === TierId.STANDARD;
+    const subscription = useSubscriptionStatusContext();
 
     const [pageLoading, setPageLoading] = useState(true);
 
@@ -141,8 +140,10 @@ export default function ResourceAuthenticationPage() {
         useState(false);
     const [loadingRemoveResourcePincode, setLoadingRemoveResourcePincode] =
         useState(false);
-    const [loadingRemoveResourceHeaderAuth, setLoadingRemoveResourceHeaderAuth] =
-        useState(false);
+    const [
+        loadingRemoveResourceHeaderAuth,
+        setLoadingRemoveResourceHeaderAuth
+    ] = useState(false);
 
     const [isSetPasswordOpen, setIsSetPasswordOpen] = useState(false);
     const [isSetPincodeOpen, setIsSetPincodeOpen] = useState(false);
@@ -234,7 +235,7 @@ export default function ResourceAuthenticationPage() {
                 );
 
                 if (build === "saas") {
-                    if (subscribed) {
+                    if (subscription?.subscribed) {
                         setAllIdps(
                             idpsResponse.data.data.idps.map((idp) => ({
                                 id: idp.idpId,
@@ -835,11 +836,11 @@ export default function ResourceAuthenticationPage() {
                                 >
                                     <Bot size="14" />
                                     <span>
-                                        {t("resourceHeaderAuthProtection", {
-                                            status: authInfo.headerAuth
-                                                ? t("enabled")
-                                                : t("disabled")
-                                        })}
+                                        {authInfo.headerAuth
+                                            ? t("resourceHeaderAuthProtectionEnabled")
+                                            : t(
+                                                  "resourceHeaderAuthProtectionDisabled"
+                                              )}
                                     </span>
                                 </div>
                                 <Button

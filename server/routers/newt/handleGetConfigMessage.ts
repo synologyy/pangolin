@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MessageHandler } from "../ws";
+import { MessageHandler } from "@server/routers/ws";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import {
@@ -14,7 +14,7 @@ import {
 import { clients, clientSites, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
-import { sendToExitNode } from "@server/lib/exitNodes";
+import { sendToExitNode } from "#dynamic/lib/exitNodes";
 
 const inputSchema = z.object({
     publicKey: z.string(),

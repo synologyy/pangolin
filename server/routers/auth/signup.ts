@@ -21,12 +21,12 @@ import { hashPassword } from "@server/auth/password";
 import { checkValidInvite } from "@server/auth/checkValidInvite";
 import { passwordSchema } from "@server/auth/passwordSchema";
 import { UserType } from "@server/types/UserTypes";
-import { createUserAccountOrg } from "@server/lib/private/createUserAccountOrg";
+import { createUserAccountOrg } from "@server/lib/createUserAccountOrg";
 import { build } from "@server/build";
 import resend, {
     AudienceIds,
     moveEmailToAudience
-} from "@server/lib/private/resend";
+} from "#dynamic/lib/resend";
 
 export const signupBodySchema = z.object({
     email: z.string().toLowerCase().email(),

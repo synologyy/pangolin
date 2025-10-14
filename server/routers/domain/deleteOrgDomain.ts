@@ -7,8 +7,8 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { and, eq } from "drizzle-orm";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 
 const paramsSchema = z
     .object({

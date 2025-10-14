@@ -8,6 +8,7 @@ build-release:
 		exit 1; \
 	fi
 	docker buildx build \
+		--build-arg BUILD=oss
 		--build-arg DATABASE=sqlite \
 		--platform linux/arm64,linux/amd64 \
 		--tag fosrl/pangolin:latest \
@@ -16,6 +17,7 @@ build-release:
 		--tag fosrl/pangolin:$(tag) \
 		--push .
 	docker buildx build \
+		--build-arg BUILD=oss
 		--build-arg DATABASE=pg \
 		--platform linux/arm64,linux/amd64 \
 		--tag fosrl/pangolin:postgresql-latest \

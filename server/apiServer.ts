@@ -7,21 +7,21 @@ import {
     errorHandlerMiddleware,
     notFoundMiddleware
 } from "@server/middlewares";
-import { corsWithLoginPageSupport } from "@server/middlewares/private/corsWithLoginPage";
-import { authenticated, unauthenticated } from "@server/routers/external";
-import { router as wsRouter, handleWSUpgrade } from "@server/routers/ws";
+import { authenticated, unauthenticated } from "#dynamic/routers/external";
+import { router as wsRouter, handleWSUpgrade } from "#dynamic/routers/ws";
 import { logIncomingMiddleware } from "./middlewares/logIncoming";
 import { csrfProtectionMiddleware } from "./middlewares/csrfProtection";
 import helmet from "helmet";
-import { stripeWebhookHandler } from "@server/routers/private/billing/webhooks";
 import { build } from "./build";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import HttpCode from "./types/HttpCode";
 import requestTimeoutMiddleware from "./middlewares/requestTimeout";
-import { createStore } from "@server/lib/private/rateLimitStore";
-import hybridRouter from "@server/routers/private/hybrid";
+import { createStore } from "#dynamic/lib/rateLimitStore";
 import { stripDuplicateSesions } from "./middlewares/stripDuplicateSessions";
+import { corsWithLoginPageSupport } from "@server/lib/corsWithLoginPage";
+import { hybridRouter } from "#dynamic/routers/hybrid";
+import { billingWebhookHandler } from "#dynamic/routers/billing/webhooks";
 
 const dev = config.isDev;
 const externalPort = config.getRawConfig().server.external_port;
@@ -39,32 +39,30 @@ export function createApiServer() {
         apiServer.post(
             `${prefix}/billing/webhooks`,
             express.raw({ type: "application/json" }),
-            stripeWebhookHandler
+            billingWebhookHandler
         );
     }
 
     const corsConfig = config.getRawConfig().server.cors;
+    const options = {
+        ...(corsConfig?.origins
+            ? { origin: corsConfig.origins }
+            : {
+                  origin: (origin: any, callback: any) => {
+                      callback(null, true);
+                  }
+              }),
+        ...(corsConfig?.methods && { methods: corsConfig.methods }),
+        ...(corsConfig?.allowed_headers && {
+            allowedHeaders: corsConfig.allowed_headers
+        }),
+        credentials: !(corsConfig?.credentials === false)
+    };
 
-    if (build == "oss") {
-        const options = {
-            ...(corsConfig?.origins
-                ? { origin: corsConfig.origins }
-                : {
-                      origin: (origin: any, callback: any) => {
-                          callback(null, true);
-                      }
-                  }),
-            ...(corsConfig?.methods && { methods: corsConfig.methods }),
-            ...(corsConfig?.allowed_headers && {
-                allowedHeaders: corsConfig.allowed_headers
-            }),
-            credentials: !(corsConfig?.credentials === false)
-        };
-
+    if (build == "oss" || !corsConfig) {
         logger.debug("Using CORS options", options);
-
         apiServer.use(cors(options));
-    } else {
+    } else if (corsConfig) {
         // Use the custom CORS middleware with loginPage support
         apiServer.use(corsWithLoginPageSupport(corsConfig));
     }

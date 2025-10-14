@@ -7,7 +7,7 @@ import {
     errorHandlerMiddleware,
     notFoundMiddleware,
 } from "@server/middlewares";
-import { authenticated, unauthenticated } from "@server/routers/integration";
+import { authenticated, unauthenticated } from "#dynamic/routers/integration";
 import { logIncomingMiddleware } from "./middlewares/logIncoming";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";

@@ -40,13 +40,6 @@ export function LicenseStatusProvider({
         ) {
             return true;
         }
-        if (
-            licenseStatusState?.maxSites &&
-            licenseStatusState?.usedSites &&
-            licenseStatusState.usedSites > licenseStatusState.maxSites
-        ) {
-            return true;
-        }
         return false;
     };
 

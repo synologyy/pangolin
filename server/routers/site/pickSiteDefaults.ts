@@ -15,7 +15,7 @@ import config from "@server/lib/config";
 import { OpenAPITags, registry } from "@server/openApi";
 import { fromError } from "zod-validation-error";
 import { z } from "zod";
-import { listExitNodes } from "@server/lib/exitNodes";
+import { listExitNodes } from "#dynamic/lib/exitNodes";
 
 export type PickSiteDefaultsResponse = {
     exitNodeId: number;

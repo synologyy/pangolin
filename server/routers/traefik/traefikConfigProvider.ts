@@ -3,7 +3,7 @@ import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import config from "@server/lib/config";
 import { build } from "@server/build";
-import { getTraefikConfig } from "@server/lib/traefik";
+import { getTraefikConfig } from "#dynamic/lib/traefik";
 import { getCurrentExitNodeId } from "@server/lib/exitNodes";
 
 const badgerMiddlewareName = "badger";

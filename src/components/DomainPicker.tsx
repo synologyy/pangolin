@@ -32,7 +32,7 @@ import { createApiClient, formatAxiosError } from "@/lib/api";
 import { useEnvContext } from "@/hooks/useEnvContext";
 import { toast } from "@/hooks/useToast";
 import { ListDomainsResponse } from "@server/routers/domain/listDomains";
-import { CheckDomainAvailabilityResponse } from "@server/routers/domain/privateCheckDomainNamespaceAvailability";
+import { CheckDomainAvailabilityResponse } from "@server/routers/domain/types";
 import { AxiosResponse } from "axios";
 import { cn } from "@/lib/cn";
 import { useTranslations } from "next-intl";
@@ -92,6 +92,10 @@ export default function DomainPicker2({
     const { env } = useEnvContext();
     const api = createApiClient({ env });
     const t = useTranslations();
+
+    if (!env.flags.usePangolinDns) {
+        hideFreeDomain = true;
+    }
 
     const [subdomainInput, setSubdomainInput] = useState<string>("");
     const [selectedBaseDomain, setSelectedBaseDomain] =

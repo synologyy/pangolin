@@ -6,9 +6,9 @@ import logger from "@server/logger";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing/features";
-import { checkExitNodeOrg } from "@server/lib/exitNodes";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing/features";
+import { checkExitNodeOrg } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
 
 // Track sites that are already offline to avoid unnecessary queries

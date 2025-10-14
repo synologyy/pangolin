@@ -1,5 +1,5 @@
 import { Target, TargetHealthCheck, db, targetHealthCheck } from "@server/db";
-import { sendToClient } from "../ws";
+import { sendToClient } from "#dynamic/routers/ws";
 import logger from "@server/logger";
 import { eq, inArray } from "drizzle-orm";
 

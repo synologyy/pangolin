@@ -9,8 +9,8 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
-import { usageService } from "@server/lib/private/billing/usageService";
-import { FeatureId } from "@server/lib/private/billing";
+import { usageService } from "@server/lib/billing/usageService";
+import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 import { UserType } from "@server/types/UserTypes";
 
