@@ -96,7 +96,7 @@ export function LicenseKeysDataTable({
             },
             cell: ({ row }) => {
                 const tier = row.original.tier;
-                tier === "enterprise"
+                return tier === "enterprise"
                     ? t("licenseTierEnterprise")
                     : t("licenseTierPersonal");
             }

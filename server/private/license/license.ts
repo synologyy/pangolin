@@ -59,8 +59,7 @@ type TokenPayload = {
 };
 
 export class License {
-    // private phoneHomeInterval = 6 * 60 * 60; // 6 hours = 6 * 60 * 60 = 21600 seconds
-    private phoneHomeInterval = 30; // 30 seconds for testing
+    private phoneHomeInterval = 6 * 60 * 60; // 6 hours = 6 * 60 * 60 = 21600 seconds
     private serverBaseUrl = "https://api.fossorial.io";
     private validationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/validate`;
     private activationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/activate`;
