@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm";
 import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import { randomUUID } from "crypto";
 
-const version = "1.10.4";
+const version = "1.11.0";
 
 export default async function migration() {
     console.log(`Running setup script ${version}...`);
