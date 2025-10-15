@@ -52,7 +52,7 @@ Check out the [quick install guide](https://docs.digpangolin.com/self-host/quick
 | <img width=500 /> | Description |
 |-----------------|--------------|
 | **Self-Host** | Free, open source, and AGPL-3 compliant. |
-| **Pangolin Cloud** | Fully managed service with instant setup and pay-as-you-go pricing — no infrastructure required. Or, self-host your own [remote node](https://github.com/fosrl/remote-note) and connect to our control plane. |
+| **Pangolin Cloud** | Fully managed service with instant setup and pay-as-you-go pricing — no infrastructure required. Or, self-host your own [remote node](https://docs.digpangolin.com/manage/remote-node/nodes) and connect to our control plane. |
 
 ## Key Features
 
