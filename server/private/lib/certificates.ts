@@ -13,72 +13,163 @@
 
 import config from "./config";
 import { certificates, db } from "@server/db";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, or, inArray, sql } from "drizzle-orm";
 import { decryptData } from "@server/lib/encryption";
 import * as fs from "fs";
+import NodeCache from "node-cache";
+
+const encryptionKeyPath =
+    config.getRawPrivateConfig().server.encryption_key_path;
+
+if (!fs.existsSync(encryptionKeyPath)) {
+    throw new Error(
+        "Encryption key file not found. Please generate one first."
+    );
+}
+
+const encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
+const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
+
+// Define the return type for clarity and type safety
+export type CertificateResult = {
+    id: number;
+    domain: string;
+    queriedDomain: string; // The domain that was originally requested (may differ for wildcards)
+    wildcard: boolean | null;
+    certFile: string | null;
+    keyFile: string | null;
+    expiresAt: number | null;
+    updatedAt?: number | null;
+};
+
+// --- In-Memory Cache Implementation ---
+const certificateCache = new NodeCache({ stdTTL: 180 }); // Cache for 3 minutes (180 seconds)
 
 export async function getValidCertificatesForDomains(
-    domains: Set<string>
-): Promise<
-    Array<{
-        id: number;
-        domain: string;
-        wildcard: boolean | null;
-        certFile: string | null;
-        keyFile: string | null;
-        expiresAt: number | null;
-        updatedAt?: number | null;
-    }>
-> {
-    if (domains.size === 0) {
-        return [];
+    domains: Set<string>,
+    useCache: boolean = true
+): Promise<Array<CertificateResult>> {
+    const finalResults: CertificateResult[] = [];
+    const domainsToQuery = new Set<string>();
+
+    // 1. Check cache first if enabled
+    if (useCache) {
+        for (const domain of domains) {
+            const cachedCert = certificateCache.get<CertificateResult>(domain);
+            if (cachedCert) {
+                finalResults.push(cachedCert); // Valid cache hit
+            } else {
+                domainsToQuery.add(domain); // Cache miss or expired
+            }
+        }
+    } else {
+        // If caching is disabled, add all domains to the query set
+        domains.forEach((d) => domainsToQuery.add(d));
     }
 
-    const domainArray = Array.from(domains);
+    // 2. If all domains were resolved from the cache, return early
+    if (domainsToQuery.size === 0) {
+        return decryptFinalResults(finalResults);
+    }
 
-    // TODO: add more foreign keys to make this query more efficient - we dont need to keep getting every certificate
-    const validCerts = await db
-        .select({
-            id: certificates.certId,
-            domain: certificates.domain,
-            certFile: certificates.certFile,
-            keyFile: certificates.keyFile,
-            expiresAt: certificates.expiresAt,
-            updatedAt: certificates.updatedAt,
-            wildcard: certificates.wildcard
-        })
+    // 3. Prepare domains for the database query
+    const domainsToQueryArray = Array.from(domainsToQuery);
+    const parentDomainsToQuery = new Set<string>();
+
+    domainsToQueryArray.forEach((domain) => {
+        const parts = domain.split(".");
+        // A wildcard can only match a domain with at least two parts (e.g., example.com)
+        if (parts.length > 1) {
+            parentDomainsToQuery.add(parts.slice(1).join("."));
+        }
+    });
+
+    const parentDomainsArray = Array.from(parentDomainsToQuery);
+
+    // 4. Build and execute a single, efficient Drizzle query
+    // This query fetches all potential exact and wildcard matches in one database round-trip.
+    const potentialCerts = await db
+        .select()
         .from(certificates)
         .where(
             and(
                 eq(certificates.status, "valid"),
                 isNotNull(certificates.certFile),
-                isNotNull(certificates.keyFile)
+                isNotNull(certificates.keyFile),
+                or(
+                    // Condition for exact matches on the requested domains
+                    inArray(certificates.domain, domainsToQueryArray),
+                    // Condition for wildcard matches on the parent domains
+                    parentDomainsArray.length > 0
+                        ? and(
+                              inArray(certificates.domain, parentDomainsArray),
+                              eq(certificates.wildcard, true)
+                          )
+                        : // If there are no possible parent domains, this condition is false
+                          sql`false`
+                )
             )
         );
 
-    // Filter certificates for the specified domains and if it is a wildcard then you can match on everything up to the first dot
-    const validCertsFiltered = validCerts.filter((cert) => {
-        return (
-            domainArray.includes(cert.domain) ||
-            (cert.wildcard &&
-                domainArray.some((domain) =>
-                    domain.endsWith(`.${cert.domain}`)
-                ))
-        );
-    });
+    // 5. Process the database results, prioritizing exact matches over wildcards
+    const exactMatches = new Map<string, (typeof potentialCerts)[0]>();
+    const wildcardMatches = new Map<string, (typeof potentialCerts)[0]>();
 
-    const encryptionKeyPath = config.getRawPrivateConfig().server.encryption_key_path;
-
-    if (!fs.existsSync(encryptionKeyPath)) {
-        throw new Error(
-            "Encryption key file not found. Please generate one first."
-        );
+    for (const cert of potentialCerts) {
+        if (cert.wildcard) {
+            wildcardMatches.set(cert.domain, cert);
+        } else {
+            exactMatches.set(cert.domain, cert);
+        }
     }
 
-    const encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
-    const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
+    for (const domain of domainsToQuery) {
+        let foundCert: (typeof potentialCerts)[0] | undefined = undefined;
 
-    const validCertsDecrypted = validCertsFiltered.map((cert) => {
+        // Priority 1: Check for an exact match
+        if (exactMatches.has(domain)) {
+            foundCert = exactMatches.get(domain);
+        }
+        // Priority 2: Check for a wildcard match on the parent domain
+        else {
+            const parts = domain.split(".");
+            if (parts.length > 1) {
+                const parentDomain = parts.slice(1).join(".");
+                if (wildcardMatches.has(parentDomain)) {
+                    foundCert = wildcardMatches.get(parentDomain);
+                }
+            }
+        }
+
+        // If a certificate was found, format it, add to results, and cache it
+        if (foundCert) {
+            const resultCert: CertificateResult = {
+                id: foundCert.certId,
+                domain: foundCert.domain, // The actual domain of the cert record
+                queriedDomain: domain, // The domain that was originally requested
+                wildcard: foundCert.wildcard,
+                certFile: foundCert.certFile,
+                keyFile: foundCert.keyFile,
+                expiresAt: foundCert.expiresAt,
+                updatedAt: foundCert.updatedAt
+            };
+
+            finalResults.push(resultCert);
+
+            // Add to cache for future requests, using the *requested domain* as the key
+            if (useCache) {
+                certificateCache.set(domain, resultCert);
+            }
+        }
+    }
+
+    return decryptFinalResults(finalResults);
+}
+
+function decryptFinalResults(
+    finalResults: CertificateResult[]
+): CertificateResult[] {
+    const validCertsDecrypted = finalResults.map((cert) => {
         // Decrypt and save certificate file
         const decryptedCert = decryptData(
             cert.certFile!, // is not null from query
