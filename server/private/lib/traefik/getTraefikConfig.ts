@@ -304,6 +304,8 @@ export async function getTraefikConfig(
                 wildCard = resource.fullDomain;
             }
 
+            const configDomain = config.getDomain(resource.domainId);
+
             let tls = {};
             if (!privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
                 const domainParts = fullDomain.split(".");
@@ -331,7 +333,7 @@ export async function getTraefikConfig(
                 }
 
                 tls = {
-                    certResolver: resolverName,
+                    certResolver: certResolver,
                     ...(preferWildcardCert
                         ? {
                             domains: [
