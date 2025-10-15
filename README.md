@@ -35,11 +35,17 @@
 
 </div>
 
+<p align="center">
+    <strong>
+        Start testing Pangolin at <a href="https://pangolin.fossorial.io/auth/signup">pangolin.fossorial.io</a>
+    </strong>
+</p>
+
 Pangolin is a self-hosted tunneled reverse proxy server with identity and context aware access control, designed to easily expose and protect applications running anywhere. Pangolin acts as a central hub and connects isolated networks — even those behind restrictive firewalls — through encrypted tunnels, enabling easy access to remote services without opening ports or requiring a VPN.
 
 ## Installation
 
-Check out the [quick install guide](https://docs.digpangolin.com) for how to install and set up Pangolin.
+Check out the [quick install guide](https://docs.digpangolin.com/self-host/quick-install) for how to install and set up Pangolin.
 
 ## Deployment Options
 
