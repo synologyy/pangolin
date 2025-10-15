@@ -35,11 +35,17 @@
 
 </div>
 
+<p align="center">
+    <strong>
+        Start testing Pangolin at <a href="https://pangolin.fossorial.io/auth/signup">pangolin.fossorial.io</a>
+    </strong>
+</p>
+
 Pangolin is a self-hosted tunneled reverse proxy server with identity and context aware access control, designed to easily expose and protect applications running anywhere. Pangolin acts as a central hub and connects isolated networks — even those behind restrictive firewalls — through encrypted tunnels, enabling easy access to remote services without opening ports or requiring a VPN.
 
 ## Installation
 
-Check out the [quick install guide](https://docs.digpangolin.com) for how to install and set up Pangolin.
+Check out the [quick install guide](https://docs.digpangolin.com/self-host/quick-install) for how to install and set up Pangolin.
 
 ## Deployment Options
 
@@ -47,7 +53,7 @@ Check out the [quick install guide](https://docs.digpangolin.com) for how to ins
 |-----------------|--------------|
 | **Self-Host: Community Edition** | Free, open source, and AGPL-3 compliant. |
 | **Self-Host: Enterprise Edition** | Licensed under Fossorial Commercial License. Free for personal and hobbyist use, and for businesses earning under \$100K USD annually. |
-| **Pangolin Cloud** | Fully managed service with instant setup and pay-as-you-go pricing — no infrastructure required. Or, self-host your own [remote node](https://github.com/fosrl/remote-note) and connect to our control plane. |
+| **Pangolin Cloud** | Fully managed service with instant setup and pay-as-you-go pricing — no infrastructure required. Or, self-host your own [remote node](https://docs.digpangolin.com/manage/remote-node/nodes) and connect to our control plane. |
 
 ## Key Features
 
@@ -55,10 +61,10 @@ Pangolin packages everything you need for seamless application access and exposu
 
 | <img width=500 />                                                                                                                                                                                                                                                                                                                                                                | <img width=500 />                                                  |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| **Manage applications in one place**<br /><br /> Pangolin provides a unified dashboard where you can monitor, configure, and secure all of your services regardless of where they are hosted.                                                                                                                                   | <img src="public/screenshots/hero.png" /><tr></tr> |
-| **Reverse proxy across networks anywhere**<br /><br />Route traffic via tunnels to any private network. Pangolin works like a reverse proxy that spans multiple networks and handles routing, load balancing, health checking, and more to the right services on the other end.                                                                                                                                               | <img src="public/screenshots/sites.png" /><tr></tr>          |
-| **Enforce identity and context aware rules**<br /><br />Protect your applications with identity and context aware rules such as SSO, OIDC, PIN, password, temporary share links, geolocation, IP, and more.                                                                                                                                                                                                | <img src="public/auth-diagram1.png" /><tr></tr>               |
-| **Quickly connect Pangolin sites**<br /><br />Pangolin's lightweight [Newt](https://github.com/fosrl/newt) client runs in userspace and can run anywhere. Use it as a site connector to route traffic to backends across all of your environments.                                                                                                                                                                                   | <img src="public/clip.gif" /><tr></tr>               |
+| **Manage applications in one place**<br /><br /> Pangolin provides a unified dashboard where you can monitor, configure, and secure all of your services regardless of where they are hosted.                                                                                                                                                                                    | <img src="public/screenshots/hero.png" width=500 /><tr></tr> |
+| **Reverse proxy across networks anywhere**<br /><br />Route traffic via tunnels to any private network. Pangolin works like a reverse proxy that spans multiple networks and handles routing, load balancing, health checking, and more to the right services on the other end.                                                                                                  | <img src="public/screenshots/sites.png" width=500 /><tr></tr>          |
+| **Enforce identity and context aware rules**<br /><br />Protect your applications with identity and context aware rules such as SSO, OIDC, PIN, password, temporary share links, geolocation, IP, and more.                                                                                                                                                                                                | <img src="public/auth-diagram1.png" width=500 /><tr></tr>               |
+| **Quickly connect Pangolin sites**<br /><br />Pangolin's lightweight [Newt](https://github.com/fosrl/newt) client runs in userspace and can run anywhere. Use it as a site connector to route traffic to backends across all of your environments.                                                                                                                                                                                   | <img src="public/clip.gif" width=500 /><tr></tr>               |
 
 ## Get Started
 
