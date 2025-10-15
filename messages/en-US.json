@@ -1839,7 +1839,7 @@
             "companyPhoneNumber": "Company phone number",
             "country": "Country",
             "phoneNumberOptional": "Phone number (optional)",
-            "complianceConfirmation": "I confirm that I am in compliance with the Fossorial Commercial License and that reporting inaccurate information or misidentifying use of the product is a violation of the license."
+            "complianceConfirmation": "I confirm that the information I provided is accurate and that I am in compliance with the Fossorial Commercial License. Reporting inaccurate information or misidentifying use of the product is a violation of the license and may result in your key getting revoked."
         },
         "buttons": {
             "close": "Close",

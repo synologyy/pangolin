@@ -183,47 +183,47 @@ export async function listExitNodes(orgId: string, filterOnline = false, noCloud
         return [];
     }
 
-    // Enhanced online checking: consider node offline if either DB says offline OR HTTP ping fails
-    const nodesWithRealOnlineStatus = await Promise.all(
-        allExitNodes.map(async (node) => {
-            // If database says it's online, verify with HTTP ping
-            let online: boolean;
-            if (filterOnline && node.type == "remoteExitNode") {
-                try {
-                    const isActuallyOnline = await checkExitNodeOnlineStatus( 
-                        node.endpoint
-                    );
+    // // Enhanced online checking: consider node offline if either DB says offline OR HTTP ping fails
+    // const nodesWithRealOnlineStatus = await Promise.all(
+    //     allExitNodes.map(async (node) => {
+    //         // If database says it's online, verify with HTTP ping
+    //         let online: boolean;
+    //         if (filterOnline && node.type == "remoteExitNode") {
+    //             try {
+    //                 const isActuallyOnline = await checkExitNodeOnlineStatus( 
+    //                     node.endpoint
+    //                 );
 
-                    // set the item in the database if it is offline
-                    if (isActuallyOnline != node.online) {
-                        await db
-                            .update(exitNodes)
-                            .set({ online: isActuallyOnline })
-                            .where(eq(exitNodes.exitNodeId, node.exitNodeId));
-                    }
-                    online = isActuallyOnline;
-                } catch (error) {
-                    logger.warn(
-                        `Failed to check online status for exit node ${node.name} (${node.endpoint}): ${error instanceof Error ? error.message : "Unknown error"}`
-                    );
-                    online = false;
-                }
-            } else {
-                online = node.online;
-            }
+    //                 // set the item in the database if it is offline
+    //                 if (isActuallyOnline != node.online) {
+    //                     await db
+    //                         .update(exitNodes)
+    //                         .set({ online: isActuallyOnline })
+    //                         .where(eq(exitNodes.exitNodeId, node.exitNodeId));
+    //                 }
+    //                 online = isActuallyOnline;
+    //             } catch (error) {
+    //                 logger.warn(
+    //                     `Failed to check online status for exit node ${node.name} (${node.endpoint}): ${error instanceof Error ? error.message : "Unknown error"}`
+    //                 );
+    //                 online = false;
+    //             }
+    //         } else {
+    //             online = node.online;
+    //         }
 
-            return {
-                ...node,
-                online
-            };
-        })
-    );
+    //         return {
+    //             ...node,
+    //             online
+    //         };
+    //     })
+    // );
 
-    const remoteExitNodes = nodesWithRealOnlineStatus.filter(
+    const remoteExitNodes = allExitNodes.filter(
         (node) =>
             node.type === "remoteExitNode" && (!filterOnline || node.online)
     );
-    const gerbilExitNodes = nodesWithRealOnlineStatus.filter(
+    const gerbilExitNodes = allExitNodes.filter(
         (node) => node.type === "gerbil" && (!filterOnline || node.online) && !noCloud
     );
 

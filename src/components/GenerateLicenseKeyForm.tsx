@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import React from "react";
 import { StrategySelect, StrategyOption } from "./StrategySelect";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { InfoIcon, Check } from "lucide-react";
+import { InfoIcon, Check, Loader2 } from "lucide-react";
 import { useUserContext } from "@app/hooks/useUserContext";
 
 type FormProps = {
@@ -58,342 +58,72 @@ export default function GenerateLicenseKeyForm({
 
     const { user } = useUserContext();
 
-    const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [generatedKey, setGeneratedKey] = useState<string | null>(null);
-    const [formKey, setFormKey] = useState(0);
 
-    // Step 1: Email & License Type
-    const step1Schema = z.object({
-        email: z
-            .string()
-            .email(t("generateLicenseKeyForm.validation.emailRequired")),
-        useCaseType: z.enum(["personal", "business"], {
-            required_error: t(
-                "generateLicenseKeyForm.validation.useCaseTypeRequired"
-            )
-        })
+    // Personal form schema
+    const personalFormSchema = z.object({
+        email: z.string().email(),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        primaryUse: z.string().min(1),
+        stateProvinceRegion: z.string().min(1),
+        postalZipCode: z.string().min(1),
+        country: z.string().min(1),
+        phoneNumber: z.string().optional(),
+        agreedToTerms: z.boolean().refine((val) => val === true),
+        complianceConfirmed: z.boolean().refine((val) => val === true)
     });
 
-    // Step 2: Personal Information
-    const createStep2Schema = (useCaseType: string | undefined) =>
-        z
-            .object({
-                firstName: z
-                    .string()
-                    .min(
-                        1,
-                        t("generateLicenseKeyForm.validation.firstNameRequired")
-                    ),
-                lastName: z
-                    .string()
-                    .min(
-                        1,
-                        t("generateLicenseKeyForm.validation.lastNameRequired")
-                    ),
-                jobTitle: z.string().optional(),
-                primaryUse: z
-                    .string()
-                    .min(
-                        1,
-                        t(
-                            "generateLicenseKeyForm.validation.primaryUseRequired"
-                        )
-                    ),
-                industry: z.string().optional(),
-                prospectiveUsers: z.coerce.number().optional(),
-                prospectiveSites: z.coerce.number().optional()
-            })
-            .refine(
-                (data) => {
-                    // If business use case, job title is required
-                    if (useCaseType === "business") {
-                        return data.jobTitle;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.jobTitleRequiredBusiness"
-                    ),
-                    path: ["jobTitle"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If business use case, industry is required
-                    if (useCaseType === "business") {
-                        return data.industry;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.industryRequiredBusiness"
-                    ),
-                    path: ["industry"]
-                }
-            );
-
-    // Step 3: Contact Information
-    const createStep3Schema = (useCaseType: string | undefined) =>
-        z
-            .object({
-                stateProvinceRegion: z
-                    .string()
-                    .min(
-                        1,
-                        t(
-                            "generateLicenseKeyForm.validation.stateProvinceRegionRequired"
-                        )
-                    ),
-                postalZipCode: z
-                    .string()
-                    .min(
-                        1,
-                        t(
-                            "generateLicenseKeyForm.validation.postalZipCodeRequired"
-                        )
-                    ),
-                country: z.string().optional(),
-                phoneNumber: z.string().optional(),
-                companyName: z.string().optional(),
-                countryOfResidence: z.string().optional(),
-                companyWebsite: z.string().optional(),
-                companyPhoneNumber: z.string().optional()
-            })
-            .refine(
-                (data) => {
-                    // If business use case, company name is required
-                    if (useCaseType === "business") {
-                        return data.companyName;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.companyNameRequiredBusiness"
-                    ),
-                    path: ["companyName"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If business use case, country of residence is required
-                    if (useCaseType === "business") {
-                        return data.countryOfResidence;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.countryOfResidenceRequiredBusiness"
-                    ),
-                    path: ["countryOfResidence"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If personal use case, country is required
-                    if (useCaseType === "personal" && !data.country) {
-                        return false;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.countryRequiredPersonal"
-                    ),
-                    path: ["country"]
-                }
-            );
-
-    // Step 4: Terms & Generate
-    const step4Schema = z.object({
-        agreedToTerms: z
-            .boolean()
-            .refine(
-                (val) => val === true,
-                t("generateLicenseKeyForm.validation.agreeToTermsRequired")
-            ),
-        complianceConfirmed: z
-            .boolean()
-            .refine(
-                (val) => val === true,
-                t("generateLicenseKeyForm.validation.complianceConfirmationRequired")
-            )
-    });
-
-    // Complete form schema for final submission with conditional validation
-    const createFormSchema = (useCaseType: string | undefined) =>
-        z
-            .object({
-                email: z.string().email("Please enter a valid email address"),
-                useCaseType: z.enum(["personal", "business"]),
-                firstName: z.string().min(1, "First name is required"),
-                lastName: z.string().min(1, "Last name is required"),
-                jobTitle: z.string().optional(),
-                primaryUse: z
-                    .string()
-                    .min(1, "Please describe your primary use"),
-                industry: z.string().optional(),
-                prospectiveUsers: z.coerce.number().optional(),
-                prospectiveSites: z.coerce.number().optional(),
-                stateProvinceRegion: z
-                    .string()
-                    .min(
-                        1,
-                        t(
-                            "generateLicenseKeyForm.validation.stateProvinceRegionRequired"
-                        )
-                    ),
-                postalZipCode: z
-                    .string()
-                    .min(
-                        1,
-                        t(
-                            "generateLicenseKeyForm.validation.postalZipCodeRequired"
-                        )
-                    ),
-                country: z.string().optional(),
-                phoneNumber: z.string().optional(),
-                companyName: z.string().optional(),
-                countryOfResidence: z.string().optional(),
-                companyWebsite: z.string().optional(),
-                companyPhoneNumber: z.string().optional(),
-                agreedToTerms: z
-                    .boolean()
-                    .refine(
-                        (val) => val === true,
-                        t(
-                            "generateLicenseKeyForm.validation.agreeToTermsRequired"
-                        )
-                    ),
-                complianceConfirmed: z
-                    .boolean()
-                    .refine(
-                        (val) => val === true,
-                        t("generateLicenseKeyForm.validation.complianceConfirmationRequired")
-                    )
-            })
-            .refine(
-                (data) => {
-                    // If business use case, job title is required
-                    if (useCaseType === "business") {
-                        return data.jobTitle;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.jobTitleRequiredBusiness"
-                    ),
-                    path: ["jobTitle"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If business use case, industry is required
-                    if (useCaseType === "business") {
-                        return data.industry;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.industryRequiredBusiness"
-                    ),
-                    path: ["industry"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If business use case, company name is required
-                    if (useCaseType === "business") {
-                        return data.companyName;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.companyNameRequiredBusiness"
-                    ),
-                    path: ["companyName"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If business use case, country of residence is required
-                    if (useCaseType === "business") {
-                        return data.countryOfResidence;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.countryOfResidenceRequiredBusiness"
-                    ),
-                    path: ["countryOfResidence"]
-                }
-            )
-            .refine(
-                (data) => {
-                    // If personal use case, country is required
-                    if (useCaseType === "personal") {
-                        return data.country;
-                    }
-                    return true;
-                },
-                {
-                    message: t(
-                        "generateLicenseKeyForm.validation.countryRequiredPersonal"
-                    ),
-                    path: ["country"]
-                }
-            );
-
-    type FormData = z.infer<ReturnType<typeof createFormSchema>>;
-
-    // Base schema for form initialization (without conditional validation)
-    const baseFormSchema = z.object({
-        email: z.string().email("Please enter a valid email address"),
-        useCaseType: z.enum(["personal", "business"]),
-        firstName: z.string().min(1, "First name is required"),
-        lastName: z.string().min(1, "Last name is required"),
-        jobTitle: z.string().optional(),
-        primaryUse: z.string().min(1, "Please describe your primary use"),
-        industry: z.string().optional(),
+    // Business form schema
+    const businessFormSchema = z.object({
+        email: z.string().email(),
+        firstName: z.string().min(1),
+        lastName: z.string().min(1),
+        jobTitle: z.string().min(1),
+        primaryUse: z.string().min(1),
+        industry: z.string().min(1),
         prospectiveUsers: z.coerce.number().optional(),
         prospectiveSites: z.coerce.number().optional(),
-        stateProvinceRegion: z
-            .string()
-            .min(1, "State/Province/Region is required"),
-        postalZipCode: z.string().min(1, "Postal/ZIP Code is required"),
-        country: z.string().optional(),
-        phoneNumber: z.string().optional(),
-        companyName: z.string().optional(),
-        countryOfResidence: z.string().optional(),
+        companyName: z.string().min(1),
+        countryOfResidence: z.string().min(1),
+        stateProvinceRegion: z.string().min(1),
+        postalZipCode: z.string().min(1),
         companyWebsite: z.string().optional(),
         companyPhoneNumber: z.string().optional(),
-        agreedToTerms: z
-            .boolean()
-            .refine(
-                (val) => val === true,
-                t("generateLicenseKeyForm.validation.agreeToTermsRequired")
-            ),
-        complianceConfirmed: z
-            .boolean()
-            .refine(
-                (val) => val === true,
-                t("generateLicenseKeyForm.validation.complianceConfirmationRequired")
-            )
+        agreedToTerms: z.boolean().refine((val) => val === true),
+        complianceConfirmed: z.boolean().refine((val) => val === true)
     });
 
-    const form = useForm<FormData>({
-        resolver: zodResolver(baseFormSchema),
+    type PersonalFormData = z.infer<typeof personalFormSchema>;
+    type BusinessFormData = z.infer<typeof businessFormSchema>;
+
+    const [useCaseType, setUseCaseType] = useState<string | undefined>(
+        undefined
+    );
+
+    // Personal form
+    const personalForm = useForm<PersonalFormData>({
+        resolver: zodResolver(personalFormSchema),
         defaultValues: {
             email: user?.email || "",
-            useCaseType: undefined,
+            firstName: "",
+            lastName: "",
+            primaryUse: "",
+            stateProvinceRegion: "",
+            postalZipCode: "",
+            country: "",
+            phoneNumber: "",
+            agreedToTerms: false,
+            complianceConfirmed: false
+        }
+    });
+
+    // Business form
+    const businessForm = useForm<BusinessFormData>({
+        resolver: zodResolver(businessFormSchema),
+        defaultValues: {
+            email: user?.email || "",
             firstName: "",
             lastName: "",
             jobTitle: "",
@@ -401,12 +131,10 @@ export default function GenerateLicenseKeyForm({
             industry: "",
             prospectiveUsers: undefined,
             prospectiveSites: undefined,
-            stateProvinceRegion: "",
-            postalZipCode: "",
-            country: "",
-            phoneNumber: "",
             companyName: "",
             countryOfResidence: "",
+            stateProvinceRegion: "",
+            postalZipCode: "",
             companyWebsite: "",
             companyPhoneNumber: "",
             agreedToTerms: false,
@@ -414,62 +142,47 @@ export default function GenerateLicenseKeyForm({
         }
     });
 
-    const useCaseType = form.watch("useCaseType");
-    const [previousUseCaseType, setPreviousUseCaseType] = useState<
-        string | undefined
-    >(undefined);
-
-    // Reset form when use case type changes
-    React.useEffect(() => {
-        if (
-            useCaseType !== previousUseCaseType &&
-            useCaseType &&
-            previousUseCaseType
-        ) {
-            // Reset fields that are specific to use case type
-            form.setValue("jobTitle", "");
-            form.setValue("prospectiveUsers", undefined);
-            form.setValue("prospectiveSites", undefined);
-            form.setValue("companyName", "");
-            form.setValue("countryOfResidence", "");
-            form.setValue("companyWebsite", "");
-            form.setValue("companyPhoneNumber", "");
-            form.setValue("phoneNumber", "");
-            form.setValue("country", "");
-
-            setPreviousUseCaseType(useCaseType);
-        }
-    }, [useCaseType, previousUseCaseType, form]);
-
     // Reset form when dialog opens
     React.useEffect(() => {
         if (open) {
-            form.reset({
-                email: user?.email || "",
-                useCaseType: undefined,
-                firstName: "",
-                lastName: "",
-                jobTitle: "",
-                primaryUse: "",
-                industry: "",
-                prospectiveUsers: undefined,
-                prospectiveSites: undefined,
-                stateProvinceRegion: "",
-                postalZipCode: "",
-                country: "",
-                phoneNumber: "",
-                companyName: "",
-                countryOfResidence: "",
-                companyWebsite: "",
-                companyPhoneNumber: "",
-                agreedToTerms: false,
-                complianceConfirmed: false
-            });
-            setCurrentStep(1);
+            resetForm();
             setGeneratedKey(null);
-            setPreviousUseCaseType(undefined);
         }
-    }, [open, form, user?.email]);
+    }, [open]);
+
+    function resetForm() {
+        personalForm.reset({
+            email: user?.email || "",
+            firstName: "",
+            lastName: "",
+            primaryUse: "",
+            stateProvinceRegion: "",
+            postalZipCode: "",
+            country: "",
+            phoneNumber: "",
+            agreedToTerms: false,
+            complianceConfirmed: false
+        });
+
+        businessForm.reset({
+            email: user?.email || "",
+            firstName: "",
+            lastName: "",
+            jobTitle: "",
+            primaryUse: "",
+            industry: "",
+            prospectiveUsers: undefined,
+            prospectiveSites: undefined,
+            companyName: "",
+            countryOfResidence: "",
+            stateProvinceRegion: "",
+            postalZipCode: "",
+            companyWebsite: "",
+            companyPhoneNumber: "",
+            agreedToTerms: false,
+            complianceConfirmed: false
+        });
+    }
 
     const useCaseOptions: StrategyOption<"personal" | "business">[] = [
         {
@@ -540,161 +253,9 @@ export default function GenerateLicenseKeyForm({
         }
     ];
 
-    const steps = [
-        {
-            title: t("generateLicenseKeyForm.steps.emailLicenseType.title"),
-            description: t(
-                "generateLicenseKeyForm.steps.emailLicenseType.description"
-            )
-        },
-        {
-            title: t("generateLicenseKeyForm.steps.personalInformation.title"),
-            description: t(
-                "generateLicenseKeyForm.steps.personalInformation.description"
-            )
-        },
-        {
-            title: t("generateLicenseKeyForm.steps.contactInformation.title"),
-            description: t(
-                "generateLicenseKeyForm.steps.contactInformation.description"
-            )
-        },
-        {
-            title: t("generateLicenseKeyForm.steps.termsGenerate.title"),
-            description: t(
-                "generateLicenseKeyForm.steps.termsGenerate.description"
-            )
-        }
-    ];
-
-    const nextStep = async () => {
-        let isValid = false;
-
-        try {
-            // Validate current step based on step number
-            switch (currentStep) {
-                case 1:
-                    await step1Schema.parseAsync(form.getValues());
-                    isValid = true;
-                    break;
-                case 2:
-                    await createStep2Schema(
-                        form.getValues("useCaseType")
-                    ).parseAsync(form.getValues());
-                    isValid = true;
-                    break;
-                case 3:
-                    await createStep3Schema(
-                        form.getValues("useCaseType")
-                    ).parseAsync(form.getValues());
-                    isValid = true;
-                    break;
-                case 4:
-                    await step4Schema.parseAsync(form.getValues());
-                    isValid = true;
-                    break;
-                default:
-                    isValid = false;
-            }
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                // Set form errors for the current step fields
-                error.errors.forEach((err) => {
-                    const fieldName = err.path[0] as keyof FormData;
-                    form.setError(fieldName, {
-                        type: "manual",
-                        message: err.message
-                    });
-                });
-            }
-            return;
-        }
-
-        if (isValid && currentStep < steps.length) {
-            setCurrentStep(currentStep + 1);
-        }
-    };
-
-    const prevStep = () => {
-        if (currentStep > 1) {
-            setCurrentStep(currentStep - 1);
-        }
-    };
-
-    const onSubmit = async (values: FormData) => {
-        // Validate with the dynamic schema before submission
-        try {
-            await createFormSchema(values.useCaseType).parseAsync(values);
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                // Set form errors for any validation failures
-                error.errors.forEach((err) => {
-                    const fieldName = err.path[0] as keyof FormData;
-                    form.setError(fieldName, {
-                        type: "manual",
-                        message: err.message
-                    });
-                });
-                return;
-            }
-        }
-
+    const submitLicenseRequest = async (payload: any) => {
         setLoading(true);
         try {
-            const payload = {
-                email: values.email,
-                useCaseType: values.useCaseType,
-                personal:
-                    values.useCaseType === "personal"
-                        ? {
-                              firstName: values.firstName,
-                              lastName: values.lastName,
-                              aboutYou: {
-                                  primaryUse: values.primaryUse
-                              },
-                              personalInfo: {
-                                  stateProvinceRegion:
-                                      values.stateProvinceRegion,
-                                  postalZipCode: values.postalZipCode,
-                                  country: values.country,
-                                  phoneNumber: values.phoneNumber || ""
-                              }
-                          }
-                        : undefined,
-                business:
-                    values.useCaseType === "business"
-                        ? {
-                              firstName: values.firstName,
-                              lastName: values.lastName,
-                              jobTitle: values.jobTitle || "",
-                              aboutYou: {
-                                  primaryUse: values.primaryUse,
-                                  industry: values.industry,
-                                  prospectiveUsers:
-                                      values.prospectiveUsers || undefined,
-                                  prospectiveSites:
-                                      values.prospectiveSites || undefined
-                              },
-                              companyInfo: {
-                                  companyName: values.companyName || "",
-                                  countryOfResidence:
-                                      values.countryOfResidence || "",
-                                  stateProvinceRegion:
-                                      values.stateProvinceRegion,
-                                  postalZipCode: values.postalZipCode,
-                                  companyWebsite: values.companyWebsite || "",
-                                  companyPhoneNumber:
-                                      values.companyPhoneNumber || ""
-                              }
-                          }
-                        : undefined,
-                consent: {
-                    agreedToTerms: values.agreedToTerms,
-                    acknowledgedPrivacyPolicy: values.agreedToTerms,
-                    complianceConfirmed: values.complianceConfirmed
-                }
-            };
-
             const response = await api.put<
                 AxiosResponse<GenerateNewLicenseResponse>
             >(`/org/${orgId}/license`, payload);
@@ -724,546 +285,72 @@ export default function GenerateLicenseKeyForm({
         setLoading(false);
     };
 
-    const handleClose = () => {
-        setOpen(false);
-        setCurrentStep(1);
-        setGeneratedKey(null);
-        setFormKey((prev) => prev + 1); // Force form reset by changing key
-        form.reset({
-            email: user?.email || "",
-            useCaseType: undefined,
-            firstName: "",
-            lastName: "",
-            jobTitle: "",
-            primaryUse: "",
-            industry: "",
-            prospectiveUsers: undefined,
-            prospectiveSites: undefined,
-            stateProvinceRegion: "",
-            postalZipCode: "",
-            country: "",
-            phoneNumber: "",
-            companyName: "",
-            countryOfResidence: "",
-            companyWebsite: "",
-            companyPhoneNumber: "",
-            agreedToTerms: false,
-            complianceConfirmed: false
-        });
+    const onSubmitPersonal = async (values: PersonalFormData) => {
+        const payload = {
+            email: values.email,
+            useCaseType: "personal",
+            personal: {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                aboutYou: {
+                    primaryUse: values.primaryUse
+                },
+                personalInfo: {
+                    stateProvinceRegion: values.stateProvinceRegion,
+                    postalZipCode: values.postalZipCode,
+                    country: values.country,
+                    phoneNumber: values.phoneNumber || ""
+                }
+            },
+            business: undefined,
+            consent: {
+                agreedToTerms: values.agreedToTerms,
+                acknowledgedPrivacyPolicy: values.agreedToTerms,
+                complianceConfirmed: values.complianceConfirmed
+            }
+        };
+
+        await submitLicenseRequest(payload);
     };
 
-    const renderStepContent = () => {
-        switch (currentStep) {
-            case 1:
-                return (
-                    <div className="space-y-4">
-                        <Alert variant="neutral" className="mb-8">
-                            <InfoIcon className="h-4 w-4" />
-                            <AlertTitle>
-                                {t(
-                                    "generateLicenseKeyForm.alerts.commercialUseDisclosure.title"
-                                )}
-                            </AlertTitle>
-                            <AlertDescription>
-                                {t(
-                                    "generateLicenseKeyForm.alerts.commercialUseDisclosure.description"
-                                ).split("Fossorial Commercial License Terms").map((part, index) => (
-                                    <span key={index}>
-                                        {part}
-                                        {index === 0 && (
-                                            <a
-                                                href="https://digpangolin.com/fcl.html"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-primary hover:underline"
-                                            >
-                                                Fossorial Commercial License Terms
-                                            </a>
-                                        )}
-                                    </span>
-                                ))}
-                            </AlertDescription>
-                        </Alert>
+    const onSubmitBusiness = async (values: BusinessFormData) => {
+        const payload = {
+            email: values.email,
+            useCaseType: "business",
+            personal: undefined,
+            business: {
+                firstName: values.firstName,
+                lastName: values.lastName,
+                jobTitle: values.jobTitle,
+                aboutYou: {
+                    primaryUse: values.primaryUse,
+                    industry: values.industry,
+                    prospectiveUsers: values.prospectiveUsers || undefined,
+                    prospectiveSites: values.prospectiveSites || undefined
+                },
+                companyInfo: {
+                    companyName: values.companyName,
+                    countryOfResidence: values.countryOfResidence,
+                    stateProvinceRegion: values.stateProvinceRegion,
+                    postalZipCode: values.postalZipCode,
+                    companyWebsite: values.companyWebsite || "",
+                    companyPhoneNumber: values.companyPhoneNumber || ""
+                }
+            },
+            consent: {
+                agreedToTerms: values.agreedToTerms,
+                acknowledgedPrivacyPolicy: values.agreedToTerms,
+                complianceConfirmed: values.complianceConfirmed
+            }
+        };
 
-                        <FormField
-                            control={form.control}
-                            name="useCaseType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel className="mb-2">
-                                        {t(
-                                            "generateLicenseKeyForm.form.useCaseQuestion"
-                                        )}
-                                    </FormLabel>
-                                    <StrategySelect
-                                        options={useCaseOptions}
-                                        defaultValue={field.value}
-                                        onChange={(value) => {
-                                            field.onChange(value);
-                                            // Reset form when use case type changes
-                                            form.reset({
-                                                email: user?.email || "",
-                                                useCaseType: value,
-                                                firstName: "",
-                                                lastName: "",
-                                                jobTitle: "",
-                                                primaryUse: "",
-                                                industry: "",
-                                                prospectiveUsers: undefined,
-                                                prospectiveSites: undefined,
-                                                stateProvinceRegion: "",
-                                                postalZipCode: "",
-                                                country: "",
-                                                phoneNumber: "",
-                                                companyName: "",
-                                                countryOfResidence: "",
-                                                companyWebsite: "",
-                                                companyPhoneNumber: "",
-                                                agreedToTerms: false,
-                                                complianceConfirmed: false
-                                            });
-                                        }}
-                                        cols={2}
-                                    />
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                );
+        await submitLicenseRequest(payload);
+    };
 
-            case 2:
-                return (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="firstName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {t(
-                                                "generateLicenseKeyForm.form.firstName"
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="lastName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {t(
-                                                "generateLicenseKeyForm.form.lastName"
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {useCaseType === "business" && (
-                            <FormField
-                                control={form.control}
-                                name="jobTitle"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {t(
-                                                "generateLicenseKeyForm.form.jobTitle"
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        )}
-
-                        <div className="space-y-4">
-                            <FormField
-                                control={form.control}
-                                name="primaryUse"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            {t(
-                                                "generateLicenseKeyForm.form.primaryUseQuestion"
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {useCaseType === "business" && (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="industry"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.industryQuestion"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="prospectiveUsers"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.prospectiveUsersQuestion"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="prospectiveSites"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.prospectiveSitesQuestion"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        {...field}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
-                            )}
-                        </div>
-                    </div>
-                );
-
-            case 3:
-                return (
-                    <div className="space-y-4">
-                        {useCaseType === "business" && (
-                            <div className="space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="companyName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                {t(
-                                                    "generateLicenseKeyForm.form.companyName"
-                                                )}
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="countryOfResidence"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                {t(
-                                                    "generateLicenseKeyForm.form.countryOfResidence"
-                                                )}
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="stateProvinceRegion"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.stateProvinceRegion"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="postalZipCode"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.postalZipCode"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="companyWebsite"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.companyWebsite"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="companyPhoneNumber"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.companyPhoneNumber"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {useCaseType === "personal" && (
-                            <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="stateProvinceRegion"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.stateProvinceRegion"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="postalZipCode"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.postalZipCode"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="country"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.country"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="phoneNumber"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t(
-                                                        "generateLicenseKeyForm.form.phoneNumberOptional"
-                                                    )}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                );
-
-            case 4:
-                return (
-                    <div className="space-y-4 pt-4">
-                        <FormField
-                            control={form.control}
-                            name="agreedToTerms"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel className="text-sm font-normal">
-                                            <div>
-                                                {t("signUpTerms.IAgreeToThe")}{" "}
-                                                <a
-                                                    href="https://digpangolin.com/terms-of-service.html"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-primary hover:underline"
-                                                >
-                                                    {t(
-                                                        "signUpTerms.termsOfService"
-                                                    )}{" "}
-                                                </a>
-                                                {t("signUpTerms.and")}{" "}
-                                                <a
-                                                    href="https://digpangolin.com/privacy-policy.html"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-primary hover:underline"
-                                                >
-                                                    {t(
-                                                        "signUpTerms.privacyPolicy"
-                                                    )}
-                                                </a>
-                                            </div>
-                                        </FormLabel>
-                                        <FormMessage />
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-                        
-                        <FormField
-                            control={form.control}
-                            name="complianceConfirmed"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                        <FormLabel className="text-sm font-normal">
-                                            <div>
-                                                I confirm that I am in compliance with the{" "}
-                                                <a
-                                                    href="https://digpangolin.com/fcl.html"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-primary hover:underline"
-                                                >
-                                                    Fossorial Commercial License
-                                                </a>{" "}
-                                                and that reporting inaccurate information or misidentifying use of the product is a violation of the license.
-                                            </div>
-                                        </FormLabel>
-                                        <FormMessage />
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                );
-
-            default:
-                return null;
-        }
+    const handleClose = () => {
+        setOpen(false);
+        setGeneratedKey(null);
+        resetForm();
     };
 
     return (
@@ -1272,40 +359,13 @@ export default function GenerateLicenseKeyForm({
                 <CredenzaHeader>
                     <CredenzaTitle>{t("generateLicenseKey")}</CredenzaTitle>
                     <CredenzaDescription>
-                        {steps[currentStep - 1]?.description}
+                        {t(
+                            "generateLicenseKeyForm.steps.emailLicenseType.description"
+                        )}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
                     <div className="space-y-6">
-                        {/* Progress indicator */}
-                        <div className="flex justify-between mb-4">
-                            {steps.map((step, index) => (
-                                <div
-                                    key={index}
-                                    className="flex flex-col items-center"
-                                >
-                                    <div
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
-                                            index + 1 <= currentStep
-                                                ? "bg-primary text-primary-foreground"
-                                                : "bg-muted text-muted-foreground"
-                                        }`}
-                                    >
-                                        {index + 1}
-                                    </div>
-                                    <span
-                                        className={`text-sm font-medium ${
-                                            index + 1 <= currentStep
-                                                ? "text-primary"
-                                                : "text-muted-foreground"
-                                        }`}
-                                    >
-                                        {step.title}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-
                         {generatedKey ? (
                             <div className="space-y-4">
                                 {useCaseType === "business" && (
@@ -1329,14 +389,713 @@ export default function GenerateLicenseKeyForm({
                                 />
                             </div>
                         ) : (
-                            <Form {...form} key={formKey}>
-                                <form
-                                    onSubmit={form.handleSubmit(onSubmit)}
-                                    className="space-y-4"
-                                >
-                                    {renderStepContent()}
-                                </form>
-                            </Form>
+                            <>
+                                <Alert variant="neutral">
+                                    <InfoIcon className="h-4 w-4" />
+                                    <AlertTitle>
+                                        {t(
+                                            "generateLicenseKeyForm.alerts.commercialUseDisclosure.title"
+                                        )}
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {t(
+                                            "generateLicenseKeyForm.alerts.commercialUseDisclosure.description"
+                                        )
+                                            .split(
+                                                "Fossorial Commercial License Terms"
+                                            )
+                                            .map((part, index) => (
+                                                <span key={index}>
+                                                    {part}
+                                                    {index === 0 && (
+                                                        <a
+                                                            href="https://digpangolin.com/fcl.html"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-primary hover:underline"
+                                                        >
+                                                            Fossorial Commercial
+                                                            License Terms
+                                                        </a>
+                                                    )}
+                                                </span>
+                                            ))}
+                                    </AlertDescription>
+                                </Alert>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">
+                                        {t(
+                                            "generateLicenseKeyForm.form.useCaseQuestion"
+                                        )}
+                                    </label>
+                                    <div className="mt-2">
+                                        <StrategySelect
+                                            options={useCaseOptions}
+                                            defaultValue={useCaseType}
+                                            onChange={(value) => {
+                                                setUseCaseType(value);
+                                                resetForm();
+                                            }}
+                                            cols={2}
+                                        />
+                                    </div>
+                                </div>
+
+                                {useCaseType === "personal" && (
+                                    <Form {...personalForm}>
+                                        <form
+                                            onSubmit={personalForm.handleSubmit(
+                                                onSubmitPersonal
+                                            )}
+                                            className="space-y-4"
+                                            id="generate-license-personal-form"
+                                        >
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={
+                                                        personalForm.control
+                                                    }
+                                                    name="firstName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.firstName"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        personalForm.control
+                                                    }
+                                                    name="lastName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.lastName"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <FormField
+                                                control={personalForm.control}
+                                                name="primaryUse"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.primaryUseQuestion"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <div className="space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormField
+                                                        control={
+                                                            personalForm.control
+                                                        }
+                                                        name="stateProvinceRegion"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "generateLicenseKeyForm.form.stateProvinceRegion"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    <FormField
+                                                        control={
+                                                            personalForm.control
+                                                        }
+                                                        name="postalZipCode"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "generateLicenseKeyForm.form.postalZipCode"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormField
+                                                        control={
+                                                            personalForm.control
+                                                        }
+                                                        name="country"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "generateLicenseKeyForm.form.country"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+
+                                                    <FormField
+                                                        control={
+                                                            personalForm.control
+                                                        }
+                                                        name="phoneNumber"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>
+                                                                    {t(
+                                                                        "generateLicenseKeyForm.form.phoneNumberOptional"
+                                                                    )}
+                                                                </FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        {...field}
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-4 pt-4">
+                                                <FormField
+                                                    control={
+                                                        personalForm.control
+                                                    }
+                                                    name="agreedToTerms"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={
+                                                                        field.value
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        field.onChange
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <div className="space-y-1 leading-none">
+                                                                <FormLabel className="text-sm font-normal">
+                                                                    <div>
+                                                                        {t(
+                                                                            "signUpTerms.IAgreeToThe"
+                                                                        )}{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/terms-of-service.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            {t(
+                                                                                "signUpTerms.termsOfService"
+                                                                            )}{" "}
+                                                                        </a>
+                                                                        {t(
+                                                                            "signUpTerms.and"
+                                                                        )}{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/privacy-policy.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            {t(
+                                                                                "signUpTerms.privacyPolicy"
+                                                                            )}
+                                                                        </a>
+                                                                    </div>
+                                                                </FormLabel>
+                                                                <FormMessage />
+                                                            </div>
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        personalForm.control
+                                                    }
+                                                    name="complianceConfirmed"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={
+                                                                        field.value
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        field.onChange
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <div className="space-y-1 leading-none">
+                                                                <FormLabel className="text-sm font-normal">
+                                                                    <div>
+                                                                        {t(
+                                                                            "generateLicenseKeyForm.form.complianceConfirmation"
+                                                                        )}{" "}
+                                                                        See
+                                                                        license
+                                                                        details:{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/fcl.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            https://digpangolin.com/fcl.html
+                                                                        </a>
+                                                                    </div>
+                                                                </FormLabel>
+                                                                <FormMessage />
+                                                            </div>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </form>
+                                    </Form>
+                                )}
+
+                                {useCaseType === "business" && (
+                                    <Form {...businessForm}>
+                                        <form
+                                            onSubmit={businessForm.handleSubmit(
+                                                onSubmitBusiness
+                                            )}
+                                            className="space-y-4"
+                                            id="generate-license-business-form"
+                                        >
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="firstName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.firstName"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="lastName"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.lastName"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <FormField
+                                                control={businessForm.control}
+                                                name="jobTitle"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.jobTitle"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={businessForm.control}
+                                                name="primaryUse"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.primaryUseQuestion"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={businessForm.control}
+                                                name="industry"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.industryQuestion"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="prospectiveUsers"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.prospectiveUsersQuestion"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="number"
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="prospectiveSites"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.prospectiveSitesQuestion"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="number"
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <FormField
+                                                control={businessForm.control}
+                                                name="companyName"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.companyName"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={businessForm.control}
+                                                name="countryOfResidence"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "generateLicenseKeyForm.form.countryOfResidence"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="stateProvinceRegion"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.stateProvinceRegion"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="postalZipCode"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.postalZipCode"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="companyWebsite"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.companyWebsite"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="companyPhoneNumber"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "generateLicenseKeyForm.form.companyPhoneNumber"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    {...field}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-4 pt-4">
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="agreedToTerms"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={
+                                                                        field.value
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        field.onChange
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <div className="space-y-1 leading-none">
+                                                                <FormLabel className="text-sm font-normal">
+                                                                    <div>
+                                                                        {t(
+                                                                            "signUpTerms.IAgreeToThe"
+                                                                        )}{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/terms-of-service.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            {t(
+                                                                                "signUpTerms.termsOfService"
+                                                                            )}{" "}
+                                                                        </a>
+                                                                        {t(
+                                                                            "signUpTerms.and"
+                                                                        )}{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/privacy-policy.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            {t(
+                                                                                "signUpTerms.privacyPolicy"
+                                                                            )}
+                                                                        </a>
+                                                                    </div>
+                                                                </FormLabel>
+                                                                <FormMessage />
+                                                            </div>
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={
+                                                        businessForm.control
+                                                    }
+                                                    name="complianceConfirmed"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={
+                                                                        field.value
+                                                                    }
+                                                                    onCheckedChange={
+                                                                        field.onChange
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <div className="space-y-1 leading-none">
+                                                                <FormLabel className="text-sm font-normal">
+                                                                    <div>
+                                                                        {t(
+                                                                            "generateLicenseKeyForm.form.complianceConfirmation"
+                                                                        )}{" "}
+                                                                        See
+                                                                        license
+                                                                        details:{" "}
+                                                                        <a
+                                                                            href="https://digpangolin.com/fcl.html"
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="text-primary hover:underline"
+                                                                        >
+                                                                            https://digpangolin.com/fcl.html
+                                                                        </a>
+                                                                    </div>
+                                                                </FormLabel>
+                                                                <FormMessage />
+                                                            </div>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </form>
+                                    </Form>
+                                )}
+                            </>
                         )}
                     </div>
                 </CredenzaBody>
@@ -1347,42 +1106,30 @@ export default function GenerateLicenseKeyForm({
                         </Button>
                     </CredenzaClose>
 
-                    {!generatedKey && (
-                        <>
-                            {currentStep > 1 && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={prevStep}
-                                    disabled={loading}
-                                >
-                                    {t(
-                                        "generateLicenseKeyForm.buttons.previous"
-                                    )}
-                                </Button>
+                    {!generatedKey && useCaseType === "personal" && (
+                        <Button
+                            type="submit"
+                            form="generate-license-personal-form"
+                            disabled={loading}
+                            loading={loading}
+                        >
+                            {t(
+                                "generateLicenseKeyForm.buttons.generateLicenseKey"
                             )}
+                        </Button>
+                    )}
 
-                            {currentStep < steps.length ? (
-                                <Button
-                                    type="button"
-                                    onClick={nextStep}
-                                    disabled={loading}
-                                >
-                                    {t("generateLicenseKeyForm.buttons.next")}
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    onClick={form.handleSubmit(onSubmit)}
-                                    loading={loading}
-                                    disabled={loading}
-                                >
-                                    {t(
-                                        "generateLicenseKeyForm.buttons.generateLicenseKey"
-                                    )}
-                                </Button>
+                    {!generatedKey && useCaseType === "business" && (
+                        <Button
+                            type="submit"
+                            form="generate-license-business-form"
+                            disabled={loading}
+                            loading={loading}
+                        >
+                            {t(
+                                "generateLicenseKeyForm.buttons.generateLicenseKey"
                             )}
-                        </>
+                        </Button>
                     )}
                 </CredenzaFooter>
             </CredenzaContent>

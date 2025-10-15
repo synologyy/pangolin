@@ -90,13 +90,24 @@ export async function getTraefikConfig(
             exitNodeId: sites.exitNodeId,
             // Namespace
             domainNamespaceId: domainNamespaces.domainNamespaceId,
-            // Certificate
+            // Certificate fields - we'll get all valid certs and filter in application logic
+            certificateId: certificates.certId,
+            certificateDomain: certificates.domain,
+            certificateWildcard: certificates.wildcard,
             certificateStatus: certificates.status
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
         .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
-        .leftJoin(certificates, eq(certificates.domainId, resources.domainId))
+        .leftJoin(
+            certificates, 
+            and(
+                eq(certificates.domainId, resources.domainId),
+                eq(certificates.status, "valid"),
+                isNotNull(certificates.certFile),
+                isNotNull(certificates.keyFile)
+            )
+        )
         .leftJoin(
             targetHealthCheck,
             eq(targetHealthCheck.targetId, targets.targetId)
@@ -127,6 +138,14 @@ export async function getTraefikConfig(
 
     // Group by resource and include targets with their unique site data
     const resourcesMap = new Map();
+    
+    // Track certificates per resource to determine the correct certificate status
+    const resourceCertificates = new Map<string, Array<{
+        id: number | null;
+        domain: string | null;
+        wildcard: boolean | null;
+        status: string | null;
+    }>>();
 
     resourcesWithTargetsAndSites.forEach((row) => {
         const resourceId = row.resourceId;
@@ -151,7 +170,25 @@ export async function getTraefikConfig(
             .filter(Boolean)
             .join("-");
         const mapKey = [resourceId, pathKey].filter(Boolean).join("-");
-        const key = sanitize(mapKey);
+        const key = sanitize(mapKey) || "";
+
+        // Track certificates for this resource
+        if (row.certificateId && row.certificateDomain && row.certificateStatus) {
+            if (!resourceCertificates.has(key)) {
+                resourceCertificates.set(key, []);
+            }
+            
+            const certList = resourceCertificates.get(key)!;
+            // Only add if not already present (avoid duplicates from multiple targets)
+            if (!certList.some(cert => cert.id === row.certificateId)) {
+                certList.push({
+                    id: row.certificateId,
+                    domain: row.certificateDomain,
+                    wildcard: row.certificateWildcard,
+                    status: row.certificateStatus
+                });
+            }
+        }
 
         if (!resourcesMap.has(key)) {
             const validation = validatePathRewriteConfig(
@@ -166,6 +203,26 @@ export async function getTraefikConfig(
                     `Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`
                 );
                 return;
+            }
+
+            // Determine the correct certificate status for this resource
+            let certificateStatus: string | null = null;
+            const resourceCerts = resourceCertificates.get(key) || [];
+            
+            if (row.fullDomain && resourceCerts.length > 0) {
+                // Find the best matching certificate
+                // Priority: exact domain match > wildcard match
+                const exactMatch = resourceCerts.find(cert => 
+                    cert.domain === row.fullDomain
+                );
+                
+                const wildcardMatch = resourceCerts.find(cert => 
+                    cert.wildcard && cert.domain && 
+                    row.fullDomain!.endsWith(`.${cert.domain}`)
+                );
+                
+                const matchingCert = exactMatch || wildcardMatch;
+                certificateStatus = matchingCert?.status || null;
             }
 
             resourcesMap.set(key, {
@@ -183,7 +240,7 @@ export async function getTraefikConfig(
                 tlsServerName: row.tlsServerName,
                 setHostHeader: row.setHostHeader,
                 enableProxy: row.enableProxy,
-                certificateStatus: row.certificateStatus,
+                certificateStatus: certificateStatus,
                 targets: [],
                 headers: row.headers,
                 path: row.path, // the targets will all have the same path
@@ -256,12 +313,12 @@ export async function getTraefikConfig(
             }
 
             // TODO: for now dont filter it out because if you have multiple domain ids and one is failed it causes all of them to fail
-            // if (resource.certificateStatus !== "valid" && privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
-            //     logger.debug(
-            //         `Resource ${resource.resourceId} has certificate stats ${resource.certificateStats}`
-            //     );
-            //     continue;
-            // }
+            if (resource.certificateStatus !== "valid" && privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
+                logger.debug(
+                    `Resource ${resource.resourceId} has certificate status ${resource.certificateStatus}`
+                );
+                continue;
+            }
 
             // add routers and services empty objects if they don't exist
             if (!config_output.http.routers) {
