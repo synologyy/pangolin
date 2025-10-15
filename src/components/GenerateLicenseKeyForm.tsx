@@ -36,7 +36,7 @@ import { useTranslations } from "next-intl";
 import React from "react";
 import { StrategySelect, StrategyOption } from "./StrategySelect";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
-import { InfoIcon, Check, Loader2 } from "lucide-react";
+import { InfoIcon, Check } from "lucide-react";
 import { useUserContext } from "@app/hooks/useUserContext";
 
 type FormProps = {
@@ -67,8 +67,6 @@ export default function GenerateLicenseKeyForm({
         firstName: z.string().min(1),
         lastName: z.string().min(1),
         primaryUse: z.string().min(1),
-        stateProvinceRegion: z.string().min(1),
-        postalZipCode: z.string().min(1),
         country: z.string().min(1),
         phoneNumber: z.string().optional(),
         agreedToTerms: z.boolean().refine((val) => val === true),
@@ -110,8 +108,6 @@ export default function GenerateLicenseKeyForm({
             firstName: "",
             lastName: "",
             primaryUse: "",
-            stateProvinceRegion: "",
-            postalZipCode: "",
             country: "",
             phoneNumber: "",
             agreedToTerms: false,
@@ -156,8 +152,6 @@ export default function GenerateLicenseKeyForm({
             firstName: "",
             lastName: "",
             primaryUse: "",
-            stateProvinceRegion: "",
-            postalZipCode: "",
             country: "",
             phoneNumber: "",
             agreedToTerms: false,
@@ -296,8 +290,6 @@ export default function GenerateLicenseKeyForm({
                     primaryUse: values.primaryUse
                 },
                 personalInfo: {
-                    stateProvinceRegion: values.stateProvinceRegion,
-                    postalZipCode: values.postalZipCode,
                     country: values.country,
                     phoneNumber: values.phoneNumber || ""
                 }
@@ -516,52 +508,6 @@ export default function GenerateLicenseKeyForm({
                                             />
 
                                             <div className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <FormField
-                                                        control={
-                                                            personalForm.control
-                                                        }
-                                                        name="stateProvinceRegion"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "generateLicenseKeyForm.form.stateProvinceRegion"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    <FormField
-                                                        control={
-                                                            personalForm.control
-                                                        }
-                                                        name="postalZipCode"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "generateLicenseKeyForm.form.postalZipCode"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                </div>
-
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <FormField
                                                         control={
