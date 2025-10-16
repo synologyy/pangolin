@@ -466,7 +466,7 @@ export default function Page() {
                         ...target,
                         ...data,
                         updated: true,
-                        siteType: site?.type || null
+                        // siteType: site?.type || null
                     }
                     : target
             )
