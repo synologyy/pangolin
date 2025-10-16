@@ -19,7 +19,17 @@ import {
     loginPage,
     targetHealthCheck
 } from "@server/db";
-import { and, eq, inArray, or, isNull, ne, isNotNull, desc } from "drizzle-orm";
+import {
+    and,
+    eq,
+    inArray,
+    or,
+    isNull,
+    ne,
+    isNotNull,
+    desc,
+    sql
+} from "drizzle-orm";
 import logger from "@server/logger";
 import config from "@server/lib/config";
 import { orgs, resources, sites, Target, targets } from "@server/db";
@@ -110,15 +120,19 @@ export async function getTraefikConfig(
             and(
                 eq(targets.enabled, true),
                 eq(resources.enabled, true),
-                // or(
-                eq(sites.exitNodeId, exitNodeId),
-                //     isNull(sites.exitNodeId)
-                // ),
+                or(
+                    eq(sites.exitNodeId, exitNodeId),
+                    and(
+                        isNull(sites.exitNodeId),
+                        sql`(${siteTypes.includes("local") ? 1 : 0} = 1)` // only allow local sites if "local" is in siteTypes
+                    )
+                ),
                 or(
                     ne(targetHealthCheck.hcHealth, "unhealthy"), // Exclude unhealthy targets
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record
                 ),
                 inArray(sites.type, siteTypes),
+                // lets rewrite this using sql
                 config.getRawConfig().traefik.allow_raw_resources
                     ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
                     : eq(resources.http, true)

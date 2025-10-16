@@ -375,8 +375,8 @@ export default function Page() {
     // Helper function to check if all targets have required fields using schema validation
     const areAllTargetsValid = () => {
         if (targets.length === 0) return true; // No targets is valid
-        
-        return targets.every(target => {
+
+        return targets.every((target) => {
             try {
                 addTargetSchema.parse({
                     ip: target.ip,
@@ -518,8 +518,8 @@ export default function Page() {
                     ? {
                           ...target,
                           ...data,
-                          updated: true
-                          // siteType: site?.type || null
+                          updated: true,
+                          siteType: site ? site.type : target.siteType
                       }
                     : target
             )

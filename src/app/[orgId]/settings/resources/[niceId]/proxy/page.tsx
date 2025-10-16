@@ -666,7 +666,7 @@ export default function ReverseProxyTargets(props: {
                           ...target,
                           ...data,
                           updated: true,
-                        //   siteType: site?.type || null
+                          siteType: site ? site.type : target.siteType
                       }
                     : target
             )

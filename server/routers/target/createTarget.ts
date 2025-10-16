@@ -46,14 +46,23 @@ const createTargetSchema = z
             .optional()
             .nullable(),
         hcTimeout: z.number().int().positive().min(1).optional().nullable(),
-        hcHeaders: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
+        hcHeaders: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable()
+            .optional(),
         hcFollowRedirects: z.boolean().optional().nullable(),
         hcMethod: z.string().min(1).optional().nullable(),
         hcStatus: z.number().int().optional().nullable(),
         path: z.string().optional().nullable(),
-        pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
+        pathMatchType: z
+            .enum(["exact", "prefix", "regex"])
+            .optional()
+            .nullable(),
         rewritePath: z.string().optional().nullable(),
-        rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
+        rewritePathType: z
+            .enum(["exact", "prefix", "regex", "stripPrefix"])
+            .optional()
+            .nullable(),
         priority: z.number().int().min(1).max(1000)
     })
     .strict();
@@ -164,6 +173,7 @@ export async function createTarget(
 
         let newTarget: Target[] = [];
         let healthCheck: TargetHealthCheck[] = [];
+        let targetIps: string[] = [];
         if (site.type == "local") {
             newTarget = await db
                 .insert(targets)
@@ -186,7 +196,7 @@ export async function createTarget(
                 );
             }
 
-            const { internalPort, targetIps } = await pickPort(
+            const { internalPort, targetIps: newTargetIps } = await pickPort(
                 site.siteId!,
                 db
             );
@@ -218,57 +228,59 @@ export async function createTarget(
                 })
                 .returning();
 
-            let hcHeaders = null;
-            if (targetData.hcHeaders) {
-                hcHeaders = JSON.stringify(targetData.hcHeaders);
-            }
-
-            healthCheck = await db
-                .insert(targetHealthCheck)
-                .values({
-                    targetId: newTarget[0].targetId,
-                    hcEnabled: targetData.hcEnabled ?? false,
-                    hcPath: targetData.hcPath ?? null,
-                    hcScheme: targetData.hcScheme ?? null,
-                    hcMode: targetData.hcMode ?? null,
-                    hcHostname: targetData.hcHostname ?? null,
-                    hcPort: targetData.hcPort ?? null,
-                    hcInterval: targetData.hcInterval ?? null,
-                    hcUnhealthyInterval: targetData.hcUnhealthyInterval ?? null,
-                    hcTimeout: targetData.hcTimeout ?? null,
-                    hcHeaders: hcHeaders,
-                    hcFollowRedirects: targetData.hcFollowRedirects ?? null,
-                    hcMethod: targetData.hcMethod ?? null,
-                    hcStatus: targetData.hcStatus ?? null,
-                    hcHealth: "unknown"
-                })
-                .returning();
-
             // add the new target to the targetIps array
-            targetIps.push(`${targetData.ip}/32`);
+            newTargetIps.push(`${targetData.ip}/32`);
 
-            if (site.pubKey) {
-                if (site.type == "wireguard") {
-                    await addPeer(site.exitNodeId!, {
-                        publicKey: site.pubKey,
-                        allowedIps: targetIps.flat()
-                    });
-                } else if (site.type == "newt") {
-                    // get the newt on the site by querying the newt table for siteId
-                    const [newt] = await db
-                        .select()
-                        .from(newts)
-                        .where(eq(newts.siteId, site.siteId))
-                        .limit(1);
+            targetIps = newTargetIps;
+        }
 
-                    await addTargets(
-                        newt.newtId,
-                        newTarget,
-                        healthCheck,
-                        resource.protocol,
-                        resource.proxyPort
-                    );
-                }
+        let hcHeaders = null;
+        if (targetData.hcHeaders) {
+            hcHeaders = JSON.stringify(targetData.hcHeaders);
+        }
+
+        healthCheck = await db
+            .insert(targetHealthCheck)
+            .values({
+                targetId: newTarget[0].targetId,
+                hcEnabled: targetData.hcEnabled ?? false,
+                hcPath: targetData.hcPath ?? null,
+                hcScheme: targetData.hcScheme ?? null,
+                hcMode: targetData.hcMode ?? null,
+                hcHostname: targetData.hcHostname ?? null,
+                hcPort: targetData.hcPort ?? null,
+                hcInterval: targetData.hcInterval ?? null,
+                hcUnhealthyInterval: targetData.hcUnhealthyInterval ?? null,
+                hcTimeout: targetData.hcTimeout ?? null,
+                hcHeaders: hcHeaders,
+                hcFollowRedirects: targetData.hcFollowRedirects ?? null,
+                hcMethod: targetData.hcMethod ?? null,
+                hcStatus: targetData.hcStatus ?? null,
+                hcHealth: "unknown"
+            })
+            .returning();
+
+        if (site.pubKey) {
+            if (site.type == "wireguard") {
+                await addPeer(site.exitNodeId!, {
+                    publicKey: site.pubKey,
+                    allowedIps: targetIps.flat()
+                });
+            } else if (site.type == "newt") {
+                // get the newt on the site by querying the newt table for siteId
+                const [newt] = await db
+                    .select()
+                    .from(newts)
+                    .where(eq(newts.siteId, site.siteId))
+                    .limit(1);
+
+                await addTargets(
+                    newt.newtId,
+                    newTarget,
+                    healthCheck,
+                    resource.protocol,
+                    resource.proxyPort
+                );
             }
         }
 

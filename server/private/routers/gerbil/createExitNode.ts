@@ -61,7 +61,14 @@ export async function createExitNode(
             `Created new exit node ${exitNode.name} with address ${exitNode.address} and port ${exitNode.listenPort}`
         );
     } else {
-        exitNode = exitNodeQuery;
+        // update the reachable at
+        [exitNode] = await db
+            .update(exitNodes)
+            .set({
+                reachableAt
+            })
+            .where(eq(exitNodes.exitNodeId, exitNodeQuery.exitNodeId))
+            .returning();
     }
 
     return exitNode;
