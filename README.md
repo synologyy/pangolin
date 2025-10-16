@@ -51,7 +51,7 @@ Check out the [quick install guide](https://docs.digpangolin.com/self-host/quick
 
 | <img width=500 /> | Description |
 |-----------------|--------------|
-| **Self-Host: Community Edition** | Free, open source, and AGPL-3 compliant. |
+| **Self-Host: Community Edition** | Free, open source, and licensed under AGPL-3. |
 | **Self-Host: Enterprise Edition** | Licensed under Fossorial Commercial License. Free for personal and hobbyist use, and for businesses earning under \$100K USD annually. |
 | **Pangolin Cloud** | Fully managed service with instant setup and pay-as-you-go pricing — no infrastructure required. Or, self-host your own [remote node](https://docs.digpangolin.com/manage/remote-node/nodes) and connect to our control plane. |
 
