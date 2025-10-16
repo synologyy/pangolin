@@ -17,18 +17,27 @@ import { and, eq, isNotNull, or, inArray, sql } from "drizzle-orm";
 import { decryptData } from "@server/lib/encryption";
 import * as fs from "fs";
 import NodeCache from "node-cache";
+import logger from "@server/logger";
 
-const encryptionKeyPath =
-    config.getRawPrivateConfig().server.encryption_key_path;
+let encryptionKeyPath = "";
+let encryptionKeyHex = "";
+let encryptionKey: Buffer;
+function loadEncryptData() {
+    if (encryptionKey) {
+        return; // already loaded
+    }
 
-if (!fs.existsSync(encryptionKeyPath)) {
-    throw new Error(
-        "Encryption key file not found. Please generate one first."
-    );
+    encryptionKeyPath = config.getRawPrivateConfig().server.encryption_key_path;
+
+    if (!fs.existsSync(encryptionKeyPath)) {
+        throw new Error(
+            "Encryption key file not found. Please generate one first."
+        );
+    }
+
+    encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
+    encryptionKey = Buffer.from(encryptionKeyHex, "hex");
 }
-
-const encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
-const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
 
 // Define the return type for clarity and type safety
 export type CertificateResult = {
@@ -49,6 +58,9 @@ export async function getValidCertificatesForDomains(
     domains: Set<string>,
     useCache: boolean = true
 ): Promise<Array<CertificateResult>> {
+
+    loadEncryptData(); // Ensure encryption key is loaded
+
     const finalResults: CertificateResult[] = [];
     const domainsToQuery = new Set<string>();
 
@@ -69,7 +81,8 @@ export async function getValidCertificatesForDomains(
 
     // 2. If all domains were resolved from the cache, return early
     if (domainsToQuery.size === 0) {
-        return decryptFinalResults(finalResults);
+        const decryptedResults = decryptFinalResults(finalResults);
+        return decryptedResults;
     }
 
     // 3. Prepare domains for the database query
@@ -126,23 +139,32 @@ export async function getValidCertificatesForDomains(
     for (const domain of domainsToQuery) {
         let foundCert: (typeof potentialCerts)[0] | undefined = undefined;
 
-        // Priority 1: Check for an exact match
+        // Priority 1: Check for an exact match (non-wildcard)
         if (exactMatches.has(domain)) {
             foundCert = exactMatches.get(domain);
         }
-        // Priority 2: Check for a wildcard match on the parent domain
+        // Priority 2: Check for a wildcard certificate that matches the exact domain
         else {
-            const parts = domain.split(".");
-            if (parts.length > 1) {
-                const parentDomain = parts.slice(1).join(".");
-                if (wildcardMatches.has(parentDomain)) {
-                    foundCert = wildcardMatches.get(parentDomain);
+            if (wildcardMatches.has(domain)) {
+                foundCert = wildcardMatches.get(domain);
+            }
+            // Priority 3: Check for a wildcard match on the parent domain
+            else {
+                const parts = domain.split(".");
+                if (parts.length > 1) {
+                    const parentDomain = parts.slice(1).join(".");
+                    if (wildcardMatches.has(parentDomain)) {
+                        foundCert = wildcardMatches.get(parentDomain);
+                    }
                 }
             }
         }
 
         // If a certificate was found, format it, add to results, and cache it
         if (foundCert) {
+            logger.debug(
+                `Creating result cert for ${domain} using cert from ${foundCert.domain}`
+            );
             const resultCert: CertificateResult = {
                 id: foundCert.certId,
                 domain: foundCert.domain, // The actual domain of the cert record
@@ -163,7 +185,8 @@ export async function getValidCertificatesForDomains(
         }
     }
 
-    return decryptFinalResults(finalResults);
+    const decryptedResults = decryptFinalResults(finalResults);
+    return decryptedResults;
 }
 
 function decryptFinalResults(
