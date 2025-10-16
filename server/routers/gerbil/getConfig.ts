@@ -118,26 +118,3 @@ export async function generateGerbilConfig(exitNode: ExitNode) {
 
     return configResponse;
 }
-
-async function getNextAvailablePort(): Promise<number> {
-    // Get all existing ports from exitNodes table
-    const existingPorts = await db
-        .select({
-            listenPort: exitNodes.listenPort
-        })
-        .from(exitNodes);
-
-    // Find the first available port between 1024 and 65535
-    let nextPort = config.getRawConfig().gerbil.start_port;
-    for (const port of existingPorts) {
-        if (port.listenPort > nextPort) {
-            break;
-        }
-        nextPort++;
-        if (nextPort > 65535) {
-            throw new Error("No available ports remaining in space");
-        }
-    }
-
-    return nextPort;
-}

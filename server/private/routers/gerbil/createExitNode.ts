@@ -69,6 +69,7 @@ export async function createExitNode(
             })
             .where(eq(exitNodes.exitNodeId, exitNodeQuery.exitNodeId))
             .returning();
+        logger.info(`Updated exit node reachableAt to ${reachableAt}`);
     }
 
     return exitNode;

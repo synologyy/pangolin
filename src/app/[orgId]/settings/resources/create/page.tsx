@@ -25,7 +25,6 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@app/components/ui/input";
 import { Button } from "@app/components/ui/button";
-import { Checkbox } from "@app/components/ui/checkbox";
 import { useParams, useRouter } from "next/navigation";
 import { ListSitesResponse } from "@server/routers/site";
 import { formatAxiosError } from "@app/lib/api";
@@ -133,10 +132,6 @@ const tcpUdpResourceFormSchema = z.object({
     // enableProxy: z.boolean().default(false)
 });
 
-const targetsSettingsSchema = z.object({
-    stickySession: z.boolean()
-});
-
 const addTargetSchema = z
     .object({
         ip: z.string().refine(isTargetValid),
@@ -241,7 +236,7 @@ export default function Page() {
     >([]);
     const [createLoading, setCreateLoading] = useState(false);
     const [showSnippets, setShowSnippets] = useState(false);
-    const [resourceId, setResourceId] = useState<number | null>(null);
+    const [niceId, setNiceId] = useState<string>("");
 
     // Target management state
     const [targets, setTargets] = useState<LocalTarget[]>([]);
@@ -361,17 +356,6 @@ export default function Page() {
         } as z.infer<typeof addTargetSchema>
     });
 
-    const targetsSettingsForm = useForm({
-        resolver: zodResolver(targetsSettingsSchema),
-        defaultValues: {
-            stickySession: false
-        }
-    });
-
-    const watchedIp = addTargetForm.watch("ip");
-    const watchedPort = addTargetForm.watch("port");
-    const watchedSiteId = addTargetForm.watch("siteId");
-
     // Helper function to check if all targets have required fields using schema validation
     const areAllTargetsValid = () => {
         if (targets.length === 0) return true; // No targets is valid
@@ -394,13 +378,6 @@ export default function Page() {
                 return false;
             }
         });
-    };
-
-    const handleContainerSelect = (hostname: string, port?: number) => {
-        addTargetForm.setValue("ip", hostname);
-        if (port) {
-            addTargetForm.setValue("port", port);
-        }
     };
 
     const initializeDockerForSite = async (siteId: number) => {
@@ -531,13 +508,11 @@ export default function Page() {
 
         const baseData = baseForm.getValues();
         const isHttp = baseData.http;
-        const stickySessionData = targetsSettingsForm.getValues();
 
         try {
             const payload = {
                 name: baseData.name,
                 http: baseData.http,
-                stickySession: stickySessionData.stickySession
             };
 
             let sanitizedSubdomain: string | undefined;
@@ -583,7 +558,7 @@ export default function Page() {
             if (res && res.status === 201) {
                 const id = res.data.data.resourceId;
                 const niceId = res.data.data.niceId;
-                setResourceId(id);
+                setNiceId(niceId);
 
                 // Create targets if any exist
                 if (targets.length > 0) {
@@ -1905,7 +1880,7 @@ export default function Page() {
                                     type="button"
                                     onClick={() =>
                                         router.push(
-                                            `/${orgId}/settings/resources/${resourceId}/proxy`
+                                            `/${orgId}/settings/resources/${niceId}/proxy`
                                         )
                                     }
                                 >
