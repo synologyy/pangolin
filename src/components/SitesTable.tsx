@@ -300,33 +300,65 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             },
             cell: ({ row }) => {
                 const originalRow = row.original;
-                return (
+                return originalRow.exitNodeName ? (
                     <div className="flex items-center space-x-2">
                         <span>{originalRow.exitNodeName}</span>
-                        {build == "saas" && originalRow.exitNodeName &&
-                         ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'].includes(originalRow.exitNodeName.toLowerCase()) && (
-                            <Badge variant="secondary">Cloud</Badge>
-                        )}
+                        {build == "saas" &&
+                            originalRow.exitNodeName &&
+                            [
+                                "mercury",
+                                "venus",
+                                "earth",
+                                "mars",
+                                "jupiter",
+                                "saturn",
+                                "uranus",
+                                "neptune"
+                            ].includes(
+                                originalRow.exitNodeName.toLowerCase()
+                            ) && <Badge variant="secondary">Cloud</Badge>}
                     </div>
-                );
-            },
-        },
-        ...(env.flags.enableClients ? [{
-            accessorKey: "address",
-            header: ({ column }: { column: Column<SiteRow, unknown> }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        Address
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
+                ) : (
+                    "-"
                 );
             }
-        }] : []),
+        },
+        ...(env.flags.enableClients
+            ? [
+                  {
+                      accessorKey: "address",
+                      header: ({
+                          column
+                      }: {
+                          column: Column<SiteRow, unknown>;
+                      }) => {
+                          return (
+                              <Button
+                                  variant="ghost"
+                                  onClick={() =>
+                                      column.toggleSorting(
+                                          column.getIsSorted() === "asc"
+                                      )
+                                  }
+                              >
+                                  Address
+                                  <ArrowUpDown className="ml-2 h-4 w-4" />
+                              </Button>
+                          );
+                      },
+                      cell: ({ row }: { row: any }) => {
+                          const originalRow = row.original;
+                          return originalRow.address ? (
+                              <div className="flex items-center space-x-2">
+                                  <span>{originalRow.address}</span>
+                              </div>
+                          ) : (
+                              "-"
+                          );
+                      }
+                  }
+              ]
+            : []),
         {
             id: "actions",
             cell: ({ row }) => {
