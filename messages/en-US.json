@@ -1893,5 +1893,6 @@
     "pathRewriteExact": "Exact",
     "pathRewriteRegex": "Regex",
     "pathRewriteStrip": "Strip",
-    "pathRewriteStripLabel": "strip"
+    "pathRewriteStripLabel": "strip",
+    "sidebarEnableEnterpriseLicense": "Enable Enterprise License"
 }

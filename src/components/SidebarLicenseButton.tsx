@@ -21,6 +21,8 @@ export default function SidebarLicenseButton({
 }: SidebarLicenseButtonProps) {
     const { licenseStatus, updateLicenseStatus } = useLicenseStatusContext();
 
+    const url = "https://docs.digpangolin.com/self-host/enterprise-edition";
+
     const t = useTranslations();
 
     return (
@@ -30,21 +32,21 @@ export default function SidebarLicenseButton({
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Link href="https://docs.digpangolin.com/">
+                                <Link href={url}>
                                     <Button size="icon" className="w-8 h-8">
                                         <TicketCheck className="h-4 w-4" />
                                     </Button>
                                 </Link>
                             </TooltipTrigger>
                             <TooltipContent side="right" sideOffset={8}>
-                                Enable Enterprise License
+                                {t("sidebarEnableEnterpriseLicense")}
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 ) : (
-                    <Link href="https://docs.digpangolin.com/">
+                    <Link href={url}>
                         <Button size="sm" className="gap-2 w-full">
-                            Enable Enterprise License
+                            {t("sidebarEnableEnterpriseLicense")}
                         </Button>
                     </Link>
                 )
