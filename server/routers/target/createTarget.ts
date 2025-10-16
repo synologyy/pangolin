@@ -179,7 +179,8 @@ export async function createTarget(
                 .insert(targets)
                 .values({
                     resourceId,
-                    ...targetData
+                    ...targetData,
+                    priority: targetData.priority || 100
                 })
                 .returning();
         } else {
