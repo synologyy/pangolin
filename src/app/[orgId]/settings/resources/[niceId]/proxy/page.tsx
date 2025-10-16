@@ -135,7 +135,7 @@ const addTargetSchema = z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
             .nullable(),
-        priority: z.number().int().min(1).max(1000)
+        priority: z.number().int().min(1).max(1000).optional()
     })
     .refine(
         (data) => {
@@ -429,17 +429,19 @@ export default function ReverseProxyTargets(props: {
     }, [isAdvancedMode]);
 
     function addNewTarget() {
+        const isHttp = resource.http;
+
         const newTarget: LocalTarget = {
             targetId: -Date.now(), // Use negative timestamp as temporary ID
             ip: "",
-            method: resource.http ? "http" : null,
+            method: isHttp ? "http" : null,
             port: 0,
             siteId: sites.length > 0 ? sites[0].siteId : 0,
-            path: null,
-            pathMatchType: null,
-            rewritePath: null,
-            rewritePathType: null,
-            priority: 100,
+            path: isHttp ? null : null,
+            pathMatchType: isHttp ? null : null,
+            rewritePath: isHttp ? null : null,
+            rewritePathType: isHttp ? null : null,
+            priority: isHttp ? 100 : 100,
             enabled: true,
             resourceId: resource.resourceId,
             hcEnabled: false,
@@ -515,25 +517,31 @@ export default function ReverseProxyTargets(props: {
         try {
             setTargetsLoading(true);
 
-            const response = await api.post<
-                AxiosResponse<CreateTargetResponse>
-            >(`/target`, {
+            const data: any = {
                 resourceId: resource.resourceId,
                 siteId: target.siteId,
                 ip: target.ip,
                 method: target.method,
                 port: target.port,
-                path: target.path,
-                pathMatchType: target.pathMatchType,
-                rewritePath: target.rewritePath,
-                rewritePathType: target.rewritePathType,
-                priority: target.priority,
                 enabled: target.enabled,
                 hcEnabled: target.hcEnabled,
                 hcPath: target.hcPath,
                 hcInterval: target.hcInterval,
                 hcTimeout: target.hcTimeout
-            });
+            };
+
+            // Only include path-related fields for HTTP resources
+            if (resource.http) {
+                data.path = target.path;
+                data.pathMatchType = target.pathMatchType;
+                data.rewritePath = target.rewritePath;
+                data.rewritePathType = target.rewritePathType;
+                data.priority = target.priority;
+            }
+
+            const response = await api.post<
+                AxiosResponse<CreateTargetResponse>
+            >(`/target`, data);
 
             if (response.status === 200) {
                 // Update the target with the new ID and remove the new flag
@@ -616,19 +624,20 @@ export default function ReverseProxyTargets(props: {
         // }
 
         const site = sites.find((site) => site.siteId === data.siteId);
+        const isHttp = resource.http;
 
         const newTarget: LocalTarget = {
             ...data,
-            path: data.path || null,
-            pathMatchType: data.pathMatchType || null,
-            rewritePath: data.rewritePath || null,
-            rewritePathType: data.rewritePathType || null,
+            path: isHttp ? (data.path || null) : null,
+            pathMatchType: isHttp ? (data.pathMatchType || null) : null,
+            rewritePath: isHttp ? (data.rewritePath || null) : null,
+            rewritePathType: isHttp ? (data.rewritePathType || null) : null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
             new: true,
             resourceId: resource.resourceId,
-            priority: 100,
+            priority: isHttp ? (data.priority || 100) : 100,
             hcEnabled: false,
             hcPath: null,
             hcMethod: null,
@@ -720,7 +729,7 @@ export default function ReverseProxyTargets(props: {
 
             // Save targets
             for (const target of targets) {
-                const data = {
+                const data: any = {
                     ip: target.ip,
                     port: target.port,
                     method: target.method,
@@ -736,13 +745,17 @@ export default function ReverseProxyTargets(props: {
                     hcHeaders: target.hcHeaders || null,
                     hcFollowRedirects: target.hcFollowRedirects || null,
                     hcMethod: target.hcMethod || null,
-                    hcStatus: target.hcStatus || null,
-                    path: target.path,
-                    pathMatchType: target.pathMatchType,
-                    rewritePath: target.rewritePath,
-                    rewritePathType: target.rewritePathType,
-                    priority: target.priority
+                    hcStatus: target.hcStatus || null
                 };
+
+                // Only include path-related fields for HTTP resources
+                if (resource.http) {
+                    data.path = target.path;
+                    data.pathMatchType = target.pathMatchType;
+                    data.rewritePath = target.rewritePath;
+                    data.rewritePathType = target.rewritePathType;
+                    data.priority = target.priority;
+                }
 
                 if (target.new) {
                     const res = await api.put<
@@ -815,6 +828,7 @@ export default function ReverseProxyTargets(props: {
 
     const getColumns = (): ColumnDef<LocalTarget>[] => {
         const baseColumns: ColumnDef<LocalTarget>[] = [];
+        const isHttp = resource.http;
 
         const priorityColumn: ColumnDef<LocalTarget> = {
             id: "priority",
@@ -1047,7 +1061,7 @@ export default function ReverseProxyTargets(props: {
                                         variant="ghost"
                                         role="combobox"
                                         className={cn(
-                                            "w-[180px] justify-between text-sm font-medium border-r pr-4 rounded-none h-8 hover:bg-transparent",
+                                            "w-[180px] justify-between text-sm border-r pr-4 rounded-none h-8 hover:bg-transparent",
                                             !row.original.siteId &&
                                                 "text-muted-foreground"
                                         )}
@@ -1129,7 +1143,7 @@ export default function ReverseProxyTargets(props: {
                             <Input
                                 defaultValue={row.original.ip}
                                 placeholder="IP / Hostname"
-                                className="flex-1 min-w-[120px] border-none placeholder-gray-400"
+                                className="flex-1 min-w-[120px] pl-0 border-none placeholder-gray-400"
                                 onBlur={(e) => {
                                     const input = e.target.value.trim();
                                     const hasProtocol =
@@ -1313,15 +1327,20 @@ export default function ReverseProxyTargets(props: {
         };
 
         if (isAdvancedMode) {
-            return [
-                matchPathColumn,
+            const columns = [
                 addressColumn,
-                rewritePathColumn,
-                priorityColumn,
                 healthCheckColumn,
                 enabledColumn,
                 actionsColumn
             ];
+
+            // Only include path-related columns for HTTP resources
+            if (isHttp) {
+                columns.unshift(matchPathColumn);
+                columns.splice(3, 0, rewritePathColumn, priorityColumn);
+            }
+
+            return columns;
         } else {
             return [
                 addressColumn,
@@ -1450,7 +1469,7 @@ export default function ReverseProxyTargets(props: {
                                         />
                                         <label
                                             htmlFor="advanced-mode-toggle"
-                                            className="text-sm font-medium"
+                                            className="text-sm"
                                         >
                                             {t("advancedMode")}
                                         </label>

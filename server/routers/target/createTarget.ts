@@ -63,7 +63,7 @@ const createTargetSchema = z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
             .nullable(),
-        priority: z.number().int().min(1).max(1000)
+        priority: z.number().int().min(1).max(1000).optional().nullable()
     })
     .strict();
 
@@ -224,7 +224,7 @@ export async function createTarget(
                     pathMatchType: targetData.pathMatchType,
                     rewritePath: targetData.rewritePath,
                     rewritePathType: targetData.rewritePathType,
-                    priority: targetData.priority
+                    priority: targetData.priority || 100
                 })
                 .returning();
 
