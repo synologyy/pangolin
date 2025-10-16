@@ -1007,14 +1007,9 @@ export default function ReverseProxyTargets(props: {
                 ) => {
                     updateTarget(row.original.targetId, {
                         ...row.original,
-                        ip: hostname
+                        ip: hostname,
+                        ...(port && { port: port })
                     });
-                    if (port) {
-                        updateTarget(row.original.targetId, {
-                            ...row.original,
-                            port: port
-                        });
-                    }
                 };
 
                 return (

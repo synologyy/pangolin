@@ -58,7 +58,16 @@ import {
 } from "@app/components/ui/popover";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { cn } from "@app/lib/cn";
-import { ArrowRight, CircleCheck, CircleX, Info, MoveRight, Plus, Settings, SquareArrowOutUpRight } from "lucide-react";
+import {
+    ArrowRight,
+    CircleCheck,
+    CircleX,
+    Info,
+    MoveRight,
+    Plus,
+    Settings,
+    SquareArrowOutUpRight
+} from "lucide-react";
 import CopyTextBox from "@app/components/CopyTextBox";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -89,15 +98,24 @@ import { isTargetValid } from "@server/lib/validators";
 import { ListTargetsResponse } from "@server/routers/target";
 import { DockerManager, DockerState } from "@app/lib/docker";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
-import { toASCII, toUnicode } from 'punycode';
+import { toASCII, toUnicode } from "punycode";
 import { DomainRow } from "../../../../../components/DomainsTable";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
-import { PathMatchDisplay, PathMatchModal, PathRewriteDisplay, PathRewriteModal } from "@app/components/PathMatchRenameModal";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@app/components/ui/tooltip";
+import {
+    PathMatchDisplay,
+    PathMatchModal,
+    PathRewriteDisplay,
+    PathRewriteModal
+} from "@app/components/PathMatchRenameModal";
 import { Badge } from "@app/components/ui/badge";
 import HealthCheckDialog from "@app/components/HealthCheckDialog";
 import { SwitchInput } from "@app/components/SwitchInput";
-
 
 const baseResourceFormSchema = z.object({
     name: z.string().min(1).max(255),
@@ -119,50 +137,57 @@ const targetsSettingsSchema = z.object({
     stickySession: z.boolean()
 });
 
-
-const addTargetSchema = z.object({
-    ip: z.string().refine(isTargetValid),
-    method: z.string().nullable(),
-    port: z.coerce.number().int().positive(),
-    siteId: z.number().int().positive(),
-    path: z.string().optional().nullable(),
-    pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
-    rewritePath: z.string().optional().nullable(),
-    rewritePathType: z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
-    priority: z.number().int().min(1).max(1000)
-}).refine(
-    (data) => {
-        // If path is provided, pathMatchType must be provided
-        if (data.path && !data.pathMatchType) {
-            return false;
-        }
-        // If pathMatchType is provided, path must be provided
-        if (data.pathMatchType && !data.path) {
-            return false;
-        }
-        // Validate path based on pathMatchType
-        if (data.path && data.pathMatchType) {
-            switch (data.pathMatchType) {
-                case "exact":
-                case "prefix":
-                    // Path should start with /
-                    return data.path.startsWith("/");
-                case "regex":
-                    // Validate regex
-                    try {
-                        new RegExp(data.path);
-                        return true;
-                    } catch {
-                        return false;
-                    }
+const addTargetSchema = z
+    .object({
+        ip: z.string().refine(isTargetValid),
+        method: z.string().nullable(),
+        port: z.coerce.number().int().positive(),
+        siteId: z.number().int().positive(),
+        path: z.string().optional().nullable(),
+        pathMatchType: z
+            .enum(["exact", "prefix", "regex"])
+            .optional()
+            .nullable(),
+        rewritePath: z.string().optional().nullable(),
+        rewritePathType: z
+            .enum(["exact", "prefix", "regex", "stripPrefix"])
+            .optional()
+            .nullable(),
+        priority: z.number().int().min(1).max(1000)
+    })
+    .refine(
+        (data) => {
+            // If path is provided, pathMatchType must be provided
+            if (data.path && !data.pathMatchType) {
+                return false;
             }
+            // If pathMatchType is provided, path must be provided
+            if (data.pathMatchType && !data.path) {
+                return false;
+            }
+            // Validate path based on pathMatchType
+            if (data.path && data.pathMatchType) {
+                switch (data.pathMatchType) {
+                    case "exact":
+                    case "prefix":
+                        // Path should start with /
+                        return data.path.startsWith("/");
+                    case "regex":
+                        // Validate regex
+                        try {
+                            new RegExp(data.path);
+                            return true;
+                        } catch {
+                            return false;
+                        }
+                }
+            }
+            return true;
+        },
+        {
+            message: "Invalid path configuration"
         }
-        return true;
-    },
-    {
-        message: "Invalid path configuration"
-    }
-)
+    )
     .refine(
         (data) => {
             // If rewritePath is provided, rewritePathType must be provided
@@ -221,7 +246,9 @@ export default function Page() {
     // Target management state
     const [targets, setTargets] = useState<LocalTarget[]>([]);
     const [targetsToRemove, setTargetsToRemove] = useState<number[]>([]);
-    const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(new Map());
+    const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(
+        new Map()
+    );
 
     const [selectedTargetForHealthCheck, setSelectedTargetForHealthCheck] =
         useState<LocalTarget | null>(null);
@@ -290,12 +317,12 @@ export default function Page() {
         ...(!env.flags.allowRawResources
             ? []
             : [
-                {
-                    id: "raw" as ResourceType,
-                    title: t("resourceRaw"),
-                    description: t("resourceRawDescription")
-                }
-            ])
+                  {
+                      id: "raw" as ResourceType,
+                      title: t("resourceRaw"),
+                      description: t("resourceRawDescription")
+                  }
+              ])
     ];
 
     const baseForm = useForm({
@@ -330,7 +357,7 @@ export default function Page() {
             pathMatchType: null,
             rewritePath: null,
             rewritePathType: null,
-            priority: 100,
+            priority: 100
         } as z.infer<typeof addTargetSchema>
     });
 
@@ -360,14 +387,14 @@ export default function Page() {
         const dockerManager = new DockerManager(api, siteId);
         const dockerState = await dockerManager.initializeDocker();
 
-        setDockerStates(prev => new Map(prev.set(siteId, dockerState)));
+        setDockerStates((prev) => new Map(prev.set(siteId, dockerState)));
     };
 
     const refreshContainersForSite = async (siteId: number) => {
         const dockerManager = new DockerManager(api, siteId);
         const containers = await dockerManager.fetchContainers();
 
-        setDockerStates(prev => {
+        setDockerStates((prev) => {
             const newMap = new Map(prev);
             const existingState = newMap.get(siteId);
             if (existingState) {
@@ -378,11 +405,13 @@ export default function Page() {
     };
 
     const getDockerStateForSite = (siteId: number): DockerState => {
-        return dockerStates.get(siteId) || {
-            isEnabled: false,
-            isAvailable: false,
-            containers: []
-        };
+        return (
+            dockerStates.get(siteId) || {
+                isEnabled: false,
+                isAvailable: false,
+                containers: []
+            }
+        );
     };
 
     async function addTarget(data: z.infer<typeof addTargetSchema>) {
@@ -443,7 +472,7 @@ export default function Page() {
             pathMatchType: null,
             rewritePath: null,
             rewritePathType: null,
-            priority: 100,
+            priority: 100
         });
     }
 
@@ -463,11 +492,11 @@ export default function Page() {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...data,
-                        updated: true,
-                        // siteType: site?.type || null
-                    }
+                          ...target,
+                          ...data,
+                          updated: true
+                          // siteType: site?.type || null
+                      }
                     : target
             )
         );
@@ -497,7 +526,9 @@ export default function Page() {
                     : undefined;
 
                 Object.assign(payload, {
-                    subdomain: sanitizedSubdomain ? toASCII(sanitizedSubdomain) : undefined,
+                    subdomain: sanitizedSubdomain
+                        ? toASCII(sanitizedSubdomain)
+                        : undefined,
                     domainId: httpData.domainId,
                     protocol: "tcp"
                 });
@@ -660,7 +691,7 @@ export default function Page() {
                     const rawDomains = res.data.data.domains as DomainRow[];
                     const domains = rawDomains.map((domain) => ({
                         ...domain,
-                        baseDomain: toUnicode(domain.baseDomain),
+                        baseDomain: toUnicode(domain.baseDomain)
                     }));
                     setBaseDomains(domains);
                     // if (domains.length) {
@@ -683,10 +714,10 @@ export default function Page() {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...config,
-                        updated: true
-                    }
+                          ...target,
+                          ...config,
+                          updated: true
+                      }
                     : target
             )
         );
@@ -712,9 +743,7 @@ export default function Page() {
                                 <Info className="h-4 w-4 text-muted-foreground" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
-                                <p>
-                                    {t("priorityDescription")}
-                                </p>
+                                <p>{t("priorityDescription")}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -895,19 +924,39 @@ export default function Page() {
                 ) => {
                     updateTarget(row.original.targetId, {
                         ...row.original,
-                        ip: hostname
+                        ip: hostname,
+                        ...(port && { port: port })
                     });
-                    if (port) {
-                        updateTarget(row.original.targetId, {
-                            ...row.original,
-                            port: port
-                        });
-                    }
                 };
 
                 return (
                     <div className="flex items-center w-full">
                         <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input shadow-2xs rounded-md">
+                            {selectedSite &&
+                                selectedSite.type === "newt" &&
+                                (() => {
+                                    const dockerState = getDockerStateForSite(
+                                        selectedSite.siteId
+                                    );
+                                    return (
+                                        <ContainersSelector
+                                            site={selectedSite}
+                                            containers={dockerState.containers}
+                                            isAvailable={
+                                                dockerState.isAvailable
+                                            }
+                                            onContainerSelect={
+                                                handleContainerSelectForTarget
+                                            }
+                                            onRefresh={() =>
+                                                refreshContainersForSite(
+                                                    selectedSite.siteId
+                                                )
+                                            }
+                                        />
+                                    );
+                                })()}
+
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -916,7 +965,7 @@ export default function Page() {
                                         className={cn(
                                             "w-[180px] justify-between text-sm font-medium border-r pr-4 rounded-none h-8 hover:bg-transparent",
                                             !row.original.siteId &&
-                                            "text-muted-foreground"
+                                                "text-muted-foreground"
                                         )}
                                     >
                                         <span className="truncate max-w-[90px]">
@@ -969,30 +1018,6 @@ export default function Page() {
                                     </Command>
                                 </PopoverContent>
                             </Popover>
-                            {selectedSite &&
-                                selectedSite.type === "newt" &&
-                                (() => {
-                                    const dockerState = getDockerStateForSite(
-                                        selectedSite.siteId
-                                    );
-                                    return (
-                                        <ContainersSelector
-                                            site={selectedSite}
-                                            containers={dockerState.containers}
-                                            isAvailable={
-                                                dockerState.isAvailable
-                                            }
-                                            onContainerSelect={
-                                                handleContainerSelectForTarget
-                                            }
-                                            onRefresh={() =>
-                                                refreshContainersForSite(
-                                                    selectedSite.siteId
-                                                )
-                                            }
-                                        />
-                                    );
-                                })()}
 
                             <Select
                                 defaultValue={row.original.method ?? "http"}
@@ -1464,10 +1489,10 @@ export default function Page() {
                                                                                     .target
                                                                                     .value
                                                                                     ? parseInt(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value
-                                                                                    )
+                                                                                          e
+                                                                                              .target
+                                                                                              .value
+                                                                                      )
                                                                                     : undefined
                                                                             )
                                                                         }
@@ -1546,60 +1571,87 @@ export default function Page() {
                                                     <TableHeader>
                                                         {table
                                                             .getHeaderGroups()
-                                                            .map((headerGroup) => (
-                                                                <TableRow key={headerGroup.id}>
-                                                                    {headerGroup.headers.map(
-                                                                        (header) => (
-                                                                            <TableHead
-                                                                                key={header.id}
-                                                                            >
-                                                                                {header.isPlaceholder
-                                                                                    ? null
-                                                                                    : flexRender(
-                                                                                        header
-                                                                                            .column
-                                                                                            .columnDef
-                                                                                            .header,
-                                                                                        header.getContext()
-                                                                                    )}
-                                                                            </TableHead>
-                                                                        )
-                                                                    )}
-                                                                </TableRow>
-                                                            ))}
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {table.getRowModel().rows?.length ? (
-                                                            table
-                                                                .getRowModel()
-                                                                .rows.map((row) => (
-                                                                    <TableRow key={row.id}>
-                                                                        {row
-                                                                            .getVisibleCells()
-                                                                            .map((cell) => (
-                                                                                <TableCell
+                                                            .map(
+                                                                (
+                                                                    headerGroup
+                                                                ) => (
+                                                                    <TableRow
+                                                                        key={
+                                                                            headerGroup.id
+                                                                        }
+                                                                    >
+                                                                        {headerGroup.headers.map(
+                                                                            (
+                                                                                header
+                                                                            ) => (
+                                                                                <TableHead
                                                                                     key={
-                                                                                        cell.id
+                                                                                        header.id
                                                                                     }
                                                                                 >
-                                                                                    {flexRender(
-                                                                                        cell
-                                                                                            .column
-                                                                                            .columnDef
-                                                                                            .cell,
-                                                                                        cell.getContext()
-                                                                                    )}
-                                                                                </TableCell>
-                                                                            ))}
+                                                                                    {header.isPlaceholder
+                                                                                        ? null
+                                                                                        : flexRender(
+                                                                                              header
+                                                                                                  .column
+                                                                                                  .columnDef
+                                                                                                  .header,
+                                                                                              header.getContext()
+                                                                                          )}
+                                                                                </TableHead>
+                                                                            )
+                                                                        )}
                                                                     </TableRow>
-                                                                ))
+                                                                )
+                                                            )}
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {table.getRowModel()
+                                                            .rows?.length ? (
+                                                            table
+                                                                .getRowModel()
+                                                                .rows.map(
+                                                                    (row) => (
+                                                                        <TableRow
+                                                                            key={
+                                                                                row.id
+                                                                            }
+                                                                        >
+                                                                            {row
+                                                                                .getVisibleCells()
+                                                                                .map(
+                                                                                    (
+                                                                                        cell
+                                                                                    ) => (
+                                                                                        <TableCell
+                                                                                            key={
+                                                                                                cell.id
+                                                                                            }
+                                                                                        >
+                                                                                            {flexRender(
+                                                                                                cell
+                                                                                                    .column
+                                                                                                    .columnDef
+                                                                                                    .cell,
+                                                                                                cell.getContext()
+                                                                                            )}
+                                                                                        </TableCell>
+                                                                                    )
+                                                                                )}
+                                                                        </TableRow>
+                                                                    )
+                                                                )
                                                         ) : (
                                                             <TableRow>
                                                                 <TableCell
-                                                                    colSpan={columns.length}
+                                                                    colSpan={
+                                                                        columns.length
+                                                                    }
                                                                     className="h-24 text-center"
                                                                 >
-                                                                    {t("targetNoOne")}
+                                                                    {t(
+                                                                        "targetNoOne"
+                                                                    )}
                                                                 </TableCell>
                                                             </TableRow>
                                                         )}
@@ -1621,8 +1673,12 @@ export default function Page() {
                                                     <div className="flex items-center gap-2">
                                                         <Switch
                                                             id="advanced-mode-toggle"
-                                                            checked={isAdvancedMode}
-                                                            onCheckedChange={setIsAdvancedMode}
+                                                            checked={
+                                                                isAdvancedMode
+                                                            }
+                                                            onCheckedChange={
+                                                                setIsAdvancedMode
+                                                            }
                                                         />
                                                         <label
                                                             htmlFor="advanced-mode-toggle"
@@ -1639,7 +1695,10 @@ export default function Page() {
                                             <p className="text-muted-foreground mb-4">
                                                 {t("targetNoOne")}
                                             </p>
-                                            <Button onClick={addNewTarget} variant="outline">
+                                            <Button
+                                                onClick={addNewTarget}
+                                                variant="outline"
+                                            >
                                                 <Plus className="h-4 w-4 mr-2" />
                                                 {t("addTarget")}
                                             </Button>
@@ -1685,24 +1744,36 @@ export default function Page() {
                                 <HealthCheckDialog
                                     open={healthCheckDialogOpen}
                                     setOpen={setHealthCheckDialogOpen}
-                                    targetId={selectedTargetForHealthCheck.targetId}
+                                    targetId={
+                                        selectedTargetForHealthCheck.targetId
+                                    }
                                     targetAddress={`${selectedTargetForHealthCheck.ip}:${selectedTargetForHealthCheck.port}`}
                                     targetMethod={
-                                        selectedTargetForHealthCheck.method || undefined
+                                        selectedTargetForHealthCheck.method ||
+                                        undefined
                                     }
                                     initialConfig={{
                                         hcEnabled:
-                                            selectedTargetForHealthCheck.hcEnabled || false,
-                                        hcPath: selectedTargetForHealthCheck.hcPath || "/",
+                                            selectedTargetForHealthCheck.hcEnabled ||
+                                            false,
+                                        hcPath:
+                                            selectedTargetForHealthCheck.hcPath ||
+                                            "/",
                                         hcMethod:
-                                            selectedTargetForHealthCheck.hcMethod || "GET",
+                                            selectedTargetForHealthCheck.hcMethod ||
+                                            "GET",
                                         hcInterval:
-                                            selectedTargetForHealthCheck.hcInterval || 5,
-                                        hcTimeout: selectedTargetForHealthCheck.hcTimeout || 5,
+                                            selectedTargetForHealthCheck.hcInterval ||
+                                            5,
+                                        hcTimeout:
+                                            selectedTargetForHealthCheck.hcTimeout ||
+                                            5,
                                         hcHeaders:
-                                            selectedTargetForHealthCheck.hcHeaders || undefined,
+                                            selectedTargetForHealthCheck.hcHeaders ||
+                                            undefined,
                                         hcScheme:
-                                            selectedTargetForHealthCheck.hcScheme || undefined,
+                                            selectedTargetForHealthCheck.hcScheme ||
+                                            undefined,
                                         hcHostname:
                                             selectedTargetForHealthCheck.hcHostname ||
                                             selectedTargetForHealthCheck.ip,
@@ -1713,8 +1784,11 @@ export default function Page() {
                                             selectedTargetForHealthCheck.hcFollowRedirects ||
                                             true,
                                         hcStatus:
-                                            selectedTargetForHealthCheck.hcStatus || undefined,
-                                        hcMode: selectedTargetForHealthCheck.hcMode || "http",
+                                            selectedTargetForHealthCheck.hcStatus ||
+                                            undefined,
+                                        hcMode:
+                                            selectedTargetForHealthCheck.hcMode ||
+                                            "http",
                                         hcUnhealthyInterval:
                                             selectedTargetForHealthCheck.hcUnhealthyInterval ||
                                             30
@@ -1749,7 +1823,9 @@ export default function Page() {
                                                 {t("resourceAddEntrypoints")}
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                {t("resourceAddEntrypointsEditFile")}
+                                                {t(
+                                                    "resourceAddEntrypointsEditFile"
+                                                )}
                                             </p>
                                             <CopyTextBox
                                                 text={`entryPoints:
@@ -1764,7 +1840,9 @@ export default function Page() {
                                                 {t("resourceExposePorts")}
                                             </h3>
                                             <p className="text-sm text-muted-foreground">
-                                                {t("resourceExposePortsEditFile")}
+                                                {t(
+                                                    "resourceExposePortsEditFile"
+                                                )}
                                             </p>
                                             <CopyTextBox
                                                 text={`ports:
