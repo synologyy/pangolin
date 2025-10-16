@@ -292,11 +292,33 @@ hybridRouter.get(
     }
 );
 
+let encryptionKeyPath = "";
+let encryptionKeyHex = "";
+let encryptionKey: Buffer;
+function loadEncryptData() {
+    if (encryptionKey) {
+        return; // already loaded
+    }
+
+    encryptionKeyPath = privateConfig.getRawPrivateConfig().server.encryption_key_path;
+
+    if (!fs.existsSync(encryptionKeyPath)) {
+        throw new Error(
+            "Encryption key file not found. Please generate one first."
+        );
+    }
+
+    encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
+    encryptionKey = Buffer.from(encryptionKeyHex, "hex");
+}
+
 // Get valid certificates for given domains (supports wildcard certs)
 hybridRouter.get(
     "/certificates/domains",
     async (req: Request, res: Response, next: NextFunction) => {
         try {
+            loadEncryptData(); // Ensure encryption key is loaded
+
             const parsed = getCertificatesByDomainsQuerySchema.safeParse(
                 req.query
             );
@@ -424,20 +446,6 @@ hybridRouter.get(
 
                 filtered.push(cert);
             }
-
-            const encryptionKeyPath =
-                privateConfig.getRawPrivateConfig().server.encryption_key_path;
-
-            if (!fs.existsSync(encryptionKeyPath)) {
-                throw new Error(
-                    "Encryption key file not found. Please generate one first."
-                );
-            }
-
-            const encryptionKeyHex = fs
-                .readFileSync(encryptionKeyPath, "utf8")
-                .trim();
-            const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
 
             const result = filtered.map((cert) => {
                 // Decrypt and save certificate file

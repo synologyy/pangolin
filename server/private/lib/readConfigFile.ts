@@ -172,6 +172,12 @@ export function readPrivateConfigFile() {
         return {};
     }
 
+    // test if the config file is there
+    if (!fs.existsSync(privateConfigFilePath1)) {
+        // load the default values of the zod schema and return those
+        return privateConfigSchema.parse({});
+    }
+
     const loadConfig = (configPath: string) => {
         try {
             const yamlContent = fs.readFileSync(configPath, "utf8");

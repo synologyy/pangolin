@@ -19,17 +19,25 @@ import * as fs from "fs";
 import NodeCache from "node-cache";
 import logger from "@server/logger";
 
-const encryptionKeyPath =
-    config.getRawPrivateConfig().server.encryption_key_path;
+let encryptionKeyPath = "";
+let encryptionKeyHex = "";
+let encryptionKey: Buffer;
+function loadEncryptData() {
+    if (encryptionKey) {
+        return; // already loaded
+    }
 
-if (!fs.existsSync(encryptionKeyPath)) {
-    throw new Error(
-        "Encryption key file not found. Please generate one first."
-    );
+    encryptionKeyPath = config.getRawPrivateConfig().server.encryption_key_path;
+
+    if (!fs.existsSync(encryptionKeyPath)) {
+        throw new Error(
+            "Encryption key file not found. Please generate one first."
+        );
+    }
+
+    encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
+    encryptionKey = Buffer.from(encryptionKeyHex, "hex");
 }
-
-const encryptionKeyHex = fs.readFileSync(encryptionKeyPath, "utf8").trim();
-const encryptionKey = Buffer.from(encryptionKeyHex, "hex");
 
 // Define the return type for clarity and type safety
 export type CertificateResult = {
@@ -50,6 +58,9 @@ export async function getValidCertificatesForDomains(
     domains: Set<string>,
     useCache: boolean = true
 ): Promise<Array<CertificateResult>> {
+
+    loadEncryptData(); // Ensure encryption key is loaded
+
     const finalResults: CertificateResult[] = [];
     const domainsToQuery = new Set<string>();
 
@@ -151,7 +162,9 @@ export async function getValidCertificatesForDomains(
 
         // If a certificate was found, format it, add to results, and cache it
         if (foundCert) {
-            logger.debug(`Creating result cert for ${domain} using cert from ${foundCert.domain}`);
+            logger.debug(
+                `Creating result cert for ${domain} using cert from ${foundCert.domain}`
+            );
             const resultCert: CertificateResult = {
                 id: foundCert.certId,
                 domain: foundCert.domain, // The actual domain of the cert record
@@ -171,7 +184,6 @@ export async function getValidCertificatesForDomains(
             }
         }
     }
-
 
     const decryptedResults = decryptFinalResults(finalResults);
     return decryptedResults;
