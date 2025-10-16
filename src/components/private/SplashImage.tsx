@@ -3,6 +3,7 @@
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 
 type SplashImageProps = {
     children: React.ReactNode;
@@ -11,8 +12,12 @@ type SplashImageProps = {
 export default function SplashImage({ children }: SplashImageProps) {
     const pathname = usePathname();
     const { env } = useEnvContext();
+    const { isUnlocked } = useLicenseStatusContext();
 
     function showBackgroundImage() {
+        if (!isUnlocked()) {
+            return false;
+        }
         if (!env.branding.background_image_path) {
             return false;
         }

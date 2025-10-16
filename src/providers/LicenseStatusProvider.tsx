@@ -1,6 +1,7 @@
 "use client";
 
 import LicenseStatusContext from "@app/contexts/licenseStatusContext";
+import { build } from "@server/build";
 import { LicenseStatus } from "@server/license/license";
 import { useState } from "react";
 

@@ -67,6 +67,12 @@ export default async function RootLayout({
             )
         )();
         licenseStatus = licenseStatusRes.data.data;
+    } else if (build === "saas") {
+        licenseStatus = {
+            isHostLicensed: true,
+            isLicenseValid: true,
+            hostId: "saas"
+        };
     } else {
         licenseStatus = {
             isHostLicensed: false,

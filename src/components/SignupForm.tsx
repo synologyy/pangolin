@@ -18,9 +18,7 @@ import {
 import {
     Card,
     CardContent,
-    CardDescription,
     CardHeader,
-    CardTitle
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -31,13 +29,13 @@ import { AxiosResponse } from "axios";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import Image from "next/image";
 import { cleanRedirect } from "@app/lib/cleanRedirect";
 import { useTranslations } from "next-intl";
 import BrandingLogo from "@app/components/BrandingLogo";
 import { build } from "@server/build";
 import { Check, X } from "lucide-react";
 import { cn } from "@app/lib/cn";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 
 // Password strength calculation
 const calculatePasswordStrength = (password: string) => {
@@ -111,6 +109,7 @@ export default function SignupForm({
     const { env } = useEnvContext();
     const api = createApiClient({ env });
     const t = useTranslations();
+    const { isUnlocked } = useLicenseStatusContext();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -192,14 +191,18 @@ export default function SignupForm({
         }
     };
 
+    const logoWidth = isUnlocked()
+        ? env.branding.logo?.authPage?.width || 175
+        : 175;
+    const logoHeight = isUnlocked()
+        ? env.branding.logo?.authPage?.height || 58
+        : 58;
+
     return (
         <Card className="w-full max-w-md shadow-md">
             <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
-                    <BrandingLogo
-                        height={env.branding.logo?.authPage?.height || 58}
-                        width={env.branding.logo?.authPage?.width || 175}
-                    />
+                    <BrandingLogo height={logoHeight} width={logoWidth} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
                     <p className="text-muted-foreground">{getSubtitle()}</p>

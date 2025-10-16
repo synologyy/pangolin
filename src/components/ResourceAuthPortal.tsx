@@ -48,6 +48,7 @@ import BrandingLogo from "@app/components/BrandingLogo";
 import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 
 const pinSchema = z.object({
     pin: z
@@ -92,6 +93,7 @@ type ResourceAuthPortalProps = {
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     const router = useRouter();
     const t = useTranslations();
+    const { isUnlocked } = useLicenseStatusContext();
 
     const getNumMethods = () => {
         let colLength = 0;
@@ -308,14 +310,22 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     }
 
     function getTitle() {
-        if (build !== "oss" && env.branding.resourceAuthPage?.titleText) {
+        if (
+            isUnlocked() &&
+            build !== "oss" &&
+            env.branding.resourceAuthPage?.titleText
+        ) {
             return env.branding.resourceAuthPage.titleText;
         }
         return t("authenticationRequired");
     }
 
     function getSubtitle(resourceName: string) {
-        if (build !== "oss" && env.branding.resourceAuthPage?.subtitleText) {
+        if (
+            isUnlocked() &&
+            build !== "oss" &&
+            env.branding.resourceAuthPage?.subtitleText
+        ) {
             return env.branding.resourceAuthPage.subtitleText
                 .split("{{resourceName}}")
                 .join(resourceName);
@@ -325,11 +335,14 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             : t("authenticationRequest", { name: resourceName });
     }
 
+    const logoWidth = isUnlocked() ? env.branding.logo?.authPage?.width || 100 : 100;
+    const logoHeight = isUnlocked() ? env.branding.logo?.authPage?.height || 100 : 100;
+
     return (
         <div>
             {!accessDenied ? (
                 <div>
-                    {build === "enterprise" ? (
+                    {isUnlocked() && build === "enterprise" ? (
                         !env.branding.resourceAuthPage?.hidePoweredBy && (
                             <div className="text-center mb-2">
                                 <span className="text-sm text-muted-foreground">
@@ -362,18 +375,13 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                     )}
                     <Card>
                         <CardHeader>
-                            {build !== "oss" &&
+                            {isUnlocked() &&
+                                build !== "oss" &&
                                 env.branding?.resourceAuthPage?.showLogo && (
                                     <div className="flex flex-row items-center justify-center mb-3">
                                         <BrandingLogo
-                                            height={
-                                                env.branding.logo?.authPage
-                                                    ?.height || 100
-                                            }
-                                            width={
-                                                env.branding.logo?.authPage
-                                                    ?.width || 100
-                                            }
+                                            height={logoHeight}
+                                            width={logoWidth}
                                         />
                                     </div>
                                 )}

@@ -174,9 +174,9 @@ export function readPrivateConfigFile() {
 
     // test if the config file is there
     if (!fs.existsSync(privateConfigFilePath1)) {
-        console.warn(
-            `Private configuration file not found at ${privateConfigFilePath1}. Using default configuration.`
-        );
+        // console.warn(
+        //     `Private configuration file not found at ${privateConfigFilePath1}. Using default configuration.`
+        // );
         // load the default values of the zod schema and return those
         return privateConfigSchema.parse({});
     }

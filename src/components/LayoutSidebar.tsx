@@ -67,6 +67,9 @@ export function LayoutSidebar({
     }, [isSidebarCollapsed]);
 
     function loadFooterLinks(): { text: string; href?: string }[] | undefined {
+        if (!isUnlocked()) {
+            return undefined;
+        }
         if (env.branding.footer) {
             try {
                 return JSON.parse(env.branding.footer);

@@ -19,11 +19,16 @@ import { setHostMeta } from "@server/lib/hostMeta";
 import { initTelemetryClient } from "./lib/telemetry.js";
 import { TraefikConfigManager } from "./lib/traefik/TraefikConfigManager.js";
 import { initCleanup } from "#dynamic/cleanup";
+import license from "#dynamic/license/license";
 
 async function startServers() {
     await setHostMeta();
 
     await config.initServer();
+
+    license.setServerSecret(config.getRawConfig().server.secret!);
+    await license.check();
+
     await runSetupFunctions();
 
     initTelemetryClient();
