@@ -372,6 +372,30 @@ export default function Page() {
     const watchedPort = addTargetForm.watch("port");
     const watchedSiteId = addTargetForm.watch("siteId");
 
+    // Helper function to check if all targets have required fields using schema validation
+    const areAllTargetsValid = () => {
+        if (targets.length === 0) return true; // No targets is valid
+        
+        return targets.every(target => {
+            try {
+                addTargetSchema.parse({
+                    ip: target.ip,
+                    method: target.method,
+                    port: target.port,
+                    siteId: target.siteId,
+                    path: target.path,
+                    pathMatchType: target.pathMatchType,
+                    rewritePath: target.rewritePath,
+                    rewritePathType: target.rewritePathType,
+                    priority: target.priority
+                });
+                return true;
+            } catch {
+                return false;
+            }
+        });
+    };
+
     const handleContainerSelect = (hostname: string, port?: number) => {
         addTargetForm.setValue("ip", hostname);
         if (port) {
@@ -968,7 +992,7 @@ export default function Page() {
                                                 "text-muted-foreground"
                                         )}
                                     >
-                                        <span className="truncate max-w-[90px]">
+                                        <span className="truncate max-w-[150px]">
                                             {row.original.siteId
                                                 ? selectedSite?.name
                                                 : t("siteSelect")}
@@ -1736,6 +1760,7 @@ export default function Page() {
                                         }
                                     }}
                                     loading={createLoading}
+                                    disabled={!areAllTargetsValid()}
                                 >
                                     {t("resourceCreate")}
                                 </Button>

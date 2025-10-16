@@ -1051,7 +1051,7 @@ export default function ReverseProxyTargets(props: {
                                                 "text-muted-foreground"
                                         )}
                                     >
-                                        <span className="truncate max-w-[90px]">
+                                        <span className="truncate max-w-[150px]">
                                             {row.original.siteId
                                                 ? selectedSite?.name
                                                 : t("siteSelect")}
