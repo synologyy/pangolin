@@ -205,6 +205,7 @@ export default function ReverseProxyTargets(props: {
 }) {
     const params = use(props.params);
     const t = useTranslations();
+    const { env } = useEnvContext();
 
     const { resource, updateResource } = useResourceContext();
 
@@ -1491,7 +1492,7 @@ export default function ReverseProxyTargets(props: {
                                     className="space-y-4"
                                     id="tls-settings-form"
                                 >
-                                    {build == "oss" && (
+                                    {!env.flags.usePangolinDns && (
                                         <FormField
                                             control={tlsSettingsForm.control}
                                             name="ssl"
