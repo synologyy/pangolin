@@ -149,7 +149,8 @@ export async function updateSiteBandwidth(
                                         orgId,
                                         true,
                                         FeatureId.EGRESS_DATA_MB,
-                                        bandwidthUsage
+                                        bandwidthUsage,
+                                        trx
                                     )
                                     .catch((error: any) => {
                                         logger.error(
@@ -175,7 +176,8 @@ export async function updateSiteBandwidth(
                                         orgId,
                                         true,
                                         FeatureId.SITE_UPTIME,
-                                        uptimeUsage
+                                        uptimeUsage,
+                                        trx
                                     )
                                     .catch((error: any) => {
                                         logger.error(
