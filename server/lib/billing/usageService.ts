@@ -920,7 +920,7 @@ export class UsageService {
                                 };
 
                                 // Don't await to prevent blocking
-                                await sendToClient(newt.newtId, payload).catch(
+                                sendToClient(newt.newtId, payload).catch(
                                     (error: any) => {
                                         logger.error(
                                             `Failed to send termination message to newt ${newt.newtId}:`,

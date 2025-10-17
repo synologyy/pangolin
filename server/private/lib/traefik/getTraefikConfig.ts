@@ -238,7 +238,7 @@ export async function getTraefikConfig(
         }
         // get the valid certs for these domains
         validCerts = await getValidCertificatesForDomains(domains, true); // we are caching here because this is called often
-        logger.debug(`Valid certs for domains: ${JSON.stringify(validCerts)}`);
+        // logger.debug(`Valid certs for domains: ${JSON.stringify(validCerts)}`);
     }
 
     const config_output: any = {
