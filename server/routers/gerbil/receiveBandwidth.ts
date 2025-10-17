@@ -98,7 +98,8 @@ export async function updateSiteBandwidth(
                         if (
                             await checkExitNodeOrg(
                                 exitNodeId,
-                                updatedSite.orgId
+                                updatedSite.orgId,
+                                trx
                             )
                         ) {
                             // not allowed
@@ -242,7 +243,8 @@ export async function updateSiteBandwidth(
                         if (
                             await checkExitNodeOrg(
                                 exitNodeId,
-                                updatedSite.orgId
+                                updatedSite.orgId,
+                                trx
                             )
                         ) {
                             // not allowed
