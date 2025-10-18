@@ -438,6 +438,7 @@ export default function ResourceRules(props: {
                     defaultValue={row.original.priority}
                     className="w-[75px]"
                     type="number"
+                    onClick={(e) => e.currentTarget.focus()}
                     onBlur={(e) => {
                         const parsed = z.coerce
                             .number()
