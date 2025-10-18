@@ -512,7 +512,7 @@ export default function SignupForm({
                                                         "signUpTerms.IAgreeToThe"
                                                     )}{" "}
                                                     <a
-                                                        href="https://digpangolin.com/terms-of-service.html"
+                                                        href="https://pangolin.net/terms-of-service.html"
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-primary hover:underline"
@@ -523,7 +523,7 @@ export default function SignupForm({
                                                     </a>
                                                     {t("signUpTerms.and")}{" "}
                                                     <a
-                                                        href="https://digpangolin.com/privacy-policy.html"
+                                                        href="https://pangolin.net/privacy-policy.html"
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-primary hover:underline"

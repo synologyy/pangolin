@@ -42,7 +42,7 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
-import { 
+import {
     SiNixos,
     SiKubernetes
 } from "react-icons/si";
@@ -150,33 +150,33 @@ export default function Page() {
         const commands = {
             mac: {
                 "Apple Silicon (arm64)": [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 "Intel x64 (amd64)": [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             },
             linux: {
                 amd64: [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm64: [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm32: [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 arm32v6: [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ],
                 riscv64: [
-                    `curl -fsSL https://digpangolin.com/get-olm.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
                     `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
                 ]
             },
@@ -342,14 +342,14 @@ export default function Page() {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000);
-                
+
                 const response = await fetch(
                     `https://api.github.com/repos/fosrl/olm/releases/latest`,
                     { signal: controller.signal }
                 );
-                
+
                 clearTimeout(timeoutId);
-                
+
                 if (!response.ok) {
                     throw new Error(
                         t("olmErrorFetchReleases", {
