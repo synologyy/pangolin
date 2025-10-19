@@ -314,14 +314,11 @@ export const configSchema = z
                 nameservers: z
                     .array(z.string().optional().optional())
                     .optional()
-                    .default(["ns1.fossorial.io", "ns2.fossorial.io"]),
-                cname_extension: z.string().optional().default("fossorial.io")
+                    .default(["ns1.pangolin.net", "ns2.pangolin.net", "ns3.pangolin.net"]),
+                cname_extension: z.string().optional().default("cname.pangolin.net")
             })
             .optional()
-            .default({
-                nameservers: ["ns1.fossorial.io", "ns2.fossorial.io"],
-                cname_extension: "fossorial.io"
-            })
+            .default({})
     })
     .refine(
         (data) => {

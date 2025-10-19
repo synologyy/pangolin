@@ -19,7 +19,7 @@
         Documentation
       </a>
       <span> | </span>
-      <a href="mailto:contact@fossorial.io">
+      <a href="mailto:contact@pangolin.net">
         Contact Us
       </a>
   </h5>
@@ -37,7 +37,7 @@
 
 <p align="center">
     <strong>
-        Start testing Pangolin at <a href="https://pangolin.fossorial.io/auth/signup">pangolin.fossorial.io</a>
+        Start testing Pangolin at <a href="https://app.pangolin.net/auth/signup">app.pangolin.net</a>
     </strong>
 </p>
 
@@ -77,11 +77,11 @@ the docs to illustrate some basic ideas.
 ### Sign up and try now
 
 For Pangolin's managed service, you will first need to create an account at
-[pangolin.fossorial.io](https://pangolin.fossorial.io). We have a generous free tier to get started.
+[app.pangolin.net](https://app.pangolin.net). We have a generous free tier to get started.
 
 ## Licensing
 
-Pangolin is dual licensed under the AGPL-3 and the [Fossorial Commercial License](https://pangolin.net/fcl.html). For inquiries about commercial licensing, please contact us at [contact@fossorial.io](mailto:contact@fossorial.io).
+Pangolin is dual licensed under the AGPL-3 and the [Fossorial Commercial License](https://pangolin.net/fcl.html). For inquiries about commercial licensing, please contact us at [contact@pangolin.net](mailto:contact@pangolin.net).
 
 ## Contributions
 

@@ -1274,7 +1274,7 @@
     "billingFreeTier": "Free Tier",
     "billingWarningOverLimit": "Warning: You have exceeded one or more usage limits. Your sites will not connect until you modify your subscription or adjust your usage.",
     "billingUsageLimitsOverview": "Usage Limits Overview",
-    "billingMonitorUsage": "Monitor your usage against configured limits. If you need limits increased please contact us support@fossorial.io.",
+    "billingMonitorUsage": "Monitor your usage against configured limits. If you need limits increased please contact us support@pangolin.net.",
     "billingDataUsage": "Data Usage",
     "billingOnlineTime": "Site Online Time",
     "billingUsers": "Active Users",
@@ -1812,7 +1812,7 @@
             },
             "trialPeriodInformation": {
                 "title": "Trial Period Information",
-                "description": "This License Key enables Enterprise features for a 7-day evaluation period. Continued access to Paid Features beyond the evaluation period requires activation under a valid Personal or Enterprise License. For Enterprise licensing, contact sales@fossorial.io."
+                "description": "This License Key enables Enterprise features for a 7-day evaluation period. Continued access to Paid Features beyond the evaluation period requires activation under a valid Personal or Enterprise License. For Enterprise licensing, contact sales@pangolin.net."
             }
         },
         "form": {

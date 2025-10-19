@@ -139,8 +139,8 @@ export async function applyBlueprint(
 //                 password: "sadfasdfadsf",
 //                 "sso-enabled": true,
 //                 "sso-roles": ["Member"],
-//                 "sso-users": ["owen@fossorial.io"],
-//                 "whitelist-users": ["owen@fossorial.io"]
+//                 "sso-users": ["owen@pangolin.net"],
+//                 "whitelist-users": ["owen@pangolin.net"]
 //             },
 //             targets: [
 //                 {

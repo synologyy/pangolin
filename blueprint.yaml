@@ -28,9 +28,9 @@ proxy-resources:
       # sso-roles:
       #   - Member
       # sso-users:
-      #   - owen@fossorial.io
+      #   - owen@pangolin.net
       # whitelist-users:
-      #   - owen@fossorial.io
+      #   - owen@pangolin.net
     headers:
       - name: X-Example-Header
         value: example-value

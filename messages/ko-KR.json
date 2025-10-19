@@ -1280,7 +1280,7 @@
     "billingFreeTier": "무료 티어",
     "billingWarningOverLimit": "경고: 하나 이상의 사용 한도를 초과했습니다. 구독을 수정하거나 사용량을 조정하기 전까지 사이트는 연결되지 않습니다.",
     "billingUsageLimitsOverview": "사용 한도 개요",
-    "billingMonitorUsage": "설정된 한도에 대한 사용량을 모니터링합니다. 한도를 늘려야 하는 경우 support@fossorial.io로 연락하십시오.",
+    "billingMonitorUsage": "설정된 한도에 대한 사용량을 모니터링합니다. 한도를 늘려야 하는 경우 support@pangolin.net로 연락하십시오.",
     "billingDataUsage": "데이터 사용량",
     "billingOnlineTime": "사이트 온라인 시간",
     "billingUsers": "활성 사용자",
@@ -1819,7 +1819,7 @@
             },
             "trialPeriodInformation": {
                 "title": "Trial Period Information",
-                "description": "This License Key enables Enterprise features for a 7-day evaluation period. Continued access to Paid Features beyond the evaluation period requires activation under a valid Personal or Enterprise License. For Enterprise licensing, contact sales@fossorial.io."
+                "description": "This License Key enables Enterprise features for a 7-day evaluation period. Continued access to Paid Features beyond the evaluation period requires activation under a valid Personal or Enterprise License. For Enterprise licensing, contact sales@pangolin.net."
             }
         },
         "form": {
