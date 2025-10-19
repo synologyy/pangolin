@@ -30,7 +30,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { build } from "@server/build";
 import { Switch } from "./ui/switch";
 import { useEffect, useState } from "react";
-import DNSRecordsTable, {DNSRecordRow} from "./DNSRecordTable";
+import DNSRecordsTable, { DNSRecordRow } from "./DNSRecordTable";
 import { createApiClient } from "@app/lib/api";
 import { useToast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
@@ -150,19 +150,33 @@ export default function DomainInfoCard({ orgId, domainId }: DomainInfoCardProps)
         }
     }, [domain.domainId]);
 
+    const getTypeDisplay = (type: string) => {
+        switch (type) {
+            case "ns":
+                return t("selectDomainTypeNsName");
+            case "cname":
+                return t("selectDomainTypeCnameName");
+            case "wildcard":
+                return t("selectDomainTypeWildcardName");
+            default:
+                return type;
+        }
+    };
+
+
 
     return (
         <>
             <Alert>
                 <AlertDescription>
-                    <InfoSections cols={2}>
+                    <InfoSections cols={3}>
                         <InfoSection>
                             <InfoSectionTitle>
                                 {t("type")}
                             </InfoSectionTitle>
                             <InfoSectionContent>
                                 <span>
-                                    {domain.type}
+                                    {getTypeDisplay(domain.type ? domain.type : "")}
                                 </span>
                             </InfoSectionContent>
                         </InfoSection>
@@ -172,16 +186,11 @@ export default function DomainInfoCard({ orgId, domainId }: DomainInfoCardProps)
                             </InfoSectionTitle>
                             <InfoSectionContent>
                                 {domain.verified ? (
-                                    <div className="text-green-500 flex items-center space-x-2">
-                                        <Badge variant="green">
-                                            {t("verified")}
-                                        </Badge>
-                                    </div>
+                                    <Badge variant="green">{t("verified")}</Badge>
                                 ) : (
-                                    <div className="text-neutral-500 flex items-center space-x-2">
-                                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                                        <span>{t("unverified")}</span>
-                                    </div>
+                                    <Badge variant="destructive">
+                                        {t("failed", { fallback: "Failed" })}
+                                    </Badge>
                                 )}
                             </InfoSectionContent>
                         </InfoSection>

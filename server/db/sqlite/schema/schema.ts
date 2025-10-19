@@ -25,6 +25,7 @@ export const dnsRecords = sqliteTable("dnsRecords", {
     recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: text("baseDomain"),
     value: text("value").notNull(), 
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
 });
 
 

@@ -8,11 +8,13 @@ import DomainContext from "@app/contexts/domainContext";
 interface DomainProviderProps {
     children: React.ReactNode;
     domain: GetDomainResponse;
+    orgId: string;
 }
 
 export function DomainProvider({
     children,
-    domain: serverDomain
+    domain: serverDomain,
+    orgId
 }: DomainProviderProps) {
     const [domain, setDomain] = useState<GetDomainResponse>(serverDomain);
 
@@ -34,7 +36,7 @@ export function DomainProvider({
     };
 
     return (
-        <DomainContext.Provider value={{ domain, updateDomain }}>
+        <DomainContext.Provider value={{ domain, updateDomain, orgId }}>
             {children}
         </DomainContext.Provider>
     );

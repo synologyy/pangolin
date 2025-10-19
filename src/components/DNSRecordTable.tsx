@@ -1,12 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Button } from "@app/components/ui/button";
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useToast } from "@app/hooks/useToast";
 import { Badge } from "@app/components/ui/badge";
-import CopyToClipboard from "@app/components/CopyToClipboard";
 import { DNSRecordsDataTable } from "./DNSRecordsDataTable";
 
 export type DNSRecordRow = {
@@ -114,7 +110,9 @@ export default function DNSRecordsTable({ records, domainId, isRefreshing }: Pro
                     verified ? (
                         <Badge variant="green">{t("verified")}</Badge>
                     ) : (
-                        <Badge variant="secondary">{t("unverified")}</Badge>
+                        <Badge variant="destructive">
+                            {t("failed", { fallback: "Failed" })}
+                        </Badge>
                     )
                 );
             }

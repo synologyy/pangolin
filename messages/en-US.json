@@ -1904,5 +1904,7 @@
     "recordName": "Record Name",
     "auto": "Auto",
     "TTL": "TTL",
-    "howToAddRecords": "How to Add Records"
+    "howToAddRecords": "How to Add Records",
+    "dnsRecord": "DNS Records",
+    "required": "Required"
 }

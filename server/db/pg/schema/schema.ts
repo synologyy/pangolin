@@ -33,6 +33,7 @@ export const dnsRecords = pgTable("dnsRecords", {
     recordType: varchar("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: varchar("baseDomain"),
     value: varchar("value").notNull(),
+    verified: boolean("verified").notNull().default(false),
 });
 
 export const orgs = pgTable("orgs", {

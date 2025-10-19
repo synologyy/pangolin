@@ -3,18 +3,17 @@ import { authCookieHeader } from "@app/lib/api/cookies";
 import { internal } from "@app/lib/api";
 import { GetDomainResponse } from "@server/routers/domain/getDomain";
 import { AxiosResponse } from "axios";
-import { getTranslations } from "next-intl/server";
-import SettingsLayoutClient from "./DomainSettingsLayout";
+import DomainProvider from "@app/providers/DomainProvider";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
-  params: { domainId: string; orgId: string };
+  params: Promise<{ domainId: string; orgId: string }>;
 }
 
 export default async function SettingsLayout({ children, params }: SettingsLayoutProps) {
-  const { domainId, orgId } = params;
-
+  const { domainId, orgId } = await params;
   let domain = null;
+
   try {
     const res = await internal.get<AxiosResponse<GetDomainResponse>>(
       `/org/${orgId}/domain/${domainId}`,
@@ -25,14 +24,9 @@ export default async function SettingsLayout({ children, params }: SettingsLayou
     redirect(`/${orgId}/settings/domains`);
   }
 
-  const t = await getTranslations();
-
   return (
-    <SettingsLayoutClient
-      orgId={orgId}
-      domain={domain}
-    >
+    <DomainProvider domain={domain} orgId={orgId}>
       {children}
-    </SettingsLayoutClient>
+    </DomainProvider>
   );
 }
