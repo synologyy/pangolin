@@ -8,11 +8,11 @@ import SettingsLayoutClient from "./DomainSettingsLayout";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
-  params: Promise<{ domainId: string; orgId: string }>;
+  params: { domainId: string; orgId: string };
 }
 
 export default async function SettingsLayout({ children, params }: SettingsLayoutProps) {
-  const { domainId, orgId } = await params;
+  const { domainId, orgId } = params;
 
   let domain = null;
   try {
