@@ -252,43 +252,43 @@ PersistentKeepalive = 5`;
         const commands = {
             mac: {
                 All: [
-                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
                 // "Intel x64 (amd64)": [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ]
             },
             linux: {
                 All: [
-                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
                 // arm64: [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ],
                 // arm32: [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ],
                 // arm32v6: [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ],
                 // riscv64: [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ]
             },
             freebsd: {
                 All: [
-                    `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                    `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 ]
                 // arm64: [
-                //     `curl -fsSL https://digpangolin.com/get-newt.sh | bash`,
+                //     `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
                 //     `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
                 // ]
             },

@@ -33,7 +33,7 @@ class TelemetryClient {
             this.client = new PostHog(
                 "phc_QYuATSSZt6onzssWcYJbXLzQwnunIpdGGDTYhzK3VjX",
                 {
-                    host: "https://digpangolin.com/relay-O7yI"
+                    host: "https://pangolin.net/relay-O7yI"
                 }
             );
 
@@ -48,11 +48,11 @@ class TelemetryClient {
             this.startAnalyticsInterval();
 
             logger.info(
-                "Pangolin now gathers anonymous usage data to help us better understand how the software is used and guide future improvements and feature development. You can find more details, including instructions for opting out of this anonymous data collection, at: https://docs.digpangolin.com/telemetry"
+                "Pangolin now gathers anonymous usage data to help us better understand how the software is used and guide future improvements and feature development. You can find more details, including instructions for opting out of this anonymous data collection, at: https://docs.pangolin.net/telemetry"
             );
         } else if (!this.enabled) {
             logger.info(
-                "Analytics usage statistics collection is disabled. If you enable this, you can help us make Pangolin better for everyone. Learn more at: https://docs.digpangolin.com/telemetry"
+                "Analytics usage statistics collection is disabled. If you enable this, you can help us make Pangolin better for everyone. Learn more at: https://docs.pangolin.net/telemetry"
             );
         }
     }

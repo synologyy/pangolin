@@ -100,6 +100,10 @@ type ResourcesTableProps = {
     internalResources: InternalResourceRow[];
     orgId: string;
     defaultView?: "proxy" | "internal";
+    defaultSort?: {
+        id: string;
+        desc: boolean;
+    };
 };
 
 
@@ -143,7 +147,8 @@ export default function ResourcesTable({
     resources,
     internalResources,
     orgId,
-    defaultView = "proxy"
+    defaultView = "proxy",
+    defaultSort
 }: ResourcesTableProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -171,12 +176,16 @@ export default function ResourcesTable({
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [sites, setSites] = useState<Site[]>([]);
 
-    const [proxySorting, setProxySorting] = useState<SortingState>([]);
+    const [proxySorting, setProxySorting] = useState<SortingState>(
+        defaultSort ? [defaultSort] : []
+    );
     const [proxyColumnFilters, setProxyColumnFilters] =
         useState<ColumnFiltersState>([]);
     const [proxyGlobalFilter, setProxyGlobalFilter] = useState<any>([]);
 
-    const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+    const [internalSorting, setInternalSorting] = useState<SortingState>(
+        defaultSort ? [defaultSort] : []
+    );
     const [internalColumnFilters, setInternalColumnFilters] =
         useState<ColumnFiltersState>([]);
     const [internalGlobalFilter, setInternalGlobalFilter] = useState<any>([]);

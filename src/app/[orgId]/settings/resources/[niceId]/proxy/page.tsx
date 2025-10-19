@@ -854,6 +854,7 @@ export default function ReverseProxyTargets(props: {
                             type="number"
                             min="1"
                             max="1000"
+                            onClick={(e) => e.currentTarget.focus()}
                             defaultValue={row.original.priority || 100}
                             className="w-full max-w-20"
                             onBlur={(e) => {

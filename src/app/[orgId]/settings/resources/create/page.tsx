@@ -1874,7 +1874,7 @@ export default function Page() {
 
                                         <Link
                                             className="text-sm text-primary flex items-center gap-1"
-                                            href="https://docs.digpangolin.com/manage/resources/tcp-udp-resources"
+                                            href="https://docs.pangolin.net/manage/resources/tcp-udp-resources"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
