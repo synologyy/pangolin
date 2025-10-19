@@ -118,7 +118,7 @@ export default function InviteUserForm({
                             <div>
                                 <div className="flex items-center gap-2">
                                     {t("type")}
-                                    <span className="px-2 py-1 rounded-md font-medium bg-secondary"><CopyToClipboard text={string} /></span>
+                                    <span className="px-2 py-1 rounded-md bg-secondary"><CopyToClipboard text={string} /></span>
                                     {t("toConfirm")}
                                 </div>
                             </div>

@@ -695,17 +695,12 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p className="mb-2">
-                                {t("resourceQuestionRemove", {
-                                    selectedResource:
-                                        selectedResource?.name ||
-                                        selectedResource?.id
-                                })}
+                            <p>
+                                {t("resourceQuestionRemove")}
                             </p>
-
-                            <p className="mb-2">{t("resourceMessageRemove")}</p>
-
-                            <p>{t("resourceMessageConfirm")}</p>
+                            <p>
+                                {t("resourceMessageRemove")}
+                            </p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
@@ -724,17 +719,12 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p className="mb-2">
-                                {t("resourceQuestionRemove", {
-                                    selectedResource:
-                                        selectedInternalResource?.name ||
-                                        selectedInternalResource?.id
-                                })}
+                            <p>
+                                {t("resourceQuestionRemove")}
                             </p>
-
-                            <p className="mb-2">{t("resourceMessageRemove")}</p>
-
-                            <p>{t("resourceMessageConfirm")}</p>
+                            <p>
+                                {t("resourceMessageRemove")}
+                            </p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
