@@ -277,25 +277,12 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                         setSelectedClient(null);
                     }}
                     dialog={
-                        <div className="space-y-4">
+                        <div>
                             <p>
-                                Are you sure you want to remove the client{" "}
-                                <b>
-                                    {selectedClient?.name || selectedClient?.id}
-                                </b>{" "}
-                                from the site and organization?
+                                {t("deleteClientQuestion")}
                             </p>
-
                             <p>
-                                <b>
-                                    Once removed, the client will no longer be
-                                    able to connect to the site.{" "}
-                                </b>
-                            </p>
-
-                            <p>
-                                To confirm, please type the name of the client
-                                below.
+                                    {t("clientMessageRemove")}
                             </p>
                         </div>
                     }

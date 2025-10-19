@@ -44,6 +44,7 @@ import { Description } from "@radix-ui/react-toast";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useTranslations } from "next-intl";
+import CopyToClipboard from "./CopyToClipboard";
 
 type InviteUserFormProps = {
     open: boolean;
@@ -110,6 +111,17 @@ export default function InviteUserForm({
                     <CredenzaBody>
                         <div className="mb-4 break-all overflow-hidden">
                             {dialog}
+                            <div className="mt-2 mb-6 font-bold text-red-700">
+                                {t("cannotbeUndone")}
+                            </div>
+
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    {t("type")}
+                                    <span className="px-2 py-1 rounded-md bg-secondary"><CopyToClipboard text={string} /></span>
+                                    {t("toConfirm")}
+                                </div>
+                            </div>
                         </div>
                         <Form {...form}>
                             <form
