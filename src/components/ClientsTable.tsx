@@ -277,7 +277,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                         setSelectedClient(null);
                     }}
                     dialog={
-                        <div className="space-y-4">
+                        <div>
                             <p>
                                 {t("deleteClientQuestion")}
                             </p>

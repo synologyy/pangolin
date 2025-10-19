@@ -175,7 +175,7 @@ export default function InvitationsTable({
                     setSelectedInvitation(null);
                 }}
                 dialog={
-                    <div className="space-y-4">
+                    <div>
                         <p>
                             {t("inviteQuestionRemove")}
                         </p>

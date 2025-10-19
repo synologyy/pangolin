@@ -177,7 +177,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                         setSelected(null);
                     }}
                     dialog={
-                        <div className="space-y-4">
+                        <div>
                             <p>
                                 {t("apiKeysQuestionRemove")}
                             </p>

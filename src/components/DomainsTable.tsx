@@ -237,7 +237,7 @@ export default function DomainsTable({ domains }: Props) {
                         setSelectedDomain(null);
                     }}
                     dialog={
-                        <div className="space-y-4">
+                        <div>
                             <p>
                                 {t("domainQuestionRemove")}
                             </p>
