@@ -169,12 +169,9 @@ export default function GeneralPage() {
                 dialog={
                     <div>
                         <p className="mb-2">
-                            {t("orgQuestionRemove", {
-                                selectedOrg: org?.org.name
-                            })}
+                            {t("orgQuestionRemove")}
                         </p>
                         <p className="mb-2">{t("orgMessageRemove")}</p>
-                        <p>{t("orgMessageConfirm")}</p>
                     </div>
                 }
                 buttonText={t("orgDeleteConfirm")}

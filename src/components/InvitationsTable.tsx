@@ -177,12 +177,9 @@ export default function InvitationsTable({
                 dialog={
                     <div className="space-y-4">
                         <p>
-                            {t("inviteQuestionRemove", {
-                                email: selectedInvitation?.email || ""
-                            })}
+                            {t("inviteQuestionRemove")}
                         </p>
                         <p>{t("inviteMessageRemove")}</p>
-                        <p>{t("inviteMessageConfirm")}</p>
                     </div>
                 }
                 buttonText={t("inviteRemoveConfirm")}

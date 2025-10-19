@@ -179,14 +179,11 @@ export default function IdpTable({ idps, orgId }: Props) {
                     dialog={
                         <div className="space-y-4">
                             <p>
-                                {t("idpQuestionRemove", {
-                                    name: selectedIdp.name
-                                })}
+                                {t("idpQuestionRemove")}
                             </p>
                             <p>
                                 <b>{t("idpMessageRemove")}</b>
                             </p>
-                            <p>{t("idpMessageConfirm")}</p>
                         </div>
                     }
                     buttonText={t("idpConfirmDelete")}

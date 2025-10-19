@@ -317,16 +317,11 @@ export default function LicensePage() {
                     dialog={
                         <div className="space-y-4">
                             <p>
-                                {t("licenseQuestionRemove", {
-                                    selectedKey: obfuscateLicenseKey(
-                                        selectedLicenseKey.licenseKey
-                                    )
-                                })}
+                                {t("licenseQuestionRemove")}
                             </p>
                             <p>
                                 <b>{t("licenseMessageRemove")}</b>
                             </p>
-                            <p>{t("licenseMessageConfirm")}</p>
                         </div>
                     }
                     buttonText={t("licenseKeyDeleteConfirm")}
