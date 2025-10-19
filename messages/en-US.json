@@ -47,9 +47,8 @@
     "edit": "Edit",
     "siteConfirmDelete": "Confirm Delete Site",
     "siteDelete": "Delete Site",
-    "siteMessageRemove": "Once removed, the site will no longer be accessible. All resources and targets associated with the site will also be removed.",
-    "siteMessageConfirm": "To confirm, please type the name of the site below.",
-    "siteQuestionRemove": "Are you sure you want to remove the site {selectedSite} from the organization?",
+    "siteMessageRemove": "Once removed the site will no longer be accessible. All targets associated with the site will also be removed.",
+    "siteQuestionRemove": "Are you sure you want to remove the site from the organization?",
     "siteManageSites": "Manage Sites",
     "siteDescription": "Allow connectivity to your network through secure tunnels",
     "siteCreate": "Create Site",
@@ -1894,5 +1893,7 @@
     "pathRewriteRegex": "Regex",
     "pathRewriteStrip": "Strip",
     "pathRewriteStripLabel": "strip",
-    "sidebarEnableEnterpriseLicense": "Enable Enterprise License"
+    "sidebarEnableEnterpriseLicense": "Enable Enterprise License",
+    "cannotbeUndone": "This can not be undone.",
+    "toConfirm": "to confirm"
 }
