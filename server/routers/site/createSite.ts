@@ -17,6 +17,7 @@ import { hashPassword } from "@server/auth/password";
 import { isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import { verifyExitNodeOrgAccess } from "#dynamic/lib/exitNodes";
+import { build } from "@server/build";
 
 const createSiteParamsSchema = z
     .object({
@@ -203,10 +204,10 @@ export async function createSite(
 
         const niceId = await getUniqueSiteName(orgId);
 
-        await db.transaction(async (trx) => {
-            let newSite: Site;
+        let newSite: Site;
 
-            if ((type == "wireguard" || type == "newt") && exitNodeId) {
+        await db.transaction(async (trx) => {
+            if (type == "wireguard" || type == "newt") {
                 // we are creating a site with an exit node (tunneled)
                 if (!subnet) {
                     return next(
@@ -217,11 +218,19 @@ export async function createSite(
                     );
                 }
 
-                const { exitNode, hasAccess } =
-                    await verifyExitNodeOrgAccess(
-                        exitNodeId,
-                        orgId
+                if (!exitNodeId) {
+                    return next(
+                        createHttpError(
+                            HttpCode.BAD_REQUEST,
+                            "Exit node ID is required for tunneled sites"
+                        )
                     );
+                }
+
+                const { exitNode, hasAccess } = await verifyExitNodeOrgAccess(
+                    exitNodeId,
+                    orgId
+                );
 
                 if (!exitNode) {
                     logger.warn("Exit node not found");
@@ -257,13 +266,51 @@ export async function createSite(
                         ...(pubKey && type == "wireguard" && { pubKey })
                     })
                     .returning();
-            } else {
-                // we are creating a site with no tunneling
+            } else if (type == "local") {
+                let exitNodeIdToCreate = exitNodeId;
+                if (!exitNodeIdToCreate) {
+                    if (build == "saas") {
+                        return next(
+                            createHttpError(
+                                HttpCode.BAD_REQUEST,
+                                "Exit node ID of a remote node is required for local sites"
+                            )
+                        );
+                    }
+
+                    // select the exit node for local sites
+                    // TODO: THIS SHOULD BE CHOSEN IN THE FRONTEND OR SOMETHING BECAUSE
+                    // YOU CAN HAVE MORE THAN ONE NODE IN THE SYSTEM AND YOU SHOULD SELECT
+                    // WHICH GERBIL NODE TO PUT THE SITE ON BUT FOR NOW THIS WILL DO
+                    const [localExitNode] = await trx
+                        .select()
+                        .from(exitNodes)
+                        .where(eq(exitNodes.type, "gerbil"))
+                        .limit(1);
+
+                    if (!localExitNode) {
+                        return next(
+                            createHttpError(
+                                HttpCode.BAD_REQUEST,
+                                "No gerbil exit node found for organization. Please create a gerbil exit node first."
+                            )
+                        );
+                    }
+
+                    exitNodeIdToCreate = localExitNode.exitNodeId;
+                } else {
+                    return next(
+                        createHttpError(
+                            HttpCode.BAD_REQUEST,
+                            "Site type not recognized"
+                        )
+                    );
+                }
 
                 [newSite] = await trx
                     .insert(sites)
                     .values({
-                        exitNodeId: exitNodeId,
+                        exitNodeId: exitNodeIdToCreate,
                         orgId,
                         name,
                         niceId,
