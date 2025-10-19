@@ -242,7 +242,7 @@ export default function DomainsTable({ domains }: Props) {
                                 {t("domainQuestionRemove")}
                             </p>
                             <p>
-                                <b>{t("domainMessageRemove")}</b>
+                                {t("domainMessageRemove")}
                             </p>
                         </div>
                     }

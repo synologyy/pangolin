@@ -182,7 +182,7 @@ export default function IdpTable({ idps, orgId }: Props) {
                                 {t("idpQuestionRemove")}
                             </p>
                             <p>
-                                <b>{t("idpMessageRemove")}</b>
+                                {t("idpMessageRemove")}
                             </p>
                         </div>
                     }

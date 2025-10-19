@@ -243,7 +243,7 @@ export default function UsersTable({ users }: Props) {
                             </p>
 
                             <p>
-                                <b>{t("userMessageRemove")}</b>
+                                {t("userMessageRemove")}
                             </p>
                         </div>
                     }

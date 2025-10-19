@@ -183,7 +183,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                             </p>
 
                             <p>
-                                <b>{t("apiKeysMessageRemove")}</b>
+                                {t("apiKeysMessageRemove")}
                             </p>
                         </div>
                     }

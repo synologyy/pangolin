@@ -167,11 +167,11 @@ export default function GeneralPage() {
                     setIsDeleteModalOpen(val);
                 }}
                 dialog={
-                    <div>
-                        <p className="mb-2">
+                    <div className="space-y-4">
+                        <p>
                             {t("orgQuestionRemove")}
                         </p>
-                        <p className="mb-2">{t("orgMessageRemove")}</p>
+                        <p>{t("orgMessageRemove")}</p>
                     </div>
                 }
                 buttonText={t("orgDeleteConfirm")}

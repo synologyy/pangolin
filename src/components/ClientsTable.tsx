@@ -282,9 +282,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                                 {t("deleteClientQuestion")}
                             </p>
                             <p>
-                                <b>
                                     {t("clientMessageRemove")}
-                                </b>
                             </p>
                         </div>
                     }

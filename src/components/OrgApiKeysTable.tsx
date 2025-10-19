@@ -191,7 +191,7 @@ export default function OrgApiKeysTable({
                             </p>
 
                             <p>
-                                <b>{t("apiKeysMessageRemove")}</b>
+                                {t("apiKeysMessageRemove")}
                             </p>
                         </div>
                     }
