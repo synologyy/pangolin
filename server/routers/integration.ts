@@ -415,6 +415,20 @@ authenticated.post(
 );
 
 authenticated.get(
+    `/resource/:resourceId/whitelist/add`,
+    verifyApiKeyResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceWhitelist),
+    resource.addEmailToResourceWhitelist
+);
+
+authenticated.get(
+    `/resource/:resourceId/whitelist/remove`,
+    verifyApiKeyResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceWhitelist),
+    resource.removeEmailFromResourceWhitelist
+);
+
+authenticated.get(
     `/resource/:resourceId/whitelist`,
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.getResourceWhitelist),
