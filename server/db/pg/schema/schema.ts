@@ -24,6 +24,17 @@ export const domains = pgTable("domains", {
     preferWildcardCert: boolean("preferWildcardCert")
 });
 
+
+export const dnsRecords = pgTable("dnsRecords", {
+    id: varchar("id").primaryKey(),
+    domainId: varchar("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" }),
+    recordType: varchar("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
+    baseDomain: varchar("baseDomain"),
+    value: varchar("value").notNull(),
+});
+
 export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
