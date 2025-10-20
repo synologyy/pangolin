@@ -728,8 +728,8 @@ export const requestAuditLog = sqliteTable("requestAuditLog", {
     userAgent: text("userAgent"),
     metadata: text("details")
 }, (table) => ([
-    index("idx_actionAuditLog_timestamp").on(table.timestamp),
-    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
+    index("idx_requestAuditLog_timestamp").on(table.timestamp),
+    index("idx_requestAuditLog_org_timestamp").on(table.orgId, table.timestamp)
 ]));
 
 export type Org = InferSelectModel<typeof orgs>;

@@ -243,8 +243,8 @@ export const identityAuditLog = sqliteTable("identityAuditLog", {
     userAgent: text("userAgent"),
     metadata: text("details")
 }, (table) => ([
-    index("idx_actionAuditLog_timestamp").on(table.timestamp),
-    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
+    index("idx_identityAuditLog_timestamp").on(table.timestamp),
+    index("idx_identityAuditLog_org_timestamp").on(table.orgId, table.timestamp)
 ]));
 
 export type Limit = InferSelectModel<typeof limits>;
