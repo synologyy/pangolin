@@ -32,14 +32,14 @@ authenticated.post(
     `/org/:orgId/send-usage-notification`,
     verifyApiKeyIsRoot, // We are the only ones who can use root key so its fine
     verifyApiKeyHasAction(ActionsEnum.sendUsageNotification),
+    logActionAudit(ActionsEnum.sendUsageNotification),
     org.sendUsageNotification,
-    logActionAudit(ActionsEnum.sendUsageNotification)
 );
 
 authenticated.delete(
     "/idp/:idpId",
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.deleteIdp),
+    logActionAudit(ActionsEnum.deleteIdp),
     orgIdp.deleteOrgIdp,
-    logActionAudit(ActionsEnum.deleteIdp)
 );

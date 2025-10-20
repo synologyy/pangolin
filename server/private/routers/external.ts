@@ -26,7 +26,6 @@ import { Router } from "express";
 import {
     verifyOrgAccess,
     verifyUserHasAction,
-    verifyUserIsOrgOwner,
     verifyUserIsServerAdmin
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
@@ -73,8 +72,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createIdp),
+    logActionAudit(ActionsEnum.createIdp),
     orgIdp.createOrgOidcIdp,
-    logActionAudit(ActionsEnum.createIdp)
 );
 
 authenticated.post(
@@ -83,8 +82,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.updateIdp),
+    logActionAudit(ActionsEnum.updateIdp),
     orgIdp.updateOrgOidcIdp,
-    logActionAudit(ActionsEnum.updateIdp)
 );
 
 authenticated.delete(
@@ -93,8 +92,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.deleteIdp),
+    logActionAudit(ActionsEnum.deleteIdp),
     orgIdp.deleteOrgIdp,
-    logActionAudit(ActionsEnum.deleteIdp)
 );
 
 authenticated.get(
@@ -131,8 +130,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyCertificateAccess,
     verifyUserHasAction(ActionsEnum.restartCertificate),
+    logActionAudit(ActionsEnum.restartCertificate),
     certificates.restartCertificate,
-    logActionAudit(ActionsEnum.restartCertificate)
 );
 
 if (build === "saas") {
@@ -157,16 +156,16 @@ if (build === "saas") {
         "/org/:orgId/billing/create-checkout-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
+        logActionAudit(ActionsEnum.billing),
         billing.createCheckoutSession,
-        logActionAudit(ActionsEnum.billing)
     );
 
     authenticated.post(
         "/org/:orgId/billing/create-portal-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
+        logActionAudit(ActionsEnum.billing),
         billing.createPortalSession,
-        logActionAudit(ActionsEnum.billing)
     );
 
     authenticated.get(
@@ -213,8 +212,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRemoteExitNode),
+    logActionAudit(ActionsEnum.createRemoteExitNode),
     remoteExitNode.createRemoteExitNode,
-    logActionAudit(ActionsEnum.createRemoteExitNode)
 );
 
 authenticated.get(
@@ -248,8 +247,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyRemoteExitNodeAccess,
     verifyUserHasAction(ActionsEnum.deleteRemoteExitNode),
+    logActionAudit(ActionsEnum.deleteRemoteExitNode),
     remoteExitNode.deleteRemoteExitNode,
-    logActionAudit(ActionsEnum.deleteRemoteExitNode)
 );
 
 authenticated.put(
@@ -257,8 +256,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createLoginPage),
+    logActionAudit(ActionsEnum.createLoginPage),
     loginPage.createLoginPage,
-    logActionAudit(ActionsEnum.createLoginPage)
 );
 
 authenticated.post(
@@ -267,8 +266,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.updateLoginPage),
+    logActionAudit(ActionsEnum.updateLoginPage),
     loginPage.updateLoginPage,
-    logActionAudit(ActionsEnum.updateLoginPage)
 );
 
 authenticated.delete(
@@ -277,8 +276,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.deleteLoginPage),
+    logActionAudit(ActionsEnum.deleteLoginPage),
     loginPage.deleteLoginPage,
-    logActionAudit(ActionsEnum.deleteLoginPage)
 );
 
 authenticated.get(
