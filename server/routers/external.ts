@@ -314,7 +314,7 @@ authenticated.patch(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.updateOrgDomain),
     domain.updateOrgDomain
-)
+);
 
 authenticated.get(
     "/org/:orgId/domain/:domainId/dns-records",
