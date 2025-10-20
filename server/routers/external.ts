@@ -309,6 +309,13 @@ authenticated.get(
     domain.getDomain
 );
 
+authenticated.patch(
+    "/org/:orgId/domain/:domainId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgDomain),
+    domain.updateOrgDomain
+)
+
 authenticated.get(
     "/org/:orgId/domain/:domainId/dns-records",
     verifyOrgAccess,

@@ -82,6 +82,7 @@ export enum ActionsEnum {
     getClient = "getClient",
     listOrgDomains = "listOrgDomains",
     getDomain = "getDomain",
+    updateOrgDomain = "updateOrgDomain",
     getDNSRecords = "getDNSRecords",
     createNewt = "createNewt",
     createIdp = "createIdp",

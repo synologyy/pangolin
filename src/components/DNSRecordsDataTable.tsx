@@ -125,7 +125,7 @@ export function DNSRecordsDataTable<TData, TValue>({
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id} className="bg-secondary">
+                                <TableRow key={headerGroup.id} className="bg-secondary dark:bg-transparent">
                                     {headerGroup.headers.map((header) => (
                                         <TableHead key={header.id}>
                                             {header.isPlaceholder
@@ -165,7 +165,7 @@ export function DNSRecordsDataTable<TData, TValue>({
                                         colSpan={columns.length}
                                         className="h-24 text-center"
                                     >
-                                        No results found.
+                                        {t("noResults")}
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -1906,5 +1906,8 @@
     "TTL": "TTL",
     "howToAddRecords": "How to Add Records",
     "dnsRecord": "DNS Records",
-    "required": "Required"
+    "required": "Required",
+    "domainSettingsUpdated": "Domain settings updated successfully",
+    "orgOrDomainIdMissing": "Organization or Domain ID is missing",
+    "loadingDNSRecords": "Loading DNS records..."
 }
