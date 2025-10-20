@@ -31,6 +31,7 @@ import {
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 import {
+    logActionAudit,
     verifyCertificateAccess,
     verifyIdpAccess,
     verifyLoginPageAccess,
@@ -72,7 +73,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createIdp),
-    orgIdp.createOrgOidcIdp
+    orgIdp.createOrgOidcIdp,
+    logActionAudit(ActionsEnum.createIdp)
 );
 
 authenticated.post(
@@ -81,7 +83,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.updateIdp),
-    orgIdp.updateOrgOidcIdp
+    orgIdp.updateOrgOidcIdp,
+    logActionAudit(ActionsEnum.updateIdp)
 );
 
 authenticated.delete(
@@ -90,7 +93,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.deleteIdp),
-    orgIdp.deleteOrgIdp
+    orgIdp.deleteOrgIdp,
+    logActionAudit(ActionsEnum.deleteIdp)
 );
 
 authenticated.get(
@@ -127,7 +131,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyCertificateAccess,
     verifyUserHasAction(ActionsEnum.restartCertificate),
-    certificates.restartCertificate
+    certificates.restartCertificate,
+    logActionAudit(ActionsEnum.restartCertificate)
 );
 
 if (build === "saas") {
@@ -152,14 +157,16 @@ if (build === "saas") {
         "/org/:orgId/billing/create-checkout-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
-        billing.createCheckoutSession
+        billing.createCheckoutSession,
+        logActionAudit(ActionsEnum.billing)
     );
 
     authenticated.post(
         "/org/:orgId/billing/create-portal-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
-        billing.createPortalSession
+        billing.createPortalSession,
+        logActionAudit(ActionsEnum.billing)
     );
 
     authenticated.get(
@@ -206,7 +213,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRemoteExitNode),
-    remoteExitNode.createRemoteExitNode
+    remoteExitNode.createRemoteExitNode,
+    logActionAudit(ActionsEnum.createRemoteExitNode)
 );
 
 authenticated.get(
@@ -240,7 +248,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyRemoteExitNodeAccess,
     verifyUserHasAction(ActionsEnum.deleteRemoteExitNode),
-    remoteExitNode.deleteRemoteExitNode
+    remoteExitNode.deleteRemoteExitNode,
+    logActionAudit(ActionsEnum.deleteRemoteExitNode)
 );
 
 authenticated.put(
@@ -248,7 +257,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createLoginPage),
-    loginPage.createLoginPage
+    loginPage.createLoginPage,
+    logActionAudit(ActionsEnum.createLoginPage)
 );
 
 authenticated.post(
@@ -257,7 +267,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.updateLoginPage),
-    loginPage.updateLoginPage
+    loginPage.updateLoginPage,
+    logActionAudit(ActionsEnum.updateLoginPage)
 );
 
 authenticated.delete(
@@ -266,7 +277,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.deleteLoginPage),
-    loginPage.deleteLoginPage
+    loginPage.deleteLoginPage,
+    logActionAudit(ActionsEnum.deleteLoginPage)
 );
 
 authenticated.get(

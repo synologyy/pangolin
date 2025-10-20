@@ -1,0 +1,147 @@
+import { actionAuditLog, db } from "@server/db";
+import { registry } from "@server/openApi";
+import { NextFunction } from "express";
+import { Request, Response } from "express";
+import { eq, gt, lt, and, count } from "drizzle-orm";
+import { OpenAPITags } from "@server/openApi";
+import { z } from "zod";
+import createHttpError from "http-errors";
+import HttpCode from "@server/types/HttpCode";
+import { fromError } from "zod-validation-error";
+import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
+import response from "@server/lib/response";
+import logger from "@server/logger";
+
+export const queryAccessAuditLogsQuery = z.object({
+    // iso string just validate its a parseable date
+    timeStart: z
+        .string()
+        .refine((val) => !isNaN(Date.parse(val)), {
+            message: "timeStart must be a valid ISO date string"
+        })
+        .transform((val) => Math.floor(new Date(val).getTime() / 1000)),
+    timeEnd: z
+        .string()
+        .refine((val) => !isNaN(Date.parse(val)), {
+            message: "timeEnd must be a valid ISO date string"
+        })
+        .transform((val) => Math.floor(new Date(val).getTime() / 1000))
+        .optional()
+        .default(new Date().toISOString()),
+    limit: z
+        .string()
+        .optional()
+        .default("1000")
+        .transform(Number)
+        .pipe(z.number().int().positive()),
+    offset: z
+        .string()
+        .optional()
+        .default("0")
+        .transform(Number)
+        .pipe(z.number().int().nonnegative())
+});
+
+export const queryAccessAuditLogsParams = z.object({
+    orgId: z.string()
+});
+
+function querySites(timeStart: number, timeEnd: number, orgId: string) {
+    return db
+        .select({
+            orgId: actionAuditLog.orgId,
+            action: actionAuditLog.action,
+            actorType: actionAuditLog.actorType,
+            timestamp: actionAuditLog.timestamp,
+            actor: actionAuditLog.actor
+        })
+        .from(actionAuditLog)
+        .where(
+            and(
+                gt(actionAuditLog.timestamp, timeStart),
+                lt(actionAuditLog.timestamp, timeEnd),
+                eq(actionAuditLog.orgId, orgId)
+            )
+        )
+        .orderBy(actionAuditLog.timestamp);
+}
+
+registry.registerPath({
+    method: "get",
+    path: "/org/{orgId}/logs/action",
+    description: "Query the action audit log for an organization",
+    tags: [OpenAPITags.Org],
+    request: {
+        query: queryAccessAuditLogsQuery,
+        params: queryAccessAuditLogsParams
+    },
+    responses: {}
+});
+
+export async function queryAccessAuditLogs(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<any> {
+    try {
+        const parsedQuery = queryAccessAuditLogsQuery.safeParse(req.query);
+        if (!parsedQuery.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedQuery.error)
+                )
+            );
+        }
+        const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
+
+        const parsedParams = queryAccessAuditLogsParams.safeParse(req.params);
+        if (!parsedParams.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedParams.error)
+                )
+            );
+        }
+        const { orgId } = parsedParams.data;
+
+        const baseQuery = querySites(timeStart, timeEnd, orgId);
+
+        const log = await baseQuery.limit(limit).offset(offset);
+
+        const countQuery = db
+            .select({ count: count() })
+            .from(actionAuditLog)
+            .where(
+                and(
+                    gt(actionAuditLog.timestamp, timeStart),
+                    lt(actionAuditLog.timestamp, timeEnd),
+                    eq(actionAuditLog.orgId, orgId)
+                )
+            );
+
+        const totalCountResult = await countQuery;
+        const totalCount = totalCountResult[0].count;
+
+        return response<QueryActionAuditLogResponse>(res, {
+            data: {
+                log: log,
+                pagination: {
+                    total: totalCount,
+                    limit,
+                    offset
+                }
+            },
+            success: true,
+            error: false,
+            message: "Action audit logs retrieved successfully",
+            status: HttpCode.OK
+        });
+    } catch (error) {
+        logger.error(error);
+        return next(
+            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "An error occurred")
+        );
+    }
+}

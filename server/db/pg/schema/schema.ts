@@ -6,7 +6,8 @@ import {
     integer,
     bigint,
     real,
-    text
+    text,
+    index
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -671,6 +672,28 @@ export const setupTokens = pgTable("setupTokens", {
     dateUsed: varchar("dateUsed")
 });
 
+export const requestAuditLog = pgTable("requestAuditLog", {
+    id: serial("id").primaryKey(),
+    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+    orgId: varchar("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    actorType: varchar("actorType").notNull(),
+    actor: varchar("actor").notNull(),
+    actorId: varchar("actorId").notNull(),
+    resourceId: integer("resourceId"),
+    ip: varchar("ip").notNull(),
+    type: varchar("type").notNull(),
+    action: varchar("action").notNull(),
+    event: varchar("event").notNull(),
+    location: varchar("location"),
+    userAgent: varchar("userAgent"),
+    metadata: text("details")
+}, (table) => ([
+    index("idx_actionAuditLog_timestamp").on(table.timestamp),
+    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
+]));
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -722,3 +745,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type LicenseKey = InferSelectModel<typeof licenseKey>;
+export type SecurityKey = InferSelectModel<typeof securityKeys>;
+export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;

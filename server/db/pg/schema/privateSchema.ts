@@ -230,6 +230,28 @@ export const actionAuditLog = pgTable("actionAuditLog", {
     index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
 ]));
 
+export const identityAuditLog = pgTable("identityAuditLog", {
+    id: serial("id").primaryKey(),
+    timestamp: bigint("timestamp", { mode: "number" }).notNull(), // this is EPOCH time in seconds
+    orgId: varchar("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    actorType: varchar("actorType", { length: 50 }).notNull(),
+    actor: varchar("actor", { length: 255 }).notNull(),
+    actorId: varchar("actorId", { length: 255 }).notNull(),
+    resourceId: integer("resourceId"),
+    ip: varchar("ip", { length: 45 }).notNull(),
+    type: varchar("type", { length: 100 }).notNull(),
+    action: varchar("action", { length: 100 }).notNull(),
+    location: text("location"),
+    path: text("path"),
+    userAgent: text("userAgent"),
+    metadata: text("details")
+}, (table) => ([
+    index("idx_identityAuditLog_timestamp").on(table.timestamp),
+    index("idx_identityAuditLog_org_timestamp").on(table.orgId, table.timestamp)
+]));
+
 export type Limit = InferSelectModel<typeof limits>;
 export type Account = InferSelectModel<typeof account>;
 export type Certificate = InferSelectModel<typeof certificates>;
@@ -248,3 +270,4 @@ export type RemoteExitNodeSession = InferSelectModel<
 export type ExitNodeOrg = InferSelectModel<typeof exitNodeOrgs>;
 export type LoginPage = InferSelectModel<typeof loginPage>;
 export type ActionAuditLog = InferSelectModel<typeof actionAuditLog>;
+export type IdentityAuditLog = InferSelectModel<typeof identityAuditLog>;

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -710,6 +710,28 @@ export const idpOrg = sqliteTable("idpOrg", {
     orgMapping: text("orgMapping")
 });
 
+export const requestAuditLog = sqliteTable("requestAuditLog", {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+    orgId: text("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    actorType: text("actorType").notNull(),
+    actor: text("actor").notNull(),
+    actorId: text("actorId").notNull(),
+    resourceId: integer("resourceId"),
+    ip: text("ip").notNull(),
+    type: text("type").notNull(),
+    action: text("action").notNull(),
+    event: text("event").notNull(),
+    location: text("location"),
+    userAgent: text("userAgent"),
+    metadata: text("details")
+}, (table) => ([
+    index("idx_actionAuditLog_timestamp").on(table.timestamp),
+    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
+]));
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -761,3 +783,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type LicenseKey = InferSelectModel<typeof licenseKey>;
+export type SecurityKey = InferSelectModel<typeof securityKeys>;
+export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
