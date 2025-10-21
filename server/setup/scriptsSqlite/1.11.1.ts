@@ -11,15 +11,20 @@ export default async function migration() {
     const db = new Database(location);
 
     db.transaction(() => {
-        const exitNodes = db.prepare(`SELECT * FROM exitNodes WHERE type = 'gerbil' LIMIT 1`).all() as {
+        const exitNodes = db
+            .prepare(`SELECT * FROM exitNodes WHERE type = 'gerbil' LIMIT 1`)
+            .all() as {
             exitNodeId: number;
             name: string;
         }[];
 
-        const exitNodeId = exitNodes.length > 0 ? exitNodes[0].exitNodeId : null;
+        const exitNodeId =
+            exitNodes.length > 0 ? exitNodes[0].exitNodeId : null;
 
         // get all of the targets
-        const sites = db.prepare(`SELECT * FROM sites WHERE type = 'local'`).all() as {
+        const sites = db
+            .prepare(`SELECT * FROM sites WHERE type = 'local'`)
+            .all() as {
             siteId: number;
             exitNodeId: number | null;
         }[];
@@ -31,6 +36,8 @@ export default async function migration() {
         for (const site of sites) {
             defineExitNodeOnSite.run(exitNodeId, site.siteId);
         }
+
+        db.prepare(`UPDATE exitNodes SET online = 1`).run(); // mark exit nodes as online
     })();
 
     console.log(`${version} migration complete`);
