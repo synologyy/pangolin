@@ -76,7 +76,6 @@ export default function DomainSettingsPage() {
         />
         <Button
           variant="outline"
-          size="sm"
           onClick={() => restartDomain(domain.domainId)}
           disabled={isRestarting}
         >

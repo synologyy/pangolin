@@ -247,8 +247,8 @@ export default function DomainInfoCard({ orgId, domainId }: DomainInfoCardProps)
                                 {domain.verified ? (
                                     <Badge variant="green">{t("verified")}</Badge>
                                 ) : (
-                                    <Badge variant="destructive">
-                                        {t("failed", { fallback: "Failed" })}
+                                    <Badge variant="yellow">
+                                        {t("pending", { fallback: "Pending" })}
                                     </Badge>
                                 )}
                             </InfoSectionContent>

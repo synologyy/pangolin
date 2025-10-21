@@ -114,7 +114,6 @@ export function DNSRecordsDataTable<TData, TValue>({
                         </div>
                         <Button
                             variant="outline"
-                            size="sm"
                         >
                             <ExternalLink className="h-4 w-4 mr-1"/>
                             {t("howToAddRecords")}

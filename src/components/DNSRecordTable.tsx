@@ -110,8 +110,8 @@ export default function DNSRecordsTable({ records, domainId, isRefreshing }: Pro
                     verified ? (
                         <Badge variant="green">{t("verified")}</Badge>
                     ) : (
-                        <Badge variant="destructive">
-                            {t("failed", { fallback: "Failed" })}
+                        <Badge variant="yellow">
+                            {t("pending", { fallback: "Pending" })}
                         </Badge>
                     )
                 );
