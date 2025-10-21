@@ -321,7 +321,6 @@ export default function CreateDomainForm({
                                                     name="certResolver"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel>{t("customResolver")}</FormLabel>
                                                             <FormControl>
                                                                 <Input
                                                                     placeholder={t("enterCustomResolver")}
