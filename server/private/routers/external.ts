@@ -21,8 +21,8 @@ import * as domain from "#private/routers/domain";
 import * as auth from "#private/routers/auth";
 import * as license from "#private/routers/license";
 import * as generateLicense from "./generatedLicense";
+import * as logs from "#private/routers/auditLogs";
 
-import { Router } from "express";
 import {
     verifyOrgAccess,
     verifyUserHasAction,
@@ -345,3 +345,8 @@ authenticated.post(
     verifyUserIsServerAdmin,
     license.recheckStatus
 );
+
+authenticated.get(
+    "/org/:orgId/logs/action",
+    logs.queryAccessAuditLogs 
+)

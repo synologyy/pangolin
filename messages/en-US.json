@@ -1893,5 +1893,12 @@
     "deleteClientQuestion": "Are you sure you want to remove the client from the site and organization?",
     "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site.",
     "sidebarLogs": "Logs",
-    "request": "Request"
+    "request": "Request",
+    "logs": "Logs",
+    "logsSettingsDescription": "Monitor logs collected from this orginization",
+    "searchLogs": "Search logs...",
+    "action": "Action",
+    "actor": "Actor",
+    "timestamp": "Timestamp",
+    "accessLogs": "Access Logs"
 }

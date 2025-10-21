@@ -1,0 +1,209 @@
+"use client";
+
+import { ChevronDownIcon, CalendarIcon } from "lucide-react";
+
+import { Button } from "@app/components/ui/button";
+import { Input } from "@app/components/ui/input";
+import { Label } from "@app/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@app/components/ui/popover";
+import { cn } from "@app/lib/cn";
+import { ChangeEvent, useEffect, useState } from "react";
+
+export interface DateTimeValue {
+  date?: Date;
+  time?: string;
+}
+
+export interface DateTimePickerProps {
+  label?: string;
+  value?: DateTimeValue;
+  onChange?: (value: DateTimeValue) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  showTime?: boolean;
+}
+
+export function DateTimePicker({
+  label,
+  value,
+  onChange,
+  placeholder = "Select date & time",
+  className,
+  disabled = false,
+  showTime = true,
+}: DateTimePickerProps) {
+  const [open, setOpen] = useState(false);
+  const [internalDate, setInternalDate] = useState<Date | undefined>(value?.date);
+  const [internalTime, setInternalTime] = useState<string>(value?.time || "");
+
+  // Sync internal state with external value prop
+  useEffect(() => {
+    setInternalDate(value?.date);
+    setInternalTime(value?.time || "");
+  }, [value?.date, value?.time]);
+
+  const handleDateChange = (date: Date | undefined) => {
+    setInternalDate(date);
+    const newValue = { date, time: internalTime };
+    setOpen(false);
+    onChange?.(newValue);
+  };
+
+  const handleTimeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const time = event.target.value;
+    setInternalTime(time);
+    const newValue = { date: internalDate, time };
+    onChange?.(newValue);
+  };
+
+  const getDisplayText = () => {
+    if (!internalDate) return placeholder;
+    
+    const dateStr = internalDate.toLocaleDateString();
+    if (!showTime || !internalTime) return dateStr;
+    
+    return `${dateStr} ${internalTime}`;
+  };
+
+  const hasValue = internalDate || (showTime && internalTime);
+
+  return (
+    <div className={cn("flex gap-4", className)}>
+      <div className="flex flex-col gap-3">
+        {label && (
+          <Label htmlFor="date-picker" className="px-1">
+            {label}
+          </Label>
+        )}
+        <div className="flex gap-2">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                id="date-picker"
+                disabled={disabled}
+                className={cn(
+                  "justify-between font-normal",
+                  showTime ? "w-48" : "w-32",
+                  !hasValue && "text-muted-foreground"
+                )}
+              >
+                {getDisplayText()}
+                <CalendarIcon className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+              <div className="p-3">
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="date-input" className="text-sm font-medium">
+                      Date
+                    </Label>
+                    <Input
+                      id="date-input"
+                      type="date"
+                      value={internalDate ? 
+                        `${internalDate.getFullYear()}-${String(internalDate.getMonth() + 1).padStart(2, '0')}-${String(internalDate.getDate()).padStart(2, '0')}` 
+                        : ''}
+                      onChange={(e) => {
+                        let dateValue = undefined;
+                        if (e.target.value) {
+                          // Create date in local timezone to avoid offset issues
+                          const parts = e.target.value.split('-');
+                          dateValue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                        }
+                        handleDateChange(dateValue);
+                      }}
+                      className="mt-1"
+                    />
+                  </div>
+                  {showTime && (
+                    <div>
+                      <Label htmlFor="time-input" className="text-sm font-medium">
+                        Time
+                      </Label>
+                      <Input
+                        id="time-input"
+                        type="time"
+                        step="1"
+                        value={internalTime}
+                        onChange={handleTimeChange}
+                        className="mt-1 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export interface DateRangePickerProps {
+  startLabel?: string;
+  endLabel?: string;
+  startValue?: DateTimeValue;
+  endValue?: DateTimeValue;
+  onStartChange?: (value: DateTimeValue) => void;
+  onEndChange?: (value: DateTimeValue) => void;
+  onRangeChange?: (start: DateTimeValue, end: DateTimeValue) => void;
+  className?: string;
+  disabled?: boolean;
+  showTime?: boolean;
+}
+
+export function DateRangePicker({
+//   startLabel = "From",
+//   endLabel = "To", 
+  startValue,
+  endValue,
+  onStartChange,
+  onEndChange,
+  onRangeChange,
+  className,
+  disabled = false,
+  showTime = true,
+}: DateRangePickerProps) {
+  const handleStartChange = (value: DateTimeValue) => {
+    onStartChange?.(value);
+    if (onRangeChange && endValue) {
+      onRangeChange(value, endValue);
+    }
+  };
+
+  const handleEndChange = (value: DateTimeValue) => {
+    onEndChange?.(value);
+    if (onRangeChange && startValue) {
+      onRangeChange(startValue, value);
+    }
+  };
+
+  return (
+    <div className={cn("flex gap-4", className)}>
+      <DateTimePicker
+        // label={startLabel}
+        value={startValue}
+        onChange={handleStartChange}
+        placeholder="Start date & time"
+        disabled={disabled}
+        showTime={showTime}
+      />
+      <DateTimePicker
+        // label={endLabel}
+        value={endValue}
+        onChange={handleEndChange}
+        placeholder="End date & time"
+        disabled={disabled}
+        showTime={showTime}
+      />
+    </div>
+  );
+}
