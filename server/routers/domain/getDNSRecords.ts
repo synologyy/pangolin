@@ -8,6 +8,7 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { getServerIp } from "@server/lib/serverIpService"; // your in-memory IP module
 
 const getDNSRecordsSchema = z
     .object({
@@ -70,8 +71,18 @@ export async function getDNSRecords(
             );
         }
 
+        const serverIp = getServerIp();
+
+        // Override value for type A or wildcard records
+        const updatedRecords = records.map(record => {
+            if ((record.recordType === "A" || record.baseDomain === "*") && serverIp) {
+                return { ...record, value: serverIp };
+            }
+            return record;
+        });
+
         return response<GetDNSRecordsResponse>(res, {
-            data: records,
+            data: updatedRecords,
             success: true,
             error: false,
             message: "DNS records retrieved successfully",
