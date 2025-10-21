@@ -47,6 +47,7 @@ import { useOrgContext } from "@app/hooks/useOrgContext";
 import { build } from "@server/build";
 import { toASCII, toUnicode } from 'punycode';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { useRouter } from "next/navigation";
 
 
 // Helper functions for Unicode domain handling
@@ -130,6 +131,7 @@ export default function CreateDomainForm({
     const { toast } = useToast();
     const { org } = useOrgContext();
     const { env } = useEnvContext();
+    const router = useRouter();
 
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
@@ -170,6 +172,7 @@ export default function CreateDomainForm({
                 description: t("domainCreatedDescription")
             });
             onCreated?.(domainData);
+            router.push(`/${org.org.orgId}/settings/domains/${domainData.domainId}`);
         } catch (e) {
             toast({
                 title: t("error"),
@@ -222,7 +225,6 @@ export default function CreateDomainForm({
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
-                    {!createdDomain ? (
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
@@ -361,329 +363,7 @@ export default function CreateDomainForm({
                                 )}
                             </form>
                         </Form>
-                    ) : (
-                        <div className="space-y-6">
-                            <Alert variant="default">
-                                <InfoIcon className="h-4 w-4" />
-                                <AlertTitle className="font-semibold">
-                                    {t("createDomainAddDnsRecords")}
-                                </AlertTitle>
-                                <AlertDescription>
-                                    {t("createDomainAddDnsRecordsDescription")}
-                                </AlertDescription>
-                            </Alert>
 
-                            <div className="space-y-4">
-                                {createdDomain.nsRecords &&
-                                    createdDomain.nsRecords.length > 0 && (
-                                        <div>
-                                            <h3 className="font-medium mb-3">
-                                                {t("createDomainNsRecords")}
-                                            </h3>
-                                            <InfoSections cols={1}>
-                                                <InfoSection>
-                                                    <InfoSectionTitle>
-                                                        {t("createDomainRecord")}
-                                                    </InfoSectionTitle>
-                                                    <InfoSectionContent>
-                                                        <div className="space-y-2">
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-sm font-medium">
-                                                                    {t(
-                                                                        "createDomainType"
-                                                                    )}
-                                                                </span>
-                                                                <span className="text-sm font-mono">
-                                                                    NS
-                                                                </span>
-                                                            </div>
-                                                            <div className="flex justify-between items-center">
-                                                                <span className="text-sm font-medium">
-                                                                    {t(
-                                                                        "createDomainName"
-                                                                    )}
-                                                                </span>
-                                                                <div className="text-right">
-                                                                    <span className="text-sm font-mono block">
-                                                                        {fromPunycode(baseDomain)}
-                                                                    </span>
-                                                                    {fromPunycode(baseDomain) !== baseDomain && (
-                                                                        <span className="text-xs text-muted-foreground font-mono">
-                                                                            ({baseDomain})
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            <span className="text-sm font-medium">
-                                                                {t(
-                                                                    "createDomainValue"
-                                                                )}
-                                                            </span>
-                                                            {createdDomain.nsRecords.map(
-                                                                (
-                                                                    nsRecord,
-                                                                    index
-                                                                ) => (
-                                                                    <div
-                                                                        className="flex justify-between items-center"
-                                                                        key={index}
-                                                                    >
-                                                                        <CopyToClipboard
-                                                                            text={
-                                                                                nsRecord
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    </InfoSectionContent>
-                                                </InfoSection>
-                                            </InfoSections>
-                                        </div>
-                                    )}
-
-                                {createdDomain.cnameRecords &&
-                                    createdDomain.cnameRecords.length > 0 && (
-                                        <div>
-                                            <h3 className="font-medium mb-3">
-                                                {t("createDomainCnameRecords")}
-                                            </h3>
-                                            <InfoSections cols={1}>
-                                                {createdDomain.cnameRecords.map(
-                                                    (cnameRecord, index) => (
-                                                        <InfoSection
-                                                            key={index}
-                                                        >
-                                                            <InfoSectionTitle>
-                                                                {t(
-                                                                    "createDomainRecordNumber",
-                                                                    {
-                                                                        number:
-                                                                            index +
-                                                                            1
-                                                                    }
-                                                                )}
-                                                            </InfoSectionTitle>
-                                                            <InfoSectionContent>
-                                                                <div className="space-y-2">
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainType"
-                                                                            )}
-                                                                        </span>
-                                                                        <span className="text-sm font-mono">
-                                                                            CNAME
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainName"
-                                                                            )}
-                                                                        </span>
-                                                                        <div className="text-right">
-                                                                            <span className="text-sm font-mono block">
-                                                                                {fromPunycode(cnameRecord.baseDomain)}
-                                                                            </span>
-                                                                            {fromPunycode(cnameRecord.baseDomain) !== cnameRecord.baseDomain && (
-                                                                                <span className="text-xs text-muted-foreground font-mono">
-                                                                                    ({cnameRecord.baseDomain})
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainValue"
-                                                                            )}
-                                                                        </span>
-                                                                        <CopyToClipboard
-                                                                            text={
-                                                                                cnameRecord.value
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </InfoSectionContent>
-                                                        </InfoSection>
-                                                    )
-                                                )}
-                                            </InfoSections>
-                                        </div>
-                                    )}
-
-                                {createdDomain.aRecords &&
-                                    createdDomain.aRecords.length > 0 && (
-                                        <div>
-                                            <h3 className="font-medium mb-3">
-                                                {t("createDomainARecords")}
-                                            </h3>
-                                            <InfoSections cols={1}>
-                                                {createdDomain.aRecords.map(
-                                                    (aRecord, index) => (
-                                                        <InfoSection
-                                                            key={index}
-                                                        >
-                                                            <InfoSectionTitle>
-                                                                {t(
-                                                                    "createDomainRecordNumber",
-                                                                    {
-                                                                        number:
-                                                                            index +
-                                                                            1
-                                                                    }
-                                                                )}
-                                                            </InfoSectionTitle>
-                                                            <InfoSectionContent>
-                                                                <div className="space-y-2">
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainType"
-                                                                            )}
-                                                                        </span>
-                                                                        <span className="text-sm font-mono">
-                                                                            A
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainName"
-                                                                            )}
-                                                                        </span>
-                                                                        <div className="text-right">
-                                                                            <span className="text-sm font-mono block">
-                                                                                {fromPunycode(aRecord.baseDomain)}
-                                                                            </span>
-                                                                            {fromPunycode(aRecord.baseDomain) !== aRecord.baseDomain && (
-                                                                                <span className="text-xs text-muted-foreground font-mono">
-                                                                                    ({aRecord.baseDomain})
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainValue"
-                                                                            )}
-                                                                        </span>
-                                                                        <span className="text-sm font-mono">
-                                                                            {
-                                                                                aRecord.value
-                                                                            }
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-                                                            </InfoSectionContent>
-                                                        </InfoSection>
-                                                    )
-                                                )}
-                                            </InfoSections>
-                                        </div>
-                                    )}
-                                {createdDomain.txtRecords &&
-                                    createdDomain.txtRecords.length > 0 && (
-                                        <div>
-                                            <h3 className="font-medium mb-3">
-                                                {t("createDomainTxtRecords")}
-                                            </h3>
-                                            <InfoSections cols={1}>
-                                                {createdDomain.txtRecords.map(
-                                                    (txtRecord, index) => (
-                                                        <InfoSection
-                                                            key={index}
-                                                        >
-                                                            <InfoSectionTitle>
-                                                                {t(
-                                                                    "createDomainRecordNumber",
-                                                                    {
-                                                                        number:
-                                                                            index +
-                                                                            1
-                                                                    }
-                                                                )}
-                                                            </InfoSectionTitle>
-                                                            <InfoSectionContent>
-                                                                <div className="space-y-2">
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainType"
-                                                                            )}
-                                                                        </span>
-                                                                        <span className="text-sm font-mono">
-                                                                            TXT
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainName"
-                                                                            )}
-                                                                        </span>
-                                                                        <div className="text-right">
-                                                                            <span className="text-sm font-mono block">
-                                                                                {fromPunycode(txtRecord.baseDomain)}
-                                                                            </span>
-                                                                            {fromPunycode(txtRecord.baseDomain) !== txtRecord.baseDomain && (
-                                                                                <span className="text-xs text-muted-foreground font-mono">
-                                                                                    ({txtRecord.baseDomain})
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="flex justify-between items-center">
-                                                                        <span className="text-sm font-medium">
-                                                                            {t(
-                                                                                "createDomainValue"
-                                                                            )}
-                                                                        </span>
-                                                                        <CopyToClipboard
-                                                                            text={
-                                                                                txtRecord.value
-                                                                            }
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </InfoSectionContent>
-                                                        </InfoSection>
-                                                    )
-                                                )}
-                                            </InfoSections>
-                                        </div>
-                                    )}
-                            </div>
-
-                            {build != "oss" && env.flags.usePangolinDns && (
-                                <Alert variant="destructive">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle className="font-semibold">
-                                        {t("createDomainSaveTheseRecords")}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {t(
-                                            "createDomainSaveTheseRecordsDescription"
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-
-                            <Alert variant="info">
-                                <AlertTriangle className="h-4 w-4" />
-                                <AlertTitle className="font-semibold">
-                                    {t("createDomainDnsPropagation")}
-                                </AlertTitle>
-                                <AlertDescription>
-                                    {t("createDomainDnsPropagationDescription")}
-                                </AlertDescription>
-                            </Alert>
-                        </div>
-                    )}
                 </CredenzaBody>
                 <CredenzaFooter>
                     <CredenzaClose asChild>
