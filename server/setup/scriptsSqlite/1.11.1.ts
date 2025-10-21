@@ -30,7 +30,7 @@ export default async function migration() {
         }[];
 
         const defineExitNodeOnSite = db.prepare(
-            `UPDATE sites SET exitNodeId = ? WHERE siteId = ?`
+            `UPDATE sites SET exitNode = ? WHERE siteId = ?`
         );
 
         for (const site of sites) {
