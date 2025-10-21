@@ -1,17 +1,37 @@
 name: CI/CD Pipeline
 
+# CI/CD workflow for building, publishing, mirroring, signing container images and building release binaries.
+# Actions are pinned to specific SHAs to reduce supply-chain risk. This workflow triggers on tag push events.
+
 permissions:
   contents: read
+  packages: write      # for GHCR push
+  id-token: write      # for Cosign Keyless (OIDC) Signing
+
+# Required secrets:
+# - DOCKER_HUB_USERNAME / DOCKER_HUB_ACCESS_TOKEN: push to Docker Hub
+# - GITHUB_TOKEN: used for GHCR login and OIDC keyless signing
+# - COSIGN_PRIVATE_KEY / COSIGN_PASSWORD / COSIGN_PUBLIC_KEY: for key-based signing
 
 on:
     push:
         tags:
             - "[0-9]+.[0-9]+.[0-9]+"
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
     release:
         name: Build and Release
         runs-on: amd64-runner
+        # Job-level timeout to avoid runaway or stuck runs
+        timeout-minutes: 120
+        env:
+          # Target images
+          DOCKERHUB_IMAGE: docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/${{ github.event.repository.name }}
+          GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}
 
         steps:
             - name: Checkout code
@@ -26,11 +46,13 @@ jobs:
             - name: Log in to Docker Hub
               uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
               with:
+                  registry: docker.io
                   username: ${{ secrets.DOCKER_HUB_USERNAME }}
                   password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
             - name: Extract tag name
               id: get-tag
               run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+              shell: bash
 
             - name: Install Go
               uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
@@ -42,18 +64,21 @@ jobs:
                   TAG=${{ env.TAG }}
                   sed -i "s/export const APP_VERSION = \".*\";/export const APP_VERSION = \"$TAG\";/" server/lib/consts.ts
                   cat server/lib/consts.ts
+              shell: bash
 
             - name: Pull latest Gerbil version
               id: get-gerbil-tag
               run: |
                   LATEST_TAG=$(curl -s https://api.github.com/repos/fosrl/gerbil/tags | jq -r '.[0].name')
                   echo "LATEST_GERBIL_TAG=$LATEST_TAG" >> $GITHUB_ENV
+              shell: bash
 
             - name: Pull latest Badger version
               id: get-badger-tag
               run: |
                   LATEST_TAG=$(curl -s https://api.github.com/repos/fosrl/badger/tags | jq -r '.[0].name')
                   echo "LATEST_BADGER_TAG=$LATEST_TAG" >> $GITHUB_ENV
+              shell: bash
 
             - name: Update install/main.go
               run: |
@@ -65,6 +90,7 @@ jobs:
                   sed -i "s/config.BadgerVersion = \".*\"/config.BadgerVersion = \"$BADGER_VERSION\"/" install/main.go
                   echo "Updated install/main.go with Pangolin version $PANGOLIN_VERSION, Gerbil version $GERBIL_VERSION, and Badger version $BADGER_VERSION"
                   cat install/main.go
+              shell: bash
 
             - name: Build installer
               working-directory: install
@@ -77,7 +103,79 @@ jobs:
                   name: install-bin
                   path: install/bin/
 
-            - name: Build and push Docker images
+            - name: Build and push Docker images (Docker Hub)
               run: |
                   TAG=${{ env.TAG }}
                   make build-release tag=$TAG
+                  echo "Built & pushed to: ${{ env.DOCKERHUB_IMAGE }}:${TAG}"
+              shell: bash
+
+            - name: Login in to GHCR
+              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+              with:
+                  registry: ghcr.io
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Install skopeo + jq
+              # skopeo: copy/inspect images between registries
+              # jq: JSON parsing tool used to extract digest values
+              run: |
+                  sudo apt-get update -y
+                  sudo apt-get install -y skopeo jq
+                  skopeo --version
+              shell: bash
+
+            - name: Copy tag from Docker Hub to GHCR
+              # Mirror the already-built image (all architectures) to GHCR so we can sign it
+              run: |
+                  set -euo pipefail
+                  TAG=${{ env.TAG }}
+                  echo "Copying ${{ env.DOCKERHUB_IMAGE }}:${TAG} -> ${{ env.GHCR_IMAGE }}:${TAG}"
+                  skopeo copy --all --retry-times 3 \
+                    docker://$DOCKERHUB_IMAGE:$TAG \
+                    docker://$GHCR_IMAGE:$TAG
+              shell: bash
+
+            - name: Install cosign
+              # cosign is used to sign and verify container images (key and keyless)
+              uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+
+            - name: Dual-sign and verify (GHCR & Docker Hub)
+              # Sign each image by digest using keyless (OIDC) and key-based signing,
+              # then verify both the public key signature and the keyless OIDC signature.
+              env:
+                  TAG: ${{ env.TAG }}
+                  COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+                  COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+                  COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
+                  COSIGN_YES: "true"
+              run: |
+                  set -euo pipefail
+
+                  issuer="https://token.actions.githubusercontent.com"
+                  id_regex="^https://github.com/${{ github.repository }}/.+"  # accept this repo (all workflows/refs)
+
+                  for IMAGE in "${GHCR_IMAGE}" "${DOCKERHUB_IMAGE}"; do
+                    echo "Processing ${IMAGE}:${TAG}"
+
+                    DIGEST="$(skopeo inspect --retry-times 3 docker://${IMAGE}:${TAG} | jq -r '.Digest')"
+                    REF="${IMAGE}@${DIGEST}"
+                    echo "Resolved digest: ${REF}"
+
+                    echo "==> cosign sign (keyless) --recursive ${REF}"
+                    cosign sign --recursive "${REF}"
+
+                    echo "==> cosign sign (key) --recursive ${REF}"
+                    cosign sign --key env://COSIGN_PRIVATE_KEY --recursive "${REF}"
+
+                    echo "==> cosign verify (public key) ${REF}"
+                    cosign verify --key env://COSIGN_PUBLIC_KEY "${REF}" -o text
+
+                    echo "==> cosign verify (keyless policy) ${REF}"
+                    cosign verify \
+                      --certificate-oidc-issuer "${issuer}" \
+                      --certificate-identity-regexp "${id_regex}" \
+                      "${REF}" -o text
+                  done
+              shell: bash
