@@ -263,7 +263,7 @@ export default function CreateDomainForm({
                                                         <AlertTitle>{t("internationaldomaindetected")}</AlertTitle>
                                                         <AlertDescription>
                                                             <div className="mt-2 space-y-1">
-                                                            <p>{t("willbestoredas")} <code className="font-mono px-1 py-0.5 rounded">{punycodePreview}</code></p>
+                                                                <p>{t("willbestoredas")} <code className="font-mono px-1 py-0.5 rounded">{punycodePreview}</code></p>
                                                             </div>
                                                         </AlertDescription>
                                                     </Alert>
@@ -274,76 +274,91 @@ export default function CreateDomainForm({
                                     )}
                                 />
                                 {domainType === "wildcard" && (
-                                    <FormField
-                                        control={form.control}
-                                        name="certResolver"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{t("certResolver")}</FormLabel>
-                                                <FormControl>
-                                                    <Select
-                                                        value={
-                                                            field.value === null ? "default" : 
-                                                            (field.value === "" || (field.value && field.value !== "default")) ? "custom" : 
-                                                            "default"
-                                                        }
-                                                        onValueChange={(val) => {
-                                                            if (val === "default") {
-                                                                field.onChange(null);
-                                                            } else if (val === "custom") {
-                                                                field.onChange("");
-                                                            } else {
-                                                                field.onChange(val);
+                                    <>
+                                        <FormField
+                                            control={form.control}
+                                            name="certResolver"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>{t("certResolver")}</FormLabel>
+                                                    <FormControl>
+                                                        <Select
+                                                            value={
+                                                                field.value === null ? "default" :
+                                                                    (field.value === "" || (field.value && field.value !== "default")) ? "custom" :
+                                                                        "default"
                                                             }
-                                                        }}
-                                                    >
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder={t("selectCertResolver")} />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {certResolverOptions.map((opt) => (
-                                                                <SelectItem key={opt.id} value={opt.id}>
-                                                                    {opt.title}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </FormControl>
-                                                <FormMessage />
-                                                {field.value !== null && field.value !== "default" && (
-                                                    <div className="space-y-2 mt-2">
-                                                        <FormControl>
-                                                            <Input
-                                                                placeholder={t("enterCustomResolver")}
-                                                                value={field.value || ""}
-                                                                onChange={(e) => field.onChange(e.target.value)}
-                                                            />
-                                                        </FormControl>
-                                                        <FormField
-                                                            control={form.control}
-                                                            name="preferWildcardCert"
-                                                            render={({ field: checkboxField }) => (
-                                                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                                                    <FormControl>
-                                                                        <CheckboxWithLabel
-                                                                            label={t("preferWildcardCert")}
-                                                                            checked={checkboxField.value}
-                                                                            onCheckedChange={checkboxField.onChange}
-                                                                        />
-                                                                    </FormControl>
+                                                            onValueChange={(val) => {
+                                                                if (val === "default") {
+                                                                    field.onChange(null);
+                                                                } else if (val === "custom") {
+                                                                    field.onChange("");
+                                                                } else {
+                                                                    field.onChange(val);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder={t("selectCertResolver")} />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {certResolverOptions.map((opt) => (
+                                                                    <SelectItem key={opt.id} value={opt.id}>
+                                                                        {opt.title}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        {form.watch("certResolver") !== null &&
+                                            form.watch("certResolver") !== "default" && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="certResolver"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{t("customResolver")}</FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    placeholder={t("enterCustomResolver")}
+                                                                    value={field.value || ""}
+                                                                    onChange={(e) => field.onChange(e.target.value)}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
+
+                                        {form.watch("certResolver") !== null &&
+                                            form.watch("certResolver") !== "default" && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="preferWildcardCert"
+                                                    render={({ field: checkboxField }) => (
+                                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <CheckboxWithLabel
+                                                                    label={t("preferWildcardCert")}
+                                                                    checked={checkboxField.value}
+                                                                    onCheckedChange={checkboxField.onChange}
+                                                                />
+                                                            </FormControl>
                                                                     {/* <div className="space-y-1 leading-none">
                                                                         <FormLabel>
                                                                             {t("preferWildcardCert")}
                                                                         </FormLabel>
                                                                     </div> */}
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </FormItem>
-                                        )}
-                                    />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
+                                    </>
                                 )}
                             </form>
                         </Form>
@@ -646,18 +661,18 @@ export default function CreateDomainForm({
                             </div>
 
                             {build != "oss" && env.flags.usePangolinDns && (
-                                    <Alert variant="destructive">
-                                        <AlertTriangle className="h-4 w-4" />
-                                        <AlertTitle className="font-semibold">
-                                            {t("createDomainSaveTheseRecords")}
-                                        </AlertTitle>
-                                        <AlertDescription>
-                                            {t(
-                                                "createDomainSaveTheseRecordsDescription"
-                                            )}
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
+                                <Alert variant="destructive">
+                                    <AlertTriangle className="h-4 w-4" />
+                                    <AlertTitle className="font-semibold">
+                                        {t("createDomainSaveTheseRecords")}
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        {t(
+                                            "createDomainSaveTheseRecordsDescription"
+                                        )}
+                                    </AlertDescription>
+                                </Alert>
+                            )}
 
                             <Alert variant="info">
                                 <AlertTriangle className="h-4 w-4" />
