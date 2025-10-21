@@ -90,7 +90,11 @@ export async function getTraefikConfig(
                 eq(resources.enabled, true),
                 or(
                     eq(sites.exitNodeId, exitNodeId),
-                    and(isNull(sites.exitNodeId), eq(sites.type, "local"))
+                    and(
+                        isNull(sites.exitNodeId),
+                        sql`(${siteTypes.includes("local") ? 1 : 0} = 1)`, // only allow local sites if "local" is in siteTypes
+                        eq(sites.type, "local")
+                    )
                 ),
                 or(
                     ne(targetHealthCheck.hcHealth, "unhealthy"), // Exclude unhealthy targets

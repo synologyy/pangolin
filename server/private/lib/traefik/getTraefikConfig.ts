@@ -124,9 +124,8 @@ export async function getTraefikConfig(
                 or(
                     eq(sites.exitNodeId, exitNodeId),
                     and(
-                        build != "saas" // so it runs in enterprise
-                            ? isNull(sites.exitNodeId)
-                            : sql`0 = 1`,
+                        isNull(sites.exitNodeId),
+                        sql`(${siteTypes.includes("local") ? 1 : 0} = 1)`, // only allow local sites if "local" is in siteTypes
                         eq(sites.type, "local")
                     )
                 ),
