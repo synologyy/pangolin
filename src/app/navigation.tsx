@@ -16,7 +16,8 @@ import {
     MonitorUp, // Added from 'dev' branch
     Server,
     Zap,
-    CreditCard
+    CreditCard,
+    Logs
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -138,6 +139,11 @@ export const orgNavSections = (
                       }
                   ]
                 : []),
+            {
+                title: "sidebarLogs",
+                href: "/{orgId}/settings/logs",
+                icon: <Logs className="h-4 w-4" />
+            },
             {
                 title: "sidebarSettings",
                 href: "/{orgId}/settings/general",
