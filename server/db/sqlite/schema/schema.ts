@@ -138,7 +138,7 @@ export const targets = sqliteTable("targets", {
     pathMatchType: text("pathMatchType"), // exact, prefix, regex
     rewritePath: text("rewritePath"), // if set, rewrites the path to this value before sending to the target
     rewritePathType: text("rewritePathType"), // exact, prefix, regex, stripPrefix
-    priority: integer("priority").default(100)
+    priority: integer("priority").notNull().default(100)
 });
 
 export const targetHealthCheck = sqliteTable("targetHealthCheck", {

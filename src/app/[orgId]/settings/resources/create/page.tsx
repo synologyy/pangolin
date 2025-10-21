@@ -1034,28 +1034,32 @@ export default function Page() {
                                 </PopoverContent>
                             </Popover>
 
-                            <Select
-                                defaultValue={row.original.method ?? "http"}
-                                onValueChange={(value) =>
-                                    updateTarget(row.original.targetId, {
-                                        ...row.original,
-                                        method: value
-                                    })
-                                }
-                            >
-                                <SelectTrigger className="h-8 px-2 w-[70px] border-none bg-transparent shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 data-[state=open]:bg-transparent">
-                                    {row.original.method || "http"}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="http">http</SelectItem>
-                                    <SelectItem value="https">https</SelectItem>
-                                    <SelectItem value="h2c">h2c</SelectItem>
-                                </SelectContent>
-                            </Select>
+                            {isHttp && (
+                                <Select
+                                    defaultValue={row.original.method ?? "http"}
+                                    onValueChange={(value) =>
+                                        updateTarget(row.original.targetId, {
+                                            ...row.original,
+                                            method: value
+                                        })
+                                    }
+                                >
+                                    <SelectTrigger className="h-8 px-2 w-[70px] border-none bg-transparent shadow-none focus:ring-0 focus:outline-none focus-visible:ring-0 data-[state=open]:bg-transparent">
+                                        {row.original.method || "http"}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="http">http</SelectItem>
+                                        <SelectItem value="https">https</SelectItem>
+                                        <SelectItem value="h2c">h2c</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
 
-                            <div className="flex items-center justify-center bg-muted px-2 h-9">
-                                {"://"}
-                            </div>
+                            {isHttp && (
+                                <div className="flex items-center justify-center bg-muted px-2 h-9">
+                                    {"://"}
+                                </div>
+                            )}
 
                             <Input
                                 defaultValue={row.original.ip}
