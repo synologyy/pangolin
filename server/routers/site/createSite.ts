@@ -267,50 +267,10 @@ export async function createSite(
                     })
                     .returning();
             } else if (type == "local") {
-                let exitNodeIdToCreate = exitNodeId;
-                if (!exitNodeIdToCreate) {
-                    if (build == "saas") {
-                        return next(
-                            createHttpError(
-                                HttpCode.BAD_REQUEST,
-                                "Exit node ID of a remote node is required for local sites"
-                            )
-                        );
-                    }
-
-                    // select the exit node for local sites
-                    // TODO: THIS SHOULD BE CHOSEN IN THE FRONTEND OR SOMETHING BECAUSE
-                    // YOU CAN HAVE MORE THAN ONE NODE IN THE SYSTEM AND YOU SHOULD SELECT
-                    // WHICH GERBIL NODE TO PUT THE SITE ON BUT FOR NOW THIS WILL DO
-                    const [localExitNode] = await trx
-                        .select()
-                        .from(exitNodes)
-                        .where(eq(exitNodes.type, "gerbil"))
-                        .limit(1);
-
-                    if (!localExitNode) {
-                        return next(
-                            createHttpError(
-                                HttpCode.BAD_REQUEST,
-                                "No gerbil exit node found for organization. Please create a gerbil exit node first."
-                            )
-                        );
-                    }
-
-                    exitNodeIdToCreate = localExitNode.exitNodeId;
-                } else {
-                    return next(
-                        createHttpError(
-                            HttpCode.BAD_REQUEST,
-                            "Site type not recognized"
-                        )
-                    );
-                }
-
                 [newSite] = await trx
                     .insert(sites)
                     .values({
-                        exitNodeId: exitNodeIdToCreate,
+                        exitNodeId: exitNodeId || null,
                         orgId,
                         name,
                         niceId,
@@ -321,6 +281,13 @@ export async function createSite(
                         subnet: "0.0.0.0/32"
                     })
                     .returning();
+            } else {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Site type not recognized"
+                    )
+                );
             }
 
             const adminRole = await trx

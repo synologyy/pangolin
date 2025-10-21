@@ -88,7 +88,10 @@ export async function getTraefikConfig(
             and(
                 eq(targets.enabled, true),
                 eq(resources.enabled, true),
-                eq(sites.exitNodeId, exitNodeId),
+                or(
+                    eq(sites.exitNodeId, exitNodeId),
+                    and(isNull(sites.exitNodeId), eq(sites.type, "local"))
+                ),
                 or(
                     ne(targetHealthCheck.hcHealth, "unhealthy"), // Exclude unhealthy targets
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record

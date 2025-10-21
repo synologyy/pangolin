@@ -40,6 +40,7 @@ import {
     CertificateResult,
     getValidCertificatesForDomains
 } from "#private/lib/certificates";
+import { build } from "@server/build";
 
 const redirectHttpsMiddlewareName = "redirect-to-https";
 const redirectToRootMiddlewareName = "redirect-to-root";
@@ -120,7 +121,15 @@ export async function getTraefikConfig(
             and(
                 eq(targets.enabled, true),
                 eq(resources.enabled, true),
-                eq(sites.exitNodeId, exitNodeId),
+                or(
+                    eq(sites.exitNodeId, exitNodeId),
+                    and(
+                        build != "saas" // so it runs in enterprise
+                            ? isNull(sites.exitNodeId)
+                            : sql`0 = 1`,
+                        eq(sites.type, "local")
+                    )
+                ),
                 or(
                     ne(targetHealthCheck.hcHealth, "unhealthy"), // Exclude unhealthy targets
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record
