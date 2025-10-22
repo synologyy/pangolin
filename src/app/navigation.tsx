@@ -1,22 +1,22 @@
 import { SidebarNavItem } from "@app/components/SidebarNav";
 import { build } from "@server/build";
 import {
-    Home,
     Settings,
     Users,
     Link as LinkIcon,
     Waypoints,
     Combine,
     Fingerprint,
-    Workflow,
     KeyRound,
     TicketCheck,
     User,
     Globe, // Added from 'dev' branch
     MonitorUp, // Added from 'dev' branch
     Server,
-    Zap,
-    CreditCard
+    CreditCard,
+    Bolt,
+    ScanText,
+    ReceiptText
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -74,6 +74,11 @@ export const orgNavSections = (
                 title: "sidebarDomains",
                 href: "/{orgId}/settings/domains",
                 icon: <Globe className="h-4 w-4" />
+            },
+            {
+                title: "sidebarBluePrints",
+                href: "/{orgId}/settings/blueprints",
+                icon: <ReceiptText className="h-4 w-4" />
             }
         ]
     },
