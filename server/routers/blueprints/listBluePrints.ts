@@ -49,7 +49,7 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
 }
 
 export type ListBlueprintsResponse = {
-    domains: NonNullable<Awaited<ReturnType<typeof queryBlueprints>>>;
+    blueprints: NonNullable<Awaited<ReturnType<typeof queryBlueprints>>>;
     pagination: { total: number; limit: number; offset: number };
 };
 
@@ -108,7 +108,7 @@ export async function listBlueprints(
 
         return response<ListBlueprintsResponse>(res, {
             data: {
-                domains: blueprintsList,
+                blueprints: blueprintsList,
                 pagination: {
                     total: count,
                     limit,

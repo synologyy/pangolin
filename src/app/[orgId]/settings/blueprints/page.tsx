@@ -1,3 +1,4 @@
+import BlueprintsTable, { type BlueprintRow } from "@app/components/BlueprintsTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
@@ -19,13 +20,13 @@ type BluePrintsPageProps = {
 export default async function BluePrintsPage(props: BluePrintsPageProps) {
     const params = await props.params;
 
-    let blueprints: any[] = [];
+    let blueprints: BlueprintRow[] = [];
     try {
         const res = await internal.get<
             AxiosResponse<ListBlueprintsResponse>
         >(`/org/${params.orgId}/domains`, await authCookieHeader());
 
-        blueprints = res.data.data.domains as any[];
+        blueprints = res.data.data.blueprints
     } catch (e) {
         console.error(e);
     }
@@ -55,7 +56,7 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
                        title={t("blueprints")}
                        description={t("blueprintsDescription")}
                    />
-                   {/* <DomainsTable domains={domains} /> */}
+                   <BlueprintsTable blueprints={blueprints} />
                </OrgProvider>
            </>
        );
