@@ -717,13 +717,18 @@ export const idpOrg = sqliteTable("idpOrg", {
 });
 
 // Blueprint runs
-export const blueprintRuns = sqliteTable("blueprintRuns", {
-    blueprintRunId: integer("blueprintRunId").primaryKey({
+export const blueprints = sqliteTable("blueprints", {
+    blueprintId: integer("blueprintId").primaryKey({
         autoIncrement: true
     }),
+    orgId: text("orgId")
+        .references(() => orgs.orgId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
     name: text("name").notNull(),
-    source: text("source", { enum: ["WEB", "CLI", "API"] }),
-    createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
+    source: text("source"),
+    createdAt: integer("createdAt").notNull(),
     succeeded: integer("succeeded", { mode: "boolean" }).notNull(),
     contents: text("contents").notNull(),
     message: text("message")
@@ -780,3 +785,4 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type Blueprint = InferSelectModel<typeof blueprints>;

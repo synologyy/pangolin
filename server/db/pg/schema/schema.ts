@@ -671,6 +671,17 @@ export const setupTokens = pgTable("setupTokens", {
     dateUsed: varchar("dateUsed")
 });
 
+// Blueprint runs
+export const blueprints = pgTable("blueprints", {
+    blueprintId: serial("blueprintId").primaryKey(),
+    name: varchar("name").notNull(),
+    source: varchar("source"),
+    createdAt: integer("createdAt").notNull(),
+    succeeded: boolean("succeeded").notNull(),
+    contents: text("contents").notNull(),
+    message: text("message")
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -722,3 +733,4 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type Blueprint = InferSelectModel<typeof blueprints>;
