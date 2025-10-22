@@ -718,13 +718,16 @@ export const idpOrg = sqliteTable("idpOrg", {
 
 // Blueprint runs
 export const blueprintRuns = sqliteTable("blueprintRuns", {
-    blueprintRunId: text("blueprintRunId").primaryKey().notNull(),
-    createdAt: integer("createdAt", {mode: 'timestamp'}).notNull(),
+    blueprintRunId: integer("blueprintRunId").primaryKey({
+        autoIncrement: true
+    }),
+    name: text("name").notNull(),
+    source: text("source", { enum: ["WEB", "CLI", "API"] }),
+    createdAt: integer("createdAt", { mode: "timestamp" }).notNull(),
     succeeded: integer("succeeded", { mode: "boolean" }).notNull(),
     contents: text("contents").notNull(),
     message: text("message")
 });
-
 
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
