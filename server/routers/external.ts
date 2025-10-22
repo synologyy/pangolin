@@ -13,6 +13,7 @@ import * as siteResource from "./siteResource";
 import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
+import * as blueprints from "./blueprints";
 import * as apiKeys from "./apiKeys";
 import HttpCode from "@server/types/HttpCode";
 import {
@@ -675,8 +676,6 @@ authenticated.post(
     idp.updateOidcIdp
 );
 
-
-
 authenticated.delete("/idp/:idpId", verifyUserIsServerAdmin, idp.deleteIdp);
 
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
@@ -704,7 +703,6 @@ authenticated.get(
     verifyUserIsServerAdmin,
     idp.listIdpOrgPolicies
 );
-
 
 authenticated.get("/idp", idp.listIdps); // anyone can see this; it's just a list of idp names and ids
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
@@ -814,6 +812,12 @@ authenticated.delete(
     domain.deleteAccountDomain
 );
 
+authenticated.get(
+    "/org/:orgId/blueprints",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listBlueprints),
+    blueprints.listBlueprints
+);
 // Auth routes
 export const authRouter = Router();
 unauthenticated.use("/auth", authRouter);
