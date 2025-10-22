@@ -27,10 +27,10 @@ export async function logRequestAudit(
         action: boolean;
         reason: number;
         resourceId?: number;
+        location?: string;
         user?: { username: string; userId: string; orgId: string };
         apiKey?: { name: string; apiKeyId: string; orgId: string };
         metadata?: any;
-        location?: string;
         // userAgent?: string;
     },
     body: {
