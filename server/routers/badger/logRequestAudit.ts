@@ -69,7 +69,8 @@ export async function logRequestAudit(
 
         if (!orgId) {
             logger.warn("logRequestAudit: No organization context found");
-            return;
+            orgId = "unknown"; 
+            // return;
         }
 
         // if (!actorType || !actor || !actorId) {
