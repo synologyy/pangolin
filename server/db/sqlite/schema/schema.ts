@@ -710,6 +710,16 @@ export const idpOrg = sqliteTable("idpOrg", {
     orgMapping: text("orgMapping")
 });
 
+// Blueprint runs
+export const blueprintRuns = sqliteTable("blueprintRuns", {
+    blueprintRunId: text("blueprintRunId").primaryKey().notNull(),
+    createdAt: integer("createdAt", {mode: 'timestamp'}).notNull(),
+    succeeded: integer("succeeded", { mode: "boolean" }).notNull(),
+    contents: text("contents").notNull(),
+    message: text("message")
+});
+
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
