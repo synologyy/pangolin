@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { boolean } from "yargs";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -142,11 +143,15 @@ export const targets = sqliteTable("targets", {
 });
 
 export const targetHealthCheck = sqliteTable("targetHealthCheck", {
-    targetHealthCheckId: integer("targetHealthCheckId").primaryKey({ autoIncrement: true }),
+    targetHealthCheckId: integer("targetHealthCheckId").primaryKey({
+        autoIncrement: true
+    }),
     targetId: integer("targetId")
         .notNull()
         .references(() => targets.targetId, { onDelete: "cascade" }),
-    hcEnabled: integer("hcEnabled", { mode: "boolean" }).notNull().default(false),
+    hcEnabled: integer("hcEnabled", { mode: "boolean" })
+        .notNull()
+        .default(false),
     hcPath: text("hcPath"),
     hcScheme: text("hcScheme"),
     hcMode: text("hcMode").default("http"),
@@ -156,7 +161,9 @@ export const targetHealthCheck = sqliteTable("targetHealthCheck", {
     hcUnhealthyInterval: integer("hcUnhealthyInterval").default(30), // in seconds
     hcTimeout: integer("hcTimeout").default(5), // in seconds
     hcHeaders: text("hcHeaders"),
-    hcFollowRedirects: integer("hcFollowRedirects", { mode: "boolean" }).default(true),
+    hcFollowRedirects: integer("hcFollowRedirects", {
+        mode: "boolean"
+    }).default(true),
     hcMethod: text("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown") // "unknown", "healthy", "unhealthy"
@@ -710,27 +717,42 @@ export const idpOrg = sqliteTable("idpOrg", {
     orgMapping: text("orgMapping")
 });
 
-export const requestAuditLog = sqliteTable("requestAuditLog", {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-    orgId: text("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: text("actorType").notNull(),
-    actor: text("actor").notNull(),
-    actorId: text("actorId").notNull(),
-    resourceId: integer("resourceId"),
-    ip: text("ip").notNull(),
-    type: text("type").notNull(),
-    action: text("action").notNull(),
-    event: text("event").notNull(),
-    location: text("location"),
-    userAgent: text("userAgent"),
-    metadata: text("details")
-}, (table) => ([
-    index("idx_requestAuditLog_timestamp").on(table.timestamp),
-    index("idx_requestAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const requestAuditLog = sqliteTable(
+    "requestAuditLog",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        action: integer("action", { mode: "boolean" }).notNull(),
+        reason: integer("reason").notNull(),
+        actorType: text("actorType"),
+        actor: text("actor"),
+        actorId: text("actorId"),
+        resourceId: integer("resourceId"),
+        ip: text("ip"),
+        type: text("type"),
+        location: text("location"),
+        userAgent: text("userAgent"),
+        metadata: text("details"),
+        headers: text("headers"), // JSON blob
+        query: text("query"), // JSON blob
+        originalRequestURL: text("originalRequestURL"),
+        scheme: text("scheme"),
+        host: text("host"),
+        path: text("path"),
+        method: text("method"),
+        tls: integer("tls", { mode: "boolean" })
+    },
+    (table) => [
+        index("idx_requestAuditLog_timestamp").on(table.timestamp),
+        index("idx_requestAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;

@@ -672,27 +672,42 @@ export const setupTokens = pgTable("setupTokens", {
     dateUsed: varchar("dateUsed")
 });
 
-export const requestAuditLog = pgTable("requestAuditLog", {
-    id: serial("id").primaryKey(),
-    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-    orgId: varchar("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: varchar("actorType").notNull(),
-    actor: varchar("actor").notNull(),
-    actorId: varchar("actorId").notNull(),
-    resourceId: integer("resourceId"),
-    ip: varchar("ip").notNull(),
-    type: varchar("type").notNull(),
-    action: varchar("action").notNull(),
-    event: varchar("event").notNull(),
-    location: varchar("location"),
-    userAgent: varchar("userAgent"),
-    metadata: text("details")
-}, (table) => ([
-    index("idx_requestAuditLog_timestamp").on(table.timestamp),
-    index("idx_requestAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const requestAuditLog = pgTable(
+    "requestAuditLog",
+    {
+        id: serial("id").primaryKey(),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        action: boolean("action").notNull(),
+        reason: integer("reason").notNull(),
+        actorType: text("actorType"),
+        actor: text("actor"),
+        actorId: text("actorId"),
+        resourceId: integer("resourceId"),
+        ip: text("ip"),
+        type: text("type"),
+        location: text("location"),
+        userAgent: text("userAgent"),
+        metadata: text("details"),
+        headers: text("headers"), // JSON blob
+        query: text("query"), // JSON blob
+        originalRequestURL: text("originalRequestURL"),
+        scheme: text("scheme"),
+        host: text("host"),
+        path: text("path"),
+        method: text("method"),
+        tls: boolean("tls")
+    },
+    (table) => [
+        index("idx_requestAuditLog_timestamp").on(table.timestamp),
+        index("idx_requestAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
