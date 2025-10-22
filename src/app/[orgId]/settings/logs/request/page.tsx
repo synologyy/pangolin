@@ -9,7 +9,8 @@ import { useTranslations } from "next-intl";
 import { LogDataTable } from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
-import { Key, RouteOff, User, Lock, Unlock } from "lucide-react";
+import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -294,7 +295,22 @@ export default function GeneralPage() {
                 );
             }
         },
-
+        {
+            accessorKey: "resourceName",
+            header: t("resource"),
+            cell: ({ row }) => {
+                return (
+                    <Link
+                        href={`/${row.original.orgId}/settings/resources/${row.original.resourceNiceId}`}
+                    >
+                        <Button variant="outline" size="sm" className="text-xs h-6">
+                            {row.original.resourceName}
+                            <ArrowUpRight className="ml-2 h-3 w-3" />
+                        </Button>
+                    </Link>
+                );
+            }
+        },
         {
             accessorKey: "host",
             header: ({ column }) => {

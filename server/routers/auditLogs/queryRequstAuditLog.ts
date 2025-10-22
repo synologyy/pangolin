@@ -1,4 +1,4 @@
-import { db, requestAuditLog } from "@server/db";
+import { db, requestAuditLog, resources } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -68,9 +68,12 @@ export function querySites(timeStart: number, timeEnd: number, orgId: string) {
             host: requestAuditLog.host, 
             path: requestAuditLog.path, 
             method: requestAuditLog.method, 
-            tls: requestAuditLog.tls, 
+            tls: requestAuditLog.tls,
+            resourceName: resources.name,
+            resourceNiceId: resources.niceId
         })
         .from(requestAuditLog)
+        .leftJoin(resources, eq(requestAuditLog.resourceId, resources.resourceId)) // TODO: Is this efficient?
         .where(
             and(
                 gt(requestAuditLog.timestamp, timeStart),
