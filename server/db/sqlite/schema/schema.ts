@@ -723,7 +723,6 @@ export const requestAuditLog = sqliteTable(
         id: integer("id").primaryKey({ autoIncrement: true }),
         timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
         orgId: text("orgId")
-            .notNull()
             .references(() => orgs.orgId, { onDelete: "cascade" }),
         action: integer("action", { mode: "boolean" }).notNull(),
         reason: integer("reason").notNull(),

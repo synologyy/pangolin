@@ -678,7 +678,6 @@ export const requestAuditLog = pgTable(
         id: serial("id").primaryKey(),
         timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
         orgId: text("orgId")
-            .notNull()
             .references(() => orgs.orgId, { onDelete: "cascade" }),
         action: boolean("action").notNull(),
         reason: integer("reason").notNull(),

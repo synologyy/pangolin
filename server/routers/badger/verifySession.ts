@@ -1,6 +1,4 @@
-import {
-    validateResourceSessionToken
-} from "@server/auth/sessions/resource";
+import { validateResourceSessionToken } from "@server/auth/sessions/resource";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import {
     getResourceByDomain,
@@ -151,14 +149,17 @@ export async function verifyResourceSession(
             if (!result) {
                 logger.debug(`Resource not found ${cleanHost}`);
 
-                logRequestAudit(
-                    {
-                        action: false,
-                        reason: 201, //resource not found
-                        location: ipCC
-                    },
-                    parsedBody.data
-                );
+                // TODO: we cant log this for now because we dont know the org
+                // eventually it would be cool to show this for the server admin
+
+                // logRequestAudit(
+                //     {
+                //         action: false,
+                //         reason: 201, //resource not found
+                //         location: ipCC
+                //     },
+                //     parsedBody.data
+                // );
 
                 return notAllowed(res);
             }
@@ -172,14 +173,17 @@ export async function verifyResourceSession(
         if (!resource) {
             logger.debug(`Resource not found ${cleanHost}`);
 
-            logRequestAudit(
-                {
-                    action: false,
-                    reason: 201, //resource not found
-                    location: ipCC
-                },
-                parsedBody.data
-            );
+            // TODO: we cant log this for now because we dont know the org
+            // eventually it would be cool to show this for the server admin
+
+            // logRequestAudit(
+            //     {
+            //         action: false,
+            //         reason: 201, //resource not found
+            //         location: ipCC
+            //     },
+            //     parsedBody.data
+            // );
 
             return notAllowed(res);
         }
@@ -193,6 +197,8 @@ export async function verifyResourceSession(
                 {
                     action: false,
                     reason: 202, //resource blocked
+                    resourceId: resource.resourceId,
+                    orgId: resource.orgId,
                     location: ipCC
                 },
                 parsedBody.data
@@ -218,6 +224,7 @@ export async function verifyResourceSession(
                         action: true,
                         reason: 100, // allowed by rule
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -233,6 +240,7 @@ export async function verifyResourceSession(
                         action: false,
                         reason: 203, // dropped by rules
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -264,6 +272,7 @@ export async function verifyResourceSession(
                     action: true,
                     reason: 101, // allowed no auth
                     resourceId: resource.resourceId,
+                    orgId: resource.orgId,
                     location: ipCC
                 },
                 parsedBody.data
@@ -325,7 +334,12 @@ export async function verifyResourceSession(
                         action: true,
                         reason: 102, // valid access token
                         resourceId: resource.resourceId,
-                        location: ipCC
+                        orgId: resource.orgId,
+                        location: ipCC,
+                        apiKey: {
+                            name: tokenItem.title,
+                            apiKeyId: tokenItem.accessTokenId,
+                        }
                     },
                     parsedBody.data
                 );
@@ -371,7 +385,12 @@ export async function verifyResourceSession(
                         action: true,
                         reason: 102, // valid access token
                         resourceId: resource.resourceId,
-                        location: ipCC
+                        orgId: resource.orgId,
+                        location: ipCC,
+                        apiKey: {
+                            name: tokenItem.title,
+                            apiKeyId: tokenItem.accessTokenId,
+                        }
                     },
                     parsedBody.data
                 );
@@ -393,7 +412,8 @@ export async function verifyResourceSession(
                         action: true,
                         reason: 103, // valid header auth
                         resourceId: resource.resourceId,
-                        location: ipCC
+                        orgId: resource.orgId,
+                        location: ipCC,
                     },
                     parsedBody.data
                 );
@@ -413,6 +433,7 @@ export async function verifyResourceSession(
                         action: true,
                         reason: 103, // valid header auth
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -433,6 +454,7 @@ export async function verifyResourceSession(
                         action: false,
                         reason: 299, // no more auth methods
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -453,6 +475,7 @@ export async function verifyResourceSession(
                         action: false,
                         reason: 299, // no more auth methods
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -476,6 +499,7 @@ export async function verifyResourceSession(
                     action: false,
                     reason: 204, // no sessions
                     resourceId: resource.resourceId,
+                    orgId: resource.orgId,
                     location: ipCC
                 },
                 parsedBody.data
@@ -520,6 +544,7 @@ export async function verifyResourceSession(
                         action: false,
                         reason: 205, // temporary request token
                         resourceId: resource.resourceId,
+                        orgId: resource.orgId,
                         location: ipCC
                     },
                     parsedBody.data
@@ -539,6 +564,7 @@ export async function verifyResourceSession(
                             action: true,
                             reason: 104, // valid pincode
                             resourceId: resource.resourceId,
+                            orgId: resource.orgId,
                             location: ipCC
                         },
                         parsedBody.data
@@ -557,6 +583,7 @@ export async function verifyResourceSession(
                             action: true,
                             reason: 105, // valid password
                             resourceId: resource.resourceId,
+                            orgId: resource.orgId,
                             location: ipCC
                         },
                         parsedBody.data
@@ -578,6 +605,7 @@ export async function verifyResourceSession(
                             action: true,
                             reason: 106, // valid email
                             resourceId: resource.resourceId,
+                            orgId: resource.orgId,
                             location: ipCC
                         },
                         parsedBody.data
@@ -596,7 +624,12 @@ export async function verifyResourceSession(
                             action: true,
                             reason: 102, // valid access token
                             resourceId: resource.resourceId,
-                            location: ipCC
+                            orgId: resource.orgId,
+                            location: ipCC,
+                            apiKey: {
+                                name: resourceSession.accessTokenTitle,
+                                apiKeyId: resourceSession.accessTokenId,
+                            }
                         },
                         parsedBody.data
                     );
@@ -634,7 +667,12 @@ export async function verifyResourceSession(
                                 action: true,
                                 reason: 107, // valid sso
                                 resourceId: resource.resourceId,
-                                location: ipCC
+                                orgId: resource.orgId,
+                                location: ipCC,
+                                user: {
+                                    username: allowedUserData.username,
+                                    userId: resourceSession.userId
+                                }
                             },
                             parsedBody.data
                         );
@@ -662,6 +700,7 @@ export async function verifyResourceSession(
                 action: false,
                 reason: 299, // no more auth methods
                 resourceId: resource.resourceId,
+                orgId: resource.orgId,
                 location: ipCC
             },
             parsedBody.data

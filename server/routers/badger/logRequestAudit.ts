@@ -27,9 +27,10 @@ export async function logRequestAudit(
         action: boolean;
         reason: number;
         resourceId?: number;
+        orgId?: string;
         location?: string;
-        user?: { username: string; userId: string; orgId: string };
-        apiKey?: { name: string; apiKeyId: string; orgId: string };
+        user?: { username: string; userId: string; };
+        apiKey?: { name: string | null; apiKeyId: string; };
         metadata?: any;
         // userAgent?: string;
     },
@@ -47,30 +48,21 @@ export async function logRequestAudit(
     }
 ) {
     try {
-        let orgId: string | undefined;
         let actorType: string | undefined;
         let actor: string | undefined;
         let actorId: string | undefined;
 
         const user = data.user;
         if (user) {
-            orgId = user.orgId;
             actorType = "user";
             actor = user.username;
             actorId = user.userId;
         }
         const apiKey = data.apiKey;
         if (apiKey) {
-            orgId = apiKey.orgId;
             actorType = "apiKey";
-            actor = apiKey.name;
+            actor = apiKey.name || apiKey.apiKeyId;
             actorId = apiKey.apiKeyId;
-        }
-
-        if (!orgId) {
-            logger.warn("logRequestAudit: No organization context found");
-            orgId = "org_7g93l5xu7p61q14"; 
-            // return;
         }
 
         // if (!actorType || !actor || !actorId) {
@@ -107,7 +99,7 @@ export async function logRequestAudit(
 
         await db.insert(requestAuditLog).values({
             timestamp,
-            orgId,
+            orgId: data.orgId,
             actorType,
             actor,
             actorId,

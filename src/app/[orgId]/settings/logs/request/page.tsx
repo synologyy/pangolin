@@ -353,12 +353,18 @@ export default function GeneralPage() {
             cell: ({ row }) => {
                 return (
                     <span className="flex items-center gap-1">
-                        {row.original.actorType == "user" ? (
-                            <User className="h-4 w-4" />
+                        {row.original.actor ? (
+                            <>
+                                {row.original.actorType == "user" ? (
+                                    <User className="h-4 w-4" />
+                                ) : (
+                                    <Key className="h-4 w-4" />
+                                )}
+                                {row.original.actor}
+                            </>
                         ) : (
-                            <Key className="h-4 w-4" />
+                            <>-</>
                         )}
-                        {row.original.actor}
                     </span>
                 );
             }

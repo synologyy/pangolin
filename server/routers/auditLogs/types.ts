@@ -17,9 +17,9 @@ export type QueryActionAuditLogResponse = {
 export type QueryRequestAuditLogResponse = {
     log: {
         timestamp: number;
-        orgId: string;
         action: boolean;
         reason: number;
+        orgId: string | null;
         actorType: string | null;
         actor: string | null;
         actorId: string | null;
