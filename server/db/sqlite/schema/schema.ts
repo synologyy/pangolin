@@ -727,7 +727,7 @@ export const blueprints = sqliteTable("blueprints", {
         })
         .notNull(),
     name: text("name").notNull(),
-    source: text("source"),
+    source: text("source").notNull(),
     createdAt: integer("createdAt").notNull(),
     succeeded: integer("succeeded", { mode: "boolean" }).notNull(),
     contents: text("contents").notNull(),

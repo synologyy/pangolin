@@ -675,7 +675,7 @@ export const setupTokens = pgTable("setupTokens", {
 export const blueprints = pgTable("blueprints", {
     blueprintId: serial("blueprintId").primaryKey(),
     name: varchar("name").notNull(),
-    source: varchar("source"),
+    source: varchar("source").notNull(),
     createdAt: integer("createdAt").notNull(),
     succeeded: boolean("succeeded").notNull(),
     contents: text("contents").notNull(),
