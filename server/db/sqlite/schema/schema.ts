@@ -142,11 +142,15 @@ export const targets = sqliteTable("targets", {
 });
 
 export const targetHealthCheck = sqliteTable("targetHealthCheck", {
-    targetHealthCheckId: integer("targetHealthCheckId").primaryKey({ autoIncrement: true }),
+    targetHealthCheckId: integer("targetHealthCheckId").primaryKey({
+        autoIncrement: true
+    }),
     targetId: integer("targetId")
         .notNull()
         .references(() => targets.targetId, { onDelete: "cascade" }),
-    hcEnabled: integer("hcEnabled", { mode: "boolean" }).notNull().default(false),
+    hcEnabled: integer("hcEnabled", { mode: "boolean" })
+        .notNull()
+        .default(false),
     hcPath: text("hcPath"),
     hcScheme: text("hcScheme"),
     hcMode: text("hcMode").default("http"),
@@ -156,7 +160,9 @@ export const targetHealthCheck = sqliteTable("targetHealthCheck", {
     hcUnhealthyInterval: integer("hcUnhealthyInterval").default(30), // in seconds
     hcTimeout: integer("hcTimeout").default(5), // in seconds
     hcHeaders: text("hcHeaders"),
-    hcFollowRedirects: integer("hcFollowRedirects", { mode: "boolean" }).default(true),
+    hcFollowRedirects: integer("hcFollowRedirects", {
+        mode: "boolean"
+    }).default(true),
     hcMethod: text("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown") // "unknown", "healthy", "unhealthy"
