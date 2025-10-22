@@ -69,7 +69,7 @@ export async function logRequestAudit(
 
         if (!orgId) {
             logger.warn("logRequestAudit: No organization context found");
-            orgId = "unknown"; 
+            orgId = "org_7g93l5xu7p61q14"; 
             // return;
         }
 
@@ -84,6 +84,26 @@ export async function logRequestAudit(
         if (metadata) {
             metadata = JSON.stringify(metadata);
         }
+
+        const clientIp = body.requestIp
+            ? (() => {
+                  if (body.requestIp.startsWith("[") && body.requestIp.includes("]")) {
+                      // if brackets are found, extract the IPv6 address from between the brackets
+                      const ipv6Match = body.requestIp.match(/\[(.*?)\]/);
+                      if (ipv6Match) {
+                          return ipv6Match[1];
+                      }
+                  }
+
+                  // ivp4
+                  // split at last colon
+                  const lastColonIndex = body.requestIp.lastIndexOf(":");
+                  if (lastColonIndex !== -1) {
+                      return body.requestIp.substring(0, lastColonIndex);
+                  }
+                  return body.requestIp;
+              })()
+            : undefined;
 
         await db.insert(requestAuditLog).values({
             timestamp,
@@ -104,7 +124,7 @@ export async function logRequestAudit(
             host: body.host,
             path: body.path,
             method: body.method,
-            ip: body.requestIp,
+            ip: clientIp,
             tls: body.tls
         });
     } catch (error) {

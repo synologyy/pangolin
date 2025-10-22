@@ -14,6 +14,7 @@ import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
 import * as apiKeys from "./apiKeys";
+import * as logs from "./auditLogs";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
@@ -1180,3 +1181,13 @@ authRouter.delete(
     }),
     auth.deleteSecurityKey
 );
+
+authenticated.get(
+    "/org/:orgId/logs/request",
+    logs.queryRequestAuditLogs
+)
+
+authenticated.get(
+    "/org/:orgId/logs/request/export",
+    logs.exportRequestAuditLogs
+)

@@ -1,17 +1,4 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
-import { actionAuditLog, db } from "@server/db";
+import { db, requestAuditLog } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -21,31 +8,31 @@ import { z } from "zod";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
-import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
+import { QueryRequestAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
-import { queryActionAuditLogsParams, queryActionAuditLogsQuery, querySites } from "./queryActionAuditLog";
-import { generateCSV } from "@server/routers/auditLogs/generateCSV";
+import { queryAccessAuditLogsQuery, queryRequestAuditLogsParams, querySites } from "./queryRequstAuditLog";
+import { generateCSV } from "./generateCSV";
 
 registry.registerPath({
     method: "get",
-    path: "/org/{orgId}/logs/actionk/export",
-    description: "Export the action audit log for an organization as CSV",
+    path: "/org/{orgId}/logs/request",
+    description: "Query the request audit log for an organization",
     tags: [OpenAPITags.Org],
     request: {
-        query: queryActionAuditLogsQuery,
-        params: queryActionAuditLogsParams
+        query: queryAccessAuditLogsQuery,
+        params: queryRequestAuditLogsParams
     },
     responses: {}
 });
 
-export async function exportActionAuditLogs(
+export async function exportRequestAuditLogs(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedQuery = queryActionAuditLogsQuery.safeParse(req.query);
+        const parsedQuery = queryAccessAuditLogsQuery.safeParse(req.query);
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -56,7 +43,7 @@ export async function exportActionAuditLogs(
         }
         const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
-        const parsedParams = queryActionAuditLogsParams.safeParse(req.params);
+        const parsedParams = queryRequestAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -74,7 +61,7 @@ export async function exportActionAuditLogs(
         const csvData = generateCSV(log);
         
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="action-audit-logs-${orgId}-${Date.now()}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="request-audit-logs-${orgId}-${Date.now()}.csv"`);
         
         return res.send(csvData);
     } catch (error) {

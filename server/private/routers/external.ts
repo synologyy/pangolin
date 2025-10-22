@@ -348,11 +348,11 @@ authenticated.post(
 
 authenticated.get(
     "/org/:orgId/logs/action",
-    logs.queryAccessAuditLogs 
+    logs.queryActionAuditLogs 
 )
 
 
 authenticated.get(
     "/org/:orgId/logs/action/export",
-    logs.exportAccessAuditLogs
+    logs.exportActionAuditLogs
 )

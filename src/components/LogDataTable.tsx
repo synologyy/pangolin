@@ -360,15 +360,36 @@ export function LogDataTable<TData, TValue>({
                                         data-state={
                                             row.getIsSelected() && "selected"
                                         }
+                                        className="text-xs" // made smaller
                                     >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext()
-                                                )}
-                                            </TableCell>
-                                        ))}
+                                        {row.getVisibleCells().map((cell) => {
+                                            const originalRow =
+                                                row.original as any;
+                                            const actionValue =
+                                                originalRow?.action;
+                                            let className = "";
+
+                                            if (
+                                                typeof actionValue === "boolean"
+                                            ) {
+                                                className = actionValue
+                                                    ? "bg-green-100 dark:bg-green-900"
+                                                    : "bg-red-100 dark:bg-red-900";
+                                            }
+
+                                            return (
+                                                <TableCell
+                                                    key={cell.id}
+                                                    className={`${className} py-2`} // made smaller
+                                                >
+                                                    {flexRender(
+                                                        cell.column.columnDef
+                                                            .cell,
+                                                        cell.getContext()
+                                                    )}
+                                                </TableCell>
+                                            );
+                                        })}
                                     </TableRow>
                                 ))
                             ) : (

@@ -1,17 +1,4 @@
-/*
- * This file is part of a proprietary work.
- *
- * Copyright (c) 2025 Fossorial, Inc.
- * All rights reserved.
- *
- * This file is licensed under the Fossorial Commercial License.
- * You may not use this file except in compliance with the License.
- * Unauthorized use, copying, modification, or distribution is strictly prohibited.
- *
- * This file is not licensed under the AGPLv3.
- */
-
-import { actionAuditLog, db } from "@server/db";
+import { db, requestAuditLog } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -21,11 +8,11 @@ import { z } from "zod";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
-import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
+import { QueryRequestAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
 
-export const queryActionAuditLogsQuery = z.object({
+export const queryAccessAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
     timeStart: z
         .string()
@@ -55,40 +42,54 @@ export const queryActionAuditLogsQuery = z.object({
         .pipe(z.number().int().nonnegative())
 });
 
-export const queryActionAuditLogsParams = z.object({
+export const queryRequestAuditLogsParams = z.object({
     orgId: z.string()
 });
 
 export function querySites(timeStart: number, timeEnd: number, orgId: string) {
     return db
         .select({
-            orgId: actionAuditLog.orgId,
-            action: actionAuditLog.action,
-            actorType: actionAuditLog.actorType,
-            actorId: actionAuditLog.actorId,
-            timestamp: actionAuditLog.timestamp,
-            actor: actionAuditLog.actor
+            timestamp: requestAuditLog.timestamp, 
+            orgId: requestAuditLog.orgId, 
+            action: requestAuditLog.action, 
+            reason: requestAuditLog.reason, 
+            actorType: requestAuditLog.actorType, 
+            actor: requestAuditLog.actor, 
+            actorId: requestAuditLog.actorId, 
+            resourceId: requestAuditLog.resourceId, 
+            ip: requestAuditLog.ip, 
+            location: requestAuditLog.location, 
+            userAgent: requestAuditLog.userAgent, 
+            metadata: requestAuditLog.metadata, 
+            headers: requestAuditLog.headers, 
+            query: requestAuditLog.query, 
+            originalRequestURL: requestAuditLog.originalRequestURL, 
+            scheme: requestAuditLog.scheme, 
+            host: requestAuditLog.host, 
+            path: requestAuditLog.path, 
+            method: requestAuditLog.method, 
+            tls: requestAuditLog.tls, 
         })
-        .from(actionAuditLog)
+        .from(requestAuditLog)
         .where(
             and(
-                gt(actionAuditLog.timestamp, timeStart),
-                lt(actionAuditLog.timestamp, timeEnd),
-                eq(actionAuditLog.orgId, orgId)
+                gt(requestAuditLog.timestamp, timeStart),
+                lt(requestAuditLog.timestamp, timeEnd),
+                eq(requestAuditLog.orgId, orgId)
             )
         )
-        .orderBy(actionAuditLog.timestamp);
+        .orderBy(requestAuditLog.timestamp);
 }
 
 export function countQuery(timeStart: number, timeEnd: number, orgId: string) {
             const countQuery = db
             .select({ count: count() })
-            .from(actionAuditLog)
+            .from(requestAuditLog)
             .where(
                 and(
-                    gt(actionAuditLog.timestamp, timeStart),
-                    lt(actionAuditLog.timestamp, timeEnd),
-                    eq(actionAuditLog.orgId, orgId)
+                    gt(requestAuditLog.timestamp, timeStart),
+                    lt(requestAuditLog.timestamp, timeEnd),
+                    eq(requestAuditLog.orgId, orgId)
                 )
             );
     return countQuery;
@@ -96,23 +97,23 @@ export function countQuery(timeStart: number, timeEnd: number, orgId: string) {
 
 registry.registerPath({
     method: "get",
-    path: "/org/{orgId}/logs/action",
-    description: "Query the action audit log for an organization",
+    path: "/org/{orgId}/logs/request",
+    description: "Query the request audit log for an organization",
     tags: [OpenAPITags.Org],
     request: {
-        query: queryActionAuditLogsQuery,
-        params: queryActionAuditLogsParams
+        query: queryAccessAuditLogsQuery,
+        params: queryRequestAuditLogsParams
     },
     responses: {}
 });
 
-export async function queryActionAuditLogs(
+export async function queryRequestAuditLogs(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedQuery = queryActionAuditLogsQuery.safeParse(req.query);
+        const parsedQuery = queryAccessAuditLogsQuery.safeParse(req.query);
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -123,7 +124,7 @@ export async function queryActionAuditLogs(
         }
         const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
-        const parsedParams = queryActionAuditLogsParams.safeParse(req.params);
+        const parsedParams = queryRequestAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -141,7 +142,7 @@ export async function queryActionAuditLogs(
         const totalCountResult = await countQuery(timeStart, timeEnd, orgId);
         const totalCount = totalCountResult[0].count;
 
-        return response<QueryActionAuditLogResponse>(res, {
+        return response<QueryRequestAuditLogResponse>(res, {
             data: {
                 log: log,
                 pagination: {

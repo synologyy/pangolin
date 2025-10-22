@@ -141,7 +141,7 @@ export const orgNavSections = (
                 : []),
             {
                 title: "sidebarLogs",
-                href: "/{orgId}/settings/logs/action",
+                href: "/{orgId}/settings/logs/request",
                 icon: <Logs className="h-4 w-4" />
             },
             {
