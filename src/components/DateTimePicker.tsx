@@ -50,7 +50,6 @@ export function DateTimePicker({
   const handleDateChange = (date: Date | undefined) => {
     setInternalDate(date);
     const newValue = { date, time: internalTime };
-    setOpen(false);
     onChange?.(newValue);
   };
 

@@ -59,7 +59,7 @@ export const queryAccessAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-function querySites(timeStart: number, timeEnd: number, orgId: string) {
+export function querySites(timeStart: number, timeEnd: number, orgId: string) {
     return db
         .select({
             orgId: actionAuditLog.orgId,
@@ -77,6 +77,20 @@ function querySites(timeStart: number, timeEnd: number, orgId: string) {
             )
         )
         .orderBy(actionAuditLog.timestamp);
+}
+
+export function countQuery(timeStart: number, timeEnd: number, orgId: string) {
+            const countQuery = db
+            .select({ count: count() })
+            .from(actionAuditLog)
+            .where(
+                and(
+                    gt(actionAuditLog.timestamp, timeStart),
+                    lt(actionAuditLog.timestamp, timeEnd),
+                    eq(actionAuditLog.orgId, orgId)
+                )
+            );
+    return countQuery;
 }
 
 registry.registerPath({
@@ -123,18 +137,7 @@ export async function queryAccessAuditLogs(
 
         const log = await baseQuery.limit(limit).offset(offset);
 
-        const countQuery = db
-            .select({ count: count() })
-            .from(actionAuditLog)
-            .where(
-                and(
-                    gt(actionAuditLog.timestamp, timeStart),
-                    lt(actionAuditLog.timestamp, timeEnd),
-                    eq(actionAuditLog.orgId, orgId)
-                )
-            );
-
-        const totalCountResult = await countQuery;
+        const totalCountResult = await countQuery(timeStart, timeEnd, orgId);
         const totalCount = totalCountResult[0].count;
 
         return response<QueryActionAuditLogResponse>(res, {

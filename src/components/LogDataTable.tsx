@@ -23,7 +23,7 @@ import { Button } from "@app/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search, RefreshCw, Filter, X } from "lucide-react";
+import { Plus, Search, RefreshCw, Filter, X, Download } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -82,6 +82,8 @@ type DataTableProps<TData, TValue> = {
     title?: string;
     addButtonText?: string;
     onRefresh?: () => void;
+    onExport?: () => void;
+    isExporting?: boolean;
     isRefreshing?: boolean;
     searchPlaceholder?: string;
     searchColumn?: string;
@@ -109,6 +111,8 @@ export function LogDataTable<TData, TValue>({
     title,
     onRefresh,
     isRefreshing,
+    onExport,
+    isExporting,
     searchPlaceholder = "Search...",
     searchColumn = "name",
     defaultSort,
@@ -142,7 +146,6 @@ export function LogDataTable<TData, TValue>({
         defaultTab || tabs?.[0]?.id || ""
     );
 
-    const [showDatePicker, setShowDatePicker] = useState(false);
     const [startDate, setStartDate] = useState<DateTimeValue>(
         dateRange?.start || {}
     );
@@ -233,22 +236,11 @@ export function LogDataTable<TData, TValue>({
         onDateRangeChange?.(start, end);
     };
 
-    const clearDateFilter = () => {
-        const emptyStart = {};
-        const emptyEnd = {};
-        setStartDate(emptyStart);
-        setEndDate(emptyEnd);
-        onDateRangeChange?.(emptyStart, emptyEnd);
-        setShowDatePicker(false);
-    };
-
-    const hasDateFilter = startDate?.date || endDate?.date;
-
     return (
         <div className="container mx-auto max-w-12xl">
             <Card>
                 <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-4">
-                    <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
+                    <div className="flex flex-row items-start w-full sm:mr-2 gap-2">
                         <div className="relative w-full sm:max-w-sm">
                             <Input
                                 placeholder={searchPlaceholder}
@@ -258,30 +250,10 @@ export function LogDataTable<TData, TValue>({
                                         String(e.target.value)
                                     )
                                 }
-                                className="w-full pl-8"
+                                className="w-full pl-8 m-0"
                             />
                             <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
                         </div>
-                        {tabs && tabs.length > 0 && (
-                            <Tabs
-                                value={activeTab}
-                                onValueChange={handleTabChange}
-                                className="w-full"
-                            >
-                                <TabsList>
-                                    {tabs.map((tab) => (
-                                        <TabsTrigger
-                                            key={tab.id}
-                                            value={tab.id}
-                                        >
-                                            {tab.label} (
-                                            {data.filter(tab.filterFn).length})
-                                        </TabsTrigger>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
-                        )}
-
                         <DateRangePicker
                             startValue={startDate}
                             endValue={endDate}
@@ -289,7 +261,7 @@ export function LogDataTable<TData, TValue>({
                             className="flex-wrap gap-2"
                         />
                     </div>
-                    <div className="flex items-center gap-2 sm:justify-end">
+                    <div className="flex items-start gap-2 sm:justify-end">
                         {onRefresh && (
                             <Button
                                 variant="outline"
@@ -300,6 +272,18 @@ export function LogDataTable<TData, TValue>({
                                     className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
                                 />
                                 {t("refresh")}
+                            </Button>
+                        )}
+                        {onExport && (
+                            <Button
+                                variant="outline"
+                                onClick={onExport}
+                                disabled={isExporting}
+                            >
+                                <Download
+                                    className={`mr-2 h-4 w-4 ${isExporting ? "animate-spin" : ""}`}
+                                />
+                                {t("exportCsv")}
                             </Button>
                         )}
                     </div>

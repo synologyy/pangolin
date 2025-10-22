@@ -350,3 +350,9 @@ authenticated.get(
     "/org/:orgId/logs/action",
     logs.queryAccessAuditLogs 
 )
+
+
+authenticated.get(
+    "/org/:orgId/logs/action/export",
+    logs.exportAccessAuditLogs
+)

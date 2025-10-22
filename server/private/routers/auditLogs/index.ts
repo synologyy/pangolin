@@ -12,3 +12,4 @@
  */
 
 export * from "./queryActionAuditLog";
+export * from "./exportActionAuditLog";

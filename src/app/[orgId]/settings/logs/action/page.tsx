@@ -21,6 +21,7 @@ export default function GeneralPage() {
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
@@ -127,6 +128,40 @@ export default function GeneralPage() {
         }
     };
 
+    const exportData = async () => {
+        try {
+            setIsExporting(true);
+            const response = await api.get(`/org/${orgId}/logs/action/export`, {
+                responseType: "blob",
+                params: {
+                    timeStart: dateRange.startDate?.date
+                        ? new Date(dateRange.startDate.date).toISOString()
+                        : undefined,
+                    timeEnd: dateRange.endDate?.date
+                        ? new Date(dateRange.endDate.date).toISOString()
+                        : undefined,
+                },
+            });
+
+            // Create a URL for the blob and trigger a download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            const epoch = Math.floor(Date.now() / 1000);
+            link.setAttribute("download", `access_audit_logs_${orgId}_${epoch}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode?.removeChild(link);
+            setIsExporting(false);
+        } catch (error) {
+            toast({
+                title: t("error"),
+                description: t("exportError"),
+                variant: "destructive"
+            });
+        }
+    };
+
     const columns: ColumnDef<any>[] = [
         {
             accessorKey: "timestamp",
@@ -212,6 +247,8 @@ export default function GeneralPage() {
                 searchColumn="action"
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
+                onExport={exportData}
+                isExporting={isExporting}
                 onDateRangeChange={handleDateRangeChange}
                 dateRange={{
                     start: dateRange.startDate,
