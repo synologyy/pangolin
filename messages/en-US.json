@@ -1891,5 +1891,7 @@
     "cannotbeUndone": "This can not be undone.",
     "toConfirm": "to confirm",
     "deleteClientQuestion": "Are you sure you want to remove the client from the site and organization?",
-    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site."
+    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site.",
+    "olmUpdateAvailableInfo": "An updated version of Olm is available. Please update to the latest version for the best experience.",
+    "client": "Client"
 }
