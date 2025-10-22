@@ -732,7 +732,6 @@ export const requestAuditLog = sqliteTable(
         actorId: text("actorId"),
         resourceId: integer("resourceId"),
         ip: text("ip"),
-        type: text("type"),
         location: text("location"),
         userAgent: text("userAgent"),
         metadata: text("details"),

@@ -26,11 +26,10 @@ export async function logRequestAudit(
     data: {
         action: boolean;
         reason: number;
+        resourceId?: number;
         user?: { username: string; userId: string; orgId: string };
         apiKey?: { name: string; apiKeyId: string; orgId: string };
         metadata?: any;
-        resouceId?: number;
-        type?: string;
         location?: string;
         // userAgent?: string;
     },
@@ -41,10 +40,10 @@ export async function logRequestAudit(
         host: string;
         method: string;
         tls: boolean;
-        sessions?: Record<string, string> | undefined;
-        headers?: Record<string, string> | undefined;
-        query?: Record<string, string> | undefined;
-        requestIp?: string | undefined;
+        sessions?: Record<string, string>;
+        headers?: Record<string, string>;
+        query?: Record<string, string>; 
+        requestIp?: string;
     }
 ) {
     try {
@@ -93,8 +92,7 @@ export async function logRequestAudit(
             actorId,
             metadata,
             action: data.action,
-            resourceId: data.resouceId,
-            type: data.type,
+            resourceId: data.resourceId,
             reason: data.reason,
             location: data.location,
             // userAgent: data.userAgent, // TODO: add this

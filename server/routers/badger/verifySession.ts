@@ -128,6 +128,10 @@ export async function verifyResourceSession(
 
         logger.debug("Client IP:", { clientIp });
 
+        const ipCC = clientIp
+            ? await getCountryCodeFromIp(clientIp)
+            : undefined;
+
         let cleanHost = host;
         // if the host ends with :port, strip it
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
@@ -154,7 +158,8 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: false,
-                        reason: 201 //resource not found
+                        reason: 201, //resource not found
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -174,7 +179,8 @@ export async function verifyResourceSession(
             logRequestAudit(
                 {
                     action: false,
-                    reason: 201 //resource not found
+                    reason: 201, //resource not found
+                    location: ipCC
                 },
                 parsedBody.data
             );
@@ -190,7 +196,8 @@ export async function verifyResourceSession(
             logRequestAudit(
                 {
                     action: false,
-                    reason: 202 //resource blocked
+                    reason: 202, //resource blocked
+                    location: ipCC
                 },
                 parsedBody.data
             );
@@ -203,7 +210,8 @@ export async function verifyResourceSession(
             const action = await checkRules(
                 resource.resourceId,
                 clientIp,
-                path
+                path,
+                ipCC
             );
 
             if (action == "ACCEPT") {
@@ -212,7 +220,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: true,
-                        reason: 100 // allowed by rule
+                        reason: 100, // allowed by rule
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -225,7 +235,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: false,
-                        reason: 203 // dropped by rules
+                        reason: 203, // dropped by rules
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -254,7 +266,9 @@ export async function verifyResourceSession(
             logRequestAudit(
                 {
                     action: true,
-                    reason: 101 // allowed no auth
+                    reason: 101, // allowed no auth
+                    resourceId: resource.resourceId,
+                    location: ipCC
                 },
                 parsedBody.data
             );
@@ -313,7 +327,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: true,
-                        reason: 102 // valid access token
+                        reason: 102, // valid access token
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -357,7 +373,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: true,
-                        reason: 102 // valid access token
+                        reason: 102, // valid access token
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -377,7 +395,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: true,
-                        reason: 103 // valid header auth
+                        reason: 103, // valid header auth
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -395,7 +415,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: true,
-                        reason: 103 // valid header auth
+                        reason: 103, // valid header auth
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -413,7 +435,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: false,
-                        reason: 299 // no more auth methods
+                        reason: 299, // no more auth methods
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -431,7 +455,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: false,
-                        reason: 299 // no more auth methods
+                        reason: 299, // no more auth methods
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -452,7 +478,9 @@ export async function verifyResourceSession(
             logRequestAudit(
                 {
                     action: false,
-                    reason: 204 // no sessions
+                    reason: 204, // no sessions
+                    resourceId: resource.resourceId,
+                    location: ipCC
                 },
                 parsedBody.data
             );
@@ -494,7 +522,9 @@ export async function verifyResourceSession(
                 logRequestAudit(
                     {
                         action: false,
-                        reason: 205 // temporary request token
+                        reason: 205, // temporary request token
+                        resourceId: resource.resourceId,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -511,7 +541,9 @@ export async function verifyResourceSession(
                     logRequestAudit(
                         {
                             action: true,
-                            reason: 104 // valid pincode
+                            reason: 104, // valid pincode
+                            resourceId: resource.resourceId,
+                            location: ipCC
                         },
                         parsedBody.data
                     );
@@ -527,7 +559,9 @@ export async function verifyResourceSession(
                     logRequestAudit(
                         {
                             action: true,
-                            reason: 105 // valid password
+                            reason: 105, // valid password
+                            resourceId: resource.resourceId,
+                            location: ipCC
                         },
                         parsedBody.data
                     );
@@ -546,7 +580,9 @@ export async function verifyResourceSession(
                     logRequestAudit(
                         {
                             action: true,
-                            reason: 106 // valid email
+                            reason: 106, // valid email
+                            resourceId: resource.resourceId,
+                            location: ipCC
                         },
                         parsedBody.data
                     );
@@ -562,7 +598,9 @@ export async function verifyResourceSession(
                     logRequestAudit(
                         {
                             action: true,
-                            reason: 102 // valid access token
+                            reason: 102, // valid access token
+                            resourceId: resource.resourceId,
+                            location: ipCC
                         },
                         parsedBody.data
                     );
@@ -598,7 +636,9 @@ export async function verifyResourceSession(
                         logRequestAudit(
                             {
                                 action: true,
-                                reason: 107 // valid sso
+                                reason: 107, // valid sso
+                                resourceId: resource.resourceId,
+                                location: ipCC
                             },
                             parsedBody.data
                         );
@@ -624,7 +664,9 @@ export async function verifyResourceSession(
         logRequestAudit(
             {
                 action: false,
-                reason: 299 // no more auth methods
+                reason: 299, // no more auth methods
+                resourceId: resource.resourceId,
+                location: ipCC
             },
             parsedBody.data
         );
@@ -799,7 +841,8 @@ async function isUserAllowedToAccessResource(
 async function checkRules(
     resourceId: number,
     clientIp: string | undefined,
-    path: string | undefined
+    path: string | undefined,
+    ipCC?: string
 ): Promise<"ACCEPT" | "DROP" | "PASS" | undefined> {
     const ruleCacheKey = `rules:${resourceId}`;
 
@@ -838,9 +881,9 @@ async function checkRules(
         ) {
             return rule.action as any;
         } else if (
-            clientIp &&
+            ipCC &&
             rule.match == "GEOIP" &&
-            (await isIpInGeoIP(clientIp, rule.value))
+            (await isIpInGeoIP(ipCC, rule.value))
         ) {
             return rule.action as any;
         }
@@ -968,11 +1011,20 @@ export function isPathAllowed(pattern: string, path: string): boolean {
     return result;
 }
 
-async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
-    if (countryCode == "ALL") {
+async function isIpInGeoIP(
+    ipCountryCode: string,
+    checkCountryCode: string
+): Promise<boolean> {
+    if (checkCountryCode == "ALL") {
         return true;
     }
 
+    logger.debug(`IP ${ipCountryCode} is in country: ${checkCountryCode}`);
+
+    return ipCountryCode?.toUpperCase() === checkCountryCode.toUpperCase();
+}
+
+async function getCountryCodeFromIp(ip: string): Promise<string | undefined> {
     const geoIpCacheKey = `geoip:${ip}`;
 
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
@@ -983,9 +1035,7 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
         cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
     }
 
-    logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
-
-    return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
+    return cachedCountryCode;
 }
 
 function extractBasicAuth(
