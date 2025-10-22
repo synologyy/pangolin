@@ -1152,6 +1152,8 @@
     "sidebarClients": "Clients",
     "sidebarDomains": "Domains",
     "sidebarBluePrints": "Blueprints",
+    "blueprints": "Blueprints",
+    "blueprintsDescription": "Blueprints are declarative YAML configurations that define your resources and their settings",
     "enableDockerSocket": "Enable Docker Blueprint",
     "enableDockerSocketDescription": "Enable Docker Socket label scraping for blueprint labels. Socket path must be provided to Newt.",
     "enableDockerSocketLink": "Learn More",
