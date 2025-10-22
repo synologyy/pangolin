@@ -23,22 +23,31 @@ export default function GeneralPage() {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
+    // Pagination state
+    const [totalCount, setTotalCount] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(0);
+    const [pageSize, setPageSize] = useState<number>(20);
+    const [isLoading, setIsLoading] = useState(false);
+
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        
+
         return {
             startDate: {
-                date: yesterday,
+                date: yesterday
             },
             endDate: {
-                date: now,
+                date: now
             }
         };
     };
 
-    const [dateRange, setDateRange] = useState<{ startDate: DateTimeValue; endDate: DateTimeValue }>(getDefaultDateRange());
+    const [dateRange, setDateRange] = useState<{
+        startDate: DateTimeValue;
+        endDate: DateTimeValue;
+    }>(getDefaultDateRange());
 
     // Trigger search with default values on component mount
     useEffect(() => {
@@ -51,21 +60,42 @@ export default function GeneralPage() {
         endDate: DateTimeValue
     ) => {
         setDateRange({ startDate, endDate });
-        queryDateTime(startDate, endDate);
+        setCurrentPage(0); // Reset to first page when filtering
+        queryDateTime(startDate, endDate, 0, pageSize);
+    };
+
+    // Handle page changes
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+        queryDateTime(
+            dateRange.startDate,
+            dateRange.endDate,
+            newPage,
+            pageSize
+        );
+    };
+
+    // Handle page size changes
+    const handlePageSizeChange = (newPageSize: number) => {
+        setPageSize(newPageSize);
+        setCurrentPage(0); // Reset to first page when changing page size
+        queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
 
     const queryDateTime = async (
         startDate: DateTimeValue,
-        endDate: DateTimeValue
+        endDate: DateTimeValue,
+        page: number = currentPage,
+        size: number = pageSize
     ) => {
-        console.log("Date range changed:", { startDate, endDate });
-        setIsRefreshing(true);
+        console.log("Date range changed:", { startDate, endDate, page, size });
+        setIsLoading(true);
 
         try {
             // Convert the date/time values to API parameters
             let params: any = {
-                limit: 20,
-                offset: 0
+                limit: size,
+                offset: page * size
             };
 
             if (startDate?.date) {
@@ -89,14 +119,20 @@ export default function GeneralPage() {
                 } else {
                     // If no time is specified, set to NOW
                     const now = new Date();
-                    endDateTime.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());    
+                    endDateTime.setHours(
+                        now.getHours(),
+                        now.getMinutes(),
+                        now.getSeconds(),
+                        now.getMilliseconds()
+                    );
                 }
                 params.timeEnd = endDateTime.toISOString();
             }
 
             const res = await api.get(`/org/${orgId}/logs/action`, { params });
             if (res.status === 200) {
-                setRows(res.data.data.log);
+                setRows(res.data.data.log || []);
+                setTotalCount(res.data.data.pagination?.total || 0);
                 console.log("Fetched logs:", res.data);
             }
         } catch (error) {
@@ -106,17 +142,21 @@ export default function GeneralPage() {
                 variant: "destructive"
             });
         } finally {
-            setIsRefreshing(false);
+            setIsLoading(false);
         }
     };
-
 
     const refreshData = async () => {
         console.log("Data refreshed");
         setIsRefreshing(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 200));
-            router.refresh();
+            // Refresh data with current date range and pagination
+            await queryDateTime(
+                dateRange.startDate,
+                dateRange.endDate,
+                currentPage,
+                pageSize
+            );
         } catch (error) {
             toast({
                 title: t("error"),
@@ -139,8 +179,8 @@ export default function GeneralPage() {
                         : undefined,
                     timeEnd: dateRange.endDate?.date
                         ? new Date(dateRange.endDate.date).toISOString()
-                        : undefined,
-                },
+                        : undefined
+                }
             });
 
             // Create a URL for the blob and trigger a download
@@ -148,7 +188,10 @@ export default function GeneralPage() {
             const link = document.createElement("a");
             link.href = url;
             const epoch = Math.floor(Date.now() / 1000);
-            link.setAttribute("download", `access_audit_logs_${orgId}_${epoch}.csv`);
+            link.setAttribute(
+                "download",
+                `access_audit_logs_${orgId}_${epoch}.csv`
+            );
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
@@ -166,21 +209,11 @@ export default function GeneralPage() {
         {
             accessorKey: "timestamp",
             header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                        className="hidden md:flex whitespace-nowrap"
-                    >
-                        {t("timestamp")}
-                    </Button>
-                );
+                return t("timestamp");
             },
             cell: ({ row }) => {
                 return (
-                    <div className="whitespace-nowrap"> 
+                    <div className="whitespace-nowrap">
                         {new Date(
                             row.original.timestamp * 1000
                         ).toLocaleString()}
@@ -191,45 +224,45 @@ export default function GeneralPage() {
         {
             accessorKey: "action",
             header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("action")}
-                    </Button>
-                );
+                return t("action");
             },
             // make the value capitalized
             cell: ({ row }) => {
                 return (
                     <span className="hitespace-nowrap">
-                        {row.original.action.charAt(0).toUpperCase() + row.original.action.slice(1)}
+                        {row.original.action.charAt(0).toUpperCase() +
+                            row.original.action.slice(1)}
                     </span>
                 );
-            },
+            }
         },
         {
             accessorKey: "actor",
             header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("actor")}
-                    </Button>
-                );
+                return t("actor");
             },
-                        cell: ({ row }) => {
+            cell: ({ row }) => {
                 return (
                     <span className="flex items-center gap-1">
-                        {row.original.actorType == "user" ? <User className="h-4 w-4" /> : <Key className="h-4 w-4" />}
+                        {row.original.actorType == "user" ? (
+                            <User className="h-4 w-4" />
+                        ) : (
+                            <Key className="h-4 w-4" />
+                        )}
                         {row.original.actor}
+                    </span>
+                );
+            }
+        },
+        {
+            accessorKey: "actorId",
+            header: ({ column }) => {
+                return t("actorId");
+            },
+            cell: ({ row }) => {
+                return (
+                    <span className="flex items-center gap-1">
+                        {row.original.actorId}
                     </span>
                 );
             }
@@ -258,6 +291,13 @@ export default function GeneralPage() {
                     id: "timestamp",
                     desc: false
                 }}
+                // Server-side pagination props
+                totalCount={totalCount}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+                isLoading={isLoading}
+                defaultPageSize={pageSize}
             />
         </>
     );

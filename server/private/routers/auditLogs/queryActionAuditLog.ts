@@ -65,6 +65,7 @@ export function querySites(timeStart: number, timeEnd: number, orgId: string) {
             orgId: actionAuditLog.orgId,
             action: actionAuditLog.action,
             actorType: actionAuditLog.actorType,
+            actorId: actionAuditLog.actorId,
             timestamp: actionAuditLog.timestamp,
             actor: actionAuditLog.actor
         })

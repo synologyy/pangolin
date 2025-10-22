@@ -103,6 +103,12 @@ type DataTableProps<TData, TValue> = {
         start: DateTimeValue;
         end: DateTimeValue;
     };
+    // Server-side pagination props
+    totalCount?: number;
+    currentPage?: number;
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+    isLoading?: boolean;
 };
 
 export function LogDataTable<TData, TValue>({
@@ -121,7 +127,12 @@ export function LogDataTable<TData, TValue>({
     persistPageSize = false,
     defaultPageSize = 20,
     onDateRangeChange,
-    dateRange
+    dateRange,
+    totalCount,
+    currentPage = 0,
+    onPageChange,
+    onPageSizeChange: onPageSizeChangeProp,
+    isLoading = false
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
 
@@ -175,26 +186,39 @@ export function LogDataTable<TData, TValue>({
         return data.filter(activeTabFilter.filterFn);
     }, [data, tabs, activeTab]);
 
+    // Determine if using server-side pagination
+    const isServerPagination = totalCount !== undefined;
+
     const table = useReactTable({
         data: filteredData,
         columns,
         getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
+        // Only use client-side pagination if totalCount is not provided
+        ...(isServerPagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
+        // Configure pagination state
+        ...(isServerPagination ? {
+            manualPagination: true,
+            pageCount: totalCount ? Math.ceil(totalCount / pageSize) : 0,
+        } : {}),
         initialState: {
             pagination: {
                 pageSize: pageSize,
-                pageIndex: 0
+                pageIndex: currentPage
             }
         },
         state: {
             sorting,
             columnFilters,
-            globalFilter
+            globalFilter,
+            pagination: {
+                pageSize: pageSize,
+                pageIndex: currentPage
+            }
         }
     });
 
@@ -210,6 +234,16 @@ export function LogDataTable<TData, TValue>({
         }
     }, [pageSize, table, persistPageSize, tableId]);
 
+    // Update table page index when currentPage prop changes (server pagination)
+    useEffect(() => {
+        if (isServerPagination) {
+            const currentPageIndex = table.getState().pagination.pageIndex;
+            if (currentPageIndex !== currentPage) {
+                table.setPageIndex(currentPage);
+            }
+        }
+    }, [currentPage, table, isServerPagination]);
+
     const handleTabChange = (value: string) => {
         setActiveTab(value);
         // Reset to first page when changing tabs
@@ -224,6 +258,18 @@ export function LogDataTable<TData, TValue>({
         // Persist immediately when changed
         if (persistPageSize) {
             setStoredPageSize(newPageSize, tableId);
+        }
+
+        // For server pagination, notify parent component
+        if (isServerPagination && onPageSizeChangeProp) {
+            onPageSizeChangeProp(newPageSize);
+        }
+    };
+
+    // Handle page changes for server pagination
+    const handlePageChange = (newPageIndex: number) => {
+        if (isServerPagination && onPageChange) {
+            onPageChange(newPageIndex);
         }
     };
 
@@ -276,7 +322,6 @@ export function LogDataTable<TData, TValue>({
                         )}
                         {onExport && (
                             <Button
-                                variant="outline"
                                 onClick={onExport}
                                 disabled={isExporting}
                             >
@@ -342,6 +387,10 @@ export function LogDataTable<TData, TValue>({
                         <DataTablePagination
                             table={table}
                             onPageSizeChange={handlePageSizeChange}
+                            onPageChange={isServerPagination ? handlePageChange : undefined}
+                            totalCount={totalCount}
+                            isServerPagination={isServerPagination}
+                            isLoading={isLoading}
                         />
                     </div>
                 </CardContent>

@@ -1901,5 +1901,6 @@
     "actor": "Actor",
     "timestamp": "Timestamp",
     "accessLogs": "Access Logs",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "actorId": "Actor ID"
 }

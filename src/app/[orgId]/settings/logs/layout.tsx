@@ -34,8 +34,8 @@ export default async function GeneralSettingsPage({
 
     const navItems = [
         {
-            title: t("access"),
-            href: `/{orgId}/settings/logs/access`
+            title: t("action"),
+            href: `/{orgId}/settings/logs/action`
         },
                 {
             title: t("request"),

@@ -3,6 +3,7 @@
 import { ChevronDownIcon, CalendarIcon } from "lucide-react";
 
 import { Button } from "@app/components/ui/button";
+import { Calendar } from "@app/components/ui/calendar";
 import { Input } from "@app/components/ui/input";
 import { Label } from "@app/components/ui/label";
 import {
@@ -60,14 +61,20 @@ export function DateTimePicker({
     onChange?.(newValue);
   };
 
-  const getDisplayText = () => {
+const getDisplayText = () => {
     if (!internalDate) return placeholder;
     
     const dateStr = internalDate.toLocaleDateString();
     if (!showTime || !internalTime) return dateStr;
     
-    return `${dateStr} ${internalTime}`;
-  };
+    // Parse time and format in local timezone
+    const [hours, minutes, seconds] = internalTime.split(':');
+    const timeDate = new Date();
+    timeDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), parseInt(seconds || '0', 10));
+    const timeStr = timeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    return `${dateStr} ${timeStr}`;
+};
 
   const hasValue = internalDate || (showTime && internalTime);
 
@@ -93,36 +100,26 @@ export function DateTimePicker({
                 )}
               >
                 {getDisplayText()}
-                <CalendarIcon className="h-4 w-4" />
+                <ChevronDownIcon className="h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-              <div className="p-3">
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="date-input" className="text-sm font-medium">
-                      Date
-                    </Label>
-                    <Input
-                      id="date-input"
-                      type="date"
-                      value={internalDate ? 
-                        `${internalDate.getFullYear()}-${String(internalDate.getMonth() + 1).padStart(2, '0')}-${String(internalDate.getDate()).padStart(2, '0')}` 
-                        : ''}
-                      onChange={(e) => {
-                        let dateValue = undefined;
-                        if (e.target.value) {
-                          // Create date in local timezone to avoid offset issues
-                          const parts = e.target.value.split('-');
-                          dateValue = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                        }
-                        handleDateChange(dateValue);
-                      }}
-                      className="mt-1"
-                    />
-                  </div>
-                  {showTime && (
-                    <div>
+              {showTime ? (
+                <div className="flex">
+                  <Calendar
+                    mode="single"
+                    selected={internalDate}
+                    captionLayout="dropdown"
+                    onSelect={(date) => {
+                      handleDateChange(date);
+                      if (!showTime) {
+                        setOpen(false);
+                      }
+                    }}
+                    className="flex-grow w-[250px]"
+                  />
+                  <div className="p-3 border-l">
+                    <div className="flex flex-col gap-3">
                       <Label htmlFor="time-input" className="text-sm font-medium">
                         Time
                       </Label>
@@ -132,12 +129,22 @@ export function DateTimePicker({
                         step="1"
                         value={internalTime}
                         onChange={handleTimeChange}
-                        className="mt-1 bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                        className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <Calendar
+                  mode="single"
+                  selected={internalDate}
+                  captionLayout="dropdown"
+                  onSelect={(date) => {
+                    handleDateChange(date);
+                    setOpen(false);
+                  }}
+                />
+              )}
             </PopoverContent>
           </Popover>
         </div>
