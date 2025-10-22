@@ -126,7 +126,8 @@ export async function getTraefikConfig(
                     and(
                         isNull(sites.exitNodeId),
                         sql`(${siteTypes.includes("local") ? 1 : 0} = 1)`, // only allow local sites if "local" is in siteTypes
-                        eq(sites.type, "local")
+                        eq(sites.type, "local"),
+                        sql`(${build != "saas" ? 1 : 0} = 1)` // Dont allow undefined local sites in cloud
                     )
                 ),
                 or(
