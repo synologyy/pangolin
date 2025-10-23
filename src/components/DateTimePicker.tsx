@@ -80,9 +80,9 @@ const getDisplayText = () => {
 
   return (
     <div className={cn("flex gap-4", className)}>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {label && (
-          <Label htmlFor="date-picker" className="px-1">
+          <Label htmlFor="date-picker">
             {label}
           </Label>
         )}
@@ -193,9 +193,9 @@ export function DateRangePicker({
   };
 
   return (
-    <div className={cn("flex gap-4", className)}>
+    <div className={cn("flex gap-4 items-center", className)}>
       <DateTimePicker
-        // label={startLabel}
+        label="Start"
         value={startValue}
         onChange={handleStartChange}
         placeholder="Start date & time"
@@ -203,7 +203,7 @@ export function DateRangePicker({
         showTime={showTime}
       />
       <DateTimePicker
-        // label={endLabel}
+        label="End"
         value={endValue}
         onChange={handleEndChange}
         placeholder="End date & time"

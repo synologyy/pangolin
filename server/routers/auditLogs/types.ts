@@ -45,6 +45,16 @@ export type QueryRequestAuditLogResponse = {
         limit: number;
         offset: number;
     };
+    filterAttributes: {
+        actors: string[];
+        resources: {
+            id: number;
+            name: string | null;
+        }[];
+        locations: string[];
+        hosts: string[];
+        paths: string[];
+    };
 };
 
 export type QueryAccessAuditLogResponse = {
@@ -68,5 +78,13 @@ export type QueryAccessAuditLogResponse = {
         total: number;
         limit: number;
         offset: number;
+    };
+    filterAttributes: {
+        actors: string[];
+        resources: {
+            id: number;
+            name: string | null;
+        }[];
+        locations: string[];
     };
 };

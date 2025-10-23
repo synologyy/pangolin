@@ -4,21 +4,22 @@ import { toast } from "@app/hooks/useToast";
 import { useState, useRef, useEffect } from "react";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LogDataTable } from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
 import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
+import { ColumnFilter } from "@app/components/ColumnFilter";
 
 export default function GeneralPage() {
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const router = useRouter();
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
     const { env } = useEnvContext();
     const { orgId } = useParams();
+    const searchParams = useSearchParams();
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -30,8 +31,60 @@ export default function GeneralPage() {
     const [pageSize, setPageSize] = useState<number>(20);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [filterAttributes, setFilterAttributes] = useState<{
+        actors: string[];
+        resources: {
+            id: number;
+            name: string | null;
+        }[];
+        locations: string[];
+        hosts: string[];
+        paths: string[];
+    }>({
+        actors: [],
+        resources: [],
+        locations: [],
+        hosts: [],
+        paths: [] 
+    });
+
+    // Filter states - unified object for all filters
+    const [filters, setFilters] = useState<{
+        action?: string;
+        resourceId?: string;
+        host?: string;
+        location?: string;
+        actor?: string;
+        method?: string;
+        reason?: string;
+        path?: string;
+    }>({
+        action: searchParams.get("action") || undefined,
+        host: searchParams.get("host") || undefined,
+        resourceId: searchParams.get("resourceId") || undefined,
+        location: searchParams.get("location") || undefined,
+        actor: searchParams.get("actor") || undefined,
+        method: searchParams.get("method") || undefined,
+        reason: searchParams.get("reason") || undefined,
+        path: searchParams.get("path") || undefined
+    });
+
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
+        // if the time is in the url params, use that instead
+        const startParam = searchParams.get("start");
+        const endParam = searchParams.get("end");
+        if (startParam && endParam) {
+            return {
+                startDate: {
+                    date: new Date(startParam)
+                },
+                endDate: {
+                    date: new Date(endParam)
+                }
+            };
+        }
+
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -53,7 +106,12 @@ export default function GeneralPage() {
     // Trigger search with default values on component mount
     useEffect(() => {
         const defaultRange = getDefaultDateRange();
-        queryDateTime(defaultRange.startDate, defaultRange.endDate);
+        queryDateTime(
+            defaultRange.startDate,
+            defaultRange.endDate,
+            0,
+            pageSize
+        );
     }, [orgId]); // Re-run if orgId changes
 
     const handleDateRangeChange = (
@@ -62,6 +120,12 @@ export default function GeneralPage() {
     ) => {
         setDateRange({ startDate, endDate });
         setCurrentPage(0); // Reset to first page when filtering
+        // put the search params in the url for the time
+        updateUrlParamsForAllFilters({
+            start: startDate.date?.toISOString() || "",
+            end: endDate.date?.toISOString() || ""
+        });
+
         queryDateTime(startDate, endDate, 0, pageSize);
     };
 
@@ -83,20 +147,76 @@ export default function GeneralPage() {
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
 
+    // Handle filter changes generically
+    const handleFilterChange = (
+        filterType: keyof typeof filters,
+        value: string | undefined
+    ) => {
+        console.log(`${filterType} filter changed:`, value);
+
+        // Create new filters object with updated value
+        const newFilters = {
+            ...filters,
+            [filterType]: value
+        };
+
+        setFilters(newFilters);
+        setCurrentPage(0); // Reset to first page when filtering
+
+        // Update URL params
+        updateUrlParamsForAllFilters(newFilters);
+
+        // Trigger new query with updated filters (pass directly to avoid async state issues)
+        queryDateTime(
+            dateRange.startDate,
+            dateRange.endDate,
+            0,
+            pageSize,
+            newFilters
+        );
+    };
+
+    const updateUrlParamsForAllFilters = (
+        newFilters:
+            | typeof filters
+            | {
+                  start: string;
+                  end: string;
+              }
+    ) => {
+        const params = new URLSearchParams(searchParams);
+        Object.entries(newFilters).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
+
     const queryDateTime = async (
         startDate: DateTimeValue,
         endDate: DateTimeValue,
         page: number = currentPage,
-        size: number = pageSize
+        size: number = pageSize,
+        filtersParam?: {
+            action?: string;
+            type?: string;
+        }
     ) => {
         console.log("Date range changed:", { startDate, endDate, page, size });
         setIsLoading(true);
 
         try {
+            // Use the provided filters or fall back to current state
+            const activeFilters = filtersParam || filters;
+
             // Convert the date/time values to API parameters
             let params: any = {
                 limit: size,
-                offset: page * size
+                offset: page * size,
+                ...activeFilters
             };
 
             if (startDate?.date) {
@@ -134,6 +254,7 @@ export default function GeneralPage() {
             if (res.status === 200) {
                 setRows(res.data.data.log || []);
                 setTotalCount(res.data.data.pagination?.total || 0);
+                setFilterAttributes(res.data.data.filterAttributes);
                 console.log("Fetched logs:", res.data);
             }
         } catch (error) {
@@ -172,18 +293,23 @@ export default function GeneralPage() {
     const exportData = async () => {
         try {
             setIsExporting(true);
+
+            // Prepare query params for export
+            let params: any = {
+                timeStart: dateRange.startDate?.date
+                    ? new Date(dateRange.startDate.date).toISOString()
+                    : undefined,
+                timeEnd: dateRange.endDate?.date
+                    ? new Date(dateRange.endDate.date).toISOString()
+                    : undefined,
+                ...filters
+            };
+
             const response = await api.get(
                 `/org/${orgId}/logs/request/export`,
                 {
                     responseType: "blob",
-                    params: {
-                        timeStart: dateRange.startDate?.date
-                            ? new Date(dateRange.startDate.date).toISOString()
-                            : undefined,
-                        timeEnd: dateRange.endDate?.date
-                            ? new Date(dateRange.endDate.date).toISOString()
-                            : undefined
-                    }
+                    params
                 }
             );
 
@@ -269,7 +395,24 @@ export default function GeneralPage() {
         {
             accessorKey: "action",
             header: ({ column }) => {
-                return t("action");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("action")}</span>
+                        <ColumnFilter
+                            options={[
+                                { value: "true", label: "Allowed" },
+                                { value: "false", label: "Denied" }
+                            ]}
+                            selectedValue={filters.action}
+                            onValueChange={(value) =>
+                                handleFilterChange("action", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (
@@ -288,7 +431,26 @@ export default function GeneralPage() {
         {
             accessorKey: "location",
             header: ({ column }) => {
-                return t("location");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("location")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.locations.map(
+                                (location) => ({
+                                    value: location,
+                                    label: location
+                                })
+                            )}
+                            selectedValue={filters.location}
+                            onValueChange={(value) =>
+                                handleFilterChange("location", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (
@@ -308,7 +470,26 @@ export default function GeneralPage() {
         },
         {
             accessorKey: "resourceName",
-            header: t("resource"),
+            header: ({ column }) => {
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("resource")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.resources.map((res) => ({
+                                value: res.id.toString(),
+                                label: res.name || "Unnamed Resource"
+                            }))}
+                            selectedValue={filters.resourceId}
+                            onValueChange={(value) =>
+                                handleFilterChange("resourceId", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
+            },
             cell: ({ row }) => {
                 return (
                     <Link
@@ -330,7 +511,24 @@ export default function GeneralPage() {
         {
             accessorKey: "host",
             header: ({ column }) => {
-                return t("host");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("host")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.hosts.map((host) => ({
+                                value: host,
+                                label: host
+                            }))}
+                            selectedValue={filters.host}
+                            onValueChange={(value) =>
+                                handleFilterChange("host", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (
@@ -348,8 +546,25 @@ export default function GeneralPage() {
         {
             accessorKey: "path",
             header: ({ column }) => {
-                return t("path");
-            }
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("path")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.paths.map((path) => ({
+                                value: path,
+                                label: path
+                            }))}
+                            selectedValue={filters.path}
+                            onValueChange={(value) =>
+                                handleFilterChange("path", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
+            },
         },
 
         // {
@@ -361,13 +576,65 @@ export default function GeneralPage() {
         {
             accessorKey: "method",
             header: ({ column }) => {
-                return t("method");
-            }
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("method")}</span>
+                        <ColumnFilter
+                            options={[
+                                { value: "GET", label: "GET" },
+                                { value: "POST", label: "POST" },
+                                { value: "PUT", label: "PUT" },
+                                { value: "DELETE", label: "DELETE" },
+                                { value: "PATCH", label: "PATCH" },
+                                { value: "HEAD", label: "HEAD" },
+                                { value: "OPTIONS", label: "OPTIONS" }
+                            ]
+                            }
+                            selectedValue={filters.method}
+                            onValueChange={(value) =>
+                                handleFilterChange("method", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
+            },
         },
         {
             accessorKey: "reason",
             header: ({ column }) => {
-                return t("reason");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("reason")}</span>
+                        <ColumnFilter
+                            options={[
+                                { value: "100", label: t("allowedByRule") },
+                                { value: "101", label: t("allowedNoAuth") },
+                                { value: "102", label: t("validAccessToken") },
+                                { value: "103", label: t("validHeaderAuth") },
+                                { value: "104", label: t("validPincode") },
+                                { value: "105", label: t("validPassword") },
+                                { value: "106", label: t("validEmail") },
+                                { value: "107", label: t("validSSO") },
+                                { value: "201", label: t("resourceNotFound") },
+                                { value: "202", label: t("resourceBlocked") },
+                                { value: "203", label: t("droppedByRule") },
+                                { value: "204", label: t("noSessions") },
+                                { value: "205", label: t("temporaryRequestToken") },
+                                { value: "299", label: t("noMoreAuthMethods") }
+                            ]}
+                            selectedValue={filters.reason}
+                            onValueChange={(value) =>
+                                handleFilterChange("reason", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (
@@ -380,7 +647,24 @@ export default function GeneralPage() {
         {
             accessorKey: "actor",
             header: ({ column }) => {
-                return t("actor");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("actor")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.actors.map((actor) => ({
+                                value: actor,
+                                label: actor
+                            }))}
+                            selectedValue={filters.actor}
+                            onValueChange={(value) =>
+                                handleFilterChange("actor", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (

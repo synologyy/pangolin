@@ -131,8 +131,8 @@ export function LogDataTable<TData, TValue>({
     isRefreshing,
     onExport,
     isExporting,
-    searchPlaceholder = "Search...",
-    searchColumn = "name",
+    // searchPlaceholder = "Search...",
+    // searchColumn = "name",
     defaultSort,
     tabs,
     defaultTab,
@@ -354,7 +354,7 @@ export function LogDataTable<TData, TValue>({
             <Card>
                 <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-4">
                     <div className="flex flex-row items-start w-full sm:mr-2 gap-2">
-                        <div className="relative w-full sm:max-w-sm">
+                        {/* <div className="relative w-full sm:max-w-sm">
                             <Input
                                 placeholder={searchPlaceholder}
                                 value={globalFilter ?? ""}
@@ -366,7 +366,7 @@ export function LogDataTable<TData, TValue>({
                                 className="w-full pl-8 m-0"
                             />
                             <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                        </div>
+                        </div> */}
                         <DateRangePicker
                             startValue={startDate}
                             endValue={endDate}

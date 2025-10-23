@@ -28,11 +28,26 @@ export const queryAccessAuditLogsQuery = z.object({
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
         .default(new Date().toISOString()),
-    action: z.boolean().optional(),
+    action: z
+        .union([z.boolean(), z.string()])
+        .transform((val) => (typeof val === "string" ? val === "true" : val))
+        .optional(),
     method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional(),
-    reason: z.number().optional(),
-    resourceId: z.number().optional(),
+    reason: z
+        .string()
+        .optional()
+        .transform(Number)
+        .pipe(z.number().int().positive())
+        .optional(),
+    resourceId: z
+        .string()
+        .optional()
+        .transform(Number)
+        .pipe(z.number().int().positive())
+        .optional(),
     actor: z.string().optional(),
+    host: z.string().optional(),
+    path: z.string().optional(),
     limit: z
         .string()
         .optional()
@@ -65,7 +80,12 @@ function getWhere(data: Q) {
             : undefined,
         data.actor ? eq(requestAuditLog.actor, data.actor) : undefined,
         data.method ? eq(requestAuditLog.method, data.method) : undefined,
-        data.reason ? eq(requestAuditLog.reason, data.reason) : undefined
+        data.reason ? eq(requestAuditLog.reason, data.reason) : undefined,
+        data.host ? eq(requestAuditLog.host, data.host) : undefined,
+        data.path ? eq(requestAuditLog.path, data.path) : undefined,
+        data.action !== undefined
+            ? eq(requestAuditLog.action, data.action)
+            : undefined
     );
 }
 
@@ -124,6 +144,71 @@ registry.registerPath({
     responses: {}
 });
 
+async function queryUniqueFilterAttributes(
+    timeStart: number,
+    timeEnd: number,
+    orgId: string
+) {
+    const baseConditions = and(
+        gt(requestAuditLog.timestamp, timeStart),
+        lt(requestAuditLog.timestamp, timeEnd),
+        eq(requestAuditLog.orgId, orgId)
+    );
+
+    // Get unique actors
+    const uniqueActors = await db
+        .selectDistinct({
+            actor: requestAuditLog.actor
+        })
+        .from(requestAuditLog)
+        .where(baseConditions);
+
+    // Get unique locations
+    const uniqueLocations = await db
+        .selectDistinct({
+            locations: requestAuditLog.location
+        })
+        .from(requestAuditLog)
+        .where(baseConditions);
+
+    // Get unique actors
+    const uniqueHosts = await db
+        .selectDistinct({
+            hosts: requestAuditLog.host
+        })
+        .from(requestAuditLog)
+        .where(baseConditions);
+
+    // Get unique actors
+    const uniquePaths = await db
+        .selectDistinct({
+            paths: requestAuditLog.path
+        })
+        .from(requestAuditLog)
+        .where(baseConditions);
+
+    // Get unique resources with names
+    const uniqueResources = await db
+        .selectDistinct({
+            id: requestAuditLog.resourceId,
+            name: resources.name
+        })
+        .from(requestAuditLog)
+        .leftJoin(
+            resources,
+            eq(requestAuditLog.resourceId, resources.resourceId)
+        )
+        .where(baseConditions);
+
+    return {
+        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
+        resources: uniqueResources.filter((row): row is { id: number; name: string | null } => row.id !== null),
+        locations: uniqueLocations.map(row => row.locations).filter((location): location is string => location !== null),
+        hosts: uniqueHosts.map(row => row.hosts).filter((host): host is string => host !== null),
+        paths: uniquePaths.map(row => row.paths).filter((path): path is string => path !== null)
+    };
+}
+
 export async function queryRequestAuditLogs(
     req: Request,
     res: Response,
@@ -159,6 +244,12 @@ export async function queryRequestAuditLogs(
         const totalCountResult = await countRequestQuery(data);
         const totalCount = totalCountResult[0].count;
 
+        const filterAttributes = await queryUniqueFilterAttributes(
+            data.timeStart,
+            data.timeEnd,
+            data.orgId
+        );
+
         return response<QueryRequestAuditLogResponse>(res, {
             data: {
                 log: log,
@@ -166,7 +257,8 @@ export async function queryRequestAuditLogs(
                     total: totalCount,
                     limit: data.limit,
                     offset: data.offset
-                }
+                },
+                filterAttributes
             },
             success: true,
             error: false,

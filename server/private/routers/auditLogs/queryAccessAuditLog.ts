@@ -41,6 +41,20 @@ export const queryAccessAuditLogsQuery = z.object({
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
         .default(new Date().toISOString()),
+    action: z
+        .union([z.boolean(), z.string()])
+        .transform((val) => (typeof val === "string" ? val === "true" : val))
+        .optional(),
+    actorType: z.string().optional(),
+    actorId: z.string().optional(),
+    resourceId: z
+        .string()
+        .optional()
+        .transform(Number)
+        .pipe(z.number().int().positive())
+        .optional(),
+    actor: z.string().optional(),
+    type: z.string().optional(),
     limit: z
         .string()
         .optional()
@@ -59,7 +73,32 @@ export const queryAccessAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export function queryAccess(timeStart: number, timeEnd: number, orgId: string) {
+export const queryAccessAuditLogsCombined = queryAccessAuditLogsQuery.merge(
+    queryAccessAuditLogsParams
+);
+type Q = z.infer<typeof queryAccessAuditLogsCombined>;
+
+function getWhere(data: Q) {
+    return and(
+        gt(accessAuditLog.timestamp, data.timeStart),
+        lt(accessAuditLog.timestamp, data.timeEnd),
+        eq(accessAuditLog.orgId, data.orgId),
+        data.resourceId
+            ? eq(accessAuditLog.resourceId, data.resourceId)
+            : undefined,
+        data.actor ? eq(accessAuditLog.actor, data.actor) : undefined,
+        data.actorType
+            ? eq(accessAuditLog.actorType, data.actorType)
+            : undefined,
+        data.actorId ? eq(accessAuditLog.actorId, data.actorId) : undefined,
+        data.type ? eq(accessAuditLog.type, data.type) : undefined,
+        data.action !== undefined
+            ? eq(accessAuditLog.action, data.action)
+            : undefined
+    );
+}
+
+export function queryAccess(data: Q) {
     return db
         .select({
             orgId: accessAuditLog.orgId,
@@ -78,29 +117,67 @@ export function queryAccess(timeStart: number, timeEnd: number, orgId: string) {
             actor: accessAuditLog.actor
         })
         .from(accessAuditLog)
-        .leftJoin(resources, eq(accessAuditLog.resourceId, resources.resourceId))
-        .where(
-            and(
-                gt(accessAuditLog.timestamp, timeStart),
-                lt(accessAuditLog.timestamp, timeEnd),
-                eq(accessAuditLog.orgId, orgId)
-            )
+        .leftJoin(
+            resources,
+            eq(accessAuditLog.resourceId, resources.resourceId)
         )
+        .where(getWhere(data))
         .orderBy(accessAuditLog.timestamp);
 }
 
-export function countAccessQuery(timeStart: number, timeEnd: number, orgId: string) {
-            const countQuery = db
-            .select({ count: count() })
-            .from(accessAuditLog)
-            .where(
-                and(
-                    gt(accessAuditLog.timestamp, timeStart),
-                    lt(accessAuditLog.timestamp, timeEnd),
-                    eq(accessAuditLog.orgId, orgId)
-                )
-            );
+export function countAccessQuery(data: Q) {
+    const countQuery = db
+        .select({ count: count() })
+        .from(accessAuditLog)
+        .where(getWhere(data));
     return countQuery;
+}
+
+async function queryUniqueFilterAttributes(
+    timeStart: number,
+    timeEnd: number,
+    orgId: string
+) {
+    const baseConditions = and(
+        gt(accessAuditLog.timestamp, timeStart),
+        lt(accessAuditLog.timestamp, timeEnd),
+        eq(accessAuditLog.orgId, orgId)
+    );
+
+    // Get unique actors
+    const uniqueActors = await db
+        .selectDistinct({
+            actor: accessAuditLog.actor
+        })
+        .from(accessAuditLog)
+        .where(baseConditions);
+
+    // Get unique locations
+    const uniqueLocations = await db
+        .selectDistinct({
+            locations: accessAuditLog.location
+        })
+        .from(accessAuditLog)
+        .where(baseConditions);
+
+    // Get unique resources with names
+    const uniqueResources = await db
+        .selectDistinct({
+            id: accessAuditLog.resourceId,
+            name: resources.name
+        })
+        .from(accessAuditLog)
+        .leftJoin(
+            resources,
+            eq(accessAuditLog.resourceId, resources.resourceId)
+        )
+        .where(baseConditions);
+
+    return {
+        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
+        resources: uniqueResources.filter((row): row is { id: number; name: string | null } => row.id !== null),
+        locations: uniqueLocations.map(row => row.locations).filter((location): location is string => location !== null)
+    };
 }
 
 registry.registerPath({
@@ -130,8 +207,6 @@ export async function queryAccessAuditLogs(
                 )
             );
         }
-        const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
-
         const parsedParams = queryAccessAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
@@ -141,23 +216,31 @@ export async function queryAccessAuditLogs(
                 )
             );
         }
-        const { orgId } = parsedParams.data;
 
-        const baseQuery = queryAccess(timeStart, timeEnd, orgId);
+        const data = { ...parsedQuery.data, ...parsedParams.data };
 
-        const log = await baseQuery.limit(limit).offset(offset);
+        const baseQuery = queryAccess(data);
 
-        const totalCountResult = await countAccessQuery(timeStart, timeEnd, orgId);
+        const log = await baseQuery.limit(data.limit).offset(data.offset);
+
+        const totalCountResult = await countAccessQuery(data);
         const totalCount = totalCountResult[0].count;
+
+        const filterAttributes = await queryUniqueFilterAttributes(
+            data.timeStart,
+            data.timeEnd,
+            data.orgId
+        );
 
         return response<QueryAccessAuditLogResponse>(res, {
             data: {
                 log: log,
                 pagination: {
                     total: totalCount,
-                    limit,
-                    offset
-                }
+                    limit: data.limit,
+                    offset: data.offset
+                },
+                filterAttributes
             },
             success: true,
             error: false,

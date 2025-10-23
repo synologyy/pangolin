@@ -1916,7 +1916,7 @@
     "noSessions": "No Sessions",
     "temporaryRequestToken": "Temporary Request Token",
     "noMoreAuthMethods": "No Valid Auth",
-    "ip": "IP Address",
+    "ip": "IP",
     "reason": "Reason",
     "requestLogs": "Request Logs",
     "host": "Host",

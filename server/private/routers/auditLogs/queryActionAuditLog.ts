@@ -24,7 +24,6 @@ import { fromError } from "zod-validation-error";
 import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
-import { metadata } from "@app/app/[orgId]/settings/layout";
 
 export const queryActionAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
@@ -42,6 +41,10 @@ export const queryActionAuditLogsQuery = z.object({
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
         .default(new Date().toISOString()),
+    action: z.string().optional(),
+    actorType: z.string().optional(),
+    actorId: z.string().optional(),
+    actor: z.string().optional(),
     limit: z
         .string()
         .optional()
@@ -60,7 +63,23 @@ export const queryActionAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export function queryAction(timeStart: number, timeEnd: number, orgId: string) {
+export const queryActionAuditLogsCombined =
+    queryActionAuditLogsQuery.merge(queryActionAuditLogsParams);
+type Q = z.infer<typeof queryActionAuditLogsCombined>;
+
+function getWhere(data: Q) {
+    return and(
+        gt(actionAuditLog.timestamp, data.timeStart),
+        lt(actionAuditLog.timestamp, data.timeEnd),
+        eq(actionAuditLog.orgId, data.orgId),
+        data.actor ? eq(actionAuditLog.actor, data.actor) : undefined,
+        data.actorType ? eq(actionAuditLog.actorType, data.actorType) : undefined,
+        data.actorId ? eq(actionAuditLog.actorId, data.actorId) : undefined,
+        data.action ? eq(actionAuditLog.action, data.action) : undefined
+    );
+}
+
+export function queryAction(data: Q) {
     return db
         .select({
             orgId: actionAuditLog.orgId,
@@ -72,27 +91,15 @@ export function queryAction(timeStart: number, timeEnd: number, orgId: string) {
             actor: actionAuditLog.actor
         })
         .from(actionAuditLog)
-        .where(
-            and(
-                gt(actionAuditLog.timestamp, timeStart),
-                lt(actionAuditLog.timestamp, timeEnd),
-                eq(actionAuditLog.orgId, orgId)
-            )
-        )
+        .where(getWhere(data))
         .orderBy(actionAuditLog.timestamp);
 }
 
-export function countActionQuery(timeStart: number, timeEnd: number, orgId: string) {
-            const countQuery = db
-            .select({ count: count() })
-            .from(actionAuditLog)
-            .where(
-                and(
-                    gt(actionAuditLog.timestamp, timeStart),
-                    lt(actionAuditLog.timestamp, timeEnd),
-                    eq(actionAuditLog.orgId, orgId)
-                )
-            );
+export function countActionQuery(data: Q) {
+    const countQuery = db
+        .select({ count: count() })
+        .from(actionAuditLog)
+        .where(getWhere(data));
     return countQuery;
 }
 
@@ -123,8 +130,6 @@ export async function queryActionAuditLogs(
                 )
             );
         }
-        const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
-
         const parsedParams = queryActionAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
@@ -134,13 +139,14 @@ export async function queryActionAuditLogs(
                 )
             );
         }
-        const { orgId } = parsedParams.data;
 
-        const baseQuery = queryAction(timeStart, timeEnd, orgId);
+        const data = { ...parsedQuery.data, ...parsedParams.data };
 
-        const log = await baseQuery.limit(limit).offset(offset);
+        const baseQuery = queryAction(data);
 
-        const totalCountResult = await countActionQuery(timeStart, timeEnd, orgId);
+        const log = await baseQuery.limit(data.limit).offset(data.offset);
+
+        const totalCountResult = await countActionQuery(data);
         const totalCount = totalCountResult[0].count;
 
         return response<QueryActionAuditLogResponse>(res, {
@@ -148,8 +154,8 @@ export async function queryActionAuditLogs(
                 log: log,
                 pagination: {
                     total: totalCount,
-                    limit,
-                    offset
+                    limit: data.limit,
+                    offset: data.offset
                 }
             },
             success: true,
