@@ -9,7 +9,8 @@ import { useTranslations } from "next-intl";
 import { LogDataTable } from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
-import { Key, User } from "lucide-react";
+import { ArrowUpRight, Key, User } from "lucide-react";
+import Link from "next/link";
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -129,7 +130,7 @@ export default function GeneralPage() {
                 params.timeEnd = endDateTime.toISOString();
             }
 
-            const res = await api.get(`/org/${orgId}/logs/action`, { params });
+            const res = await api.get(`/org/${orgId}/logs/access`, { params });
             if (res.status === 200) {
                 setRows(res.data.data.log || []);
                 setTotalCount(res.data.data.pagination?.total || 0);
@@ -171,7 +172,7 @@ export default function GeneralPage() {
     const exportData = async () => {
         try {
             setIsExporting(true);
-            const response = await api.get(`/org/${orgId}/logs/action/export`, {
+            const response = await api.get(`/org/${orgId}/logs/access/export`, {
                 responseType: "blob",
                 params: {
                     timeStart: dateRange.startDate?.date
@@ -190,7 +191,7 @@ export default function GeneralPage() {
             const epoch = Math.floor(Date.now() / 1000);
             link.setAttribute(
                 "download",
-                `action-audit-logs-${orgId}-${epoch}.csv`
+                `access-audit-logs-${orgId}-${epoch}.csv`
             );
             document.body.appendChild(link);
             link.click();
@@ -226,12 +227,76 @@ export default function GeneralPage() {
             header: ({ column }) => {
                 return t("action");
             },
-            // make the value capitalized
             cell: ({ row }) => {
                 return (
-                    <span className="hitespace-nowrap">
-                        {row.original.action.charAt(0).toUpperCase() +
-                            row.original.action.slice(1)}
+                    <span className="flex items-center gap-1">
+                        {row.original.action ? <>Allowed</> : <>Denied</>}
+                    </span>
+                );
+            }
+        },
+        {
+            accessorKey: "ip",
+            header: ({ column }) => {
+                return t("ip");
+            }
+        },
+        {
+            accessorKey: "location",
+            header: ({ column }) => {
+                return t("location");
+            },
+            cell: ({ row }) => {
+                return (
+                    <span className="flex items-center gap-1">
+                        {row.original.location ? (
+                            <span className="text-muted-foreground text-xs">
+                                ({row.original.location})
+                            </span>
+                        ) : (
+                            <span className="text-muted-foreground text-xs">
+                                -
+                            </span>
+                        )}
+                    </span>
+                );
+            }
+        },
+        {
+            accessorKey: "resourceName",
+            header: t("resource"),
+            cell: ({ row }) => {
+                return (
+                    <Link
+                        href={`/${row.original.orgId}/settings/resources/${row.original.resourceNiceId}`}
+                    >
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-6"
+                        >
+                            {row.original.resourceName}
+                            <ArrowUpRight className="ml-2 h-3 w-3" />
+                        </Button>
+                    </Link>
+                );
+            }
+        },
+        {
+            accessorKey: "type",
+            header: ({ column }) => {
+                return t("type");
+            },
+            cell: ({ row }) => {
+                return (
+                    <span className="flex items-center gap-1">
+                        {/* {row.original.type == "pincode" ? (
+                            <User className="h-4 w-4" />
+                        ) : (
+                            <Key className="h-4 w-4" />
+                        )} */}
+                        {row.original.type.charAt(0).toUpperCase() +
+                            row.original.type.slice(1)}
                     </span>
                 );
             }
@@ -244,12 +309,18 @@ export default function GeneralPage() {
             cell: ({ row }) => {
                 return (
                     <span className="flex items-center gap-1">
-                        {row.original.actorType == "user" ? (
-                            <User className="h-4 w-4" />
+                        {row.original.actor ? (
+                            <>
+                                {row.original.actorType == "user" ? (
+                                    <User className="h-4 w-4" />
+                                ) : (
+                                    <Key className="h-4 w-4" />
+                                )}
+                                {row.original.actor}
+                            </>
                         ) : (
-                            <Key className="h-4 w-4" />
+                            <>-</>
                         )}
-                        {row.original.actor}
                     </span>
                 );
             }
@@ -262,7 +333,7 @@ export default function GeneralPage() {
             cell: ({ row }) => {
                 return (
                     <span className="flex items-center gap-1">
-                        {row.original.actorId}
+                        {row.original.actorId || "-"}
                     </span>
                 );
             }
@@ -274,10 +345,10 @@ export default function GeneralPage() {
             <LogDataTable
                 columns={columns}
                 data={rows}
-                persistPageSize="action-logs-table"
-                title={t("actionLogs")}
+                persistPageSize="access-logs-table"
+                title={t("accessLogs")}
                 searchPlaceholder={t("searchLogs")}
-                searchColumn="action"
+                searchColumn="type"
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
                 onExport={exportData}

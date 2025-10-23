@@ -11,7 +11,7 @@ import { fromError } from "zod-validation-error";
 import { QueryRequestAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
-import { queryAccessAuditLogsQuery, queryRequestAuditLogsParams, querySites } from "./queryRequstAuditLog";
+import { queryAccessAuditLogsQuery, queryRequestAuditLogsParams, queryRequest } from "./queryRequstAuditLog";
 import { generateCSV } from "./generateCSV";
 
 registry.registerPath({
@@ -54,7 +54,7 @@ export async function exportRequestAuditLogs(
         }
         const { orgId } = parsedParams.data;
 
-        const baseQuery = querySites(timeStart, timeEnd, orgId);
+        const baseQuery = queryRequest(timeStart, timeEnd, orgId);
 
         const log = await baseQuery.limit(limit).offset(offset);
 

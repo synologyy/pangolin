@@ -225,23 +225,22 @@ export const actionAuditLog = sqliteTable("actionAuditLog", {
     index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
 ]));
 
-export const identityAuditLog = sqliteTable("identityAuditLog", {
+export const accessAuditLog = sqliteTable("accessAuditLog", {
     id: integer("id").primaryKey({ autoIncrement: true }),
     timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
     orgId: text("orgId")
         .notNull()
         .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: text("actorType").notNull(),
-    actor: text("actor").notNull(),
-    actorId: text("actorId").notNull(),
+    actorType: text("actorType"),
+    actor: text("actor"),
+    actorId: text("actorId"),
     resourceId: integer("resourceId"),
-    ip: text("ip").notNull(),
-    type: text("type").notNull(),
-    action: text("action").notNull(),
+    ip: text("ip"),
     location: text("location"),
-    path: text("path"),
+    type: text("type").notNull(),
+    action: integer("action", { mode: "boolean" }).notNull(),
     userAgent: text("userAgent"),
-    metadata: text("details")
+    metadata: text("metadata")
 }, (table) => ([
     index("idx_identityAuditLog_timestamp").on(table.timestamp),
     index("idx_identityAuditLog_org_timestamp").on(table.orgId, table.timestamp)
@@ -265,3 +264,4 @@ export type RemoteExitNodeSession = InferSelectModel<
 export type ExitNodeOrg = InferSelectModel<typeof exitNodeOrgs>;
 export type LoginPage = InferSelectModel<typeof loginPage>;
 export type ActionAuditLog = InferSelectModel<typeof actionAuditLog>;
+export type AccessAuditLog = InferSelectModel<typeof accessAuditLog>;

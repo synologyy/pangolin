@@ -1915,7 +1915,7 @@
     "droppedByRule": "Dropped by Rule",
     "noSessions": "No Sessions",
     "temporaryRequestToken": "Temporary Request Token",
-    "noMoreAuthMethods": "No More Auth Methods",
+    "noMoreAuthMethods": "No Valid Auth",
     "ip": "IP Address",
     "reason": "Reason",
     "requestLogs": "Request Logs",

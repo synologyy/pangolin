@@ -266,14 +266,25 @@ export default function GeneralPage() {
                 );
             }
         },
-
+        {
+            accessorKey: "action",
+            header: ({ column }) => {
+                return t("action");
+            },
+            cell: ({ row }) => {
+                return (
+                    <span className="flex items-center gap-1">
+                        {row.original.action ? <>Allowed</> : <>Denied</>}
+                    </span>
+                );
+            }
+        },
         {
             accessorKey: "ip",
             header: ({ column }) => {
                 return t("ip");
             }
         },
-
         {
             accessorKey: "location",
             header: ({ column }) => {
@@ -303,7 +314,11 @@ export default function GeneralPage() {
                     <Link
                         href={`/${row.original.orgId}/settings/resources/${row.original.resourceNiceId}`}
                     >
-                        <Button variant="outline" size="sm" className="text-xs h-6">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-6"
+                        >
                             {row.original.resourceName}
                             <ArrowUpRight className="ml-2 h-3 w-3" />
                         </Button>

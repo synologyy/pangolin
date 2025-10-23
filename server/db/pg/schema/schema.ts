@@ -688,7 +688,7 @@ export const requestAuditLog = pgTable(
         ip: text("ip"),
         location: text("location"),
         userAgent: text("userAgent"),
-        metadata: text("details"),
+        metadata: text("metadata"),
         headers: text("headers"), // JSON blob
         query: text("query"), // JSON blob
         originalRequestURL: text("originalRequestURL"),

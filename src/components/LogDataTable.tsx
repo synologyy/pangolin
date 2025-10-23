@@ -373,8 +373,8 @@ export function LogDataTable<TData, TValue>({
                                                 typeof actionValue === "boolean"
                                             ) {
                                                 className = actionValue
-                                                    ? "bg-green-100 dark:bg-green-900"
-                                                    : "bg-red-100 dark:bg-red-900";
+                                                    ? "bg-green-100 dark:bg-green-900/50"
+                                                    : "bg-red-100 dark:bg-red-900/50";
                                             }
 
                                             return (

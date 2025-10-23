@@ -46,7 +46,7 @@ export const queryRequestAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export function querySites(timeStart: number, timeEnd: number, orgId: string) {
+export function queryRequest(timeStart: number, timeEnd: number, orgId: string) {
     return db
         .select({
             timestamp: requestAuditLog.timestamp, 
@@ -84,7 +84,7 @@ export function querySites(timeStart: number, timeEnd: number, orgId: string) {
         .orderBy(requestAuditLog.timestamp);
 }
 
-export function countQuery(timeStart: number, timeEnd: number, orgId: string) {
+export function countRequestQuery(timeStart: number, timeEnd: number, orgId: string) {
             const countQuery = db
             .select({ count: count() })
             .from(requestAuditLog)
@@ -138,11 +138,11 @@ export async function queryRequestAuditLogs(
         }
         const { orgId } = parsedParams.data;
 
-        const baseQuery = querySites(timeStart, timeEnd, orgId);
+        const baseQuery = queryRequest(timeStart, timeEnd, orgId);
 
         const log = await baseQuery.limit(limit).offset(offset);
 
-        const totalCountResult = await countQuery(timeStart, timeEnd, orgId);
+        const totalCountResult = await countRequestQuery(timeStart, timeEnd, orgId);
         const totalCount = totalCountResult[0].count;
 
         return response<QueryRequestAuditLogResponse>(res, {

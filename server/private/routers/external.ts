@@ -351,8 +351,17 @@ authenticated.get(
     logs.queryActionAuditLogs 
 )
 
-
 authenticated.get(
     "/org/:orgId/logs/action/export",
     logs.exportActionAuditLogs
+)
+
+authenticated.get(
+    "/org/:orgId/logs/access",
+    logs.queryAccessAuditLogs 
+)
+
+authenticated.get(
+    "/org/:orgId/logs/access/export",
+    logs.exportAccessAuditLogs
 )

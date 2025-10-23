@@ -11,7 +11,7 @@
  * This file is not licensed under the AGPLv3.
  */
 
-import { actionAuditLog, db } from "@server/db";
+import { accessAuditLog, db, resources } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -21,11 +21,11 @@ import { z } from "zod";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
-import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
+import { QueryAccessAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
 
-export const queryActionAuditLogsQuery = z.object({
+export const queryAccessAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
     timeStart: z
         .string()
@@ -55,40 +55,49 @@ export const queryActionAuditLogsQuery = z.object({
         .pipe(z.number().int().nonnegative())
 });
 
-export const queryActionAuditLogsParams = z.object({
+export const queryAccessAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export function queryAction(timeStart: number, timeEnd: number, orgId: string) {
+export function queryAccess(timeStart: number, timeEnd: number, orgId: string) {
     return db
         .select({
-            orgId: actionAuditLog.orgId,
-            action: actionAuditLog.action,
-            actorType: actionAuditLog.actorType,
-            actorId: actionAuditLog.actorId,
-            timestamp: actionAuditLog.timestamp,
-            actor: actionAuditLog.actor
+            orgId: accessAuditLog.orgId,
+            action: accessAuditLog.action,
+            actorType: accessAuditLog.actorType,
+            actorId: accessAuditLog.actorId,
+            resourceId: accessAuditLog.resourceId,
+            resourceName: resources.name,
+            resourceNiceId: resources.niceId,
+            ip: accessAuditLog.ip,
+            location: accessAuditLog.location,
+            userAgent: accessAuditLog.userAgent,
+            metadata: accessAuditLog.metadata,
+            type: accessAuditLog.type,
+            timestamp: accessAuditLog.timestamp,
+            actor: accessAuditLog.actor
         })
-        .from(actionAuditLog)
+        .from(accessAuditLog)
+        .leftJoin(resources, eq(accessAuditLog.resourceId, resources.resourceId))
         .where(
             and(
-                gt(actionAuditLog.timestamp, timeStart),
-                lt(actionAuditLog.timestamp, timeEnd),
-                eq(actionAuditLog.orgId, orgId)
+                gt(accessAuditLog.timestamp, timeStart),
+                lt(accessAuditLog.timestamp, timeEnd),
+                eq(accessAuditLog.orgId, orgId)
             )
         )
-        .orderBy(actionAuditLog.timestamp);
+        .orderBy(accessAuditLog.timestamp);
 }
 
-export function countActionQuery(timeStart: number, timeEnd: number, orgId: string) {
+export function countAccessQuery(timeStart: number, timeEnd: number, orgId: string) {
             const countQuery = db
             .select({ count: count() })
-            .from(actionAuditLog)
+            .from(accessAuditLog)
             .where(
                 and(
-                    gt(actionAuditLog.timestamp, timeStart),
-                    lt(actionAuditLog.timestamp, timeEnd),
-                    eq(actionAuditLog.orgId, orgId)
+                    gt(accessAuditLog.timestamp, timeStart),
+                    lt(accessAuditLog.timestamp, timeEnd),
+                    eq(accessAuditLog.orgId, orgId)
                 )
             );
     return countQuery;
@@ -96,23 +105,23 @@ export function countActionQuery(timeStart: number, timeEnd: number, orgId: stri
 
 registry.registerPath({
     method: "get",
-    path: "/org/{orgId}/logs/action",
-    description: "Query the action audit log for an organization",
+    path: "/org/{orgId}/logs/access",
+    description: "Query the access audit log for an organization",
     tags: [OpenAPITags.Org],
     request: {
-        query: queryActionAuditLogsQuery,
-        params: queryActionAuditLogsParams
+        query: queryAccessAuditLogsQuery,
+        params: queryAccessAuditLogsParams
     },
     responses: {}
 });
 
-export async function queryActionAuditLogs(
+export async function queryAccessAuditLogs(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedQuery = queryActionAuditLogsQuery.safeParse(req.query);
+        const parsedQuery = queryAccessAuditLogsQuery.safeParse(req.query);
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -123,7 +132,7 @@ export async function queryActionAuditLogs(
         }
         const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
-        const parsedParams = queryActionAuditLogsParams.safeParse(req.params);
+        const parsedParams = queryAccessAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -134,14 +143,14 @@ export async function queryActionAuditLogs(
         }
         const { orgId } = parsedParams.data;
 
-        const baseQuery = queryAction(timeStart, timeEnd, orgId);
+        const baseQuery = queryAccess(timeStart, timeEnd, orgId);
 
         const log = await baseQuery.limit(limit).offset(offset);
 
-        const totalCountResult = await countActionQuery(timeStart, timeEnd, orgId);
+        const totalCountResult = await countAccessQuery(timeStart, timeEnd, orgId);
         const totalCount = totalCountResult[0].count;
 
-        return response<QueryActionAuditLogResponse>(res, {
+        return response<QueryAccessAuditLogResponse>(res, {
             data: {
                 log: log,
                 pagination: {
@@ -152,7 +161,7 @@ export async function queryActionAuditLogs(
             },
             success: true,
             error: false,
-            message: "Action audit logs retrieved successfully",
+            message: "Access audit logs retrieved successfully",
             status: HttpCode.OK
         });
     } catch (error) {

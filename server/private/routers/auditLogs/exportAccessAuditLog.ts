@@ -19,28 +19,28 @@ import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
-import { queryActionAuditLogsParams, queryActionAuditLogsQuery, queryAction } from "./queryActionAuditLog";
+import { queryAccessAuditLogsParams, queryAccessAuditLogsQuery, queryAccess } from "./queryAccessAuditLog";
 import { generateCSV } from "@server/routers/auditLogs/generateCSV";
 
 registry.registerPath({
     method: "get",
-    path: "/org/{orgId}/logs/action/export",
-    description: "Export the action audit log for an organization as CSV",
+    path: "/org/{orgId}/logs/access/export",
+    description: "Export the access audit log for an organization as CSV",
     tags: [OpenAPITags.Org],
     request: {
-        query: queryActionAuditLogsQuery,
-        params: queryActionAuditLogsParams
+        query: queryAccessAuditLogsQuery,
+        params: queryAccessAuditLogsParams
     },
     responses: {}
 });
 
-export async function exportActionAuditLogs(
+export async function exportAccessAuditLogs(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedQuery = queryActionAuditLogsQuery.safeParse(req.query);
+        const parsedQuery = queryAccessAuditLogsQuery.safeParse(req.query);
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -51,7 +51,7 @@ export async function exportActionAuditLogs(
         }
         const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
-        const parsedParams = queryActionAuditLogsParams.safeParse(req.params);
+        const parsedParams = queryAccessAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -62,14 +62,14 @@ export async function exportActionAuditLogs(
         }
         const { orgId } = parsedParams.data;
 
-        const baseQuery = queryAction(timeStart, timeEnd, orgId);
+        const baseQuery = queryAccess(timeStart, timeEnd, orgId);
 
         const log = await baseQuery.limit(limit).offset(offset);
 
         const csvData = generateCSV(log);
         
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="action-audit-logs-${orgId}-${Date.now()}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="access-audit-logs-${orgId}-${Date.now()}.csv"`);
         
         return res.send(csvData);
     } catch (error) {

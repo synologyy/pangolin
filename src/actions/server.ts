@@ -202,6 +202,7 @@ export type LoginRequest = {
     email: string;
     password: string;
     code?: string;
+    resourceGuid?: string;
 };
 
 export type LoginResponse = {

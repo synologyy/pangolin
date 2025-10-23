@@ -1,13 +1,6 @@
-import { internal } from "@app/lib/api";
-import { authCookieHeader } from "@app/lib/api/cookies";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
 import { verifySession } from "@app/lib/auth/verifySession";
-import OrgProvider from "@app/providers/OrgProvider";
-import OrgUserProvider from "@app/providers/OrgUserProvider";
-import { GetOrgResponse } from "@server/routers/org";
-import { GetOrgUserResponse } from "@server/routers/user";
-import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { getTranslations } from "next-intl/server";
@@ -36,6 +29,10 @@ export default async function GeneralSettingsPage({
         {
             title: t("request"),
             href: `/{orgId}/settings/logs/request`
+        },
+        {
+            title: t("access"),
+            href: `/{orgId}/settings/logs/access`
         },
         {
             title: t("action"),

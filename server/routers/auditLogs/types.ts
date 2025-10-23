@@ -45,3 +45,27 @@ export type QueryRequestAuditLogResponse = {
         offset: number;
     };
 };
+
+export type QueryAccessAuditLogResponse = {
+    log: {
+        orgId: string;
+        action: string;
+        type: string;
+        resourceId: number | null;
+        resourceName: string | null;
+        resourceNiceId: string | null;
+        ip: string | null;
+        location: string | null;
+        userAgent: string | null;
+        metadata: string | null;
+        actorType: string;
+        actorId: string;
+        timestamp: number;
+        actor: string;
+    }[];
+    pagination: {
+        total: number;
+        limit: number;
+        offset: number;
+    };
+};
