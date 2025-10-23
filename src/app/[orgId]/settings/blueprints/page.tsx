@@ -1,4 +1,6 @@
-import BlueprintsTable, { type BlueprintRow } from "@app/components/BlueprintsTable";
+import BlueprintsTable, {
+    type BlueprintRow
+} from "@app/components/BlueprintsTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
@@ -6,34 +8,34 @@ import OrgProvider from "@app/providers/OrgProvider";
 import { ListBlueprintsResponse } from "@server/routers/blueprints";
 import { GetOrgResponse } from "@server/routers/org";
 import { AxiosResponse } from "axios";
+import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-
 
 type BluePrintsPageProps = {
     params: Promise<{ orgId: string }>;
     searchParams: Promise<{ view?: string }>;
 };
 
+export const metadata: Metadata = {
+    title: "Blueprint"
+};
 
 export default async function BluePrintsPage(props: BluePrintsPageProps) {
     const params = await props.params;
 
     let blueprints: BlueprintRow[] = [];
     try {
-        const res = await internal.get<
-            AxiosResponse<ListBlueprintsResponse>
-        >(`/org/${params.orgId}/blueprints`, await authCookieHeader());
+        const res = await internal.get<AxiosResponse<ListBlueprintsResponse>>(
+            `/org/${params.orgId}/blueprints`,
+            await authCookieHeader()
+        );
 
-        blueprints = res.data.data.blueprints
-        console.log({
-           ...res.data.data
-        })
+        blueprints = res.data.data.blueprints;
     } catch (e) {
         console.error(e);
     }
-
 
     let org = null;
     try {
@@ -49,21 +51,15 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
         redirect(`/${params.orgId}`);
     }
 
-    if (!org) {
-    }
-
     const t = await getTranslations();
 
-
     return (
-           <>
-               <OrgProvider org={org}>
-                   <SettingsSectionTitle
-                       title={t("blueprints")}
-                       description={t("blueprintsDescription")}
-                   />
-                   <BlueprintsTable blueprints={blueprints} orgId={params.orgId} />
-               </OrgProvider>
-           </>
-       );
+        <OrgProvider org={org}>
+            <SettingsSectionTitle
+                title={t("blueprints")}
+                description={t("blueprintsDescription")}
+            />
+            <BlueprintsTable blueprints={blueprints} orgId={params.orgId} />
+        </OrgProvider>
+    );
 }
