@@ -45,7 +45,7 @@ export default function GeneralPage() {
         resources: [],
         locations: [],
         hosts: [],
-        paths: [] 
+        paths: []
     });
 
     // Filter states - unified object for all filters
@@ -457,7 +457,7 @@ export default function GeneralPage() {
                     <span className="flex items-center gap-1">
                         {row.original.location ? (
                             <span className="text-muted-foreground text-xs">
-                                ({row.original.location})
+                                {row.original.location}
                             </span>
                         ) : (
                             <span className="text-muted-foreground text-xs">
@@ -564,7 +564,7 @@ export default function GeneralPage() {
                         />
                     </div>
                 );
-            },
+            }
         },
 
         // {
@@ -588,8 +588,7 @@ export default function GeneralPage() {
                                 { value: "PATCH", label: "PATCH" },
                                 { value: "HEAD", label: "HEAD" },
                                 { value: "OPTIONS", label: "OPTIONS" }
-                            ]
-                            }
+                            ]}
                             selectedValue={filters.method}
                             onValueChange={(value) =>
                                 handleFilterChange("method", value)
@@ -600,7 +599,7 @@ export default function GeneralPage() {
                         />
                     </div>
                 );
-            },
+            }
         },
         {
             accessorKey: "reason",
@@ -622,7 +621,10 @@ export default function GeneralPage() {
                                 { value: "202", label: t("resourceBlocked") },
                                 { value: "203", label: t("droppedByRule") },
                                 { value: "204", label: t("noSessions") },
-                                { value: "205", label: t("temporaryRequestToken") },
+                                {
+                                    value: "205",
+                                    label: t("temporaryRequestToken")
+                                },
                                 { value: "299", label: t("noMoreAuthMethods") }
                             ]}
                             selectedValue={filters.reason}
@@ -712,14 +714,24 @@ export default function GeneralPage() {
                     <div>
                         <strong>Metadata:</strong>
                         <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
-                            {row.metadata ? JSON.stringify(JSON.parse(row.metadata), null, 2) : "N/A"}
+                            {row.metadata
+                                ? JSON.stringify(
+                                      JSON.parse(row.metadata),
+                                      null,
+                                      2
+                                  )
+                                : "N/A"}
                         </pre>
                     </div>
                     {row.headers && (
                         <div className="md:col-span-2">
                             <strong>Headers:</strong>
                             <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
-                                {JSON.stringify(JSON.parse(row.headers), null, 2)}
+                                {JSON.stringify(
+                                    JSON.parse(row.headers),
+                                    null,
+                                    2
+                                )}
                             </pre>
                         </div>
                     )}

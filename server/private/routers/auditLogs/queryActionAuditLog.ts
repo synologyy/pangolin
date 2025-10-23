@@ -103,6 +103,38 @@ export function countActionQuery(data: Q) {
     return countQuery;
 }
 
+async function queryUniqueFilterAttributes(
+    timeStart: number,
+    timeEnd: number,
+    orgId: string
+) {
+    const baseConditions = and(
+        gt(actionAuditLog.timestamp, timeStart),
+        lt(actionAuditLog.timestamp, timeEnd),
+        eq(actionAuditLog.orgId, orgId)
+    );
+
+    // Get unique actors
+    const uniqueActors = await db
+        .selectDistinct({
+            actor: actionAuditLog.actor
+        })
+        .from(actionAuditLog)
+        .where(baseConditions);
+
+    const uniqueActions = await db
+        .selectDistinct({
+            action: actionAuditLog.action
+        })
+        .from(actionAuditLog)
+        .where(baseConditions);
+
+    return {
+        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
+        actions: uniqueActions.map(row => row.action).filter((action): action is string => action !== null),
+    };
+}
+
 registry.registerPath({
     method: "get",
     path: "/org/{orgId}/logs/action",
@@ -149,6 +181,12 @@ export async function queryActionAuditLogs(
         const totalCountResult = await countActionQuery(data);
         const totalCount = totalCountResult[0].count;
 
+        const filterAttributes = await queryUniqueFilterAttributes(
+            data.timeStart,
+            data.timeEnd,
+            data.orgId
+        );
+
         return response<QueryActionAuditLogResponse>(res, {
             data: {
                 log: log,
@@ -156,7 +194,8 @@ export async function queryActionAuditLogs(
                     total: totalCount,
                     limit: data.limit,
                     offset: data.offset
-                }
+                },
+                filterAttributes
             },
             success: true,
             error: false,

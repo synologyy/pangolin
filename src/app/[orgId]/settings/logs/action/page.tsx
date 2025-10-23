@@ -4,12 +4,13 @@ import { toast } from "@app/hooks/useToast";
 import { useState, useRef, useEffect } from "react";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LogDataTable } from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
 import { Key, User } from "lucide-react";
+import { ColumnFilter } from "@app/components/ColumnFilter";
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -18,10 +19,27 @@ export default function GeneralPage() {
     const t = useTranslations();
     const { env } = useEnvContext();
     const { orgId } = useParams();
+    const searchParams = useSearchParams();
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [filterAttributes, setFilterAttributes] = useState<{
+        actors: string[];
+        actions: string[];
+    }>({
+        actors: [],
+        actions: []
+    });
+
+    // Filter states - unified object for all filters
+    const [filters, setFilters] = useState<{
+        action?: string;
+        actor?: string;
+    }>({
+        action: searchParams.get("action") || undefined,
+        actor: searchParams.get("actor") || undefined
+    });
 
     // Pagination state
     const [totalCount, setTotalCount] = useState<number>(0);
@@ -31,6 +49,20 @@ export default function GeneralPage() {
 
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
+        // if the time is in the url params, use that instead
+        const startParam = searchParams.get("start");
+        const endParam = searchParams.get("end");
+        if (startParam && endParam) {
+            return {
+                startDate: {
+                    date: new Date(startParam)
+                },
+                endDate: {
+                    date: new Date(endParam)
+                }
+            };
+        }
+
         const now = new Date();
         const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -52,7 +84,12 @@ export default function GeneralPage() {
     // Trigger search with default values on component mount
     useEffect(() => {
         const defaultRange = getDefaultDateRange();
-        queryDateTime(defaultRange.startDate, defaultRange.endDate);
+        queryDateTime(
+            defaultRange.startDate,
+            defaultRange.endDate,
+            0,
+            pageSize
+        );
     }, [orgId]); // Re-run if orgId changes
 
     const handleDateRangeChange = (
@@ -61,6 +98,12 @@ export default function GeneralPage() {
     ) => {
         setDateRange({ startDate, endDate });
         setCurrentPage(0); // Reset to first page when filtering
+        // put the search params in the url for the time
+        updateUrlParamsForAllFilters({
+            start: startDate.date?.toISOString() || "",
+            end: endDate.date?.toISOString() || ""
+        });
+
         queryDateTime(startDate, endDate, 0, pageSize);
     };
 
@@ -82,20 +125,74 @@ export default function GeneralPage() {
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
 
+    // Handle filter changes generically
+    const handleFilterChange = (
+        filterType: keyof typeof filters,
+        value: string | undefined
+    ) => {
+        // Create new filters object with updated value
+        const newFilters = {
+            ...filters,
+            [filterType]: value
+        };
+
+        setFilters(newFilters);
+        setCurrentPage(0); // Reset to first page when filtering
+
+        // Update URL params
+        updateUrlParamsForAllFilters(newFilters);
+
+        // Trigger new query with updated filters (pass directly to avoid async state issues)
+        queryDateTime(
+            dateRange.startDate,
+            dateRange.endDate,
+            0,
+            pageSize,
+            newFilters
+        );
+    };
+
+    const updateUrlParamsForAllFilters = (
+        newFilters:
+            | typeof filters
+            | {
+                  start: string;
+                  end: string;
+              }
+    ) => {
+        const params = new URLSearchParams(searchParams);
+        Object.entries(newFilters).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        });
+        router.replace(`?${params.toString()}`, { scroll: false });
+    };
+
     const queryDateTime = async (
         startDate: DateTimeValue,
         endDate: DateTimeValue,
         page: number = currentPage,
-        size: number = pageSize
+        size: number = pageSize,
+        filtersParam?: {
+            action?: string;
+            actor?: string;
+        }
     ) => {
         console.log("Date range changed:", { startDate, endDate, page, size });
         setIsLoading(true);
 
         try {
+            // Use the provided filters or fall back to current state
+            const activeFilters = filtersParam || filters;
+
             // Convert the date/time values to API parameters
             let params: any = {
                 limit: size,
-                offset: page * size
+                offset: page * size,
+                ...activeFilters
             };
 
             if (startDate?.date) {
@@ -133,6 +230,7 @@ export default function GeneralPage() {
             if (res.status === 200) {
                 setRows(res.data.data.log || []);
                 setTotalCount(res.data.data.pagination?.total || 0);
+                setFilterAttributes(res.data.data.filterAttributes);
                 console.log("Fetched logs:", res.data);
             }
         } catch (error) {
@@ -171,16 +269,21 @@ export default function GeneralPage() {
     const exportData = async () => {
         try {
             setIsExporting(true);
+
+            // Prepare query params for export
+            let params: any = {
+                timeStart: dateRange.startDate?.date
+                    ? new Date(dateRange.startDate.date).toISOString()
+                    : undefined,
+                timeEnd: dateRange.endDate?.date
+                    ? new Date(dateRange.endDate.date).toISOString()
+                    : undefined,
+                ...filters
+            };
+
             const response = await api.get(`/org/${orgId}/logs/action/export`, {
                 responseType: "blob",
-                params: {
-                    timeStart: dateRange.startDate?.date
-                        ? new Date(dateRange.startDate.date).toISOString()
-                        : undefined,
-                    timeEnd: dateRange.endDate?.date
-                        ? new Date(dateRange.endDate.date).toISOString()
-                        : undefined
-                }
+                params
             });
 
             // Create a URL for the blob and trigger a download
@@ -224,9 +327,27 @@ export default function GeneralPage() {
         {
             accessorKey: "action",
             header: ({ column }) => {
-                return t("action");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("action")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.actions.map((action) => ({
+                                label:
+                                    action.charAt(0).toUpperCase() +
+                                    action.slice(1),
+                                value: action
+                            }))}
+                            selectedValue={filters.action}
+                            onValueChange={(value) =>
+                                handleFilterChange("action", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
-            // make the value capitalized
             cell: ({ row }) => {
                 return (
                     <span className="hitespace-nowrap">
@@ -239,7 +360,24 @@ export default function GeneralPage() {
         {
             accessorKey: "actor",
             header: ({ column }) => {
-                return t("actor");
+                return (
+                    <div className="flex items-center gap-2">
+                        <span>{t("actor")}</span>
+                        <ColumnFilter
+                            options={filterAttributes.actors.map((actor) => ({
+                                value: actor,
+                                label: actor
+                            }))}
+                            selectedValue={filters.actor}
+                            onValueChange={(value) =>
+                                handleFilterChange("actor", value)
+                            }
+                            // placeholder=""
+                            searchPlaceholder="Search..."
+                            emptyMessage="None found"
+                        />
+                    </div>
+                );
             },
             cell: ({ row }) => {
                 return (
@@ -276,7 +414,13 @@ export default function GeneralPage() {
                     <div>
                         <strong>Metadata:</strong>
                         <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
-                            {row.metadata ? JSON.stringify(JSON.parse(row.metadata), null, 2) : "N/A"}
+                            {row.metadata
+                                ? JSON.stringify(
+                                      JSON.parse(row.metadata),
+                                      null,
+                                      2
+                                  )
+                                : "N/A"}
                         </pre>
                     </div>
                 </div>

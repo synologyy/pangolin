@@ -13,6 +13,9 @@ export type QueryActionAuditLogResponse = {
         limit: number;
         offset: number;
     };
+    filterAttributes: {
+        actors: string[];
+    };
 };
 
 export type QueryRequestAuditLogResponse = {

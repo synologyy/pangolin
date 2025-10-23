@@ -46,6 +46,7 @@ export const queryAccessAuditLogsQuery = z.object({
         .pipe(z.number().int().positive())
         .optional(),
     actor: z.string().optional(),
+    location: z.string().optional(),
     host: z.string().optional(),
     path: z.string().optional(),
     limit: z
@@ -82,6 +83,7 @@ function getWhere(data: Q) {
         data.method ? eq(requestAuditLog.method, data.method) : undefined,
         data.reason ? eq(requestAuditLog.reason, data.reason) : undefined,
         data.host ? eq(requestAuditLog.host, data.host) : undefined,
+        data.location ? eq(requestAuditLog.location, data.location) : undefined,
         data.path ? eq(requestAuditLog.path, data.path) : undefined,
         data.action !== undefined
             ? eq(requestAuditLog.action, data.action)

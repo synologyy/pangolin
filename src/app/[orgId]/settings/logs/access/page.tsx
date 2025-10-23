@@ -142,8 +142,6 @@ export default function GeneralPage() {
         filterType: keyof typeof filters,
         value: string | undefined
     ) => {
-        console.log(`${filterType} filter changed:`, value);
-
         // Create new filters object with updated value
         const newFilters = {
             ...filters,
@@ -193,6 +191,9 @@ export default function GeneralPage() {
         filtersParam?: {
             action?: string;
             type?: string;
+            resourceId?: string;
+            location?: string;
+            actor?: string;
         }
     ) => {
         console.log("Date range changed:", { startDate, endDate, page, size });
@@ -403,7 +404,7 @@ export default function GeneralPage() {
                     <span className="flex items-center gap-1">
                         {row.original.location ? (
                             <span className="text-muted-foreground text-xs">
-                                ({row.original.location})
+                                {row.original.location}
                             </span>
                         ) : (
                             <span className="text-muted-foreground text-xs">
@@ -482,7 +483,12 @@ export default function GeneralPage() {
             },
             cell: ({ row }) => {
                 // should be capitalized first letter
-                return <span>{row.original.type.charAt(0).toUpperCase() + row.original.type.slice(1) || "-"}</span>;
+                return (
+                    <span>
+                        {row.original.type.charAt(0).toUpperCase() +
+                            row.original.type.slice(1) || "-"}
+                    </span>
+                );
             }
         },
         {

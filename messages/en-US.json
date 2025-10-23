@@ -1920,5 +1920,6 @@
     "reason": "Reason",
     "requestLogs": "Request Logs",
     "host": "Host",
-    "location": "Location"
+    "location": "Location",
+    "actionLogs": "Action Logs"
 }
