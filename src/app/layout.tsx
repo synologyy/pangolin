@@ -18,6 +18,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
+import { TopLoader } from "@app/components/Toploader";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -62,9 +63,9 @@ export default async function RootLayout({
     if (build === "enterprise") {
         const licenseStatusRes = await cache(
             async () =>
-            await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
-                "/license/status"
-            )
+                await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
+                    "/license/status"
+                )
         )();
         licenseStatus = licenseStatusRes.data.data;
     } else if (build === "saas") {
@@ -84,6 +85,7 @@ export default async function RootLayout({
     return (
         <html suppressHydrationWarning lang={locale}>
             <body className={`${font.className} h-screen overflow-hidden`}>
+                <TopLoader />
                 <NextIntlClientProvider>
                     <ThemeProvider
                         attribute="class"
