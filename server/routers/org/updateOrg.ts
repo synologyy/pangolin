@@ -12,15 +12,13 @@ import { OpenAPITags, registry } from "@server/openApi";
 
 const updateOrgParamsSchema = z
     .object({
-        orgId: z.string(),
+        orgId: z.string()
     })
     .strict();
 
 const updateOrgBodySchema = z
     .object({
-        name: z.string().min(1).max(255).optional(),
-        settings: z.object({
-        }).optional(),
+        name: z.string().min(1).max(255).optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -73,13 +71,10 @@ export async function updateOrg(
 
         const { orgId } = parsedParams.data;
 
-        const settings = parsedBody.data.settings ? JSON.stringify(parsedBody.data.settings) : undefined;
-
         const updatedOrg = await db
             .update(orgs)
             .set({
-                name: parsedBody.data.name,
-                settings: settings
+                name: parsedBody.data.name
             })
             .where(eq(orgs.orgId, orgId))
             .returning();
