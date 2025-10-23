@@ -24,12 +24,16 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
     try {
         const res = await internal.get<
             AxiosResponse<ListBlueprintsResponse>
-        >(`/org/${params.orgId}/domains`, await authCookieHeader());
+        >(`/org/${params.orgId}/blueprints`, await authCookieHeader());
 
         blueprints = res.data.data.blueprints
+        console.log({
+           ...res.data.data
+        })
     } catch (e) {
         console.error(e);
     }
+
 
     let org = null;
     try {
@@ -49,6 +53,8 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
     }
 
     const t = await getTranslations();
+
+
     return (
            <>
                <OrgProvider org={org}>
@@ -56,7 +62,7 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
                        title={t("blueprints")}
                        description={t("blueprintsDescription")}
                    />
-                   <BlueprintsTable blueprints={blueprints} />
+                   <BlueprintsTable blueprints={blueprints} orgId={params.orgId} />
                </OrgProvider>
            </>
        );

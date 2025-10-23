@@ -39,7 +39,8 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
             blueprintId: blueprints.blueprintId,
             name: blueprints.name,
             source: blueprints.source,
-            succeeded: blueprints.succeeded
+            succeeded: blueprints.succeeded,
+            orgId: blueprints.orgId
         })
         .from(blueprints)
         .leftJoin(orgs, eq(blueprints.orgId, orgs.orgId))
@@ -48,8 +49,15 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
     return res;
 }
 
+type BlueprintData = Omit<
+    Awaited<ReturnType<typeof queryBlueprints>>[number],
+    "source"
+> & {
+    source: "API" | "WEB" | "CLI";
+};
+
 export type ListBlueprintsResponse = {
-    blueprints: NonNullable<Awaited<ReturnType<typeof queryBlueprints>>>;
+    blueprints: NonNullable<BlueprintData[]>;
     pagination: { total: number; limit: number; offset: number };
 };
 
@@ -108,7 +116,7 @@ export async function listBlueprints(
 
         return response<ListBlueprintsResponse>(res, {
             data: {
-                blueprints: blueprintsList,
+                blueprints: blueprintsList as BlueprintData[],
                 pagination: {
                     total: count,
                     limit,
