@@ -77,7 +77,8 @@ import {
     MoveRight,
     ArrowUp,
     Info,
-    ArrowDown
+    ArrowDown,
+    AlertTriangle
 } from "lucide-react";
 import { ContainersSelector } from "@app/components/ContainersSelector";
 import { useTranslations } from "next-intl";
@@ -115,6 +116,7 @@ import {
     TooltipProvider,
     TooltipTrigger
 } from "@app/components/ui/tooltip";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 const addTargetSchema = z
     .object({
@@ -288,7 +290,9 @@ export default function ReverseProxyTargets(props: {
             ),
         headers: z
             .array(z.object({ name: z.string(), value: z.string() }))
-            .nullable()
+            .nullable(),
+        proxyProtocol: z.boolean().optional(),
+        proxyProtocolVersion: z.number().int().min(1).max(2).optional()
     });
 
     const tlsSettingsSchema = z.object({
@@ -325,7 +329,9 @@ export default function ReverseProxyTargets(props: {
         resolver: zodResolver(proxySettingsSchema),
         defaultValues: {
             setHostHeader: resource.setHostHeader || "",
-            headers: resource.headers
+            headers: resource.headers,
+            proxyProtocol: resource.proxyProtocol || false,
+            proxyProtocolVersion: resource.proxyProtocolVersion || 1
         }
     });
 
@@ -549,11 +555,11 @@ export default function ReverseProxyTargets(props: {
                     prev.map((t) =>
                         t.targetId === target.targetId
                             ? {
-                                  ...t,
-                                  targetId: response.data.data.targetId,
-                                  new: false,
-                                  updated: false
-                              }
+                                ...t,
+                                targetId: response.data.data.targetId,
+                                new: false,
+                                updated: false
+                            }
                             : t
                     )
                 );
@@ -673,11 +679,11 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                          ...target,
-                          ...data,
-                          updated: true,
-                          siteType: site ? site.type : target.siteType
-                      }
+                        ...target,
+                        ...data,
+                        updated: true,
+                        siteType: site ? site.type : target.siteType
+                    }
                     : target
             )
         );
@@ -688,10 +694,10 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                          ...target,
-                          ...config,
-                          updated: true
-                      }
+                        ...target,
+                        ...config,
+                        updated: true
+                    }
                     : target
             )
         );
@@ -799,6 +805,22 @@ export default function ReverseProxyTargets(props: {
                     tlsServerName: tlsData.tlsServerName || null,
                     setHostHeader: proxyData.setHostHeader || null,
                     headers: proxyData.headers || null
+                });
+            } else {
+                // For TCP/UDP resources, save proxy protocol settings
+                const proxyData = proxySettingsForm.getValues();
+                
+                const payload = {
+                    proxyProtocol: proxyData.proxyProtocol || false,
+                    proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
+                };
+
+                await api.post(`/resource/${resource.resourceId}`, payload);
+
+                updateResource({
+                    ...resource,
+                    proxyProtocol: proxyData.proxyProtocol || false,
+                    proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
                 });
             }
 
@@ -1064,7 +1086,7 @@ export default function ReverseProxyTargets(props: {
                                         className={cn(
                                             "w-[180px] justify-between text-sm border-r pr-4 rounded-none h-8 hover:bg-transparent",
                                             !row.original.siteId &&
-                                                "text-muted-foreground"
+                                            "text-muted-foreground"
                                         )}
                                     >
                                         <span className="truncate max-w-[150px]">
@@ -1404,12 +1426,12 @@ export default function ReverseProxyTargets(props: {
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
+                                                                        header
+                                                                            .column
+                                                                            .columnDef
+                                                                            .header,
+                                                                        header.getContext()
+                                                                    )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1668,6 +1690,100 @@ export default function ReverseProxyTargets(props: {
                                             </FormItem>
                                         )}
                                     />
+                                </form>
+                            </Form>
+                        </SettingsSectionForm>
+                    </SettingsSectionBody>
+                </SettingsSection>
+            )}
+
+            {!resource.http && resource.protocol && (
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            Proxy Protocol Settings
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            Configure Proxy Protocol to preserve client IP addresses for TCP/UDP services.
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <SettingsSectionBody>
+                        <SettingsSectionForm>
+                            <Form {...proxySettingsForm}>
+                                <form
+                                    onSubmit={proxySettingsForm.handleSubmit(
+                                        saveAllSettings
+                                    )}
+                                    className="space-y-4"
+                                    id="proxy-protocol-settings-form"
+                                >
+                                    <FormField
+                                        control={proxySettingsForm.control}
+                                        name="proxyProtocol"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <SwitchInput
+                                                        id="proxy-protocol-toggle"
+                                                        label="Enable Proxy Protocol"
+                                                        description="Preserve client IP addresses for TCP/UDP backends"
+                                                        defaultChecked={
+                                                            field.value || false
+                                                        }
+                                                        onCheckedChange={(val) => {
+                                                            field.onChange(val);
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    
+                                    {proxySettingsForm.watch("proxyProtocol") && (
+                                        <>
+                                            <FormField
+                                                control={proxySettingsForm.control}
+                                                name="proxyProtocolVersion"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Proxy Protocol Version</FormLabel>
+                                                        <FormControl>
+                                                            <Select
+                                                                value={String(field.value || 1)}
+                                                                onValueChange={(value) =>
+                                                                    field.onChange(parseInt(value, 10))
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue placeholder="Select version" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    <SelectItem value="1">
+                                                                        Version 1 (Recommended)
+                                                                    </SelectItem>
+                                                                    <SelectItem value="2">
+                                                                        Version 2
+                                                                    </SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            Version 1 is text-based and widely supported. Version 2 is binary and more efficient but less compatible.
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <Alert>
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <AlertDescription>
+                                                    <strong>Warning:</strong> Your backend application must be configured to accept Proxy Protocol connections. 
+                                                    If your backend doesn't support Proxy Protocol, enabling this will break all connections. 
+                                                    Make sure to configure your backend to trust Proxy Protocol headers from Traefik.
+                                                </AlertDescription>
+                                            </Alert>
+                                        </>
+                                    )}
                                 </form>
                             </Form>
                         </SettingsSectionForm>
