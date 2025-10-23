@@ -28,6 +28,11 @@ export const queryAccessAuditLogsQuery = z.object({
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
         .default(new Date().toISOString()),
+    action: z.boolean().optional(),
+    method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional(),
+    reason: z.number().optional(),
+    resourceId: z.number().optional(),
+    actor: z.string().optional(),
     limit: z
         .string()
         .optional()
@@ -46,55 +51,64 @@ export const queryRequestAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export function queryRequest(timeStart: number, timeEnd: number, orgId: string) {
+export const queryRequestAuditLogsCombined =
+    queryAccessAuditLogsQuery.merge(queryRequestAuditLogsParams);
+type Q = z.infer<typeof queryRequestAuditLogsCombined>;
+
+function getWhere(data: Q) {
+    return and(
+        gt(requestAuditLog.timestamp, data.timeStart),
+        lt(requestAuditLog.timestamp, data.timeEnd),
+        eq(requestAuditLog.orgId, data.orgId),
+        data.resourceId
+            ? eq(requestAuditLog.resourceId, data.resourceId)
+            : undefined,
+        data.actor ? eq(requestAuditLog.actor, data.actor) : undefined,
+        data.method ? eq(requestAuditLog.method, data.method) : undefined,
+        data.reason ? eq(requestAuditLog.reason, data.reason) : undefined
+    );
+}
+
+export function queryRequest(data: Q) {
     return db
         .select({
-            timestamp: requestAuditLog.timestamp, 
-            orgId: requestAuditLog.orgId, 
-            action: requestAuditLog.action, 
-            reason: requestAuditLog.reason, 
-            actorType: requestAuditLog.actorType, 
-            actor: requestAuditLog.actor, 
-            actorId: requestAuditLog.actorId, 
-            resourceId: requestAuditLog.resourceId, 
-            ip: requestAuditLog.ip, 
-            location: requestAuditLog.location, 
-            userAgent: requestAuditLog.userAgent, 
-            metadata: requestAuditLog.metadata, 
-            headers: requestAuditLog.headers, 
-            query: requestAuditLog.query, 
-            originalRequestURL: requestAuditLog.originalRequestURL, 
-            scheme: requestAuditLog.scheme, 
-            host: requestAuditLog.host, 
-            path: requestAuditLog.path, 
-            method: requestAuditLog.method, 
+            timestamp: requestAuditLog.timestamp,
+            orgId: requestAuditLog.orgId,
+            action: requestAuditLog.action,
+            reason: requestAuditLog.reason,
+            actorType: requestAuditLog.actorType,
+            actor: requestAuditLog.actor,
+            actorId: requestAuditLog.actorId,
+            resourceId: requestAuditLog.resourceId,
+            ip: requestAuditLog.ip,
+            location: requestAuditLog.location,
+            userAgent: requestAuditLog.userAgent,
+            metadata: requestAuditLog.metadata,
+            headers: requestAuditLog.headers,
+            query: requestAuditLog.query,
+            originalRequestURL: requestAuditLog.originalRequestURL,
+            scheme: requestAuditLog.scheme,
+            host: requestAuditLog.host,
+            path: requestAuditLog.path,
+            method: requestAuditLog.method,
             tls: requestAuditLog.tls,
             resourceName: resources.name,
             resourceNiceId: resources.niceId
         })
         .from(requestAuditLog)
-        .leftJoin(resources, eq(requestAuditLog.resourceId, resources.resourceId)) // TODO: Is this efficient?
-        .where(
-            and(
-                gt(requestAuditLog.timestamp, timeStart),
-                lt(requestAuditLog.timestamp, timeEnd),
-                eq(requestAuditLog.orgId, orgId)
-            )
-        )
+        .leftJoin(
+            resources,
+            eq(requestAuditLog.resourceId, resources.resourceId)
+        ) // TODO: Is this efficient?
+        .where(getWhere(data))
         .orderBy(requestAuditLog.timestamp);
 }
 
-export function countRequestQuery(timeStart: number, timeEnd: number, orgId: string) {
-            const countQuery = db
-            .select({ count: count() })
-            .from(requestAuditLog)
-            .where(
-                and(
-                    gt(requestAuditLog.timestamp, timeStart),
-                    lt(requestAuditLog.timestamp, timeEnd),
-                    eq(requestAuditLog.orgId, orgId)
-                )
-            );
+export function countRequestQuery(data: Q) {
+    const countQuery = db
+        .select({ count: count() })
+        .from(requestAuditLog)
+        .where(getWhere(data));
     return countQuery;
 }
 
@@ -125,7 +139,6 @@ export async function queryRequestAuditLogs(
                 )
             );
         }
-        const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
         const parsedParams = queryRequestAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
@@ -136,13 +149,14 @@ export async function queryRequestAuditLogs(
                 )
             );
         }
-        const { orgId } = parsedParams.data;
 
-        const baseQuery = queryRequest(timeStart, timeEnd, orgId);
+        const data = { ...parsedQuery.data, ...parsedParams.data };
 
-        const log = await baseQuery.limit(limit).offset(offset);
+        const baseQuery = queryRequest(data);
 
-        const totalCountResult = await countRequestQuery(timeStart, timeEnd, orgId);
+        const log = await baseQuery.limit(data.limit).offset(data.offset);
+
+        const totalCountResult = await countRequestQuery(data);
         const totalCount = totalCountResult[0].count;
 
         return response<QueryRequestAuditLogResponse>(res, {
@@ -150,8 +164,8 @@ export async function queryRequestAuditLogs(
                 log: log,
                 pagination: {
                     total: totalCount,
-                    limit,
-                    offset
+                    limit: data.limit,
+                    offset: data.offset
                 }
             },
             success: true,

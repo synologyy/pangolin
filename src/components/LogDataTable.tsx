@@ -23,7 +23,16 @@ import { Button } from "@app/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search, RefreshCw, Filter, X, Download } from "lucide-react";
+import {
+    Plus,
+    Search,
+    RefreshCw,
+    Filter,
+    X,
+    Download,
+    ChevronRight,
+    ChevronDown
+} from "lucide-react";
 import {
     Card,
     CardContent,
@@ -109,6 +118,9 @@ type DataTableProps<TData, TValue> = {
     onPageChange?: (page: number) => void;
     onPageSizeChange?: (pageSize: number) => void;
     isLoading?: boolean;
+    // Row expansion props
+    expandable?: boolean;
+    renderExpandedRow?: (row: TData) => React.ReactNode;
 };
 
 export function LogDataTable<TData, TValue>({
@@ -132,7 +144,9 @@ export function LogDataTable<TData, TValue>({
     currentPage = 0,
     onPageChange,
     onPageSizeChange: onPageSizeChangeProp,
-    isLoading = false
+    isLoading = false,
+    expandable = false,
+    renderExpandedRow
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
 
@@ -161,6 +175,7 @@ export function LogDataTable<TData, TValue>({
         dateRange?.start || {}
     );
     const [endDate, setEndDate] = useState<DateTimeValue>(dateRange?.end || {});
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
     // Sync internal date state with external dateRange prop
     useEffect(() => {
@@ -186,25 +201,77 @@ export function LogDataTable<TData, TValue>({
         return data.filter(activeTabFilter.filterFn);
     }, [data, tabs, activeTab]);
 
+    // Toggle row expansion
+    const toggleRowExpansion = (rowId: string) => {
+        setExpandedRows((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(rowId)) {
+                newSet.delete(rowId);
+            } else {
+                newSet.add(rowId);
+            }
+            return newSet;
+        });
+    };
+
     // Determine if using server-side pagination
     const isServerPagination = totalCount !== undefined;
 
+    // Create columns with expansion column if expandable
+    const enhancedColumns = useMemo(() => {
+        if (!expandable) {
+            return columns;
+        }
+
+        const expansionColumn: ColumnDef<TData, TValue> = {
+            id: "expand",
+            header: () => null,
+            cell: ({ row }) => {
+                const isExpanded = expandedRows.has(row.id);
+                return (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={(e) => {
+                            toggleRowExpansion(row.id);
+                            e.stopPropagation();
+                        }}
+                    >
+                        {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                        ) : (
+                            <ChevronRight className="h-4 w-4" />
+                        )}
+                    </Button>
+                );
+            },
+            size: 40
+        };
+
+        return [expansionColumn, ...columns];
+    }, [columns, expandable, expandedRows, toggleRowExpansion]);
+
     const table = useReactTable({
         data: filteredData,
-        columns,
+        columns: enhancedColumns,
         getCoreRowModel: getCoreRowModel(),
         // Only use client-side pagination if totalCount is not provided
-        ...(isServerPagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
+        ...(isServerPagination
+            ? {}
+            : { getPaginationRowModel: getPaginationRowModel() }),
         onSortingChange: setSorting,
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
         // Configure pagination state
-        ...(isServerPagination ? {
-            manualPagination: true,
-            pageCount: totalCount ? Math.ceil(totalCount / pageSize) : 0,
-        } : {}),
+        ...(isServerPagination
+            ? {
+                  manualPagination: true,
+                  pageCount: totalCount ? Math.ceil(totalCount / pageSize) : 0
+              }
+            : {}),
         initialState: {
             pagination: {
                 pageSize: pageSize,
@@ -321,10 +388,7 @@ export function LogDataTable<TData, TValue>({
                             </Button>
                         )}
                         {onExport && (
-                            <Button
-                                onClick={onExport}
-                                disabled={isExporting}
-                            >
+                            <Button onClick={onExport} disabled={isExporting}>
                                 <Download
                                     className={`mr-2 h-4 w-4 ${isExporting ? "animate-spin" : ""}`}
                                 />
@@ -354,48 +418,84 @@ export function LogDataTable<TData, TValue>({
                         </TableHeader>
                         <TableBody>
                             {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        data-state={
-                                            row.getIsSelected() && "selected"
-                                        }
-                                        className="text-xs" // made smaller
-                                    >
-                                        {row.getVisibleCells().map((cell) => {
-                                            const originalRow =
-                                                row.original as any;
-                                            const actionValue =
-                                                originalRow?.action;
-                                            let className = "";
+                                table.getRowModel().rows.map((row) => {
+                                    const isExpanded =
+                                        expandable && expandedRows.has(row.id);
+                                    return (
+                                        <>
+                                            <TableRow
+                                                key={row.id}
+                                                data-state={
+                                                    row.getIsSelected() &&
+                                                    "selected"
+                                                }
+                                                onClick={() =>
+                                                    expandable
+                                                        ? toggleRowExpansion(
+                                                              row.id
+                                                          )
+                                                        : undefined
+                                                }
+                                                className="text-xs" // made smaller
+                                            >
+                                                {row
+                                                    .getVisibleCells()
+                                                    .map((cell) => {
+                                                        const originalRow =
+                                                            row.original as any;
+                                                        const actionValue =
+                                                            originalRow?.action;
+                                                        let className = "";
 
-                                            if (
-                                                typeof actionValue === "boolean"
-                                            ) {
-                                                className = actionValue
-                                                    ? "bg-green-100 dark:bg-green-900/50"
-                                                    : "bg-red-100 dark:bg-red-900/50";
-                                            }
+                                                        if (
+                                                            typeof actionValue ===
+                                                            "boolean"
+                                                        ) {
+                                                            className =
+                                                                actionValue
+                                                                    ? "bg-green-100 dark:bg-green-900/50"
+                                                                    : "bg-red-100 dark:bg-red-900/50";
+                                                        }
 
-                                            return (
-                                                <TableCell
-                                                    key={cell.id}
-                                                    className={`${className} py-2`} // made smaller
-                                                >
-                                                    {flexRender(
-                                                        cell.column.columnDef
-                                                            .cell,
-                                                        cell.getContext()
-                                                    )}
-                                                </TableCell>
-                                            );
-                                        })}
-                                    </TableRow>
-                                ))
+                                                        return (
+                                                            <TableCell
+                                                                key={cell.id}
+                                                                className={`${className} py-2`} // made smaller
+                                                            >
+                                                                {flexRender(
+                                                                    cell.column
+                                                                        .columnDef
+                                                                        .cell,
+                                                                    cell.getContext()
+                                                                )}
+                                                            </TableCell>
+                                                        );
+                                                    })}
+                                            </TableRow>
+                                            {isExpanded &&
+                                                renderExpandedRow && (
+                                                    <TableRow
+                                                        key={`${row.id}-expanded`}
+                                                    >
+                                                        <TableCell
+                                                            colSpan={
+                                                                enhancedColumns.length
+                                                            }
+                                                            className="p-4 bg-muted/50"
+                                                        >
+                                                            {renderExpandedRow(
+                                                                row.original
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                        </>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={columns.length}
+                                        colSpan={enhancedColumns.length}
                                         className="h-24 text-center"
                                     >
                                         No results found.
@@ -408,7 +508,11 @@ export function LogDataTable<TData, TValue>({
                         <DataTablePagination
                             table={table}
                             onPageSizeChange={handlePageSizeChange}
-                            onPageChange={isServerPagination ? handlePageChange : undefined}
+                            onPageChange={
+                                isServerPagination
+                                    ? handlePageChange
+                                    : undefined
+                            }
                             totalCount={totalCount}
                             isServerPagination={isServerPagination}
                             isLoading={isLoading}

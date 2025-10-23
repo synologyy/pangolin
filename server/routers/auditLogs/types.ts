@@ -4,6 +4,7 @@ export type QueryActionAuditLogResponse = {
         action: string;
         actorType: string;
         actorId: string;
+        metadata: string | null;
         timestamp: number;
         actor: string;
     }[];
@@ -49,8 +50,9 @@ export type QueryRequestAuditLogResponse = {
 export type QueryAccessAuditLogResponse = {
     log: {
         orgId: string;
-        action: string;
-        type: string;
+        action: boolean;
+        actorType: string | null;
+        actorId: string | null;
         resourceId: number | null;
         resourceName: string | null;
         resourceNiceId: string | null;
@@ -58,10 +60,9 @@ export type QueryAccessAuditLogResponse = {
         location: string | null;
         userAgent: string | null;
         metadata: string | null;
-        actorType: string;
-        actorId: string;
+        type: string;
         timestamp: number;
-        actor: string;
+        actor: string | null;
     }[];
     pagination: {
         total: number;

@@ -41,7 +41,6 @@ export async function exportRequestAuditLogs(
                 )
             );
         }
-        const { timeStart, timeEnd, limit, offset } = parsedQuery.data;
 
         const parsedParams = queryRequestAuditLogsParams.safeParse(req.params);
         if (!parsedParams.success) {
@@ -52,16 +51,17 @@ export async function exportRequestAuditLogs(
                 )
             );
         }
-        const { orgId } = parsedParams.data;
 
-        const baseQuery = queryRequest(timeStart, timeEnd, orgId);
+        const data = { ...parsedQuery.data, ...parsedParams.data };
 
-        const log = await baseQuery.limit(limit).offset(offset);
+        const baseQuery = queryRequest(data);
+
+        const log = await baseQuery.limit(data.limit).offset(data.offset);
 
         const csvData = generateCSV(log);
         
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="request-audit-logs-${orgId}-${Date.now()}.csv"`);
+        res.setHeader('Content-Disposition', `attachment; filename="request-audit-logs-${data.orgId}-${Date.now()}.csv"`);
         
         return res.send(csvData);
     } catch (error) {

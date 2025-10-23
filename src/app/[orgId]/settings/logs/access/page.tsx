@@ -340,6 +340,21 @@ export default function GeneralPage() {
         }
     ];
 
+    const renderExpandedRow = (row: any) => {
+        return (
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <strong>Metadata:</strong>
+                        <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
+                            {row.metadata ? JSON.stringify(JSON.parse(row.metadata), null, 2) : "N/A"}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <>
             <LogDataTable
@@ -369,6 +384,9 @@ export default function GeneralPage() {
                 onPageSizeChange={handlePageSizeChange}
                 isLoading={isLoading}
                 defaultPageSize={pageSize}
+                // Row expansion props
+                expandable={true}
+                renderExpandedRow={renderExpandedRow}
             />
         </>
     );

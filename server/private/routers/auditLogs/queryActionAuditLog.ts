@@ -24,6 +24,7 @@ import { fromError } from "zod-validation-error";
 import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
+import { metadata } from "@app/app/[orgId]/settings/layout";
 
 export const queryActionAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
@@ -65,6 +66,7 @@ export function queryAction(timeStart: number, timeEnd: number, orgId: string) {
             orgId: actionAuditLog.orgId,
             action: actionAuditLog.action,
             actorType: actionAuditLog.actorType,
+            metadata: actionAuditLog.metadata,
             actorId: actionAuditLog.actorId,
             timestamp: actionAuditLog.timestamp,
             actor: actionAuditLog.actor

@@ -313,6 +313,7 @@ export default function GeneralPage() {
                 return (
                     <Link
                         href={`/${row.original.orgId}/settings/resources/${row.original.resourceNiceId}`}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <Button
                             variant="outline"
@@ -402,6 +403,55 @@ export default function GeneralPage() {
         }
     ];
 
+    const renderExpandedRow = (row: any) => {
+        return (
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                        <strong>User Agent:</strong>
+                        <p className="text-muted-foreground mt-1 break-all">
+                            {row.userAgent || "N/A"}
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Original URL:</strong>
+                        <p className="text-muted-foreground mt-1 break-all">
+                            {row.originalRequestURL || "N/A"}
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Scheme:</strong>
+                        <p className="text-muted-foreground mt-1">
+                            {row.scheme || "N/A"}
+                        </p>
+                    </div>
+                    <div>
+                        <strong>Metadata:</strong>
+                        <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
+                            {row.metadata ? JSON.stringify(JSON.parse(row.metadata), null, 2) : "N/A"}
+                        </pre>
+                    </div>
+                    {row.headers && (
+                        <div className="md:col-span-2">
+                            <strong>Headers:</strong>
+                            <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
+                                {JSON.stringify(JSON.parse(row.headers), null, 2)}
+                            </pre>
+                        </div>
+                    )}
+                    {row.query && (
+                        <div className="md:col-span-2">
+                            <strong>Query Parameters:</strong>
+                            <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">
+                                {JSON.stringify(JSON.parse(row.query), null, 2)}
+                            </pre>
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <>
             <LogDataTable
@@ -431,6 +481,9 @@ export default function GeneralPage() {
                 onPageSizeChange={handlePageSizeChange}
                 isLoading={isLoading}
                 defaultPageSize={pageSize}
+                // Row expansion props
+                expandable={true}
+                renderExpandedRow={renderExpandedRow}
             />
         </>
     );
