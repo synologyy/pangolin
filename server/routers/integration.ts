@@ -443,14 +443,14 @@ authenticated.post(
     resource.setResourceWhitelist,
 );
 
-authenticated.get(
+authenticated.post(
     `/resource/:resourceId/whitelist/add`,
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourceWhitelist),
     resource.addEmailToResourceWhitelist
 );
 
-authenticated.get(
+authenticated.post(
     `/resource/:resourceId/whitelist/remove`,
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourceWhitelist),

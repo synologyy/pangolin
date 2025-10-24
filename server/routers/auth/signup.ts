@@ -224,7 +224,7 @@ export async function signup(
         res.appendHeader("Set-Cookie", cookie);
 
         if (build == "saas") {
-            moveEmailToAudience(email, AudienceIds.General);
+            moveEmailToAudience(email, AudienceIds.SignUps);
         }
 
         if (config.getRawConfig().flags?.require_email_verification) {
