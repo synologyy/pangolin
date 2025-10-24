@@ -12,11 +12,39 @@
  */
 
 import { ActionsEnum } from "@server/auth/actions";
-import { actionAuditLog, db } from "@server/db";
+import { actionAuditLog, db, orgs } from "@server/db";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
+import NodeCache from "node-cache";
+import { eq } from "drizzle-orm";
+
+const cache = new NodeCache({ stdTTL: 300 }); // cache for 5 minutes
+async function getActionDays(orgId: string): Promise<number> {
+    // check cache first
+    const cached = cache.get<number>(`org_${orgId}_actionDays`);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const [org] = await db
+        .select({
+            settingsLogRetentionDaysAction: orgs.settingsLogRetentionDaysAction
+        })
+        .from(orgs)
+        .where(eq(orgs.orgId, orgId))
+        .limit(1);
+
+    if (!org) {
+        return 0;
+    }
+
+    // store the result in cache
+    cache.set(`org_${orgId}_actionDays`, org.settingsLogRetentionDaysAction);
+
+    return org.settingsLogRetentionDaysAction;
+}
 
 export function logActionAudit(action: ActionsEnum) {
     return async function (
@@ -57,6 +85,12 @@ export function logActionAudit(action: ActionsEnum) {
                 return next();
             }
 
+            const retentionDays = await getActionDays(orgId);
+            if (retentionDays === 0) {
+                // do not log
+                return next();
+            }
+
             const timestamp = Math.floor(Date.now() / 1000);
 
             let metadata = null;
@@ -86,3 +120,4 @@ export function logActionAudit(action: ActionsEnum) {
         }
     };
 }
+

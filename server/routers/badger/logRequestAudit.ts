@@ -1,5 +1,7 @@
-import { db, requestAuditLog } from "@server/db";
+import { db, orgs, requestAuditLog } from "@server/db";
 import logger from "@server/logger";
+import { eq } from "drizzle-orm";
+import NodeCache from "node-cache";
 
 /** 
 
@@ -22,6 +24,32 @@ Reasons:
 
  */
 
+const cache = new NodeCache({ stdTTL: 300 }); // cache for 5 minutes
+async function getRetentionDays(orgId: string): Promise<number> {
+    // check cache first
+    const cached = cache.get<number>(`org_${orgId}_retentionDays`);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const [org] = await db
+        .select({
+            settingsLogRetentionDaysRequest: orgs.settingsLogRetentionDaysRequest
+        })
+        .from(orgs)
+        .where(eq(orgs.orgId, orgId))
+        .limit(1);
+
+    if (!org) {
+        return 0;
+    }
+
+    // store the result in cache
+    cache.set(`org_${orgId}_retentionDays`, org.settingsLogRetentionDaysRequest);
+
+    return org.settingsLogRetentionDaysRequest;
+}
+
 export async function logRequestAudit(
     data: {
         action: boolean;
@@ -29,8 +57,8 @@ export async function logRequestAudit(
         resourceId?: number;
         orgId?: string;
         location?: string;
-        user?: { username: string; userId: string; };
-        apiKey?: { name: string | null; apiKeyId: string; };
+        user?: { username: string; userId: string };
+        apiKey?: { name: string | null; apiKeyId: string };
         metadata?: any;
         // userAgent?: string;
     },
@@ -43,11 +71,20 @@ export async function logRequestAudit(
         tls: boolean;
         sessions?: Record<string, string>;
         headers?: Record<string, string>;
-        query?: Record<string, string>; 
+        query?: Record<string, string>;
         requestIp?: string;
     }
 ) {
     try {
+
+        if (data.orgId) {
+            const retentionDays = await getRetentionDays(data.orgId);
+            if (retentionDays === 0) {
+                // do not log
+                return;
+            }
+        }
+
         let actorType: string | undefined;
         let actor: string | undefined;
         let actorId: string | undefined;
@@ -79,7 +116,10 @@ export async function logRequestAudit(
 
         const clientIp = body.requestIp
             ? (() => {
-                  if (body.requestIp.startsWith("[") && body.requestIp.includes("]")) {
+                  if (
+                      body.requestIp.startsWith("[") &&
+                      body.requestIp.includes("]")
+                  ) {
                       // if brackets are found, extract the IPv6 address from between the brackets
                       const ipv6Match = body.requestIp.match(/\[(.*?)\]/);
                       if (ipv6Match) {

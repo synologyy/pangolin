@@ -26,7 +26,16 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
-    createdAt: text("createdAt")
+    createdAt: text("createdAt"),
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+        .notNull()
+        .default(15),
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+        .notNull()
+        .default(15),
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+        .notNull()
+        .default(15),
 });
 
 export const orgDomains = pgTable("orgDomains", {
@@ -676,8 +685,9 @@ export const requestAuditLog = pgTable(
     {
         id: serial("id").primaryKey(),
         timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-        orgId: text("orgId")
-            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        orgId: text("orgId").references(() => orgs.orgId, {
+            onDelete: "cascade"
+        }),
         action: boolean("action").notNull(),
         reason: integer("reason").notNull(),
         actorType: text("actorType"),

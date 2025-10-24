@@ -1,11 +1,32 @@
-import { accessAuditLog, db } from "@server/db";
+import { accessAuditLog, db, orgs } from "@server/db";
 import { getCountryCodeForIp } from "@server/lib/geoip";
 import logger from "@server/logger";
-import NodeCache from "node-cache";
+import { eq } from "drizzle-orm";
 
-const cache = new NodeCache({
-    stdTTL: 5 // seconds
-});
+async function getAccessDays(orgId: string): Promise<number> {
+    // check cache first
+    const cached = cache.get<number>(`org_${orgId}_accessDays`);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const [org] = await db
+        .select({
+            settingsLogRetentionDaysAction: orgs.settingsLogRetentionDaysAction
+        })
+        .from(orgs)
+        .where(eq(orgs.orgId, orgId))
+        .limit(1);
+
+    if (!org) {
+        return 0;
+    }
+
+    // store the result in cache
+    cache.set(`org_${orgId}_accessDays`, org.settingsLogRetentionDaysAction);
+
+    return org.settingsLogRetentionDaysAction;
+}
 
 export async function logAccessAudit(data: {
     action: boolean;

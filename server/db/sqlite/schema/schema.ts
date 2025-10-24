@@ -19,7 +19,16 @@ export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
     subnet: text("subnet"),
-    createdAt: text("createdAt")
+    createdAt: text("createdAt"),
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+        .notNull()
+        .default(15),
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+        .notNull()
+        .default(15),
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+        .notNull()
+        .default(15)
 });
 
 export const userDomains = sqliteTable("userDomains", {
@@ -721,8 +730,9 @@ export const requestAuditLog = sqliteTable(
     {
         id: integer("id").primaryKey({ autoIncrement: true }),
         timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-        orgId: text("orgId")
-            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        orgId: text("orgId").references(() => orgs.orgId, {
+            onDelete: "cascade"
+        }),
         action: integer("action", { mode: "boolean" }).notNull(),
         reason: integer("reason").notNull(),
         actorType: text("actorType"),
