@@ -97,7 +97,7 @@ export function DataTablePagination<TData>({
                     value={`${table.getState().pagination.pageSize}`}
                     onValueChange={handlePageSizeChange}
                 >
-                    <SelectTrigger className="h-8 w-[70px]">
+                    <SelectTrigger className="h-8 w-[73px]">
                         <SelectValue
                             placeholder={table.getState().pagination.pageSize}
                         />

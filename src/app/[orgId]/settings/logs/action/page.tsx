@@ -6,7 +6,7 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { LogDataTable } from "@app/components/LogDataTable";
+import { getStoredPageSize, LogDataTable, setStoredPageSize } from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
 import { Key, User } from "lucide-react";
@@ -44,8 +44,12 @@ export default function GeneralPage() {
     // Pagination state
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(0);
-    const [pageSize, setPageSize] = useState<number>(20);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Initialize page size from storage or default
+    const [pageSize, setPageSize] = useState<number>(() => {
+        return getStoredPageSize("action-audit-logs", 20);
+    });
 
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
@@ -121,6 +125,7 @@ export default function GeneralPage() {
     // Handle page size changes
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
+        setStoredPageSize(newPageSize, "action-audit-logs");
         setCurrentPage(0); // Reset to first page when changing page size
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
@@ -433,7 +438,6 @@ export default function GeneralPage() {
             <LogDataTable
                 columns={columns}
                 data={rows}
-                persistPageSize="action-logs-table"
                 title={t("actionLogs")}
                 searchPlaceholder={t("searchLogs")}
                 searchColumn="action"
@@ -453,10 +457,10 @@ export default function GeneralPage() {
                 // Server-side pagination props
                 totalCount={totalCount}
                 currentPage={currentPage}
+                pageSize={pageSize}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
                 isLoading={isLoading}
-                defaultPageSize={pageSize}
                 // Row expansion props
                 expandable={true}
                 renderExpandedRow={renderExpandedRow}

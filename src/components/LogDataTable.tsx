@@ -49,7 +49,7 @@ const STORAGE_KEYS = {
         tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
 };
 
-const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
+export const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
     if (typeof window === "undefined") return defaultSize;
 
     try {
@@ -68,7 +68,7 @@ const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
     return defaultSize;
 };
 
-const setStoredPageSize = (pageSize: number, tableId?: string): void => {
+export const setStoredPageSize = (pageSize: number, tableId?: string): void => {
     if (typeof window === "undefined") return;
 
     try {
@@ -102,8 +102,6 @@ type DataTableProps<TData, TValue> = {
     };
     tabs?: TabFilter[];
     defaultTab?: string;
-    persistPageSize?: boolean | string;
-    defaultPageSize?: number;
     onDateRangeChange?: (
         startDate: DateTimeValue,
         endDate: DateTimeValue
@@ -114,6 +112,7 @@ type DataTableProps<TData, TValue> = {
     };
     // Server-side pagination props
     totalCount?: number;
+    pageSize: number;
     currentPage?: number;
     onPageChange?: (page: number) => void;
     onPageSizeChange?: (pageSize: number) => void;
@@ -136,9 +135,8 @@ export function LogDataTable<TData, TValue>({
     defaultSort,
     tabs,
     defaultTab,
-    persistPageSize = false,
-    defaultPageSize = 20,
     onDateRangeChange,
+    pageSize,
     dateRange,
     totalCount,
     currentPage = 0,
@@ -149,18 +147,6 @@ export function LogDataTable<TData, TValue>({
     renderExpandedRow
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
-
-    // Determine table identifier for storage
-    const tableId =
-        typeof persistPageSize === "string" ? persistPageSize : undefined;
-
-    // Initialize page size from storage or default
-    const [pageSize, setPageSize] = useState<number>(() => {
-        if (persistPageSize) {
-            return getStoredPageSize(tableId, defaultPageSize);
-        }
-        return defaultPageSize;
-    });
 
     const [sorting, setSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
@@ -289,17 +275,17 @@ export function LogDataTable<TData, TValue>({
         }
     });
 
-    useEffect(() => {
-        const currentPageSize = table.getState().pagination.pageSize;
-        if (currentPageSize !== pageSize) {
-            table.setPageSize(pageSize);
+    // useEffect(() => {
+    //     const currentPageSize = table.getState().pagination.pageSize;
+    //     if (currentPageSize !== pageSize) {
+    //         table.setPageSize(pageSize);
 
-            // Persist to localStorage if enabled
-            if (persistPageSize) {
-                setStoredPageSize(pageSize, tableId);
-            }
-        }
-    }, [pageSize, table, persistPageSize, tableId]);
+    //         // Persist to localStorage if enabled
+    //         if (persistPageSize) {
+    //             setStoredPageSize(pageSize, tableId);
+    //         }
+    //     }
+    // }, [pageSize, table, persistPageSize, tableId]);
 
     // Update table page index when currentPage prop changes (server pagination)
     useEffect(() => {
@@ -319,13 +305,13 @@ export function LogDataTable<TData, TValue>({
 
     // Enhanced pagination component that updates our local state
     const handlePageSizeChange = (newPageSize: number) => {
-        setPageSize(newPageSize);
+        // setPageSize(newPageSize);
         table.setPageSize(newPageSize);
 
         // Persist immediately when changed
-        if (persistPageSize) {
-            setStoredPageSize(newPageSize, tableId);
-        }
+        // if (persistPageSize) {
+        //     setStoredPageSize(newPageSize, tableId);
+        // }
 
         // For server pagination, notify parent component
         if (isServerPagination && onPageSizeChangeProp) {
@@ -421,77 +407,75 @@ export function LogDataTable<TData, TValue>({
                                 table.getRowModel().rows.map((row) => {
                                     const isExpanded =
                                         expandable && expandedRows.has(row.id);
-                                    return (
-                                        <>
-                                            <TableRow
-                                                key={row.id}
-                                                data-state={
-                                                    row.getIsSelected() &&
-                                                    "selected"
-                                                }
-                                                onClick={() =>
-                                                    expandable
-                                                        ? toggleRowExpansion(
-                                                              row.id
-                                                          )
-                                                        : undefined
-                                                }
-                                                className="text-xs" // made smaller
-                                            >
-                                                {row
-                                                    .getVisibleCells()
-                                                    .map((cell) => {
-                                                        const originalRow =
-                                                            row.original as any;
-                                                        const actionValue =
-                                                            originalRow?.action;
-                                                        let className = "";
+                                    return [
+                                        <TableRow
+                                            key={row.id}
+                                            data-state={
+                                                row.getIsSelected() &&
+                                                "selected"
+                                            }
+                                            onClick={() =>
+                                                expandable
+                                                    ? toggleRowExpansion(
+                                                          row.id
+                                                      )
+                                                    : undefined
+                                            }
+                                            className="text-xs" // made smaller
+                                        >
+                                            {row
+                                                .getVisibleCells()
+                                                .map((cell) => {
+                                                    const originalRow =
+                                                        row.original as any;
+                                                    const actionValue =
+                                                        originalRow?.action;
+                                                    let className = "";
 
-                                                        if (
-                                                            typeof actionValue ===
-                                                            "boolean"
-                                                        ) {
-                                                            className =
-                                                                actionValue
-                                                                    ? "bg-green-100 dark:bg-green-900/50"
-                                                                    : "bg-red-100 dark:bg-red-900/50";
-                                                        }
+                                                    if (
+                                                        typeof actionValue ===
+                                                        "boolean"
+                                                    ) {
+                                                        className =
+                                                            actionValue
+                                                                ? "bg-green-100 dark:bg-green-900/50"
+                                                                : "bg-red-100 dark:bg-red-900/50";
+                                                    }
 
-                                                        return (
-                                                            <TableCell
-                                                                key={cell.id}
-                                                                className={`${className} py-2`} // made smaller
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </TableCell>
-                                                        );
-                                                    })}
-                                            </TableRow>
-                                            {isExpanded &&
-                                                renderExpandedRow && (
-                                                    <TableRow
-                                                        key={`${row.id}-expanded`}
-                                                    >
+                                                    return (
                                                         <TableCell
-                                                            colSpan={
-                                                                enhancedColumns.length
-                                                            }
-                                                            className="p-4 bg-muted/50"
+                                                            key={cell.id}
+                                                            className={`${className} py-2`} // made smaller
                                                         >
-                                                            {renderExpandedRow(
-                                                                row.original
+                                                            {flexRender(
+                                                                cell.column
+                                                                    .columnDef
+                                                                    .cell,
+                                                                cell.getContext()
                                                             )}
                                                         </TableCell>
-                                                    </TableRow>
-                                                )}
-                                        </>
-                                    );
-                                })
+                                                    );
+                                                })}
+                                        </TableRow>,
+                                        isExpanded &&
+                                            renderExpandedRow && (
+                                                <TableRow
+                                                    key={`${row.id}-expanded`}
+                                                >
+                                                    <TableCell
+                                                        colSpan={
+                                                            enhancedColumns.length
+                                                        }
+                                                        className="p-4 bg-muted/50"
+                                                    >
+                                                        {renderExpandedRow(
+                                                            row.original
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                    ].filter(Boolean);
+                                }).flat()
                             ) : (
                                 <TableRow>
                                     <TableCell
