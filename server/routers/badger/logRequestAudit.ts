@@ -1,7 +1,7 @@
 import { db, orgs, requestAuditLog } from "@server/db";
 import logger from "@server/logger";
-import { eq } from "drizzle-orm";
-import NodeCache from "node-cache";
+import { and, eq, lt } from "drizzle-orm";
+import cache from "@server/lib/cache";
 
 /** 
 
@@ -24,7 +24,6 @@ Reasons:
 
  */
 
-const cache = new NodeCache({ stdTTL: 300 }); // cache for 5 minutes
 async function getRetentionDays(orgId: string): Promise<number> {
     // check cache first
     const cached = cache.get<number>(`org_${orgId}_retentionDays`);
@@ -34,7 +33,8 @@ async function getRetentionDays(orgId: string): Promise<number> {
 
     const [org] = await db
         .select({
-            settingsLogRetentionDaysRequest: orgs.settingsLogRetentionDaysRequest
+            settingsLogRetentionDaysRequest:
+                orgs.settingsLogRetentionDaysRequest
         })
         .from(orgs)
         .where(eq(orgs.orgId, orgId))
@@ -45,9 +45,36 @@ async function getRetentionDays(orgId: string): Promise<number> {
     }
 
     // store the result in cache
-    cache.set(`org_${orgId}_retentionDays`, org.settingsLogRetentionDaysRequest);
+    cache.set(
+        `org_${orgId}_retentionDays`,
+        org.settingsLogRetentionDaysRequest,
+        300
+    );
 
     return org.settingsLogRetentionDaysRequest;
+}
+
+export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
+    const now = Math.floor(Date.now() / 1000);
+
+    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+
+    try {
+        const deleteResult = await db
+            .delete(requestAuditLog)
+            .where(
+                and(
+                    lt(requestAuditLog.timestamp, cutoffTimestamp),
+                    eq(requestAuditLog.orgId, orgId)
+                )
+            );
+
+        logger.info(
+            `Cleaned up ${deleteResult.changes} request audit logs older than ${retentionDays} days`
+        );
+    } catch (error) {
+        logger.error("Error cleaning up old request audit logs:", error);
+    }
 }
 
 export async function logRequestAudit(
@@ -76,7 +103,6 @@ export async function logRequestAudit(
     }
 ) {
     try {
-
         if (data.orgId) {
             const retentionDays = await getRetentionDays(data.orgId);
             if (retentionDays === 0) {

@@ -17,10 +17,9 @@ import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
-import NodeCache from "node-cache";
-import { eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
+import cache from "@server/lib/cache";
 
-const cache = new NodeCache({ stdTTL: 300 }); // cache for 5 minutes
 async function getActionDays(orgId: string): Promise<number> {
     // check cache first
     const cached = cache.get<number>(`org_${orgId}_actionDays`);
@@ -41,9 +40,32 @@ async function getActionDays(orgId: string): Promise<number> {
     }
 
     // store the result in cache
-    cache.set(`org_${orgId}_actionDays`, org.settingsLogRetentionDaysAction);
+    cache.set(`org_${orgId}_actionDays`, org.settingsLogRetentionDaysAction, 300);
 
     return org.settingsLogRetentionDaysAction;
+}
+
+export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
+    const now = Math.floor(Date.now() / 1000);
+
+    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+
+    try {
+        const deleteResult = await db
+            .delete(actionAuditLog)
+            .where(
+                and(
+                    lt(actionAuditLog.timestamp, cutoffTimestamp),
+                    eq(actionAuditLog.orgId, orgId)
+                )
+            );
+
+        logger.info(
+            `Cleaned up ${deleteResult.changes} action audit logs older than ${retentionDays} days`
+        );
+    } catch (error) {
+        logger.error("Error cleaning up old action audit logs:", error);
+    }
 }
 
 export function logActionAudit(action: ActionsEnum) {

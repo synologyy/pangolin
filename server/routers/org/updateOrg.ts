@@ -18,7 +18,10 @@ const updateOrgParamsSchema = z
 
 const updateOrgBodySchema = z
     .object({
-        name: z.string().min(1).max(255).optional()
+        name: z.string().min(1).max(255).optional(),
+        settingsLogRetentionDaysRequest: z.number().min(-1).optional(),
+        settingsLogRetentionDaysAccess: z.number().min(-1).optional(),
+        settingsLogRetentionDaysAction: z.number().min(-1).optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -74,7 +77,7 @@ export async function updateOrg(
         const updatedOrg = await db
             .update(orgs)
             .set({
-                name: parsedBody.data.name
+                ...parsedBody.data
             })
             .where(eq(orgs.orgId, orgId))
             .returning();

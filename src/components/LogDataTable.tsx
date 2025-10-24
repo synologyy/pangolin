@@ -102,6 +102,7 @@ type DataTableProps<TData, TValue> = {
     };
     tabs?: TabFilter[];
     defaultTab?: string;
+    disabled?: boolean;
     onDateRangeChange?: (
         startDate: DateTimeValue,
         endDate: DateTimeValue
@@ -144,6 +145,7 @@ export function LogDataTable<TData, TValue>({
     onPageSizeChange: onPageSizeChangeProp,
     isLoading = false,
     expandable = false,
+    disabled=false,
     renderExpandedRow
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
@@ -175,6 +177,11 @@ export function LogDataTable<TData, TValue>({
 
     // Apply tab filter to data
     const filteredData = useMemo(() => {
+        // If disabled, return empty array to prevent data loading
+        if (disabled) {
+            return [];
+        }
+
         if (!tabs || activeTab === "") {
             return data;
         }
@@ -185,7 +192,7 @@ export function LogDataTable<TData, TValue>({
         }
 
         return data.filter(activeTabFilter.filterFn);
-    }, [data, tabs, activeTab]);
+    }, [data, tabs, activeTab, disabled]);
 
     // Toggle row expansion
     const toggleRowExpansion = (rowId: string) => {
@@ -219,9 +226,12 @@ export function LogDataTable<TData, TValue>({
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0"
+                        disabled={disabled}
                         onClick={(e) => {
-                            toggleRowExpansion(row.id);
-                            e.stopPropagation();
+                            if (!disabled) {
+                                toggleRowExpansion(row.id);
+                                e.stopPropagation();
+                            }
                         }}
                     >
                         {isExpanded ? (
@@ -236,7 +246,7 @@ export function LogDataTable<TData, TValue>({
         };
 
         return [expansionColumn, ...columns];
-    }, [columns, expandable, expandedRows, toggleRowExpansion]);
+    }, [columns, expandable, expandedRows, toggleRowExpansion, disabled]);
 
     const table = useReactTable({
         data: filteredData,
@@ -298,6 +308,8 @@ export function LogDataTable<TData, TValue>({
     }, [currentPage, table, isServerPagination]);
 
     const handleTabChange = (value: string) => {
+        if (disabled) return;
+        
         setActiveTab(value);
         // Reset to first page when changing tabs
         table.setPageIndex(0);
@@ -305,6 +317,8 @@ export function LogDataTable<TData, TValue>({
 
     // Enhanced pagination component that updates our local state
     const handlePageSizeChange = (newPageSize: number) => {
+        if (disabled) return;
+        
         // setPageSize(newPageSize);
         table.setPageSize(newPageSize);
 
@@ -321,6 +335,8 @@ export function LogDataTable<TData, TValue>({
 
     // Handle page changes for server pagination
     const handlePageChange = (newPageIndex: number) => {
+        if (disabled) return;
+        
         if (isServerPagination && onPageChange) {
             onPageChange(newPageIndex);
         }
@@ -330,6 +346,8 @@ export function LogDataTable<TData, TValue>({
         start: DateTimeValue,
         end: DateTimeValue
     ) => {
+        if (disabled) return;
+        
         setStartDate(start);
         setEndDate(end);
         onDateRangeChange?.(start, end);
@@ -358,14 +376,15 @@ export function LogDataTable<TData, TValue>({
                             endValue={endDate}
                             onRangeChange={handleDateRangeChange}
                             className="flex-wrap gap-2"
+                            disabled={disabled}
                         />
                     </div>
                     <div className="flex items-start gap-2 sm:justify-end">
                         {onRefresh && (
                             <Button
                                 variant="outline"
-                                onClick={onRefresh}
-                                disabled={isRefreshing}
+                                onClick={() => !disabled && onRefresh()}
+                                disabled={isRefreshing || disabled}
                             >
                                 <RefreshCw
                                     className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -374,7 +393,7 @@ export function LogDataTable<TData, TValue>({
                             </Button>
                         )}
                         {onExport && (
-                            <Button onClick={onExport} disabled={isExporting}>
+                            <Button onClick={() => !disabled && onExport()} disabled={isExporting || disabled}>
                                 <Download
                                     className={`mr-2 h-4 w-4 ${isExporting ? "animate-spin" : ""}`}
                                 />
@@ -415,7 +434,7 @@ export function LogDataTable<TData, TValue>({
                                                 "selected"
                                             }
                                             onClick={() =>
-                                                expandable
+                                                expandable && !disabled
                                                     ? toggleRowExpansion(
                                                           row.id
                                                       )
@@ -500,6 +519,7 @@ export function LogDataTable<TData, TValue>({
                             totalCount={totalCount}
                             isServerPagination={isServerPagination}
                             isLoading={isLoading}
+                            disabled={disabled}
                         />
                     </div>
                 </CardContent>

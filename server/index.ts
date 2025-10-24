@@ -5,6 +5,7 @@ import { runSetupFunctions } from "./setup";
 import { createApiServer } from "./apiServer";
 import { createNextServer } from "./nextServer";
 import { createInternalServer } from "./internalServer";
+import { createIntegrationApiServer } from "./integrationApiServer";
 import {
     ApiKey,
     ApiKeyOrg,
@@ -13,13 +14,13 @@ import {
     User,
     UserOrg
 } from "@server/db";
-import { createIntegrationApiServer } from "./integrationApiServer";
 import config from "@server/lib/config";
 import { setHostMeta } from "@server/lib/hostMeta";
-import { initTelemetryClient } from "./lib/telemetry.js";
-import { TraefikConfigManager } from "./lib/traefik/TraefikConfigManager.js";
+import { initTelemetryClient } from "@server/lib/telemetry";
+import { TraefikConfigManager } from "@server/lib/traefik/TraefikConfigManager";
 import { initCleanup } from "#dynamic/cleanup";
 import license from "#dynamic/license/license";
+import { initLogCleanupInterval } from "@server/lib/cleanupLogs";
 
 async function startServers() {
     await setHostMeta();
@@ -32,6 +33,8 @@ async function startServers() {
     await runSetupFunctions();
 
     initTelemetryClient();
+
+    initLogCleanupInterval();
 
     // Start all servers
     const apiServer = createApiServer();

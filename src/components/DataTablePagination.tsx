@@ -23,6 +23,7 @@ interface DataTablePaginationProps<TData> {
     totalCount?: number;
     isServerPagination?: boolean;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 export function DataTablePagination<TData>({
@@ -31,7 +32,8 @@ export function DataTablePagination<TData>({
     onPageChange,
     totalCount,
     isServerPagination = false,
-    isLoading = false
+    isLoading = false,
+    disabled = false
 }: DataTablePaginationProps<TData>) {
     const t = useTranslations();
 
@@ -96,8 +98,9 @@ export function DataTablePagination<TData>({
                 <Select
                     value={`${table.getState().pagination.pageSize}`}
                     onValueChange={handlePageSizeChange}
+                    disabled={disabled}
                 >
-                    <SelectTrigger className="h-8 w-[73px]">
+                    <SelectTrigger className="h-8 w-[73px]" disabled={disabled}>
                         <SelectValue
                             placeholder={table.getState().pagination.pageSize}
                         />
@@ -128,7 +131,7 @@ export function DataTablePagination<TData>({
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
                         onClick={() => handlePageNavigation('first')}
-                        disabled={!table.getCanPreviousPage() || isLoading}
+                        disabled={!table.getCanPreviousPage() || isLoading || disabled}
                     >
                         <span className="sr-only">{t('paginatorToFirst')}</span>
                         <DoubleArrowLeftIcon className="h-4 w-4" />
@@ -137,7 +140,7 @@ export function DataTablePagination<TData>({
                         variant="outline"
                         className="h-8 w-8 p-0"
                         onClick={() => handlePageNavigation('previous')}
-                        disabled={!table.getCanPreviousPage() || isLoading}
+                        disabled={!table.getCanPreviousPage() || isLoading || disabled}
                     >
                         <span className="sr-only">{t('paginatorToPrevious')}</span>
                         <ChevronLeftIcon className="h-4 w-4" />
@@ -146,7 +149,7 @@ export function DataTablePagination<TData>({
                         variant="outline"
                         className="h-8 w-8 p-0"
                         onClick={() => handlePageNavigation('next')}
-                        disabled={!table.getCanNextPage() || isLoading}
+                        disabled={!table.getCanNextPage() || isLoading || disabled}
                     >
                         <span className="sr-only">{t('paginatorToNext')}</span>
                         <ChevronRightIcon className="h-4 w-4" />
@@ -155,7 +158,7 @@ export function DataTablePagination<TData>({
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
                         onClick={() => handlePageNavigation('last')}
-                        disabled={!table.getCanNextPage() || isLoading}
+                        disabled={!table.getCanNextPage() || isLoading || disabled}
                     >
                         <span className="sr-only">{t('paginatorToLast')}</span>
                         <DoubleArrowRightIcon className="h-4 w-4" />

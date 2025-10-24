@@ -22,13 +22,13 @@ export const orgs = sqliteTable("orgs", {
     createdAt: text("createdAt"),
     settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
         .notNull()
-        .default(15),
+        .default(7),
     settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
         .notNull()
-        .default(15),
+        .default(0),
     settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
         .notNull()
-        .default(15)
+        .default(0)
 });
 
 export const userDomains = sqliteTable("userDomains", {

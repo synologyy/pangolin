@@ -123,16 +123,20 @@ export const orgNavSections = (
                 href: "/{orgId}/settings/logs/request",
                 icon: <SquareMousePointer className="h-4 w-4" />
             },
-            {
-                title: "sidebarLogsAccess",
-                href: "/{orgId}/settings/logs/access",
-                icon: <ScanEye className="h-4 w-4" />
-            },
-            {
-                title: "sidebarLogsAction",
-                href: "/{orgId}/settings/logs/action",
-                icon: <Logs className="h-4 w-4" />
-            },
+            ...(build != "oss"
+                ? [
+                      {
+                          title: "sidebarLogsAccess",
+                          href: "/{orgId}/settings/logs/access",
+                          icon: <ScanEye className="h-4 w-4" />
+                      },
+                      {
+                          title: "sidebarLogsAction",
+                          href: "/{orgId}/settings/logs/action",
+                          icon: <Logs className="h-4 w-4" />
+                      }
+                  ]
+                : [])
         ]
     },
     {

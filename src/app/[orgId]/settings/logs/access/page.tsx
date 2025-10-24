@@ -6,12 +6,21 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { getStoredPageSize, LogDataTable, setStoredPageSize } from "@app/components/LogDataTable";
+import {
+    getStoredPageSize,
+    LogDataTable,
+    setStoredPageSize
+} from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
 import { ArrowUpRight, Key, User } from "lucide-react";
 import Link from "next/link";
 import { ColumnFilter } from "@app/components/ColumnFilter";
+import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { build } from "@server/build";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -21,6 +30,8 @@ export default function GeneralPage() {
     const t = useTranslations();
     const { env } = useEnvContext();
     const { orgId } = useParams();
+    const subscription = useSubscriptionStatusContext();
+    const { isUnlocked } = useLicenseStatusContext();
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -202,6 +213,16 @@ export default function GeneralPage() {
         }
     ) => {
         console.log("Date range changed:", { startDate, endDate, page, size });
+        if (
+            (build == "saas" && !subscription?.subscribed) ||
+            (build == "enterprise" && !isUnlocked())
+        ) {
+            console.log(
+                "Access denied: subscription inactive or license locked"
+            );
+            return;
+        }
+
         setIsLoading(true);
 
         try {
@@ -583,6 +604,27 @@ export default function GeneralPage() {
 
     return (
         <>
+            <SettingsSectionTitle
+                title={t("accessLogs")}
+                description={t("accessLogsDescription")}
+            />
+
+            {build == "saas" && !subscription?.subscribed ? (
+                <Alert variant="info" className="mb-6">
+                    <AlertDescription>
+                        {t("subscriptionRequiredToUse")}
+                    </AlertDescription>
+                </Alert>
+            ) : null}
+
+            {build == "enterprise" && !isUnlocked() ? (
+                <Alert variant="info" className="mb-6">
+                    <AlertDescription>
+                        {t("licenseRequiredToUse")}
+                    </AlertDescription>
+                </Alert>
+            ) : null}
+
             <LogDataTable
                 columns={columns}
                 data={rows}
@@ -610,6 +652,10 @@ export default function GeneralPage() {
                 // Row expansion props
                 expandable={true}
                 renderExpandedRow={renderExpandedRow}
+                disabled={
+                    (build == "saas" && !subscription?.subscribed) ||
+                    (build == "enterprise" && !isUnlocked())
+                }
             />
         </>
     );

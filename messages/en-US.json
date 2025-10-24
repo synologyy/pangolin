@@ -1925,5 +1925,22 @@
     "sidebarLogsRequest": "Request Logs",
     "sidebarLogsAccess": "Access Logs",
     "sidebarLogsAction": "Action Logs",
-    "requestLogsDescription": "View detailed pre-request logs for resources in this organization"
+    "logRetention": "Log Retention",
+    "logRetentionDescription": "Manage how long different types of logs are retained for this organization or disable them",
+    "requestLogsDescription": "View detailed request logs for resources in this organization",
+    "logRetentionRequestLabel": "Request Log Retention",
+    "logRetentionRequestDescription": "How long to retain request logs",
+    "logRetentionAccessLabel": "Access Log Retention",
+    "logRetentionAccessDescription": "How long to retain access logs",
+    "logRetentionActionLabel": "Action Log Retention",
+    "logRetentionActionDescription": "How long to retain action logs",
+    "logRetentionDisabled": "Disabled",
+    "logRetention3Days": "3 days",
+    "logRetention7Days": "7 days",
+    "logRetention14Days": "14 days",
+    "logRetention30Days": "30 days",
+    "logRetentionForever": "Forever",
+    "actionLogsDescription": "View a history of actions performed in this organization",
+    "accessLogsDescription": "View access auth requests for resources in this organization",
+    "licenseRequiredToUse": "An Enterprise license is required to use this feature."
 }

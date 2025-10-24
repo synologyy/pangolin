@@ -1,7 +1,8 @@
 import { accessAuditLog, db, orgs } from "@server/db";
 import { getCountryCodeForIp } from "@server/lib/geoip";
 import logger from "@server/logger";
-import { eq } from "drizzle-orm";
+import { and, eq, lt } from "drizzle-orm";
+import cache from "@server/lib/cache";
 
 async function getAccessDays(orgId: string): Promise<number> {
     // check cache first
@@ -23,9 +24,36 @@ async function getAccessDays(orgId: string): Promise<number> {
     }
 
     // store the result in cache
-    cache.set(`org_${orgId}_accessDays`, org.settingsLogRetentionDaysAction);
+    cache.set(
+        `org_${orgId}_accessDays`,
+        org.settingsLogRetentionDaysAction,
+        300
+    );
 
     return org.settingsLogRetentionDaysAction;
+}
+
+export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
+    const now = Math.floor(Date.now() / 1000);
+
+    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+
+    try {
+        const deleteResult = await db
+            .delete(accessAuditLog)
+            .where(
+                and(
+                    lt(accessAuditLog.timestamp, cutoffTimestamp),
+                    eq(accessAuditLog.orgId, orgId)
+                )
+            );
+
+        logger.info(
+            `Cleaned up ${deleteResult.changes} access audit logs older than ${retentionDays} days`
+        );
+    } catch (error) {
+        logger.error("Error cleaning up old action audit logs:", error);
+    }
 }
 
 export async function logAccessAudit(data: {
@@ -40,6 +68,12 @@ export async function logAccessAudit(data: {
     requestIp?: string;
 }) {
     try {
+        const retentionDays = await getAccessDays(data.orgId);
+        if (retentionDays === 0) {
+            // do not log
+            return;
+        }
+
         let actorType: string | undefined;
         let actor: string | undefined;
         let actorId: string | undefined;
