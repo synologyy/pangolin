@@ -1,4 +1,3 @@
-import NodeCache from "node-cache";
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
@@ -20,8 +19,7 @@ import { UserType } from "@server/types/UserTypes";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
-
-const regenerateTracker = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
+import cache from "@server/lib/cache";
 
 const inviteUserParamsSchema = z
     .object({
@@ -182,7 +180,7 @@ export async function inviteUser(
         }
 
         if (existingInvite.length) {
-            const attempts = regenerateTracker.get<number>(email) || 0;
+            const attempts = cache.get<number>(email) || 0;
             if (attempts >= 3) {
                 return next(
                     createHttpError(
@@ -192,7 +190,7 @@ export async function inviteUser(
                 );
             }
 
-            regenerateTracker.set(email, attempts + 1);
+            cache.set(email, attempts + 1);
 
             const inviteId = existingInvite[0].inviteId; // Retrieve the original inviteId
             const token = generateRandomString(

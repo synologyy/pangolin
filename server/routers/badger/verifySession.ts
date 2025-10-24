@@ -24,7 +24,6 @@ import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
-import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { getCountryCodeForIp } from "@server/lib/geoip";
@@ -32,11 +31,7 @@ import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
 import { logRequestAudit } from "./logRequestAudit";
-
-// We'll see if this speeds anything up
-const cache = new NodeCache({
-    stdTTL: 5 // seconds
-});
+import cache from "@server/lib/cache";
 
 const verifyResourceSessionSchema = z.object({
     sessions: z.record(z.string()).optional(),
@@ -165,7 +160,7 @@ export async function verifyResourceSession(
             }
 
             resourceData = result;
-            cache.set(resourceCacheKey, resourceData);
+            cache.set(resourceCacheKey, resourceData, 5);
         }
 
         const { resource, pincode, password, headerAuth } = resourceData;
@@ -425,7 +420,7 @@ export async function verifyResourceSession(
                     headerAuth.headerAuthHash
                 )
             ) {
-                cache.set(clientHeaderAuthKey, clientHeaderAuth);
+                cache.set(clientHeaderAuthKey, clientHeaderAuth, 5);
                 logger.debug("Resource allowed because header auth is valid");
 
                 logRequestAudit(
@@ -524,7 +519,7 @@ export async function verifyResourceSession(
                 );
 
                 resourceSession = result?.resourceSession;
-                cache.set(sessionCacheKey, resourceSession);
+                cache.set(sessionCacheKey, resourceSession, 5);
             }
 
             if (resourceSession?.isRequestToken) {
@@ -651,7 +646,7 @@ export async function verifyResourceSession(
                             resource
                         );
 
-                        cache.set(userAccessCacheKey, allowedUserData);
+                        cache.set(userAccessCacheKey, allowedUserData, 5);
                     }
 
                     if (
@@ -885,7 +880,7 @@ async function checkRules(
 
     if (!rules) {
         rules = await getResourceRules(resourceId);
-        cache.set(ruleCacheKey, rules);
+        cache.set(ruleCacheKey, rules, 5);
     }
 
     if (rules.length === 0) {
