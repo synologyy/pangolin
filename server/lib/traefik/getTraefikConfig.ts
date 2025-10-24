@@ -56,6 +56,8 @@ export async function getTraefikConfig(
             setHostHeader: resources.setHostHeader,
             enableProxy: resources.enableProxy,
             headers: resources.headers,
+            proxyProtocol: resources.proxyProtocol,
+            proxyProtocolVersion: resources.proxyProtocolVersion,
             // Target fields
             targetId: targets.targetId,
             targetEnabled: targets.enabled,
@@ -164,6 +166,8 @@ export async function getTraefikConfig(
                 enableProxy: row.enableProxy,
                 targets: [],
                 headers: row.headers,
+                proxyProtocol: row.proxyProtocol,
+                proxyProtocolVersion: row.proxyProtocolVersion ?? 1,
                 path: row.path, // the targets will all have the same path
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
                 rewritePath: row.rewritePath,
@@ -562,6 +566,8 @@ export async function getTraefikConfig(
                 ...(protocol === "tcp" ? { rule: "HostSNI(`*`)" } : {})
             };
 
+            const serversTransportName = `${key}-proxy-protocol-transport`;
+
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
                     servers: (() => {
@@ -615,6 +621,9 @@ export async function getTraefikConfig(
                                 }
                             });
                     })(),
+                    ...(resource.proxyProtocol
+                        ? { serversTransport: serversTransportName }
+                        : {}),
                     ...(resource.stickySession
                         ? {
                               sticky: {
@@ -627,6 +636,23 @@ export async function getTraefikConfig(
                         : {})
                 }
             };
+
+            // Add serversTransport configuration if proxy protocol is enabled
+            if (resource.proxyProtocol) {
+                if (!config_output[protocol].serversTransports) {
+                    config_output[protocol].serversTransports = {};
+                }
+                
+                config_output[protocol].serversTransports[serversTransportName] = {
+                    proxyProtocol: {
+                        version: resource.proxyProtocolVersion || 1
+                    }
+                };
+
+                logger.debug(
+                    `Enabled Proxy Protocol v${resource.proxyProtocolVersion || 1} for ${protocol} resource ${resource.resourceId} (${resource.name})`
+                );
+            }
         }
     }
     return config_output;
