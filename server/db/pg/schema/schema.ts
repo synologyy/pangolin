@@ -25,7 +25,8 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
-    createdAt: text("createdAt")
+    createdAt: text("createdAt"),
+    requireTwoFactor: boolean("requireTwoFactor").default(false)
 });
 
 export const orgDomains = pgTable("orgDomains", {

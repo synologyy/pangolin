@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "@server/db";
+import { db, orgs } from "@server/db";
 import { userOrgs } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 export async function verifyOrgAccess(
     req: Request,
@@ -43,12 +44,27 @@ export async function verifyOrgAccess(
                     "User does not have access to this organization"
                 )
             );
-        } else {
-            // User has access, attach the user's role to the request for potential future use
-            req.userOrgRoleId = req.userOrg.roleId;
-            req.userOrgId = orgId;
-            return next();
         }
+
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId,
+            userId
+        });
+
+        if (!policyCheck.success || policyCheck.error) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "Failed organization access policy check: " +
+                        (policyCheck.error || "Unknown error")
+                )
+            );
+        }
+
+        // User has access, attach the user's role to the request for potential future use
+        req.userOrgRoleId = req.userOrg.roleId;
+        req.userOrgId = orgId;
+        return next();
     } catch (e) {
         return next(
             createHttpError(
