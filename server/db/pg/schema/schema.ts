@@ -26,7 +26,8 @@ export const orgs = pgTable("orgs", {
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
     createdAt: text("createdAt"),
-    requireTwoFactor: boolean("requireTwoFactor").default(false)
+    requireTwoFactor: boolean("requireTwoFactor"),
+    maxSessionLengthHours: integer("maxSessionLengthHours")
 });
 
 export const orgDomains = pgTable("orgDomains", {
@@ -226,7 +227,8 @@ export const sessions = pgTable("session", {
     userId: varchar("userId")
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
-    expiresAt: bigint("expiresAt", { mode: "number" }).notNull()
+    expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
+    issuedAt: bigint("expiresAt", { mode: "number" })
 });
 
 export const newtSessions = pgTable("newtSession", {

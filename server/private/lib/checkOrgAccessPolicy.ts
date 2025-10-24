@@ -12,7 +12,7 @@
  */
 
 import { build } from "@server/build";
-import { db, Org, orgs, User, users } from "@server/db";
+import { db, Org, orgs, sessions, User, users } from "@server/db";
 import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import license from "#private/license/license";
@@ -28,6 +28,7 @@ export async function checkOrgAccessPolicy(
 ): Promise<CheckOrgAccessPolicyResult> {
     const userId = props.userId || props.user?.userId;
     const orgId = props.orgId || props.org?.orgId;
+    const sessionId = props.sessionId || props.session?.sessionId;
 
     if (!orgId) {
         return {
@@ -37,6 +38,9 @@ export async function checkOrgAccessPolicy(
     }
     if (!userId) {
         return { allowed: false, error: "User ID is required" };
+    }
+    if (!sessionId) {
+        return { allowed: false, error: "Session ID is required" };
     }
 
     if (build === "saas") {
@@ -80,6 +84,17 @@ export async function checkOrgAccessPolicy(
         }
     }
 
+    if (!props.session) {
+        const [sessionQuery] = await db
+            .select()
+            .from(sessions)
+            .where(eq(sessions.sessionId, sessionId));
+        props.session = sessionQuery;
+        if (!props.session) {
+            return { allowed: false, error: "Session not found" };
+        }
+    }
+
     // now check the policies
     const policies: CheckOrgAccessPolicyResult["policies"] = {};
 
@@ -88,7 +103,34 @@ export async function checkOrgAccessPolicy(
         policies.requiredTwoFactor = props.user.twoFactorEnabled || false;
     }
 
-    const allowed = Object.values(policies).every((v) => v === true);
+    if (props.org.maxSessionLengthHours) {
+        const sessionIssuedAt = props.session.issuedAt; // may be null
+        const maxSessionLengthHours = props.org.maxSessionLengthHours;
+
+        if (sessionIssuedAt) {
+            const maxSessionLengthMs = maxSessionLengthHours * 60 * 60 * 1000;
+            const sessionAgeMs = Date.now() - sessionIssuedAt;
+            policies.maxSessionLength = {
+                compliant: sessionAgeMs <= maxSessionLengthMs,
+                maxSessionLengthHours,
+                sessionAgeHours: sessionAgeMs / (60 * 60 * 1000)
+            };
+        } else {
+            policies.maxSessionLength = {
+                compliant: false,
+                maxSessionLengthHours,
+                sessionAgeHours: maxSessionLengthHours
+            };
+        }
+    }
+
+    let allowed = true;
+    if (policies.requiredTwoFactor === false) {
+        allowed = false;
+    }
+    if (policies.maxSessionLength && policies.maxSessionLength.compliant === false) {
+        allowed = false;
+    }
 
     return {
         allowed,

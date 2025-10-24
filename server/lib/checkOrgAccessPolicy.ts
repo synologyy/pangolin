@@ -1,10 +1,12 @@
-import { Org, User } from "@server/db";
+import { Org, Session, User } from "@server/db";
 
 export type CheckOrgAccessPolicyProps = {
     orgId?: string;
     org?: Org;
     userId?: string;
     user?: User;
+    sessionId?: string;
+    session?: Session;
 };
 
 export type CheckOrgAccessPolicyResult = {
@@ -12,6 +14,11 @@ export type CheckOrgAccessPolicyResult = {
     error?: string;
     policies?: {
         requiredTwoFactor?: boolean;
+        maxSessionLength?: {
+            compliant: boolean;
+            maxSessionLengthHours: number;
+            sessionAgeHours: number;
+        }
     };
 };
 

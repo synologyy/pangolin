@@ -16,6 +16,8 @@ import Enable2FaDialog from "./Enable2FaDialog";
 import { useTranslations } from "next-intl";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useRouter } from "next/navigation";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { createApiClient } from "@app/lib/api";
 
 type OrgPolicyResultProps = {
     orgId: string;
@@ -41,15 +43,18 @@ export default function OrgPolicyResult({
     const t = useTranslations();
     const { user } = useUserContext();
     const router = useRouter();
-
-    // Determine if user is compliant with 2FA policy
-    const isTwoFactorCompliant = user?.twoFactorEnabled || false;
-    const policyKeys = Object.keys(accessRes.policies || {});
+    let requireedSteps = 0;
+    let completedSteps = 0;
+    const { env } = useEnvContext();
+    const api = createApiClient({ env });
 
     const policies: PolicyItem[] = [];
-
-    // Only add 2FA policy if the organization has it enforced
-    if (policyKeys.includes("requiredTwoFactor")) {
+    if (
+        accessRes.policies?.requiredTwoFactor === false ||
+        accessRes.policies?.requiredTwoFactor === true
+    ) {
+        const isTwoFactorCompliant =
+            accessRes.policies?.requiredTwoFactor === true;
         policies.push({
             id: "two-factor",
             name: t("twoFactorAuthentication"),
@@ -60,54 +65,51 @@ export default function OrgPolicyResult({
                 : undefined,
             actionText: !isTwoFactorCompliant ? t("enableTwoFactor") : undefined
         });
-
-        // policies.push({
-        //     id: "reauth-required",
-        //     name: "Re-authentication",
-        //     description:
-        //         "It's been 30 days since you last verified your identity. Please log out and log back in to continue.",
-        //     compliant: false,
-        //     action: () => {},
-        //     actionText: "Log Out"
-        // });
-        //
-        // policies.push({
-        //     id: "password-rotation",
-        //     name: "Password Rotation",
-        //     description:
-        //         "It's been 30 days since you last changed your password. Please update your password to continue.",
-        //     compliant: false,
-        //     action: () => {},
-        //     actionText: "Change Password"
-        // });
+        requireedSteps += 1;
+        if (isTwoFactorCompliant) {
+            completedSteps += 1;
+        }
     }
 
-    const nonCompliantPolicies = policies.filter((policy) => !policy.compliant);
-    const allCompliant =
-        policies.length === 0 || nonCompliantPolicies.length === 0;
+    // Add max session length policy if the organization has it enforced
+    if (accessRes.policies?.maxSessionLength) {
+        const maxSessionPolicy = accessRes.policies?.maxSessionLength;
+        const maxDays = Math.round(maxSessionPolicy.maxSessionLengthHours / 24);
+        const daysAgo = Math.round(maxSessionPolicy.sessionAgeHours / 24);
 
-    // Calculate progress
-    const completedPolicies = policies.filter(
-        (policy) => policy.compliant
-    ).length;
-    const totalPolicies = policies.length;
+        policies.push({
+            id: "max-session-length",
+            name: t("reauthenticationRequired"),
+            description: t("reauthenticationDescription", {
+                maxDays,
+                daysAgo
+            }),
+            compliant: maxSessionPolicy.compliant,
+            action: !maxSessionPolicy.compliant
+                ? async () => {
+                      try {
+                          await api.post("/auth/logout", undefined);
+                          router.push("/auth/login");
+                      } catch (error) {
+                          console.error("Error during logout:", error);
+                          router.push("/auth/login");
+                      }
+                  }
+                : undefined,
+            actionText: !maxSessionPolicy.compliant
+                ? t("reauthenticateNow")
+                : undefined
+        });
+        requireedSteps += 1;
+        if (maxSessionPolicy.compliant) {
+            completedSteps += 1;
+        }
+    }
+
     const progressPercentage =
-        totalPolicies > 0 ? (completedPolicies / totalPolicies) * 100 : 100;
+        requireedSteps === 0 ? 100 : (completedSteps / requireedSteps) * 100;
 
-    // If no policies are enforced, show a simple success message
-    if (policies.length === 0) {
-        return (
-            <div className="text-center py-8">
-                <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-4" />
-                <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                    {t("accessGranted")}
-                </h2>
-                <p className="text-sm text-gray-600">
-                    {t("noSecurityRequirements")}
-                </p>
-            </div>
-        );
-    }
+    const allCompliant = completedSteps === requireedSteps;
 
     return (
         <>
@@ -123,12 +125,10 @@ export default function OrgPolicyResult({
                     </CardDescription>
                 </CardHeader>
 
-                {/* Progress Bar */}
                 <div className="px-6 pb-4">
                     <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
                         <span>
-                            {completedPolicies} of {totalPolicies} steps
-                            completed
+                            {completedSteps} of {requireedSteps} steps completed
                         </span>
                         <span>{Math.round(progressPercentage)}%</span>
                     </div>
@@ -171,17 +171,6 @@ export default function OrgPolicyResult({
                     ))}
                 </CardContent>
             </Card>
-
-            {allCompliant && (
-                <div className="text-center">
-                    <p className="text-sm text-green-600 font-medium">
-                        {t("allRequirementsMet")}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                        {t("youCanNowAccessOrganization")}
-                    </p>
-                </div>
-            )}
 
             <Enable2FaDialog
                 open={show2FaDialog}

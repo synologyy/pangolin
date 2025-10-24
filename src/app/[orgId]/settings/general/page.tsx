@@ -19,6 +19,13 @@ import {
     FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@/components/ui/select";
 
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -46,11 +53,24 @@ import { SwitchInput } from "@app/components/SwitchInput";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { Badge } from "@app/components/ui/badge";
+
+// Session length options in hours
+const SESSION_LENGTH_OPTIONS = [
+    { value: null, label: "Unenforced" },
+    { value: 72, label: "3 days" }, // 3 * 24 = 72 hours
+    { value: 168, label: "7 days" }, // 7 * 24 = 168 hours
+    { value: 336, label: "14 days" }, // 14 * 24 = 336 hours
+    { value: 720, label: "30 days" }, // 30 * 24 = 720 hours
+    { value: 2160, label: "90 days" }, // 90 * 24 = 2160 hours
+    { value: 4320, label: "180 days" } // 180 * 24 = 4320 hours
+];
+
 // Schema for general organization settings
 const GeneralFormSchema = z.object({
     name: z.string(),
     subnet: z.string().optional(),
-    requireTwoFactor: z.boolean().optional()
+    requireTwoFactor: z.boolean().optional(),
+    maxSessionLengthHours: z.number().nullable().optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -76,7 +96,8 @@ export default function GeneralPage() {
         defaultValues: {
             name: org?.org.name,
             subnet: org?.org.subnet || "", // Add default value for subnet
-            requireTwoFactor: org?.org.requireTwoFactor || false
+            requireTwoFactor: org?.org.requireTwoFactor || false,
+            maxSessionLengthHours: org?.org.maxSessionLengthHours || null
         },
         mode: "onChange"
     });
@@ -141,6 +162,7 @@ export default function GeneralPage() {
             } as any;
             if (build !== "oss") {
                 reqData.requireTwoFactor = data.requireTwoFactor || false;
+                reqData.maxSessionLengthHours = data.maxSessionLengthHours;
             }
 
             // Update organization
@@ -331,6 +353,97 @@ export default function GeneralPage() {
                                                           )
                                                         : t(
                                                               "requireTwoFactorDescription"
+                                                          )}
+                                                </FormDescription>
+                                            </FormItem>
+                                        );
+                                    }}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="maxSessionLengthHours"
+                                    render={({ field }) => {
+                                        const isEnterpriseNotLicensed =
+                                            build === "enterprise" &&
+                                            !isUnlocked();
+                                        const isSaasNotSubscribed =
+                                            build === "saas" &&
+                                            !subscriptionStatus?.isSubscribed();
+                                        const isDisabled =
+                                            isEnterpriseNotLicensed ||
+                                            isSaasNotSubscribed;
+
+                                        return (
+                                            <FormItem className="col-span-2">
+                                                <FormLabel>
+                                                    {t("maxSessionLength")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={
+                                                            field.value?.toString() ||
+                                                            "null"
+                                                        }
+                                                        onValueChange={(value) => {
+                                                            if (!isDisabled) {
+                                                                const numValue =
+                                                                    value === "null"
+                                                                        ? null
+                                                                        : parseInt(
+                                                                              value,
+                                                                              10
+                                                                          );
+                                                                form.setValue(
+                                                                    "maxSessionLengthHours",
+                                                                    numValue
+                                                                );
+                                                            }
+                                                        }}
+                                                        disabled={isDisabled}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue
+                                                                placeholder={
+                                                                    t(
+                                                                        "selectSessionLength"
+                                                                    )
+                                                                }
+                                                            />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {SESSION_LENGTH_OPTIONS.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value ===
+                                                                            null
+                                                                                ? "null"
+                                                                                : option.value.toString()
+                                                                        }
+                                                                        value={
+                                                                            option.value ===
+                                                                            null
+                                                                                ? "null"
+                                                                                : option.value.toString()
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    {isDisabled
+                                                        ? t(
+                                                              "maxSessionLengthDisabledDescription"
+                                                          )
+                                                        : t(
+                                                              "maxSessionLengthDescription"
                                                           )}
                                                 </FormDescription>
                                             </FormItem>

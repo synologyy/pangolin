@@ -24,7 +24,8 @@ const updateOrgParamsSchema = z
 const updateOrgBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
-        requireTwoFactor: z.boolean().optional()
+        requireTwoFactor: z.boolean().optional(),
+        maxSessionLengthHours: z.number().nullable().optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -80,6 +81,7 @@ export async function updateOrg(
         const isLicensed = await isLicensedOrSubscribed(orgId);
         if (!isLicensed) {
             parsedBody.data.requireTwoFactor = undefined;
+            parsedBody.data.maxSessionLengthHours = undefined;
         }
 
         if (
@@ -100,7 +102,8 @@ export async function updateOrg(
             .update(orgs)
             .set({
                 name: parsedBody.data.name,
-                requireTwoFactor: parsedBody.data.requireTwoFactor
+                requireTwoFactor: parsedBody.data.requireTwoFactor,
+                maxSessionLengthHours: parsedBody.data.maxSessionLengthHours
             })
             .where(eq(orgs.orgId, orgId))
             .returning();

@@ -68,7 +68,6 @@ export async function checkOrgUserAccess(
     next: NextFunction
 ): Promise<any> {
     try {
-        logger.debug("here0 ")
         const parsedParams = paramsSchema.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
@@ -116,7 +115,8 @@ export async function checkOrgUserAccess(
 
         const policyCheck = await checkOrgAccessPolicy({
             orgId,
-            userId
+            userId,
+            session: req.session
         });
 
         // if we get here, the user has an org join, we just don't know if they pass the policies

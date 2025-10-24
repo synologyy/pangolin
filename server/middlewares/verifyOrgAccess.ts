@@ -49,7 +49,8 @@ export async function verifyOrgAccess(
 
         const policyCheck = await checkOrgAccessPolicy({
             orgId,
-            userId
+            userId,
+            session: req.session
         });
 
         logger.debug("Org check policy result", { policyCheck });

@@ -76,7 +76,8 @@ export async function getExchangeToken(
         // check org policy here
         const hasAccess = await checkOrgAccessPolicy({
             orgId: resource[0].orgId,
-            userId: req.user!.userId
+            userId: req.user!.userId,
+            session: req.session
         });
 
         if (!hasAccess.allowed || hasAccess.error) {

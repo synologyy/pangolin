@@ -19,7 +19,8 @@ export const orgs = sqliteTable("orgs", {
     name: text("name").notNull(),
     subnet: text("subnet"),
     createdAt: text("createdAt"),
-    requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" })
+    requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
+    maxSessionLengthHours: integer("maxSessionLengthHours") // hours
 });
 
 export const userDomains = sqliteTable("userDomains", {
@@ -333,7 +334,8 @@ export const sessions = sqliteTable("session", {
     userId: text("userId")
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
-    expiresAt: integer("expiresAt").notNull()
+    expiresAt: integer("expiresAt").notNull(),
+    issuedAt: integer("issuedAt")
 });
 
 export const newtSessions = sqliteTable("newtSession", {
