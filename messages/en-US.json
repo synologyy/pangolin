@@ -1891,5 +1891,15 @@
     "cannotbeUndone": "This can not be undone.",
     "toConfirm": "to confirm",
     "deleteClientQuestion": "Are you sure you want to remove the client from the site and organization?",
-    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site."
+    "clientMessageRemove": "Once removed, the client will no longer be able to connect to the site.",
+    "proxyProtocol": "Proxy Protocol Settings",
+    "proxyProtocolDescription": "Configure Proxy Protocol to preserve client IP addresses for TCP/UDP services.",
+    "enableProxyProtocol": "Enable Proxy Protocol",
+    "proxyProtocolInfo": "Preserve client IP addresses for TCP/UDP backends",
+    "proxyProtocolVersion": "Proxy Protocol Version",
+    "version1": " Version 1 (Recommended)",
+    "version2": "Version 2",
+    "versionDescription": "Version 1 is text-based and widely supported. Version 2 is binary and more efficient but less compatible.",
+    "warning": "Warning",
+    "proxyProtocolWarning": "Your backend application must be configured to accept Proxy Protocol connections. If your backend doesn't support Proxy Protocol, enabling this will break all connections. Make sure to configure your backend to trust Proxy Protocol headers from Traefik."
 }

@@ -809,7 +809,7 @@ export default function ReverseProxyTargets(props: {
             } else {
                 // For TCP/UDP resources, save proxy protocol settings
                 const proxyData = proxySettingsForm.getValues();
-                
+
                 const payload = {
                     proxyProtocol: proxyData.proxyProtocol || false,
                     proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
@@ -1701,10 +1701,10 @@ export default function ReverseProxyTargets(props: {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            Proxy Protocol Settings
+                            {t("proxyProtocol")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            Configure Proxy Protocol to preserve client IP addresses for TCP/UDP services.
+                            {t("proxyProtocolDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
@@ -1725,8 +1725,12 @@ export default function ReverseProxyTargets(props: {
                                                 <FormControl>
                                                     <SwitchInput
                                                         id="proxy-protocol-toggle"
-                                                        label="Enable Proxy Protocol"
-                                                        description="Preserve client IP addresses for TCP/UDP backends"
+                                                        label={t(
+                                                            "enableProxyProtocol"
+                                                        )}
+                                                        description={t(
+                                                            "proxyProtocolInfo"
+                                                        )}
                                                         defaultChecked={
                                                             field.value || false
                                                         }
@@ -1738,7 +1742,7 @@ export default function ReverseProxyTargets(props: {
                                             </FormItem>
                                         )}
                                     />
-                                    
+
                                     {proxySettingsForm.watch("proxyProtocol") && (
                                         <>
                                             <FormField
@@ -1746,7 +1750,7 @@ export default function ReverseProxyTargets(props: {
                                                 name="proxyProtocolVersion"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Proxy Protocol Version</FormLabel>
+                                                        <FormLabel>{t("proxyProtocolVersion")}</FormLabel>
                                                         <FormControl>
                                                             <Select
                                                                 value={String(field.value || 1)}
@@ -1759,16 +1763,16 @@ export default function ReverseProxyTargets(props: {
                                                                 </SelectTrigger>
                                                                 <SelectContent>
                                                                     <SelectItem value="1">
-                                                                        Version 1 (Recommended)
+                                                                        {t("version1")}
                                                                     </SelectItem>
                                                                     <SelectItem value="2">
-                                                                        Version 2
+                                                                        {t("version2")}
                                                                     </SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </FormControl>
                                                         <FormDescription>
-                                                            Version 1 is text-based and widely supported. Version 2 is binary and more efficient but less compatible.
+                                                            {t("versionDescription")}
                                                         </FormDescription>
                                                     </FormItem>
                                                 )}
@@ -1777,9 +1781,7 @@ export default function ReverseProxyTargets(props: {
                                             <Alert>
                                                 <AlertTriangle className="h-4 w-4" />
                                                 <AlertDescription>
-                                                    <strong>Warning:</strong> Your backend application must be configured to accept Proxy Protocol connections. 
-                                                    If your backend doesn't support Proxy Protocol, enabling this will break all connections. 
-                                                    Make sure to configure your backend to trust Proxy Protocol headers from Traefik.
+                                                    <strong>{t("warning")}:</strong> {t("proxyProtocolWarning")}
                                                 </AlertDescription>
                                             </Alert>
                                         </>
