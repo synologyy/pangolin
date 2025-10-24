@@ -37,7 +37,7 @@ export default async function CreateBlueprintPage(
                 />
             </div>
 
-            <CreateBlueprintForm />
+            <CreateBlueprintForm orgId={orgId} />
         </>
     );
 }

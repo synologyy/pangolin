@@ -1161,6 +1161,8 @@
     "blueprintInfo": "Blueprint Information",
     "blueprintNameDescription": "This is the display name for the blueprint.",
     "blueprintContentsDescription": "Define the YAML content describing your infrastructure",
+    "blueprintErrorCreateDescription": "An error occurred when applying the blueprint",
+    "blueprintErrorCreate": "Error creating blueprint",
     "searchBlueprintProgress": "Search blueprints...",
     "source": "Source",
     "contents": "Contents",

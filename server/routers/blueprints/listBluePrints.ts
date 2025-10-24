@@ -40,7 +40,8 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
             name: blueprints.name,
             source: blueprints.source,
             succeeded: blueprints.succeeded,
-            orgId: blueprints.orgId
+            orgId: blueprints.orgId,
+            createdAt: blueprints.createdAt
         })
         .from(blueprints)
         .leftJoin(orgs, eq(blueprints.orgId, orgs.orgId))
@@ -51,9 +52,10 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
 
 type BlueprintData = Omit<
     Awaited<ReturnType<typeof queryBlueprints>>[number],
-    "source"
+    "source" | "createdAt"
 > & {
-    source: "API" | "WEB" | "CLI";
+    source: "API" | "UI" | "NEWT";
+    createdAt: Date;
 };
 
 export type ListBlueprintsResponse = {
@@ -116,7 +118,10 @@ export async function listBlueprints(
 
         return response<ListBlueprintsResponse>(res, {
             data: {
-                blueprints: blueprintsList as BlueprintData[],
+                blueprints: blueprintsList.map((b) => ({
+                    ...b,
+                    createdAt: new Date(b.createdAt * 1000)
+                })) as BlueprintData[],
                 pagination: {
                     total: count,
                     limit,

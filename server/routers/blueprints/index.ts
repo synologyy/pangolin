@@ -1,1 +1,2 @@
-export * from "./listBluePrints";
+export * from "./listBlueprints";
+export * from "./createAndApplyBlueprint";
