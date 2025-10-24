@@ -1,15 +1,10 @@
-import { db, requestAuditLog } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
-import { eq, gt, lt, and, count } from "drizzle-orm";
 import { OpenAPITags } from "@server/openApi";
-import { z } from "zod";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
-import { QueryRequestAuditLogResponse } from "@server/routers/auditLogs/types";
-import response from "@server/lib/response";
 import logger from "@server/logger";
 import { queryAccessAuditLogsQuery, queryRequestAuditLogsParams, queryRequest } from "./queryRequstAuditLog";
 import { generateCSV } from "./generateCSV";

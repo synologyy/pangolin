@@ -17,7 +17,9 @@ import {
     Server,
     Zap,
     CreditCard,
-    Logs
+    Logs,
+    SquareMousePointer,
+    ScanEye
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -114,6 +116,26 @@ export const orgNavSections = (
         ]
     },
     {
+        heading: "Analytics",
+        items: [
+            {
+                title: "sidebarLogsRequest",
+                href: "/{orgId}/settings/logs/request",
+                icon: <SquareMousePointer className="h-4 w-4" />
+            },
+            {
+                title: "sidebarLogsAccess",
+                href: "/{orgId}/settings/logs/access",
+                icon: <ScanEye className="h-4 w-4" />
+            },
+            {
+                title: "sidebarLogsAction",
+                href: "/{orgId}/settings/logs/action",
+                icon: <Logs className="h-4 w-4" />
+            },
+        ]
+    },
+    {
         heading: "Organization",
         items: [
             {
@@ -139,11 +161,6 @@ export const orgNavSections = (
                       }
                   ]
                 : []),
-            {
-                title: "sidebarLogs",
-                href: "/{orgId}/settings/logs/request",
-                icon: <Logs className="h-4 w-4" />
-            },
             {
                 title: "sidebarSettings",
                 href: "/{orgId}/settings/general",

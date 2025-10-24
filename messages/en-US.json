@@ -1921,5 +1921,9 @@
     "requestLogs": "Request Logs",
     "host": "Host",
     "location": "Location",
-    "actionLogs": "Action Logs"
+    "actionLogs": "Action Logs",
+    "sidebarLogsRequest": "Request Logs",
+    "sidebarLogsAccess": "Access Logs",
+    "sidebarLogsAction": "Action Logs",
+    "requestLogsDescription": "View detailed pre-request logs for resources in this organization"
 }

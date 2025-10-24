@@ -46,6 +46,7 @@ import createHttpError from "http-errors";
 import { build } from "@server/build";
 import { createStore } from "#dynamic/lib/rateLimitStore";
 import { logActionAudit } from "#dynamic/middlewares";
+import { log } from "console";
 
 // Root routes
 export const unauthenticated = Router();
@@ -860,6 +861,21 @@ authenticated.delete(
     domain.deleteAccountDomain,
 );
 
+authenticated.get(
+    "/org/:orgId/logs/request",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAuditLogs
+)
+
+authenticated.get(
+    "/org/:orgId/logs/request/export",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportRequestAuditLogs
+)
+
 // Auth routes
 export const authRouter = Router();
 unauthenticated.use("/auth", authRouter);
@@ -1181,13 +1197,3 @@ authRouter.delete(
     }),
     auth.deleteSecurityKey
 );
-
-authenticated.get(
-    "/org/:orgId/logs/request",
-    logs.queryRequestAuditLogs
-)
-
-authenticated.get(
-    "/org/:orgId/logs/request/export",
-    logs.exportRequestAuditLogs
-)

@@ -12,6 +12,7 @@ import { DateTimeValue } from "@app/components/DateTimePicker";
 import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { ColumnFilter } from "@app/components/ColumnFilter";
+import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 
 export default function GeneralPage() {
     const router = useRouter();
@@ -755,6 +756,11 @@ export default function GeneralPage() {
 
     return (
         <>
+            <SettingsSectionTitle
+                title={t('requestLogs')}
+                description={t('requestLogsDescription')}
+            />
+
             <LogDataTable
                 columns={columns}
                 data={rows}

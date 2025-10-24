@@ -34,7 +34,8 @@ import {
     verifyCertificateAccess,
     verifyIdpAccess,
     verifyLoginPageAccess,
-    verifyRemoteExitNodeAccess
+    verifyRemoteExitNodeAccess,
+    verifyValidSubscription
 } from "#private/middlewares";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
@@ -348,20 +349,38 @@ authenticated.post(
 
 authenticated.get(
     "/org/:orgId/logs/action",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
     logs.queryActionAuditLogs 
 )
 
 authenticated.get(
     "/org/:orgId/logs/action/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
     logs.exportActionAuditLogs
 )
 
 authenticated.get(
     "/org/:orgId/logs/access",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
     logs.queryAccessAuditLogs 
 )
 
 authenticated.get(
     "/org/:orgId/logs/access/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
     logs.exportAccessAuditLogs
 )
