@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
+import logger from "@server/logger";
 
 export async function verifyOrgAccess(
     req: Request,
@@ -51,7 +52,9 @@ export async function verifyOrgAccess(
             userId
         });
 
-        if (!policyCheck.success || policyCheck.error) {
+        logger.debug("Org check policy result", { policyCheck });
+
+        if (!policyCheck.allowed || policyCheck.error) {
             return next(
                 createHttpError(
                     HttpCode.FORBIDDEN,

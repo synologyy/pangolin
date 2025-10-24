@@ -17,28 +17,26 @@ import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import license from "#private/license/license";
 import { eq } from "drizzle-orm";
-
-type CheckOrgAccessPolicyProps = {
-    orgId?: string;
-    org?: Org;
-    userId?: string;
-    user?: User;
-};
+import {
+    CheckOrgAccessPolicyProps,
+    CheckOrgAccessPolicyResult
+} from "@server/lib/checkOrgAccessPolicy";
+import { UserType } from "@server/types/UserTypes";
 
 export async function checkOrgAccessPolicy(
     props: CheckOrgAccessPolicyProps
-): Promise<{
-    success: boolean;
-    error?: string;
-}> {
+): Promise<CheckOrgAccessPolicyResult> {
     const userId = props.userId || props.user?.userId;
     const orgId = props.orgId || props.org?.orgId;
 
     if (!orgId) {
-        return { success: false, error: "Organization ID is required" };
+        return {
+            allowed: false,
+            error: "Organization ID is required"
+        };
     }
     if (!userId) {
-        return { success: false, error: "User ID is required" };
+        return { allowed: false, error: "User ID is required" };
     }
 
     if (build === "saas") {
@@ -46,7 +44,7 @@ export async function checkOrgAccessPolicy(
         const subscribed = tier === TierId.STANDARD;
         // if not subscribed, don't check the policies
         if (!subscribed) {
-            return { success: true };
+            return { allowed: true };
         }
     }
 
@@ -54,7 +52,7 @@ export async function checkOrgAccessPolicy(
         const isUnlocked = await license.isUnlocked();
         // if not licensed, don't check the policies
         if (!isUnlocked) {
-            return { success: true };
+            return { allowed: true };
         }
     }
 
@@ -67,7 +65,7 @@ export async function checkOrgAccessPolicy(
             .where(eq(orgs.orgId, orgId));
         props.org = orgQuery;
         if (!props.org) {
-            return { success: false, error: "Organization not found" };
+            return { allowed: false, error: "Organization not found" };
         }
     }
 
@@ -78,18 +76,22 @@ export async function checkOrgAccessPolicy(
             .where(eq(users.userId, userId));
         props.user = userQuery;
         if (!props.user) {
-            return { success: false, error: "User not found" };
+            return { allowed: false, error: "User not found" };
         }
     }
 
     // now check the policies
+    const policies: CheckOrgAccessPolicyResult["policies"] = {};
 
-    if (!props.org.requireTwoFactor && !props.user.twoFactorEnabled) {
-        return {
-            success: false,
-            error: "Two-factor authentication is required"
-        };
+    // only applies to internal users
+    if (props.user.type === UserType.Internal && props.org.requireTwoFactor) {
+        policies.requiredTwoFactor = props.user.twoFactorEnabled || false;
     }
 
-    return { success: true };
+    const allowed = Object.values(policies).every((v) => v === true);
+
+    return {
+        allowed,
+        policies
+    };
 }

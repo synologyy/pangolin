@@ -42,11 +42,15 @@ import {
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
-
+import { SwitchInput } from "@app/components/SwitchInput";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { Badge } from "@app/components/ui/badge";
 // Schema for general organization settings
 const GeneralFormSchema = z.object({
     name: z.string(),
-    subnet: z.string().optional()
+    subnet: z.string().optional(),
+    requireTwoFactor: z.boolean().optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -60,6 +64,8 @@ export default function GeneralPage() {
     const { user } = useUserContext();
     const t = useTranslations();
     const { env } = useEnvContext();
+    const { licenseStatus, isUnlocked } = useLicenseStatusContext();
+    const subscriptionStatus = useSubscriptionStatusContext();
 
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
@@ -69,7 +75,8 @@ export default function GeneralPage() {
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: org?.org.name,
-            subnet: org?.org.subnet || "" // Add default value for subnet
+            subnet: org?.org.subnet || "", // Add default value for subnet
+            requireTwoFactor: org?.org.requireTwoFactor || false
         },
         mode: "onChange"
     });
@@ -129,11 +136,15 @@ export default function GeneralPage() {
         setLoadingSave(true);
 
         try {
-            // Update organization
-            await api.post(`/org/${org?.org.orgId}`, {
+            const reqData = {
                 name: data.name
-                // subnet: data.subnet // Include subnet in the API request
-            });
+            } as any;
+            if (build !== "oss") {
+                reqData.requireTwoFactor = data.requireTwoFactor || false;
+            }
+
+            // Update organization
+            await api.post(`/org/${org?.org.orgId}`, reqData);
 
             // Also save auth page settings if they have unsaved changes
             if (
@@ -168,9 +179,7 @@ export default function GeneralPage() {
                 }}
                 dialog={
                     <div>
-                        <p>
-                            {t("orgQuestionRemove")}
-                        </p>
+                        <p>{t("orgQuestionRemove")}</p>
                         <p>{t("orgMessageRemove")}</p>
                     </div>
                 }
@@ -241,45 +250,122 @@ export default function GeneralPage() {
                 </SettingsSectionBody>
             </SettingsSection>
 
-            {(build === "saas") && (
-                <AuthPageSettings ref={authPageSettingsRef} />
-            )}
+            {/* Security Settings Section */}
+            <SettingsSection>
+                <SettingsSectionHeader>
+                    <div className="flex items-center gap-2">
+                        <SettingsSectionTitle>
+                            {t("securitySettings")}
+                        </SettingsSectionTitle>
+                        {build === "enterprise" && !isUnlocked() ? (
+                            <Badge variant="outlinePrimary">
+                                {build === "enterprise"
+                                    ? t("licenseBadge")
+                                    : t("subscriptionBadge")}
+                            </Badge>
+                        ) : null}
+                    </div>
+                    <SettingsSectionDescription>
+                        {t("securitySettingsDescription")}
+                    </SettingsSectionDescription>
+                </SettingsSectionHeader>
+                <SettingsSectionBody>
+                    <SettingsSectionForm>
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="space-y-4"
+                                id="security-settings-form"
+                            >
+                                <FormField
+                                    control={form.control}
+                                    name="requireTwoFactor"
+                                    render={({ field }) => {
+                                        const isEnterpriseNotLicensed =
+                                            build === "enterprise" &&
+                                            !isUnlocked();
+                                        const isSaasNotSubscribed =
+                                            build === "saas" &&
+                                            !subscriptionStatus?.isSubscribed();
+                                        const isDisabled =
+                                            isEnterpriseNotLicensed ||
+                                            isSaasNotSubscribed;
+                                        const shouldDisableToggle = isDisabled;
 
-            {/* Save Button */}
-            <div className="flex justify-end">
+                                        return (
+                                            <FormItem className="col-span-2">
+                                                <div className="flex items-center gap-2">
+                                                    <FormControl>
+                                                        <SwitchInput
+                                                            id="require-two-factor"
+                                                            defaultChecked={
+                                                                field.value ||
+                                                                false
+                                                            }
+                                                            label={t(
+                                                                "requireTwoFactorForAllUsers"
+                                                            )}
+                                                            disabled={
+                                                                shouldDisableToggle
+                                                            }
+                                                            onCheckedChange={(
+                                                                val
+                                                            ) => {
+                                                                if (
+                                                                    !shouldDisableToggle
+                                                                ) {
+                                                                    form.setValue(
+                                                                        "requireTwoFactor",
+                                                                        val
+                                                                    );
+                                                                }
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                </div>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    {isDisabled
+                                                        ? t(
+                                                              "requireTwoFactorDisabledDescription"
+                                                          )
+                                                        : t(
+                                                              "requireTwoFactorDescription"
+                                                          )}
+                                                </FormDescription>
+                                            </FormItem>
+                                        );
+                                    }}
+                                />
+                            </form>
+                        </Form>
+                    </SettingsSectionForm>
+                </SettingsSectionBody>
+            </SettingsSection>
+
+            {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
+
+            <div className="flex justify-end gap-2">
+                {build !== "saas" && (
+                    <Button
+                        variant="destructive"
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="flex items-center gap-2"
+                        loading={loadingDelete}
+                        disabled={loadingDelete}
+                    >
+                        {t("orgDelete")}
+                    </Button>
+                )}
                 <Button
                     type="submit"
                     form="org-settings-form"
                     loading={loadingSave}
                     disabled={loadingSave}
                 >
-                    {t("saveGeneralSettings")}
+                    {t("saveSettings")}
                 </Button>
             </div>
-
-            {build !== "saas" && (
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("orgDangerZone")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("orgDangerZoneDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionFooter>
-                        <Button
-                            variant="destructive"
-                            onClick={() => setIsDeleteModalOpen(true)}
-                            className="flex items-center gap-2"
-                            loading={loadingDelete}
-                            disabled={loadingDelete}
-                        >
-                            {t("orgDelete")}
-                        </Button>
-                    </SettingsSectionFooter>
-                </SettingsSection>
-            )}
         </SettingsContainer>
     );
 }

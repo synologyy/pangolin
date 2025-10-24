@@ -1,10 +1,18 @@
 import { Org, User } from "@server/db";
 
-type CheckOrgAccessPolicyProps = {
+export type CheckOrgAccessPolicyProps = {
     orgId?: string;
     org?: Org;
     userId?: string;
     user?: User;
+};
+
+export type CheckOrgAccessPolicyResult = {
+    allowed: boolean;
+    error?: string;
+    policies?: {
+        requiredTwoFactor?: boolean;
+    };
 };
 
 export async function checkOrgAccessPolicy(

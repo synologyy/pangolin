@@ -10,11 +10,10 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { generateSessionToken } from "@server/auth/sessions/app";
 import config from "@server/lib/config";
-import {
-    encodeHexLowerCase
-} from "@oslojs/encoding";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { response } from "@server/lib/response";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 const getExchangeTokenParams = z
     .object({
@@ -70,6 +69,22 @@ export async function getExchangeToken(
                 createHttpError(
                     HttpCode.UNAUTHORIZED,
                     "Missing SSO session cookie"
+                )
+            );
+        }
+
+        // check org policy here
+        const hasAccess = await checkOrgAccessPolicy({
+            orgId: resource[0].orgId,
+            userId: req.user!.userId
+        });
+
+        if (!hasAccess.allowed || hasAccess.error) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "Failed organization access policy check: " +
+                        (hasAccess.error || "Unknown error")
                 )
             );
         }
