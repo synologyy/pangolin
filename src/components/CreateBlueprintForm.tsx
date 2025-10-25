@@ -69,13 +69,17 @@ export default function CreateBlueprintForm({
         ),
         defaultValues: {
             name: "",
-            contents: `proxy-resources:
-    resource-nice-id-uno:
-        name: this is my resource
-        protocol: http
-        full-domain: never-gonna-give-you-up.example.com
-        host-header: example.com
-        tls-server-name: example.com
+            contents: `# Example blueprint
+# proxy-resources:
+#     resource-nice-id-uno:
+#         name: this is my resource
+#         protocol: http
+#         full-domain: never-gonna-give-you-up.example.com
+#         targets:
+#             - site: lively-yosemite-toad
+#               hostname: localhost
+#               method: http
+#               port: 8000
 `
         }
     });
@@ -125,7 +129,7 @@ export default function CreateBlueprintForm({
                             </SettingsSectionTitle>
                         </SettingsSectionHeader>
                         <SettingsSectionBody>
-                            <SettingsSectionForm>
+                            <SettingsSectionForm className="max-w-2xl">
                                 <FormField
                                     control={form.control}
                                     name="name"
@@ -159,7 +163,7 @@ export default function CreateBlueprintForm({
                                             <FormControl>
                                                 <div
                                                     className={cn(
-                                                        "resize-y h-52 min-h-52 overflow-y-auto overflow-x-clip max-w-full"
+                                                        "resize-y h-64 min-h-64 overflow-y-auto overflow-x-clip max-w-full rounded-md"
                                                     )}
                                                 >
                                                     <Editor
