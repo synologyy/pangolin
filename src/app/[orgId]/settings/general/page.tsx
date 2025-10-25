@@ -51,6 +51,7 @@ import {
 import { ChevronDown } from "lucide-react";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 // Schema for general organization settings
 const GeneralFormSchema = z.object({
@@ -288,15 +289,6 @@ export default function GeneralPage() {
                             </SettingsSectionDescription>
                         </SettingsSectionHeader>
                         <SettingsSectionBody>
-                            {/* {build === "saas" && !subscription?.subscribed ? (
-                        <Alert variant="info" className="mb-6">
-                            <AlertDescription>
-                                {t("orgAuthPageDisabled")}{" "}
-                                {t("subscriptionRequiredToUse")}
-                            </AlertDescription>
-                        </Alert>
-                    ) : null} */}
-
                             <SettingsSectionForm>
                                 <FormField
                                     control={form.control}
@@ -355,6 +347,32 @@ export default function GeneralPage() {
 
                                 {build != "oss" && (
                                     <>
+                                        {build == "saas" &&
+                                        !subscription?.subscribed ? (
+                                            <Alert
+                                                variant="info"
+                                                className="mb-6"
+                                            >
+                                                <AlertDescription>
+                                                    {t(
+                                                        "subscriptionRequiredToUse"
+                                                    )}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : null}
+
+                                        {build == "enterprise" &&
+                                        !isUnlocked() ? (
+                                            <Alert
+                                                variant="info"
+                                                className="mb-6"
+                                            >
+                                                <AlertDescription>
+                                                    {t("licenseRequiredToUse")}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : null}
+
                                         <FormField
                                             control={form.control}
                                             name="settingsLogRetentionDaysAccess"
