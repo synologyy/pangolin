@@ -820,7 +820,7 @@ authenticated.get(
 );
 
 authenticated.put(
-    "/org/:orgId/blueprints",
+    "/org/:orgId/blueprint",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.applyBlueprint),
     blueprints.createAndApplyBlueprint

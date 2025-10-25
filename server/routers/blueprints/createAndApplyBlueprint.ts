@@ -1,6 +1,6 @@
 import { OpenAPITags, registry } from "@server/openApi";
 import z from "zod";
-import { applyBlueprint as applyBlueprintFunc } from "@server/lib/blueprints/applyBlueprint";
+import { applyBlueprint } from "@server/lib/blueprints/applyBlueprint";
 import { NextFunction, Request, Response } from "express";
 import logger from "@server/logger";
 import createHttpError from "http-errors";
@@ -9,6 +9,8 @@ import { fromZodError } from "zod-validation-error";
 import response from "@server/lib/response";
 import { type Blueprint, blueprints, db, loginPage } from "@server/db";
 import { parse as parseYaml } from "yaml";
+import { ConfigSchema } from "@server/lib/blueprints/types";
+import { BlueprintSource } from "./types";
 
 const applyBlueprintSchema = z
     .object({
@@ -16,9 +18,9 @@ const applyBlueprintSchema = z
         contents: z
             .string()
             .min(1)
-            .superRefine((contents, ctx) => {
+            .superRefine((val, ctx) => {
                 try {
-                    parseYaml(contents);
+                    parseYaml(val);
                 } catch (error) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
@@ -86,42 +88,67 @@ export async function createAndApplyBlueprint(
 
         const { contents, name } = parsedBody.data;
 
-        logger.debug(`Received blueprint: ${contents}`);
+        logger.debug(`Received blueprint:`, contents);
 
-        // try {
-        //     // then parse the json
-        //     const blueprintParsed = parseYaml(contents);
+        const parsedConfig = parseYaml(contents);
+        // apply the validation in advance so that error concerning the format are ruled out first
+        const validationResult = ConfigSchema.safeParse(parsedConfig);
+        if (!validationResult.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromZodError(validationResult.error)
+                )
+            );
+        }
 
-        //     // Update the blueprint in the database
-        //     await applyBlueprintFunc(orgId, blueprintParsed);
+        let blueprintSucceeded: boolean;
+        let blueprintMessage: string;
 
-        //     await db.transaction(async (trx) => {
-        //         const newBlueprint = await trx
-        //             .insert(blueprints)
-        //             .values({
-        //                 orgId,
-        //                 name,
-        //                 contents
-        //                 // createdAt
-        //             })
-        //             .returning();
-        //     });
-        // } catch (error) {
-        //     logger.error(`Failed to update database from config: ${error}`);
+        try {
+            await applyBlueprint(orgId, parsedConfig);
+            blueprintSucceeded = true;
+            blueprintMessage = "success";
+        } catch (error) {
+            blueprintSucceeded = false;
+            blueprintMessage = `Failed to update blueprint from config: ${error}`;
+            logger.error(blueprintMessage);
+        }
 
-        //     return next(
-        //         createHttpError(
-        //             HttpCode.BAD_REQUEST,
-        //             `Failed to update database from config: ${error}`
-        //         )
-        //     );
-        // }
+        let blueprint: Blueprint | null = null;
+        await db.transaction(async (trx) => {
+            const newBlueprint = await trx
+                .insert(blueprints)
+                .values({
+                    orgId,
+                    name,
+                    contents,
+                    createdAt: Math.floor(Date.now() / 1000),
+                    succeeded: blueprintSucceeded,
+                    message: blueprintMessage,
+                    source: "UI" as BlueprintSource
+                })
+                .returning();
+
+            blueprint = newBlueprint[0];
+        });
+
+        if (!blueprint) {
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Failed to create resource"
+                )
+            );
+        }
 
         return response(res, {
-            data: null,
+            data: blueprint,
             success: true,
             error: false,
-            message: "Blueprint applied successfully",
+            message: blueprintSucceeded
+                ? "Blueprint applied with success"
+                : `Blueprint applied with errors: ${blueprintMessage}`,
             status: HttpCode.CREATED
         });
     } catch (error) {
