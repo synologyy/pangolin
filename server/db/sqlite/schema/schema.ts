@@ -11,8 +11,23 @@ export const domains = sqliteTable("domains", {
     type: text("type"), // "ns", "cname", "wildcard"
     verified: integer("verified", { mode: "boolean" }).notNull().default(false),
     failed: integer("failed", { mode: "boolean" }).notNull().default(false),
-    tries: integer("tries").notNull().default(0)
+    tries: integer("tries").notNull().default(0),
+    certResolver: text("certResolver"),
+    preferWildcardCert: integer("preferWildcardCert", { mode: "boolean" })
 });
+
+export const dnsRecords = sqliteTable("dnsRecords", {
+    id: text("id").primaryKey(),
+    domainId: text("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" }),
+
+    recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
+    baseDomain: text("baseDomain"),
+    value: text("value").notNull(), 
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+});
+
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
@@ -745,6 +760,7 @@ export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;
 export type VersionMigration = InferSelectModel<typeof versionMigrations>;
 export type ResourceRule = InferSelectModel<typeof resourceRules>;
 export type Domain = InferSelectModel<typeof domains>;
+export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
 export type ClientSite = InferSelectModel<typeof clientSites>;
 export type RoleClient = InferSelectModel<typeof roleClients>;

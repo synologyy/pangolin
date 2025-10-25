@@ -20,7 +20,7 @@ import { initTelemetryClient } from "./lib/telemetry.js";
 import { TraefikConfigManager } from "./lib/traefik/TraefikConfigManager.js";
 import { initCleanup } from "#dynamic/cleanup";
 import license from "#dynamic/license/license";
-
+import { fetchServerIp } from "./lib/serverIpService.js";
 async function startServers() {
     await setHostMeta();
 
@@ -30,6 +30,8 @@ async function startServers() {
     await license.check();
 
     await runSetupFunctions();
+
+    await fetchServerIp();
 
     initTelemetryClient();
 
