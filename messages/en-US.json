@@ -1909,5 +1909,7 @@
     "required": "Required",
     "domainSettingsUpdated": "Domain settings updated successfully",
     "orgOrDomainIdMissing": "Organization or Domain ID is missing",
-    "loadingDNSRecords": "Loading DNS records..."
+    "loadingDNSRecords": "Loading DNS records...",
+    "olmUpdateAvailableInfo": "An updated version of Olm is available. Please update to the latest version for the best experience.",
+    "client": "Client"
 }
