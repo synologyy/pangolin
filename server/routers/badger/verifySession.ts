@@ -655,7 +655,7 @@ async function checkRules(
             return rule.action as any;
         } else if (
             clientIp &&
-            rule.match == "GEOIP" &&
+            rule.match == "COUNTRY" &&
             (await isIpInGeoIP(clientIp, rule.value))
         ) {
             return rule.action as any;
