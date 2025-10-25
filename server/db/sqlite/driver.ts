@@ -13,12 +13,14 @@ bootstrapVolume();
 
 function createDb() {
     const sqlite = new Database(location);
-    return DrizzleSqlite(sqlite, { schema });
+    return DrizzleSqlite(sqlite, { schema, logger: true });
 }
 
 export const db = createDb();
 export default db;
-export type Transaction = Parameters<Parameters<typeof db["transaction"]>[0]>[0];
+export type Transaction = Parameters<
+    Parameters<(typeof db)["transaction"]>[0]
+>[0];
 
 function checkFileExists(filePath: string): boolean {
     try {
