@@ -13,6 +13,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, XCircle, Shield } from "lucide-react";
 import Enable2FaDialog from "./Enable2FaDialog";
+import ChangePasswordDialog from "./ChangePasswordDialog";
 import { useTranslations } from "next-intl";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useRouter } from "next/navigation";
@@ -40,6 +41,7 @@ export default function OrgPolicyResult({
     accessRes
 }: OrgPolicyResultProps) {
     const [show2FaDialog, setShow2FaDialog] = useState(false);
+    const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
     const t = useTranslations();
     const { user } = useUserContext();
     const router = useRouter();
@@ -102,6 +104,33 @@ export default function OrgPolicyResult({
         });
         requireedSteps += 1;
         if (maxSessionPolicy.compliant) {
+            completedSteps += 1;
+        }
+    }
+
+    // Add password age policy if the organization has it enforced
+    if (accessRes.policies?.passwordAge) {
+        const passwordAgePolicy = accessRes.policies.passwordAge;
+        const maxDays = passwordAgePolicy.maxPasswordAgeDays;
+        const daysAgo = Math.round(passwordAgePolicy.passwordAgeDays);
+
+        policies.push({
+            id: "password-age",
+            name: t("passwordExpiryRequired"),
+            description: t("passwordExpiryDescription", {
+                maxDays,
+                daysAgo
+            }),
+            compliant: passwordAgePolicy.compliant,
+            action: !passwordAgePolicy.compliant
+                ? () => setShowChangePasswordDialog(true)
+                : undefined,
+            actionText: !passwordAgePolicy.compliant
+                ? t("changePasswordNow")
+                : undefined
+        });
+        requireedSteps += 1;
+        if (passwordAgePolicy.compliant) {
             completedSteps += 1;
         }
     }
@@ -176,6 +205,14 @@ export default function OrgPolicyResult({
                 open={show2FaDialog}
                 setOpen={(val) => {
                     setShow2FaDialog(val);
+                    router.refresh();
+                }}
+            />
+
+            <ChangePasswordDialog
+                open={showChangePasswordDialog}
+                setOpen={(val) => {
+                    setShowChangePasswordDialog(val);
                     router.refresh();
                 }}
             />

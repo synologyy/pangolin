@@ -98,11 +98,12 @@ export async function checkOrgAccessPolicy(
     // now check the policies
     const policies: CheckOrgAccessPolicyResult["policies"] = {};
 
-    // only applies to internal users
+    // only applies to internal users; oidc users 2fa is managed by the IDP
     if (props.user.type === UserType.Internal && props.org.requireTwoFactor) {
         policies.requiredTwoFactor = props.user.twoFactorEnabled || false;
     }
 
+    // applies to all users
     if (props.org.maxSessionLengthHours) {
         const sessionIssuedAt = props.session.issuedAt; // may be null
         const maxSessionLengthHours = props.org.maxSessionLengthHours;
@@ -124,11 +125,38 @@ export async function checkOrgAccessPolicy(
         }
     }
 
+    // only applies to internal users; oidc users don't have passwords
+    if (props.user.type === UserType.Internal && props.org.passwordExpiryDays) {
+        if (props.user.lastPasswordChange) {
+            const passwordExpiryDays = props.org.passwordExpiryDays;
+            const passwordAgeMs = Date.now() - props.user.lastPasswordChange;
+            const passwordAgeDays = passwordAgeMs / (24 * 60 * 60 * 1000);
+
+            policies.passwordAge = {
+                compliant: passwordAgeDays <= passwordExpiryDays,
+                maxPasswordAgeDays: passwordExpiryDays,
+                passwordAgeDays: passwordAgeDays
+            };
+        } else {
+            policies.passwordAge = {
+                compliant: false,
+                maxPasswordAgeDays: props.org.passwordExpiryDays,
+                passwordAgeDays: props.org.passwordExpiryDays // Treat as expired
+            };
+        }
+    }
+
     let allowed = true;
     if (policies.requiredTwoFactor === false) {
         allowed = false;
     }
-    if (policies.maxSessionLength && policies.maxSessionLength.compliant === false) {
+    if (
+        policies.maxSessionLength &&
+        policies.maxSessionLength.compliant === false
+    ) {
+        allowed = false;
+    }
+    if (policies.passwordAge && policies.passwordAge.compliant === false) {
         allowed = false;
     }
 

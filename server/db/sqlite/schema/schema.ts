@@ -20,7 +20,8 @@ export const orgs = sqliteTable("orgs", {
     subnet: text("subnet"),
     createdAt: text("createdAt"),
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
-    maxSessionLengthHours: integer("maxSessionLengthHours") // hours
+    maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
+    passwordExpiryDays: integer("passwordExpiryDays") // days
 });
 
 export const userDomains = sqliteTable("userDomains", {
@@ -229,7 +230,8 @@ export const users = sqliteTable("user", {
     termsVersion: text("termsVersion"),
     serverAdmin: integer("serverAdmin", { mode: "boolean" })
         .notNull()
-        .default(false)
+        .default(false),
+    lastPasswordChange: integer("lastPasswordChange")
 });
 
 export const securityKeys = sqliteTable("webauthnCredentials", {

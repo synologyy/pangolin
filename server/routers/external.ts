@@ -973,11 +973,11 @@ authRouter.post(
     auth.requestEmailVerificationCode
 );
 
-// authRouter.post(
-//     "/change-password",
-//     verifySessionUserMiddleware,
-//     auth.changePassword
-// );
+authRouter.post(
+    "/change-password",
+    verifySessionUserMiddleware,
+    auth.changePassword
+);
 
 authRouter.post(
     "/reset-password/request",

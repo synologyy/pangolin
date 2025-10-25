@@ -65,12 +65,23 @@ const SESSION_LENGTH_OPTIONS = [
     { value: 4320, label: "180 days" } // 180 * 24 = 4320 hours
 ];
 
+// Password expiry options in days
+const PASSWORD_EXPIRY_OPTIONS = [
+    { value: null, label: "Never Expire" },
+    { value: 30, label: "30 days" },
+    { value: 60, label: "60 days" },
+    { value: 90, label: "90 days" },
+    { value: 180, label: "180 days" },
+    { value: 365, label: "1 year" }
+];
+
 // Schema for general organization settings
 const GeneralFormSchema = z.object({
     name: z.string(),
     subnet: z.string().optional(),
     requireTwoFactor: z.boolean().optional(),
-    maxSessionLengthHours: z.number().nullable().optional()
+    maxSessionLengthHours: z.number().nullable().optional(),
+    passwordExpiryDays: z.number().nullable().optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -87,6 +98,14 @@ export default function GeneralPage() {
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscriptionStatus = useSubscriptionStatusContext();
 
+    // Check if security features are disabled due to licensing/subscription
+    const isSecurityFeatureDisabled = () => {
+        const isEnterpriseNotLicensed = build === "enterprise" && !isUnlocked();
+        const isSaasNotSubscribed =
+            build === "saas" && !subscriptionStatus?.isSubscribed();
+        return isEnterpriseNotLicensed || isSaasNotSubscribed;
+    };
+
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
     const authPageSettingsRef = useRef<AuthPageSettingsRef>(null);
@@ -97,7 +116,8 @@ export default function GeneralPage() {
             name: org?.org.name,
             subnet: org?.org.subnet || "", // Add default value for subnet
             requireTwoFactor: org?.org.requireTwoFactor || false,
-            maxSessionLengthHours: org?.org.maxSessionLengthHours || null
+            maxSessionLengthHours: org?.org.maxSessionLengthHours || null,
+            passwordExpiryDays: org?.org.passwordExpiryDays || null
         },
         mode: "onChange"
     });
@@ -163,6 +183,7 @@ export default function GeneralPage() {
             if (build !== "oss") {
                 reqData.requireTwoFactor = data.requireTwoFactor || false;
                 reqData.maxSessionLengthHours = data.maxSessionLengthHours;
+                reqData.passwordExpiryDays = data.passwordExpiryDays;
             }
 
             // Update organization
@@ -303,16 +324,8 @@ export default function GeneralPage() {
                                     control={form.control}
                                     name="requireTwoFactor"
                                     render={({ field }) => {
-                                        const isEnterpriseNotLicensed =
-                                            build === "enterprise" &&
-                                            !isUnlocked();
-                                        const isSaasNotSubscribed =
-                                            build === "saas" &&
-                                            !subscriptionStatus?.isSubscribed();
                                         const isDisabled =
-                                            isEnterpriseNotLicensed ||
-                                            isSaasNotSubscribed;
-                                        const shouldDisableToggle = isDisabled;
+                                            isSecurityFeatureDisabled();
 
                                         return (
                                             <FormItem className="col-span-2">
@@ -328,13 +341,13 @@ export default function GeneralPage() {
                                                                 "requireTwoFactorForAllUsers"
                                                             )}
                                                             disabled={
-                                                                shouldDisableToggle
+                                                                isDisabled
                                                             }
                                                             onCheckedChange={(
                                                                 val
                                                             ) => {
                                                                 if (
-                                                                    !shouldDisableToggle
+                                                                    !isDisabled
                                                                 ) {
                                                                     form.setValue(
                                                                         "requireTwoFactor",
@@ -347,13 +360,9 @@ export default function GeneralPage() {
                                                 </div>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {isDisabled
-                                                        ? t(
-                                                              "requireTwoFactorDisabledDescription"
-                                                          )
-                                                        : t(
-                                                              "requireTwoFactorDescription"
-                                                          )}
+                                                    {t(
+                                                        "requireTwoFactorDescription"
+                                                    )}
                                                 </FormDescription>
                                             </FormItem>
                                         );
@@ -363,15 +372,8 @@ export default function GeneralPage() {
                                     control={form.control}
                                     name="maxSessionLengthHours"
                                     render={({ field }) => {
-                                        const isEnterpriseNotLicensed =
-                                            build === "enterprise" &&
-                                            !isUnlocked();
-                                        const isSaasNotSubscribed =
-                                            build === "saas" &&
-                                            !subscriptionStatus?.isSubscribed();
                                         const isDisabled =
-                                            isEnterpriseNotLicensed ||
-                                            isSaasNotSubscribed;
+                                            isSecurityFeatureDisabled();
 
                                         return (
                                             <FormItem className="col-span-2">
@@ -384,10 +386,13 @@ export default function GeneralPage() {
                                                             field.value?.toString() ||
                                                             "null"
                                                         }
-                                                        onValueChange={(value) => {
+                                                        onValueChange={(
+                                                            value
+                                                        ) => {
                                                             if (!isDisabled) {
                                                                 const numValue =
-                                                                    value === "null"
+                                                                    value ===
+                                                                    "null"
                                                                         ? null
                                                                         : parseInt(
                                                                               value,
@@ -403,11 +408,9 @@ export default function GeneralPage() {
                                                     >
                                                         <SelectTrigger>
                                                             <SelectValue
-                                                                placeholder={
-                                                                    t(
-                                                                        "selectSessionLength"
-                                                                    )
-                                                                }
+                                                                placeholder={t(
+                                                                    "selectSessionLength"
+                                                                )}
                                                             />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -438,13 +441,90 @@ export default function GeneralPage() {
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {isDisabled
-                                                        ? t(
-                                                              "maxSessionLengthDisabledDescription"
-                                                          )
-                                                        : t(
-                                                              "maxSessionLengthDescription"
-                                                          )}
+                                                    {t(
+                                                        "maxSessionLengthDescription"
+                                                    )}
+                                                </FormDescription>
+                                            </FormItem>
+                                        );
+                                    }}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="passwordExpiryDays"
+                                    render={({ field }) => {
+                                        const isDisabled =
+                                            isSecurityFeatureDisabled();
+
+                                        return (
+                                            <FormItem className="col-span-2">
+                                                <FormLabel>
+                                                    {t("passwordExpiryDays")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={
+                                                            field.value?.toString() ||
+                                                            "null"
+                                                        }
+                                                        onValueChange={(
+                                                            value
+                                                        ) => {
+                                                            if (!isDisabled) {
+                                                                const numValue =
+                                                                    value ===
+                                                                    "null"
+                                                                        ? null
+                                                                        : parseInt(
+                                                                              value,
+                                                                              10
+                                                                          );
+                                                                form.setValue(
+                                                                    "passwordExpiryDays",
+                                                                    numValue
+                                                                );
+                                                            }
+                                                        }}
+                                                        disabled={isDisabled}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue
+                                                                placeholder={t(
+                                                                    "selectPasswordExpiry"
+                                                                )}
+                                                            />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {PASSWORD_EXPIRY_OPTIONS.map(
+                                                                (option) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            option.value ===
+                                                                            null
+                                                                                ? "null"
+                                                                                : option.value.toString()
+                                                                        }
+                                                                        value={
+                                                                            option.value ===
+                                                                            null
+                                                                                ? "null"
+                                                                                : option.value.toString()
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormDescription>
+                                                    <FormMessage />
+                                                    {t(
+                                                        "passwordExpiryDescription"
+                                                    )}
                                                 </FormDescription>
                                             </FormItem>
                                         );

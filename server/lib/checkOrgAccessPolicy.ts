@@ -18,6 +18,11 @@ export type CheckOrgAccessPolicyResult = {
             compliant: boolean;
             maxSessionLengthHours: number;
             sessionAgeHours: number;
+        };
+        passwordAge?: {
+            compliant: boolean;
+            maxPasswordAgeDays: number;
+            passwordAgeDays: number;
         }
     };
 };
