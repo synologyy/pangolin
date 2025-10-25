@@ -35,7 +35,9 @@ import {
     loginPageOrg,
     LoginPage,
     resourceHeaderAuth,
-    ResourceHeaderAuth
+    ResourceHeaderAuth,
+    orgs,
+    requestAuditLog
 } from "@server/db";
 import {
     resources,
@@ -300,7 +302,8 @@ function loadEncryptData() {
         return; // already loaded
     }
 
-    encryptionKeyPath = privateConfig.getRawPrivateConfig().server.encryption_key_path;
+    encryptionKeyPath =
+        privateConfig.getRawPrivateConfig().server.encryption_key_path;
 
     if (!fs.existsSync(encryptionKeyPath)) {
         throw new Error(
@@ -1571,6 +1574,196 @@ hybridRouter.post(
                 `Returning ${Object.keys(endpoints).length} endpoints: ${JSON.stringify(endpoints)}`
             );
             return res.status(HttpCode.OK).send({ endpoints });
+        } catch (error) {
+            logger.error(error);
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "An error occurred..."
+                )
+            );
+        }
+    }
+);
+
+hybridRouter.get(
+    "/org/:orgId/get-retention-days",
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const parsedParams = getOrgLoginPageParamsSchema.safeParse(
+                req.params
+            );
+            if (!parsedParams.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedParams.error).toString()
+                    )
+                );
+            }
+
+            const { orgId } = parsedParams.data;
+
+            const remoteExitNode = req.remoteExitNode;
+
+            if (!remoteExitNode || !remoteExitNode.exitNodeId) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Remote exit node not found"
+                    )
+                );
+            }
+
+            if (await checkExitNodeOrg(remoteExitNode.exitNodeId, orgId)) {
+                // If the exit node is not allowed for the org, return an error
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Exit node not allowed for this organization"
+                    )
+                );
+            }
+
+            const [org] = await db
+                .select({
+                    settingsLogRetentionDaysRequest:
+                        orgs.settingsLogRetentionDaysRequest
+                })
+                .from(orgs)
+                .where(eq(orgs.orgId, orgId))
+                .limit(1);
+
+            return response(res, {
+                data: {
+                    settingsLogRetentionDaysRequest:
+                        org.settingsLogRetentionDaysRequest
+                },
+                success: true,
+                error: false,
+                message: "Log retention days retrieved successfully",
+                status: HttpCode.OK
+            });
+        } catch (error) {
+            logger.error(error);
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "An error occurred..."
+                )
+            );
+        }
+    }
+);
+
+const batchLogsSchema = z.object({
+    logs: z.array(
+        z.object({
+            timestamp: z.number(),
+            orgId: z.string().optional(),
+            actorType: z.string().optional(),
+            actor: z.string().optional(),
+            actorId: z.string().optional(),
+            metadata: z.string().nullable(),
+            action: z.boolean(),
+            resourceId: z.number().optional(),
+            reason: z.number(),
+            location: z.string().optional(),
+            originalRequestURL: z.string(),
+            scheme: z.string(),
+            host: z.string(),
+            path: z.string(),
+            method: z.string(),
+            ip: z.string().optional(),
+            tls: z.boolean()
+        })
+    )
+});
+
+hybridRouter.post(
+    "/org/:orgId/logs/batch",
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const parsedParams = getOrgLoginPageParamsSchema.safeParse(
+                req.params
+            );
+            if (!parsedParams.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedParams.error).toString()
+                    )
+                );
+            }
+
+            const { orgId } = parsedParams.data;
+
+            const parsedBody = batchLogsSchema.safeParse(req.body);
+            if (!parsedBody.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedBody.error).toString()
+                    )
+                );
+            }
+
+            const { logs } = parsedBody.data;
+
+            const remoteExitNode = req.remoteExitNode;
+
+            if (!remoteExitNode || !remoteExitNode.exitNodeId) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Remote exit node not found"
+                    )
+                );
+            }
+
+            if (await checkExitNodeOrg(remoteExitNode.exitNodeId, orgId)) {
+                // If the exit node is not allowed for the org, return an error
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Exit node not allowed for this organization"
+                    )
+                );
+            }
+
+            // Batch insert all logs in a single query
+            const logEntries = logs.map((logEntry) => ({
+                timestamp: logEntry.timestamp,
+                orgId: logEntry.orgId,
+                actorType: logEntry.actorType,
+                actor: logEntry.actor,
+                actorId: logEntry.actorId,
+                metadata: logEntry.metadata,
+                action: logEntry.action,
+                resourceId: logEntry.resourceId,
+                reason: logEntry.reason,
+                location: logEntry.location,
+                // userAgent: data.userAgent, // TODO: add this
+                // headers: data.body.headers,
+                // query: data.body.query,
+                originalRequestURL: logEntry.originalRequestURL,
+                scheme: logEntry.scheme,
+                host: logEntry.host,
+                path: logEntry.path,
+                method: logEntry.method,
+                ip: logEntry.ip,
+                tls: logEntry.tls
+            }));
+
+            await db.insert(requestAuditLog).values(logEntries);
+
+            return response(res, {
+                data: null,
+                success: true,
+                error: false,
+                message: "Logs saved successfully",
+                status: HttpCode.OK
+            });
         } catch (error) {
             logger.error(error);
             return next(
