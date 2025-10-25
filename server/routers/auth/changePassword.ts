@@ -18,6 +18,9 @@ import { sessions, resourceSessions } from "@server/db";
 import { and, eq, ne, inArray } from "drizzle-orm";
 import { passwordSchema } from "@server/auth/passwordSchema";
 import { UserType } from "@server/types/UserTypes";
+import { sendEmail } from "@server/emails";
+import ConfirmPasswordReset from "@server/emails/templates/NotifyResetPassword";
+import config from "@server/lib/config";
 
 export const changePasswordBody = z
     .object({
@@ -158,7 +161,16 @@ export async function changePassword(
         // Invalidate all sessions except the current one
         await invalidateAllSessionsExceptCurrent(user.userId, req.session.sessionId);
 
-        // TODO: send email to user confirming password change
+        try {
+            const email = user.email!;
+            await sendEmail(ConfirmPasswordReset({ email }), {
+                from: config.getNoReplyEmail(),
+                to: email,
+                subject: "Password Reset Confirmation"
+            });
+        } catch (e) {
+            logger.error("Failed to send password reset confirmation email", e);
+        }
 
         return response(res, {
             data: null,

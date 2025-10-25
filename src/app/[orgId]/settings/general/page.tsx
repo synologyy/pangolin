@@ -65,14 +65,14 @@ const SESSION_LENGTH_OPTIONS = [
     { value: 4320, label: "180 days" } // 180 * 24 = 4320 hours
 ];
 
-// Password expiry options in days
+// Password expiry options in days - will be translated in component
 const PASSWORD_EXPIRY_OPTIONS = [
-    { value: null, label: "Never Expire" },
-    { value: 30, label: "30 days" },
-    { value: 60, label: "60 days" },
-    { value: 90, label: "90 days" },
-    { value: 180, label: "180 days" },
-    { value: 365, label: "1 year" }
+    { value: null, labelKey: "neverExpire" },
+    { value: 30, labelKey: "30Days" },
+    { value: 60, labelKey: "60Days" },
+    { value: 90, labelKey: "90Days" },
+    { value: 180, labelKey: "180Days" },
+    { value: 365, labelKey: "1Year" }
 ];
 
 // Schema for general organization settings
@@ -511,9 +511,7 @@ export default function GeneralPage() {
                                                                                 : option.value.toString()
                                                                         }
                                                                     >
-                                                                        {
-                                                                            option.label
-                                                                        }
+                                                                        {t(option.labelKey)}
                                                                     </SelectItem>
                                                                 )
                                                             )}
@@ -523,7 +521,7 @@ export default function GeneralPage() {
                                                 <FormDescription>
                                                     <FormMessage />
                                                     {t(
-                                                        "passwordExpiryDescription"
+                                                        "editPasswordExpiryDescription"
                                                     )}
                                                 </FormDescription>
                                             </FormItem>
