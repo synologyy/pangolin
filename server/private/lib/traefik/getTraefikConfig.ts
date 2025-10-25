@@ -15,6 +15,7 @@ import {
     certificates,
     db,
     domainNamespaces,
+    domains,
     exitNodes,
     loginPage,
     targetHealthCheck
@@ -104,11 +105,16 @@ export async function getTraefikConfig(
             subnet: sites.subnet,
             exitNodeId: sites.exitNodeId,
             // Namespace
-            domainNamespaceId: domainNamespaces.domainNamespaceId
+            domainNamespaceId: domainNamespaces.domainNamespaceId,
+            // Certificate
+            certificateStatus: certificates.status,
+            domainCertResolver: domains.certResolver,
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
         .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
+        .leftJoin(certificates, eq(certificates.domainId, resources.domainId))
+        .leftJoin(domains, eq(domains.domainId, resources.domainId))
         .leftJoin(
             targetHealthCheck,
             eq(targetHealthCheck.targetId, targets.targetId)
@@ -206,7 +212,8 @@ export async function getTraefikConfig(
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
                 rewritePath: row.rewritePath,
                 rewritePathType: row.rewritePathType,
-                priority: priority // may be null, we fallback later
+                priority: priority, // may be null, we fallback later
+                domainCertResolver: row.domainCertResolver,
             });
         }
 
@@ -294,6 +301,20 @@ export async function getTraefikConfig(
                 config_output.http.services = {};
             }
 
+            const domainParts = fullDomain.split(".");
+            let wildCard;
+            if (domainParts.length <= 2) {
+                wildCard = `*.${domainParts.join(".")}`;
+            } else {
+                wildCard = `*.${domainParts.slice(1).join(".")}`;
+            }
+
+            if (!resource.subdomain) {
+                wildCard = resource.fullDomain;
+            }
+
+            const configDomain = config.getDomain(resource.domainId);
+
             let tls = {};
             if (!privateConfig.getRawPrivateConfig().flags.use_pangolin_dns) {
                 const domainParts = fullDomain.split(".");
@@ -324,13 +345,13 @@ export async function getTraefikConfig(
                     certResolver: certResolver,
                     ...(preferWildcardCert
                         ? {
-                              domains: [
-                                  {
-                                      main: wildCard
-                                  }
-                              ]
-                          }
-                        : {})
+                            domains: [
+                                {
+                                    main: wildCard,
+                                },
+                            ],
+                        }
+                        : {}),
                 };
             } else {
                 // find a cert that matches the full domain, if not continue
@@ -582,14 +603,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  cookie: {
-                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                      secure: resource.ssl,
-                                      httpOnly: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                cookie: {
+                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                    secure: resource.ssl,
+                                    httpOnly: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
@@ -690,13 +711,13 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  ipStrategy: {
-                                      depth: 0,
-                                      sourcePort: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                ipStrategy: {
+                                    depth: 0,
+                                    sourcePort: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
@@ -744,10 +765,9 @@ export async function getTraefikConfig(
                     loadBalancer: {
                         servers: [
                             {
-                                url: `http://${
-                                    config.getRawConfig().server
+                                url: `http://${config.getRawConfig().server
                                         .internal_hostname
-                                }:${config.getRawConfig().server.next_port}`
+                                    }:${config.getRawConfig().server.next_port}`
                             }
                         ]
                     }
