@@ -86,20 +86,6 @@ export async function updateOrg(
             parsedBody.data.passwordExpiryDays = undefined;
         }
 
-        if (
-            req.user &&
-            req.user.type === UserType.Internal &&
-            parsedBody.data.requireTwoFactor === true &&
-            !req.user.twoFactorEnabled
-        ) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    "You must enable two-factor authentication for your account before enforcing it for all users"
-                )
-            );
-        }
-
         const updatedOrg = await db
             .update(orgs)
             .set({

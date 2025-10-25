@@ -108,6 +108,7 @@ export default function GeneralPage() {
 
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
+    const [isSecurityPolicyConfirmOpen, setIsSecurityPolicyConfirmOpen] = useState(false);
     const authPageSettingsRef = useRef<AuthPageSettingsRef>(null);
 
     const form = useForm({
@@ -121,6 +122,23 @@ export default function GeneralPage() {
         },
         mode: "onChange"
     });
+
+    // Track initial security policy values
+    const initialSecurityValues = {
+        requireTwoFactor: org?.org.requireTwoFactor || false,
+        maxSessionLengthHours: org?.org.maxSessionLengthHours || null,
+        passwordExpiryDays: org?.org.passwordExpiryDays || null
+    };
+
+    // Check if security policies have changed
+    const hasSecurityPolicyChanged = () => {
+        const currentValues = form.getValues();
+        return (
+            currentValues.requireTwoFactor !== initialSecurityValues.requireTwoFactor ||
+            currentValues.maxSessionLengthHours !== initialSecurityValues.maxSessionLengthHours ||
+            currentValues.passwordExpiryDays !== initialSecurityValues.passwordExpiryDays
+        );
+    };
 
     async function deleteOrg() {
         setLoadingDelete(true);
@@ -174,6 +192,16 @@ export default function GeneralPage() {
     }
 
     async function onSubmit(data: GeneralFormValues) {
+        // Check if security policies have changed
+        if (hasSecurityPolicyChanged()) {
+            setIsSecurityPolicyConfirmOpen(true);
+            return;
+        }
+
+        await performSave(data);
+    }
+
+    async function performSave(data: GeneralFormValues) {
         setLoadingSave(true);
 
         try {
@@ -230,6 +258,20 @@ export default function GeneralPage() {
                 onConfirm={deleteOrg}
                 string={org?.org.name || ""}
                 title={t("orgDelete")}
+            />
+            <ConfirmDeleteDialog
+                open={isSecurityPolicyConfirmOpen}
+                setOpen={setIsSecurityPolicyConfirmOpen}
+                dialog={
+                    <div>
+                        <p>{t("securityPolicyChangeDescription")}</p>
+                    </div>
+                }
+                buttonText={t("saveSettings")}
+                onConfirm={() => performSave(form.getValues())}
+                string={t("securityPolicyChangeConfirmMessage")}
+                title={t("securityPolicyChangeWarning")}
+                warningText={t("securityPolicyChangeWarningText")}
             />
             <SettingsSection>
                 <SettingsSectionHeader>
