@@ -47,6 +47,8 @@ Pangolin is a self-hosted tunneled reverse proxy server with identity and contex
 
 Check out the [quick install guide](https://docs.pangolin.net/self-host/quick-install) for how to install and set up Pangolin.
 
+<img src="public/screenshots/hero.png" />
+
 ## Deployment Options
 
 | <img width=500 /> | Description |
