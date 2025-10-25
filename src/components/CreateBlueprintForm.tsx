@@ -33,6 +33,7 @@ import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { AxiosResponse } from "axios";
 import type { CreateBlueprintResponse } from "@server/routers/blueprints";
 import { toast } from "@app/hooks/useToast";
+import { useRouter } from "next/navigation";
 
 export type CreateBlueprintFormProps = {
     orgId: string;
@@ -45,6 +46,7 @@ export default function CreateBlueprintForm({
     const { env } = useEnvContext();
     const api = createApiClient({ env });
     const [, formAction, isSubmitting] = useActionState(onSubmit, null);
+    const router = useRouter();
 
     const form = useForm({
         resolver: zodResolver(
@@ -87,7 +89,6 @@ export default function CreateBlueprintForm({
         console.log({
             isValid,
             payload
-            // json: parse(data.contents)
         });
         const res = await api
             .put<
@@ -107,68 +108,10 @@ export default function CreateBlueprintForm({
         if (res && res.status === 201) {
             toast({
                 variant: "default",
-                title: "Success"
+                title: "Done",
+                description: res.data.data.message
             });
-            // const id = res.data.data.resourceId;
-            // const niceId = res.data.data.niceId;
-            // setNiceId(niceId);
-            // // Create targets if any exist
-            // if (targets.length > 0) {
-            //     try {
-            //         for (const target of targets) {
-            //             const data: any = {
-            //                 ip: target.ip,
-            //                 port: target.port,
-            //                 method: target.method,
-            //                 enabled: target.enabled,
-            //                 siteId: target.siteId,
-            //                 hcEnabled: target.hcEnabled,
-            //                 hcPath: target.hcPath || null,
-            //                 hcMethod: target.hcMethod || null,
-            //                 hcInterval: target.hcInterval || null,
-            //                 hcTimeout: target.hcTimeout || null,
-            //                 hcHeaders: target.hcHeaders || null,
-            //                 hcScheme: target.hcScheme || null,
-            //                 hcHostname: target.hcHostname || null,
-            //                 hcPort: target.hcPort || null,
-            //                 hcFollowRedirects: target.hcFollowRedirects || null,
-            //                 hcStatus: target.hcStatus || null
-            //             };
-            //             // Only include path-related fields for HTTP resources
-            //             if (isHttp) {
-            //                 data.path = target.path;
-            //                 data.pathMatchType = target.pathMatchType;
-            //                 data.rewritePath = target.rewritePath;
-            //                 data.rewritePathType = target.rewritePathType;
-            //                 data.priority = target.priority;
-            //             }
-            //             await api.put(`/resource/${id}/target`, data);
-            //         }
-            //     } catch (targetError) {
-            //         console.error("Error creating targets:", targetError);
-            //         toast({
-            //             variant: "destructive",
-            //             title: t("targetErrorCreate"),
-            //             description: formatAxiosError(
-            //                 targetError,
-            //                 t("targetErrorCreateDescription")
-            //             )
-            //         });
-            //     }
-            // }
-            // if (isHttp) {
-            //     router.push(`/${orgId}/settings/resources/${niceId}`);
-            // } else {
-            //     const tcpUdpData = tcpUdpForm.getValues();
-            //     // Only show config snippets if enableProxy is explicitly true
-            //     // if (tcpUdpData.enableProxy === true) {
-            //     setShowSnippets(true);
-            //     router.refresh();
-            //     // } else {
-            //     //     // If enableProxy is false or undefined, go directly to resource page
-            //     //     router.push(`/${orgId}/settings/resources/${id}`);
-            //     // }
-            // }
+            router.push(`/${orgId}/settings/blueprints`);
         }
     }
     return (

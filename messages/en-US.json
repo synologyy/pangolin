@@ -1164,6 +1164,7 @@
     "blueprintErrorCreateDescription": "An error occurred when applying the blueprint",
     "blueprintErrorCreate": "Error creating blueprint",
     "searchBlueprintProgress": "Search blueprints...",
+    "appliedAt": "Applied at",
     "source": "Source",
     "contents": "Contents",
     "enableDockerSocket": "Enable Docker Blueprint",

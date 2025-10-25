@@ -9,6 +9,7 @@ import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { warn } from "console";
+import { BlueprintData } from "./types";
 
 const listBluePrintsParamsSchema = z
     .object({
@@ -50,16 +51,18 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
     return res;
 }
 
-type BlueprintData = Omit<
-    Awaited<ReturnType<typeof queryBlueprints>>[number],
-    "source" | "createdAt"
-> & {
-    source: "API" | "UI" | "NEWT";
-    createdAt: Date;
-};
-
 export type ListBlueprintsResponse = {
-    blueprints: NonNullable<BlueprintData[]>;
+    blueprints: NonNullable<
+        Pick<
+            BlueprintData,
+            | "blueprintId"
+            | "name"
+            | "source"
+            | "succeeded"
+            | "orgId"
+            | "createdAt"
+        >[]
+    >;
     pagination: { total: number; limit: number; offset: number };
 };
 
