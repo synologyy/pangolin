@@ -2096,6 +2096,7 @@
     "enableSelected": "Enable Selected",
     "disableSelected": "Disable Selected",
     "checkSelectedStatus": "Check Status of Selected",
+    "credentials": "Credentials",
     "savecredentials": "Save Credentials",
     "regeneratecredentials": "Regenerate Credentials",
     "regenerateClientCredentials": "Regenerate and save your managed credentials",
