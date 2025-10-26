@@ -1743,6 +1743,7 @@
     "orgAuthNoIdpConfigured": "This organization doesn't have any identity providers configured. You can log in with your Pangolin identity instead.",
     "orgAuthSignInWithPangolin": "Sign in with Pangolin",
     "subscriptionRequiredToUse": "A subscription is required to use this feature.",
+    "licenseRequiredToUse": "An Enterprise license is required to use this feature.",
     "idpDisabled": "Identity providers are disabled.",
     "orgAuthPageDisabled": "Organization auth page is disabled.",
     "domainRestartedDescription": "Domain verification restarted successfully",

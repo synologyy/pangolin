@@ -53,6 +53,7 @@ import { SwitchInput } from "@app/components/SwitchInput";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { Badge } from "@app/components/ui/badge";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
@@ -338,23 +339,30 @@ export default function GeneralPage() {
             {/* Security Settings Section */}
             <SettingsSection>
                 <SettingsSectionHeader>
-                    <div className="flex items-center gap-2">
-                        <SettingsSectionTitle>
-                            {t("securitySettings")}
-                        </SettingsSectionTitle>
-                        {build === "enterprise" && !isUnlocked() ? (
-                            <Badge variant="outlinePrimary">
-                                {build === "enterprise"
-                                    ? t("licenseBadge")
-                                    : t("subscriptionBadge")}
-                            </Badge>
-                        ) : null}
-                    </div>
+                    <SettingsSectionTitle>
+                        {t("securitySettings")}
+                    </SettingsSectionTitle>
                     <SettingsSectionDescription>
                         {t("securitySettingsDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
+                    {build == "saas" && !subscriptionStatus?.isSubscribed() ? (
+                        <Alert variant="info" className="mb-6">
+                            <AlertDescription>
+                                {t("subscriptionRequiredToUse")}
+                            </AlertDescription>
+                        </Alert>
+                    ) : null}
+
+                    {build == "enterprise" && !isUnlocked() ? (
+                        <Alert variant="info" className="mb-6">
+                            <AlertDescription>
+                                {t("licenseRequiredToUse")}
+                            </AlertDescription>
+                        </Alert>
+                    ) : null}
+
                     <SettingsSectionForm>
                         <Form {...form}>
                             <form
