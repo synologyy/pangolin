@@ -95,6 +95,13 @@ export async function checkOrgAccessPolicy(
         }
     }
 
+    if (props.session.userId !== props.user.userId) {
+        return {
+            allowed: false,
+            error: "Session does not belong to the user"
+        };
+    }
+
     // now check the policies
     const policies: CheckOrgAccessPolicyResult["policies"] = {};
 

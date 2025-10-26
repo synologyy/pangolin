@@ -73,6 +73,8 @@ import { validateResourceSessionToken } from "@server/auth/sessions/resource";
 import { checkExitNodeOrg, resolveExitNodes } from "#private/lib/exitNodes";
 import { maxmindLookup } from "@server/db/maxmind";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
+import { CheckOrgAccessPolicyResult } from "@server/lib/checkOrgAccessPolicy";
 
 // Zod schemas for request validation
 const getResourceByDomainParamsSchema = z
@@ -300,7 +302,8 @@ function loadEncryptData() {
         return; // already loaded
     }
 
-    encryptionKeyPath = privateConfig.getRawPrivateConfig().server.encryption_key_path;
+    encryptionKeyPath =
+        privateConfig.getRawPrivateConfig().server.encryption_key_path;
 
     if (!fs.existsSync(encryptionKeyPath)) {
         throw new Error(
@@ -1577,6 +1580,93 @@ hybridRouter.post(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
                     "An error occurred..."
+                )
+            );
+        }
+    }
+);
+
+const getOrgAccessPolicyParamsSchema = z
+    .object({
+        orgId: z.string().min(1),
+        userId: z.string().min(1)
+    })
+    .strict();
+
+const getOrgAccessPolicyBodySchema = z
+    .object({
+        sessionId: z.string().min(1)
+    })
+    .strict();
+
+hybridRouter.get(
+    "/org/:orgId/user/:userId/access",
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const parsedParams = getOrgAccessPolicyParamsSchema.safeParse(
+                req.params
+            );
+            if (!parsedParams.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedParams.error).toString()
+                    )
+                );
+            }
+
+            const parsedBody = getOrgAccessPolicyBodySchema.safeParse(req.body);
+            if (!parsedBody.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedBody.error).toString()
+                    )
+                );
+            }
+
+            const { orgId, userId } = parsedParams.data;
+            const { sessionId } = parsedBody.data;
+            const remoteExitNode = req.remoteExitNode;
+
+            if (!remoteExitNode?.exitNodeId) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Remote exit node not found"
+                    )
+                );
+            }
+
+            if (await checkExitNodeOrg(remoteExitNode.exitNodeId, orgId)) {
+                // If the exit node is not allowed for the org, return an error
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Exit node not allowed for this organization"
+                    )
+                );
+            }
+
+            const accessPolicy = await checkOrgAccessPolicy({
+                orgId,
+                userId,
+                sessionId
+            });
+
+            return response<CheckOrgAccessPolicyResult>(res, {
+                data: accessPolicy,
+                success: true,
+                error: false,
+                message: "Org access policy retrieved successfully",
+                status: HttpCode.OK
+            });
+        } catch (error) {
+            logger.error(error);
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Failed to get org login page"
                 )
             );
         }

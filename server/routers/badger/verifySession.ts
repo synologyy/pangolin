@@ -37,6 +37,7 @@ import { getCountryCodeForIp } from "@server/lib/geoip";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 // We'll see if this speeds anything up
 const cache = new NodeCache({
@@ -313,7 +314,8 @@ export async function verifyResourceSession(
                 return allowed(res);
             }
 
-            if ( // we dont want to redirect if this is the only auth method and we did not pass here
+            if (
+                // we dont want to redirect if this is the only auth method and we did not pass here
                 !sso &&
                 !pincode &&
                 !password &&
@@ -586,6 +588,18 @@ async function isUserAllowedToAccessResource(
     const userOrgRole = await getUserOrgRole(user.userId, resource.orgId);
 
     if (!userOrgRole) {
+        return null;
+    }
+
+    const accessPolicy = await checkOrgAccessPolicy({
+        orgId: resource.orgId,
+        userId: user.userId,
+        sessionId: session.sessionId
+    });
+    if (!accessPolicy.allowed || accessPolicy.error) {
+        logger.debug(`User not allowed by org access policy because`, {
+            accessPolicy
+        });
         return null;
     }
 
