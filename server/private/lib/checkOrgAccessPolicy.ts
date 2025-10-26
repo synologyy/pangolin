@@ -12,7 +12,14 @@
  */
 
 import { build } from "@server/build";
-import { db, Org, orgs, sessions, User, users } from "@server/db";
+import {
+    db,
+    Org,
+    orgs,
+    ResourceSession,
+    sessions,
+    users
+} from "@server/db";
 import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import license from "#private/license/license";
@@ -22,6 +29,35 @@ import {
     CheckOrgAccessPolicyResult
 } from "@server/lib/checkOrgAccessPolicy";
 import { UserType } from "@server/types/UserTypes";
+
+export async function enforceResourceSessionLength(
+    resourceSession: ResourceSession,
+    org: Org
+): Promise<{ valid: boolean; error?: string }> {
+    if (org.maxSessionLengthHours) {
+        const sessionIssuedAt = resourceSession.issuedAt; // may be null
+        const maxSessionLengthHours = org.maxSessionLengthHours;
+
+        if (sessionIssuedAt) {
+            const maxSessionLengthMs = maxSessionLengthHours * 60 * 60 * 1000;
+            const sessionAgeMs = Date.now() - sessionIssuedAt;
+
+            if (sessionAgeMs > maxSessionLengthMs) {
+                return {
+                    valid: false,
+                    error: `Resource session has expired due to organization policy (max session length: ${maxSessionLengthHours} hours)`
+                };
+            }
+        } else {
+            return {
+                valid: false,
+                error: `Resource session is invalid due to organization policy (max session length: ${maxSessionLengthHours} hours)`
+            };
+        }
+    }
+
+    return { valid: true };
+}
 
 export async function checkOrgAccessPolicy(
     props: CheckOrgAccessPolicyProps
@@ -41,15 +77,6 @@ export async function checkOrgAccessPolicy(
     }
     if (!sessionId) {
         return { allowed: false, error: "Session ID is required" };
-    }
-
-    if (build === "saas") {
-        const { tier } = await getOrgTierData(orgId);
-        const subscribed = tier === TierId.STANDARD;
-        // if not subscribed, don't check the policies
-        if (!subscribed) {
-            return { allowed: true };
-        }
     }
 
     if (build === "enterprise") {

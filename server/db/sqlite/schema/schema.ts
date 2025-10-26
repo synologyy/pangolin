@@ -587,7 +587,8 @@ export const resourceSessions = sqliteTable("resourceSessions", {
         {
             onDelete: "cascade"
         }
-    )
+    ),
+    issuedAt: integer("issuedAt")
 });
 
 export const resourceWhitelist = sqliteTable("resourceWhitelist", {

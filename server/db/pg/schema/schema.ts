@@ -447,7 +447,8 @@ export const resourceSessions = pgTable("resourceSessions", {
         {
             onDelete: "cascade"
         }
-    )
+    ),
+    issuedAt: bigint("issuedAt", { mode: "number" })
 });
 
 export const resourceWhitelist = pgTable("resourceWhitelist", {

@@ -1,4 +1,4 @@
-import { Org, Session, User } from "@server/db";
+import { Org, ResourceSession, Session, User } from "@server/db";
 
 export type CheckOrgAccessPolicyProps = {
     orgId?: string;
@@ -26,6 +26,13 @@ export type CheckOrgAccessPolicyResult = {
         }
     };
 };
+
+export async function enforceResourceSessionLength(
+    resourceSession: ResourceSession,
+    org: Org
+): Promise<{ valid: boolean; error?: string }> {
+    return { valid: true };
+}
 
 export async function checkOrgAccessPolicy(
     props: CheckOrgAccessPolicyProps
