@@ -51,16 +51,8 @@ import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "@app/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
@@ -284,11 +276,6 @@ export default function GeneralPage() {
         }
     }
 
-    const getLabelForValue = (value: number) => {
-        const option = LOG_RETENTION_OPTIONS.find((opt) => opt.value === value);
-        return option ? t(option.label) : `${value} days`;
-    };
-
     return (
         <SettingsContainer>
             <ConfirmDeleteDialog
@@ -402,21 +389,22 @@ export default function GeneralPage() {
                                                 {t("logRetentionRequestLabel")}
                                             </FormLabel>
                                             <FormControl>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="outline"
-                                                            className="w-full justify-between"
-                                                        >
-                                                            {getLabelForValue(
-                                                                field.value
+                                                <Select
+                                                    value={field.value.toString()}
+                                                    onValueChange={(value) =>
+                                                        field.onChange(
+                                                            parseInt(value, 10)
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "selectLogRetention"
                                                             )}
-                                                            <ChevronDown className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent className="w-full">
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
                                                         {LOG_RETENTION_OPTIONS.filter(
                                                             (option) => {
                                                                 if (
@@ -431,29 +419,16 @@ export default function GeneralPage() {
                                                                 return true;
                                                             }
                                                         ).map((option) => (
-                                                            <DropdownMenuItem
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                onClick={() =>
-                                                                    field.onChange(
-                                                                        option.value
-                                                                    )
-                                                                }
+                                                            <SelectItem
+                                                                key={option.value}
+                                                                value={option.value.toString()}
                                                             >
-                                                                {t(
-                                                                    option.label
-                                                                )}
-                                                            </DropdownMenuItem>
+                                                                {t(option.label)}
+                                                            </SelectItem>
                                                         ))}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                    </SelectContent>
+                                                </Select>
                                             </FormControl>
-                                            <FormDescription>
-                                                {t(
-                                                    "logRetentionRequestDescription"
-                                                )}
-                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -461,163 +436,153 @@ export default function GeneralPage() {
 
                                 {build != "oss" && (
                                     <>
-                                        {build == "saas" &&
-                                        !subscription?.subscribed ? (
-                                            <Alert
-                                                variant="info"
-                                                className="mb-6"
-                                            >
-                                                <AlertDescription>
-                                                    {t(
-                                                        "subscriptionRequiredToUse"
-                                                    )}
-                                                </AlertDescription>
-                                            </Alert>
-                                        ) : null}
-
-                                        {build == "enterprise" &&
-                                        !isUnlocked() ? (
-                                            <Alert
-                                                variant="info"
-                                                className="mb-6"
-                                            >
-                                                <AlertDescription>
-                                                    {t("licenseRequiredToUse")}
-                                                </AlertDescription>
-                                            </Alert>
-                                        ) : null}
+                                        <SecurityFeaturesAlert />
 
                                         <FormField
                                             control={form.control}
                                             name="settingsLogRetentionDaysAccess"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        {t(
-                                                            "logRetentionAccessLabel"
-                                                        )}
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className="w-full justify-between"
-                                                                    disabled={
-                                                                        (build ==
-                                                                            "saas" &&
-                                                                            !subscription?.subscribed) ||
-                                                                        (build ==
-                                                                            "enterprise" &&
-                                                                            !isUnlocked())
+                                            render={({ field }) => {
+                                                const isDisabled =
+                                                    (build == "saas" &&
+                                                        !subscription
+                                                            ?.subscribed) ||
+                                                    (build == "enterprise" &&
+                                                        !isUnlocked());
+
+                                                return (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "logRetentionAccessLabel"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Select
+                                                                value={field.value.toString()}
+                                                                onValueChange={(
+                                                                    value
+                                                                ) => {
+                                                                    if (
+                                                                        !isDisabled
+                                                                    ) {
+                                                                        field.onChange(
+                                                                            parseInt(
+                                                                                value,
+                                                                                10
+                                                                            )
+                                                                        );
                                                                     }
-                                                                >
-                                                                    {getLabelForValue(
-                                                                        field.value
-                                                                    )}
-                                                                    <ChevronDown className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent className="w-full">
-                                                                {LOG_RETENTION_OPTIONS.map(
-                                                                    (
-                                                                        option
-                                                                    ) => (
-                                                                        <DropdownMenuItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            onClick={() =>
-                                                                                field.onChange(
+                                                                }}
+                                                                disabled={
+                                                                    isDisabled
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue
+                                                                        placeholder={t(
+                                                                            "selectLogRetention"
+                                                                        )}
+                                                                    />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {LOG_RETENTION_OPTIONS.map(
+                                                                        (
+                                                                            option
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
                                                                                     option.value
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            {t(
-                                                                                option.label
-                                                                            )}
-                                                                        </DropdownMenuItem>
-                                                                    )
-                                                                )}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {t(
-                                                            "logRetentionAccessDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                                                                                }
+                                                                                value={
+                                                                                    option.value.toString()
+                                                                                }
+                                                                            >
+                                                                                {t(
+                                                                                    option.label
+                                                                                )}
+                                                                            </SelectItem>
+                                                                        )
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
                                         />
                                         <FormField
                                             control={form.control}
                                             name="settingsLogRetentionDaysAction"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        {t(
-                                                            "logRetentionActionLabel"
-                                                        )}
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger
-                                                                asChild
-                                                            >
-                                                                <Button
-                                                                    variant="outline"
-                                                                    className="w-full justify-between"
-                                                                    disabled={
-                                                                        (build ==
-                                                                            "saas" &&
-                                                                            !subscription?.subscribed) ||
-                                                                        (build ==
-                                                                            "enterprise" &&
-                                                                            !isUnlocked())
+                                            render={({ field }) => {
+                                                const isDisabled =
+                                                    (build == "saas" &&
+                                                        !subscription
+                                                            ?.subscribed) ||
+                                                    (build == "enterprise" &&
+                                                        !isUnlocked());
+
+                                                return (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "logRetentionActionLabel"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Select
+                                                                value={field.value.toString()}
+                                                                onValueChange={(
+                                                                    value
+                                                                ) => {
+                                                                    if (
+                                                                        !isDisabled
+                                                                    ) {
+                                                                        field.onChange(
+                                                                            parseInt(
+                                                                                value,
+                                                                                10
+                                                                            )
+                                                                        );
                                                                     }
-                                                                >
-                                                                    {getLabelForValue(
-                                                                        field.value
-                                                                    )}
-                                                                    <ChevronDown className="h-4 w-4" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent className="w-full">
-                                                                {LOG_RETENTION_OPTIONS.map(
-                                                                    (
-                                                                        option
-                                                                    ) => (
-                                                                        <DropdownMenuItem
-                                                                            key={
-                                                                                option.value
-                                                                            }
-                                                                            onClick={() =>
-                                                                                field.onChange(
+                                                                }}
+                                                                disabled={
+                                                                    isDisabled
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue
+                                                                        placeholder={t(
+                                                                            "selectLogRetention"
+                                                                        )}
+                                                                    />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {LOG_RETENTION_OPTIONS.map(
+                                                                        (
+                                                                            option
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
                                                                                     option.value
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            {t(
-                                                                                option.label
-                                                                            )}
-                                                                        </DropdownMenuItem>
-                                                                    )
-                                                                )}
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {t(
-                                                            "logRetentionActionDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                                                                                }
+                                                                                value={
+                                                                                    option.value.toString()
+                                                                                }
+                                                                            >
+                                                                                {t(
+                                                                                    option.label
+                                                                                )}
+                                                                            </SelectItem>
+                                                                        )
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                );
+                                            }}
                                         />
                                     </>
                                 )}
@@ -640,9 +605,8 @@ export default function GeneralPage() {
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
-                    <SecurityFeaturesAlert />
-
                     <SettingsSectionForm>
+                        <SecurityFeaturesAlert />
                         <Form {...form}>
                             <form
                                 onSubmit={form.handleSubmit(onSubmit)}
