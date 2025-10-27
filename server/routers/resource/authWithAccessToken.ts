@@ -13,7 +13,7 @@ import logger from "@server/logger";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import config from "@server/lib/config";
 import stoi from "@server/lib/stoi";
-import { logAccessAudit } from "@server/private/lib/logAccessAudit";
+import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 const authWithAccessTokenBodySchema = z
     .object({

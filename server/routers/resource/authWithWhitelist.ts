@@ -12,7 +12,7 @@ import { createResourceSession } from "@server/auth/sessions/resource";
 import { isValidOtp, sendResourceOtpEmail } from "@server/auth/resourceOtp";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { logAccessAudit } from "@server/private/lib/logAccessAudit";
+import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 const authWithWhitelistBodySchema = z
     .object({

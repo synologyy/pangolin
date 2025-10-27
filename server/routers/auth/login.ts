@@ -18,7 +18,7 @@ import logger from "@server/logger";
 import { verifyPassword } from "@server/auth/password";
 import { verifySession } from "@server/auth/sessions/verifySession";
 import { UserType } from "@server/types/UserTypes";
-import { logAccessAudit } from "@server/private/lib/logAccessAudit";
+import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 export const loginBodySchema = z
     .object({

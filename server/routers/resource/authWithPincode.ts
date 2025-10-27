@@ -12,7 +12,7 @@ import { createResourceSession } from "@server/auth/sessions/resource";
 import logger from "@server/logger";
 import { verifyPassword } from "@server/auth/password";
 import config from "@server/lib/config";
-import { logAccessAudit } from "@server/private/lib/logAccessAudit";
+import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 export const authWithPincodeBodySchema = z
     .object({
