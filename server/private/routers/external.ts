@@ -21,20 +21,21 @@ import * as domain from "#private/routers/domain";
 import * as auth from "#private/routers/auth";
 import * as license from "#private/routers/license";
 import * as generateLicense from "./generatedLicense";
+import * as logs from "#private/routers/auditLogs";
 
-import { Router } from "express";
 import {
     verifyOrgAccess,
     verifyUserHasAction,
-    verifyUserIsOrgOwner,
     verifyUserIsServerAdmin
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 import {
+    logActionAudit,
     verifyCertificateAccess,
     verifyIdpAccess,
     verifyLoginPageAccess,
-    verifyRemoteExitNodeAccess
+    verifyRemoteExitNodeAccess,
+    verifyValidSubscription
 } from "#private/middlewares";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
@@ -72,7 +73,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createIdp),
-    orgIdp.createOrgOidcIdp
+    logActionAudit(ActionsEnum.createIdp),
+    orgIdp.createOrgOidcIdp,
 );
 
 authenticated.post(
@@ -81,7 +83,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.updateIdp),
-    orgIdp.updateOrgOidcIdp
+    logActionAudit(ActionsEnum.updateIdp),
+    orgIdp.updateOrgOidcIdp,
 );
 
 authenticated.delete(
@@ -90,7 +93,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.deleteIdp),
-    orgIdp.deleteOrgIdp
+    logActionAudit(ActionsEnum.deleteIdp),
+    orgIdp.deleteOrgIdp,
 );
 
 authenticated.get(
@@ -127,7 +131,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyCertificateAccess,
     verifyUserHasAction(ActionsEnum.restartCertificate),
-    certificates.restartCertificate
+    logActionAudit(ActionsEnum.restartCertificate),
+    certificates.restartCertificate,
 );
 
 if (build === "saas") {
@@ -152,14 +157,16 @@ if (build === "saas") {
         "/org/:orgId/billing/create-checkout-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
-        billing.createCheckoutSession
+        logActionAudit(ActionsEnum.billing),
+        billing.createCheckoutSession,
     );
 
     authenticated.post(
         "/org/:orgId/billing/create-portal-session",
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
-        billing.createPortalSession
+        logActionAudit(ActionsEnum.billing),
+        billing.createPortalSession,
     );
 
     authenticated.get(
@@ -206,7 +213,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRemoteExitNode),
-    remoteExitNode.createRemoteExitNode
+    logActionAudit(ActionsEnum.createRemoteExitNode),
+    remoteExitNode.createRemoteExitNode,
 );
 
 authenticated.get(
@@ -240,7 +248,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyRemoteExitNodeAccess,
     verifyUserHasAction(ActionsEnum.deleteRemoteExitNode),
-    remoteExitNode.deleteRemoteExitNode
+    logActionAudit(ActionsEnum.deleteRemoteExitNode),
+    remoteExitNode.deleteRemoteExitNode,
 );
 
 authenticated.put(
@@ -248,7 +257,8 @@ authenticated.put(
     verifyValidLicense,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createLoginPage),
-    loginPage.createLoginPage
+    logActionAudit(ActionsEnum.createLoginPage),
+    loginPage.createLoginPage,
 );
 
 authenticated.post(
@@ -257,7 +267,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.updateLoginPage),
-    loginPage.updateLoginPage
+    logActionAudit(ActionsEnum.updateLoginPage),
+    loginPage.updateLoginPage,
 );
 
 authenticated.delete(
@@ -266,7 +277,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.deleteLoginPage),
-    loginPage.deleteLoginPage
+    logActionAudit(ActionsEnum.deleteLoginPage),
+    loginPage.deleteLoginPage,
 );
 
 authenticated.get(
@@ -333,4 +345,42 @@ authenticated.post(
     "/license/recheck",
     verifyUserIsServerAdmin,
     license.recheckStatus
+);
+
+authenticated.get(
+    "/org/:orgId/logs/action",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logs.queryActionAuditLogs 
+);
+
+authenticated.get(
+    "/org/:orgId/logs/action/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportActionAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/access",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logs.queryAccessAuditLogs 
+);
+
+authenticated.get(
+    "/org/:orgId/logs/access/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportAccessAuditLogs
 );
