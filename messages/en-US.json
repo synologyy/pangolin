@@ -1939,6 +1939,7 @@
     "logRetention7Days": "7 days",
     "logRetention14Days": "14 days",
     "logRetention30Days": "30 days",
+    "logRetention90Days": "90 days",
     "logRetentionForever": "Forever",
     "actionLogsDescription": "View a history of actions performed in this organization",
     "accessLogsDescription": "View access auth requests for resources in this organization",

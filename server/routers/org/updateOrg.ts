@@ -9,6 +9,9 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { build } from "@server/build";
+import { getOrgTierData } from "@server/lib/billing";
+import { TierId } from "@server/lib/billing/tiers";
 
 const updateOrgParamsSchema = z
     .object({
@@ -19,9 +22,18 @@ const updateOrgParamsSchema = z
 const updateOrgBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
-        settingsLogRetentionDaysRequest: z.number().min(-1).optional(),
-        settingsLogRetentionDaysAccess: z.number().min(-1).optional(),
-        settingsLogRetentionDaysAction: z.number().min(-1).optional()
+        settingsLogRetentionDaysRequest: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAccess: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAction: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -73,6 +85,20 @@ export async function updateOrg(
         }
 
         const { orgId } = parsedParams.data;
+
+        const { tier } = await getOrgTierData(orgId); // returns null in oss
+        if (
+            tier != TierId.STANDARD &&
+            parsedBody.data.settingsLogRetentionDaysRequest &&
+            parsedBody.data.settingsLogRetentionDaysRequest > 30
+        ) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not allowed to set log retention days greater than 30 because you are not subscribed to the Standard tier"
+                )
+            );
+        }
 
         const updatedOrg = await db
             .update(orgs)

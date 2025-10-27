@@ -48,7 +48,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, SubscriptIcon } from "lucide-react";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
@@ -70,7 +70,8 @@ const LOG_RETENTION_OPTIONS = [
     { label: "logRetention7Days", value: 7 },
     { label: "logRetention14Days", value: 14 },
     { label: "logRetention30Days", value: 30 },
-    { label: "logRetentionForever", value: -1 }
+    { label: "logRetention90Days", value: 90 },
+    ...(build != "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
 ];
 
 export default function GeneralPage() {
@@ -314,7 +315,12 @@ export default function GeneralPage() {
                                                         </Button>
                                                     </DropdownMenuTrigger>
                                                     <DropdownMenuContent className="w-full">
-                                                        {LOG_RETENTION_OPTIONS.map(
+                                                        {LOG_RETENTION_OPTIONS.filter((option) => {
+                                                            if (build == "saas" && !subscription?.subscribed && option.value > 30) {
+                                                                return false
+                                                            }
+                                                            return true;
+                                                        }).map(
                                                             (option) => (
                                                                 <DropdownMenuItem
                                                                     key={
