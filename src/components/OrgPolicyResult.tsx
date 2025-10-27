@@ -91,10 +91,10 @@ export default function OrgPolicyResult({
                 ? async () => {
                       try {
                           await api.post("/auth/logout", undefined);
-                          router.push("/auth/login");
+                          router.push(`/auth/login?orgId=${orgId}`);
                       } catch (error) {
                           console.error("Error during logout:", error);
-                          router.push("/auth/login");
+                          router.push(`/auth/login?orgId=${orgId}`);
                       }
                   }
                 : undefined,
