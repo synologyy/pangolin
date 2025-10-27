@@ -23,7 +23,7 @@ export type CheckOrgAccessPolicyResult = {
             compliant: boolean;
             maxPasswordAgeDays: number;
             passwordAgeDays: number;
-        }
+        };
     };
 };
 
@@ -36,9 +36,6 @@ export async function enforceResourceSessionLength(
 
 export async function checkOrgAccessPolicy(
     props: CheckOrgAccessPolicyProps
-): Promise<{
-    success: boolean;
-    error?: string;
-}> {
-    return { success: true };
+): Promise<CheckOrgAccessPolicyResult> {
+    return { allowed: true };
 }

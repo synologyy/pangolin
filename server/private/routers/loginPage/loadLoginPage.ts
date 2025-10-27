@@ -87,7 +87,7 @@ export async function loadLoginPage(
             );
         }
 
-        let { resourceId, idpId, fullDomain, orgId } = parsedQuery.data;
+        const { resourceId, idpId, fullDomain, orgId } = parsedQuery.data;
 
         if (resourceId) {
             const [resource] = await db
