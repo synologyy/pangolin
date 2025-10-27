@@ -119,6 +119,7 @@ export enum ActionsEnum {
 
     // blueprints
     listBlueprints = "listBlueprints",
+    getBlueprint = "getBlueprint",
     applyBlueprint = "applyBlueprint"
 }
 

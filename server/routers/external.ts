@@ -826,6 +826,13 @@ authenticated.put(
     blueprints.createAndApplyBlueprint
 );
 
+authenticated.get(
+    "/org/:orgId/blueprint/:blueprintId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getBlueprint),
+    blueprints.getBlueprint
+);
+
 // Auth routes
 export const authRouter = Router();
 unauthenticated.use("/auth", authRouter);

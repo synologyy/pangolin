@@ -44,7 +44,7 @@ registry.registerPath({
     path: "/org/{orgId}/blueprint",
     description:
         "Create and Apply a base64 encoded blueprint to an organization",
-    tags: [OpenAPITags.Org],
+    tags: [OpenAPITags.Org, OpenAPITags.Blueprint],
     request: {
         params: applyBlueprintParamsSchema,
         body: {

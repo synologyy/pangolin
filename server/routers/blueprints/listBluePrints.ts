@@ -46,6 +46,7 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
         })
         .from(blueprints)
         .leftJoin(orgs, eq(blueprints.orgId, orgs.orgId))
+        .where(eq(blueprints.orgId, orgId))
         .limit(limit)
         .offset(offset);
     return res;
@@ -70,7 +71,7 @@ registry.registerPath({
     method: "get",
     path: "/org/{orgId}/blueprints",
     description: "List all blueprints for a organization.",
-    tags: [OpenAPITags.Org],
+    tags: [OpenAPITags.Org, OpenAPITags.Blueprint],
     request: {
         params: z.object({
             orgId: z.string()
@@ -121,10 +122,8 @@ export async function listBlueprints(
 
         return response<ListBlueprintsResponse>(res, {
             data: {
-                blueprints: blueprintsList.map((b) => ({
-                    ...b,
-                    createdAt: new Date(b.createdAt * 1000)
-                })) as BlueprintData[],
+                blueprints:
+                    blueprintsList as ListBlueprintsResponse["blueprints"],
                 pagination: {
                     total: count,
                     limit,

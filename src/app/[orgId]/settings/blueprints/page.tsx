@@ -4,18 +4,16 @@ import BlueprintsTable, {
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
+import { getCachedOrg } from "@app/lib/api/getCachedOrg";
 import OrgProvider from "@app/providers/OrgProvider";
 import { ListBlueprintsResponse } from "@server/routers/blueprints";
-import { GetOrgResponse } from "@server/routers/org";
 import { AxiosResponse } from "axios";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { cache } from "react";
 
 type BluePrintsPageProps = {
     params: Promise<{ orgId: string }>;
-    searchParams: Promise<{ view?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -39,13 +37,7 @@ export default async function BluePrintsPage(props: BluePrintsPageProps) {
 
     let org = null;
     try {
-        const getOrg = cache(async () =>
-            internal.get<AxiosResponse<GetOrgResponse>>(
-                `/org/${params.orgId}`,
-                await authCookieHeader()
-            )
-        );
-        const res = await getOrg();
+        const res = await getCachedOrg(params.orgId);
         org = res.data.data;
     } catch {
         redirect(`/${params.orgId}`);

@@ -3,7 +3,6 @@ import {
     SettingsContainer,
     SettingsSection,
     SettingsSectionBody,
-    SettingsSectionDescription,
     SettingsSectionForm,
     SettingsSectionHeader,
     SettingsSectionTitle
@@ -22,11 +21,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { Input } from "./ui/input";
-import { useActionState, useTransition } from "react";
-import Editor, { useMonaco } from "@monaco-editor/react";
+import { useActionState } from "react";
+import Editor from "@monaco-editor/react";
 import { cn } from "@app/lib/cn";
 import { Button } from "./ui/button";
-import { wait } from "@app/lib/wait";
 import { parse as parseYaml } from "yaml";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { createApiClient, formatAxiosError } from "@app/lib/api";

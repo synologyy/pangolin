@@ -1,35 +1,19 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { DomainsDataTable } from "@app/components/DomainsDataTable";
 import { Button } from "@app/components/ui/button";
 import {
     ArrowRight,
     ArrowUpDown,
     Globe,
-    LucideIcon,
-    MoreHorizontal,
     Terminal,
     Webhook
 } from "lucide-react";
-import { useState, useTransition } from "react";
-import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import { formatAxiosError } from "@app/lib/api";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useTransition } from "react";
 import { Badge } from "@app/components/ui/badge";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import CreateDomainForm from "@app/components/CreateDomainForm";
-import { useToast } from "@app/hooks/useToast";
-import { useOrgContext } from "@app/hooks/useOrgContext";
 import { DataTable } from "./ui/data-table";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "./ui/dropdown-menu";
 import Link from "next/link";
 import { ListBlueprintsResponse } from "@server/routers/blueprints";
 
@@ -68,7 +52,9 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
                         className="text-muted-foreground"
                         dateTime={row.original.createdAt.toString()}
                     >
-                        {new Date(row.original.createdAt).toLocaleString()}
+                        {new Date(
+                            row.original.createdAt * 1000
+                        ).toLocaleString()}
                     </time>
                 );
             }
@@ -179,11 +165,11 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
                 );
             },
             cell: ({ row }) => {
-                const domain = row.original;
-
                 return (
                     <Button variant="outline" className="items-center" asChild>
-                        <Link href={`#`}>
+                        <Link
+                            href={`/${orgId}/settings/blueprints/${row.original.blueprintId}`}
+                        >
                             View details{" "}
                             <ArrowRight className="size-4 flex-none" />
                         </Link>
