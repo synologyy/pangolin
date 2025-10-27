@@ -114,7 +114,7 @@ export const resources = pgTable("resources", {
     setHostHeader: varchar("setHostHeader"),
     enableProxy: boolean("enableProxy").default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
-        onDelete: "cascade"
+        onDelete: "set null"
     }),
     headers: text("headers"), // comma-separated list of headers to add to the request
     proxyProtocol: boolean("proxyProtocol").notNull().default(false),

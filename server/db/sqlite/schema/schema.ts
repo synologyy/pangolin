@@ -126,7 +126,7 @@ export const resources = sqliteTable("resources", {
     setHostHeader: text("setHostHeader"),
     enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
-        onDelete: "cascade"
+        onDelete: "set null"
     }),
     headers: text("headers"), // comma-separated list of headers to add to the request
     proxyProtocol: integer("proxyProtocol", { mode: "boolean" }).notNull().default(false),
