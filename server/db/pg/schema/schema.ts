@@ -116,7 +116,9 @@ export const resources = pgTable("resources", {
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
     }),
-    headers: text("headers") // comma-separated list of headers to add to the request
+    headers: text("headers"), // comma-separated list of headers to add to the request
+    proxyProtocol: boolean("proxyProtocol").notNull().default(false),
+    proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
 });
 
 export const targets = pgTable("targets", {
