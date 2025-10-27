@@ -21,6 +21,7 @@ import { TraefikConfigManager } from "@server/lib/traefik/TraefikConfigManager";
 import { initCleanup } from "#dynamic/cleanup";
 import license from "#dynamic/license/license";
 import { initLogCleanupInterval } from "@server/lib/cleanupLogs";
+import { fetchServerIp } from "@server/lib/serverIpService";
 
 async function startServers() {
     await setHostMeta();
@@ -31,6 +32,8 @@ async function startServers() {
     await license.check();
 
     await runSetupFunctions();
+
+    await fetchServerIp();
 
     initTelemetryClient();
 

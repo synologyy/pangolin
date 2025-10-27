@@ -319,6 +319,27 @@ authenticated.get(
 );
 
 authenticated.get(
+    "/org/:orgId/domain/:domainId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getDomain),
+    domain.getDomain
+);
+
+authenticated.patch(
+    "/org/:orgId/domain/:domainId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgDomain),
+    domain.updateOrgDomain
+);
+
+authenticated.get(
+    "/org/:orgId/domain/:domainId/dns-records",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getDNSRecords),
+    domain.getDNSRecords
+);
+
+authenticated.get(
     "/org/:orgId/invitations",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listInvitations),

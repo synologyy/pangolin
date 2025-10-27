@@ -19,7 +19,22 @@ export const domains = pgTable("domains", {
     type: varchar("type"), // "ns", "cname", "wildcard"
     verified: boolean("verified").notNull().default(false),
     failed: boolean("failed").notNull().default(false),
-    tries: integer("tries").notNull().default(0)
+    tries: integer("tries").notNull().default(0),
+    certResolver: varchar("certResolver"),
+    customCertResolver: varchar("customCertResolver"),
+    preferWildcardCert: boolean("preferWildcardCert")
+});
+
+
+export const dnsRecords = pgTable("dnsRecords", {
+    id: varchar("id").primaryKey(),
+    domainId: varchar("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" }),
+    recordType: varchar("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
+    baseDomain: varchar("baseDomain"),
+    value: varchar("value").notNull(),
+    verified: boolean("verified").notNull().default(false),
 });
 
 export const orgs = pgTable("orgs", {
@@ -111,7 +126,9 @@ export const resources = pgTable("resources", {
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
         onDelete: "cascade"
     }),
-    headers: text("headers") // comma-separated list of headers to add to the request
+    headers: text("headers"), // comma-separated list of headers to add to the request
+    proxyProtocol: boolean("proxyProtocol").notNull().default(false),
+    proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
 });
 
 export const targets = pgTable("targets", {
