@@ -13,7 +13,8 @@ import config from "@server/lib/config";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { response } from "@server/lib/response";
-import { logAccessAudit } from "@server/private/lib/logAccessAudit";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
+import { logAccessAudit } from "#private/lib/logAccessAudit";
 
 const getExchangeTokenParams = z
     .object({
@@ -69,6 +70,23 @@ export async function getExchangeToken(
                 createHttpError(
                     HttpCode.UNAUTHORIZED,
                     "Missing SSO session cookie"
+                )
+            );
+        }
+
+        // check org policy here
+        const hasAccess = await checkOrgAccessPolicy({
+            orgId: resource.orgId,
+            userId: req.user!.userId,
+            session: req.session
+        });
+
+        if (!hasAccess.allowed || hasAccess.error) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "Failed organization access policy check: " +
+                        (hasAccess.error || "Unknown error")
                 )
             );
         }

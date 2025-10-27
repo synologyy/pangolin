@@ -11,11 +11,13 @@ import {
 } from "@server/db/queries/verifySessionQueries";
 import {
     LoginPage,
+    Org,
     Resource,
     ResourceHeaderAuth,
     ResourcePassword,
     ResourcePincode,
-    ResourceRule
+    ResourceRule,
+    resourceSessions
 } from "@server/db";
 import config from "@server/lib/config";
 import { isIpInCidr } from "@server/lib/ip";
@@ -30,6 +32,10 @@ import { getCountryCodeForIp } from "@server/lib/geoip";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
+import {
+    checkOrgAccessPolicy,
+    enforceResourceSessionLength
+} from "#dynamic/lib/checkOrgAccessPolicy";
 import { logRequestAudit } from "./logRequestAudit";
 import cache from "@server/lib/cache";
 
@@ -135,6 +141,7 @@ export async function verifyResourceSession(
                   pincode: ResourcePincode | null;
                   password: ResourcePassword | null;
                   headerAuth: ResourceHeaderAuth | null;
+                  org: Org;
               }
             | undefined = cache.get(resourceCacheKey);
 
@@ -333,7 +340,7 @@ export async function verifyResourceSession(
                         location: ipCC,
                         apiKey: {
                             name: tokenItem.title,
-                            apiKeyId: tokenItem.accessTokenId,
+                            apiKeyId: tokenItem.accessTokenId
                         }
                     },
                     parsedBody.data
@@ -384,7 +391,7 @@ export async function verifyResourceSession(
                         location: ipCC,
                         apiKey: {
                             name: tokenItem.title,
-                            apiKeyId: tokenItem.accessTokenId,
+                            apiKeyId: tokenItem.accessTokenId
                         }
                     },
                     parsedBody.data
@@ -408,7 +415,7 @@ export async function verifyResourceSession(
                         reason: 103, // valid header auth
                         resourceId: resource.resourceId,
                         orgId: resource.orgId,
-                        location: ipCC,
+                        location: ipCC
                     },
                     parsedBody.data
                 );
@@ -549,6 +556,20 @@ export async function verifyResourceSession(
             }
 
             if (resourceSession) {
+                // only run this check if not SSO sesion; SSO session length is checked later
+                const accessPolicy = await enforceResourceSessionLength(
+                    resourceSession,
+                    resourceData.org
+                );
+
+                if (!accessPolicy.valid) {
+                    logger.debug(
+                        "Resource session invalid due to org policy:",
+                        accessPolicy.error
+                    );
+                    return notAllowed(res, redirectPath, resource.orgId);
+                }
+
                 if (pincode && resourceSession.pincodeId) {
                     logger.debug(
                         "Resource allowed because pincode session is valid"
@@ -623,7 +644,7 @@ export async function verifyResourceSession(
                             location: ipCC,
                             apiKey: {
                                 name: resourceSession.accessTokenTitle,
-                                apiKeyId: resourceSession.accessTokenId,
+                                apiKeyId: resourceSession.accessTokenId
                             }
                         },
                         parsedBody.data
@@ -643,7 +664,8 @@ export async function verifyResourceSession(
                     if (allowedUserData === undefined) {
                         allowedUserData = await isUserAllowedToAccessResource(
                             resourceSession.userSessionId,
-                            resource
+                            resource,
+                            resourceData.org
                         );
 
                         cache.set(userAccessCacheKey, allowedUserData, 5);
@@ -812,7 +834,8 @@ function allowed(res: Response, userData?: BasicUserData) {
 
 async function isUserAllowedToAccessResource(
     userSessionId: string,
-    resource: Resource
+    resource: Resource,
+    org: Org
 ): Promise<BasicUserData | null> {
     const result = await getUserSessionWithUser(userSessionId);
 
@@ -836,6 +859,18 @@ async function isUserAllowedToAccessResource(
     const userOrgRole = await getUserOrgRole(user.userId, resource.orgId);
 
     if (!userOrgRole) {
+        return null;
+    }
+
+    const accessPolicy = await checkOrgAccessPolicy({
+        org,
+        user,
+        session
+    });
+    if (!accessPolicy.allowed || accessPolicy.error) {
+        logger.debug(`User not allowed by org access policy because`, {
+            accessPolicy
+        });
         return null;
     }
 

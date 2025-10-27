@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
-import { orgs } from "@server/db";
+import { orgs, users } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -10,7 +10,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
-import { getOrgTierData } from "@server/lib/billing";
+import { UserType } from "@server/types/UserTypes";
+import license from "#dynamic/license/license";
+import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 
 const updateOrgParamsSchema = z
@@ -22,6 +24,9 @@ const updateOrgParamsSchema = z
 const updateOrgBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
+        requireTwoFactor: z.boolean().optional(),
+        maxSessionLengthHours: z.number().nullable().optional(),
+        passwordExpiryDays: z.number().nullable().optional(),
         settingsLogRetentionDaysRequest: z
             .number()
             .min(build === "saas" ? 0 : -1)
@@ -86,9 +91,15 @@ export async function updateOrg(
 
         const { orgId } = parsedParams.data;
 
-        const { tier } = await getOrgTierData(orgId); // returns null in oss
+        const isLicensed = await isLicensedOrSubscribed(orgId);
+        if (!isLicensed) {
+            parsedBody.data.requireTwoFactor = undefined;
+            parsedBody.data.maxSessionLengthHours = undefined;
+            parsedBody.data.passwordExpiryDays = undefined;
+        }
+
         if (
-            tier != TierId.STANDARD &&
+            !isLicensed &&
             parsedBody.data.settingsLogRetentionDaysRequest &&
             parsedBody.data.settingsLogRetentionDaysRequest > 30
         ) {
@@ -103,7 +114,16 @@ export async function updateOrg(
         const updatedOrg = await db
             .update(orgs)
             .set({
-                ...parsedBody.data
+                name: parsedBody.data.name,
+                requireTwoFactor: parsedBody.data.requireTwoFactor,
+                maxSessionLengthHours: parsedBody.data.maxSessionLengthHours,
+                passwordExpiryDays: parsedBody.data.passwordExpiryDays,
+                settingsLogRetentionDaysRequest:
+                    parsedBody.data.settingsLogRetentionDaysRequest,
+                settingsLogRetentionDaysAccess:
+                    parsedBody.data.settingsLogRetentionDaysAccess,
+                settingsLogRetentionDaysAction:
+                    parsedBody.data.settingsLogRetentionDaysAction
             })
             .where(eq(orgs.orgId, orgId))
             .returning();
@@ -130,4 +150,23 @@ export async function updateOrg(
             createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "An error occurred")
         );
     }
+}
+
+async function isLicensedOrSubscribed(orgId: string): Promise<boolean> {
+    if (build === "enterprise") {
+        const isUnlocked = await license.isUnlocked();
+        if (!isUnlocked) {
+            return false;
+        }
+    }
+
+    if (build === "saas") {
+        const { tier } = await getOrgTierData(orgId);
+        const subscribed = tier === TierId.STANDARD;
+        if (!subscribed) {
+            return false;
+        }
+    }
+
+    return true;
 }

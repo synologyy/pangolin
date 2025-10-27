@@ -25,7 +25,7 @@ import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
 const querySchema = z.object({
     resourceId: z.coerce.number().int().positive().optional(),
     idpId: z.coerce.number().int().positive().optional(),
-    orgId: z.coerce.number().int().positive().optional(),
+    orgId: z.string().min(1).optional(),
     fullDomain: z.string().min(1)
 });
 
@@ -87,9 +87,8 @@ export async function loadLoginPage(
             );
         }
 
-        const { resourceId, idpId, fullDomain } = parsedQuery.data;
+        const { resourceId, idpId, fullDomain, orgId } = parsedQuery.data;
 
-        let orgId;
         if (resourceId) {
             const [resource] = await db
                 .select()
@@ -118,7 +117,7 @@ export async function loadLoginPage(
 
             orgId = idpOrgLink.orgId;
         } else if (parsedQuery.data.orgId) {
-            orgId = parsedQuery.data.orgId.toString();
+            orgId = parsedQuery.data.orgId;
         }
 
         const loginPage = await query(orgId, fullDomain);

@@ -667,6 +667,7 @@ authenticated.post(
 );
 
 authenticated.get("/org/:orgId/user/:userId", verifyOrgAccess, user.getOrgUser);
+authenticated.get("/org/:orgId/user/:userId/check", org.checkOrgUserAccess);
 
 authenticated.post(
     "/user/:userId/2fa",
@@ -737,8 +738,6 @@ authenticated.post(
     idp.updateOidcIdp
 );
 
-
-
 authenticated.delete("/idp/:idpId", verifyUserIsServerAdmin, idp.deleteIdp);
 
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
@@ -766,7 +765,6 @@ authenticated.get(
     verifyUserIsServerAdmin,
     idp.listIdpOrgPolicies
 );
-
 
 authenticated.get("/idp", idp.listIdps); // anyone can see this; it's just a list of idp names and ids
 authenticated.get("/idp/:idpId", verifyUserIsServerAdmin, idp.getIdp);
@@ -1058,11 +1056,11 @@ authRouter.post(
     auth.requestEmailVerificationCode
 );
 
-// authRouter.post(
-//     "/change-password",
-//     verifySessionUserMiddleware,
-//     auth.changePassword
-// );
+authRouter.post(
+    "/change-password",
+    verifySessionUserMiddleware,
+    auth.changePassword
+);
 
 authRouter.post(
     "/reset-password/request",

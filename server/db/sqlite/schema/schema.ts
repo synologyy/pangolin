@@ -35,6 +35,9 @@ export const orgs = sqliteTable("orgs", {
     name: text("name").notNull(),
     subnet: text("subnet"),
     createdAt: text("createdAt"),
+    requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
+    maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
+    passwordExpiryDays: integer("passwordExpiryDays"), // days
     settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
         .notNull()
         .default(7),
@@ -255,7 +258,8 @@ export const users = sqliteTable("user", {
     termsVersion: text("termsVersion"),
     serverAdmin: integer("serverAdmin", { mode: "boolean" })
         .notNull()
-        .default(false)
+        .default(false),
+    lastPasswordChange: integer("lastPasswordChange")
 });
 
 export const securityKeys = sqliteTable("webauthnCredentials", {
@@ -360,7 +364,8 @@ export const sessions = sqliteTable("session", {
     userId: text("userId")
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
-    expiresAt: integer("expiresAt").notNull()
+    expiresAt: integer("expiresAt").notNull(),
+    issuedAt: integer("issuedAt")
 });
 
 export const newtSessions = sqliteTable("newtSession", {
@@ -610,7 +615,8 @@ export const resourceSessions = sqliteTable("resourceSessions", {
         {
             onDelete: "cascade"
         }
-    )
+    ),
+    issuedAt: integer("issuedAt")
 });
 
 export const resourceWhitelist = sqliteTable("resourceWhitelist", {

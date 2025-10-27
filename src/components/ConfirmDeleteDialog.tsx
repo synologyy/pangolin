@@ -54,6 +54,7 @@ type InviteUserFormProps = {
     dialog: React.ReactNode;
     buttonText: string;
     onConfirm: () => Promise<void>;
+    warningText?: string;
 };
 
 export default function InviteUserForm({
@@ -63,7 +64,8 @@ export default function InviteUserForm({
     title,
     onConfirm,
     buttonText,
-    dialog
+    dialog,
+    warningText
 }: InviteUserFormProps) {
     const [loading, setLoading] = useState(false);
 
@@ -86,13 +88,20 @@ export default function InviteUserForm({
 
     function reset() {
         form.reset();
-        setLoading(false);
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setLoading(true);
-        await onConfirm();
-        reset();
+        try {
+            await onConfirm();
+            setOpen(false);
+            reset();
+        } catch (error) {
+            // Handle error if needed
+            console.error("Confirmation failed:", error);
+        } finally {
+            setLoading(false);
+        }
     }
 
     return (
@@ -111,8 +120,8 @@ export default function InviteUserForm({
                     <CredenzaBody>
                         <div className="mb-4 break-all overflow-hidden">
                             {dialog}
-                            <div className="mt-2 mb-6 font-bold text-red-700">
-                                {t("cannotbeUndone")}
+                            <div className="mt-2 mb-6 font-bold text-destructive">
+                                {warningText || t("cannotbeUndone")}
                             </div>
 
                             <div>
