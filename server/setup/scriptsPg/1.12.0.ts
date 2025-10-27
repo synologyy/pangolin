@@ -9,7 +9,7 @@ export default async function migration() {
     try {
         await db.execute(sql`BEGIN`);
 
-        await db.execute(sql`UPDATE "resourceRules" SET "match" = "COUNTRY" WHERE "match" = "GEOIP"`);
+        await db.execute(sql`UPDATE "resourceRules" SET "match" = 'COUNTRY' WHERE "match" = 'GEOIP'`);
 
         await db.execute(sql`
         CREATE TABLE "accessAuditLog" (

@@ -105,7 +105,7 @@ export async function logRequestAudit(
     try {
         if (data.orgId) {
             const retentionDays = await getRetentionDays(data.orgId);
-            if (retentionDays === 0) {
+            if (retentionDays == 0) {
                 // do not log
                 return;
             }

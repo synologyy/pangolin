@@ -18,9 +18,15 @@ type Props = {
     records: DNSRecordRow[];
     domainId: string;
     isRefreshing?: boolean;
+    type: string | null;
 };
 
-export default function DNSRecordsTable({ records, domainId, isRefreshing }: Props) {
+export default function DNSRecordsTable({
+    records,
+    domainId,
+    isRefreshing,
+    type
+}: Props) {
     const t = useTranslations();
 
     const columns: ColumnDef<DNSRecordRow>[] = [
@@ -28,56 +34,31 @@ export default function DNSRecordsTable({ records, domainId, isRefreshing }: Pro
             accessorKey: "baseDomain",
             header: ({ column }) => {
                 return (
-                    <div
-                    >
-                        {t("recordName", { fallback: "Record name" })}
-                    </div>
+                    <div>{t("recordName", { fallback: "Record name" })}</div>
                 );
             },
             cell: ({ row }) => {
                 const baseDomain = row.original.baseDomain;
-                return (
-                    <div>
-                        {baseDomain || "-"}
-                    </div>
-                );
+                return <div>{baseDomain || "-"}</div>;
             }
         },
         {
             accessorKey: "recordType",
             header: ({ column }) => {
-                return (
-                    <div
-                    >
-                        {t("type")}
-                    </div>
-                );
+                return <div>{t("type")}</div>;
             },
             cell: ({ row }) => {
                 const type = row.original.recordType;
-                return (
-                    <div className="">
-                        {type}
-                    </div>
-                );
+                return <div className="">{type}</div>;
             }
         },
         {
             accessorKey: "ttl",
             header: ({ column }) => {
-                return (
-                    <div
-                    >
-                        {t("TTL")}
-                    </div>
-                );
+                return <div>{t("TTL")}</div>;
             },
             cell: ({ row }) => {
-                return (
-                    <div>
-                        {t("auto")}
-                    </div>
-                );
+                return <div>{t("auto")}</div>;
             }
         },
         {
@@ -87,44 +68,39 @@ export default function DNSRecordsTable({ records, domainId, isRefreshing }: Pro
             },
             cell: ({ row }) => {
                 const value = row.original.value;
-                return (
-                    <div>
-                        {value}
-                    </div>
-                );
+                return <div>{value}</div>;
             }
         },
         {
             accessorKey: "verified",
             header: ({ column }) => {
-                return (
-                    <div
-                    >
-                        {t("status")}
-                    </div>
-                );
+                return <div>{t("status")}</div>;
             },
             cell: ({ row }) => {
                 const verified = row.original.verified;
-                return (
-                    verified ? (
-                        <Badge variant="green">{t("verified")}</Badge>
-                    ) : (
-                        <Badge variant="yellow">
-                            {t("pending", { fallback: "Pending" })}
+                return verified ? (
+                    type === "wildcard" ? (
+                        <Badge variant="outlinePrimary">
+                            {t("manual", { fallback: "Manual" })}
                         </Badge>
+                    ) : (
+                        <Badge variant="green">{t("verified")}</Badge>
                     )
+                ) : (
+                    <Badge variant="yellow">
+                        {t("pending", { fallback: "Pending" })}
+                    </Badge>
                 );
             }
         }
     ];
-
 
     return (
         <DNSRecordsDataTable
             columns={columns}
             data={records}
             isRefreshing={isRefreshing}
+            type={type}
         />
     );
 }

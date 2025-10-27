@@ -15,7 +15,7 @@ export default async function migration() {
 
         db.transaction(() => {
             db.prepare(
-                `UPDATE resourceRules SET match = "COUNTRY" WHERE match = "GEOIP"`
+                `UPDATE 'resourceRules' SET 'match' = 'COUNTRY' WHERE 'match' = 'GEOIP'`
             ).run();
 
             db.prepare(
@@ -155,7 +155,7 @@ export default async function migration() {
             ).run();
 
             db.prepare(
-                `INSERT INTO '__new_resources'("resourceId", "resourceGuid", "orgId", "niceId", "name", "subdomain", "fullDomain", "domainId", "ssl", "blockAccess", "sso", "http", "protocol", "proxyPort", "emailWhitelistEnabled", "applyRules", "enabled", "stickySession", "tlsServerName", "setHostHeader", "enableProxy", "skipToIdpId", "headers", "proxyProtocol", "proxyProtocolVersion") SELECT "resourceId", "resourceGuid", "orgId", "niceId", "name", "subdomain", "fullDomain", "domainId", "ssl", "blockAccess", "sso", "http", "protocol", "proxyPort", "emailWhitelistEnabled", "applyRules", "enabled", "stickySession", "tlsServerName", "setHostHeader", "enableProxy", "skipToIdpId", "headers", "proxyProtocol", "proxyProtocolVersion" FROM 'resources';`
+                `INSERT INTO '__new_resources'("resourceId", "resourceGuid", "orgId", "niceId", "name", "subdomain", "fullDomain", "domainId", "ssl", "blockAccess", "sso", "http", "protocol", "proxyPort", "emailWhitelistEnabled", "applyRules", "enabled", "stickySession", "tlsServerName", "setHostHeader", "enableProxy", "skipToIdpId", "headers") SELECT "resourceId", "resourceGuid", "orgId", "niceId", "name", "subdomain", "fullDomain", "domainId", "ssl", "blockAccess", "sso", "http", "protocol", "proxyPort", "emailWhitelistEnabled", "applyRules", "enabled", "stickySession", "tlsServerName", "setHostHeader", "enableProxy", "skipToIdpId", "headers" FROM 'resources';`
             ).run();
             db.prepare(`DROP TABLE 'resources';`).run();
             db.prepare(

@@ -14,7 +14,7 @@ import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { response } from "@server/lib/response";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
-import { logAccessAudit } from "#private/lib/logAccessAudit";
+import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 const getExchangeTokenParams = z
     .object({

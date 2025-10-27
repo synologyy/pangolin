@@ -29,7 +29,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import { Badge } from "./ui/badge";
-
+import Link from "next/link";
+import { build } from "@server/build";
 
 type TabFilter = {
     id: string;
@@ -55,6 +56,7 @@ type DNSRecordsDataTableProps<TData, TValue> = {
     defaultTab?: string;
     persistPageSize?: boolean | string;
     defaultPageSize?: number;
+    type?: string | null;
 };
 
 export function DNSRecordsDataTable<TData, TValue>({
@@ -68,7 +70,7 @@ export function DNSRecordsDataTable<TData, TValue>({
     defaultSort,
     tabs,
     defaultTab,
-
+    type
 }: DNSRecordsDataTableProps<TData, TValue>) {
     const t = useTranslations();
 
@@ -97,11 +99,8 @@ export function DNSRecordsDataTable<TData, TValue>({
         getPaginationRowModel: getPaginationRowModel(),
 
         getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
+        getFilteredRowModel: getFilteredRowModel()
     });
-
-
-
 
     return (
         <div className="container mx-auto max-w-12xl">
@@ -112,28 +111,31 @@ export function DNSRecordsDataTable<TData, TValue>({
                             <h1 className="font-bold">{t("dnsRecord")}</h1>
                             <Badge variant="secondary">{t("required")}</Badge>
                         </div>
-                        <Button
-                            variant="outline"
-                        >
-                            <ExternalLink className="h-4 w-4 mr-1"/>
-                            {t("howToAddRecords")}
-                        </Button>
+                        <Link href="https://docs.pangolin.net/self-host/dns-and-networking">
+                            <Button variant="outline">
+                                <ExternalLink className="h-4 w-4 mr-1" />
+                                {t("howToAddRecords")}
+                            </Button>
+                        </Link>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id} className="bg-secondary dark:bg-transparent">
+                                <TableRow
+                                    key={headerGroup.id}
+                                    className="bg-secondary dark:bg-transparent"
+                                >
                                     {headerGroup.headers.map((header) => (
                                         <TableHead key={header.id}>
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
-                                                    header.column.columnDef
-                                                        .header,
-                                                    header.getContext()
-                                                )}
+                                                      header.column.columnDef
+                                                          .header,
+                                                      header.getContext()
+                                                  )}
                                         </TableHead>
                                     ))}
                                 </TableRow>
