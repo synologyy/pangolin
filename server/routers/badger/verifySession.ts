@@ -387,19 +387,17 @@ export async function verifyResourceSession(
 
             if (resourceSession) {
                 // only run this check if not SSO sesion; SSO session length is checked later
-                if (!(resourceSessions.userSessionId && sso)) {
-                    const accessPolicy = await enforceResourceSessionLength(
-                        resourceSession,
-                        resourceData.org
-                    );
+                const accessPolicy = await enforceResourceSessionLength(
+                    resourceSession,
+                    resourceData.org
+                );
 
-                    if (!accessPolicy.valid) {
-                        logger.debug(
-                            "Resource session invalid due to org policy:",
-                            accessPolicy.error
-                        );
-                        return notAllowed(res, redirectPath, resource.orgId);
-                    }
+                if (!accessPolicy.valid) {
+                    logger.debug(
+                        "Resource session invalid due to org policy:",
+                        accessPolicy.error
+                    );
+                    return notAllowed(res, redirectPath, resource.orgId);
                 }
 
                 if (pincode && resourceSession.pincodeId) {
