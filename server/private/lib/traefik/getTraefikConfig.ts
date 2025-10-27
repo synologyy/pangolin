@@ -789,7 +789,7 @@ export async function getTraefikConfig(
                     continue;
                 }
 
-                let tls = {};
+                const tls = {};
                 if (
                     !privateConfig.getRawPrivateConfig().flags.use_pangolin_dns
                 ) {

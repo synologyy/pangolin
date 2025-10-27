@@ -43,8 +43,7 @@ async function startServers() {
     const apiServer = createApiServer();
     const internalServer = createInternalServer();
 
-    let nextServer;
-    nextServer = await createNextServer();
+    const nextServer = await createNextServer();
     if (config.getRawConfig().traefik.file_mode) {
         const monitor = new TraefikConfigManager();
         await monitor.start();

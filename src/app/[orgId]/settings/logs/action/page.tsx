@@ -214,7 +214,7 @@ export default function GeneralPage() {
             const activeFilters = filtersParam || filters;
 
             // Convert the date/time values to API parameters
-            let params: any = {
+            const params: any = {
                 limit: size,
                 offset: page * size,
                 ...activeFilters
@@ -296,7 +296,7 @@ export default function GeneralPage() {
             setIsExporting(true);
 
             // Prepare query params for export
-            let params: any = {
+            const params: any = {
                 timeStart: dateRange.startDate?.date
                     ? new Date(dateRange.startDate.date).toISOString()
                     : undefined,

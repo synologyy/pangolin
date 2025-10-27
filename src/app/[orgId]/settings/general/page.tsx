@@ -317,7 +317,7 @@ export default function GeneralPage() {
                                                     <DropdownMenuContent className="w-full">
                                                         {LOG_RETENTION_OPTIONS.filter((option) => {
                                                             if (build == "saas" && !subscription?.subscribed && option.value > 30) {
-                                                                return false
+                                                                return false;
                                                             }
                                                             return true;
                                                         }).map(

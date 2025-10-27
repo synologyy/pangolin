@@ -887,7 +887,7 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.viewLogs),
     logs.queryRequestAuditLogs
-)
+);
 
 authenticated.get(
     "/org/:orgId/logs/request/export",
@@ -895,7 +895,7 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportRequestAuditLogs
-)
+);
 
 // Auth routes
 export const authRouter = Router();

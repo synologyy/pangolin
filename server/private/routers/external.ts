@@ -354,7 +354,7 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.exportLogs),
     logs.queryActionAuditLogs 
-)
+);
 
 authenticated.get(
     "/org/:orgId/logs/action/export",
@@ -364,7 +364,7 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportActionAuditLogs
-)
+);
 
 authenticated.get(
     "/org/:orgId/logs/access",
@@ -373,7 +373,7 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.exportLogs),
     logs.queryAccessAuditLogs 
-)
+);
 
 authenticated.get(
     "/org/:orgId/logs/access/export",
@@ -383,4 +383,4 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportAccessAuditLogs
-)
+);
