@@ -87,8 +87,9 @@ export async function loadLoginPage(
             );
         }
 
-        const { resourceId, idpId, fullDomain, orgId } = parsedQuery.data;
+        const { resourceId, idpId, fullDomain } = parsedQuery.data;
 
+        let orgId: string | undefined = undefined;
         if (resourceId) {
             const [resource] = await db
                 .select()
