@@ -76,16 +76,24 @@ export default function OrgPolicyResult({
     // Add max session length policy if the organization has it enforced
     if (accessRes.policies?.maxSessionLength) {
         const maxSessionPolicy = accessRes.policies?.maxSessionLength;
-        const maxDays = Math.round(maxSessionPolicy.maxSessionLengthHours / 24);
-        const daysAgo = Math.round(maxSessionPolicy.sessionAgeHours / 24);
+        const maxHours = maxSessionPolicy.maxSessionLengthHours;
+        
+        // Use hours if less than 24, otherwise convert to days
+        const useHours = maxHours < 24;
+        const maxTime = useHours ? maxHours : Math.round(maxHours / 24);
+        
+        const descriptionKey = useHours 
+            ? "reauthenticationDescriptionHours"
+            : "reauthenticationDescription";
+        
+        const description = useHours
+            ? t(descriptionKey, { maxHours })
+            : t(descriptionKey, { maxDays: maxTime });
 
         policies.push({
             id: "max-session-length",
             name: t("reauthenticationRequired"),
-            description: t("reauthenticationDescription", {
-                maxDays,
-                daysAgo
-            }),
+            description,
             compliant: maxSessionPolicy.compliant,
             action: !maxSessionPolicy.compliant
                 ? async () => {

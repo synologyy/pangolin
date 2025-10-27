@@ -56,18 +56,24 @@ import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
-    { value: null, label: "Unenforced" },
-    { value: 72, label: "3 days" }, // 3 * 24 = 72 hours
-    { value: 168, label: "7 days" }, // 7 * 24 = 168 hours
-    { value: 336, label: "14 days" }, // 14 * 24 = 336 hours
-    { value: 720, label: "30 days" }, // 30 * 24 = 720 hours
-    { value: 2160, label: "90 days" }, // 90 * 24 = 2160 hours
-    { value: 4320, label: "180 days" } // 180 * 24 = 4320 hours
+    { value: null, labelKey: "unenforced" },
+    { value: 1, labelKey: "1Hour" },
+    { value: 3, labelKey: "3Hours" },
+    { value: 6, labelKey: "6Hours" },
+    { value: 12, labelKey: "12Hours" },
+    { value: 24, labelKey: "1DaySession" },
+    { value: 72, labelKey: "3Days" },
+    { value: 168, labelKey: "7Days" },
+    { value: 336, labelKey: "14Days" },
+    { value: 720, labelKey: "30DaysSession" },
+    { value: 2160, labelKey: "90DaysSession" },
+    { value: 4320, labelKey: "180DaysSession" }
 ];
 
 // Password expiry options in days - will be translated in component
 const PASSWORD_EXPIRY_OPTIONS = [
     { value: null, labelKey: "neverExpire" },
+    { value: 1, labelKey: "1Day" },
     { value: 30, labelKey: "30Days" },
     { value: 60, labelKey: "60Days" },
     { value: 90, labelKey: "90Days" },
@@ -465,9 +471,7 @@ export default function GeneralPage() {
                                                                                 : option.value.toString()
                                                                         }
                                                                     >
-                                                                        {
-                                                                            option.label
-                                                                        }
+                                                                        {t(option.labelKey)}
                                                                     </SelectItem>
                                                                 )
                                                             )}
