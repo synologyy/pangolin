@@ -52,8 +52,7 @@ import { build } from "@server/build";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { Badge } from "@app/components/ui/badge";
-import { Alert, AlertDescription } from "@app/components/ui/alert";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
@@ -347,21 +346,7 @@ export default function GeneralPage() {
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
-                    {build == "saas" && !subscriptionStatus?.isSubscribed() ? (
-                        <Alert variant="info" className="mb-6">
-                            <AlertDescription>
-                                {t("subscriptionRequiredToUse")}
-                            </AlertDescription>
-                        </Alert>
-                    ) : null}
-
-                    {build == "enterprise" && !isUnlocked() ? (
-                        <Alert variant="info" className="mb-6">
-                            <AlertDescription>
-                                {t("licenseRequiredToUse")}
-                            </AlertDescription>
-                        </Alert>
-                    ) : null}
+                    <SecurityFeaturesAlert />
 
                     <SettingsSectionForm>
                         <Form {...form}>
