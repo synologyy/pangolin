@@ -1,7 +1,7 @@
 import { db } from "@server/db/pg/driver";
 import { sql } from "drizzle-orm";
 
-const version = "1.11.2";
+const version = "1.12.0";
 
 export default async function migration() {
     console.log(`Running setup script ${version}...`);
