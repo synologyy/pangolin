@@ -50,7 +50,8 @@ export async function getTraefikConfig(
     exitNodeId: number,
     siteTypes: string[],
     filterOutNamespaceDomains = false,
-    generateLoginPageRouters = false
+    generateLoginPageRouters = false,
+    allowRawResources = true
 ): Promise<any> {
     // Define extended target type with site information
     type TargetWithSite = Target & {
@@ -135,7 +136,7 @@ export async function getTraefikConfig(
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record
                 ),
                 inArray(sites.type, siteTypes),
-                config.getRawConfig().traefik.allow_raw_resources
+                allowRawResources
                     ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
                     : eq(resources.http, true)
             )
@@ -688,6 +689,11 @@ export async function getTraefikConfig(
                                 }
                             });
                     })(),
+                    ...(resource.proxyProtocol && protocol == "tcp" // proxy protocol only works for tcp
+                        ? {
+                              serversTransport: `pp-transport-v${resource.proxyProtocolVersion || 1}`
+                          }
+                        : {}),
                     ...(resource.stickySession
                         ? {
                               sticky: {

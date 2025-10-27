@@ -23,7 +23,8 @@ export async function getTraefikConfig(
     exitNodeId: number,
     siteTypes: string[],
     filterOutNamespaceDomains = false,
-    generateLoginPageRouters = false
+    generateLoginPageRouters = false,
+    allowRawResources = true
 ): Promise<any> {
     // Define extended target type with site information
     type TargetWithSite = Target & {
@@ -103,7 +104,7 @@ export async function getTraefikConfig(
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record
                 ),
                 inArray(sites.type, siteTypes),
-                config.getRawConfig().traefik.allow_raw_resources
+                allowRawResources
                     ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
                     : eq(resources.http, true)
             )
@@ -566,8 +567,6 @@ export async function getTraefikConfig(
                 ...(protocol === "tcp" ? { rule: "HostSNI(`*`)" } : {})
             };
 
-            const serversTransportName = `${key}-proxy-protocol-transport`;
-
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
                     servers: (() => {
@@ -621,8 +620,10 @@ export async function getTraefikConfig(
                                 }
                             });
                     })(),
-                    ...(resource.proxyProtocol
-                        ? { serversTransport: serversTransportName }
+                    ...(resource.proxyProtocol && protocol == "tcp"
+                        ? {
+                              serversTransport: `pp-transport-v${resource.proxyProtocolVersion || 1}`
+                          }
                         : {}),
                     ...(resource.stickySession
                         ? {
@@ -636,23 +637,6 @@ export async function getTraefikConfig(
                         : {})
                 }
             };
-
-            // Add serversTransport configuration if proxy protocol is enabled
-            if (resource.proxyProtocol) {
-                if (!config_output[protocol].serversTransports) {
-                    config_output[protocol].serversTransports = {};
-                }
-                
-                config_output[protocol].serversTransports[serversTransportName] = {
-                    proxyProtocol: {
-                        version: resource.proxyProtocolVersion || 1
-                    }
-                };
-
-                logger.debug(
-                    `Enabled Proxy Protocol v${resource.proxyProtocolVersion || 1} for ${protocol} resource ${resource.resourceId} (${resource.name})`
-                );
-            }
         }
     }
     return config_output;
