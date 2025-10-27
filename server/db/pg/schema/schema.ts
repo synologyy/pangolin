@@ -6,7 +6,8 @@ import {
     integer,
     bigint,
     real,
-    text
+    text,
+    index
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -18,7 +19,22 @@ export const domains = pgTable("domains", {
     type: varchar("type"), // "ns", "cname", "wildcard"
     verified: boolean("verified").notNull().default(false),
     failed: boolean("failed").notNull().default(false),
-    tries: integer("tries").notNull().default(0)
+    tries: integer("tries").notNull().default(0),
+    certResolver: varchar("certResolver"),
+    customCertResolver: varchar("customCertResolver"),
+    preferWildcardCert: boolean("preferWildcardCert")
+});
+
+
+export const dnsRecords = pgTable("dnsRecords", {
+    id: varchar("id").primaryKey(),
+    domainId: varchar("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" }),
+    recordType: varchar("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
+    baseDomain: varchar("baseDomain"),
+    value: varchar("value").notNull(),
+    verified: boolean("verified").notNull().default(false),
 });
 
 export const orgs = pgTable("orgs", {
@@ -28,7 +44,16 @@ export const orgs = pgTable("orgs", {
     createdAt: text("createdAt"),
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
-    passwordExpiryDays: integer("passwordExpiryDays")
+    passwordExpiryDays: integer("passwordExpiryDays"),
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+        .notNull()
+        .default(7),
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+        .notNull()
+        .default(0),
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+        .notNull()
+        .default(0)
 });
 
 export const orgDomains = pgTable("orgDomains", {
@@ -102,9 +127,11 @@ export const resources = pgTable("resources", {
     setHostHeader: varchar("setHostHeader"),
     enableProxy: boolean("enableProxy").default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
-        onDelete: "cascade"
+        onDelete: "set null"
     }),
-    headers: text("headers") // comma-separated list of headers to add to the request
+    headers: text("headers"), // comma-separated list of headers to add to the request
+    proxyProtocol: boolean("proxyProtocol").notNull().default(false),
+    proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
 });
 
 export const targets = pgTable("targets", {
@@ -676,6 +703,42 @@ export const setupTokens = pgTable("setupTokens", {
     dateUsed: varchar("dateUsed")
 });
 
+export const requestAuditLog = pgTable(
+    "requestAuditLog",
+    {
+        id: serial("id").primaryKey(),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId").references(() => orgs.orgId, {
+            onDelete: "cascade"
+        }),
+        action: boolean("action").notNull(),
+        reason: integer("reason").notNull(),
+        actorType: text("actorType"),
+        actor: text("actor"),
+        actorId: text("actorId"),
+        resourceId: integer("resourceId"),
+        ip: text("ip"),
+        location: text("location"),
+        userAgent: text("userAgent"),
+        metadata: text("metadata"),
+        headers: text("headers"), // JSON blob
+        query: text("query"), // JSON blob
+        originalRequestURL: text("originalRequestURL"),
+        scheme: text("scheme"),
+        host: text("host"),
+        path: text("path"),
+        method: text("method"),
+        tls: boolean("tls")
+    },
+    (table) => [
+        index("idx_requestAuditLog_timestamp").on(table.timestamp),
+        index("idx_requestAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -727,3 +790,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type LicenseKey = InferSelectModel<typeof licenseKey>;
+export type SecurityKey = InferSelectModel<typeof securityKeys>;
+export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;

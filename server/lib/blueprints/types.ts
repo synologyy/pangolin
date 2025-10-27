@@ -275,24 +275,26 @@ export const ConfigSchema = z
         }
     )
     .refine(
-        // Enforce proxy-port uniqueness within proxy-resources
+        // Enforce proxy-port uniqueness within proxy-resources per protocol
         (config) => {
-            const proxyPortMap = new Map<number, string[]>();
+            const protocolPortMap = new Map<string, string[]>();
 
             Object.entries(config["proxy-resources"]).forEach(
                 ([resourceKey, resource]) => {
                     const proxyPort = resource["proxy-port"];
-                    if (proxyPort !== undefined) {
-                        if (!proxyPortMap.has(proxyPort)) {
-                            proxyPortMap.set(proxyPort, []);
+                    const protocol = resource.protocol;
+                    if (proxyPort !== undefined && protocol !== undefined) {
+                        const key = `${protocol}:${proxyPort}`;
+                        if (!protocolPortMap.has(key)) {
+                            protocolPortMap.set(key, []);
                         }
-                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                        protocolPortMap.get(key)!.push(resourceKey);
                     }
                 }
             );
 
             // Find duplicates
-            const duplicates = Array.from(proxyPortMap.entries()).filter(
+            const duplicates = Array.from(protocolPortMap.entries()).filter(
                 ([_, resourceKeys]) => resourceKeys.length > 1
             );
 
@@ -300,25 +302,29 @@ export const ConfigSchema = z
         },
         (config) => {
             // Extract duplicates for error message
-            const proxyPortMap = new Map<number, string[]>();
+            const protocolPortMap = new Map<string, string[]>();
 
             Object.entries(config["proxy-resources"]).forEach(
                 ([resourceKey, resource]) => {
                     const proxyPort = resource["proxy-port"];
-                    if (proxyPort !== undefined) {
-                        if (!proxyPortMap.has(proxyPort)) {
-                            proxyPortMap.set(proxyPort, []);
+                    const protocol = resource.protocol;
+                    if (proxyPort !== undefined && protocol !== undefined) {
+                        const key = `${protocol}:${proxyPort}`;
+                        if (!protocolPortMap.has(key)) {
+                            protocolPortMap.set(key, []);
                         }
-                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                        protocolPortMap.get(key)!.push(resourceKey);
                     }
                 }
             );
 
-            const duplicates = Array.from(proxyPortMap.entries())
+            const duplicates = Array.from(protocolPortMap.entries())
                 .filter(([_, resourceKeys]) => resourceKeys.length > 1)
                 .map(
-                    ([proxyPort, resourceKeys]) =>
-                        `port ${proxyPort} used by proxy-resources: ${resourceKeys.join(", ")}`
+                    ([protocolPort, resourceKeys]) => {
+                        const [protocol, port] = protocolPort.split(':');
+                        return `${protocol.toUpperCase()} port ${port} used by proxy-resources: ${resourceKeys.join(", ")}`;
+                    }
                 )
                 .join("; ");
 

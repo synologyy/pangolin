@@ -1,9 +1,4 @@
-import { generateSessionToken } from "@server/auth/sessions/app";
-import {
-    createResourceSession,
-    serializeResourceSessionCookie,
-    validateResourceSessionToken
-} from "@server/auth/sessions/resource";
+import { validateResourceSessionToken } from "@server/auth/sessions/resource";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import {
     getResourceByDomain,
@@ -18,7 +13,6 @@ import {
     LoginPage,
     Org,
     Resource,
-    ResourceAccessToken,
     ResourceHeaderAuth,
     ResourcePassword,
     ResourcePincode,
@@ -32,7 +26,6 @@ import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
-import NodeCache from "node-cache";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { getCountryCodeForIp } from "@server/lib/geoip";
@@ -43,11 +36,8 @@ import {
     checkOrgAccessPolicy,
     enforceResourceSessionLength
 } from "#dynamic/lib/checkOrgAccessPolicy";
-
-// We'll see if this speeds anything up
-const cache = new NodeCache({
-    stdTTL: 5 // seconds
-});
+import { logRequestAudit } from "./logRequestAudit";
+import cache from "@server/lib/cache";
 
 const verifyResourceSessionSchema = z.object({
     sessions: z.record(z.string()).optional(),
@@ -133,6 +123,10 @@ export async function verifyResourceSession(
 
         logger.debug("Client IP:", { clientIp });
 
+        const ipCC = clientIp
+            ? await getCountryCodeFromIp(clientIp)
+            : undefined;
+
         let cleanHost = host;
         // if the host ends with :port, strip it
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
@@ -156,17 +150,43 @@ export async function verifyResourceSession(
 
             if (!result) {
                 logger.debug(`Resource not found ${cleanHost}`);
+
+                // TODO: we cant log this for now because we dont know the org
+                // eventually it would be cool to show this for the server admin
+
+                // logRequestAudit(
+                //     {
+                //         action: false,
+                //         reason: 201, //resource not found
+                //         location: ipCC
+                //     },
+                //     parsedBody.data
+                // );
+
                 return notAllowed(res);
             }
 
             resourceData = result;
-            cache.set(resourceCacheKey, resourceData);
+            cache.set(resourceCacheKey, resourceData, 5);
         }
 
         const { resource, pincode, password, headerAuth } = resourceData;
 
         if (!resource) {
             logger.debug(`Resource not found ${cleanHost}`);
+
+            // TODO: we cant log this for now because we dont know the org
+            // eventually it would be cool to show this for the server admin
+
+            // logRequestAudit(
+            //     {
+            //         action: false,
+            //         reason: 201, //resource not found
+            //         location: ipCC
+            //     },
+            //     parsedBody.data
+            // );
+
             return notAllowed(res);
         }
 
@@ -174,6 +194,18 @@ export async function verifyResourceSession(
 
         if (blockAccess) {
             logger.debug("Resource blocked", host);
+
+            logRequestAudit(
+                {
+                    action: false,
+                    reason: 202, //resource blocked
+                    resourceId: resource.resourceId,
+                    orgId: resource.orgId,
+                    location: ipCC
+                },
+                parsedBody.data
+            );
+
             return notAllowed(res);
         }
 
@@ -182,14 +214,40 @@ export async function verifyResourceSession(
             const action = await checkRules(
                 resource.resourceId,
                 clientIp,
-                path
+                path,
+                ipCC
             );
 
             if (action == "ACCEPT") {
                 logger.debug("Resource allowed by rule");
+
+                logRequestAudit(
+                    {
+                        action: true,
+                        reason: 100, // allowed by rule
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return allowed(res);
             } else if (action == "DROP") {
                 logger.debug("Resource denied by rule");
+
+                // TODO: add rules type
+                logRequestAudit(
+                    {
+                        action: false,
+                        reason: 203, // dropped by rules
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return notAllowed(res);
             } else if (action == "PASS") {
                 logger.debug(
@@ -210,6 +268,18 @@ export async function verifyResourceSession(
             !headerAuth
         ) {
             logger.debug("Resource allowed because no auth");
+
+            logRequestAudit(
+                {
+                    action: true,
+                    reason: 101, // allowed no auth
+                    resourceId: resource.resourceId,
+                    orgId: resource.orgId,
+                    location: ipCC
+                },
+                parsedBody.data
+            );
+
             return allowed(res);
         }
 
@@ -261,6 +331,21 @@ export async function verifyResourceSession(
             }
 
             if (valid && tokenItem) {
+                logRequestAudit(
+                    {
+                        action: true,
+                        reason: 102, // valid access token
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC,
+                        apiKey: {
+                            name: tokenItem.title,
+                            apiKeyId: tokenItem.accessTokenId
+                        }
+                    },
+                    parsedBody.data
+                );
+
                 return allowed(res);
             }
         }
@@ -297,6 +382,21 @@ export async function verifyResourceSession(
             }
 
             if (valid && tokenItem) {
+                logRequestAudit(
+                    {
+                        action: true,
+                        reason: 102, // valid access token
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC,
+                        apiKey: {
+                            name: tokenItem.title,
+                            apiKeyId: tokenItem.accessTokenId
+                        }
+                    },
+                    parsedBody.data
+                );
+
                 return allowed(res);
             }
         }
@@ -308,6 +408,18 @@ export async function verifyResourceSession(
                 logger.debug(
                     "Resource allowed because header auth is valid (cached)"
                 );
+
+                logRequestAudit(
+                    {
+                        action: true,
+                        reason: 103, // valid header auth
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return allowed(res);
             } else if (
                 await verifyPassword(
@@ -315,8 +427,20 @@ export async function verifyResourceSession(
                     headerAuth.headerAuthHash
                 )
             ) {
-                cache.set(clientHeaderAuthKey, clientHeaderAuth);
+                cache.set(clientHeaderAuthKey, clientHeaderAuth, 5);
                 logger.debug("Resource allowed because header auth is valid");
+
+                logRequestAudit(
+                    {
+                        action: true,
+                        reason: 103, // valid header auth
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return allowed(res);
             }
 
@@ -327,6 +451,17 @@ export async function verifyResourceSession(
                 !password &&
                 !resource.emailWhitelistEnabled
             ) {
+                logRequestAudit(
+                    {
+                        action: false,
+                        reason: 299, // no more auth methods
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return notAllowed(res);
             }
         } else if (headerAuth) {
@@ -337,6 +472,17 @@ export async function verifyResourceSession(
                 !password &&
                 !resource.emailWhitelistEnabled
             ) {
+                logRequestAudit(
+                    {
+                        action: false,
+                        reason: 299, // no more auth methods
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return notAllowed(res);
             }
         }
@@ -349,6 +495,18 @@ export async function verifyResourceSession(
                     }. IP: ${clientIp}.`
                 );
             }
+
+            logRequestAudit(
+                {
+                    action: false,
+                    reason: 204, // no sessions
+                    resourceId: resource.resourceId,
+                    orgId: resource.orgId,
+                    location: ipCC
+                },
+                parsedBody.data
+            );
+
             return notAllowed(res);
         }
 
@@ -368,7 +526,7 @@ export async function verifyResourceSession(
                 );
 
                 resourceSession = result?.resourceSession;
-                cache.set(sessionCacheKey, resourceSession);
+                cache.set(sessionCacheKey, resourceSession, 5);
             }
 
             if (resourceSession?.isRequestToken) {
@@ -382,6 +540,18 @@ export async function verifyResourceSession(
                         }. IP: ${clientIp}.`
                     );
                 }
+
+                logRequestAudit(
+                    {
+                        action: false,
+                        reason: 205, // temporary request token
+                        resourceId: resource.resourceId,
+                        orgId: resource.orgId,
+                        location: ipCC
+                    },
+                    parsedBody.data
+                );
+
                 return notAllowed(res);
             }
 
@@ -404,6 +574,18 @@ export async function verifyResourceSession(
                     logger.debug(
                         "Resource allowed because pincode session is valid"
                     );
+
+                    logRequestAudit(
+                        {
+                            action: true,
+                            reason: 104, // valid pincode
+                            resourceId: resource.resourceId,
+                            orgId: resource.orgId,
+                            location: ipCC
+                        },
+                        parsedBody.data
+                    );
+
                     return allowed(res);
                 }
 
@@ -411,6 +593,18 @@ export async function verifyResourceSession(
                     logger.debug(
                         "Resource allowed because password session is valid"
                     );
+
+                    logRequestAudit(
+                        {
+                            action: true,
+                            reason: 105, // valid password
+                            resourceId: resource.resourceId,
+                            orgId: resource.orgId,
+                            location: ipCC
+                        },
+                        parsedBody.data
+                    );
+
                     return allowed(res);
                 }
 
@@ -421,6 +615,18 @@ export async function verifyResourceSession(
                     logger.debug(
                         "Resource allowed because whitelist session is valid"
                     );
+
+                    logRequestAudit(
+                        {
+                            action: true,
+                            reason: 106, // valid email
+                            resourceId: resource.resourceId,
+                            orgId: resource.orgId,
+                            location: ipCC
+                        },
+                        parsedBody.data
+                    );
+
                     return allowed(res);
                 }
 
@@ -428,6 +634,22 @@ export async function verifyResourceSession(
                     logger.debug(
                         "Resource allowed because access token session is valid"
                     );
+
+                    logRequestAudit(
+                        {
+                            action: true,
+                            reason: 102, // valid access token
+                            resourceId: resource.resourceId,
+                            orgId: resource.orgId,
+                            location: ipCC,
+                            apiKey: {
+                                name: resourceSession.accessTokenTitle,
+                                apiKeyId: resourceSession.accessTokenId
+                            }
+                        },
+                        parsedBody.data
+                    );
+
                     return allowed(res);
                 }
 
@@ -446,7 +668,7 @@ export async function verifyResourceSession(
                             resourceData.org
                         );
 
-                        cache.set(userAccessCacheKey, allowedUserData);
+                        cache.set(userAccessCacheKey, allowedUserData, 5);
                     }
 
                     if (
@@ -456,6 +678,22 @@ export async function verifyResourceSession(
                         logger.debug(
                             "Resource allowed because user session is valid"
                         );
+
+                        logRequestAudit(
+                            {
+                                action: true,
+                                reason: 107, // valid sso
+                                resourceId: resource.resourceId,
+                                orgId: resource.orgId,
+                                location: ipCC,
+                                user: {
+                                    username: allowedUserData.username,
+                                    userId: resourceSession.userId
+                                }
+                            },
+                            parsedBody.data
+                        );
+
                         return allowed(res, allowedUserData);
                     }
                 }
@@ -473,6 +711,17 @@ export async function verifyResourceSession(
         }
 
         logger.debug(`Redirecting to login at ${redirectPath}`);
+
+        logRequestAudit(
+            {
+                action: false,
+                reason: 299, // no more auth methods
+                resourceId: resource.resourceId,
+                orgId: resource.orgId,
+                location: ipCC
+            },
+            parsedBody.data
+        );
 
         return notAllowed(res, redirectPath, resource.orgId);
     } catch (e) {
@@ -657,7 +906,8 @@ async function isUserAllowedToAccessResource(
 async function checkRules(
     resourceId: number,
     clientIp: string | undefined,
-    path: string | undefined
+    path: string | undefined,
+    ipCC?: string
 ): Promise<"ACCEPT" | "DROP" | "PASS" | undefined> {
     const ruleCacheKey = `rules:${resourceId}`;
 
@@ -665,7 +915,7 @@ async function checkRules(
 
     if (!rules) {
         rules = await getResourceRules(resourceId);
-        cache.set(ruleCacheKey, rules);
+        cache.set(ruleCacheKey, rules, 5);
     }
 
     if (rules.length === 0) {
@@ -697,7 +947,7 @@ async function checkRules(
             return rule.action as any;
         } else if (
             clientIp &&
-            rule.match == "GEOIP" &&
+            rule.match == "COUNTRY" &&
             (await isIpInGeoIP(clientIp, rule.value))
         ) {
             return rule.action as any;
@@ -826,11 +1076,20 @@ export function isPathAllowed(pattern: string, path: string): boolean {
     return result;
 }
 
-async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
-    if (countryCode == "ALL") {
+async function isIpInGeoIP(
+    ipCountryCode: string,
+    checkCountryCode: string
+): Promise<boolean> {
+    if (checkCountryCode == "ALL") {
         return true;
     }
 
+    logger.debug(`IP ${ipCountryCode} is in country: ${checkCountryCode}`);
+
+    return ipCountryCode?.toUpperCase() === checkCountryCode.toUpperCase();
+}
+
+async function getCountryCodeFromIp(ip: string): Promise<string | undefined> {
     const geoIpCacheKey = `geoip:${ip}`;
 
     let cachedCountryCode: string | undefined = cache.get(geoIpCacheKey);
@@ -841,9 +1100,7 @@ async function isIpInGeoIP(ip: string, countryCode: string): Promise<boolean> {
         cache.set(geoIpCacheKey, cachedCountryCode, 300); // 5 minutes
     }
 
-    logger.debug(`IP ${ip} is in country: ${cachedCountryCode}`);
-
-    return cachedCountryCode?.toUpperCase() === countryCode.toUpperCase();
+    return cachedCountryCode;
 }
 
 function extractBasicAuth(

@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { boolean } from "yargs";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -11,8 +12,23 @@ export const domains = sqliteTable("domains", {
     type: text("type"), // "ns", "cname", "wildcard"
     verified: integer("verified", { mode: "boolean" }).notNull().default(false),
     failed: integer("failed", { mode: "boolean" }).notNull().default(false),
-    tries: integer("tries").notNull().default(0)
+    tries: integer("tries").notNull().default(0),
+    certResolver: text("certResolver"),
+    preferWildcardCert: integer("preferWildcardCert", { mode: "boolean" })
 });
+
+export const dnsRecords = sqliteTable("dnsRecords", {
+    id: text("id").primaryKey(),
+    domainId: text("domainId")
+        .notNull()
+        .references(() => domains.domainId, { onDelete: "cascade" }),
+
+    recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
+    baseDomain: text("baseDomain"),
+    value: text("value").notNull(), 
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+});
+
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
@@ -21,7 +37,16 @@ export const orgs = sqliteTable("orgs", {
     createdAt: text("createdAt"),
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
     maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
-    passwordExpiryDays: integer("passwordExpiryDays") // days
+    passwordExpiryDays: integer("passwordExpiryDays"), // days
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+        .notNull()
+        .default(7),
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+        .notNull()
+        .default(0),
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+        .notNull()
+        .default(0)
 });
 
 export const userDomains = sqliteTable("userDomains", {
@@ -114,9 +139,12 @@ export const resources = sqliteTable("resources", {
     setHostHeader: text("setHostHeader"),
     enableProxy: integer("enableProxy", { mode: "boolean" }).default(true),
     skipToIdpId: integer("skipToIdpId").references(() => idp.idpId, {
-        onDelete: "cascade"
+        onDelete: "set null"
     }),
-    headers: text("headers") // comma-separated list of headers to add to the request
+    headers: text("headers"), // comma-separated list of headers to add to the request
+    proxyProtocol: integer("proxyProtocol", { mode: "boolean" }).notNull().default(false),
+    proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
+
 });
 
 export const targets = sqliteTable("targets", {
@@ -721,6 +749,42 @@ export const idpOrg = sqliteTable("idpOrg", {
     orgMapping: text("orgMapping")
 });
 
+export const requestAuditLog = sqliteTable(
+    "requestAuditLog",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId").references(() => orgs.orgId, {
+            onDelete: "cascade"
+        }),
+        action: integer("action", { mode: "boolean" }).notNull(),
+        reason: integer("reason").notNull(),
+        actorType: text("actorType"),
+        actor: text("actor"),
+        actorId: text("actorId"),
+        resourceId: integer("resourceId"),
+        ip: text("ip"),
+        location: text("location"),
+        userAgent: text("userAgent"),
+        metadata: text("metadata"),
+        headers: text("headers"), // JSON blob
+        query: text("query"), // JSON blob
+        originalRequestURL: text("originalRequestURL"),
+        scheme: text("scheme"),
+        host: text("host"),
+        path: text("path"),
+        method: text("method"),
+        tls: integer("tls", { mode: "boolean" })
+    },
+    (table) => [
+        index("idx_requestAuditLog_timestamp").on(table.timestamp),
+        index("idx_requestAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -757,6 +821,7 @@ export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;
 export type VersionMigration = InferSelectModel<typeof versionMigrations>;
 export type ResourceRule = InferSelectModel<typeof resourceRules>;
 export type Domain = InferSelectModel<typeof domains>;
+export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
 export type ClientSite = InferSelectModel<typeof clientSites>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
@@ -772,3 +837,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type LicenseKey = InferSelectModel<typeof licenseKey>;
+export type SecurityKey = InferSelectModel<typeof securityKeys>;
+export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;

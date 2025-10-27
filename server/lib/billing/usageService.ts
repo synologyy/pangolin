@@ -1,5 +1,4 @@
 import { eq, sql, and } from "drizzle-orm";
-import NodeCache from "node-cache";
 import { v4 as uuidv4 } from "uuid";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import * as fs from "fs/promises";
@@ -20,6 +19,7 @@ import logger from "@server/logger";
 import { sendToClient } from "#dynamic/routers/ws";
 import { build } from "@server/build";
 import { s3Client } from "@server/lib/s3";
+import cache from "@server/lib/cache"; 
 
 interface StripeEvent {
     identifier?: string;
@@ -43,7 +43,6 @@ export function noop() {
 }
 
 export class UsageService {
-    private cache: NodeCache;
     private bucketName: string | undefined;
     private currentEventFile: string | null = null;
     private currentFileStartTime: number = 0;
@@ -51,7 +50,6 @@ export class UsageService {
     private uploadingFiles: Set<string> = new Set();
 
     constructor() {
-        this.cache = new NodeCache({ stdTTL: 300 }); // 5 minute TTL
         if (noop()) {
             return;
         }
@@ -399,7 +397,7 @@ export class UsageService {
         featureId: FeatureId
     ): Promise<string | null> {
         const cacheKey = `customer_${orgId}_${featureId}`;
-        const cached = this.cache.get<string>(cacheKey);
+        const cached = cache.get<string>(cacheKey);
 
         if (cached) {
             return cached;
@@ -422,7 +420,7 @@ export class UsageService {
             const customerId = customer.customerId;
 
             // Cache the result
-            this.cache.set(cacheKey, customerId);
+            cache.set(cacheKey, customerId, 300); // 5 minute TTL
 
             return customerId;
         } catch (error) {
@@ -698,10 +696,6 @@ export class UsageService {
 
     public async forceUpload(): Promise<void> {
         await this.uploadFileToS3();
-    }
-
-    public clearCache(): void {
-        this.cache.flushAll();
     }
 
     /**

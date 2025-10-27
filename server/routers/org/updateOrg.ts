@@ -26,7 +26,19 @@ const updateOrgBodySchema = z
         name: z.string().min(1).max(255).optional(),
         requireTwoFactor: z.boolean().optional(),
         maxSessionLengthHours: z.number().nullable().optional(),
-        passwordExpiryDays: z.number().nullable().optional()
+        passwordExpiryDays: z.number().nullable().optional(),
+        settingsLogRetentionDaysRequest: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAccess: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAction: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -86,13 +98,32 @@ export async function updateOrg(
             parsedBody.data.passwordExpiryDays = undefined;
         }
 
+        if (
+            !isLicensed &&
+            parsedBody.data.settingsLogRetentionDaysRequest &&
+            parsedBody.data.settingsLogRetentionDaysRequest > 30
+        ) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not allowed to set log retention days greater than 30 because you are not subscribed to the Standard tier"
+                )
+            );
+        }
+
         const updatedOrg = await db
             .update(orgs)
             .set({
                 name: parsedBody.data.name,
                 requireTwoFactor: parsedBody.data.requireTwoFactor,
                 maxSessionLengthHours: parsedBody.data.maxSessionLengthHours,
-                passwordExpiryDays: parsedBody.data.passwordExpiryDays
+                passwordExpiryDays: parsedBody.data.passwordExpiryDays,
+                settingsLogRetentionDaysRequest:
+                    parsedBody.data.settingsLogRetentionDaysRequest,
+                settingsLogRetentionDaysAccess:
+                    parsedBody.data.settingsLogRetentionDaysAccess,
+                settingsLogRetentionDaysAction:
+                    parsedBody.data.settingsLogRetentionDaysAction
             })
             .where(eq(orgs.orgId, orgId))
             .returning();

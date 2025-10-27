@@ -49,13 +49,13 @@ export async function getOrg(
 
         const { orgId } = parsedParams.data;
 
-        const org = await db
+        const [org] = await db
             .select()
             .from(orgs)
             .where(eq(orgs.orgId, orgId))
             .limit(1);
 
-        if (org.length === 0) {
+        if (!org) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
@@ -66,7 +66,7 @@ export async function getOrg(
 
         return response<GetOrgResponse>(res, {
             data: {
-                org: org[0]
+                org
             },
             success: true,
             error: false,

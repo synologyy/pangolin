@@ -50,9 +50,17 @@ import { useUserContext } from "@app/hooks/useUserContext";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { SwitchInput } from "@app/components/SwitchInput";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "@app/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
@@ -87,10 +95,23 @@ const GeneralFormSchema = z.object({
     subnet: z.string().optional(),
     requireTwoFactor: z.boolean().optional(),
     maxSessionLengthHours: z.number().nullable().optional(),
-    passwordExpiryDays: z.number().nullable().optional()
+    passwordExpiryDays: z.number().nullable().optional(),
+    settingsLogRetentionDaysRequest: z.number(),
+    settingsLogRetentionDaysAccess: z.number(),
+    settingsLogRetentionDaysAction: z.number()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
+
+const LOG_RETENTION_OPTIONS = [
+    { label: "logRetentionDisabled", value: 0 },
+    { label: "logRetention3Days", value: 3 },
+    { label: "logRetention7Days", value: 7 },
+    { label: "logRetention14Days", value: 14 },
+    { label: "logRetention30Days", value: 30 },
+    { label: "logRetention90Days", value: 90 },
+    ...(build != "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
+];
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -102,19 +123,20 @@ export default function GeneralPage() {
     const t = useTranslations();
     const { env } = useEnvContext();
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
-    const subscriptionStatus = useSubscriptionStatusContext();
+    const subscription = useSubscriptionStatusContext();
 
     // Check if security features are disabled due to licensing/subscription
     const isSecurityFeatureDisabled = () => {
         const isEnterpriseNotLicensed = build === "enterprise" && !isUnlocked();
         const isSaasNotSubscribed =
-            build === "saas" && !subscriptionStatus?.isSubscribed();
+            build === "saas" && !subscription?.isSubscribed();
         return isEnterpriseNotLicensed || isSaasNotSubscribed;
     };
 
     const [loadingDelete, setLoadingDelete] = useState(false);
     const [loadingSave, setLoadingSave] = useState(false);
-    const [isSecurityPolicyConfirmOpen, setIsSecurityPolicyConfirmOpen] = useState(false);
+    const [isSecurityPolicyConfirmOpen, setIsSecurityPolicyConfirmOpen] =
+        useState(false);
     const authPageSettingsRef = useRef<AuthPageSettingsRef>(null);
 
     const form = useForm({
@@ -124,7 +146,13 @@ export default function GeneralPage() {
             subnet: org?.org.subnet || "", // Add default value for subnet
             requireTwoFactor: org?.org.requireTwoFactor || false,
             maxSessionLengthHours: org?.org.maxSessionLengthHours || null,
-            passwordExpiryDays: org?.org.passwordExpiryDays || null
+            passwordExpiryDays: org?.org.passwordExpiryDays || null,
+            settingsLogRetentionDaysRequest:
+                org.org.settingsLogRetentionDaysRequest ?? 15,
+            settingsLogRetentionDaysAccess:
+                org.org.settingsLogRetentionDaysAccess ?? 15,
+            settingsLogRetentionDaysAction:
+                org.org.settingsLogRetentionDaysAction ?? 15
         },
         mode: "onChange"
     });
@@ -140,9 +168,12 @@ export default function GeneralPage() {
     const hasSecurityPolicyChanged = () => {
         const currentValues = form.getValues();
         return (
-            currentValues.requireTwoFactor !== initialSecurityValues.requireTwoFactor ||
-            currentValues.maxSessionLengthHours !== initialSecurityValues.maxSessionLengthHours ||
-            currentValues.passwordExpiryDays !== initialSecurityValues.passwordExpiryDays
+            currentValues.requireTwoFactor !==
+                initialSecurityValues.requireTwoFactor ||
+            currentValues.maxSessionLengthHours !==
+                initialSecurityValues.maxSessionLengthHours ||
+            currentValues.passwordExpiryDays !==
+                initialSecurityValues.passwordExpiryDays
         );
     };
 
@@ -212,7 +243,13 @@ export default function GeneralPage() {
 
         try {
             const reqData = {
-                name: data.name
+                name: data.name,
+                settingsLogRetentionDaysRequest:
+                    data.settingsLogRetentionDaysRequest,
+                settingsLogRetentionDaysAccess:
+                    data.settingsLogRetentionDaysAccess,
+                settingsLogRetentionDaysAction:
+                    data.settingsLogRetentionDaysAction
             } as any;
             if (build !== "oss") {
                 reqData.requireTwoFactor = data.requireTwoFactor || false;
@@ -247,6 +284,11 @@ export default function GeneralPage() {
         }
     }
 
+    const getLabelForValue = (value: number) => {
+        const option = LOG_RETENTION_OPTIONS.find((opt) => opt.value === value);
+        return option ? t(option.label) : `${value} days`;
+    };
+
     return (
         <SettingsContainer>
             <ConfirmDeleteDialog
@@ -279,23 +321,24 @@ export default function GeneralPage() {
                 title={t("securityPolicyChangeWarning")}
                 warningText={t("securityPolicyChangeWarningText")}
             />
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("orgGeneralSettings")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("orgGeneralSettingsDescription")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
-                <SettingsSectionBody>
-                    <SettingsSectionForm>
-                        <Form {...form}>
-                            <form
-                                onSubmit={form.handleSubmit(onSubmit)}
-                                className="space-y-4"
-                                id="org-settings-form"
-                            >
+
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                    id="org-settings-form"
+                >
+                    <SettingsSection>
+                        <SettingsSectionHeader>
+                            <SettingsSectionTitle>
+                                {t("orgGeneralSettings")}
+                            </SettingsSectionTitle>
+                            <SettingsSectionDescription>
+                                {t("orgGeneralSettingsDescription")}
+                            </SettingsSectionDescription>
+                        </SettingsSectionHeader>
+                        <SettingsSectionBody>
+                            <SettingsSectionForm>
                                 <FormField
                                     control={form.control}
                                     name="name"
@@ -335,11 +378,256 @@ export default function GeneralPage() {
                                         )}
                                     />
                                 )}
-                            </form>
-                        </Form>
-                    </SettingsSectionForm>
-                </SettingsSectionBody>
-            </SettingsSection>
+                            </SettingsSectionForm>
+                        </SettingsSectionBody>
+                    </SettingsSection>
+
+                    <SettingsSection>
+                        <SettingsSectionHeader>
+                            <SettingsSectionTitle>
+                                {t("logRetention")}
+                            </SettingsSectionTitle>
+                            <SettingsSectionDescription>
+                                {t("logRetentionDescription")}
+                            </SettingsSectionDescription>
+                        </SettingsSectionHeader>
+                        <SettingsSectionBody>
+                            <SettingsSectionForm>
+                                <FormField
+                                    control={form.control}
+                                    name="settingsLogRetentionDaysRequest"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {t("logRetentionRequestLabel")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full justify-between"
+                                                        >
+                                                            {getLabelForValue(
+                                                                field.value
+                                                            )}
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent className="w-full">
+                                                        {LOG_RETENTION_OPTIONS.filter(
+                                                            (option) => {
+                                                                if (
+                                                                    build ==
+                                                                        "saas" &&
+                                                                    !subscription?.subscribed &&
+                                                                    option.value >
+                                                                        30
+                                                                ) {
+                                                                    return false;
+                                                                }
+                                                                return true;
+                                                            }
+                                                        ).map((option) => (
+                                                            <DropdownMenuItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                onClick={() =>
+                                                                    field.onChange(
+                                                                        option.value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {t(
+                                                                    option.label
+                                                                )}
+                                                            </DropdownMenuItem>
+                                                        ))}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </FormControl>
+                                            <FormDescription>
+                                                {t(
+                                                    "logRetentionRequestDescription"
+                                                )}
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                {build != "oss" && (
+                                    <>
+                                        {build == "saas" &&
+                                        !subscription?.subscribed ? (
+                                            <Alert
+                                                variant="info"
+                                                className="mb-6"
+                                            >
+                                                <AlertDescription>
+                                                    {t(
+                                                        "subscriptionRequiredToUse"
+                                                    )}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : null}
+
+                                        {build == "enterprise" &&
+                                        !isUnlocked() ? (
+                                            <Alert
+                                                variant="info"
+                                                className="mb-6"
+                                            >
+                                                <AlertDescription>
+                                                    {t("licenseRequiredToUse")}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : null}
+
+                                        <FormField
+                                            control={form.control}
+                                            name="settingsLogRetentionDaysAccess"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t(
+                                                            "logRetentionAccessLabel"
+                                                        )}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="w-full justify-between"
+                                                                    disabled={
+                                                                        (build ==
+                                                                            "saas" &&
+                                                                            !subscription?.subscribed) ||
+                                                                        (build ==
+                                                                            "enterprise" &&
+                                                                            !isUnlocked())
+                                                                    }
+                                                                >
+                                                                    {getLabelForValue(
+                                                                        field.value
+                                                                    )}
+                                                                    <ChevronDown className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-full">
+                                                                {LOG_RETENTION_OPTIONS.map(
+                                                                    (
+                                                                        option
+                                                                    ) => (
+                                                                        <DropdownMenuItem
+                                                                            key={
+                                                                                option.value
+                                                                            }
+                                                                            onClick={() =>
+                                                                                field.onChange(
+                                                                                    option.value
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {t(
+                                                                                option.label
+                                                                            )}
+                                                                        </DropdownMenuItem>
+                                                                    )
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {t(
+                                                            "logRetentionAccessDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="settingsLogRetentionDaysAction"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t(
+                                                            "logRetentionActionLabel"
+                                                        )}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                <Button
+                                                                    variant="outline"
+                                                                    className="w-full justify-between"
+                                                                    disabled={
+                                                                        (build ==
+                                                                            "saas" &&
+                                                                            !subscription?.subscribed) ||
+                                                                        (build ==
+                                                                            "enterprise" &&
+                                                                            !isUnlocked())
+                                                                    }
+                                                                >
+                                                                    {getLabelForValue(
+                                                                        field.value
+                                                                    )}
+                                                                    <ChevronDown className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent className="w-full">
+                                                                {LOG_RETENTION_OPTIONS.map(
+                                                                    (
+                                                                        option
+                                                                    ) => (
+                                                                        <DropdownMenuItem
+                                                                            key={
+                                                                                option.value
+                                                                            }
+                                                                            onClick={() =>
+                                                                                field.onChange(
+                                                                                    option.value
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {t(
+                                                                                option.label
+                                                                            )}
+                                                                        </DropdownMenuItem>
+                                                                    )
+                                                                )}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </FormControl>
+                                                    <FormDescription>
+                                                        {t(
+                                                            "logRetentionActionDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </>
+                                )}
+                            </SettingsSectionForm>
+                        </SettingsSectionBody>
+                    </SettingsSection>
+                </form>
+            </Form>
+
+            {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
 
             {/* Security Settings Section */}
             <SettingsSection>
@@ -471,7 +759,9 @@ export default function GeneralPage() {
                                                                                 : option.value.toString()
                                                                         }
                                                                     >
-                                                                        {t(option.labelKey)}
+                                                                        {t(
+                                                                            option.labelKey
+                                                                        )}
                                                                     </SelectItem>
                                                                 )
                                                             )}
@@ -550,7 +840,9 @@ export default function GeneralPage() {
                                                                                 : option.value.toString()
                                                                         }
                                                                     >
-                                                                        {t(option.labelKey)}
+                                                                        {t(
+                                                                            option.labelKey
+                                                                        )}
                                                                     </SelectItem>
                                                                 )
                                                             )}
