@@ -1,6 +1,6 @@
 import { db, orgs } from "@server/db";
-import { cleanUpOldLogs as cleanUpOldAccessLogs } from "@server/private/lib/logAccessAudit";
-import { cleanUpOldLogs as cleanUpOldActionLogs } from "@server/private/middlewares/logActionAudit";
+import { cleanUpOldLogs as cleanUpOldAccessLogs } from "#dynamic/lib/logAccessAudit";
+import { cleanUpOldLogs as cleanUpOldActionLogs } from "#dynamic/middlewares/logActionAudit";
 import { cleanUpOldLogs as cleanUpOldRequestLogs } from "@server/routers/badger/logRequestAudit";
 import { gt, or } from "drizzle-orm";
 

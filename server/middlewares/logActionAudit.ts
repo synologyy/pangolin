@@ -10,3 +10,7 @@ export function logActionAudit(action: ActionsEnum) {
         next();
     };
 }
+
+export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
+    return;
+}
