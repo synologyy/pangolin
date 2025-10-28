@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
-import { orgs, userInvites, userOrgs, users } from "@server/db";
+import { orgs, roles, userInvites, userOrgs, users } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -106,6 +106,27 @@ export async function inviteUser(
         if (!org.length) {
             return next(
                 createHttpError(HttpCode.NOT_FOUND, "Organization not found")
+            );
+        }
+
+        // Validate that the roleId belongs to the target organization
+        const [role] = await db
+            .select()
+            .from(roles)
+            .where(
+                and(
+                    eq(roles.roleId, roleId),
+                    eq(roles.orgId, orgId)
+                )
+            )
+            .limit(1);
+
+        if (!role) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Invalid role ID or role does not belong to this organization"
+                )
             );
         }
 
