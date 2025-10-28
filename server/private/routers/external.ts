@@ -22,6 +22,7 @@ import * as auth from "#private/routers/auth";
 import * as license from "#private/routers/license";
 import * as generateLicense from "./generatedLicense";
 import * as logs from "#private/routers/auditLogs";
+import * as misc from "#private/routers/misc";
 
 import {
     verifyOrgAccess,
@@ -74,7 +75,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createIdp),
     logActionAudit(ActionsEnum.createIdp),
-    orgIdp.createOrgOidcIdp,
+    orgIdp.createOrgOidcIdp
 );
 
 authenticated.post(
@@ -84,7 +85,7 @@ authenticated.post(
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.updateIdp),
     logActionAudit(ActionsEnum.updateIdp),
-    orgIdp.updateOrgOidcIdp,
+    orgIdp.updateOrgOidcIdp
 );
 
 authenticated.delete(
@@ -94,7 +95,7 @@ authenticated.delete(
     verifyIdpAccess,
     verifyUserHasAction(ActionsEnum.deleteIdp),
     logActionAudit(ActionsEnum.deleteIdp),
-    orgIdp.deleteOrgIdp,
+    orgIdp.deleteOrgIdp
 );
 
 authenticated.get(
@@ -132,7 +133,7 @@ authenticated.post(
     verifyCertificateAccess,
     verifyUserHasAction(ActionsEnum.restartCertificate),
     logActionAudit(ActionsEnum.restartCertificate),
-    certificates.restartCertificate,
+    certificates.restartCertificate
 );
 
 if (build === "saas") {
@@ -158,7 +159,7 @@ if (build === "saas") {
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
         logActionAudit(ActionsEnum.billing),
-        billing.createCheckoutSession,
+        billing.createCheckoutSession
     );
 
     authenticated.post(
@@ -166,7 +167,7 @@ if (build === "saas") {
         verifyOrgAccess,
         verifyUserHasAction(ActionsEnum.billing),
         logActionAudit(ActionsEnum.billing),
-        billing.createPortalSession,
+        billing.createPortalSession
     );
 
     authenticated.get(
@@ -194,6 +195,24 @@ if (build === "saas") {
         verifyOrgAccess,
         generateLicense.generateNewLicense
     );
+
+    authenticated.post(
+        "/send-support-request",
+        rateLimit({
+            windowMs: 15 * 60 * 1000,
+            max: 3,
+            keyGenerator: (req) =>
+                `sendSupportRequest:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
+            handler: (req, res, next) => {
+                const message = `You can only send 3 support requests every 15 minutes. Please try again later.`;
+                return next(
+                    createHttpError(HttpCode.TOO_MANY_REQUESTS, message)
+                );
+            },
+            store: createStore()
+        }),
+        misc.sendSupportEmail
+    );
 }
 
 authenticated.get(
@@ -214,7 +233,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRemoteExitNode),
     logActionAudit(ActionsEnum.createRemoteExitNode),
-    remoteExitNode.createRemoteExitNode,
+    remoteExitNode.createRemoteExitNode
 );
 
 authenticated.get(
@@ -249,7 +268,7 @@ authenticated.delete(
     verifyRemoteExitNodeAccess,
     verifyUserHasAction(ActionsEnum.deleteRemoteExitNode),
     logActionAudit(ActionsEnum.deleteRemoteExitNode),
-    remoteExitNode.deleteRemoteExitNode,
+    remoteExitNode.deleteRemoteExitNode
 );
 
 authenticated.put(
@@ -258,7 +277,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createLoginPage),
     logActionAudit(ActionsEnum.createLoginPage),
-    loginPage.createLoginPage,
+    loginPage.createLoginPage
 );
 
 authenticated.post(
@@ -268,7 +287,7 @@ authenticated.post(
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.updateLoginPage),
     logActionAudit(ActionsEnum.updateLoginPage),
-    loginPage.updateLoginPage,
+    loginPage.updateLoginPage
 );
 
 authenticated.delete(
@@ -278,7 +297,7 @@ authenticated.delete(
     verifyLoginPageAccess,
     verifyUserHasAction(ActionsEnum.deleteLoginPage),
     logActionAudit(ActionsEnum.deleteLoginPage),
-    loginPage.deleteLoginPage,
+    loginPage.deleteLoginPage
 );
 
 authenticated.get(
@@ -353,7 +372,7 @@ authenticated.get(
     verifyValidSubscription,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.exportLogs),
-    logs.queryActionAuditLogs 
+    logs.queryActionAuditLogs
 );
 
 authenticated.get(
@@ -372,7 +391,7 @@ authenticated.get(
     verifyValidSubscription,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.exportLogs),
-    logs.queryAccessAuditLogs 
+    logs.queryAccessAuditLogs
 );
 
 authenticated.get(
