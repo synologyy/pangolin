@@ -48,11 +48,20 @@ export async function sendSupportEmail(
         const { body, subject } = parsedBody.data;
         const user = req.user!;
 
+        if (!user?.email) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "User does not have an email associated with their account"
+                )
+            );
+        }
+
         try {
             await sendEmail(
                 SupportEmail({
                     username: user.username,
-                    email: user.email || "Unknown",
+                    email: user.email,
                     subject,
                     body
                 }),
