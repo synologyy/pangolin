@@ -72,7 +72,7 @@ export default async function migration() {
             db.prepare(
                 `
         CREATE TABLE 'dnsRecords' (
-            'id' text PRIMARY KEY NOT NULL,
+            'id' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'domainId' text NOT NULL,
             'recordType' text NOT NULL,
             'baseDomain' text,

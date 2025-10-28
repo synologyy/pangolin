@@ -18,7 +18,7 @@ export const domains = sqliteTable("domains", {
 });
 
 export const dnsRecords = sqliteTable("dnsRecords", {
-    id: text("id").primaryKey(),
+    id: integer("id").primaryKey({ autoIncrement: true }),
     domainId: text("domainId")
         .notNull()
         .references(() => domains.domainId, { onDelete: "cascade" }),

@@ -3,9 +3,9 @@ import axios from "axios";
 let serverIp: string | null = null;
 
 const services = [
+    "https://checkip.amazonaws.com",
     "https://ifconfig.io/ip",
     "https://api.ipify.org",
-    "https://checkip.amazonaws.com"
 ];
 
 export async function fetchServerIp() {

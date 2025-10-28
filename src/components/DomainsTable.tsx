@@ -15,7 +15,12 @@ import { useTranslations } from "next-intl";
 import CreateDomainForm from "@app/components/CreateDomainForm";
 import { useToast } from "@app/hooks/useToast";
 import { useOrgContext } from "@app/hooks/useOrgContext";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "./ui/dropdown-menu";
 import Link from "next/link";
 
 export type DomainRow = {
@@ -179,9 +184,15 @@ export default function DomainsTable({ domains, orgId }: Props) {
                 );
             },
             cell: ({ row }) => {
-                const { verified, failed } = row.original;
+                const { verified, failed, type } = row.original;
                 if (verified) {
-                    return <Badge variant="green">{t("verified")}</Badge>;
+                    type === "wildcard" ? (
+                        <Badge variant="outlinePrimary">
+                            {t("manual", { fallback: "Manual" })}
+                        </Badge>
+                    ) : (
+                        <Badge variant="green">{t("verified")}</Badge>
+                    );
                 } else if (failed) {
                     return (
                         <Badge variant="destructive">
@@ -210,16 +221,21 @@ export default function DomainsTable({ domains, orgId }: Props) {
                             >
                                 {isRestarting
                                     ? t("restarting", {
-                                        fallback: "Restarting..."
-                                    })
+                                          fallback: "Restarting..."
+                                      })
                                     : t("restart", { fallback: "Restart" })}
                             </Button>
                         )}
                         <div className="flex items-center justify-end gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                        <span className="sr-only">Open menu</span>
+                                    <Button
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <span className="sr-only">
+                                            Open menu
+                                        </span>
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -282,12 +298,8 @@ export default function DomainsTable({ domains, orgId }: Props) {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("domainQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("domainMessageRemove")}
-                            </p>
+                            <p>{t("domainQuestionRemove")}</p>
+                            <p>{t("domainMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("domainConfirmDelete")}

@@ -50,7 +50,7 @@ export const configSchema = z
                         .string()
                         .nonempty("base_domain must not be empty")
                         .transform((url) => url.toLowerCase()),
-                    cert_resolver: z.string().optional().default("letsencrypt"),
+                    cert_resolver: z.string().optional(), // null falls back to traefik.cert_resolver
                     prefer_wildcard_cert: z.boolean().optional().default(false)
                 })
             )

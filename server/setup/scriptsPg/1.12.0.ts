@@ -44,7 +44,7 @@ export default async function migration() {
 
         await db.execute(sql`
         CREATE TABLE "dnsRecords" (
-            "id" varchar PRIMARY KEY NOT NULL,
+            "id" serial PRIMARY KEY NOT NULL,
             "domainId" varchar NOT NULL,
             "recordType" varchar NOT NULL,
             "baseDomain" varchar,
@@ -108,10 +108,10 @@ export default async function migration() {
         await db.execute(sql`ALTER TABLE "orgs" DROP COLUMN "settings";`);
 
         await db.execute(sql`COMMIT`);
-        console.log(`Updated resource rules match value from GEOIP to COUNTRY`);
+        console.log("Migrated database");
     } catch (e) {
         await db.execute(sql`ROLLBACK`);
-        console.log("Unable to update resource rules match value");
+        console.log("Unable to migrate database");
         console.log(e);
         throw e;
     }

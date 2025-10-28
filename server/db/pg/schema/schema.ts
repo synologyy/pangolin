@@ -27,7 +27,7 @@ export const domains = pgTable("domains", {
 
 
 export const dnsRecords = pgTable("dnsRecords", {
-    id: varchar("id").primaryKey(),
+    id: serial("id").primaryKey(),
     domainId: varchar("domainId")
         .notNull()
         .references(() => domains.domainId, { onDelete: "cascade" }),

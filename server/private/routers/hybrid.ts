@@ -75,6 +75,7 @@ import { validateResourceSessionToken } from "@server/auth/sessions/resource";
 import { checkExitNodeOrg, resolveExitNodes } from "#private/lib/exitNodes";
 import { maxmindLookup } from "@server/db/maxmind";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
+import semver from "semver";
 
 // Zod schemas for request validation
 const getResourceByDomainParamsSchema = z
@@ -1070,10 +1071,19 @@ hybridRouter.get(
                 );
             }
 
-            const rules = await db
+            let rules = await db
                 .select()
                 .from(resourceRules)
                 .where(eq(resourceRules.resourceId, resourceId));
+
+            // backward compatibility: COUNTRY -> GEOIP
+            if ((remoteExitNode.version && semver.lt(remoteExitNode.version, "1.1.0")) || !remoteExitNode.version) {
+                for (const rule of rules) {
+                    if (rule.match == "COUNTRY") {
+                        rule.match = "GEOIP";
+                    }
+                }
+            }
 
             return response<(typeof resourceRules.$inferSelect)[]>(res, {
                 data: rules,

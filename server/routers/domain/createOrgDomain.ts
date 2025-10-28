@@ -286,7 +286,6 @@ export async function createOrgDomain(
                 // Save NS records to database
                 for (const nsValue of nsRecords) {
                     recordsToInsert.push({
-                        id: generateId(15),
                         domainId,
                         recordType: "NS",
                         baseDomain: baseDomain,
@@ -309,7 +308,6 @@ export async function createOrgDomain(
                 // Save CNAME records to database
                 for (const cnameRecord of cnameRecords) {
                     recordsToInsert.push({
-                        id: generateId(15),
                         domainId,
                         recordType: "CNAME",
                         baseDomain: cnameRecord.baseDomain,
@@ -332,7 +330,6 @@ export async function createOrgDomain(
                 // Save A records to database
                 for (const aRecord of aRecords) {
                     recordsToInsert.push({
-                        id: generateId(15),
                         domainId,
                         recordType: "A",
                         baseDomain: aRecord.baseDomain,

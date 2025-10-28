@@ -98,15 +98,16 @@ export async function updateOrg(
             parsedBody.data.passwordExpiryDays = undefined;
         }
 
+        const { tier } = await getOrgTierData(orgId);
         if (
-            !isLicensed &&
+            tier != TierId.STANDARD &&
             parsedBody.data.settingsLogRetentionDaysRequest &&
             parsedBody.data.settingsLogRetentionDaysRequest > 30
         ) {
             return next(
                 createHttpError(
                     HttpCode.FORBIDDEN,
-                    "You are not allowed to set log retention days greater than 30 because you are not subscribed to the Standard tier"
+                    "You are not allowed to set log retention days greater than 30 with your current subscription"
                 )
             );
         }
