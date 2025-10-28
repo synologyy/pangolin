@@ -1,3 +1,4 @@
+import logger from "@server/logger";
 import axios from "axios";
 
 let serverIp: string | null = null;
@@ -13,8 +14,8 @@ export async function fetchServerIp() {
         try {
             const response = await axios.get(url, { timeout: 5000 });
             serverIp = response.data.trim();
-            console.log("Detected public IP:", serverIp);
-            return; 
+            logger.debug("Detected public IP: " + serverIp);
+            return;
         } catch (err: any) {
             console.warn(`Failed to fetch server IP from ${url}: ${err.message || err.code}`);
         }
