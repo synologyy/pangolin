@@ -2095,5 +2095,6 @@
     "selectedResources": "Selected Resources",
     "enableSelected": "Enable Selected",
     "disableSelected": "Disable Selected",
-    "checkSelectedStatus": "Check Status of Selected"
+    "checkSelectedStatus": "Check Status of Selected",
+    "niceId": "Nice ID"
 }
