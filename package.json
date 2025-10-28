@@ -101,7 +101,7 @@
         "npm": "^11.6.2",
         "oslo": "1.2.1",
         "pg": "^8.16.2",
-        "posthog-node": "^5.10.3",
+        "posthog-node": "^5.10.4",
         "qrcode.react": "4.2.0",
         "react": "19.2.0",
         "react-dom": "19.2.0",
