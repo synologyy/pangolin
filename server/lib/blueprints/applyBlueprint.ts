@@ -138,7 +138,7 @@ export async function applyBlueprint({
         }
 
         blueprintSucceeded = true;
-        blueprintMessage = "success";
+        blueprintMessage = "Blueprint applied successfully";
     } catch (err) {
         blueprintSucceeded = false;
         blueprintMessage = `Failed to update blueprint from config: ${err}`;
