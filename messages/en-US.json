@@ -1179,7 +1179,7 @@
     "blueprintErrorCreateDescription": "An error occurred when applying the blueprint",
     "blueprintErrorCreate": "Error creating blueprint",
     "searchBlueprintProgress": "Search blueprints...",
-    "appliedAt": "Applied at",
+    "appliedAt": "Applied At",
     "source": "Source",
     "contents": "Contents",
     "parsedContents": "Parsed Contents",
