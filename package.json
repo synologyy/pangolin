@@ -132,6 +132,7 @@
     "devDependencies": {
         "@dotenvx/dotenvx": "1.51.0",
         "@esbuild-plugins/tsconfig-paths": "0.1.2",
+        "@faker-js/faker": "^10.1.0",
         "@react-email/preview-server": "4.3.1",
         "@tailwindcss/postcss": "^4.1.14",
         "@types/better-sqlite3": "7.6.12",
