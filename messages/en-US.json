@@ -2096,5 +2096,10 @@
     "enableSelected": "Enable Selected",
     "disableSelected": "Disable Selected",
     "checkSelectedStatus": "Check Status of Selected",
-    "niceId": "Nice ID"
+    "niceId": "Nice ID",
+    "niceIdUpdated": "Nice ID Updated",
+    "niceIdUpdatedSuccessfully": "Nice ID Updated Successfully",
+    "niceIdUpdateError": "Error updating Nice ID",
+    "niceIdUpdateErrorDescription": "An error occurred while updating the Nice ID.",
+    "niceIdCannotBeEmpty": "Nice ID cannot be empty"
 }
