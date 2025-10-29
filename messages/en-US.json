@@ -1793,6 +1793,7 @@
     "securityPolicyChangeConfirmMessage": "I confirm",
     "securityPolicyChangeWarningText": "This will affect all users in the organization",
     "authPageErrorUpdateMessage": "An error occurred while updating the auth page settings",
+    "authPageErrorUpdate": "Unable to update auth page",
     "authPageUpdated": "Auth page updated successfully",
     "healthCheckNotAvailable": "Local",
     "rewritePath": "Rewrite Path",
