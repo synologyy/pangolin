@@ -153,9 +153,6 @@ export default function BlueprintDetailsForm({
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>{t("name")}</FormLabel>
-                                            <FormDescription>
-                                                {t("blueprintNameDescription")}
-                                            </FormDescription>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
