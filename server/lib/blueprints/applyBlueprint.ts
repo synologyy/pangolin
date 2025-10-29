@@ -159,7 +159,7 @@ export async function applyBlueprint({
                 createdAt: Math.floor(Date.now() / 1000),
                 succeeded: blueprintSucceeded,
                 message: blueprintMessage,
-                source: source
+                source
             })
             .returning();
 
