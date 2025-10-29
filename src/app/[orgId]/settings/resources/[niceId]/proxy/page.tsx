@@ -733,6 +733,10 @@ export default function ReverseProxyTargets(props: {
             setHttpsTlsLoading(true);
             setProxySettingsLoading(true);
 
+            for (const targetId of targetsToRemove) {
+                await api.delete(`/target/${targetId}`);
+            }
+
             // Save targets
             for (const target of targets) {
                 const data: any = {
@@ -773,10 +777,6 @@ export default function ReverseProxyTargets(props: {
                     await api.post(`/target/${target.targetId}`, data);
                     target.updated = false;
                 }
-            }
-
-            for (const targetId of targetsToRemove) {
-                await api.delete(`/target/${targetId}`);
             }
 
             if (resource.http) {
