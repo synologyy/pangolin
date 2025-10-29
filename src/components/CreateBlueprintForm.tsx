@@ -87,11 +87,13 @@ export default function CreateBlueprintForm({
 
         if (!isValid) return;
 
-        const payload = form.getValues();
         const res = await api
             .put<
                 AxiosResponse<CreateBlueprintResponse>
-            >(`/org/${orgId}/blueprint/`, payload)
+            >(`/org/${orgId}/blueprint/`, {
+                name: form.getValues("name"),
+                blueprint: form.getValues("contents")
+            })
             .catch((e) => {
                 toast({
                     variant: "destructive",

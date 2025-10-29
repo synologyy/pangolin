@@ -102,6 +102,7 @@ export async function applyYAMLBlueprint(
 
         let blueprint: Blueprint | null = null;
 
+        let error: string | null = null;
         try {
             blueprint = await applyBlueprint({
                 orgId,
@@ -109,17 +110,20 @@ export async function applyYAMLBlueprint(
                 source: "UI",
                 configData: parsedConfig
             });
-        } catch (error) {
+        } catch (err) {
             // We do nothing, the error is thrown for the other APIs & websockets for backwards compatibility
             // for this API, the error is already saved in the blueprint and we don't need to handle it
-            logger.error(error);
+            logger.error(err);
+            if (err instanceof Error) {
+                error = err.message;
+            }
         }
 
         if (!blueprint) {
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    "Failed to save blueprint in the database"
+                    error ? error : "An unknown error occurred while applying the blueprint"
                 )
             );
         }
