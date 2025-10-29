@@ -24,17 +24,16 @@ export default async function CreateBlueprintPage(
 
     return (
         <>
-            <div className="flex flex-col gap-2 items-start">
-                <Button variant="link" asChild className="gap-1 px-0">
-                    <Link href={`/${orgId}/settings/blueprints`}>
-                        <ArrowLeft className="size-4 flex-none" />{" "}
-                        {t("blueprintGoBack")}
-                    </Link>
-                </Button>
+            <div className="flex gap-2 justify-between">
                 <SettingsSectionTitle
                     title={t("blueprintCreate")}
                     description={t("blueprintCreateDescription2")}
                 />
+                <Button variant="outline" asChild>
+                    <Link href={`/${orgId}/settings/blueprints`}>
+                        {t("blueprintGoBack")}
+                    </Link>
+                </Button>
             </div>
 
             <CreateBlueprintForm orgId={orgId} />

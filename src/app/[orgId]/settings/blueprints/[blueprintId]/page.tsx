@@ -47,18 +47,10 @@ export default async function BluePrintDetailPage(props: BluePrintsPageProps) {
 
     return (
         <>
-            <div className="flex flex-col gap-2 items-start">
-                <Button variant="link" asChild className="gap-1 px-0">
-                    <Link href={`/${params.orgId}/settings/blueprints`}>
-                        <ArrowLeft className="size-4 flex-none" />
-                        {t("blueprintGoBack")}
-                    </Link>
-                </Button>
-                <SettingsSectionTitle
-                    title={t("blueprintDetails")}
-                    description={t("blueprintDetailsDescription")}
-                />
-            </div>
+            <SettingsSectionTitle
+                title={t("blueprintDetails")}
+                description={t("blueprintDetailsDescription")}
+            />
 
             <BlueprintDetailsForm blueprint={blueprint} />
         </>
