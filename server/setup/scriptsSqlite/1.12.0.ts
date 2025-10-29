@@ -15,7 +15,7 @@ export default async function migration() {
 
         db.transaction(() => {
             db.prepare(
-                `UPDATE 'resourceRules' SET 'match' = 'COUNTRY' WHERE 'match' = 'GEOIP'`
+                `UPDATE 'resourceRules' SET match = 'COUNTRY' WHERE match = 'GEOIP'`
             ).run();
 
             db.prepare(
@@ -195,6 +195,29 @@ export default async function migration() {
             db.prepare(
                 `ALTER TABLE 'user' ADD 'lastPasswordChange' integer;`
             ).run();
+
+            // get all of the domains
+            const domains = db.prepare(`SELECT domainId, baseDomain from domains`).all() as {
+                domainId: number;
+                baseDomain: string;
+            }[];
+
+            for (const domain of domains) {
+                // insert two records into the dnsRecords table for each domain
+                const insert = db.prepare(
+                    `INSERT INTO 'dnsRecords' (domainId, recordType, baseDomain, value, verified) VALUES (?, 'A', ?, ?, 1)`
+                );
+                insert.run(
+                    domain.domainId,
+                    `*.${domain.baseDomain}`,
+                    `Server IP Address`
+                );
+                insert.run(
+                    domain.domainId,
+                    `${domain.baseDomain}`,
+                    `Server IP Address`
+                );
+            }
         })();
 
         db.pragma("foreign_keys = ON");

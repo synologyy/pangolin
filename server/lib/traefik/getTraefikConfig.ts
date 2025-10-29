@@ -265,37 +265,36 @@ export async function getTraefikConfig(
             const domainCertResolver = resource.domainCertResolver;
             const preferWildcardCert = resource.preferWildcardCert;
 
-             let resolverName: string | undefined;
-                let preferWildcard: boolean | undefined;
-                // Handle both letsencrypt & custom cases
-                if (domainCertResolver) {
-                    resolverName = domainCertResolver.trim();
-                } else {
-                    resolverName = globalDefaultResolver;
-                }
+            let resolverName: string | undefined;
+            let preferWildcard: boolean | undefined;
+            // Handle both letsencrypt & custom cases
+            if (domainCertResolver) {
+                resolverName = domainCertResolver.trim();
+            } else {
+                resolverName = globalDefaultResolver;
+            }
 
-                if (
-                    preferWildcardCert !== undefined &&
-                    preferWildcardCert !== null
-                ) {
-                    preferWildcard = preferWildcardCert;
-                } else {
-                    preferWildcard = globalDefaultPreferWildcard;
-                }
+            if (
+                preferWildcardCert !== undefined &&
+                preferWildcardCert !== null
+            ) {
+                preferWildcard = preferWildcardCert;
+            } else {
+                preferWildcard = globalDefaultPreferWildcard;
+            }
 
-                const tls = {
-                    certResolver: resolverName,
-                    ...(preferWildcard
-                        ? {
-                            domains: [
-                                {
-                                    main: wildCard
-                                }
-                            ]
-                        }
-                        : {})
-                };
-            
+            const tls = {
+                certResolver: resolverName,
+                ...(preferWildcard
+                    ? {
+                          domains: [
+                              {
+                                  main: wildCard
+                              }
+                          ]
+                      }
+                    : {})
+            };
 
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
@@ -534,14 +533,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                cookie: {
-                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                    secure: resource.ssl,
-                                    httpOnly: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  cookie: {
+                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                      secure: resource.ssl,
+                                      httpOnly: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };
@@ -586,6 +585,8 @@ export async function getTraefikConfig(
                 service: serviceName,
                 ...(protocol === "tcp" ? { rule: "HostSNI(`*`)" } : {})
             };
+
+            const ppPrefix = config.getRawConfig().traefik.pp_transport_prefix;
 
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
@@ -642,18 +643,18 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.proxyProtocol && protocol == "tcp"
                         ? {
-                              serversTransport: `pp-transport-v${resource.proxyProtocolVersion || 1}`
+                              serversTransport: `${ppPrefix}${resource.proxyProtocolVersion || 1}@file` // TODO: does @file here cause issues?
                           }
                         : {}),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                ipStrategy: {
-                                    depth: 0,
-                                    sourcePort: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  ipStrategy: {
+                                      depth: 0,
+                                      sourcePort: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };

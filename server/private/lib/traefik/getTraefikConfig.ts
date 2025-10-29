@@ -109,7 +109,7 @@ export async function getTraefikConfig(
             domainNamespaceId: domainNamespaces.domainNamespaceId,
             // Certificate
             certificateStatus: certificates.status,
-            domainCertResolver: domains.certResolver,
+            domainCertResolver: domains.certResolver
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
@@ -214,7 +214,7 @@ export async function getTraefikConfig(
                 rewritePath: row.rewritePath,
                 rewritePathType: row.rewritePathType,
                 priority: priority, // may be null, we fallback later
-                domainCertResolver: row.domainCertResolver,
+                domainCertResolver: row.domainCertResolver
             });
         }
 
@@ -330,29 +330,43 @@ export async function getTraefikConfig(
                     wildCard = resource.fullDomain;
                 }
 
-                const configDomain = config.getDomain(resource.domainId);
+                const globalDefaultResolver =
+                    config.getRawConfig().traefik.cert_resolver;
+                const globalDefaultPreferWildcard =
+                    config.getRawConfig().traefik.prefer_wildcard_cert;
 
-                let certResolver: string, preferWildcardCert: boolean;
-                if (!configDomain) {
-                    certResolver = config.getRawConfig().traefik.cert_resolver;
-                    preferWildcardCert =
-                        config.getRawConfig().traefik.prefer_wildcard_cert;
+                const domainCertResolver = resource.domainCertResolver;
+                const preferWildcardCert = resource.preferWildcardCert;
+
+                let resolverName: string | undefined;
+                let preferWildcard: boolean | undefined;
+                // Handle both letsencrypt & custom cases
+                if (domainCertResolver) {
+                    resolverName = domainCertResolver.trim();
                 } else {
-                    certResolver = configDomain.cert_resolver;
-                    preferWildcardCert = configDomain.prefer_wildcard_cert;
+                    resolverName = globalDefaultResolver;
+                }
+
+                if (
+                    preferWildcardCert !== undefined &&
+                    preferWildcardCert !== null
+                ) {
+                    preferWildcard = preferWildcardCert;
+                } else {
+                    preferWildcard = globalDefaultPreferWildcard;
                 }
 
                 tls = {
-                    certResolver: certResolver,
-                    ...(preferWildcardCert
+                    certResolver: resolverName,
+                    ...(preferWildcard
                         ? {
-                            domains: [
-                                {
-                                    main: wildCard,
-                                },
-                            ],
-                        }
-                        : {}),
+                              domains: [
+                                  {
+                                      main: wildCard
+                                  }
+                              ]
+                          }
+                        : {})
                 };
             } else {
                 // find a cert that matches the full domain, if not continue
@@ -604,14 +618,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                cookie: {
-                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                    secure: resource.ssl,
-                                    httpOnly: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  cookie: {
+                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                      secure: resource.ssl,
+                                      httpOnly: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };
@@ -656,6 +670,8 @@ export async function getTraefikConfig(
                 service: serviceName,
                 ...(protocol === "tcp" ? { rule: "HostSNI(`*`)" } : {})
             };
+
+            const ppPrefix = config.getRawConfig().traefik.pp_transport_prefix;
 
             config_output[protocol].services[serviceName] = {
                 loadBalancer: {
@@ -712,18 +728,18 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.proxyProtocol && protocol == "tcp" // proxy protocol only works for tcp
                         ? {
-                              serversTransport: `pp-transport-v${resource.proxyProtocolVersion || 1}`
+                              serversTransport: `${ppPrefix}${resource.proxyProtocolVersion || 1}@file` // TODO: does @file here cause issues?
                           }
                         : {}),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                ipStrategy: {
-                                    depth: 0,
-                                    sourcePort: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  ipStrategy: {
+                                      depth: 0,
+                                      sourcePort: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };
@@ -771,9 +787,10 @@ export async function getTraefikConfig(
                     loadBalancer: {
                         servers: [
                             {
-                                url: `http://${config.getRawConfig().server
+                                url: `http://${
+                                    config.getRawConfig().server
                                         .internal_hostname
-                                    }:${config.getRawConfig().server.next_port}`
+                                }:${config.getRawConfig().server.next_port}`
                             }
                         ]
                     }
