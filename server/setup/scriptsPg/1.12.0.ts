@@ -107,6 +107,26 @@ export default async function migration() {
         await db.execute(sql`ALTER TABLE "resources" ADD CONSTRAINT "resources_skipToIdpId_idp_idpId_fk" FOREIGN KEY ("skipToIdpId") REFERENCES "public"."idp"("idpId") ON DELETE set null ON UPDATE no action;`);
         await db.execute(sql`ALTER TABLE "orgs" DROP COLUMN "settings";`);
 
+
+        // get all of the domains
+        const domainsQuery = await db.execute(sql`SELECT "domainId", "baseDomain" FROM "domains"`);
+        const domains = domainsQuery.rows as {
+            domainId: string;
+            baseDomain: string;
+        }[];
+
+        for (const domain of domains) {
+            // insert two records into the dnsRecords table for each domain
+            await db.execute(sql`
+                INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")
+                VALUES (${domain.domainId}, 'A', ${`*.${domain.baseDomain}`}, ${'Server IP Address'}, true)
+            `);
+            await db.execute(sql`
+                INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")
+                VALUES (${domain.domainId}, 'A', ${domain.baseDomain}, ${'Server IP Address'}, true)
+            `);
+        }
+
         await db.execute(sql`COMMIT`);
         console.log("Migrated database");
     } catch (e) {
