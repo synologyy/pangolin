@@ -81,6 +81,9 @@ export enum ActionsEnum {
     listClients = "listClients",
     getClient = "getClient",
     listOrgDomains = "listOrgDomains",
+    getDomain = "getDomain",
+    updateOrgDomain = "updateOrgDomain",
+    getDNSRecords = "getDNSRecords",
     createNewt = "createNewt",
     createIdp = "createIdp",
     updateIdp = "updateIdp",
@@ -121,6 +124,9 @@ export enum ActionsEnum {
     listBlueprints = "listBlueprints",
     getBlueprint = "getBlueprint",
     applyBlueprint = "applyBlueprint"
+    applyBlueprint = "applyBlueprint",
+    viewLogs = "viewLogs",
+    exportLogs = "exportLogs"
 }
 
 export async function checkUserActionPermission(

@@ -15,6 +15,7 @@ import * as accessToken from "./accessToken";
 import * as idp from "./idp";
 import * as blueprints from "./blueprints";
 import * as apiKeys from "./apiKeys";
+import * as logs from "./auditLogs";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
@@ -45,6 +46,8 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import { build } from "@server/build";
 import { createStore } from "#dynamic/lib/rateLimitStore";
+import { logActionAudit } from "#dynamic/middlewares";
+import { log } from "console";
 
 // Root routes
 export const unauthenticated = Router();
@@ -76,7 +79,8 @@ authenticated.post(
     "/org/:orgId",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.updateOrg),
-    org.updateOrg
+    logActionAudit(ActionsEnum.updateOrg),
+    org.updateOrg,
 );
 
 if (build !== "saas") {
@@ -85,7 +89,8 @@ if (build !== "saas") {
         verifyOrgAccess,
         verifyUserIsOrgOwner,
         verifyUserHasAction(ActionsEnum.deleteOrg),
-        org.deleteOrg
+        logActionAudit(ActionsEnum.deleteOrg),
+        org.deleteOrg,
     );
 }
 
@@ -93,6 +98,7 @@ authenticated.put(
     "/org/:orgId/site",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createSite),
+    logActionAudit(ActionsEnum.createSite),
     site.createSite
 );
 authenticated.get(
@@ -150,7 +156,8 @@ authenticated.put(
     verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
-    client.createClient
+    logActionAudit(ActionsEnum.createClient),
+    client.createClient,
 );
 
 authenticated.delete(
@@ -158,7 +165,8 @@ authenticated.delete(
     verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.deleteClient),
-    client.deleteClient
+    logActionAudit(ActionsEnum.deleteClient),
+    client.deleteClient,
 );
 
 authenticated.post(
@@ -166,7 +174,8 @@ authenticated.post(
     verifyClientsEnabled,
     verifyClientAccess, // this will check if the user has access to the client
     verifyUserHasAction(ActionsEnum.updateClient), // this will check if the user has permission to update the client
-    client.updateClient
+    logActionAudit(ActionsEnum.updateClient),
+    client.updateClient,
 );
 
 // authenticated.get(
@@ -179,15 +188,18 @@ authenticated.post(
     "/site/:siteId",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.updateSite),
-    site.updateSite
+    logActionAudit(ActionsEnum.updateSite),
+    site.updateSite,
 );
 authenticated.delete(
     "/site/:siteId",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.deleteSite),
-    site.deleteSite
+    logActionAudit(ActionsEnum.deleteSite),
+    site.deleteSite,
 );
 
+// TODO: BREAK OUT THESE ACTIONS SO THEY ARE NOT ALL "getSite"
 authenticated.get(
     "/site/:siteId/docker/status",
     verifySiteAccess,
@@ -204,13 +216,13 @@ authenticated.post(
     "/site/:siteId/docker/check",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
-    site.checkDockerSocket
+    site.checkDockerSocket,
 );
 authenticated.post(
     "/site/:siteId/docker/trigger",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
-    site.triggerFetchContainers
+    site.triggerFetchContainers,
 );
 authenticated.get(
     "/site/:siteId/docker/containers",
@@ -225,7 +237,8 @@ authenticated.put(
     verifyOrgAccess,
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.createSiteResource),
-    siteResource.createSiteResource
+    logActionAudit(ActionsEnum.createSiteResource),
+    siteResource.createSiteResource,
 );
 
 authenticated.get(
@@ -258,7 +271,8 @@ authenticated.post(
     verifySiteAccess,
     verifySiteResourceAccess,
     verifyUserHasAction(ActionsEnum.updateSiteResource),
-    siteResource.updateSiteResource
+    logActionAudit(ActionsEnum.updateSiteResource),
+    siteResource.updateSiteResource,
 );
 
 authenticated.delete(
@@ -267,14 +281,16 @@ authenticated.delete(
     verifySiteAccess,
     verifySiteResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteSiteResource),
-    siteResource.deleteSiteResource
+    logActionAudit(ActionsEnum.deleteSiteResource),
+    siteResource.deleteSiteResource,
 );
 
 authenticated.put(
     "/org/:orgId/resource",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createResource),
-    resource.createResource
+    logActionAudit(ActionsEnum.createResource),
+    resource.createResource,
 );
 
 authenticated.get(
@@ -304,6 +320,27 @@ authenticated.get(
 );
 
 authenticated.get(
+    "/org/:orgId/domain/:domainId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getDomain),
+    domain.getDomain
+);
+
+authenticated.patch(
+    "/org/:orgId/domain/:domainId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgDomain),
+    domain.updateOrgDomain
+);
+
+authenticated.get(
+    "/org/:orgId/domain/:domainId/dns-records",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getDNSRecords),
+    domain.getDNSRecords
+);
+
+authenticated.get(
     "/org/:orgId/invitations",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listInvitations),
@@ -314,15 +351,18 @@ authenticated.delete(
     "/org/:orgId/invitations/:inviteId",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.removeInvitation),
-    user.removeInvitation
+    logActionAudit(ActionsEnum.removeInvitation),
+    user.removeInvitation,
 );
 
 authenticated.post(
     "/org/:orgId/create-invite",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.inviteUser),
-    user.inviteUser
+    logActionAudit(ActionsEnum.inviteUser),
+    user.inviteUser,
 ); // maybe make this /invite/create instead
+
 unauthenticated.post("/invite/accept", user.acceptInvite); // this is supposed to be unauthenticated
 
 authenticated.get(
@@ -355,20 +395,23 @@ authenticated.post(
     "/resource/:resourceId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.updateResource),
-    resource.updateResource
+    logActionAudit(ActionsEnum.updateResource),
+    resource.updateResource,
 );
 authenticated.delete(
     "/resource/:resourceId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteResource),
-    resource.deleteResource
+    logActionAudit(ActionsEnum.deleteResource),
+    resource.deleteResource,
 );
 
 authenticated.put(
     "/resource/:resourceId/target",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.createTarget),
-    target.createTarget
+    logActionAudit(ActionsEnum.createTarget),
+    target.createTarget,
 );
 authenticated.get(
     "/resource/:resourceId/targets",
@@ -381,7 +424,8 @@ authenticated.put(
     "/resource/:resourceId/rule",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.createResourceRule),
-    resource.createResourceRule
+    logActionAudit(ActionsEnum.createResourceRule),
+    resource.createResourceRule,
 );
 authenticated.get(
     "/resource/:resourceId/rules",
@@ -393,13 +437,15 @@ authenticated.post(
     "/resource/:resourceId/rule/:ruleId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.updateResourceRule),
-    resource.updateResourceRule
+    logActionAudit(ActionsEnum.updateResourceRule),
+    resource.updateResourceRule,
 );
 authenticated.delete(
     "/resource/:resourceId/rule/:ruleId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteResourceRule),
-    resource.deleteResourceRule
+    logActionAudit(ActionsEnum.deleteResourceRule),
+    resource.deleteResourceRule,
 );
 
 authenticated.get(
@@ -412,20 +458,23 @@ authenticated.post(
     "/target/:targetId",
     verifyTargetAccess,
     verifyUserHasAction(ActionsEnum.updateTarget),
-    target.updateTarget
+    logActionAudit(ActionsEnum.updateTarget),
+    target.updateTarget,
 );
 authenticated.delete(
     "/target/:targetId",
     verifyTargetAccess,
     verifyUserHasAction(ActionsEnum.deleteTarget),
-    target.deleteTarget
+    logActionAudit(ActionsEnum.deleteTarget),
+    target.deleteTarget,
 );
 
 authenticated.put(
     "/org/:orgId/role",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRole),
-    role.createRole
+    logActionAudit(ActionsEnum.createRole),
+    role.createRole,
 );
 authenticated.get(
     "/org/:orgId/roles",
@@ -450,14 +499,16 @@ authenticated.delete(
     "/role/:roleId",
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.deleteRole),
-    role.deleteRole
+    logActionAudit(ActionsEnum.deleteRole),
+    role.deleteRole,
 );
 authenticated.post(
     "/role/:roleId/add/:userId",
     verifyRoleAccess,
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.addUserRole),
-    user.addUserRole
+    logActionAudit(ActionsEnum.addUserRole),
+    user.addUserRole,
 );
 
 authenticated.post(
@@ -465,7 +516,8 @@ authenticated.post(
     verifyResourceAccess,
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.setResourceRoles),
-    resource.setResourceRoles
+    logActionAudit(ActionsEnum.setResourceRoles),
+    resource.setResourceRoles,
 );
 
 authenticated.post(
@@ -473,35 +525,40 @@ authenticated.post(
     verifyResourceAccess,
     verifySetResourceUsers,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
-    resource.setResourceUsers
+    logActionAudit(ActionsEnum.setResourceUsers),
+    resource.setResourceUsers,
 );
 
 authenticated.post(
     `/resource/:resourceId/password`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourcePassword),
-    resource.setResourcePassword
+    logActionAudit(ActionsEnum.setResourcePassword),
+    resource.setResourcePassword,
 );
 
 authenticated.post(
     `/resource/:resourceId/pincode`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourcePincode),
-    resource.setResourcePincode
+    logActionAudit(ActionsEnum.setResourcePincode),
+    resource.setResourcePincode,
 );
 
 authenticated.post(
     `/resource/:resourceId/header-auth`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourceHeaderAuth),
-    resource.setResourceHeaderAuth
+    logActionAudit(ActionsEnum.setResourceHeaderAuth),
+    resource.setResourceHeaderAuth,
 );
 
 authenticated.post(
     `/resource/:resourceId/whitelist`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourceWhitelist),
-    resource.setResourceWhitelist
+    logActionAudit(ActionsEnum.setResourceWhitelist),
+    resource.setResourceWhitelist,
 );
 
 authenticated.get(
@@ -515,14 +572,16 @@ authenticated.post(
     `/resource/:resourceId/access-token`,
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.generateAccessToken),
-    accessToken.generateAccessToken
+    logActionAudit(ActionsEnum.generateAccessToken),
+    accessToken.generateAccessToken,
 );
 
 authenticated.delete(
     `/access-token/:accessTokenId`,
     verifyAccessTokenAccess,
     verifyUserHasAction(ActionsEnum.deleteAcessToken),
-    accessToken.deleteAccessToken
+    logActionAudit(ActionsEnum.deleteAcessToken),
+    accessToken.deleteAccessToken,
 );
 
 authenticated.get(
@@ -595,7 +654,8 @@ authenticated.put(
     "/org/:orgId/user",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createOrgUser),
-    user.createOrgUser
+    logActionAudit(ActionsEnum.createOrgUser),
+    user.createOrgUser,
 );
 
 authenticated.post(
@@ -603,10 +663,12 @@ authenticated.post(
     verifyOrgAccess,
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.updateOrgUser),
-    user.updateOrgUser
+    logActionAudit(ActionsEnum.updateOrgUser),
+    user.updateOrgUser,
 );
 
 authenticated.get("/org/:orgId/user/:userId", verifyOrgAccess, user.getOrgUser);
+authenticated.get("/org/:orgId/user/:userId/check", org.checkOrgUserAccess);
 
 authenticated.post(
     "/user/:userId/2fa",
@@ -625,7 +687,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.removeUser),
-    user.removeUserOrg
+    logActionAudit(ActionsEnum.removeUser),
+    user.removeUserOrg,
 );
 
 // authenticated.put(
@@ -755,7 +818,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyApiKeyAccess,
     verifyUserHasAction(ActionsEnum.setApiKeyActions),
-    apiKeys.setApiKeyActions
+    logActionAudit(ActionsEnum.setApiKeyActions),
+    apiKeys.setApiKeyActions,
 );
 
 authenticated.get(
@@ -770,7 +834,8 @@ authenticated.put(
     `/org/:orgId/api-key`,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createApiKey),
-    apiKeys.createOrgApiKey
+    logActionAudit(ActionsEnum.createApiKey),
+    apiKeys.createOrgApiKey,
 );
 
 authenticated.delete(
@@ -778,7 +843,8 @@ authenticated.delete(
     verifyOrgAccess,
     verifyApiKeyAccess,
     verifyUserHasAction(ActionsEnum.deleteApiKey),
-    apiKeys.deleteOrgApiKey
+    logActionAudit(ActionsEnum.deleteApiKey),
+    apiKeys.deleteOrgApiKey,
 );
 
 authenticated.get(
@@ -793,7 +859,8 @@ authenticated.put(
     `/org/:orgId/domain`,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createOrgDomain),
-    domain.createOrgDomain
+    logActionAudit(ActionsEnum.createOrgDomain),
+    domain.createOrgDomain,
 );
 
 authenticated.post(
@@ -801,7 +868,8 @@ authenticated.post(
     verifyOrgAccess,
     verifyDomainAccess,
     verifyUserHasAction(ActionsEnum.restartOrgDomain),
-    domain.restartOrgDomain
+    logActionAudit(ActionsEnum.restartOrgDomain),
+    domain.restartOrgDomain,
 );
 
 authenticated.delete(
@@ -809,7 +877,23 @@ authenticated.delete(
     verifyOrgAccess,
     verifyDomainAccess,
     verifyUserHasAction(ActionsEnum.deleteOrgDomain),
-    domain.deleteAccountDomain
+    logActionAudit(ActionsEnum.deleteOrgDomain),
+    domain.deleteAccountDomain,
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request/export",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportRequestAuditLogs
 );
 
 authenticated.get(
@@ -994,11 +1078,11 @@ authRouter.post(
     auth.requestEmailVerificationCode
 );
 
-// authRouter.post(
-//     "/change-password",
-//     verifySessionUserMiddleware,
-//     auth.changePassword
-// );
+authRouter.post(
+    "/change-password",
+    verifySessionUserMiddleware,
+    auth.changePassword
+);
 
 authRouter.post(
     "/reset-password/request",

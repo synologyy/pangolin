@@ -26,6 +26,8 @@ import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useTranslations } from "next-intl";
+import { Badge } from "./ui/badge";
+import { InfoPopup } from "./ui/info-popup";
 
 export type ClientRow = {
     id: number;
@@ -36,6 +38,8 @@ export type ClientRow = {
     mbOut: string;
     orgId: string;
     online: boolean;
+    olmVersion?: string;
+    olmUpdateAvailable: boolean;
 };
 
 type ClientTableProps = {
@@ -205,6 +209,45 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
             }
         },
         {
+            accessorKey: "client",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("client")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                const originalRow = row.original;
+
+                return (
+                    <div className="flex items-center space-x-1">
+                        <Badge variant="secondary">
+                            <div className="flex items-center space-x-2">
+                                <span>Olm</span>
+                                {originalRow.olmVersion && (
+                                    <span className="text-xs text-gray-500">
+                                        v{originalRow.olmVersion}
+                                    </span>
+                                )}
+                            </div>
+                        </Badge>
+                        {originalRow.olmUpdateAvailable && (
+                            <InfoPopup
+                                info={t("olmUpdateAvailableInfo")}
+                            />
+                        )}
+                    </div>
+                );
+            }
+        },
+        {
             accessorKey: "subnet",
             header: ({ column }) => {
                 return (
@@ -282,7 +325,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                                 {t("deleteClientQuestion")}
                             </p>
                             <p>
-                                    {t("clientMessageRemove")}
+                                {t("clientMessageRemove")}
                             </p>
                         </div>
                     }

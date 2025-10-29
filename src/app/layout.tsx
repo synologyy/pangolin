@@ -19,6 +19,7 @@ import { getLocale } from "next-intl/server";
 import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
+import Script from "next/script";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -86,6 +87,13 @@ export default async function RootLayout({
         <html suppressHydrationWarning lang={locale}>
             <body className={`${font.className} h-screen overflow-hidden`}>
                 <TopLoader />
+                {build === "saas" && (
+                    <Script
+                        src="https://rybbit.fossorial.io/api/script.js"
+                        data-site-id="fe1ff2a33287"
+                        strategy="afterInteractive"
+                    />
+                )}
                 <NextIntlClientProvider>
                     <ThemeProvider
                         attribute="class"

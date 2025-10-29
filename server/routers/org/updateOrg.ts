@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
-import { orgs } from "@server/db";
+import { orgs, users } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -9,18 +9,36 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { build } from "@server/build";
+import { UserType } from "@server/types/UserTypes";
+import license from "#dynamic/license/license";
+import { getOrgTierData } from "#dynamic/lib/billing";
+import { TierId } from "@server/lib/billing/tiers";
 
 const updateOrgParamsSchema = z
     .object({
-        orgId: z.string(),
+        orgId: z.string()
     })
     .strict();
 
 const updateOrgBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
-        settings: z.object({
-        }).optional(),
+        requireTwoFactor: z.boolean().optional(),
+        maxSessionLengthHours: z.number().nullable().optional(),
+        passwordExpiryDays: z.number().nullable().optional(),
+        settingsLogRetentionDaysRequest: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAccess: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional(),
+        settingsLogRetentionDaysAction: z
+            .number()
+            .min(build === "saas" ? 0 : -1)
+            .optional()
     })
     .strict()
     .refine((data) => Object.keys(data).length > 0, {
@@ -73,13 +91,40 @@ export async function updateOrg(
 
         const { orgId } = parsedParams.data;
 
-        const settings = parsedBody.data.settings ? JSON.stringify(parsedBody.data.settings) : undefined;
+        const isLicensed = await isLicensedOrSubscribed(orgId);
+        if (!isLicensed) {
+            parsedBody.data.requireTwoFactor = undefined;
+            parsedBody.data.maxSessionLengthHours = undefined;
+            parsedBody.data.passwordExpiryDays = undefined;
+        }
+
+        const { tier } = await getOrgTierData(orgId);
+        if (
+            tier != TierId.STANDARD &&
+            parsedBody.data.settingsLogRetentionDaysRequest &&
+            parsedBody.data.settingsLogRetentionDaysRequest > 30
+        ) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "You are not allowed to set log retention days greater than 30 with your current subscription"
+                )
+            );
+        }
 
         const updatedOrg = await db
             .update(orgs)
             .set({
                 name: parsedBody.data.name,
-                settings: settings
+                requireTwoFactor: parsedBody.data.requireTwoFactor,
+                maxSessionLengthHours: parsedBody.data.maxSessionLengthHours,
+                passwordExpiryDays: parsedBody.data.passwordExpiryDays,
+                settingsLogRetentionDaysRequest:
+                    parsedBody.data.settingsLogRetentionDaysRequest,
+                settingsLogRetentionDaysAccess:
+                    parsedBody.data.settingsLogRetentionDaysAccess,
+                settingsLogRetentionDaysAction:
+                    parsedBody.data.settingsLogRetentionDaysAction
             })
             .where(eq(orgs.orgId, orgId))
             .returning();
@@ -106,4 +151,23 @@ export async function updateOrg(
             createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "An error occurred")
         );
     }
+}
+
+async function isLicensedOrSubscribed(orgId: string): Promise<boolean> {
+    if (build === "enterprise") {
+        const isUnlocked = await license.isUnlocked();
+        if (!isUnlocked) {
+            return false;
+        }
+    }
+
+    if (build === "saas") {
+        const { tier } = await getOrgTierData(orgId);
+        const subscribed = tier === TierId.STANDARD;
+        if (!subscribed) {
+            return false;
+        }
+    }
+
+    return true;
 }

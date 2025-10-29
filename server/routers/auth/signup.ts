@@ -23,10 +23,7 @@ import { passwordSchema } from "@server/auth/passwordSchema";
 import { UserType } from "@server/types/UserTypes";
 import { createUserAccountOrg } from "@server/lib/createUserAccountOrg";
 import { build } from "@server/build";
-import resend, {
-    AudienceIds,
-    moveEmailToAudience
-} from "#dynamic/lib/resend";
+import resend, { AudienceIds, moveEmailToAudience } from "#dynamic/lib/resend";
 
 export const signupBodySchema = z.object({
     email: z.string().toLowerCase().email(),
@@ -183,7 +180,8 @@ export async function signup(
             passwordHash,
             dateCreated: moment().toISOString(),
             termsAcceptedTimestamp: termsAcceptedTimestamp || null,
-            termsVersion: "1"
+            termsVersion: "1",
+            lastPasswordChange: new Date().getTime()
         });
 
         // give the user their default permissions:
@@ -224,7 +222,7 @@ export async function signup(
         res.appendHeader("Set-Cookie", cookie);
 
         if (build == "saas") {
-            moveEmailToAudience(email, AudienceIds.General);
+            moveEmailToAudience(email, AudienceIds.SignUps);
         }
 
         if (config.getRawConfig().flags?.require_email_verification) {

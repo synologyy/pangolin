@@ -17,6 +17,11 @@ import {
     Bolt,
     ScanText,
     ReceiptText
+    Zap,
+    CreditCard,
+    Logs,
+    SquareMousePointer,
+    ScanEye
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -115,6 +120,30 @@ export const orgNavSections = (
                 href: "/{orgId}/settings/share-links",
                 icon: <LinkIcon className="h-4 w-4" />
             }
+        ]
+    },
+    {
+        heading: "Analytics",
+        items: [
+            {
+                title: "sidebarLogsRequest",
+                href: "/{orgId}/settings/logs/request",
+                icon: <SquareMousePointer className="h-4 w-4" />
+            },
+            ...(build != "oss"
+                ? [
+                      {
+                          title: "sidebarLogsAccess",
+                          href: "/{orgId}/settings/logs/access",
+                          icon: <ScanEye className="h-4 w-4" />
+                      },
+                      {
+                          title: "sidebarLogsAction",
+                          href: "/{orgId}/settings/logs/action",
+                          icon: <Logs className="h-4 w-4" />
+                      }
+                  ]
+                : [])
         ]
     },
     {

@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { DomainsDataTable } from "@app/components/DomainsDataTable";
 import { Button } from "@app/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { formatAxiosError } from "@app/lib/api";
@@ -15,6 +15,13 @@ import { useTranslations } from "next-intl";
 import CreateDomainForm from "@app/components/CreateDomainForm";
 import { useToast } from "@app/hooks/useToast";
 import { useOrgContext } from "@app/hooks/useOrgContext";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from "./ui/dropdown-menu";
+import Link from "next/link";
 
 export type DomainRow = {
     domainId: string;
@@ -24,13 +31,16 @@ export type DomainRow = {
     failed: boolean;
     tries: number;
     configManaged: boolean;
+    certResolver: string;
+    preferWildcardCert: boolean;
 };
 
 type Props = {
     domains: DomainRow[];
+    orgId: string;
 };
 
-export default function DomainsTable({ domains }: Props) {
+export default function DomainsTable({ domains, orgId }: Props) {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedDomain, setSelectedDomain] = useState<DomainRow | null>(
@@ -174,9 +184,15 @@ export default function DomainsTable({ domains }: Props) {
                 );
             },
             cell: ({ row }) => {
-                const { verified, failed } = row.original;
+                const { verified, failed, type } = row.original;
                 if (verified) {
-                    return <Badge variant="green">{t("verified")}</Badge>;
+                    type === "wildcard" ? (
+                        <Badge variant="outlinePrimary">
+                            {t("manual", { fallback: "Manual" })}
+                        </Badge>
+                    ) : (
+                        <Badge variant="green">{t("verified")}</Badge>
+                    );
                 } else if (failed) {
                     return (
                         <Badge variant="destructive">
@@ -210,7 +226,51 @@ export default function DomainsTable({ domains }: Props) {
                                     : t("restart", { fallback: "Restart" })}
                             </Button>
                         )}
-                        <Button
+                        <div className="flex items-center justify-end gap-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        className="h-8 w-8 p-0"
+                                    >
+                                        <span className="sr-only">
+                                            Open menu
+                                        </span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <Link
+                                        className="block w-full"
+                                        href={`/${orgId}/settings/domains/${domain.domainId}`}
+                                    >
+                                        <DropdownMenuItem>
+                                            {t("viewSettings")}
+                                        </DropdownMenuItem>
+                                    </Link>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setSelectedDomain(domain);
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                    >
+                                        <span className="text-red-500">
+                                            {t("delete")}
+                                        </span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <Link
+                                href={`/${orgId}/settings/domains/${domain.domainId}`}
+                            >
+                                <Button variant={"secondary"} size="sm">
+                                    {t("edit")}
+                                    <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
+                            </Link>
+                        </div>
+                        {/* <Button
                             variant="secondary"
                             size="sm"
                             disabled={domain.configManaged}
@@ -220,7 +280,7 @@ export default function DomainsTable({ domains }: Props) {
                             }}
                         >
                             {t("delete")}
-                        </Button>
+                        </Button> */}
                     </div>
                 );
             }
@@ -238,12 +298,8 @@ export default function DomainsTable({ domains }: Props) {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("domainQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("domainMessageRemove")}
-                            </p>
+                            <p>{t("domainQuestionRemove")}</p>
+                            <p>{t("domainMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("domainConfirmDelete")}

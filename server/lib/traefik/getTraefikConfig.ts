@@ -1,4 +1,4 @@
-import { db, targetHealthCheck } from "@server/db";
+import { db, targetHealthCheck, domains } from "@server/db";
 import {
     and,
     eq,
@@ -23,7 +23,8 @@ export async function getTraefikConfig(
     exitNodeId: number,
     siteTypes: string[],
     filterOutNamespaceDomains = false,
-    generateLoginPageRouters = false
+    generateLoginPageRouters = false,
+    allowRawResources = true
 ): Promise<any> {
     // Define extended target type with site information
     type TargetWithSite = Target & {
@@ -56,6 +57,8 @@ export async function getTraefikConfig(
             setHostHeader: resources.setHostHeader,
             enableProxy: resources.enableProxy,
             headers: resources.headers,
+            proxyProtocol: resources.proxyProtocol,
+            proxyProtocolVersion: resources.proxyProtocolVersion,
             // Target fields
             targetId: targets.targetId,
             targetEnabled: targets.enabled,
@@ -75,11 +78,14 @@ export async function getTraefikConfig(
             siteType: sites.type,
             siteOnline: sites.online,
             subnet: sites.subnet,
-            exitNodeId: sites.exitNodeId
+            exitNodeId: sites.exitNodeId,
+            // Domain cert resolver fields
+            domainCertResolver: domains.certResolver
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
         .innerJoin(resources, eq(resources.resourceId, targets.resourceId))
+        .leftJoin(domains, eq(domains.domainId, resources.domainId))
         .leftJoin(
             targetHealthCheck,
             eq(targetHealthCheck.targetId, targets.targetId)
@@ -88,13 +94,20 @@ export async function getTraefikConfig(
             and(
                 eq(targets.enabled, true),
                 eq(resources.enabled, true),
-                eq(sites.exitNodeId, exitNodeId),
+                or(
+                    eq(sites.exitNodeId, exitNodeId),
+                    and(
+                        isNull(sites.exitNodeId),
+                        sql`(${siteTypes.includes("local") ? 1 : 0} = 1)`, // only allow local sites if "local" is in siteTypes
+                        eq(sites.type, "local")
+                    )
+                ),
                 or(
                     ne(targetHealthCheck.hcHealth, "unhealthy"), // Exclude unhealthy targets
                     isNull(targetHealthCheck.hcHealth) // Include targets with no health check record
                 ),
                 inArray(sites.type, siteTypes),
-                config.getRawConfig().traefik.allow_raw_resources
+                allowRawResources
                     ? isNotNull(resources.http) // ignore the http check if allow_raw_resources is true
                     : eq(resources.http, true)
             )
@@ -157,11 +170,15 @@ export async function getTraefikConfig(
                 enableProxy: row.enableProxy,
                 targets: [],
                 headers: row.headers,
+                proxyProtocol: row.proxyProtocol,
+                proxyProtocolVersion: row.proxyProtocolVersion ?? 1,
                 path: row.path, // the targets will all have the same path
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
                 rewritePath: row.rewritePath,
                 rewritePathType: row.rewritePathType,
-                priority: priority // may be null, we fallback later
+                priority: priority,
+                // Store domain cert resolver fields
+                domainCertResolver: row.domainCertResolver
             });
         }
 
@@ -240,30 +257,45 @@ export async function getTraefikConfig(
                 wildCard = resource.fullDomain;
             }
 
-            const configDomain = config.getDomain(resource.domainId);
+            const globalDefaultResolver =
+                config.getRawConfig().traefik.cert_resolver;
+            const globalDefaultPreferWildcard =
+                config.getRawConfig().traefik.prefer_wildcard_cert;
 
-            let certResolver: string, preferWildcardCert: boolean;
-            if (!configDomain) {
-                certResolver = config.getRawConfig().traefik.cert_resolver;
-                preferWildcardCert =
-                    config.getRawConfig().traefik.prefer_wildcard_cert;
-            } else {
-                certResolver = configDomain.cert_resolver;
-                preferWildcardCert = configDomain.prefer_wildcard_cert;
-            }
+            const domainCertResolver = resource.domainCertResolver;
+            const preferWildcardCert = resource.preferWildcardCert;
 
-            const tls = {
-                certResolver: certResolver,
-                ...(preferWildcardCert
-                    ? {
-                          domains: [
-                              {
-                                  main: wildCard
-                              }
-                          ]
-                      }
-                    : {})
-            };
+             let resolverName: string | undefined;
+                let preferWildcard: boolean | undefined;
+                // Handle both letsencrypt & custom cases
+                if (domainCertResolver) {
+                    resolverName = domainCertResolver.trim();
+                } else {
+                    resolverName = globalDefaultResolver;
+                }
+
+                if (
+                    preferWildcardCert !== undefined &&
+                    preferWildcardCert !== null
+                ) {
+                    preferWildcard = preferWildcardCert;
+                } else {
+                    preferWildcard = globalDefaultPreferWildcard;
+                }
+
+                const tls = {
+                    certResolver: resolverName,
+                    ...(preferWildcard
+                        ? {
+                            domains: [
+                                {
+                                    main: wildCard
+                                }
+                            ]
+                        }
+                        : {})
+                };
+            
 
             const additionalMiddlewares =
                 config.getRawConfig().traefik.additional_middlewares || [];
@@ -502,14 +534,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  cookie: {
-                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                      secure: resource.ssl,
-                                      httpOnly: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                cookie: {
+                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                    secure: resource.ssl,
+                                    httpOnly: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
@@ -608,15 +640,20 @@ export async function getTraefikConfig(
                                 }
                             });
                     })(),
+                    ...(resource.proxyProtocol && protocol == "tcp"
+                        ? {
+                              serversTransport: `pp-transport-v${resource.proxyProtocolVersion || 1}`
+                          }
+                        : {}),
                     ...(resource.stickySession
                         ? {
-                              sticky: {
-                                  ipStrategy: {
-                                      depth: 0,
-                                      sourcePort: true
-                                  }
-                              }
-                          }
+                            sticky: {
+                                ipStrategy: {
+                                    depth: 0,
+                                    sourcePort: true
+                                }
+                            }
+                        }
                         : {})
                 }
             };
