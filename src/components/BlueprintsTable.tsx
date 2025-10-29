@@ -158,22 +158,24 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         {
             id: "actions",
             header: () => {
-                return (
-                    <span className="text-muted-foreground p-3">
-                        {t("actions")}
-                    </span>
-                );
+                return null;
             },
             cell: ({ row }) => {
                 return (
-                    <Button variant="outline" className="items-center" asChild>
-                        <Link
-                            href={`/${orgId}/settings/blueprints/${row.original.blueprintId}`}
+                    <div className="flex justify-end">
+                        <Button
+                            variant="outline"
+                            className="items-center"
+                            asChild
                         >
-                            View details{" "}
-                            <ArrowRight className="size-4 flex-none" />
-                        </Link>
-                    </Button>
+                            <Link
+                                href={`/${orgId}/settings/blueprints/${row.original.blueprintId}`}
+                            >
+                                View details{" "}
+                                <ArrowRight className="size-4 flex-none" />
+                            </Link>
+                        </Button>
+                    </div>
                 );
             }
         }
