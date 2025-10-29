@@ -2,7 +2,7 @@ import { db, requestAuditLog, resources } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
-import { eq, gt, lt, and, count } from "drizzle-orm";
+import { eq, gt, lt, and, count, desc } from "drizzle-orm";
 import { OpenAPITags } from "@server/openApi";
 import { z } from "zod";
 import createHttpError from "http-errors";
@@ -123,7 +123,7 @@ export function queryRequest(data: Q) {
             eq(requestAuditLog.resourceId, resources.resourceId)
         ) // TODO: Is this efficient?
         .where(getWhere(data))
-        .orderBy(requestAuditLog.timestamp);
+        .orderBy(desc(requestAuditLog.timestamp));
 }
 
 export function countRequestQuery(data: Q) {
