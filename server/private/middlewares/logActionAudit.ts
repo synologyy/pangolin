@@ -60,7 +60,7 @@ export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
                 )
             );
 
-        logger.info(
+        logger.debug(
             `Cleaned up ${deleteResult.changes} action audit logs older than ${retentionDays} days`
         );
     } catch (error) {

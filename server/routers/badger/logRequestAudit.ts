@@ -3,7 +3,7 @@ import logger from "@server/logger";
 import { and, eq, lt } from "drizzle-orm";
 import cache from "@server/lib/cache";
 
-/** 
+/**
 
 Reasons:
 100 - Allowed by Rule
@@ -69,7 +69,7 @@ export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
                 )
             );
 
-        logger.info(
+        logger.debug(
             `Cleaned up ${deleteResult.changes} request audit logs older than ${retentionDays} days`
         );
     } catch (error) {
