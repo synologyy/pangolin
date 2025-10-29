@@ -125,7 +125,7 @@ export default function BlueprintDetailsForm({
                                     {blueprint.source === "UI" && (
                                         <Badge
                                             variant="secondary"
-                                            className="-mx-1 rounded-sm py-1"
+                                            className="-mx-1 py-1"
                                         >
                                             <span className="inline-flex items-center gap-1 ">
                                                 Dashboard{" "}
