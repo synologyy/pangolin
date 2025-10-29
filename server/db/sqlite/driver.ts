@@ -13,7 +13,10 @@ bootstrapVolume();
 
 function createDb() {
     const sqlite = new Database(location);
-    return DrizzleSqlite(sqlite, { schema, logger: true });
+    return DrizzleSqlite(sqlite, {
+        schema,
+        logger: process.env.NODE_ENV === "development"
+    });
 }
 
 export const db = createDb();
