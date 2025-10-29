@@ -948,7 +948,7 @@ async function checkRules(
         } else if (
             clientIp &&
             rule.match == "COUNTRY" &&
-            (await isIpInGeoIP(clientIp, rule.value))
+            (await isIpInGeoIP(ipCC, rule.value))
         ) {
             return rule.action as any;
         }
@@ -1077,14 +1077,12 @@ export function isPathAllowed(pattern: string, path: string): boolean {
 }
 
 async function isIpInGeoIP(
-    ipCountryCode: string,
+    ipCountryCode: string | undefined,
     checkCountryCode: string
 ): Promise<boolean> {
     if (checkCountryCode == "ALL") {
         return true;
     }
-
-    logger.debug(`IP ${ipCountryCode} is in country: ${checkCountryCode}`);
 
     return ipCountryCode?.toUpperCase() === checkCountryCode.toUpperCase();
 }
