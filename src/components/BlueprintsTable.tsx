@@ -157,7 +157,7 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             id: "actions",
-            header: ({ column }) => {
+            header: () => {
                 return (
                     <span className="text-muted-foreground p-3">
                         {t("actions")}

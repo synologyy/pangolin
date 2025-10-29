@@ -5,7 +5,6 @@ export const registry = new OpenAPIRegistry();
 export enum OpenAPITags {
     Site = "Site",
     Org = "Organization",
-    Blueprint = "Blueprint",
     Resource = "Resource",
     Role = "Role",
     User = "User",
@@ -16,5 +15,6 @@ export enum OpenAPITags {
     Idp = "Identity Provider",
     Client = "Client",
     ApiKey = "API Key",
-    Domain = "Domain"
+    Domain = "Domain",
+    Blueprint = "Blueprint"
 }
