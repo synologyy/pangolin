@@ -1168,7 +1168,7 @@
     "blueprintsDescription": "Blueprints are declarative YAML configurations that define your resources and their settings",
     "blueprintAdd": "Add Blueprint",
     "blueprintGoBack": "See all Blueprints",
-    "blueprintCreate": "Create blueprint",
+    "blueprintCreate": "Create Blueprint",
     "blueprintCreateDescription2": "Follow the steps below to create and apply a new blueprint",
     "blueprintDetails": "Blueprint details",
     "blueprintDetailsDescription": "See the blueprint run details",
