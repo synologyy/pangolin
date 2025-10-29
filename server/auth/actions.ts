@@ -119,11 +119,8 @@ export enum ActionsEnum {
     updateLoginPage = "updateLoginPage",
     getLoginPage = "getLoginPage",
     deleteLoginPage = "deleteLoginPage",
-
-    // blueprints
     listBlueprints = "listBlueprints",
     getBlueprint = "getBlueprint",
-    applyBlueprint = "applyBlueprint"
     applyBlueprint = "applyBlueprint",
     viewLogs = "viewLogs",
     exportLogs = "exportLogs"

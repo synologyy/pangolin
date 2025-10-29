@@ -53,7 +53,7 @@ authenticated.put(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.createOrg),
     logActionAudit(ActionsEnum.createOrg),
-    org.createOrg,
+    org.createOrg
 );
 
 authenticated.get(
@@ -75,7 +75,7 @@ authenticated.post(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.updateOrg),
     logActionAudit(ActionsEnum.updateOrg),
-    org.updateOrg,
+    org.updateOrg
 );
 
 authenticated.delete(
@@ -83,7 +83,7 @@ authenticated.delete(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.deleteOrg),
     logActionAudit(ActionsEnum.deleteOrg),
-    org.deleteOrg,
+    org.deleteOrg
 );
 
 authenticated.put(
@@ -91,7 +91,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createSite),
     logActionAudit(ActionsEnum.createSite),
-    site.createSite,
+    site.createSite
 );
 
 authenticated.get(
@@ -127,7 +127,7 @@ authenticated.post(
     verifyApiKeySiteAccess,
     verifyApiKeyHasAction(ActionsEnum.updateSite),
     logActionAudit(ActionsEnum.updateSite),
-    site.updateSite,
+    site.updateSite
 );
 
 authenticated.delete(
@@ -135,7 +135,7 @@ authenticated.delete(
     verifyApiKeySiteAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteSite),
     logActionAudit(ActionsEnum.deleteSite),
-    site.deleteSite,
+    site.deleteSite
 );
 
 authenticated.get(
@@ -150,7 +150,7 @@ authenticated.put(
     verifyApiKeySiteAccess,
     verifyApiKeyHasAction(ActionsEnum.createSiteResource),
     logActionAudit(ActionsEnum.createSiteResource),
-    siteResource.createSiteResource,
+    siteResource.createSiteResource
 );
 
 authenticated.get(
@@ -184,7 +184,7 @@ authenticated.post(
     verifyApiKeySiteResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.updateSiteResource),
     logActionAudit(ActionsEnum.updateSiteResource),
-    siteResource.updateSiteResource,
+    siteResource.updateSiteResource
 );
 
 authenticated.delete(
@@ -194,7 +194,7 @@ authenticated.delete(
     verifyApiKeySiteResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteSiteResource),
     logActionAudit(ActionsEnum.deleteSiteResource),
-    siteResource.deleteSiteResource,
+    siteResource.deleteSiteResource
 );
 
 authenticated.put(
@@ -202,7 +202,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createResource),
     logActionAudit(ActionsEnum.createResource),
-    resource.createResource,
+    resource.createResource
 );
 
 authenticated.put(
@@ -210,7 +210,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createResource),
     logActionAudit(ActionsEnum.createResource),
-    resource.createResource,
+    resource.createResource
 );
 
 authenticated.get(
@@ -246,7 +246,7 @@ authenticated.post(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.inviteUser),
     logActionAudit(ActionsEnum.inviteUser),
-    user.inviteUser,
+    user.inviteUser
 );
 
 authenticated.get(
@@ -275,7 +275,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.updateResource),
     logActionAudit(ActionsEnum.updateResource),
-    resource.updateResource,
+    resource.updateResource
 );
 
 authenticated.delete(
@@ -283,7 +283,7 @@ authenticated.delete(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteResource),
     logActionAudit(ActionsEnum.deleteResource),
-    resource.deleteResource,
+    resource.deleteResource
 );
 
 authenticated.put(
@@ -291,7 +291,7 @@ authenticated.put(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.createTarget),
     logActionAudit(ActionsEnum.createTarget),
-    target.createTarget,
+    target.createTarget
 );
 
 authenticated.get(
@@ -306,7 +306,7 @@ authenticated.put(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.createResourceRule),
     logActionAudit(ActionsEnum.createResourceRule),
-    resource.createResourceRule,
+    resource.createResourceRule
 );
 
 authenticated.get(
@@ -321,7 +321,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.updateResourceRule),
     logActionAudit(ActionsEnum.updateResourceRule),
-    resource.updateResourceRule,
+    resource.updateResourceRule
 );
 
 authenticated.delete(
@@ -329,7 +329,7 @@ authenticated.delete(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteResourceRule),
     logActionAudit(ActionsEnum.deleteResourceRule),
-    resource.deleteResourceRule,
+    resource.deleteResourceRule
 );
 
 authenticated.get(
@@ -344,7 +344,7 @@ authenticated.post(
     verifyApiKeyTargetAccess,
     verifyApiKeyHasAction(ActionsEnum.updateTarget),
     logActionAudit(ActionsEnum.updateTarget),
-    target.updateTarget,
+    target.updateTarget
 );
 
 authenticated.delete(
@@ -352,7 +352,7 @@ authenticated.delete(
     verifyApiKeyTargetAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteTarget),
     logActionAudit(ActionsEnum.deleteTarget),
-    target.deleteTarget,
+    target.deleteTarget
 );
 
 authenticated.put(
@@ -360,7 +360,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createRole),
     logActionAudit(ActionsEnum.createRole),
-    role.createRole,
+    role.createRole
 );
 
 authenticated.get(
@@ -375,7 +375,7 @@ authenticated.delete(
     verifyApiKeyRoleAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteRole),
     logActionAudit(ActionsEnum.deleteRole),
-    role.deleteRole,
+    role.deleteRole
 );
 
 authenticated.get(
@@ -391,7 +391,7 @@ authenticated.post(
     verifyApiKeyUserAccess,
     verifyApiKeyHasAction(ActionsEnum.addUserRole),
     logActionAudit(ActionsEnum.addUserRole),
-    user.addUserRole,
+    user.addUserRole
 );
 
 authenticated.post(
@@ -400,7 +400,7 @@ authenticated.post(
     verifyApiKeyRoleAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
     logActionAudit(ActionsEnum.setResourceRoles),
-    resource.setResourceRoles,
+    resource.setResourceRoles
 );
 
 authenticated.post(
@@ -409,7 +409,7 @@ authenticated.post(
     verifyApiKeySetResourceUsers,
     verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    resource.setResourceUsers,
+    resource.setResourceUsers
 );
 
 authenticated.post(
@@ -417,7 +417,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourcePassword),
     logActionAudit(ActionsEnum.setResourcePassword),
-    resource.setResourcePassword,
+    resource.setResourcePassword
 );
 
 authenticated.post(
@@ -425,7 +425,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourcePincode),
     logActionAudit(ActionsEnum.setResourcePincode),
-    resource.setResourcePincode,
+    resource.setResourcePincode
 );
 
 authenticated.post(
@@ -433,7 +433,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourceHeaderAuth),
     logActionAudit(ActionsEnum.setResourceHeaderAuth),
-    resource.setResourceHeaderAuth,
+    resource.setResourceHeaderAuth
 );
 
 authenticated.post(
@@ -441,7 +441,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.setResourceWhitelist),
     logActionAudit(ActionsEnum.setResourceWhitelist),
-    resource.setResourceWhitelist,
+    resource.setResourceWhitelist
 );
 
 authenticated.post(
@@ -470,7 +470,7 @@ authenticated.post(
     verifyApiKeyResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.generateAccessToken),
     logActionAudit(ActionsEnum.generateAccessToken),
-    accessToken.generateAccessToken,
+    accessToken.generateAccessToken
 );
 
 authenticated.delete(
@@ -478,7 +478,7 @@ authenticated.delete(
     verifyApiKeyAccessTokenAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteAcessToken),
     logActionAudit(ActionsEnum.deleteAcessToken),
-    accessToken.deleteAccessToken,
+    accessToken.deleteAccessToken
 );
 
 authenticated.get(
@@ -507,7 +507,7 @@ authenticated.post(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.updateUser),
     logActionAudit(ActionsEnum.updateUser),
-    user.updateUser2FA,
+    user.updateUser2FA
 );
 
 authenticated.get(
@@ -529,7 +529,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createOrgUser),
     logActionAudit(ActionsEnum.createOrgUser),
-    user.createOrgUser,
+    user.createOrgUser
 );
 
 authenticated.post(
@@ -538,7 +538,7 @@ authenticated.post(
     verifyApiKeyUserAccess,
     verifyApiKeyHasAction(ActionsEnum.updateOrgUser),
     logActionAudit(ActionsEnum.updateOrgUser),
-    user.updateOrgUser,
+    user.updateOrgUser
 );
 
 authenticated.delete(
@@ -547,7 +547,7 @@ authenticated.delete(
     verifyApiKeyUserAccess,
     verifyApiKeyHasAction(ActionsEnum.removeUser),
     logActionAudit(ActionsEnum.removeUser),
-    user.removeUserOrg,
+    user.removeUserOrg
 );
 
 // authenticated.put(
@@ -568,7 +568,7 @@ authenticated.post(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.setApiKeyActions),
     logActionAudit(ActionsEnum.setApiKeyActions),
-    apiKeys.setApiKeyActions,
+    apiKeys.setApiKeyActions
 );
 
 authenticated.get(
@@ -583,7 +583,7 @@ authenticated.put(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.createApiKey),
     logActionAudit(ActionsEnum.createApiKey),
-    apiKeys.createOrgApiKey,
+    apiKeys.createOrgApiKey
 );
 
 authenticated.delete(
@@ -591,7 +591,7 @@ authenticated.delete(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.deleteApiKey),
     logActionAudit(ActionsEnum.deleteApiKey),
-    apiKeys.deleteApiKey,
+    apiKeys.deleteApiKey
 );
 
 authenticated.put(
@@ -599,7 +599,7 @@ authenticated.put(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.createIdp),
     logActionAudit(ActionsEnum.createIdp),
-    idp.createOidcIdp,
+    idp.createOidcIdp
 );
 
 authenticated.post(
@@ -607,7 +607,7 @@ authenticated.post(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.updateIdp),
     logActionAudit(ActionsEnum.updateIdp),
-    idp.updateOidcIdp,
+    idp.updateOidcIdp
 );
 
 authenticated.get(
@@ -629,7 +629,7 @@ authenticated.put(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.createIdpOrg),
     logActionAudit(ActionsEnum.createIdpOrg),
-    idp.createIdpOrgPolicy,
+    idp.createIdpOrgPolicy
 );
 
 authenticated.post(
@@ -637,7 +637,7 @@ authenticated.post(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.updateIdpOrg),
     logActionAudit(ActionsEnum.updateIdpOrg),
-    idp.updateIdpOrgPolicy,
+    idp.updateIdpOrgPolicy
 );
 
 authenticated.delete(
@@ -645,7 +645,7 @@ authenticated.delete(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.deleteIdpOrg),
     logActionAudit(ActionsEnum.deleteIdpOrg),
-    idp.deleteIdpOrgPolicy,
+    idp.deleteIdpOrgPolicy
 );
 
 authenticated.get(
@@ -685,7 +685,7 @@ authenticated.put(
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
-    client.createClient,
+    client.createClient
 );
 
 authenticated.delete(
@@ -694,7 +694,7 @@ authenticated.delete(
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
-    client.deleteClient,
+    client.deleteClient
 );
 
 authenticated.post(
@@ -703,14 +703,13 @@ authenticated.post(
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.updateClient),
     logActionAudit(ActionsEnum.updateClient),
-    client.updateClient,
+    client.updateClient
 );
 
 authenticated.put(
     "/org/:orgId/blueprint",
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
-    blueprints.applyJSONBlueprint
     logActionAudit(ActionsEnum.applyBlueprint),
-    org.applyBlueprint,
+    blueprints.applyJSONBlueprint
 );

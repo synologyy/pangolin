@@ -13,11 +13,7 @@ import {
     Globe, // Added from 'dev' branch
     MonitorUp, // Added from 'dev' branch
     Server,
-    CreditCard,
-    Bolt,
-    ScanText,
-    ReceiptText
-    Zap,
+    ReceiptText,
     CreditCard,
     Logs,
     SquareMousePointer,
