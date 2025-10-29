@@ -88,10 +88,6 @@ export default function CreateBlueprintForm({
         if (!isValid) return;
 
         const payload = form.getValues();
-        console.log({
-            isValid,
-            payload
-        });
         const res = await api
             .put<
                 AxiosResponse<CreateBlueprintResponse>
