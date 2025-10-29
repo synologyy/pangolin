@@ -7,4 +7,3 @@ export * from "./checkId";
 export * from "./getOrgOverview";
 export * from "./listOrgs";
 export * from "./pickOrgDefaults";
-export * from "./applyBlueprint";

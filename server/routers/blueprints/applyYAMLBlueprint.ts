@@ -7,15 +7,14 @@ import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromZodError } from "zod-validation-error";
 import response from "@server/lib/response";
-import { type Blueprint, blueprints, db, loginPage } from "@server/db";
+import { type Blueprint } from "@server/db";
 import { parse as parseYaml } from "yaml";
 import { ConfigSchema } from "@server/lib/blueprints/types";
-import { BlueprintSource } from "./types";
 
 const applyBlueprintSchema = z
     .object({
         name: z.string().min(1).max(255),
-        contents: z
+        blueprint: z
             .string()
             .min(1)
             .superRefine((val, ctx) => {
@@ -40,10 +39,9 @@ const applyBlueprintParamsSchema = z
 export type CreateBlueprintResponse = Blueprint;
 
 registry.registerPath({
-    method: "post",
+    method: "put",
     path: "/org/{orgId}/blueprint",
-    description:
-        "Create and Apply a base64 encoded blueprint to an organization",
+    description: "Create and apply a YAML blueprint to an organization",
     tags: [OpenAPITags.Org, OpenAPITags.Blueprint],
     request: {
         params: applyBlueprintParamsSchema,
@@ -58,7 +56,7 @@ registry.registerPath({
     responses: {}
 });
 
-export async function createAndApplyBlueprint(
+export async function applyYAMLBlueprint(
     req: Request,
     res: Response,
     next: NextFunction
@@ -86,7 +84,7 @@ export async function createAndApplyBlueprint(
             );
         }
 
-        const { contents, name } = parsedBody.data;
+        const { blueprint: contents, name } = parsedBody.data;
 
         logger.debug(`Received blueprint:`, contents);
 
@@ -102,42 +100,26 @@ export async function createAndApplyBlueprint(
             );
         }
 
-        let blueprintSucceeded: boolean;
-        let blueprintMessage: string;
+        let blueprint: Blueprint | null = null;
 
         try {
-            await applyBlueprint(orgId, parsedConfig);
-            blueprintSucceeded = true;
-            blueprintMessage = "success";
+            blueprint = await applyBlueprint({
+                orgId,
+                name,
+                source: "UI",
+                configData: parsedConfig
+            });
         } catch (error) {
-            blueprintSucceeded = false;
-            blueprintMessage = `Failed to update blueprint from config: ${error}`;
-            logger.error(blueprintMessage);
+            // We do nothing, the error is thrown for the other APIs & websockets for backwards compatibility
+            // for this API, the error is already saved in the blueprint and we don't need to handle it
+            logger.error(error);
         }
-
-        let blueprint: Blueprint | null = null;
-        await db.transaction(async (trx) => {
-            const newBlueprint = await trx
-                .insert(blueprints)
-                .values({
-                    orgId,
-                    name,
-                    contents,
-                    createdAt: Math.floor(Date.now() / 1000),
-                    succeeded: blueprintSucceeded,
-                    message: blueprintMessage,
-                    source: "UI" as BlueprintSource
-                })
-                .returning();
-
-            blueprint = newBlueprint[0];
-        });
 
         if (!blueprint) {
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    "Failed to create resource"
+                    "Failed to save blueprint in the database"
                 )
             );
         }
@@ -146,9 +128,9 @@ export async function createAndApplyBlueprint(
             data: blueprint,
             success: true,
             error: false,
-            message: blueprintSucceeded
+            message: blueprint.succeeded
                 ? "Blueprint applied with success"
-                : `Blueprint applied with errors: ${blueprintMessage}`,
+                : `Blueprint applied with errors: ${blueprint.message}`,
             status: HttpCode.CREATED
         });
     } catch (error) {

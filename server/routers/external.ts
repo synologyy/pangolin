@@ -823,7 +823,7 @@ authenticated.put(
     "/org/:orgId/blueprint",
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.applyBlueprint),
-    blueprints.createAndApplyBlueprint
+    blueprints.applyYAMLBlueprint
 );
 
 authenticated.get(

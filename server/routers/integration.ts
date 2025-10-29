@@ -1,5 +1,6 @@
 import * as site from "./site";
 import * as org from "./org";
+import * as blueprints from "./blueprints";
 import * as resource from "./resource";
 import * as domain from "./domain";
 import * as target from "./target";
@@ -663,5 +664,5 @@ authenticated.put(
     "/org/:orgId/blueprint",
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
-    org.applyBlueprint
+    blueprints.applyJSONBlueprint
 );

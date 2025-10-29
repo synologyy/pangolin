@@ -1,3 +1,4 @@
 export * from "./listBlueprints";
-export * from "./createAndApplyBlueprint";
+export * from "./applyYAMLBlueprint";
+export * from "./applyJSONBlueprint";
 export * from "./getBlueprint";
