@@ -198,8 +198,8 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
             }}
             isRefreshing={isRefreshing}
             defaultSort={{
-                id: "name",
-                desc: false
+                id: "createdAt",
+                desc: true
             }}
         />
     );

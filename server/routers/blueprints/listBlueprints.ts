@@ -4,11 +4,10 @@ import { db, blueprints, orgs } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { sql, eq, or, inArray, and, count } from "drizzle-orm";
+import { sql, eq, desc } from "drizzle-orm";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
-import { warn } from "console";
 import { BlueprintData } from "./types";
 
 const listBluePrintsParamsSchema = z
@@ -47,6 +46,7 @@ async function queryBlueprints(orgId: string, limit: number, offset: number) {
         .from(blueprints)
         .leftJoin(orgs, eq(blueprints.orgId, orgs.orgId))
         .where(eq(blueprints.orgId, orgId))
+        .orderBy(desc(blueprints.createdAt))
         .limit(limit)
         .offset(offset);
     return res;
