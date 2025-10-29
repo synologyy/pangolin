@@ -1170,6 +1170,7 @@
     "appliedAt": "Applied at",
     "source": "Source",
     "contents": "Contents",
+    "parsedContents": "Parsed Contents",
     "enableDockerSocket": "Enable Docker Blueprint",
     "enableDockerSocketDescription": "Enable Docker Socket label scraping for blueprint labels. Socket path must be provided to Newt.",
     "enableDockerSocketLink": "Learn More",

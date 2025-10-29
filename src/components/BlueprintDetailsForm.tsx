@@ -170,7 +170,7 @@ export default function BlueprintDetailsForm({
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>
-                                                {t("contents")}
+                                                {t("parsedContents")}
                                             </FormLabel>
                                             <FormDescription>
                                                 {t(
