@@ -1697,7 +1697,7 @@ export default function ReverseProxyTargets(props: {
                 </SettingsSection>
             )}
 
-            {!resource.http && resource.protocol && (
+            {!resource.http && resource.protocol == "tcp" && (
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>

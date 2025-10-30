@@ -111,7 +111,7 @@ export function DNSRecordsDataTable<TData, TValue>({
                             <h1 className="font-bold">{t("dnsRecord")}</h1>
                             <Badge variant="secondary">{t("required")}</Badge>
                         </div>
-                        <Link href="https://docs.pangolin.net/manage/domains">
+                        <Link href="https://docs.pangolin.net/manage/domains" target="_blank" rel="noopener noreferrer">
                             <Button variant="outline">
                                 <ExternalLink className="h-4 w-4 mr-1" />
                                 {t("howToAddRecords")}
