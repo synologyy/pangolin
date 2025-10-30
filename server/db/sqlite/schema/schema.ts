@@ -749,6 +749,23 @@ export const idpOrg = sqliteTable("idpOrg", {
     orgMapping: text("orgMapping")
 });
 
+// Blueprint runs
+export const blueprints = sqliteTable("blueprints", {
+    blueprintId: integer("blueprintId").primaryKey({
+        autoIncrement: true
+    }),
+    orgId: text("orgId")
+        .references(() => orgs.orgId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
+    name: text("name").notNull(),
+    source: text("source").notNull(),
+    createdAt: integer("createdAt").notNull(),
+    succeeded: integer("succeeded", { mode: "boolean" }).notNull(),
+    contents: text("contents").notNull(),
+    message: text("message")
+});
 export const requestAuditLog = sqliteTable(
     "requestAuditLog",
     {
@@ -837,6 +854,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type Blueprint = InferSelectModel<typeof blueprints>;
 export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
