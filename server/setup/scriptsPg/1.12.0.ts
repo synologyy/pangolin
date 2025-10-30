@@ -119,7 +119,7 @@ export default async function migration() {
             // insert two records into the dnsRecords table for each domain
             await db.execute(sql`
                 INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")
-                VALUES (${domain.domainId}, 'A', ${`*.${domain.baseDomain}`}, ${'Server IP Address'}, true)
+                VALUES (${"*." + domain.domainId}, 'A', ${`*.${domain.baseDomain}`}, ${'Server IP Address'}, true)
             `);
             await db.execute(sql`
                 INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")

@@ -186,10 +186,8 @@ export default function DomainsTable({ domains, orgId }: Props) {
             cell: ({ row }) => {
                 const { verified, failed, type } = row.original;
                 if (verified) {
-                    type === "wildcard" ? (
-                        <Badge variant="outlinePrimary">
-                            {t("manual", { fallback: "Manual" })}
-                        </Badge>
+                    return type == "wildcard" ? (
+                        <Badge variant="outlinePrimary">{t("manual")}</Badge>
                     ) : (
                         <Badge variant="green">{t("verified")}</Badge>
                     );

@@ -10,10 +10,10 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { build } from "@server/build";
-import { UserType } from "@server/types/UserTypes";
 import license from "#dynamic/license/license";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
+import { cache } from "@server/lib/cache";
 
 const updateOrgParamsSchema = z
     .object({
@@ -137,6 +137,11 @@ export async function updateOrg(
                 )
             );
         }
+
+        // invalidate the cache for all of the orgs retention days
+        cache.del(`org_${orgId}_retentionDays`);
+        cache.del(`org_${orgId}_actionDays`);
+        cache.del(`org_${orgId}_accessDays`);
 
         return response(res, {
             data: updatedOrg[0],

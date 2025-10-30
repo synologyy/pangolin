@@ -51,7 +51,7 @@ export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
     const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
 
     try {
-        const deleteResult = await db
+        await db
             .delete(actionAuditLog)
             .where(
                 and(
@@ -61,7 +61,7 @@ export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
             );
 
         logger.debug(
-            `Cleaned up ${deleteResult.changes} action audit logs older than ${retentionDays} days`
+            `Cleaned up action audit logs older than ${retentionDays} days`
         );
     } catch (error) {
         logger.error("Error cleaning up old action audit logs:", error);
