@@ -699,24 +699,24 @@ export default function GeneralPage() {
         return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div>
+                    {/* <div>
                         <strong>User Agent:</strong>
                         <p className="text-muted-foreground mt-1 break-all">
                             {row.userAgent || "N/A"}
                         </p>
-                    </div>
+                    </div> */}
                     <div>
                         <strong>Original URL:</strong>
                         <p className="text-muted-foreground mt-1 break-all">
                             {row.originalRequestURL || "N/A"}
                         </p>
                     </div>
-                    <div>
+                    {/* <div>
                         <strong>Scheme:</strong>
                         <p className="text-muted-foreground mt-1">
                             {row.scheme || "N/A"}
                         </p>
-                    </div>
+                    </div> */}
                     <div>
                         <strong>Metadata:</strong>
                         <pre className="text-muted-foreground mt-1 text-xs bg-background p-2 rounded border overflow-auto">

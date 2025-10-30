@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { Badge } from "@app/components/ui/badge";
 import { DNSRecordsDataTable } from "./DNSRecordsDataTable";
+import CopyToClipboard from "@app/components/CopyToClipboard";
 
 export type DNSRecordRow = {
     id: string;
@@ -39,7 +40,15 @@ export default function DNSRecordsTable({
             },
             cell: ({ row }) => {
                 const baseDomain = row.original.baseDomain;
-                return <div>{baseDomain || "-"}</div>;
+                return baseDomain ? (
+                    <CopyToClipboard
+                        text={baseDomain}
+                        displayText={baseDomain}
+                        isLink={false}
+                    />
+                ) : (
+                    <div>-</div>
+                );
             }
         },
         {
@@ -68,7 +77,13 @@ export default function DNSRecordsTable({
             },
             cell: ({ row }) => {
                 const value = row.original.value;
-                return <div>{value}</div>;
+                return (
+                    <CopyToClipboard
+                        text={value}
+                        displayText={value}
+                        isLink={false}
+                    />
+                );
             }
         },
         {
