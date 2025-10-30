@@ -100,7 +100,7 @@ async function copyInDomains() {
                     {
                         domainId,
                         recordType: "A",
-                        baseDomain,
+                        baseDomain: `*.${baseDomain}`,
                         value: "Server IP Address",
                         verified: true
                     }
@@ -127,7 +127,7 @@ async function copyInDomains() {
                     {
                         domainId,
                         recordType: "A",
-                        baseDomain,
+                        baseDomain: `*.${baseDomain}`,
                         value: "Server IP Address",
                         verified: true
                     }
