@@ -166,7 +166,8 @@ export async function applyBlueprint({
         blueprint = newBlueprint[0];
     });
 
-    if (!blueprint || !blueprintSucceeded) {
+    if (!blueprint || (source !== "UI" && !blueprintSucceeded)) {
+        //             ^^^^^^^^^^^^^^^ The UI considers a failed blueprint as a valid response
         throw error ?? "Unknown Server Error";
     }
 

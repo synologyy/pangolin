@@ -107,10 +107,11 @@ export default function CreateBlueprintForm({
             });
 
         if (res && res.status === 201) {
+            const createdBlueprint = res.data.data;
             toast({
-                variant: "default",
-                title: "Success",
-                description: res.data.data.message
+                variant: "warning",
+                title: createdBlueprint.succeeded ? "Success" : "Warning",
+                description: createdBlueprint.message
             });
             router.push(`/${orgId}/settings/blueprints`);
         }
