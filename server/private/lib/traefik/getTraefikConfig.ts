@@ -85,6 +85,8 @@ export async function getTraefikConfig(
             setHostHeader: resources.setHostHeader,
             enableProxy: resources.enableProxy,
             headers: resources.headers,
+            proxyProtocol: resources.proxyProtocol,
+            proxyProtocolVersion: resources.proxyProtocolVersion,
             // Target fields
             targetId: targets.targetId,
             targetEnabled: targets.enabled,
@@ -209,6 +211,8 @@ export async function getTraefikConfig(
                 enableProxy: row.enableProxy,
                 targets: [],
                 headers: row.headers,
+                proxyProtocol: row.proxyProtocol,
+                proxyProtocolVersion: row.proxyProtocolVersion ?? 1,
                 path: row.path, // the targets will all have the same path
                 pathMatchType: row.pathMatchType, // the targets will all have the same pathMatchType
                 rewritePath: row.rewritePath,
