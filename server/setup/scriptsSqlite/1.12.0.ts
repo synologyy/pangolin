@@ -112,6 +112,23 @@ export default async function migration() {
         `
             ).run();
 
+
+            db.prepare(
+                `
+        CREATE TABLE 'blueprints' (
+                'blueprintId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+                'orgId' text NOT NULL,
+                'name' text NOT NULL,
+                'source' text NOT NULL,
+                'createdAt' integer NOT NULL,
+                'succeeded' integer NOT NULL,
+                'contents' text NOT NULL,
+                'message' text,
+                FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
+        );
+        `
+            ).run();
+
             db.prepare(
                 `CREATE INDEX 'idx_requestAuditLog_timestamp' ON 'requestAuditLog' ('timestamp');`
             ).run();

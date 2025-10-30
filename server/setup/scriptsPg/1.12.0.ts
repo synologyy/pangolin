@@ -79,6 +79,21 @@ export default async function migration() {
         );
         `);
 
+        await db.execute(sql`
+        CREATE TABLE "blueprints" (
+                "blueprintId" serial PRIMARY KEY NOT NULL,
+                "orgId" text NOT NULL,
+                "name" varchar NOT NULL,
+                "source" varchar NOT NULL,
+                "createdAt" integer NOT NULL,
+                "succeeded" boolean NOT NULL,
+                "contents" text NOT NULL,
+                "message" text
+        );
+        `);
+
+        await db.execute(sql`ALTER TABLE "blueprints" ADD CONSTRAINT "blueprints_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
+
         await db.execute(sql`ALTER TABLE "resources" DROP CONSTRAINT "resources_skipToIdpId_idp_idpId_fk";`);
         await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "certResolver" varchar;`);
         await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "customCertResolver" varchar;`);
