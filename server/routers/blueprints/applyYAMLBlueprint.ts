@@ -123,7 +123,9 @@ export async function applyYAMLBlueprint(
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    error ? error : "An unknown error occurred while applying the blueprint"
+                    error
+                        ? error
+                        : "An unknown error occurred while applying the blueprint"
                 )
             );
         }
@@ -132,9 +134,7 @@ export async function applyYAMLBlueprint(
             data: blueprint,
             success: true,
             error: false,
-            message: blueprint.succeeded
-                ? "Blueprint applied with success"
-                : `Blueprint applied with errors: ${blueprint.message}`,
+            message: "Done",
             status: HttpCode.CREATED
         });
     } catch (error) {
