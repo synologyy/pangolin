@@ -30,7 +30,12 @@ export async function applyNewtDockerBlueprint(
         logger.debug(`Received Docker blueprint: ${JSON.stringify(blueprint)}`);
 
         // Update the blueprint in the database
-        await applyBlueprint(site.orgId, blueprint, site.siteId);
+        await applyBlueprint({
+            orgId: site.orgId,
+            configData: blueprint,
+            siteId: site.siteId,
+            source: "NEWT"
+        });
     } catch (error) {
         logger.error(`Failed to update database from config: ${error}`);
         await sendToClient(newtId, {

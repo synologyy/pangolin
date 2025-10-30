@@ -18,6 +18,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
+import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
 
 export const metadata: Metadata = {
@@ -85,6 +86,7 @@ export default async function RootLayout({
     return (
         <html suppressHydrationWarning lang={locale}>
             <body className={`${font.className} h-screen overflow-hidden`}>
+                <TopLoader />
                 {build === "saas" && (
                     <Script
                         src="https://rybbit.fossorial.io/api/script.js"

@@ -119,6 +119,8 @@ export enum ActionsEnum {
     updateLoginPage = "updateLoginPage",
     getLoginPage = "getLoginPage",
     deleteLoginPage = "deleteLoginPage",
+    listBlueprints = "listBlueprints",
+    getBlueprint = "getBlueprint",
     applyBlueprint = "applyBlueprint",
     viewLogs = "viewLogs",
     exportLogs = "exportLogs"
@@ -198,7 +200,6 @@ export async function checkUserActionPermission(
             .limit(1);
 
         return roleActionPermission.length > 0;
-
     } catch (error) {
         console.error("Error checking user action permission:", error);
         throw createHttpError(

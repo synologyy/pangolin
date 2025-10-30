@@ -13,6 +13,7 @@ import * as siteResource from "./siteResource";
 import * as supporterKey from "./supporterKey";
 import * as accessToken from "./accessToken";
 import * as idp from "./idp";
+import * as blueprints from "./blueprints";
 import * as apiKeys from "./apiKeys";
 import * as logs from "./auditLogs";
 import HttpCode from "@server/types/HttpCode";
@@ -893,6 +894,27 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/blueprints",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listBlueprints),
+    blueprints.listBlueprints
+);
+
+authenticated.put(
+    "/org/:orgId/blueprint",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.applyBlueprint),
+    blueprints.applyYAMLBlueprint
+);
+
+authenticated.get(
+    "/org/:orgId/blueprint/:blueprintId",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getBlueprint),
+    blueprints.getBlueprint
 );
 
 // Auth routes

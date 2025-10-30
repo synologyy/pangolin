@@ -25,7 +25,6 @@ export const domains = pgTable("domains", {
     preferWildcardCert: boolean("preferWildcardCert")
 });
 
-
 export const dnsRecords = pgTable("dnsRecords", {
     id: serial("id").primaryKey(),
     domainId: varchar("domainId")
@@ -34,7 +33,7 @@ export const dnsRecords = pgTable("dnsRecords", {
     recordType: varchar("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: varchar("baseDomain"),
     value: varchar("value").notNull(),
-    verified: boolean("verified").notNull().default(false),
+    verified: boolean("verified").notNull().default(false)
 });
 
 export const orgs = pgTable("orgs", {
@@ -703,6 +702,21 @@ export const setupTokens = pgTable("setupTokens", {
     dateUsed: varchar("dateUsed")
 });
 
+// Blueprint runs
+export const blueprints = pgTable("blueprints", {
+    blueprintId: serial("blueprintId").primaryKey(),
+    orgId: text("orgId")
+        .references(() => orgs.orgId, {
+            onDelete: "cascade"
+        })
+        .notNull(),
+    name: varchar("name").notNull(),
+    source: varchar("source").notNull(),
+    createdAt: integer("createdAt").notNull(),
+    succeeded: boolean("succeeded").notNull(),
+    contents: text("contents").notNull(),
+    message: text("message")
+});
 export const requestAuditLog = pgTable(
     "requestAuditLog",
     {
@@ -790,6 +804,7 @@ export type SetupToken = InferSelectModel<typeof setupTokens>;
 export type HostMeta = InferSelectModel<typeof hostMeta>;
 export type TargetHealthCheck = InferSelectModel<typeof targetHealthCheck>;
 export type IdpOidcConfig = InferSelectModel<typeof idpOidcConfig>;
+export type Blueprint = InferSelectModel<typeof blueprints>;
 export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
