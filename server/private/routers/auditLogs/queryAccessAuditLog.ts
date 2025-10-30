@@ -124,7 +124,7 @@ export function queryAccess(data: Q) {
             eq(accessAuditLog.resourceId, resources.resourceId)
         )
         .where(getWhere(data))
-        .orderBy(desc(accessAuditLog.timestamp));
+        .orderBy(desc(accessAuditLog.timestamp), desc(accessAuditLog.id));
 }
 
 export function countAccessQuery(data: Q) {

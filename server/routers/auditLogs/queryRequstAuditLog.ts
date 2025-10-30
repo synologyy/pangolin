@@ -94,6 +94,7 @@ function getWhere(data: Q) {
 export function queryRequest(data: Q) {
     return db
         .select({
+            id: requestAuditLog.id,
             timestamp: requestAuditLog.timestamp,
             orgId: requestAuditLog.orgId,
             action: requestAuditLog.action,
@@ -123,7 +124,7 @@ export function queryRequest(data: Q) {
             eq(requestAuditLog.resourceId, resources.resourceId)
         ) // TODO: Is this efficient?
         .where(getWhere(data))
-        .orderBy(desc(requestAuditLog.timestamp));
+        .orderBy(desc(requestAuditLog.timestamp), desc(requestAuditLog.id));
 }
 
 export function countRequestQuery(data: Q) {

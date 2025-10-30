@@ -92,7 +92,7 @@ export function queryAction(data: Q) {
         })
         .from(actionAuditLog)
         .where(getWhere(data))
-        .orderBy(desc(actionAuditLog.timestamp));
+        .orderBy(desc(actionAuditLog.timestamp), desc(actionAuditLog.id));
 }
 
 export function countActionQuery(data: Q) {
