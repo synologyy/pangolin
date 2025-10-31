@@ -8,7 +8,6 @@ import CopyToClipboard from "@app/components/CopyToClipboard";
 
 export type DNSRecordRow = {
     id: string;
-    domainId: string;
     recordType: string; // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: string | null;
     value: string;
@@ -17,15 +16,11 @@ export type DNSRecordRow = {
 
 type Props = {
     records: DNSRecordRow[];
-    domainId: string;
-    isRefreshing?: boolean;
     type: string | null;
 };
 
 export default function DNSRecordsTable({
     records,
-    domainId,
-    isRefreshing,
     type
 }: Props) {
     const t = useTranslations();
@@ -114,7 +109,6 @@ export default function DNSRecordsTable({
         <DNSRecordsDataTable
             columns={columns}
             data={records}
-            isRefreshing={isRefreshing}
             type={type}
         />
     );

@@ -3,7 +3,12 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { DomainsDataTable } from "@app/components/DomainsDataTable";
 import { Button } from "@app/components/ui/button";
-import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
+import {
+    ArrowRight,
+    ArrowUpDown,
+    MoreHorizontal,
+    RefreshCw
+} from "lucide-react";
 import { useState } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { formatAxiosError } from "@app/lib/api";
@@ -217,6 +222,9 @@ export default function DomainsTable({ domains, orgId }: Props) {
                                 onClick={() => restartDomain(domain.domainId)}
                                 disabled={isRestarting}
                             >
+                                <RefreshCw
+                                    className={`mr-2 h-4 w-4 ${isRestarting ? "animate-spin" : ""}`}
+                                />
                                 {isRestarting
                                     ? t("restarting", {
                                           fallback: "Restarting..."

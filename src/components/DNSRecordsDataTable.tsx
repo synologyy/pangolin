@@ -30,7 +30,6 @@ import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import { Badge } from "./ui/badge";
 import Link from "next/link";
-import { build } from "@server/build";
 
 type TabFilter = {
     id: string;
