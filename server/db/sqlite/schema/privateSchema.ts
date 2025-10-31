@@ -162,6 +162,7 @@ export const remoteExitNodes = sqliteTable("remoteExitNode", {
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
     version: text("version"),
+    secondaryVersion: text("secondaryVersion"), // This is to detect the new nodes after the transition to pangolin-node
     exitNodeId: integer("exitNodeId").references(() => exitNodes.exitNodeId, {
         onDelete: "cascade"
     })

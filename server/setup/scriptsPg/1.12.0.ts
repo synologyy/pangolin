@@ -94,6 +94,7 @@ export default async function migration() {
 
         await db.execute(sql`ALTER TABLE "blueprints" ADD CONSTRAINT "blueprints_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
 
+        await db.execute(sql`ALTER TABLE "remoteExitNode" ADD COLUMN "secondaryVersion" varchar;`);
         await db.execute(sql`ALTER TABLE "resources" DROP CONSTRAINT "resources_skipToIdpId_idp_idpId_fk";`);
         await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "certResolver" varchar;`);
         await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "customCertResolver" varchar;`);

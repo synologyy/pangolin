@@ -167,6 +167,7 @@ export const remoteExitNodes = pgTable("remoteExitNode", {
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
     version: varchar("version"),
+    secondaryVersion: varchar("secondaryVersion"), // This is to detect the new nodes after the transition to pangolin-node
     exitNodeId: integer("exitNodeId").references(() => exitNodes.exitNodeId, {
         onDelete: "cascade"
     })

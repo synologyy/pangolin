@@ -212,6 +212,7 @@ export default async function migration() {
             db.prepare(
                 `ALTER TABLE 'user' ADD 'lastPasswordChange' integer;`
             ).run();
+            db.prepare(`ALTER TABLE 'remoteExitNode' ADD 'secondaryVersion' text;`).run();
 
             // get all of the domains
             const domains = db.prepare(`SELECT domainId, baseDomain from domains`).all() as {

@@ -1077,13 +1077,22 @@ hybridRouter.get(
                 .where(eq(resourceRules.resourceId, resourceId));
 
             // backward compatibility: COUNTRY -> GEOIP
-            if ((remoteExitNode.version && semver.lt(remoteExitNode.version, "1.1.0")) || !remoteExitNode.version) {
+            // TODO: remove this after a few versions once all exit nodes are updated
+            if (
+                (remoteExitNode.secondaryVersion &&
+                    semver.lt(remoteExitNode.secondaryVersion, "1.1.0")) ||
+                !remoteExitNode.secondaryVersion
+            ) {
                 for (const rule of rules) {
                     if (rule.match == "COUNTRY") {
                         rule.match = "GEOIP";
                     }
                 }
             }
+
+            logger.debug(
+                `Retrieved ${rules.length} rules for resource ID ${resourceId}: ${JSON.stringify(rules)}`
+            );
 
             return response<(typeof resourceRules.$inferSelect)[]>(res, {
                 data: rules,
@@ -1692,23 +1701,9 @@ const batchLogsSchema = z.object({
 });
 
 hybridRouter.post(
-    "/org/:orgId/logs/batch",
+    "/logs/batch",
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const parsedParams = getOrgLoginPageParamsSchema.safeParse(
-                req.params
-            );
-            if (!parsedParams.success) {
-                return next(
-                    createHttpError(
-                        HttpCode.BAD_REQUEST,
-                        fromError(parsedParams.error).toString()
-                    )
-                );
-            }
-
-            const { orgId } = parsedParams.data;
-
             const parsedBody = batchLogsSchema.safeParse(req.body);
             if (!parsedBody.success) {
                 return next(
@@ -1732,39 +1727,48 @@ hybridRouter.post(
                 );
             }
 
-            if (await checkExitNodeOrg(remoteExitNode.exitNodeId, orgId)) {
-                // If the exit node is not allowed for the org, return an error
-                return next(
-                    createHttpError(
-                        HttpCode.FORBIDDEN,
-                        "Exit node not allowed for this organization"
-                    )
-                );
-            }
+            const exitNodeOrgsRes = await db
+                .select()
+                .from(exitNodeOrgs)
+                .where(
+                    and(eq(exitNodeOrgs.exitNodeId, remoteExitNode.exitNodeId))
+                )
+                .limit(1);
 
             // Batch insert all logs in a single query
-            const logEntries = logs.map((logEntry) => ({
-                timestamp: logEntry.timestamp,
-                orgId: logEntry.orgId,
-                actorType: logEntry.actorType,
-                actor: logEntry.actor,
-                actorId: logEntry.actorId,
-                metadata: logEntry.metadata,
-                action: logEntry.action,
-                resourceId: logEntry.resourceId,
-                reason: logEntry.reason,
-                location: logEntry.location,
-                // userAgent: data.userAgent, // TODO: add this
-                // headers: data.body.headers,
-                // query: data.body.query,
-                originalRequestURL: logEntry.originalRequestURL,
-                scheme: logEntry.scheme,
-                host: logEntry.host,
-                path: logEntry.path,
-                method: logEntry.method,
-                ip: logEntry.ip,
-                tls: logEntry.tls
-            }));
+            const logEntries = logs
+                .filter((logEntry) => {
+                    if (!logEntry.orgId) {
+                        return false;
+                    }
+
+                    const isOrgAllowed = exitNodeOrgsRes.some(
+                        (eno) => eno.orgId === logEntry.orgId
+                    );
+                    return isOrgAllowed;
+                })
+                .map((logEntry) => ({
+                    timestamp: logEntry.timestamp,
+                    orgId: logEntry.orgId,
+                    actorType: logEntry.actorType,
+                    actor: logEntry.actor,
+                    actorId: logEntry.actorId,
+                    metadata: logEntry.metadata,
+                    action: logEntry.action,
+                    resourceId: logEntry.resourceId,
+                    reason: logEntry.reason,
+                    location: logEntry.location,
+                    // userAgent: data.userAgent, // TODO: add this
+                    // headers: data.body.headers,
+                    // query: data.body.query,
+                    originalRequestURL: logEntry.originalRequestURL,
+                    scheme: logEntry.scheme,
+                    host: logEntry.host,
+                    path: logEntry.path,
+                    method: logEntry.method,
+                    ip: logEntry.ip,
+                    tls: logEntry.tls
+                }));
 
             await db.insert(requestAuditLog).values(logEntries);
 
