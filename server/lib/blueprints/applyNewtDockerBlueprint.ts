@@ -31,19 +31,15 @@ export async function applyNewtDockerBlueprint(
 
         // make sure this is not an empty object
         if (isEmptyObject(blueprint)) {
-            throw new Error("No valid blueprint data found in container labels");
+            return;
         }
 
         if (isEmptyObject(blueprint["proxy-resources"])) {
-            throw new Error(
-                "No proxy-resources found in blueprint data from container labels"
-            );
+            return;
         }
 
         if (isEmptyObject(blueprint["client-resources"])) {
-            throw new Error(
-                "No client-resources found in blueprint data from container labels"
-            );
+            return;
         }
 
         // Update the blueprint in the database
