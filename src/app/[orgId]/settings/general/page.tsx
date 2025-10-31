@@ -318,7 +318,7 @@ export default function GeneralPage() {
                     <SettingsSection>
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
-                                {t("orgGeneralSettings")}
+                                {t("general")}
                             </SettingsSectionTitle>
                             <SettingsSectionDescription>
                                 {t("orgGeneralSettingsDescription")}
@@ -420,10 +420,14 @@ export default function GeneralPage() {
                                                             }
                                                         ).map((option) => (
                                                             <SelectItem
-                                                                key={option.value}
+                                                                key={
+                                                                    option.value
+                                                                }
                                                                 value={option.value.toString()}
                                                             >
-                                                                {t(option.label)}
+                                                                {t(
+                                                                    option.label
+                                                                )}
                                                             </SelectItem>
                                                         ))}
                                                     </SelectContent>
@@ -444,8 +448,7 @@ export default function GeneralPage() {
                                             render={({ field }) => {
                                                 const isDisabled =
                                                     (build == "saas" &&
-                                                        !subscription
-                                                            ?.subscribed) ||
+                                                        !subscription?.subscribed) ||
                                                     (build == "enterprise" &&
                                                         !isUnlocked());
 
@@ -493,9 +496,7 @@ export default function GeneralPage() {
                                                                                 key={
                                                                                     option.value
                                                                                 }
-                                                                                value={
-                                                                                    option.value.toString()
-                                                                                }
+                                                                                value={option.value.toString()}
                                                                             >
                                                                                 {t(
                                                                                     option.label
@@ -517,8 +518,7 @@ export default function GeneralPage() {
                                             render={({ field }) => {
                                                 const isDisabled =
                                                     (build == "saas" &&
-                                                        !subscription
-                                                            ?.subscribed) ||
+                                                        !subscription?.subscribed) ||
                                                     (build == "enterprise" &&
                                                         !isUnlocked());
 
@@ -566,9 +566,7 @@ export default function GeneralPage() {
                                                                                 key={
                                                                                     option.value
                                                                                 }
-                                                                                value={
-                                                                                    option.value.toString()
-                                                                                }
+                                                                                value={option.value.toString()}
                                                                             >
                                                                                 {t(
                                                                                     option.label
@@ -589,29 +587,20 @@ export default function GeneralPage() {
                             </SettingsSectionForm>
                         </SettingsSectionBody>
                     </SettingsSection>
-                </form>
-            </Form>
 
-            {build !== "oss" && (
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("securitySettings")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("securitySettingsDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <SecurityFeaturesAlert />
-
-                        <SettingsSectionForm>
-                            <Form {...form}>
-                                <form
-                                    onSubmit={form.handleSubmit(onSubmit)}
-                                    className="space-y-4"
-                                    id="security-settings-form"
-                                >
+                    {build !== "oss" && (
+                        <SettingsSection>
+                            <SettingsSectionHeader>
+                                <SettingsSectionTitle>
+                                    {t("securitySettings")}
+                                </SettingsSectionTitle>
+                                <SettingsSectionDescription>
+                                    {t("securitySettingsDescription")}
+                                </SettingsSectionDescription>
+                            </SettingsSectionHeader>
+                            <SettingsSectionBody>
+                                <SettingsSectionForm>
+                                <SecurityFeaturesAlert />
                                     <FormField
                                         control={form.control}
                                         name="requireTwoFactor"
@@ -836,12 +825,12 @@ export default function GeneralPage() {
                                             );
                                         }}
                                     />
-                                </form>
-                            </Form>
-                        </SettingsSectionForm>
-                    </SettingsSectionBody>
-                </SettingsSection>
-            )}
+                                </SettingsSectionForm>
+                            </SettingsSectionBody>
+                        </SettingsSection>
+                    )}
+                </form>
+            </Form>
 
             {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
 

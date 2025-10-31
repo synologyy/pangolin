@@ -207,7 +207,7 @@
     "alwaysAllow": "Always Allow",
     "alwaysDeny": "Always Deny",
     "passToAuth": "Pass to Auth",
-    "orgSettingsDescription": "Configure your organization's general settings",
+    "orgSettingsDescription": "Configure your organization's settings",
     "orgGeneralSettings": "Organization Settings",
     "orgGeneralSettingsDescription": "Manage your organization details and configuration",
     "saveGeneralSettings": "Save General Settings",
@@ -2080,5 +2080,6 @@
     "supportSending": "Sending...",
     "supportSend": "Send",
     "supportMessageSent": "Message Sent!",
-    "supportWillContact": "We'll be in touch shortly!"
+    "supportWillContact": "We'll be in touch shortly!",
+    "selectLogRetention": "Select log retention"
 }
