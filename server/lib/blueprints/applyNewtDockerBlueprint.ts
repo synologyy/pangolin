@@ -29,6 +29,23 @@ export async function applyNewtDockerBlueprint(
 
         logger.debug(`Received Docker blueprint: ${JSON.stringify(blueprint)}`);
 
+        // make sure this is not an empty object
+        if (isEmptyObject(blueprint)) {
+            throw new Error("No valid blueprint data found in container labels");
+        }
+
+        if (isEmptyObject(blueprint["proxy-resources"])) {
+            throw new Error(
+                "No proxy-resources found in blueprint data from container labels"
+            );
+        }
+
+        if (isEmptyObject(blueprint["client-resources"])) {
+            throw new Error(
+                "No client-resources found in blueprint data from container labels"
+            );
+        }
+
         // Update the blueprint in the database
         await applyBlueprint({
             orgId: site.orgId,
@@ -42,7 +59,7 @@ export async function applyNewtDockerBlueprint(
             type: "newt/blueprint/results",
             data: {
                 success: false,
-                message: `Failed to update database from config: ${error}`
+                message: `Failed to apply blueprint from config: ${error}`
             }
         });
         return;
@@ -55,4 +72,11 @@ export async function applyNewtDockerBlueprint(
             message: "Config updated successfully"
         }
     });
+}
+
+function isEmptyObject(obj: any) {
+    if (obj === null || obj === undefined) {
+        return true;
+    }
+    return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
