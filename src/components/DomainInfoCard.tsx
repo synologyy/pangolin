@@ -43,16 +43,14 @@ export default function DomainInfoCard({
                     <InfoSection>
                         <InfoSectionTitle>{t("type")}</InfoSectionTitle>
                         <InfoSectionContent>
-                            <span>
-                                {getTypeDisplay(type ? type : "")}
-                            </span>
+                            <span>{getTypeDisplay(type ? type : "")}</span>
                         </InfoSectionContent>
                     </InfoSection>
                     <InfoSection>
                         <InfoSectionTitle>{t("status")}</InfoSectionTitle>
                         <InfoSectionContent>
                             {failed ? (
-                                <Badge variant="red" className="ml-2">
+                                <Badge variant="red">
                                     {t("failed", { fallback: "Failed" })}
                                 </Badge>
                             ) : verified ? (

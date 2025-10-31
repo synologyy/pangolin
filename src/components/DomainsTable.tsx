@@ -198,7 +198,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
                     );
                 } else if (failed) {
                     return (
-                        <Badge variant="destructive">
+                        <Badge variant="red">
                             {t("failed", { fallback: "Failed" })}
                         </Badge>
                     );
