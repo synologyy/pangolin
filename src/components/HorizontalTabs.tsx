@@ -7,7 +7,6 @@ import { cn } from "@app/lib/cn";
 import { Badge } from "@app/components/ui/badge";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useTranslations } from "next-intl";
-import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 
 export type HorizontalTabs = Array<{
     title: string;
@@ -30,7 +29,6 @@ export function HorizontalTabs({
     const pathname = usePathname();
     const params = useParams();
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
-    const subscription = useSubscriptionStatusContext();
     const t = useTranslations();
 
     function hydrateHref(href: string) {
