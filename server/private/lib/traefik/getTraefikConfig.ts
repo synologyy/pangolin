@@ -378,7 +378,7 @@ export async function getTraefikConfig(
                     (cert) => cert.queriedDomain === resource.fullDomain
                 );
                 if (!matchingCert) {
-                    logger.warn(
+                    logger.debug(
                         `No matching certificate found for domain: ${resource.fullDomain}`
                     );
                     continue;
