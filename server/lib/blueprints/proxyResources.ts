@@ -114,7 +114,12 @@ export async function updateProxyResources(
                     internalPort: internalPortToCreate,
                     path: targetData.path,
                     pathMatchType: targetData["path-match"],
-                    rewritePath: targetData.rewritePath || targetData["rewrite-path"] || (targetData["rewrite-match"] === "stripPrefix" ? "/" : undefined),
+                    rewritePath:
+                        targetData.rewritePath ||
+                        targetData["rewrite-path"] ||
+                        (targetData["rewrite-match"] === "stripPrefix"
+                            ? "/"
+                            : undefined),
                     rewritePathType: targetData["rewrite-match"],
                     priority: targetData.priority
                 })
@@ -139,10 +144,14 @@ export async function updateProxyResources(
                     hcHostname: healthcheckData?.hostname,
                     hcPort: healthcheckData?.port,
                     hcInterval: healthcheckData?.interval,
-                    hcUnhealthyInterval: healthcheckData?.unhealthyInterval,
+                    hcUnhealthyInterval:
+                        healthcheckData?.unhealthyInterval ||
+                        healthcheckData?.["unhealthy-interval"],
                     hcTimeout: healthcheckData?.timeout,
                     hcHeaders: hcHeaders,
-                    hcFollowRedirects: healthcheckData?.followRedirects,
+                    hcFollowRedirects:
+                        healthcheckData?.followRedirects ||
+                        healthcheckData?.["follow-redirects"],
                     hcMethod: healthcheckData?.method,
                     hcStatus: healthcheckData?.status,
                     hcHealth: "unknown"
@@ -392,7 +401,12 @@ export async function updateProxyResources(
                             enabled: targetData.enabled,
                             path: targetData.path,
                             pathMatchType: targetData["path-match"],
-                            rewritePath: targetData.rewritePath || targetData["rewrite-path"] || (targetData["rewrite-match"] === "stripPrefix" ? "/" : undefined),
+                            rewritePath:
+                                targetData.rewritePath ||
+                                targetData["rewrite-path"] ||
+                                (targetData["rewrite-match"] === "stripPrefix"
+                                    ? "/"
+                                    : undefined),
                             rewritePathType: targetData["rewrite-match"],
                             priority: targetData.priority
                         })
@@ -452,10 +466,13 @@ export async function updateProxyResources(
                             hcPort: healthcheckData?.port,
                             hcInterval: healthcheckData?.interval,
                             hcUnhealthyInterval:
-                                healthcheckData?.unhealthyInterval,
+                                healthcheckData?.unhealthyInterval ||
+                                healthcheckData?.["unhealthy-interval"],
                             hcTimeout: healthcheckData?.timeout,
                             hcHeaders: hcHeaders,
-                            hcFollowRedirects: healthcheckData?.followRedirects,
+                            hcFollowRedirects:
+                                healthcheckData?.followRedirects ||
+                                healthcheckData?.["follow-redirects"],
                             hcMethod: healthcheckData?.method,
                             hcStatus: healthcheckData?.status
                         })
@@ -535,7 +552,7 @@ export async function updateProxyResources(
                             .set({
                                 action: getRuleAction(rule.action),
                                 match: rule.match.toUpperCase(),
-                                value: rule.value.toUpperCase(),
+                                value: rule.value.toUpperCase()
                             })
                             .where(
                                 eq(resourceRules.ruleId, existingRule.ruleId)
