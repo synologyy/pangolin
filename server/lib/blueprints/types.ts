@@ -33,6 +33,7 @@ export const TargetSchema = z.object({
     "path-match": z.enum(["exact", "prefix", "regex"]).optional().nullable(),
     healthcheck: TargetHealthCheckSchema.optional(),
     rewritePath: z.string().optional(),
+    "rewrite-path": z.string().optional(),
     "rewrite-match": z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
     priority: z.number().int().min(1).max(1000).optional().default(100)
 });
