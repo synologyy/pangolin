@@ -114,7 +114,7 @@ export async function updateProxyResources(
                     internalPort: internalPortToCreate,
                     path: targetData.path,
                     pathMatchType: targetData["path-match"],
-                    rewritePath: targetData.rewritePath,
+                    rewritePath: targetData.rewritePath || targetData["rewrite-path"] || (targetData["rewrite-match"] === "stripPrefix" ? "/" : undefined),
                     rewritePathType: targetData["rewrite-match"],
                     priority: targetData.priority
                 })
@@ -392,7 +392,7 @@ export async function updateProxyResources(
                             enabled: targetData.enabled,
                             path: targetData.path,
                             pathMatchType: targetData["path-match"],
-                            rewritePath: targetData.rewritePath,
+                            rewritePath: targetData.rewritePath || targetData["rewrite-path"] || (targetData["rewrite-match"] === "stripPrefix" ? "/" : undefined),
                             rewritePathType: targetData["rewrite-match"],
                             priority: targetData.priority
                         })
