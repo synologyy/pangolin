@@ -53,7 +53,7 @@ export default async function Page(props: {
 
     if (loginPageDomain) {
         const redirectUrl = searchParams.redirect as string | undefined;
-        
+
         let url = `https://${loginPageDomain}/auth/org`;
         if (redirectUrl) {
             url += `?redirect=${redirectUrl}`;

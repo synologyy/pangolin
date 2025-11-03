@@ -50,14 +50,16 @@ export function pullEnv(): Env {
             hideSupporterKey:
                 process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
             usePangolinDns:
-                process.env.USE_PANGOLIN_DNS === "true"
-                    ? true
-                    : false
+                process.env.USE_PANGOLIN_DNS === "true" ? true : false
         },
 
         branding: {
             appName: process.env.BRANDING_APP_NAME as string,
             background_image_path: process.env.BACKGROUND_IMAGE_PATH as string,
+            hideAuthLayoutFooter:
+                process.env.BRANDING_HIDE_AUTH_LAYOUT_FOOTER === "true"
+                    ? true
+                    : false,
             logo: {
                 lightPath: process.env.BRANDING_LOGO_LIGHT_PATH as string,
                 darkPath: process.env.BRANDING_LOGO_DARK_PATH as string,

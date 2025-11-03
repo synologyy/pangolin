@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
-import { boolean } from "yargs";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -25,10 +24,9 @@ export const dnsRecords = sqliteTable("dnsRecords", {
 
     recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: text("baseDomain"),
-    value: text("value").notNull(), 
-    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    value: text("value").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false)
 });
-
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
@@ -142,9 +140,10 @@ export const resources = sqliteTable("resources", {
         onDelete: "set null"
     }),
     headers: text("headers"), // comma-separated list of headers to add to the request
-    proxyProtocol: integer("proxyProtocol", { mode: "boolean" }).notNull().default(false),
+    proxyProtocol: integer("proxyProtocol", { mode: "boolean" })
+        .notNull()
+        .default(false),
     proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
-
 });
 
 export const targets = sqliteTable("targets", {
@@ -802,6 +801,19 @@ export const requestAuditLog = sqliteTable(
     ]
 );
 
+export const deviceWebAuthCodes = sqliteTable("deviceWebAuthCodes", {
+    codeId: integer("codeId").primaryKey({ autoIncrement: true }),
+    code: text("code").notNull().unique(),
+    ip: text("ip"),
+    city: text("city"),
+    deviceName: text("deviceName"),
+    applicationName: text("applicationName").notNull(),
+    expiresAt: integer("expiresAt").notNull(),
+    createdAt: integer("createdAt").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    userId: text("userId").references(() => users.userId, { onDelete: "cascade" })
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -859,3 +871,4 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
+export type DeviceWebAuthCode = InferSelectModel<typeof deviceWebAuthCodes>;

@@ -1,5 +1,13 @@
 import ThemeSwitcher from "@app/components/ThemeSwitcher";
+import { Separator } from "@app/components/ui/separator";
+import { priv } from "@app/lib/api";
+import { verifySession } from "@app/lib/auth/verifySession";
+import { pullEnv } from "@app/lib/pullEnv";
+import { GetLicenseStatusResponse } from "@server/routers/license/types";
+import { AxiosResponse } from "axios";
 import { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { cache } from "react";
 
 export const metadata: Metadata = {
     title: `Auth - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -11,6 +19,20 @@ type AuthLayoutProps = {
 };
 
 export default async function AuthLayout({ children }: AuthLayoutProps) {
+    const getUser = cache(verifySession);
+    const env = pullEnv();
+    const user = await getUser();
+    const t = await getTranslations();
+    const hideFooter = env.branding.hideAuthLayoutFooter || false;
+
+    const licenseStatusRes = await cache(
+        async () =>
+            await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
+                "/license/status"
+            )
+    )();
+    const licenseStatus = licenseStatusRes.data.data;
+
     return (
         <div className="h-full flex flex-col">
             <div className="flex justify-end items-center p-3 space-x-2">
@@ -20,6 +42,91 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
             <div className="flex-1 flex items-center justify-center">
                 <div className="w-full max-w-md p-3">{children}</div>
             </div>
+
+            {!(
+                hideFooter ||
+                (licenseStatus.isHostLicensed && licenseStatus.isLicenseValid)
+            ) && (
+                <footer className="hidden md:block w-full mt-12 py-3 mb-6 px-4">
+                    <div className="container mx-auto flex flex-wrap justify-center items-center h-3 space-x-4 text-xs text-neutral-400 dark:text-neutral-600">
+                        <a
+                            href="https://pangolin.net"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Built by Fossorial"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>
+                                © {new Date().getFullYear()} Fossorial, Inc.
+                            </span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://pangolin.net"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Built by Fossorial"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>
+                                {process.env.BRANDING_APP_NAME || "Pangolin"}
+                            </span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://pangolin.net/terms-of-service.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="GitHub"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>{t("terms")}</span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://pangolin.net/privacy-policy.html"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="GitHub"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>{t("privacy")}</span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://github.com/fosrl/pangolin/blob/main/SECURITY.md"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="GitHub"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>{t("security")}</span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://docs.pangolin.net"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Built by Fossorial"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>{t("docs")}</span>
+                        </a>
+                        <Separator orientation="vertical" />
+                        <span>{t("communityEdition")}</span>
+                        <Separator orientation="vertical" />
+                        <a
+                            href="https://github.com/fosrl/pangolin"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="GitHub"
+                            className="flex items-center space-x-2 whitespace-nowrap"
+                        >
+                            <span>{t("github")}</span>
+                        </a>
+                    </div>
+                </footer>
+            )}
         </div>
     );
 }

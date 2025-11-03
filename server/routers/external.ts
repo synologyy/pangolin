@@ -1238,3 +1238,51 @@ authRouter.delete(
     }),
     auth.deleteSecurityKey
 );
+
+authRouter.post(
+    "/device-web-auth/start",
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 30, // Allow 30 device auth code requests per 15 minutes per IP
+        keyGenerator: (req) =>
+            `deviceWebAuthStart:${ipKeyGenerator(req.ip || "")}`,
+        handler: (req, res, next) => {
+            const message = `You can only request a device auth code ${30} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.startDeviceWebAuth
+);
+
+authRouter.get(
+    "/device-web-auth/poll/:code",
+    rateLimit({
+        windowMs: 60 * 1000, // 1 minute
+        max: 60, // Allow 60 polling requests per minute per IP (poll every second)
+        keyGenerator: (req) =>
+            `deviceWebAuthPoll:${ipKeyGenerator(req.ip || "")}:${req.params.code}`,
+        handler: (req, res, next) => {
+            const message = `You can only poll a device auth code ${60} times per minute. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.pollDeviceWebAuth
+);
+
+authenticated.post(
+    "/device-web-auth/verify",
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 50, // Allow 50 verification attempts per 15 minutes per user
+        keyGenerator: (req) =>
+            `deviceWebAuthVerify:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
+        handler: (req, res, next) => {
+            const message = `You can only verify a device auth code ${50} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.verifyDeviceWebAuth
+);
