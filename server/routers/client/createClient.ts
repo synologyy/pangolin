@@ -182,14 +182,13 @@ export async function createClient(
             const randomExitNode =
                 exitNodesList[Math.floor(Math.random() * exitNodesList.length)];
 
-            const adminRole = await trx
+            const [adminRole] = await trx
                 .select()
                 .from(roles)
                 .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
                 .limit(1);
 
-            if (adminRole.length === 0) {
-                trx.rollback();
+            if (!adminRole) {
                 return next(
                     createHttpError(HttpCode.NOT_FOUND, `Admin role not found`)
                 );
@@ -207,12 +206,12 @@ export async function createClient(
                 .returning();
 
             await trx.insert(roleClients).values({
-                roleId: adminRole[0].roleId,
+                roleId: adminRole.roleId,
                 clientId: newClient.clientId
             });
 
-            if (req.user && req.userOrgRoleId != adminRole[0].roleId) {
-                // make sure the user can access the site
+            if (req.user && req.userOrgRoleId != adminRole.roleId) {
+                // make sure the user can access the client
                 trx.insert(userClients).values({
                     userId: req.user?.userId!,
                     clientId: newClient.clientId

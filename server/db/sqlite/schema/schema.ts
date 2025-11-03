@@ -25,10 +25,9 @@ export const dnsRecords = sqliteTable("dnsRecords", {
 
     recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: text("baseDomain"),
-    value: text("value").notNull(), 
-    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    value: text("value").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false)
 });
-
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
@@ -142,9 +141,10 @@ export const resources = sqliteTable("resources", {
         onDelete: "set null"
     }),
     headers: text("headers"), // comma-separated list of headers to add to the request
-    proxyProtocol: integer("proxyProtocol", { mode: "boolean" }).notNull().default(false),
+    proxyProtocol: integer("proxyProtocol", { mode: "boolean" })
+        .notNull()
+        .default(false),
     proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
-
 });
 
 export const targets = sqliteTable("targets", {
@@ -315,6 +315,10 @@ export const clients = sqliteTable("clients", {
     exitNodeId: integer("exitNode").references(() => exitNodes.exitNodeId, {
         onDelete: "set null"
     }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
+        onDelete: "cascade"
+    }),
     name: text("name").notNull(),
     pubKey: text("pubKey"),
     subnet: text("subnet").notNull(),
@@ -347,6 +351,10 @@ export const olms = sqliteTable("olms", {
     dateCreated: text("dateCreated").notNull(),
     version: text("version"),
     clientId: integer("clientId").references(() => clients.clientId, {
+        // we will switch this depending on the current org it wants to connect to
+        onDelete: "set null"
+    }),
+    userId: text("userId").references(() => users.userId, { // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     })
 });

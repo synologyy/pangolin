@@ -197,7 +197,7 @@ export async function listExitNodes(orgId: string, filterOnline = false, noCloud
 
     //                 // set the item in the database if it is offline
     //                 if (isActuallyOnline != node.online) {
-    //                     await db
+    //                     await trx
     //                         .update(exitNodes)
     //                         .set({ online: isActuallyOnline })
     //                         .where(eq(exitNodes.exitNodeId, node.exitNodeId));

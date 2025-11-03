@@ -607,6 +607,10 @@ export const clients = pgTable("clients", {
     exitNodeId: integer("exitNode").references(() => exitNodes.exitNodeId, {
         onDelete: "set null"
     }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
+        onDelete: "cascade"
+    }),
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
     subnet: varchar("subnet").notNull(),
@@ -638,6 +642,11 @@ export const olms = pgTable("olms", {
     dateCreated: varchar("dateCreated").notNull(),
     version: text("version"),
     clientId: integer("clientId").references(() => clients.clientId, {
+        // we will switch this depending on the current org it wants to connect to
+        onDelete: "set null"
+    }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     })
 });
