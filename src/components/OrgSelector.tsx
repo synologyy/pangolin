@@ -54,7 +54,6 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                     role="combobox"
                     aria-expanded={open}
                     className={cn(
-                        "shadow-2xs",
                         isCollapsed ? "w-8 h-8" : "w-full h-12 px-3 py-4"
                     )}
                 >

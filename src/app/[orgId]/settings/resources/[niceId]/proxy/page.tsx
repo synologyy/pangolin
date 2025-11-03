@@ -1052,7 +1052,7 @@ export default function ReverseProxyTargets(props: {
 
                 return (
                     <div className="flex items-center w-full">
-                        <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input shadow-2xs rounded-md">
+                        <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input rounded-md">
                             {selectedSite &&
                                 selectedSite.type === "newt" &&
                                 (() => {
