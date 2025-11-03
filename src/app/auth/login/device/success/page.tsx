@@ -31,11 +31,11 @@ export default function DeviceAuthSuccessPage() {
             </CardHeader>
             <CardContent className="p-6">
                 <div className="flex flex-col items-center space-y-4">
-                    <CheckCircle2 className="h-16 w-16 text-green-600" />
+                    <CheckCircle2 className="h-12 w-12 text-green-500" />
                     <div className="space-y-2">
-                        <h2 className="text-2xl font-bold text-center">
+                        <h3 className="text-xl font-bold text-center">
                             {t("deviceConnected")}
-                        </h2>
+                        </h3>
                         <p className="text-center text-sm text-muted-foreground">
                             {t("deviceAuthorizedMessage")}
                         </p>

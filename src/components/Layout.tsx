@@ -72,7 +72,7 @@ export async function Layout({
                 <main className="flex-1 overflow-y-auto p-3 md:p-6 w-full">
                     <div className={cn(
                         "container mx-auto max-w-12xl mb-12",
-                        showHeader && "md:pt-20" // Add top padding only on desktop to account for fixed header
+                        showHeader && "md:pt-16" // Add top padding only on desktop to account for fixed header
                     )}>
                         {children}
                     </div>
