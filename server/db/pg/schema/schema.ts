@@ -611,6 +611,7 @@ export const clients = pgTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
+    olmId: text("olmId"), // to lock it to a specific olm optionally 
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
     subnet: varchar("subnet").notNull(),
@@ -641,6 +642,7 @@ export const olms = pgTable("olms", {
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
     version: text("version"),
+    name: varchar("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
         // we will switch this depending on the current org it wants to connect to
         onDelete: "set null"

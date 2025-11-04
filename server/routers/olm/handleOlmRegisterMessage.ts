@@ -30,7 +30,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId, deviceName } = message.data;
+    const { publicKey, relay, olmVersion, orgId } = message.data;
     let client: Client;
 
     if (orgId) {
@@ -40,7 +40,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         }
 
         try {
-            client = await getOrCreateOrgClient(orgId, olm.userId, deviceName);
+            client = await getOrCreateOrgClient(orgId, olm.userId, olm.olmId, olm.name || "User Device");
         } catch (err) {
             logger.error(
                 `Error switching olm client ${olm.olmId} to org ${orgId}: ${err}`
@@ -293,7 +293,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 async function getOrCreateOrgClient(
     orgId: string,
     userId: string,
-    deviceName?: string,
+    olmId: string,
+    name: string,
     trx: Transaction | typeof db = db
 ): Promise<Client> {
     let client: Client;
@@ -328,7 +329,13 @@ async function getOrCreateOrgClient(
     const [existingClient] = await trx
         .select()
         .from(clients)
-        .where(and(eq(clients.orgId, orgId), eq(clients.userId, userId)))
+        .where(
+            and(
+                eq(clients.orgId, orgId),
+                eq(clients.userId, userId),
+                eq(clients.olmId, olmId)
+            )
+        ) // checking the olmid here because we want to create a new client PER OLM PER ORG
         .limit(1);
 
     if (!existingClient) {
@@ -364,10 +371,11 @@ async function getOrCreateOrgClient(
             .values({
                 exitNodeId: randomExitNode.exitNodeId,
                 orgId,
-                name: deviceName || "User Device",
+                name,
                 subnet: updatedSubnet,
                 type: "olm",
-                userId: userId
+                userId: userId,
+                olmId: olmId // to lock this client to the olm even as the olm moves between clients in different orgs
             })
             .returning();
 

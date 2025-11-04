@@ -201,7 +201,8 @@ export async function createClient(
                     orgId,
                     name,
                     subnet: updatedSubnet,
-                    type
+                    type,
+                    olmId // this is to lock it to a specific olm even if the olm moves across clients
                 })
                 .returning();
 
@@ -227,15 +228,6 @@ export async function createClient(
                     }))
                 );
             }
-
-            const secretHash = await hashPassword(secret);
-
-            await trx.insert(olms).values({
-                olmId,
-                secretHash,
-                clientId: newClient.clientId,
-                dateCreated: moment().toISOString()
-            });
 
             return response<CreateClientResponse>(res, {
                 data: newClient,

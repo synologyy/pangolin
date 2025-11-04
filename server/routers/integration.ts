@@ -11,6 +11,7 @@ import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
 import * as siteResource from "./siteResource";
+import * as olm from "./olm";
 import {
     verifyApiKey,
     verifyApiKeyOrgAccess,
@@ -555,6 +556,12 @@ authenticated.delete(
 //     verifyApiKeyHasAction(ActionsEnum.createNewt),
 //     newt.createNewt
 // );
+
+authenticated.put(
+    "/olm",
+    verifyApiKeyHasAction(ActionsEnum.createOlm),
+    olm.createOlm
+);
 
 authenticated.get(
     `/org/:orgId/api-keys`,

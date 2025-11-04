@@ -16,6 +16,8 @@ import * as idp from "./idp";
 import * as blueprints from "./blueprints";
 import * as apiKeys from "./apiKeys";
 import * as logs from "./auditLogs";
+import * as newt from "./newt";
+import * as olm from "./olm";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
@@ -40,8 +42,6 @@ import {
     verifySiteResourceAccess
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
-import { createNewt, getNewtToken } from "./newt";
-import { getOlmToken } from "./olm";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import { build } from "@server/build";
@@ -727,6 +727,12 @@ authenticated.delete(
 // );
 
 authenticated.put(
+    "/olm",
+    verifyUserHasAction(ActionsEnum.createOlm),
+    olm.createOlm
+);
+
+authenticated.put(
     "/idp/oidc",
     verifyUserIsServerAdmin,
     // verifyUserHasAction(ActionsEnum.createIdp),
@@ -978,7 +984,7 @@ authRouter.post(
         },
         store: createStore()
     }),
-    getNewtToken
+    newt.getNewtToken
 );
 authRouter.post(
     "/olm/get-token",
@@ -993,7 +999,7 @@ authRouter.post(
         },
         store: createStore()
     }),
-    getOlmToken
+    olm.getOlmToken
 );
 
 authRouter.post(

@@ -319,8 +319,10 @@ export const clients = sqliteTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
+    
     name: text("name").notNull(),
     pubKey: text("pubKey"),
+    olmId: text("olmId"), // to lock it to a specific olm optionally 
     subnet: text("subnet").notNull(),
     megabytesIn: integer("bytesIn"),
     megabytesOut: integer("bytesOut"),
@@ -350,6 +352,7 @@ export const olms = sqliteTable("olms", {
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
     version: text("version"),
+    name: text("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
         // we will switch this depending on the current org it wants to connect to
         onDelete: "set null"
