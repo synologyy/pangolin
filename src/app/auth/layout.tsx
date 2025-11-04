@@ -1,8 +1,8 @@
 import ThemeSwitcher from "@app/components/ThemeSwitcher";
 import { Separator } from "@app/components/ui/separator";
 import { priv } from "@app/lib/api";
-import { verifySession } from "@app/lib/auth/verifySession";
 import { pullEnv } from "@app/lib/pullEnv";
+import { build } from "@server/build";
 import { GetLicenseStatusResponse } from "@server/routers/license/types";
 import { AxiosResponse } from "axios";
 import { Metadata } from "next";
@@ -19,19 +19,25 @@ type AuthLayoutProps = {
 };
 
 export default async function AuthLayout({ children }: AuthLayoutProps) {
-    const getUser = cache(verifySession);
     const env = pullEnv();
-    const user = await getUser();
     const t = await getTranslations();
-    const hideFooter = env.branding.hideAuthLayoutFooter || false;
+    let hideFooter = false;
 
-    const licenseStatusRes = await cache(
-        async () =>
-            await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
-                "/license/status"
-            )
-    )();
-    const licenseStatus = licenseStatusRes.data.data;
+    if (build == "enterprise") {
+        const licenseStatusRes = await cache(
+            async () =>
+                await priv.get<AxiosResponse<GetLicenseStatusResponse>>(
+                    "/license/status"
+                )
+        )();
+        if (
+            env.branding.hideAuthLayoutFooter &&
+            licenseStatusRes.data.data.isHostLicensed &&
+            licenseStatusRes.data.data.isLicenseValid
+        ) {
+            hideFooter = true;
+        }
+    }
 
     return (
         <div className="h-full flex flex-col">
@@ -43,10 +49,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                 <div className="w-full max-w-md p-3">{children}</div>
             </div>
 
-            {!(
-                hideFooter ||
-                (licenseStatus.isHostLicensed && licenseStatus.isLicenseValid)
-            ) && (
+            {!hideFooter && (
                 <footer className="hidden md:block w-full mt-12 py-3 mb-6 px-4">
                     <div className="container mx-auto flex flex-wrap justify-center items-center h-3 space-x-4 text-xs text-neutral-400 dark:text-neutral-600">
                         <a
