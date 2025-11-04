@@ -22,6 +22,10 @@ export default async function OrgPage(props: OrgPageProps) {
     const orgId = params.orgId;
     const env = pullEnv();
 
+    if (!orgId) {
+        redirect(`/`);
+    }
+
     const getUser = cache(verifySession);
     const user = await getUser();
 

@@ -1,7 +1,6 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
-import { boolean } from "yargs";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -813,6 +812,19 @@ export const requestAuditLog = sqliteTable(
     ]
 );
 
+export const deviceWebAuthCodes = sqliteTable("deviceWebAuthCodes", {
+    codeId: integer("codeId").primaryKey({ autoIncrement: true }),
+    code: text("code").notNull().unique(),
+    ip: text("ip"),
+    city: text("city"),
+    deviceName: text("deviceName"),
+    applicationName: text("applicationName").notNull(),
+    expiresAt: integer("expiresAt").notNull(),
+    createdAt: integer("createdAt").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    userId: text("userId").references(() => users.userId, { onDelete: "cascade" })
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -870,3 +882,4 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
+export type DeviceWebAuthCode = InferSelectModel<typeof deviceWebAuthCodes>;

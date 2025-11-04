@@ -36,17 +36,18 @@ export default function DashboardLoginForm({
         return t("loginStart");
     }
 
-    const logoWidth = isUnlocked() ? env.branding.logo?.authPage?.width || 175 : 175;
-    const logoHeight = isUnlocked() ? env.branding.logo?.authPage?.height || 58 : 58;
+    const logoWidth = isUnlocked()
+        ? env.branding.logo?.authPage?.width || 175
+        : 175;
+    const logoHeight = isUnlocked()
+        ? env.branding.logo?.authPage?.height || 58
+        : 58;
 
     return (
-        <Card className="shadow-md w-full max-w-md">
+        <Card className="w-full max-w-md">
             <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
-                    <BrandingLogo
-                        height={logoHeight}
-                        width={logoWidth}
-                    />
+                    <BrandingLogo height={logoHeight} width={logoWidth} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
                     <p className="text-muted-foreground">{getSubtitle()}</p>
@@ -56,12 +57,12 @@ export default function DashboardLoginForm({
                 <LoginForm
                     redirect={redirect}
                     idps={idps}
-                    onLogin={() => {
-                        if (redirect) {
-                            const safe = cleanRedirect(redirect);
-                            router.push(safe);
+                    onLogin={(redirectUrl) => {
+                        if (redirectUrl) {
+                            const safe = cleanRedirect(redirectUrl);
+                            router.replace(safe);
                         } else {
-                            router.push("/");
+                            router.replace("/");
                         }
                     }}
                 />

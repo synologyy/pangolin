@@ -58,7 +58,7 @@ export type LoginFormIDP = {
 
 type LoginFormProps = {
     redirect?: string;
-    onLogin?: () => void | Promise<void>;
+    onLogin?: (redirectUrl?: string) => void | Promise<void>;
     idps?: LoginFormIDP[];
     orgId?: string;
 };
@@ -175,7 +175,7 @@ export default function LoginForm({
 
                 if (verifyResponse.success) {
                     if (onLogin) {
-                        await onLogin();
+                        await onLogin(redirect);
                     }
                 }
             } catch (error: any) {
@@ -263,7 +263,7 @@ export default function LoginForm({
             // Handle case where data is null (e.g., already logged in)
             if (!data) {
                 if (onLogin) {
-                    await onLogin();
+                    await onLogin(redirect);
                 }
                 return;
             }
@@ -312,7 +312,7 @@ export default function LoginForm({
             }
 
             if (onLogin) {
-                await onLogin();
+                await onLogin(redirect);
             }
         } catch (e: any) {
             console.error(e);

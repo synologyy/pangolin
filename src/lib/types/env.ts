@@ -33,6 +33,7 @@ export type Env = {
     branding: {
         appName?: string;
         background_image_path?: string;
+        hideAuthLayoutFooter?: boolean;
         logo?: {
             lightPath?: string;
             darkPath?: string;

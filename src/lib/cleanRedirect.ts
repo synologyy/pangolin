@@ -6,7 +6,8 @@ type PatternConfig = {
 const patterns: PatternConfig[] = [
     { name: "Invite Token", regex: /^\/invite\?token=[a-zA-Z0-9-]+$/ },
     { name: "Setup", regex: /^\/setup$/ },
-    { name: "Resource Auth Portal", regex: /^\/auth\/resource\/\d+$/ }
+    { name: "Resource Auth Portal", regex: /^\/auth\/resource\/\d+$/ },
+    { name: "Device Login", regex: /^\/auth\/login\/device$/ }
 ];
 
 export function cleanRedirect(input: string, fallback?: string): string {
