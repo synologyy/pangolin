@@ -20,11 +20,12 @@ import logger from "@server/logger";
 import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import moment from "moment";
-import { hashPassword } from "@server/auth/password";
+import { hashPassword, verifyPassword } from "@server/auth/password";
 import { isValidCIDR, isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import { OpenAPITags, registry } from "@server/openApi";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
+import { generateId } from "@server/auth/sessions/app";
 
 const createClientParamsSchema = z
     .object({
@@ -37,7 +38,7 @@ const createClientSchema = z
         name: z.string().min(1).max(255),
         siteIds: z.array(z.number().int().positive()),
         olmId: z.string(),
-        secret: z.string(),
+        secret: z.string().optional(),
         subnet: z.string(),
         type: z.enum(["olm"])
     })
@@ -176,6 +177,28 @@ export async function createClient(
             );
         }
 
+        // check if the olmId already exists
+        const [existingOlm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.olmId, olmId))
+            .limit(1);
+
+        // TODO: HOW DO WE WANT TO AUTH THAT YOU CAN ADOPT AN EXISTING OLM CROSS ORG OTHER THAN MAKING SURE THE SECRET IS CORRECT
+        if (existingOlm && secret) {
+            // verify the secret
+            const validSecret = await verifyPassword(
+                secret,
+                existingOlm.secretHash
+            );
+
+            if (!validSecret) {
+                return next(
+                    createHttpError(HttpCode.BAD_REQUEST, "Secret is incorrect on existing olm")
+                );
+            }
+        }
+
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
             const exitNodesList = await listExitNodes(orgId);
@@ -229,7 +252,12 @@ export async function createClient(
                 );
             }
 
-            const secretHash = await hashPassword(secret);
+            let secretToUse = secret;
+            if (!secretToUse) {
+                secretToUse = generateId(48);
+            }
+
+            const secretHash = await hashPassword(secretToUse);
 
             await trx.insert(olms).values({
                 olmId,

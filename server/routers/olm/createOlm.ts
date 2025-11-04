@@ -25,10 +25,14 @@ export type CreateOlmResponse = {
 
 const createOlmSchema = z
     .object({
-        userId: z.string().optional(),
         name: z.string().min(1).max(255)
     })
     .strict();
+
+const createOlmParamsSchema = z
+    .object({
+        userId: z.string().optional()
+    });
 
 export async function createOlm(
     req: Request,
@@ -46,12 +50,26 @@ export async function createOlm(
             );
         }
 
-        const { userId, name } = parsedBody.data;
+        const { name } = parsedBody.data;
+
+        const parsedParams = createOlmParamsSchema.safeParse(req.params);
+        if (!parsedParams.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedParams.error).toString()
+                )
+            );
+        }
+
+        const { userId } = parsedParams.data;
         let userIdFinal = userId;
 
         if (req.user) { // overwrite the user with the one calling because we want to assign the olm to the user creating it
             userIdFinal = req.user.userId;
-        } else if (!userIdFinal) {
+        }
+        
+        if (!userIdFinal) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
@@ -67,7 +85,7 @@ export async function createOlm(
 
         await db.insert(olms).values({
             olmId: olmId,
-            userId: userId,
+            userId: userIdFinal,
             name,
             secretHash,
             dateCreated: moment().toISOString()

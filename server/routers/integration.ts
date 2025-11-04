@@ -558,7 +558,8 @@ authenticated.delete(
 // );
 
 authenticated.put(
-    "/olm",
+    "/user/:userId/olm",
+    verifyApiKeyUserAccess,
     verifyApiKeyHasAction(ActionsEnum.createOlm),
     olm.createOlm
 );

@@ -728,7 +728,6 @@ authenticated.delete(
 
 authenticated.put(
     "/olm",
-    verifyUserHasAction(ActionsEnum.createOlm),
     olm.createOlm
 );
 
