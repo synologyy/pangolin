@@ -12,7 +12,7 @@ import {
 } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
 import { clients, clientSites, exitNodes, Olm, olms, sites } from "@server/db";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
@@ -40,7 +40,12 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         }
 
         try {
-            client = await getOrCreateOrgClient(orgId, olm.userId, olm.olmId, olm.name || "User Device");
+            client = await getOrCreateOrgClient(
+                orgId,
+                olm.userId,
+                olm.olmId,
+                olm.name || "User Device"
+            );
         } catch (err) {
             logger.error(
                 `Error switching olm client ${olm.olmId} to org ${orgId}: ${err}`
@@ -292,7 +297,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
 async function getOrCreateOrgClient(
     orgId: string,
-    userId: string,
+    userId: string | null,
     olmId: string,
     name: string,
     trx: Transaction | typeof db = db
@@ -314,17 +319,6 @@ async function getOrCreateOrgClient(
         throw new Error("Org has no subnet defined");
     }
 
-    // Verify that the user belongs to the org
-    const [userOrg] = await trx
-        .select()
-        .from(userOrgs)
-        .where(and(eq(userOrgs.orgId, orgId), eq(userOrgs.userId, userId)))
-        .limit(1);
-
-    if (!userOrg) {
-        throw new Error("User does not belong to org");
-    }
-
     // check if the user has a client in the org and if not then create a client for them
     const [existingClient] = await trx
         .select()
@@ -332,7 +326,7 @@ async function getOrCreateOrgClient(
         .where(
             and(
                 eq(clients.orgId, orgId),
-                eq(clients.userId, userId),
+                userId ? eq(clients.userId, userId) : isNull(clients.userId), // we dont check the user id if it is null because the olm is not tied to a user?
                 eq(clients.olmId, olmId)
             )
         ) // checking the olmid here because we want to create a new client PER OLM PER ORG
@@ -342,6 +336,21 @@ async function getOrCreateOrgClient(
         logger.debug(
             `Client does not exist in org ${orgId}, creating new client for user ${userId}`
         );
+
+        if (!userId) {
+            throw new Error("User ID is required to create client in org");
+        }
+
+        // Verify that the user belongs to the org
+        const [userOrg] = await trx
+            .select()
+            .from(userOrgs)
+            .where(and(eq(userOrgs.orgId, orgId), eq(userOrgs.userId, userId)))
+            .limit(1);
+
+        if (!userOrg) {
+            throw new Error("User does not belong to org");
+        }
 
         // TODO: more intelligent way to pick the exit node
         const exitNodesList = await listExitNodes(orgId);

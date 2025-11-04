@@ -229,6 +229,16 @@ export async function createClient(
                 );
             }
 
+            const secretHash = await hashPassword(secret);
+
+            await trx.insert(olms).values({
+                olmId,
+                secretHash,
+                name,
+                clientId: newClient.clientId,
+                dateCreated: moment().toISOString()
+            });
+
             return response<CreateClientResponse>(res, {
                 data: newClient,
                 success: true,
