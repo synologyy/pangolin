@@ -7,11 +7,20 @@ import logger from "@server/logger";
 import { response } from "@server/lib/response";
 import { db, deviceWebAuthCodes } from "@server/db";
 import { eq, and, gt } from "drizzle-orm";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 const bodySchema = z.object({
     code: z.string().min(1, "Code is required"),
     verify: z.boolean().optional().default(false) // If false, just check and return metadata
 }).strict();
+
+// Helper function to hash device code before querying database
+function hashDeviceCode(code: string): string {
+    return encodeHexLowerCase(
+        sha256(new TextEncoder().encode(code))
+    );
+}
 
 export type VerifyDeviceWebAuthBody = z.infer<typeof bodySchema>;
 
@@ -49,13 +58,16 @@ export async function verifyDeviceWebAuth(
 
         logger.debug("Verifying device web auth code:", { code });
 
+        // Hash the code before querying
+        const hashedCode = hashDeviceCode(code);
+
         // Find the code in the database that is not expired and not already verified
         const [deviceCode] = await db
             .select()
             .from(deviceWebAuthCodes)
             .where(
                 and(
-                    eq(deviceWebAuthCodes.code, code),
+                    eq(deviceWebAuthCodes.code, hashedCode),
                     gt(deviceWebAuthCodes.expiresAt, now),
                     eq(deviceWebAuthCodes.verified, false)
                 )

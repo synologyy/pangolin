@@ -11,12 +11,21 @@ import {
     createSession,
     generateSessionToken
 } from "@server/auth/sessions/app";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 const paramsSchema = z.object({
     code: z.string().min(1, "Code is required")
 });
 
 export type PollDeviceWebAuthParams = z.infer<typeof paramsSchema>;
+
+// Helper function to hash device code before querying database
+function hashDeviceCode(code: string): string {
+    return encodeHexLowerCase(
+        sha256(new TextEncoder().encode(code))
+    );
+}
 
 export type PollDeviceWebAuthResponse = {
     verified: boolean;
@@ -68,11 +77,14 @@ export async function pollDeviceWebAuth(
         const now = Date.now();
         const requestIp = extractIpFromRequest(req);
 
+        // Hash the code before querying
+        const hashedCode = hashDeviceCode(code);
+
         // Find the code in the database
         const [deviceCode] = await db
             .select()
             .from(deviceWebAuthCodes)
-            .where(eq(deviceWebAuthCodes.code, code))
+            .where(eq(deviceWebAuthCodes.code, hashedCode))
             .limit(1);
 
         if (!deviceCode) {

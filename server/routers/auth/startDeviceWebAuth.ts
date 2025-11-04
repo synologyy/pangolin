@@ -10,6 +10,8 @@ import { alphabet, generateRandomString } from "oslo/crypto";
 import { createDate } from "oslo";
 import { TimeSpan } from "oslo";
 import { maxmindLookup } from "@server/db/maxmind";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 const bodySchema = z.object({
     deviceName: z.string().optional(),
@@ -28,6 +30,13 @@ function generateDeviceCode(): string {
     const part1 = generateRandomString(4, alphabet("A-Z", "0-9"));
     const part2 = generateRandomString(4, alphabet("A-Z", "0-9"));
     return `${part1}-${part2}`;
+}
+
+// Helper function to hash device code before storing in database
+function hashDeviceCode(code: string): string {
+    return encodeHexLowerCase(
+        sha256(new TextEncoder().encode(code))
+    );
 }
 
 // Helper function to extract IP from request
@@ -99,6 +108,9 @@ export async function startDeviceWebAuth(
         // Generate device code
         const code = generateDeviceCode();
 
+        // Hash the code before storing in database
+        const hashedCode = hashDeviceCode(code);
+
         // Extract IP from request
         const ip = extractIpFromRequest(req);
 
@@ -108,9 +120,9 @@ export async function startDeviceWebAuth(
         // Set expiration to 5 minutes from now
         const expiresAt = createDate(new TimeSpan(5, "m")).getTime();
 
-        // Insert into database
+        // Insert into database (store hashed code)
         await db.insert(deviceWebAuthCodes).values({
-            code,
+            code: hashedCode,
             ip: ip || null,
             city: city || null,
             deviceName: deviceName || null,
