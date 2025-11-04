@@ -156,7 +156,7 @@ export default async function OrgAuthPage(props: {
                     </Link>
                 </span>
             </div>
-            <Card className="shadow-md w-full max-w-md">
+            <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle>{t("orgAuthSignInTitle")}</CardTitle>
                     <CardDescription>

@@ -46,7 +46,7 @@ export const tagVariants = cva(
                 capitalize: "capitalize"
             },
             interaction: {
-                clickable: "cursor-pointer hover:shadow-md",
+                clickable: "cursor-pointer hover:shadow-sm",
                 nonClickable: "cursor-default"
             },
             animation: {
