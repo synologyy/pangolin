@@ -76,35 +76,37 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                             </span>
                         </a>
                         <Separator orientation="vertical" />
-                        <a
-                            href="https://pangolin.net/terms-of-service.html"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="GitHub"
-                            className="flex items-center space-x-2 whitespace-nowrap"
-                        >
-                            <span>{t("terms")}</span>
-                        </a>
-                        <Separator orientation="vertical" />
-                        <a
-                            href="https://pangolin.net/privacy-policy.html"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="GitHub"
-                            className="flex items-center space-x-2 whitespace-nowrap"
-                        >
-                            <span>{t("privacy")}</span>
-                        </a>
-                        <Separator orientation="vertical" />
-                        <a
-                            href="https://github.com/fosrl/pangolin/blob/main/SECURITY.md"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="GitHub"
-                            className="flex items-center space-x-2 whitespace-nowrap"
-                        >
-                            <span>{t("security")}</span>
-                        </a>
+                        <span>
+                            {build === "oss"
+                                ? t("communityEdition")
+                                : build === "enterprise"
+                                  ? t("enterpriseEdition")
+                                  : t("pangolinCloud")}
+                        </span>
+                        {build === "saas" && (
+                            <>
+                                <Separator orientation="vertical" />
+                                <a
+                                    href="https://pangolin.net/terms-of-service.html"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="GitHub"
+                                    className="flex items-center space-x-2 whitespace-nowrap"
+                                >
+                                    <span>{t("terms")}</span>
+                                </a>
+                                <Separator orientation="vertical" />
+                                <a
+                                    href="https://pangolin.net/privacy-policy.html"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="GitHub"
+                                    className="flex items-center space-x-2 whitespace-nowrap"
+                                >
+                                    <span>{t("privacy")}</span>
+                                </a>
+                            </>
+                        )}
                         <Separator orientation="vertical" />
                         <a
                             href="https://docs.pangolin.net"
@@ -115,8 +117,6 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                         >
                             <span>{t("docs")}</span>
                         </a>
-                        <Separator orientation="vertical" />
-                        <span>{t("communityEdition")}</span>
                         <Separator orientation="vertical" />
                         <a
                             href="https://github.com/fosrl/pangolin"

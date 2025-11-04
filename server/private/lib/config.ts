@@ -45,11 +45,10 @@ export class PrivateConfig {
 
         this.rawPrivateConfig = parsedPrivateConfig;
 
-        if (this.rawPrivateConfig.branding?.hide_auth_layout_footer) {
-            process.env.HIDE_AUTH_LAYOUT_FOOTER = JSON.stringify(
-                this.rawPrivateConfig.branding?.hide_auth_layout_footer
-            );
-        }
+        process.env.BRANDING_HIDE_AUTH_LAYOUT_FOOTER =
+            this.rawPrivateConfig.branding?.hide_auth_layout_footer === true
+                ? "true"
+                : "false";
 
         if (this.rawPrivateConfig.branding?.colors) {
             process.env.BRANDING_COLORS = JSON.stringify(

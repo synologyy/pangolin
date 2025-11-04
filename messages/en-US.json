@@ -2102,5 +2102,6 @@
     "deviceOrganizationsAccess": "Access to all organizations your account has access to",
     "deviceAuthorize": "Authorize {applicationName}",
     "deviceConnected": "Device Connected!",
-    "deviceAuthorizedMessage": "Your device is authorized to access your account."
+    "deviceAuthorizedMessage": "Your device is authorized to access your account.",
+    "pangolinCloud": "Pangolin Cloud"
 }

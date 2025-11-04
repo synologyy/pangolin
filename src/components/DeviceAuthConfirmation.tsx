@@ -86,7 +86,7 @@ export function DeviceAuthConfirmation({
 
                 <div className="space-y-3">
                     <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-                        <Monitor className="h-5 w-5 text-gray-600 mt-0.5" />
+                        <Monitor className="h-5 w-5 mt-0.5" />
                         <div className="flex-1">
                             <p className="text-sm font-medium">
                                 {metadata.applicationName}
@@ -106,11 +106,11 @@ export function DeviceAuthConfirmation({
                         <p className="text-sm font-medium">{t("deviceExistingAccess")}</p>
                         <div className="space-y-1 pl-4">
                             <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
                                 <span>{t("deviceFullAccess")}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm">
-                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
                                 <span>
                                     {t("deviceOrganizationsAccess")}
                                 </span>
