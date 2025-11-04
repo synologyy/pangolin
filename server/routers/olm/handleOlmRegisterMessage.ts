@@ -34,11 +34,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     let client: Client;
 
     if (orgId) {
-        if (!olm.userId) {
-            logger.warn("Olm has no user ID to verify org change!");
-            return;
-        }
-
         try {
             client = await getOrCreateOrgClient(
                 orgId,
