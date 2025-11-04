@@ -2101,5 +2101,7 @@
     "niceIdUpdatedSuccessfully": "Nice ID Updated Successfully",
     "niceIdUpdateError": "Error updating Nice ID",
     "niceIdUpdateErrorDescription": "An error occurred while updating the Nice ID.",
-    "niceIdCannotBeEmpty": "Nice ID cannot be empty"
+    "niceIdCannotBeEmpty": "Nice ID cannot be empty",
+    "enterIdentifier": "Enter identifier",
+    "identifier": "Identifier"
 }

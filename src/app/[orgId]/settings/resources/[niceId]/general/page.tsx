@@ -320,11 +320,11 @@ export default function GeneralForm() {
                                             name="niceId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{t("niceId") || "Nice ID"}</FormLabel>
+                                                    <FormLabel>{t("identifier")}</FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
-                                                            placeholder="Enter Nice ID"
+                                                            placeholder={t("enterIdentifier")}
                                                             className="flex-1"
                                                         />
                                                     </FormControl>
