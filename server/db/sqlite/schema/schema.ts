@@ -492,6 +492,24 @@ export const userSites = sqliteTable("userSites", {
         .references(() => sites.siteId, { onDelete: "cascade" })
 });
 
+export const userClients = sqliteTable("userClients", {
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" })
+});
+
+export const roleClients = sqliteTable("roleClients", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" })
+});
+
 export const roleResources = sqliteTable("roleResources", {
     roleId: integer("roleId")
         .notNull()
@@ -846,6 +864,8 @@ export type Domain = InferSelectModel<typeof domains>;
 export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
 export type ClientSite = InferSelectModel<typeof clientSites>;
+export type RoleClient = InferSelectModel<typeof roleClients>;
+export type UserClient = InferSelectModel<typeof userClients>;
 export type SupporterKey = InferSelectModel<typeof supporterKey>;
 export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
