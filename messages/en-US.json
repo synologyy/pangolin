@@ -1279,6 +1279,8 @@
     "settingsErrorUpdateDescription": "An error occurred while updating settings",
     "sidebarCollapse": "Collapse",
     "sidebarExpand": "Expand",
+    "productUpdateMoreInfo": "{noOfUpdates} more updates",
+    "productUpdateInfo": "{noOfUpdates} updates",
     "pangolinUpdateAvailable": "New version available",
     "pangolinUpdateAvailableInfo": "Version {version} is ready to install",
     "pangolinUpdateAvailableReleaseNotes": "View release notes",

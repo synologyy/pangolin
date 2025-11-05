@@ -3,29 +3,59 @@
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLocalStorage } from "@app/hooks/useLocalStorage";
 import { cn } from "@app/lib/cn";
-import { versionsQueries } from "@app/lib/queries";
-import { useQuery } from "@tanstack/react-query";
+import { productUpdatesQueries } from "@app/lib/queries";
+import { useQueries } from "@tanstack/react-query";
 import { ArrowRight, BellIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-interface ProductUpdatesProps {}
+export default function ProductUpdates() {
+    const data = useQueries({
+        queries: [
+            productUpdatesQueries.list,
+            productUpdatesQueries.latestVersion
+        ],
+        combine(result) {
+            return {
+                updates: result[0].data?.data ?? [],
+                latestVersion: result[1].data
+            };
+        }
+    });
 
-export default function ProductUpdates({}: ProductUpdatesProps) {
+    const t = useTranslations();
+
     return (
-        <div className="flex flex-col gap-1 relative z-1 overflow-clip">
-            {/* <small className="text-xs text-muted-foreground flex items-center gap-1">
-                <BellIcon className="flex-none size-3" />
-                <span>3 more updates</span>
-            </small> */}
-            <NewVersionAvailable />
+        <div className="flex flex-col gap-1 overflow-clip">
+            {data.updates.length > 0 && (
+                <small className="text-xs text-muted-foreground flex items-center gap-1">
+                    <BellIcon className="flex-none size-3" />
+                    <span>
+                        {t("productUpdateMoreInfo", {
+                            noOfUpdates: data.updates.length
+                        })}
+                    </span>
+                </small>
+            )}
+            <NewVersionAvailable version={data.latestVersion} />
         </div>
     );
 }
 
-function NewVersionAvailable() {
+type NewVersionAvailableProps = {
+    version:
+        | Awaited<
+              ReturnType<
+                  NonNullable<
+                      typeof productUpdatesQueries.latestVersion.queryFn
+                  >
+              >
+          >
+        | undefined;
+};
+
+function NewVersionAvailable({ version }: NewVersionAvailableProps) {
     const { env } = useEnvContext();
     const t = useTranslations();
-    const { data: version } = useQuery(versionsQueries.latestVersion());
 
     const [ignoredVersionUpdate, setIgnoredVersionUpdate] = useLocalStorage<
         string | null
@@ -33,8 +63,8 @@ function NewVersionAvailable() {
 
     const showNewVersionPopup =
         version?.data &&
-        ignoredVersionUpdate !== version.data.pangolin.latestVersion &&
-        env.app.version !== version.data.pangolin.latestVersion;
+        ignoredVersionUpdate !== version.data?.pangolin.latestVersion &&
+        env.app.version !== version.data?.pangolin.latestVersion;
 
     if (!showNewVersionPopup) return null;
 
