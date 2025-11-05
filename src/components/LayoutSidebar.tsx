@@ -32,7 +32,11 @@ import {
 import { build } from "@server/build";
 import SidebarLicenseButton from "./SidebarLicenseButton";
 import { SidebarSupportButton } from "./SidebarSupportButton";
-import ProductUpdates from "./ProductUpdates";
+import dynamic from "next/dynamic";
+
+const ProductUpdates = dynamic(() => import("./ProductUpdates"), {
+    ssr: false
+});
 
 interface LayoutSidebarProps {
     orgId?: string;
@@ -135,9 +139,7 @@ export function LayoutSidebar({
             </div>
 
             <div className="p-4 flex flex-col gap-4 shrink-0">
-                <div className="mb-3">
-                    <ProductUpdates />
-                </div>
+                <ProductUpdates />
 
                 {build === "enterprise" && (
                     <div className="mb-3">

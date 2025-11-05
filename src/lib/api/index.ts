@@ -51,6 +51,15 @@ export const internal = axios.create({
     }
 });
 
+export const remote = axios.create({
+    baseURL: `${process.env.NEXT_PUBLIC_FOSSORIAL_REMOTE_API_URL}/api/v1`,
+    timeout: 10000,
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": "x-csrf-protection"
+    }
+});
+
 export const priv = axios.create({
     baseURL: `http://localhost:${process.env.SERVER_INTERNAL_PORT}/api/v1`,
     timeout: 10000,
@@ -60,4 +69,3 @@ export const priv = axios.create({
 });
 
 export * from "./formatAxiosError";
-
