@@ -7,13 +7,12 @@ import { versionsQueries } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BellIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
 
 interface ProductUpdatesProps {}
 
 export default function ProductUpdates({}: ProductUpdatesProps) {
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 relative z-1 overflow-clip">
             {/* <small className="text-xs text-muted-foreground flex items-center gap-1">
                 <BellIcon className="flex-none size-3" />
                 <span>3 more updates</span>
@@ -34,15 +33,16 @@ function NewVersionAvailable() {
 
     const showNewVersionPopup =
         version?.data &&
-        ignoredVersionUpdate !== version.data.pangolin.latestVersion;
+        ignoredVersionUpdate !== version.data.pangolin.latestVersion &&
+        env.app.version !== version.data.pangolin.latestVersion;
+
+    if (!showNewVersionPopup) return null;
 
     return (
         <div
             className={cn(
                 "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
-                "transition duration-500",
-                "opacity-0 h-0 pointer-events-none",
-                showNewVersionPopup && "opacity-100 h-full pointer-events-auto"
+                "animate-in slide-in-from-bottom duration-300"
             )}
         >
             {version?.data && (
@@ -60,7 +60,7 @@ function NewVersionAvailable() {
                             })}
                         </small>
                         <a
-                            href={version?.data?.pangolin.releaseNotes}
+                            href={version.data.pangolin.releaseNotes}
                             target="_blank"
                             className="inline-flex items-center gap-0.5 text-xs font-medium"
                         >
@@ -74,7 +74,7 @@ function NewVersionAvailable() {
                         className="p-1 cursor-pointer"
                         onClick={() =>
                             setIgnoredVersionUpdate(
-                                version?.data?.pangolin.latestVersion ?? null
+                                version.data?.pangolin.latestVersion ?? null
                             )
                         }
                     >
