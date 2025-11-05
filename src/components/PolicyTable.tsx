@@ -102,7 +102,7 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
                         info={mapping}
                     />
                 ) : (
-                    "--"
+                    "-"
                 );
             }
         },
@@ -129,18 +129,19 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
                         info={mapping}
                     />
                 ) : (
-                    "--"
+                    "-"
                 );
             }
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t('actions')}</span>),
             cell: ({ row }) => {
                 const policy = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center">
                         <Button
-                            variant={"secondary"}
+                            variant={"outline"}
                             className="ml-2"
                             onClick={() => onEdit(policy)}
                         >

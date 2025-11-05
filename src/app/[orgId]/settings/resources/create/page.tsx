@@ -793,7 +793,7 @@ export default function Page() {
 
         const healthCheckColumn: ColumnDef<LocalTarget> = {
             accessorKey: "healthCheck",
-            header: t("healthCheck"),
+            header: () => (<span className="p-3">{t("healthCheck")}</span>),
             cell: ({ row }) => {
                 const status = row.original.hcHealth || "unknown";
                 const isEnabled = row.original.hcEnabled;
@@ -865,7 +865,7 @@ export default function Page() {
 
         const matchPathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "path",
-            header: t("matchPath"),
+            header: () => (<span className="p-3">{t("matchPath")}</span>),
             cell: ({ row }) => {
                 const hasPathMatch = !!(
                     row.original.path || row.original.pathMatchType
@@ -927,7 +927,7 @@ export default function Page() {
 
         const addressColumn: ColumnDef<LocalTarget> = {
             accessorKey: "address",
-            header: t("address"),
+            header: () => (<span className="p-3">{t("address")}</span>),
             cell: ({ row }) => {
                 const selectedSite = sites.find(
                     (site) => site.siteId === row.original.siteId
@@ -1141,7 +1141,7 @@ export default function Page() {
 
         const rewritePathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "rewritePath",
-            header: t("rewritePath"),
+            header: () => (<span className="p-3">{t("rewritePath")}</span>),
             cell: ({ row }) => {
                 const hasRewritePath = !!(
                     row.original.rewritePath || row.original.rewritePathType
@@ -1211,7 +1211,7 @@ export default function Page() {
 
         const enabledColumn: ColumnDef<LocalTarget> = {
             accessorKey: "enabled",
-            header: t("enabled"),
+            header: () => (<span className="p-3">{t("enabled")}</span>),
             cell: ({ row }) => (
                 <div className="flex items-center justify-center w-full">
                     <Switch
@@ -1232,6 +1232,7 @@ export default function Page() {
 
         const actionsColumn: ColumnDef<LocalTarget> = {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => (
                 <div className="flex items-center justify-end w-full">
                     <Button

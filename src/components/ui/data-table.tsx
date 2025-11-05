@@ -9,7 +9,8 @@ import {
     SortingState,
     getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel
+    getFilteredRowModel,
+    VisibilityState
 } from "@tanstack/react-table";
 import {
     Table,
@@ -23,7 +24,7 @@ import { Button } from "@app/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Plus, Search, RefreshCw, Columns } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -32,16 +33,24 @@ import {
 } from "@app/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@app/components/ui/dropdown-menu";
 
 const STORAGE_KEYS = {
-    PAGE_SIZE: 'datatable-page-size',
-    getTablePageSize: (tableId?: string) => 
+    PAGE_SIZE: "datatable-page-size",
+    getTablePageSize: (tableId?: string) =>
         tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
-    if (typeof window === 'undefined') return defaultSize;
-    
+    if (typeof window === "undefined") return defaultSize;
+
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         const stored = localStorage.getItem(key);
@@ -53,19 +62,19 @@ const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
             }
         }
     } catch (error) {
-        console.warn('Failed to read page size from localStorage:', error);
+        console.warn("Failed to read page size from localStorage:", error);
     }
     return defaultSize;
 };
 
 const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
-        console.warn('Failed to save page size to localStorage:', error);
+        console.warn("Failed to save page size to localStorage:", error);
     }
 };
 
@@ -93,6 +102,8 @@ type DataTableProps<TData, TValue> = {
     defaultTab?: string;
     persistPageSize?: boolean | string;
     defaultPageSize?: number;
+    columnVisibility?: Record<string, boolean>;
+    enableColumnVisibility?: boolean;
 };
 
 export function DataTable<TData, TValue>({
@@ -109,13 +120,16 @@ export function DataTable<TData, TValue>({
     tabs,
     defaultTab,
     persistPageSize = false,
-    defaultPageSize = 20
+    defaultPageSize = 20,
+    columnVisibility: defaultColumnVisibility,
+    enableColumnVisibility = false
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
-    
+
     // Determine table identifier for storage
-    const tableId = typeof persistPageSize === 'string' ? persistPageSize : undefined;
-    
+    const tableId =
+        typeof persistPageSize === "string" ? persistPageSize : undefined;
+
     // Initialize page size from storage or default
     const [pageSize, setPageSize] = useState<number>(() => {
         if (persistPageSize) {
@@ -123,12 +137,15 @@ export function DataTable<TData, TValue>({
         }
         return defaultPageSize;
     });
-    
+
     const [sorting, setSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<any>([]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+        defaultColumnVisibility || {}
+    );
     const [activeTab, setActiveTab] = useState<string>(
         defaultTab || tabs?.[0]?.id || ""
     );
@@ -157,16 +174,19 @@ export function DataTable<TData, TValue>({
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
+        onColumnVisibilityChange: setColumnVisibility,
         initialState: {
             pagination: {
                 pageSize: pageSize,
                 pageIndex: 0
-            }
+            },
+            columnVisibility: defaultColumnVisibility || {}
         },
         state: {
             sorting,
             columnFilters,
-            globalFilter
+            globalFilter,
+            columnVisibility
         }
     });
 
@@ -174,7 +194,7 @@ export function DataTable<TData, TValue>({
         const currentPageSize = table.getState().pagination.pageSize;
         if (currentPageSize !== pageSize) {
             table.setPageSize(pageSize);
-            
+
             // Persist to localStorage if enabled
             if (persistPageSize) {
                 setStoredPageSize(pageSize, tableId);
@@ -192,7 +212,7 @@ export function DataTable<TData, TValue>({
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
         table.setPageSize(newPageSize);
-        
+
         // Persist immediately when changed
         if (persistPageSize) {
             setStoredPageSize(newPageSize, tableId);
@@ -238,6 +258,53 @@ export function DataTable<TData, TValue>({
                         )}
                     </div>
                     <div className="flex items-center gap-2 sm:justify-end">
+                        {enableColumnVisibility &&
+                            table
+                                .getAllColumns()
+                                .some((column) => column.getCanHide()) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                        <span className="hidden sm:inline">
+                                            {t("columns") || "Columns"}
+                                        </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    align="end"
+                                    className="w-48"
+                                >
+                                    <DropdownMenuLabel>
+                                        {t("toggleColumns") || "Toggle columns"}
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {table
+                                        .getAllColumns()
+                                        .filter((column) => column.getCanHide())
+                                        .map((column) => {
+                                            return (
+                                                <DropdownMenuCheckboxItem
+                                                    key={column.id}
+                                                    className="capitalize"
+                                                    checked={column.getIsVisible()}
+                                                    onCheckedChange={(value) =>
+                                                        column.toggleVisibility(
+                                                            !!value
+                                                        )
+                                                    }
+                                                >
+                                                    {typeof column.columnDef
+                                                        .header === "string"
+                                                        ? column.columnDef
+                                                              .header
+                                                        : column.id}
+                                                </DropdownMenuCheckboxItem>
+                                            );
+                                        })}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                         {onRefresh && (
                             <Button
                                 variant="outline"
@@ -245,9 +312,11 @@ export function DataTable<TData, TValue>({
                                 disabled={isRefreshing}
                             >
                                 <RefreshCw
-                                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                                    className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
                                 />
-                                {t("refresh")}
+                                <span className="hidden sm:inline">
+                                    {t("refresh")}
+                                </span>
                             </Button>
                         )}
                         {onAdd && addButtonText && (
@@ -264,7 +333,10 @@ export function DataTable<TData, TValue>({
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id}>
+                                        <TableHead
+                                            key={header.id}
+                                            className="whitespace-nowrap"
+                                        >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -287,7 +359,10 @@ export function DataTable<TData, TValue>({
                                         }
                                     >
                                         {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
+                                            <TableCell
+                                                key={cell.id}
+                                                className="whitespace-nowrap"
+                                            >
                                                 {flexRender(
                                                     cell.column.columnDef.cell,
                                                     cell.getContext()
@@ -309,8 +384,8 @@ export function DataTable<TData, TValue>({
                         </TableBody>
                     </Table>
                     <div className="mt-4">
-                        <DataTablePagination 
-                            table={table} 
+                        <DataTablePagination
+                            table={table}
                             onPageSizeChange={handlePageSizeChange}
                         />
                     </div>

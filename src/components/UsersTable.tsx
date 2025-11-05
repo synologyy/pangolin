@@ -143,10 +143,35 @@ export default function UsersTable({ users: u }: UsersTableProps) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const userRow = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center">
+                        {userRow.isOwner && (
+                            <Button
+                                variant={"outline"}
+                                className="ml-2"
+                                disabled={true}
+                            >
+                                {t("manage")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        )}
+                        {!userRow.isOwner && (
+                            <Link
+                                href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
+                            >
+                                <Button
+                                    variant={"outline"}
+                                    className="ml-2"
+                                    disabled={userRow.isOwner}
+                                >
+                                    {t("manage")}
+                                    <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
+                            </Link>
+                        )}
                         <>
                             <div>
                                 {userRow.isOwner && (
@@ -200,32 +225,6 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                                 )}
                             </div>
                         </>
-                        {userRow.isOwner && (
-                            <Button
-                                variant={"secondary"}
-                                className="ml-2"
-                                size="sm"
-                                disabled={true}
-                            >
-                                {t("manage")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        )}
-                        {!userRow.isOwner && (
-                            <Link
-                                href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
-                            >
-                                <Button
-                                    variant={"secondary"}
-                                    className="ml-2"
-                                    size="sm"
-                                    disabled={userRow.isOwner}
-                                >
-                                    {t("manage")}
-                                    <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            </Link>
-                        )}
                     </div>
                 );
             }

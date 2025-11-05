@@ -123,10 +123,10 @@ export function LicenseKeysDataTable({
         },
         {
             id: "delete",
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => (
-                <div className="flex items-center justify-end space-x-2">
-                    <Button
-                        variant="secondary"
+                <div className="flex items-center space-x-2">
+                    <Button variant={"outline"}
                         onClick={() => onDelete(row.original)}
                     >
                         {t("delete")}

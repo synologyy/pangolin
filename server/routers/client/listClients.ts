@@ -1,4 +1,4 @@
-import { db, olms } from "@server/db";
+import { db, olms, users } from "@server/db";
 import {
     clients,
     orgs,
@@ -19,7 +19,7 @@ import { OpenAPITags, registry } from "@server/openApi";
 import NodeCache from "node-cache";
 import semver from "semver";
 
-const olmVersionCache = new NodeCache({ stdTTL: 3600 }); 
+const olmVersionCache = new NodeCache({ stdTTL: 3600 });
 
 async function getLatestOlmVersion(): Promise<string | null> {
     try {
@@ -29,7 +29,7 @@ async function getLatestOlmVersion(): Promise<string | null> {
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500); 
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
 
         const response = await fetch(
             "https://api.github.com/repos/fosrl/olm/tags",
@@ -112,11 +112,15 @@ function queryClients(orgId: string, accessibleClientIds: number[]) {
             orgName: orgs.name,
             type: clients.type,
             online: clients.online,
-            olmVersion: olms.version
+            olmVersion: olms.version,
+            userId: clients.userId,
+            username: users.username,
+            userEmail: users.email
         })
         .from(clients)
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))
         .leftJoin(olms, eq(clients.clientId, olms.clientId))
+        .leftJoin(users, eq(clients.userId, users.userId))
         .where(
             and(
                 inArray(clients.clientId, accessibleClientIds),

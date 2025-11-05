@@ -209,16 +209,16 @@ export default function DomainsTable({ domains, orgId }: Props) {
         },
         {
             id: "actions",
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const domain = row.original;
                 const isRestarting = restartingDomains.has(domain.domainId);
 
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                         {domain.failed && (
                             <Button
                                 variant="outline"
-                                size="sm"
                                 onClick={() => restartDomain(domain.domainId)}
                                 disabled={isRestarting}
                             >
@@ -232,6 +232,14 @@ export default function DomainsTable({ domains, orgId }: Props) {
                                     : t("restart", { fallback: "Restart" })}
                             </Button>
                         )}
+                        <Link
+                            href={`/${orgId}/settings/domains/${domain.domainId}`}
+                        >
+                            <Button variant={"outline"}>
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <div className="flex items-center justify-end gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -266,15 +274,6 @@ export default function DomainsTable({ domains, orgId }: Props) {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-
-                            <Link
-                                href={`/${orgId}/settings/domains/${domain.domainId}`}
-                            >
-                                <Button variant={"secondary"} size="sm">
-                                    {t("edit")}
-                                    <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            </Link>
                         </div>
                         {/* <Button
                             variant="secondary"

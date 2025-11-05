@@ -230,10 +230,11 @@ export default function ExitNodesTable({
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const nodeRow = row.original;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">

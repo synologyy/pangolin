@@ -122,7 +122,7 @@ export default function ShareLinksTable({
                 const r = row.original;
                 return (
                     <Link href={`/${orgId}/settings/resources/${r.resourceNiceId}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline">
                             {r.resourceName}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -254,10 +254,11 @@ export default function ShareLinksTable({
         },
         {
             id: "delete",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center space-x-2">
                         {/* <DropdownMenu> */}
                         {/*     <DropdownMenuTrigger asChild> */}
                         {/*         <Button variant="ghost" className="h-8 w-8 p-0"> */}
@@ -281,9 +282,7 @@ export default function ShareLinksTable({
                         {/*         </DropdownMenuItem> */}
                         {/*     </DropdownMenuContent> */}
                         {/* </DropdownMenu> */}
-                        <Button
-                            variant="secondary"
-                            size="sm"
+                        <Button variant={"outline"}
                             onClick={() =>
                                 deleteSharelink(row.original.accessTokenId)
                             }

@@ -9,13 +9,17 @@ import {
     SortingState,
     getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel
+    getFilteredRowModel,
+    VisibilityState
 } from "@tanstack/react-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger
+    DropdownMenuTrigger,
+    DropdownMenuCheckboxItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
 import {
@@ -25,7 +29,8 @@ import {
     ArrowUpRight,
     ShieldOff,
     ShieldCheck,
-    RefreshCw
+    RefreshCw,
+    Columns
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -106,15 +111,14 @@ type ResourcesTableProps = {
     };
 };
 
-
 const STORAGE_KEYS = {
-    PAGE_SIZE: 'datatable-page-size',
+    PAGE_SIZE: "datatable-page-size",
     getTablePageSize: (tableId?: string) =>
         tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
-    if (typeof window === 'undefined') return defaultSize;
+    if (typeof window === "undefined") return defaultSize;
 
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
@@ -126,22 +130,21 @@ const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
             }
         }
     } catch (error) {
-        console.warn('Failed to read page size from localStorage:', error);
+        console.warn("Failed to read page size from localStorage:", error);
     }
     return defaultSize;
 };
 
 const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
-        console.warn('Failed to save page size to localStorage:', error);
+        console.warn("Failed to save page size to localStorage:", error);
     }
 };
-
 
 export default function ResourcesTable({
     resources,
@@ -159,10 +162,10 @@ export default function ResourcesTable({
     const api = createApiClient({ env });
 
     const [proxyPageSize, setProxyPageSize] = useState<number>(() =>
-        getStoredPageSize('proxy-resources', 20)
+        getStoredPageSize("proxy-resources", 20)
     );
     const [internalPageSize, setInternalPageSize] = useState<number>(() =>
-        getStoredPageSize('internal-resources', 20)
+        getStoredPageSize("internal-resources", 20)
     );
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -190,6 +193,8 @@ export default function ResourcesTable({
         useState<ColumnFiltersState>([]);
     const [internalGlobalFilter, setInternalGlobalFilter] = useState<any>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [proxyColumnVisibility, setProxyColumnVisibility] = useState<VisibilityState>({});
+    const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({});
 
     const currentView = searchParams.get("view") || defaultView;
 
@@ -384,15 +389,23 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "protocol",
-            header: t("protocol"),
+            header: () => (<span className="p-3">{t("protocol")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                return <span>{resourceRow.http ? (resourceRow.ssl ? "HTTPS" : "HTTP") : resourceRow.protocol.toUpperCase()}</span>;
+                return (
+                    <span>
+                        {resourceRow.http
+                            ? resourceRow.ssl
+                                ? "HTTPS"
+                                : "HTTP"
+                            : resourceRow.protocol.toUpperCase()}
+                    </span>
+                );
             }
         },
         {
             accessorKey: "domain",
-            header: t("access"),
+            header: () => (<span className="p-3">{t("access")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -455,7 +468,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "enabled",
-            header: t("enabled"),
+            header: () => (<span className="p-3">{t("enabled")}</span>),
             cell: ({ row }) => (
                 <Switch
                     defaultChecked={
@@ -474,10 +487,19 @@ export default function ResourcesTable({
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
+                        >
+                            <Button variant={"outline"}>
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -508,18 +530,6 @@ export default function ResourcesTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Link
-                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
-                        >
-                            <Button
-                                variant={"secondary"}
-                                className="ml-2"
-                                size="sm"
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
                     </div>
                 );
             }
@@ -545,14 +555,14 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "siteName",
-            header: t("siteName"),
+            header: () => (<span className="p-3">{t("siteName")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
                     <Link
                         href={`/${resourceRow.orgId}/settings/sites/${resourceRow.siteNiceId}`}
                     >
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline">
                             {resourceRow.siteName}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -562,7 +572,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "protocol",
-            header: t("protocol"),
+            header: () => (<span className="p-3">{t("protocol")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return <span>{resourceRow.protocol.toUpperCase()}</span>;
@@ -570,7 +580,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "proxyPort",
-            header: t("proxyPort"),
+            header: () => (<span className="p-3">{t("proxyPort")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -583,7 +593,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "destination",
-            header: t("resourcesTableDestination"),
+            header: () => (<span className="p-3">{t("resourcesTableDestination")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 const destination = `${resourceRow.destinationIp}:${resourceRow.destinationPort}`;
@@ -593,10 +603,20 @@ export default function ResourcesTable({
 
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant={"outline"}
+                            onClick={() => {
+                                setEditingResource(resourceRow);
+                                setIsEditDialogOpen(true);
+                            }}
+                        >
+                            {t("edit")}
+                        </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -621,16 +641,6 @@ export default function ResourcesTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button
-                            variant={"secondary"}
-                            size="sm"
-                            onClick={() => {
-                                setEditingResource(resourceRow);
-                                setIsEditDialogOpen(true);
-                            }}
-                        >
-                            {t("edit")}
-                        </Button>
                     </div>
                 );
             }
@@ -647,6 +657,7 @@ export default function ResourcesTable({
         onColumnFiltersChange: setProxyColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setProxyGlobalFilter,
+        onColumnVisibilityChange: setProxyColumnVisibility,
         initialState: {
             pagination: {
                 pageSize: proxyPageSize,
@@ -656,7 +667,8 @@ export default function ResourcesTable({
         state: {
             sorting: proxySorting,
             columnFilters: proxyColumnFilters,
-            globalFilter: proxyGlobalFilter
+            globalFilter: proxyGlobalFilter,
+            columnVisibility: proxyColumnVisibility
         }
     });
 
@@ -670,6 +682,7 @@ export default function ResourcesTable({
         onColumnFiltersChange: setInternalColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setInternalGlobalFilter,
+        onColumnVisibilityChange: setInternalColumnVisibility,
         initialState: {
             pagination: {
                 pageSize: internalPageSize,
@@ -679,18 +692,19 @@ export default function ResourcesTable({
         state: {
             sorting: internalSorting,
             columnFilters: internalColumnFilters,
-            globalFilter: internalGlobalFilter
+            globalFilter: internalGlobalFilter,
+            columnVisibility: internalColumnVisibility
         }
     });
 
     const handleProxyPageSizeChange = (newPageSize: number) => {
         setProxyPageSize(newPageSize);
-        setStoredPageSize(newPageSize, 'proxy-resources');
+        setStoredPageSize(newPageSize, "proxy-resources");
     };
 
     const handleInternalPageSizeChange = (newPageSize: number) => {
         setInternalPageSize(newPageSize);
-        setStoredPageSize(newPageSize, 'internal-resources');
+        setStoredPageSize(newPageSize, "internal-resources");
     };
 
     return (
@@ -704,12 +718,8 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("resourceQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("resourceMessageRemove")}
-                            </p>
+                            <p>{t("resourceQuestionRemove")}</p>
+                            <p>{t("resourceMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
@@ -728,12 +738,8 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("resourceQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("resourceMessageRemove")}
-                            </p>
+                            <p>{t("resourceQuestionRemove")}</p>
+                            <p>{t("resourceMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
@@ -771,6 +777,80 @@ export default function ResourcesTable({
                                 )}
                             </div>
                             <div className="flex items-center gap-2 sm:justify-end">
+                                {currentView === "proxy" && proxyTable.getAllColumns().some((column) => column.getCanHide()) && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                <span className="hidden sm:inline">
+                                                    {t("columns") || "Columns"}
+                                                </span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuLabel>
+                                                {t("toggleColumns") || "Toggle columns"}
+                                            </DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {proxyTable
+                                                .getAllColumns()
+                                                .filter((column) => column.getCanHide())
+                                                .map((column) => {
+                                                    return (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={column.id}
+                                                            className="capitalize"
+                                                            checked={column.getIsVisible()}
+                                                            onCheckedChange={(value) =>
+                                                                column.toggleVisibility(!!value)
+                                                            }
+                                                        >
+                                                            {typeof column.columnDef.header === "string"
+                                                                ? column.columnDef.header
+                                                                : column.id}
+                                                        </DropdownMenuCheckboxItem>
+                                                    );
+                                                })}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                                {currentView === "internal" && internalTable.getAllColumns().some((column) => column.getCanHide()) && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline">
+                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                <span className="hidden sm:inline">
+                                                    {t("columns") || "Columns"}
+                                                </span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48">
+                                            <DropdownMenuLabel>
+                                                {t("toggleColumns") || "Toggle columns"}
+                                            </DropdownMenuLabel>
+                                            <DropdownMenuSeparator />
+                                            {internalTable
+                                                .getAllColumns()
+                                                .filter((column) => column.getCanHide())
+                                                .map((column) => {
+                                                    return (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={column.id}
+                                                            className="capitalize"
+                                                            checked={column.getIsVisible()}
+                                                            onCheckedChange={(value) =>
+                                                                column.toggleVisibility(!!value)
+                                                            }
+                                                        >
+                                                            {typeof column.columnDef.header === "string"
+                                                                ? column.columnDef.header
+                                                                : column.id}
+                                                        </DropdownMenuCheckboxItem>
+                                                    );
+                                                })}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
                                 <div>
                                     <Button
                                         variant="outline"
@@ -778,14 +858,14 @@ export default function ResourcesTable({
                                         disabled={isRefreshing}
                                     >
                                         <RefreshCw
-                                            className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                                            className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
                                         />
-                                        {t("refresh")}
+                                        <span className="hidden sm:inline">
+                                            {t("refresh")}
+                                        </span>
                                     </Button>
                                 </div>
-                                <div>
-                                    {getActionButton()}
-                                </div>
+                                <div>{getActionButton()}</div>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -796,23 +876,25 @@ export default function ResourcesTable({
                                             .getHeaderGroups()
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
-                                                            </TableHead>
-                                                        )
-                                                    )}
+                                                    {headerGroup.headers
+                                                        .filter((header) => header.column.getIsVisible())
+                                                        .map(
+                                                            (header) => (
+                                                                <TableHead
+                                                                    key={header.id}
+                                                                >
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </TableHead>
+                                                            )
+                                                        )}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>
@@ -867,7 +949,9 @@ export default function ResourcesTable({
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={proxyTable}
-                                        onPageSizeChange={handleProxyPageSizeChange}
+                                        onPageSizeChange={
+                                            handleProxyPageSizeChange
+                                        }
                                     />
                                 </div>
                             </TabsContent>
@@ -897,23 +981,25 @@ export default function ResourcesTable({
                                             .getHeaderGroups()
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
-                                                    {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
-                                                            </TableHead>
-                                                        )
-                                                    )}
+                                                    {headerGroup.headers
+                                                        .filter((header) => header.column.getIsVisible())
+                                                        .map(
+                                                            (header) => (
+                                                                <TableHead
+                                                                    key={header.id}
+                                                                >
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </TableHead>
+                                                            )
+                                                        )}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>
@@ -968,7 +1054,9 @@ export default function ResourcesTable({
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={internalTable}
-                                        onPageSizeChange={handleInternalPageSizeChange}
+                                        onPageSizeChange={
+                                            handleInternalPageSizeChange
+                                        }
                                     />
                                 </div>
                             </TabsContent>

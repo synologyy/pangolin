@@ -361,10 +361,19 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             : []),
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
+                        >
+                            <Button variant={"outline"}>
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -393,15 +402,6 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-
-                        <Link
-                            href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
-                        >
-                            <Button variant={"secondary"} size="sm">
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
                     </div>
                 );
             }
@@ -440,6 +440,12 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 }
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
+                columnVisibility={{
+                    nice: false,
+                    exitNode: false,
+                    address: false
+                }}
+                enableColumnVisibility={true}
             />
         </>
     );

@@ -47,6 +47,9 @@ export default async function ClientsPage(props: ClientsPageProps) {
             online: client.online,
             olmVersion: client.olmVersion || undefined,
             olmUpdateAvailable: client.olmUpdateAvailable || false,
+            userId: client.userId,
+            username: client.username,
+            userEmail: client.userEmail
         };
     });
 

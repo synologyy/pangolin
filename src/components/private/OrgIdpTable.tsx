@@ -117,10 +117,20 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
                     <div className="flex items-center justify-end">
+                        <Link href={`/${orgId}/settings/idp/${siteRow.idpId}/general`}>
+                            <Button
+                                variant={"outline"}
+                                className="ml-2"
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -151,16 +161,6 @@ export default function IdpTable({ idps, orgId }: Props) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Link href={`/${orgId}/settings/idp/${siteRow.idpId}/general`}>
-                            <Button
-                                variant={"secondary"}
-                                className="ml-2"
-                                size="sm"
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
                     </div>
                 );
             }

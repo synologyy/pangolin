@@ -11,6 +11,8 @@ interface DataTableProps<TData, TValue> {
     onRefresh?: () => void;
     isRefreshing?: boolean;
     addClient?: () => void;
+    columnVisibility?: Record<string, boolean>;
+    enableColumnVisibility?: boolean;
 }
 
 export function ClientsDataTable<TData, TValue>({
@@ -18,7 +20,9 @@ export function ClientsDataTable<TData, TValue>({
     data,
     addClient,
     onRefresh,
-    isRefreshing
+    isRefreshing,
+    columnVisibility,
+    enableColumnVisibility
 }: DataTableProps<TData, TValue>) {
     return (
         <DataTable
@@ -32,6 +36,8 @@ export function ClientsDataTable<TData, TValue>({
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             addButtonText="Add Client"
+            columnVisibility={columnVisibility}
+            enableColumnVisibility={enableColumnVisibility}
         />
     );
 }

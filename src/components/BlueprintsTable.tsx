@@ -157,12 +157,10 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             id: "actions",
-            header: () => {
-                return null;
-            },
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 return (
-                    <div className="flex justify-end">
+                    <div className="flex">
                         <Button
                             variant="outline"
                             className="items-center"

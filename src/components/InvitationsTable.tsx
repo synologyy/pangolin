@@ -69,11 +69,11 @@ export default function InvitationsTable({
     const columns: ColumnDef<InvitationRow>[] = [
         {
             accessorKey: "email",
-            header: t("email")
+            header: () => (<span className="p-3">{t("email")}</span>)
         },
         {
             accessorKey: "expiresAt",
-            header: t("expiresAt"),
+            header: () => (<span className="p-3">{t("expiresAt")}</span>),
             cell: ({ row }) => {
                 const expiresAt = new Date(row.original.expiresAt);
                 const isExpired = expiresAt < new Date();
@@ -87,7 +87,7 @@ export default function InvitationsTable({
         },
         {
             accessorKey: "role",
-            header: t("role")
+            header: () => (<span className="p-3">{t("role")}</span>)
         },
         {
             id: "dots",

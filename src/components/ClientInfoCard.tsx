@@ -19,9 +19,7 @@ export default function SiteInfoCard({}: ClientInfoCardProps) {
 
     return (
         <Alert>
-            <InfoIcon className="h-4 w-4" />
-            <AlertTitle className="font-semibold">{t("clientInformation")}</AlertTitle>
-            <AlertDescription className="mt-4">
+            <AlertDescription>
                 <InfoSections cols={2}>
                         <>
                             <InfoSection>

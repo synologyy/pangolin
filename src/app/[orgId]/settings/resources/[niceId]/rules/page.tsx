@@ -465,7 +465,7 @@ export default function ResourceRules(props: {
         },
         {
             accessorKey: "action",
-            header: t('rulesAction'),
+            header: () => (<span className="p-3">{t('rulesAction')}</span>),
             cell: ({ row }) => (
                 <Select
                     defaultValue={row.original.action}
@@ -488,7 +488,7 @@ export default function ResourceRules(props: {
         },
         {
             accessorKey: "match",
-            header: t('rulesMatchType'),
+            header: () => (<span className="p-3">{t('rulesMatchType')}</span>),
             cell: ({ row }) => (
                 <Select
                     defaultValue={row.original.match}
@@ -512,7 +512,7 @@ export default function ResourceRules(props: {
         },
         {
             accessorKey: "value",
-            header: t('value'),
+            header: () => (<span className="p-3">{t('value')}</span>),
             cell: ({ row }) => (
                 row.original.match === "COUNTRY" ? (
                     <Popover>
@@ -573,7 +573,7 @@ export default function ResourceRules(props: {
         },
         {
             accessorKey: "enabled",
-            header: t('enabled'),
+            header: () => (<span className="p-3">{t('enabled')}</span>),
             cell: ({ row }) => (
                 <Switch
                     defaultChecked={row.original.enabled}
@@ -585,8 +585,9 @@ export default function ResourceRules(props: {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t('actions')}</span>),
             cell: ({ row }) => (
-                <div className="flex items-center justify-end space-x-2">
+                <div className="flex items-center space-x-2">
                     <Button
                         variant="outline"
                         onClick={() => removeRule(row.original.ruleId)}

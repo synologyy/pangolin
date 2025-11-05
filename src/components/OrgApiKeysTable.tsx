@@ -107,7 +107,7 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "key",
-            header: t("key"),
+            header: () => (<span className="p-3">{t("key")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return <span className="font-mono">{r.key}</span>;
@@ -115,7 +115,7 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "createdAt",
-            header: t("createdAt"),
+            header: () => (<span className="p-3">{t("createdAt")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return <span>{moment(r.createdAt).format("lll")}</span>;
@@ -123,10 +123,19 @@ export default function OrgApiKeysTable({
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center">
+                        <Link href={`/${orgId}/settings/api-keys/${r.id}`}>
+                            <Button
+                                variant={"outline"}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -158,17 +167,6 @@ export default function OrgApiKeysTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-
-                        <Link href={`/${orgId}/settings/api-keys/${r.id}`}>
-                            <Button
-                                variant={"secondary"}
-                                className="ml-2"
-                                size="sm"
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
                     </div>
                 );
             }

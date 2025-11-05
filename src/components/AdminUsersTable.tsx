@@ -201,11 +201,21 @@ export default function UsersTable({ users }: Props) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return (
                     <>
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={"outline"}
+                                onClick={() => {
+                                    router.push(`/admin/users/${r.id}`);
+                                }}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
@@ -229,16 +239,6 @@ export default function UsersTable({ users }: Props) {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button
-                                variant={"secondary"}
-                                size="sm"
-                                onClick={() => {
-                                    router.push(`/admin/users/${r.id}`);
-                                }}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
                         </div>
                     </>
                 );

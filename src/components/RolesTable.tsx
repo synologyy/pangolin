@@ -80,18 +80,18 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         },
         {
             accessorKey: "description",
-            header: t("description")
+            header: () => (<span className="p-3">{t("description")}</span>)
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const roleRow = row.original;
 
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center">
                         <Button
-                            variant={"secondary"}
-                            size="sm"
+                            variant={"outline"}
                             disabled={roleRow.isAdmin || false}
                             onClick={() => {
                                 setIsDeleteModalOpen(true);

@@ -40,6 +40,9 @@ export type ClientRow = {
     online: boolean;
     olmVersion?: string;
     olmUpdateAvailable: boolean;
+    userId: string | null;
+    username: string | null;
+    userEmail: string | null;
 };
 
 type ClientTableProps = {
@@ -112,6 +115,37 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                         Name
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
+                );
+            }
+        },
+        {
+            accessorKey: "userId",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        User
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                const r = row.original;
+                return r.userId ? (
+                    <Link
+                        href={`/${r.orgId}/settings/access/users/${r.userId}`}
+                    >
+                        <Button variant="outline">
+                            {r.userEmail || r.username || r.userId}
+                            <ArrowUpRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </Link>
+                ) : (
+                    "-"
                 );
             }
         },
@@ -239,9 +273,7 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                             </div>
                         </Badge>
                         {originalRow.olmUpdateAvailable && (
-                            <InfoPopup
-                                info={t("olmUpdateAvailableInfo")}
-                            />
+                            <InfoPopup info={t("olmUpdateAvailableInfo")} />
                         )}
                     </div>
                 );
@@ -265,11 +297,19 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const clientRow = row.original;
                 return (
-                    <div className="flex items-center justify-end">
-
+                    <div className="flex items-center">
+                        <Link
+                            href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
+                        >
+                            <Button variant={"outline"}>
+                                Edit
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -296,14 +336,6 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Link
-                            href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
-                        >
-                            <Button variant={"secondary"} className="ml-2">
-                                Edit
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
                     </div>
                 );
             }
@@ -321,12 +353,8 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("deleteClientQuestion")}
-                            </p>
-                            <p>
-                                {t("clientMessageRemove")}
-                            </p>
+                            <p>{t("deleteClientQuestion")}</p>
+                            <p>{t("clientMessageRemove")}</p>
                         </div>
                     }
                     buttonText="Confirm Delete Client"
@@ -344,6 +372,11 @@ export default function ClientsTable({ clients, orgId }: ClientTableProps) {
                 }}
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
+                columnVisibility={{
+                    client: false,
+                    subnet: false
+                }}
+                enableColumnVisibility={true}
             />
         </>
     );
