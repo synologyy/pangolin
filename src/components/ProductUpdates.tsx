@@ -55,6 +55,9 @@ type NewVersionAvailableProps = {
 
 function NewVersionAvailable({ version }: NewVersionAvailableProps) {
     const { env } = useEnvContext();
+    console.log({
+        env
+    });
     const t = useTranslations();
 
     const [ignoredVersionUpdate, setIgnoredVersionUpdate] = useLocalStorage<
