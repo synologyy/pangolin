@@ -15,6 +15,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Transition } from "@headlessui/react";
 import * as React from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 export default function ProductUpdates({
     isCollapsed
@@ -88,7 +89,7 @@ export default function ProductUpdates({
                         </>
                     )}
                 </small>
-                <ProductUpdatesPopup
+                <ProductUpdatesListPopup
                     updates={data.updates}
                     show={data.updates.length > 0}
                 />
@@ -107,9 +108,12 @@ export default function ProductUpdates({
     );
 }
 
-type ProductUpdatesPopupProps = { updates: ProductUpdate[]; show: boolean };
+type ProductUpdatesListPopupProps = { updates: ProductUpdate[]; show: boolean };
 
-function ProductUpdatesPopup({ updates, show }: ProductUpdatesPopupProps) {
+function ProductUpdatesListPopup({
+    updates,
+    show
+}: ProductUpdatesListPopupProps) {
     const [open, setOpen] = React.useState(false);
     const t = useTranslations();
 
@@ -121,41 +125,44 @@ function ProductUpdatesPopup({ updates, show }: ProductUpdatesPopupProps) {
     }, [show]);
 
     return (
-        <Transition show={open}>
-            <div
-                className={cn(
-                    "relative z-1",
-                    "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
-                    "transition duration-300 ease-in-out",
-                    "data-closed:opacity-0 data-closed:translate-y-full"
-                )}
-            >
-                <div className="rounded-md bg-muted-foreground/20 p-2">
-                    <BellIcon className="flex-none size-4" />
-                </div>
-                <div className="flex flex-col gap-2">
-                    <p className="font-medium">{t("productUpdateWhatsNew")}</p>
-                    <small
+        <Popover>
+            <Transition show={open}>
+                <PopoverTrigger asChild>
+                    <button
                         className={cn(
-                            "text-muted-foreground",
-                            "overflow-hidden h-8",
-                            "[-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]"
+                            "relative z-1 cursor-pointer",
+                            "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
+                            "transition duration-300 ease-in-out",
+                            "data-closed:opacity-0 data-closed:translate-y-full"
                         )}
                     >
-                        {updates[0].contents}
-                    </small>
-                </div>
-                <button
-                    className="p-1 cursor-pointer"
-                    onClick={() => {
-                        setOpen(false);
-                        // onClose();
-                    }}
-                >
-                    <ChevronRightIcon className="size-4 flex-none" />
-                </button>
-            </div>
-        </Transition>
+                        <div className="rounded-md bg-muted-foreground/20 p-2">
+                            <BellIcon className="flex-none size-4" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <p className="font-medium text-start">
+                                {t("productUpdateWhatsNew")}
+                            </p>
+                            <small
+                                className={cn(
+                                    "text-start text-muted-foreground",
+                                    "overflow-hidden h-8",
+                                    "[-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]"
+                                )}
+                            >
+                                {updates[0].contents}
+                            </small>
+                        </div>
+                        <div className="p-1 cursor-pointer">
+                            <ChevronRightIcon className="size-4 flex-none" />
+                        </div>
+                    </button>
+                </PopoverTrigger>
+                <PopoverContent side="right" align="end">
+                    Hello
+                </PopoverContent>
+            </Transition>
+        </Popover>
     );
 }
 
