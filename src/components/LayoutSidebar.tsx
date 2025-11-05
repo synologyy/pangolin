@@ -139,7 +139,7 @@ export function LayoutSidebar({
             </div>
 
             <div className="p-4 flex flex-col gap-4 shrink-0">
-                <ProductUpdates />
+                <ProductUpdates isCollapsed={isSidebarCollapsed} />
 
                 {build === "enterprise" && (
                     <div className="mb-3">

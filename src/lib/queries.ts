@@ -4,7 +4,7 @@ import { build } from "@server/build";
 import { remote } from "./api";
 import type ResponseT from "@server/types/Response";
 
-type ProductUpdate = {
+export type ProductUpdate = {
     link: string | null;
     edition: "enterprise" | "community" | "cloud" | null;
     id: number;

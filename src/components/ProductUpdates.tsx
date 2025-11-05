@@ -3,45 +3,159 @@
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLocalStorage } from "@app/hooks/useLocalStorage";
 import { cn } from "@app/lib/cn";
-import { productUpdatesQueries } from "@app/lib/queries";
+import { type ProductUpdate, productUpdatesQueries } from "@app/lib/queries";
 import { useQueries } from "@tanstack/react-query";
-import { ArrowRight, BellIcon, XIcon } from "lucide-react";
+import { ArrowRight, BellIcon, ChevronRightIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Transition } from "@headlessui/react";
+import * as React from "react";
 
-export default function ProductUpdates() {
+export default function ProductUpdates({
+    isCollapsed
+}: {
+    isCollapsed?: boolean;
+}) {
     const data = useQueries({
         queries: [
             productUpdatesQueries.list,
             productUpdatesQueries.latestVersion
         ],
         combine(result) {
+            if (result[0].isLoading || result[1].isLoading) return null;
             return {
                 updates: result[0].data?.data ?? [],
                 latestVersion: result[1].data
             };
         }
     });
-
+    const { env } = useEnvContext();
     const t = useTranslations();
+    const [showMoreUpdatesText, setShowMoreUpdatesText] = React.useState(false);
+
+    // we need to delay the initial
+    React.useEffect(() => {
+        const timeout = setTimeout(() => setShowMoreUpdatesText(true), 500);
+        return () => clearTimeout(timeout);
+    }, []);
+
+    const [ignoredVersionUpdate, setIgnoredVersionUpdate] = useLocalStorage<
+        string | null
+    >("ignored-version", null);
+
+    const [showNewVersionPopup, setShowNewVersionPopup] = React.useState(true);
+
+    if (!data) return null;
+
+    // const showNewVersionPopup = Boolean(
+    //     data?.latestVersion?.data &&
+    //         ignoredVersionUpdate !==
+    //             data.latestVersion.data?.pangolin.latestVersion &&
+    //         env.app.version !== data.latestVersion.data?.pangolin.latestVersion
+    // );
 
     return (
-        <div className="flex flex-col gap-1 overflow-clip">
-            {data.updates.length > 0 && (
-                <small className="text-xs text-muted-foreground flex items-center gap-1">
-                    <BellIcon className="flex-none size-3" />
-                    <span>
-                        {t("productUpdateMoreInfo", {
-                            noOfUpdates: data.updates.length
-                        })}
-                    </span>
-                </small>
+        <div
+            className={cn(
+                "flex flex-col gap-1 overflow-clip",
+                isCollapsed && "hidden"
             )}
-            <NewVersionAvailable version={data.latestVersion} />
+        >
+            <NewVersionAvailable
+                version={data.latestVersion?.data}
+                onClose={() => {
+                    // setIgnoredVersionUpdate(
+                    //     data.latestVersion?.data?.pangolin.latestVersion ?? null
+                    // );
+                    setShowNewVersionPopup(false);
+                }}
+                show={showNewVersionPopup}
+            />
+
+            <Transition show={showMoreUpdatesText}>
+                <small
+                    className={cn(
+                        "text-xs text-muted-foreground flex items-center gap-1 mt-2",
+                        "transition ease-in duration-300 data-closed:opacity-0"
+                    )}
+                >
+                    {data.updates.length > 0 && (
+                        <>
+                            <BellIcon className="flex-none size-3" />
+                            <span>
+                                {showNewVersionPopup
+                                    ? t("productUpdateMoreInfo", {
+                                          noOfUpdates: data.updates.length
+                                      })
+                                    : t("productUpdateInfo", {
+                                          noOfUpdates: data.updates.length
+                                      })}
+                            </span>
+                        </>
+                    )}
+                </small>
+            </Transition>
+            <ProductUpdatesPopup
+                updates={data.updates}
+                show={data.updates.length > 0}
+            />
         </div>
     );
 }
 
+type ProductUpdatesPopupProps = { updates: ProductUpdate[]; show: boolean };
+
+function ProductUpdatesPopup({ updates, show }: ProductUpdatesPopupProps) {
+    const [open, setOpen] = React.useState(false);
+    const t = useTranslations();
+
+    // we need to delay the initial opening state to have an animation on `appear`
+    React.useEffect(() => {
+        if (show) {
+            requestAnimationFrame(() => setOpen(true));
+        }
+    }, [show]);
+
+    return (
+        <Transition show={open}>
+            <div
+                className={cn(
+                    "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
+                    "transition duration-300 ease-in-out",
+                    "data-closed:opacity-0 data-closed:translate-y-full"
+                )}
+            >
+                <div className="rounded-md bg-muted-foreground/20 p-2">
+                    <BellIcon className="flex-none size-4" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <p className="font-medium">What's new</p>
+                    <small
+                        className={cn(
+                            "text-muted-foreground",
+                            "overflow-hidden h-8",
+                            "[-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]"
+                        )}
+                    >
+                        {updates[0].contents}
+                    </small>
+                </div>
+                <button
+                    className="p-1 cursor-pointer"
+                    onClick={() => {
+                        setOpen(false);
+                        // onClose();
+                    }}
+                >
+                    <ChevronRightIcon className="size-4 flex-none" />
+                </button>
+            </div>
+        </Transition>
+    );
+}
+
 type NewVersionAvailableProps = {
+    onClose: () => void;
+    show: boolean;
     version:
         | Awaited<
               ReturnType<
@@ -49,72 +163,71 @@ type NewVersionAvailableProps = {
                       typeof productUpdatesQueries.latestVersion.queryFn
                   >
               >
-          >
+          >["data"]
         | undefined;
 };
 
-function NewVersionAvailable({ version }: NewVersionAvailableProps) {
-    const { env } = useEnvContext();
-    console.log({
-        env
-    });
+function NewVersionAvailable({
+    version,
+    show,
+    onClose
+}: NewVersionAvailableProps) {
     const t = useTranslations();
+    const [open, setOpen] = React.useState(false);
 
-    const [ignoredVersionUpdate, setIgnoredVersionUpdate] = useLocalStorage<
-        string | null
-    >("ignored-version", null);
-
-    const showNewVersionPopup =
-        version?.data &&
-        ignoredVersionUpdate !== version.data?.pangolin.latestVersion &&
-        env.app.version !== version.data?.pangolin.latestVersion;
-
-    if (!showNewVersionPopup) return null;
+    // we need to delay the initial opening state to have an animation on `appear`
+    React.useEffect(() => {
+        if (show) {
+            requestAnimationFrame(() => setOpen(true));
+        }
+    }, [show]);
 
     return (
-        <div
-            className={cn(
-                "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
-                "animate-in slide-in-from-bottom duration-300"
-            )}
-        >
-            {version?.data && (
-                <>
-                    <div className="rounded-md bg-muted-foreground/20 p-2">
-                        <BellIcon className="flex-none size-4" />
-                    </div>
-                    <div className="flex flex-col gap-2">
-                        <p className="font-medium">
-                            {t("pangolinUpdateAvailable")}
-                        </p>
-                        <small className="text-muted-foreground">
-                            {t("pangolinUpdateAvailableInfo", {
-                                version: version.data.pangolin.latestVersion
-                            })}
-                        </small>
-                        <a
-                            href={version.data.pangolin.releaseNotes}
-                            target="_blank"
-                            className="inline-flex items-center gap-0.5 text-xs font-medium"
+        <Transition show={open}>
+            <div
+                className={cn(
+                    "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
+                    "transition duration-300 ease-in-out",
+                    "data-closed:opacity-0 data-closed:translate-y-full"
+                )}
+            >
+                {version && (
+                    <>
+                        <div className="rounded-md bg-muted-foreground/20 p-2">
+                            <BellIcon className="flex-none size-4" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <p className="font-medium">
+                                {t("pangolinUpdateAvailable")}
+                            </p>
+                            <small className="text-muted-foreground">
+                                {t("pangolinUpdateAvailableInfo", {
+                                    version: version.pangolin.latestVersion
+                                })}
+                            </small>
+                            <a
+                                href={version.pangolin.releaseNotes}
+                                target="_blank"
+                                className="inline-flex items-center gap-0.5 text-xs font-medium"
+                            >
+                                <span>
+                                    {t("pangolinUpdateAvailableReleaseNotes")}
+                                </span>
+                                <ArrowRight className="flex-none size-3" />
+                            </a>
+                        </div>
+                        <button
+                            className="p-1 cursor-pointer"
+                            onClick={() => {
+                                setOpen(false);
+                                onClose();
+                            }}
                         >
-                            <span>
-                                {t("pangolinUpdateAvailableReleaseNotes")}
-                            </span>
-                            <ArrowRight className="flex-none size-3" />
-                        </a>
-                    </div>
-                    <button
-                        className="p-1 cursor-pointer"
-                        onClick={() =>
-                            setIgnoredVersionUpdate(
-                                version.data?.pangolin.latestVersion ?? null
-                            )
-                        }
-                    >
-                        <XIcon className="size-4 flex-none" />
-                    </button>
-                </>
-            )}
-        </div>
+                            <XIcon className="size-4 flex-none" />
+                        </button>
+                    </>
+                )}
+            </div>
+        </Transition>
     );
 }
