@@ -18,11 +18,13 @@ import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
 import privateConfig from "#private/lib/config";
 import { GenerateNewLicenseResponse } from "@server/routers/generatedLicense/types";
+import { pullEnv } from "@app/lib/pullEnv";
 
 async function createNewLicense(orgId: string, licenseData: any): Promise<any> {
     try {
+        const env = pullEnv();
         const response = await fetch(
-            `https://api.fossorial.io/api/v1/license-internal/enterprise/${orgId}/create`,
+            `${env.app.fossorialRemoteAPIBaseUrl}/api/v1/license-internal/enterprise/${orgId}/create`,
             {
                 method: "PUT",
                 headers: {
@@ -37,7 +39,7 @@ async function createNewLicense(orgId: string, licenseData: any): Promise<any> {
 
         const data = await response.json();
 
-        logger.debug("Fossorial API response:", {data});
+        logger.debug("Fossorial API response:", { data });
         return data;
     } catch (error) {
         console.error("Error creating new license:", error);

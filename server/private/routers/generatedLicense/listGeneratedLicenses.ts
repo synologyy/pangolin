@@ -17,12 +17,17 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { response as sendResponse } from "@server/lib/response";
 import privateConfig from "#private/lib/config";
-import { GeneratedLicenseKey, ListGeneratedLicenseKeysResponse } from "@server/routers/generatedLicense/types";
+import {
+    GeneratedLicenseKey,
+    ListGeneratedLicenseKeysResponse
+} from "@server/routers/generatedLicense/types";
+import { pullEnv } from "@app/lib/pullEnv";
 
 async function fetchLicenseKeys(orgId: string): Promise<any> {
     try {
+        const env = pullEnv();
         const response = await fetch(
-            `https://api.fossorial.io/api/v1/license-internal/enterprise/${orgId}/list`,
+            `${env.app.fossorialRemoteAPIBaseUrl}/api/v1/license-internal/enterprise/${orgId}/list`,
             {
                 method: "GET",
                 headers: {
