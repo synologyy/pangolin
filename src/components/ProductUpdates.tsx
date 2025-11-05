@@ -13,7 +13,7 @@ import {
     XIcon
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Transition, TransitionChild } from "@headlessui/react";
+import { Transition } from "@headlessui/react";
 import * as React from "react";
 
 export default function ProductUpdates({
@@ -38,7 +38,7 @@ export default function ProductUpdates({
     const t = useTranslations();
     const [showMoreUpdatesText, setShowMoreUpdatesText] = React.useState(false);
 
-    // we delay the small text so that the user can notice it
+    // we delay the small text animation so that the user can notice it
     React.useEffect(() => {
         const timeout = setTimeout(() => setShowMoreUpdatesText(true), 600);
         return () => clearTimeout(timeout);
@@ -64,37 +64,35 @@ export default function ProductUpdates({
                 isCollapsed && "hidden"
             )}
         >
-            <>
-                <div className="flex flex-col gap-1">
-                    <small
-                        className={cn(
-                            "text-xs text-muted-foreground flex items-center gap-1 mt-2",
-                            showMoreUpdatesText
-                                ? "animate-in fade-in duration-300"
-                                : "opacity-0"
-                        )}
-                    >
-                        {data.updates.length > 0 && (
-                            <>
-                                <BellIcon className="flex-none size-3" />
-                                <span>
-                                    {showNewVersionPopup
-                                        ? t("productUpdateMoreInfo", {
-                                              noOfUpdates: data.updates.length
-                                          })
-                                        : t("productUpdateInfo", {
-                                              noOfUpdates: data.updates.length
-                                          })}
-                                </span>
-                            </>
-                        )}
-                    </small>
-                    <ProductUpdatesPopup
-                        updates={data.updates}
-                        show={data.updates.length > 0}
-                    />
-                </div>
-            </>
+            <div className="flex flex-col gap-1">
+                <small
+                    className={cn(
+                        "text-xs text-muted-foreground flex items-center gap-1 mt-2",
+                        showMoreUpdatesText
+                            ? "animate-in fade-in duration-300"
+                            : "opacity-0"
+                    )}
+                >
+                    {data.updates.length > 0 && (
+                        <>
+                            <BellIcon className="flex-none size-3" />
+                            <span>
+                                {showNewVersionPopup
+                                    ? t("productUpdateMoreInfo", {
+                                          noOfUpdates: data.updates.length
+                                      })
+                                    : t("productUpdateInfo", {
+                                          noOfUpdates: data.updates.length
+                                      })}
+                            </span>
+                        </>
+                    )}
+                </small>
+                <ProductUpdatesPopup
+                    updates={data.updates}
+                    show={data.updates.length > 0}
+                />
+            </div>
 
             <NewVersionAvailable
                 version={data.latestVersion?.data}
