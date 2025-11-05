@@ -75,14 +75,14 @@ export default function GeneralPage() {
                 const res = await api.get<AxiosResponse<ListSitesResponse>>(
                     `/org/${client?.orgId}/sites/`
                 );
-                
+
                 const availableSites = res.data.data.sites
                     .filter((s) => s.type === "newt" && s.subnet)
                     .map((site) => ({
                         id: site.siteId.toString(),
                         text: site.name
                     }));
-                
+
                 setSites(availableSites);
 
                 // Filter sites to only include those assigned to the client
@@ -169,39 +169,6 @@ export default function GeneralPage() {
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="siteIds"
-                                    render={(field) => (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>{t("sites")}</FormLabel>
-                                            <TagInput
-                                                {...field}
-                                                activeTagIndex={activeSitesTagIndex}
-                                                setActiveTagIndex={setActiveSitesTagIndex}
-                                                placeholder={t("selectSites")}
-                                                size="sm"
-                                                tags={form.getValues().siteIds}
-                                                setTags={(newTags) => {
-                                                    form.setValue(
-                                                        "siteIds",
-                                                        newTags as [Tag, ...Tag[]]
-                                                    );
-                                                }}
-                                                enableAutocomplete={true}
-                                                autocompleteOptions={sites}
-                                                allowDuplicates={false}
-                                                restrictTagsToAutocompleteOptions={true}
-                                                sortTags={true}
-                                            />
-                                            <FormDescription>
-                                                {t("sitesDescription")}
-                                            </FormDescription>
                                             <FormMessage />
                                         </FormItem>
                                     )}

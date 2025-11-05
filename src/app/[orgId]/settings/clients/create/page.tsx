@@ -99,10 +99,7 @@ export default function Page() {
                     id: z.string(),
                     text: z.string()
                 })
-            )
-            .refine((val) => val.length > 0, {
-                message: t("siteRequired")
-            }),
+            ),
         subnet: z.string().ip().min(1, {
             message: t("subnetRequired")
         })
@@ -293,18 +290,18 @@ export default function Page() {
 
             // Fetch available sites
 
-            const res = await api.get<AxiosResponse<ListSitesResponse>>(
-                `/org/${orgId}/sites/`
-            );
-            const sites = res.data.data.sites.filter(
-                (s) => s.type === "newt" && s.subnet
-            );
-            setSites(
-                sites.map((site) => ({
-                    id: site.siteId.toString(),
-                    text: site.name
-                }))
-            );
+            // const res = await api.get<AxiosResponse<ListSitesResponse>>(
+            //     `/org/${orgId}/sites/`
+            // );
+            // const sites = res.data.data.sites.filter(
+            //     (s) => s.type === "newt" && s.subnet
+            // );
+            // setSites(
+            //     sites.map((site) => ({
+            //         id: site.siteId.toString(),
+            //         text: site.name
+            //     }))
+            // );
 
             let olmVersion = "latest";
 
@@ -468,60 +465,60 @@ export default function Page() {
                                                 )}
                                             />
 
-                                            <FormField
-                                                control={form.control}
-                                                name="siteIds"
-                                                render={(field) => (
-                                                    <FormItem className="flex flex-col">
-                                                        <FormLabel>
-                                                            {t("sites")}
-                                                        </FormLabel>
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={
-                                                                activeSitesTagIndex
-                                                            }
-                                                            setActiveTagIndex={
-                                                                setActiveSitesTagIndex
-                                                            }
-                                                            placeholder={t("selectSites")}
-                                                            size="sm"
-                                                            tags={
-                                                                form.getValues()
-                                                                    .siteIds
-                                                            }
-                                                            setTags={(
-                                                                olmags
-                                                            ) => {
-                                                                form.setValue(
-                                                                    "siteIds",
-                                                                    olmags as [
-                                                                        Tag,
-                                                                        ...Tag[]
-                                                                    ]
-                                                                );
-                                                            }}
-                                                            enableAutocomplete={
-                                                                true
-                                                            }
-                                                            autocompleteOptions={
-                                                                sites
-                                                            }
-                                                            allowDuplicates={
-                                                                false
-                                                            }
-                                                            restrictTagsToAutocompleteOptions={
-                                                                true
-                                                            }
-                                                            sortTags={true}
-                                                        />
-                                                        <FormDescription>
-                                                            {t("sitesDescription")}
-                                                        </FormDescription>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            {/* <FormField */}
+                                            {/*     control={form.control} */}
+                                            {/*     name="siteIds" */}
+                                            {/*     render={(field) => ( */}
+                                            {/*         <FormItem className="flex flex-col"> */}
+                                            {/*             <FormLabel> */}
+                                            {/*                 {t("sites")} */}
+                                            {/*             </FormLabel> */}
+                                            {/*             <TagInput */}
+                                            {/*                 {...field} */}
+                                            {/*                 activeTagIndex={ */}
+                                            {/*                     activeSitesTagIndex */}
+                                            {/*                 } */}
+                                            {/*                 setActiveTagIndex={ */}
+                                            {/*                     setActiveSitesTagIndex */}
+                                            {/*                 } */}
+                                            {/*                 placeholder={t("selectSites")} */}
+                                            {/*                 size="sm" */}
+                                            {/*                 tags={ */}
+                                            {/*                     form.getValues() */}
+                                            {/*                         .siteIds */}
+                                            {/*                 } */}
+                                            {/*                 setTags={( */}
+                                            {/*                     olmags */}
+                                            {/*                 ) => { */}
+                                            {/*                     form.setValue( */}
+                                            {/*                         "siteIds", */}
+                                            {/*                         olmags as [ */}
+                                            {/*                             Tag, */}
+                                            {/*                             ...Tag[] */}
+                                            {/*                         ] */}
+                                            {/*                     ); */}
+                                            {/*                 }} */}
+                                            {/*                 enableAutocomplete={ */}
+                                            {/*                     true */}
+                                            {/*                 } */}
+                                            {/*                 autocompleteOptions={ */}
+                                            {/*                     sites */}
+                                            {/*                 } */}
+                                            {/*                 allowDuplicates={ */}
+                                            {/*                     false */}
+                                            {/*                 } */}
+                                            {/*                 restrictTagsToAutocompleteOptions={ */}
+                                            {/*                     true */}
+                                            {/*                 } */}
+                                            {/*                 sortTags={true} */}
+                                            {/*             /> */}
+                                            {/*             <FormDescription> */}
+                                            {/*                 {t("sitesDescription")} */}
+                                            {/*             </FormDescription> */}
+                                            {/*             <FormMessage /> */}
+                                            {/*         </FormItem> */}
+                                            {/*     )} */}
+                                            {/* /> */}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>
