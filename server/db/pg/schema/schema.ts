@@ -661,24 +661,6 @@ export const olmSessions = pgTable("clientSession", {
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull()
 });
 
-export const userClients = pgTable("userClients", {
-    userId: varchar("userId")
-        .notNull()
-        .references(() => users.userId, { onDelete: "cascade" }),
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" })
-});
-
-export const roleClients = pgTable("roleClients", {
-    roleId: integer("roleId")
-        .notNull()
-        .references(() => roles.roleId, { onDelete: "cascade" }),
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" })
-});
-
 export const securityKeys = pgTable("webauthnCredentials", {
     credentialId: varchar("credentialId").primaryKey(),
     userId: varchar("userId")
@@ -822,8 +804,6 @@ export type Client = InferSelectModel<typeof clients>;
 export type ClientSite = InferSelectModel<typeof clientSites>;
 export type Olm = InferSelectModel<typeof olms>;
 export type OlmSession = InferSelectModel<typeof olmSessions>;
-export type UserClient = InferSelectModel<typeof userClients>;
-export type RoleClient = InferSelectModel<typeof roleClients>;
 export type OrgDomains = InferSelectModel<typeof orgDomains>;
 export type SiteResource = InferSelectModel<typeof siteResources>;
 export type SetupToken = InferSelectModel<typeof setupTokens>;

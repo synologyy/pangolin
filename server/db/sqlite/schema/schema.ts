@@ -318,10 +318,10 @@ export const clients = sqliteTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
-    
+
     name: text("name").notNull(),
     pubKey: text("pubKey"),
-    olmId: text("olmId"), // to lock it to a specific olm optionally 
+    olmId: text("olmId"), // to lock it to a specific olm optionally
     subnet: text("subnet").notNull(),
     megabytesIn: integer("bytesIn"),
     megabytesOut: integer("bytesOut"),
@@ -490,24 +490,6 @@ export const userSites = sqliteTable("userSites", {
     siteId: integer("siteId")
         .notNull()
         .references(() => sites.siteId, { onDelete: "cascade" })
-});
-
-export const userClients = sqliteTable("userClients", {
-    userId: text("userId")
-        .notNull()
-        .references(() => users.userId, { onDelete: "cascade" }),
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" })
-});
-
-export const roleClients = sqliteTable("roleClients", {
-    roleId: integer("roleId")
-        .notNull()
-        .references(() => roles.roleId, { onDelete: "cascade" }),
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" })
 });
 
 export const roleResources = sqliteTable("roleResources", {
@@ -864,8 +846,6 @@ export type Domain = InferSelectModel<typeof domains>;
 export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
 export type ClientSite = InferSelectModel<typeof clientSites>;
-export type RoleClient = InferSelectModel<typeof roleClients>;
-export type UserClient = InferSelectModel<typeof userClients>;
 export type SupporterKey = InferSelectModel<typeof supporterKey>;
 export type Idp = InferSelectModel<typeof idp>;
 export type ApiKey = InferSelectModel<typeof apiKeys>;
