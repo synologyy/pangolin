@@ -38,7 +38,7 @@ export default function ProductUpdates({
     const t = useTranslations();
     const [showMoreUpdatesText, setShowMoreUpdatesText] = React.useState(false);
 
-    // we need to delay the initial
+    // we delay the small text so that the user can notice it
     React.useEffect(() => {
         const timeout = setTimeout(() => setShowMoreUpdatesText(true), 600);
         return () => clearTimeout(timeout);
