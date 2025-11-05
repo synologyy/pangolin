@@ -24,7 +24,6 @@ interface DataTablePaginationProps<TData> {
     isServerPagination?: boolean;
     isLoading?: boolean;
     disabled?: boolean;
-    renderAdditionalControls?: () => React.ReactNode;
 }
 
 export function DataTablePagination<TData>({
@@ -34,8 +33,7 @@ export function DataTablePagination<TData>({
     totalCount,
     isServerPagination = false,
     isLoading = false,
-    disabled = false,
-    renderAdditionalControls
+    disabled = false
 }: DataTablePaginationProps<TData>) {
     const t = useTranslations();
 
@@ -115,11 +113,6 @@ export function DataTablePagination<TData>({
                         ))}
                     </SelectContent>
                 </Select>
-                {renderAdditionalControls && (
-                    <div className="flex items-center space-x-2">
-                        {renderAdditionalControls()}
-                    </div>
-                )}
             </div>
 
             <div className="flex items-center space-x-3 lg:space-x-8">
