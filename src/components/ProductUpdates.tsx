@@ -5,9 +5,15 @@ import { useLocalStorage } from "@app/hooks/useLocalStorage";
 import { cn } from "@app/lib/cn";
 import { type ProductUpdate, productUpdatesQueries } from "@app/lib/queries";
 import { useQueries } from "@tanstack/react-query";
-import { ArrowRight, BellIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import {
+    ArrowRight,
+    BellIcon,
+    ChevronRightIcon,
+    RocketIcon,
+    XIcon
+} from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Transition } from "@headlessui/react";
+import { Transition, TransitionChild } from "@headlessui/react";
 import * as React from "react";
 
 export default function ProductUpdates({
@@ -34,7 +40,7 @@ export default function ProductUpdates({
 
     // we need to delay the initial
     React.useEffect(() => {
-        const timeout = setTimeout(() => setShowMoreUpdatesText(true), 500);
+        const timeout = setTimeout(() => setShowMoreUpdatesText(true), 600);
         return () => clearTimeout(timeout);
     }, []);
 
@@ -42,61 +48,62 @@ export default function ProductUpdates({
         string | null
     >("ignored-version", null);
 
-    const [showNewVersionPopup, setShowNewVersionPopup] = React.useState(true);
-
     if (!data) return null;
 
-    // const showNewVersionPopup = Boolean(
-    //     data?.latestVersion?.data &&
-    //         ignoredVersionUpdate !==
-    //             data.latestVersion.data?.pangolin.latestVersion &&
-    //         env.app.version !== data.latestVersion.data?.pangolin.latestVersion
-    // );
+    const showNewVersionPopup = Boolean(
+        data?.latestVersion?.data &&
+            ignoredVersionUpdate !==
+                data.latestVersion.data?.pangolin.latestVersion &&
+            env.app.version !== data.latestVersion.data?.pangolin.latestVersion
+    );
 
     return (
         <div
             className={cn(
-                "flex flex-col gap-1 overflow-clip",
+                "flex flex-col gap-2 overflow-clip",
                 isCollapsed && "hidden"
             )}
         >
+            <>
+                <div className="flex flex-col gap-1">
+                    <small
+                        className={cn(
+                            "text-xs text-muted-foreground flex items-center gap-1 mt-2",
+                            showMoreUpdatesText
+                                ? "animate-in fade-in duration-300"
+                                : "opacity-0"
+                        )}
+                    >
+                        {data.updates.length > 0 && (
+                            <>
+                                <BellIcon className="flex-none size-3" />
+                                <span>
+                                    {showNewVersionPopup
+                                        ? t("productUpdateMoreInfo", {
+                                              noOfUpdates: data.updates.length
+                                          })
+                                        : t("productUpdateInfo", {
+                                              noOfUpdates: data.updates.length
+                                          })}
+                                </span>
+                            </>
+                        )}
+                    </small>
+                    <ProductUpdatesPopup
+                        updates={data.updates}
+                        show={data.updates.length > 0}
+                    />
+                </div>
+            </>
+
             <NewVersionAvailable
                 version={data.latestVersion?.data}
                 onClose={() => {
-                    // setIgnoredVersionUpdate(
-                    //     data.latestVersion?.data?.pangolin.latestVersion ?? null
-                    // );
-                    setShowNewVersionPopup(false);
+                    setIgnoredVersionUpdate(
+                        data.latestVersion?.data?.pangolin.latestVersion ?? null
+                    );
                 }}
                 show={showNewVersionPopup}
-            />
-
-            <Transition show={showMoreUpdatesText}>
-                <small
-                    className={cn(
-                        "text-xs text-muted-foreground flex items-center gap-1 mt-2",
-                        "transition ease-in duration-300 data-closed:opacity-0"
-                    )}
-                >
-                    {data.updates.length > 0 && (
-                        <>
-                            <BellIcon className="flex-none size-3" />
-                            <span>
-                                {showNewVersionPopup
-                                    ? t("productUpdateMoreInfo", {
-                                          noOfUpdates: data.updates.length
-                                      })
-                                    : t("productUpdateInfo", {
-                                          noOfUpdates: data.updates.length
-                                      })}
-                            </span>
-                        </>
-                    )}
-                </small>
-            </Transition>
-            <ProductUpdatesPopup
-                updates={data.updates}
-                show={data.updates.length > 0}
             />
         </div>
     );
@@ -119,6 +126,7 @@ function ProductUpdatesPopup({ updates, show }: ProductUpdatesPopupProps) {
         <Transition show={open}>
             <div
                 className={cn(
+                    "relative z-1",
                     "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
                     "transition duration-300 ease-in-out",
                     "data-closed:opacity-0 data-closed:translate-y-full"
@@ -128,7 +136,7 @@ function ProductUpdatesPopup({ updates, show }: ProductUpdatesPopupProps) {
                     <BellIcon className="flex-none size-4" />
                 </div>
                 <div className="flex flex-col gap-2">
-                    <p className="font-medium">What's new</p>
+                    <p className="font-medium">{t("productUpdateWhatsNew")}</p>
                     <small
                         className={cn(
                             "text-muted-foreground",
@@ -186,6 +194,7 @@ function NewVersionAvailable({
         <Transition show={open}>
             <div
                 className={cn(
+                    "relative z-2",
                     "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
                     "transition duration-300 ease-in-out",
                     "data-closed:opacity-0 data-closed:translate-y-full"
@@ -194,7 +203,7 @@ function NewVersionAvailable({
                 {version && (
                     <>
                         <div className="rounded-md bg-muted-foreground/20 p-2">
-                            <BellIcon className="flex-none size-4" />
+                            <RocketIcon className="flex-none size-4" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <p className="font-medium">

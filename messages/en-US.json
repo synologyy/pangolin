@@ -1281,6 +1281,7 @@
     "sidebarExpand": "Expand",
     "productUpdateMoreInfo": "{noOfUpdates} more updates",
     "productUpdateInfo": "{noOfUpdates} updates",
+    "productUpdateWhatsNew": "What's New",
     "pangolinUpdateAvailable": "New version available",
     "pangolinUpdateAvailableInfo": "Version {version} is ready to install",
     "pangolinUpdateAvailableReleaseNotes": "View release notes",
