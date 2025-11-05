@@ -611,7 +611,7 @@ export const clients = pgTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
-    olmId: text("olmId"), // to lock it to a specific olm optionally 
+    olmId: text("olmId"), // to lock it to a specific olm optionally
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
     subnet: varchar("subnet").notNull(),
@@ -764,6 +764,21 @@ export const requestAuditLog = pgTable(
     ]
 );
 
+export const deviceWebAuthCodes = pgTable("deviceWebAuthCodes", {
+    codeId: serial("codeId").primaryKey(),
+    code: text("code").notNull().unique(),
+    ip: text("ip"),
+    city: text("city"),
+    deviceName: text("deviceName"),
+    applicationName: text("applicationName").notNull(),
+    expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
+    createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+    verified: boolean("verified").notNull().default(false),
+    userId: varchar("userId").references(() => users.userId, {
+        onDelete: "cascade"
+    })
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -819,4 +834,5 @@ export type Blueprint = InferSelectModel<typeof blueprints>;
 export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type DeviceWebAuthCode = InferSelectModel<typeof deviceWebAuthCodes>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
