@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, newts } from "@server/db";
+import { db, newts, roleResources, roles, roleSiteResources } from "@server/db";
 import { siteResources, sites, orgs, SiteResource } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -140,6 +140,23 @@ export async function createSiteResource(
             })
             .returning();
 
+        const adminRole = await db
+            .select()
+            .from(roles)
+            .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
+            .limit(1);
+
+        if (adminRole.length === 0) {
+            return next(
+                createHttpError(HttpCode.NOT_FOUND, `Admin role not found`)
+            );
+        }
+
+        await db.insert(roleSiteResources).values({
+            roleId: adminRole[0].roleId,
+            siteResourceId: newSiteResource.siteResourceId
+        });
+
         const [newt] = await db
             .select()
             .from(newts)
@@ -150,7 +167,13 @@ export async function createSiteResource(
             return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
         }
 
-        await addTargets(newt.newtId, destinationIp, destinationPort, protocol, proxyPort);
+        await addTargets(
+            newt.newtId,
+            destinationIp,
+            destinationPort,
+            protocol,
+            proxyPort
+        );
 
         logger.info(
             `Created site resource ${newSiteResource.siteResourceId} for site ${siteId}`

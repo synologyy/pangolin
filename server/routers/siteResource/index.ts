@@ -4,3 +4,7 @@ export * from "./getSiteResource";
 export * from "./updateSiteResource";
 export * from "./listSiteResources";
 export * from "./listAllSiteResourcesByOrg";
+export * from "./listSiteResourceRoles";
+export * from "./listSiteResourceUsers";
+export * from "./setSiteResourceRoles";
+export * from "./setSiteResourceUsers";

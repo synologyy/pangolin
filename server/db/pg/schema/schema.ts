@@ -211,6 +211,24 @@ export const siteResources = pgTable("siteResources", {
     enabled: boolean("enabled").notNull().default(true)
 });
 
+export const roleSiteResources = pgTable("roleSiteResources", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const userSiteResources = pgTable("userSiteResources", {
+    userId: varchar("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
 export const users = pgTable("user", {
     userId: varchar("id").primaryKey(),
     email: varchar("email"),

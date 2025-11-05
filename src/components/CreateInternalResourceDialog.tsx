@@ -51,7 +51,13 @@ import { useTranslations } from "next-intl";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { ListSitesResponse } from "@server/routers/site";
+import { ListRolesResponse } from "@server/routers/role";
+import { ListUsersResponse } from "@server/routers/user";
 import { cn } from "@app/lib/cn";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
+import { Separator } from "@app/components/ui/separator";
+import { AxiosResponse } from "axios";
+import { UserType } from "@server/types/UserTypes";
 
 type Site = ListSitesResponse["sites"][0];
 
@@ -93,10 +99,27 @@ export default function CreateInternalResourceDialog({
             .int()
             .positive()
             .min(1, t("createInternalResourceDialogDestinationPortMin"))
-            .max(65535, t("createInternalResourceDialogDestinationPortMax"))
+            .max(65535, t("createInternalResourceDialogDestinationPortMax")),
+        roles: z.array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
+        ).optional(),
+        users: z.array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
+        ).optional()
     });
     
     type FormData = z.infer<typeof formSchema>;
+
+    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
+    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>([]);
+    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<number | null>(null);
+    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<number | null>(null);
 
     const availableSites = sites.filter(
         (site) => site.type === "newt" && site.subnet
@@ -110,7 +133,9 @@ export default function CreateInternalResourceDialog({
             protocol: "tcp",
             proxyPort: undefined,
             destinationIp: "",
-            destinationPort: undefined
+            destinationPort: undefined,
+            roles: [],
+            users: []
         }
     });
 
@@ -122,22 +147,75 @@ export default function CreateInternalResourceDialog({
                 protocol: "tcp",
                 proxyPort: undefined,
                 destinationIp: "",
-                destinationPort: undefined
+                destinationPort: undefined,
+                roles: [],
+                users: []
             });
         }
     }, [open]);
 
+    useEffect(() => {
+        const fetchRolesAndUsers = async () => {
+            try {
+                const [rolesResponse, usersResponse] = await Promise.all([
+                    api.get<AxiosResponse<ListRolesResponse>>(`/org/${orgId}/roles`),
+                    api.get<AxiosResponse<ListUsersResponse>>(`/org/${orgId}/users`)
+                ]);
+
+                setAllRoles(
+                    rolesResponse.data.data.roles
+                        .map((role) => ({
+                            id: role.roleId.toString(),
+                            text: role.name
+                        }))
+                        .filter((role) => role.text !== "Admin")
+                );
+
+                setAllUsers(
+                    usersResponse.data.data.users.map((user) => ({
+                        id: user.id.toString(),
+                        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+                    }))
+                );
+            } catch (error) {
+                console.error("Error fetching roles and users:", error);
+            }
+        };
+
+        if (open) {
+            fetchRolesAndUsers();
+        }
+    }, [open, orgId]);
+
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
-            await api.put(`/org/${orgId}/site/${data.siteId}/resource`, {
-                name: data.name,
-                protocol: data.protocol,
-                proxyPort: data.proxyPort,
-                destinationIp: data.destinationIp,
-                destinationPort: data.destinationPort,
-                enabled: true
-            });
+            const response = await api.put<AxiosResponse<any>>(
+                `/org/${orgId}/site/${data.siteId}/resource`,
+                {
+                    name: data.name,
+                    protocol: data.protocol,
+                    proxyPort: data.proxyPort,
+                    destinationIp: data.destinationIp,
+                    destinationPort: data.destinationPort,
+                    enabled: true
+                }
+            );
+
+            const siteResourceId = response.data.data.siteResourceId;
+
+            // Set roles and users if provided
+            if (data.roles && data.roles.length > 0) {
+                await api.post(`/site-resource/${siteResourceId}/roles`, {
+                    roleIds: data.roles.map((r) => parseInt(r.id))
+                });
+            }
+
+            if (data.users && data.users.length > 0) {
+                await api.post(`/site-resource/${siteResourceId}/users`, {
+                    userIds: data.users.map((u) => u.id)
+                });
+            }
 
             toast({
                 title: t("createInternalResourceDialogSuccess"),
@@ -394,6 +472,81 @@ export default function CreateInternalResourceDialog({
                                             )}
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Access Control Section */}
+                            <Separator />
+                            <div>
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {t("resourceUsersRoles")}
+                                </h3>
+                                <div className="space-y-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="roles"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col items-start">
+                                                <FormLabel>{t("roles")}</FormLabel>
+                                                <FormControl>
+                                                    <TagInput
+                                                        {...field}
+                                                        activeTagIndex={activeRolesTagIndex}
+                                                        setActiveTagIndex={setActiveRolesTagIndex}
+                                                        placeholder={t("accessRoleSelect2")}
+                                                        size="sm"
+                                                        tags={form.getValues().roles || []}
+                                                        setTags={(newRoles) => {
+                                                            form.setValue(
+                                                                "roles",
+                                                                newRoles as [Tag, ...Tag[]]
+                                                            );
+                                                        }}
+                                                        enableAutocomplete={true}
+                                                        autocompleteOptions={allRoles}
+                                                        allowDuplicates={false}
+                                                        restrictTagsToAutocompleteOptions={true}
+                                                        sortTags={true}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    {t("resourceRoleDescription")}
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="users"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col items-start">
+                                                <FormLabel>{t("users")}</FormLabel>
+                                                <FormControl>
+                                                    <TagInput
+                                                        {...field}
+                                                        activeTagIndex={activeUsersTagIndex}
+                                                        setActiveTagIndex={setActiveUsersTagIndex}
+                                                        placeholder={t("accessUserSelect")}
+                                                        tags={form.getValues().users || []}
+                                                        size="sm"
+                                                        setTags={(newUsers) => {
+                                                            form.setValue(
+                                                                "users",
+                                                                newUsers as [Tag, ...Tag[]]
+                                                            );
+                                                        }}
+                                                        enableAutocomplete={true}
+                                                        autocompleteOptions={allUsers}
+                                                        allowDuplicates={false}
+                                                        restrictTagsToAutocompleteOptions={true}
+                                                        sortTags={true}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
                                 </div>
                             </div>
                         </form>

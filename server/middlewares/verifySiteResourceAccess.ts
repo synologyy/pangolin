@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "@server/db";
+import { db, roleSiteResources, userOrgs, userSiteResources } from "@server/db";
 import { siteResources } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import createHttpError from "http-errors";
@@ -12,44 +12,128 @@ export async function verifySiteResourceAccess(
     next: NextFunction
 ): Promise<any> {
     try {
-        const siteResourceId = parseInt(req.params.siteResourceId);
-        const siteId = parseInt(req.params.siteId);
-        const orgId = req.params.orgId;
+        const userId = req.user!.userId;
+        const siteResourceId =
+            req.params.siteResourceId ||
+            req.body.siteResourceId ||
+            req.query.siteResourceId;
 
-        if (!siteResourceId || !siteId || !orgId) {
+        if (!userId) {
+            return next(
+                createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
+            );
+        }
+
+        if (!siteResourceId) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
-                    "Missing required parameters"
+                    "Site resource ID is required"
                 )
             );
         }
 
-        // Check if the site resource exists and belongs to the specified site and org
+        const siteResourceIdNum = parseInt(siteResourceId as string, 10);
+        if (isNaN(siteResourceIdNum)) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Invalid site resource ID"
+                )
+            );
+        }
+
         const [siteResource] = await db
             .select()
             .from(siteResources)
-            .where(and(
-                eq(siteResources.siteResourceId, siteResourceId),
-                eq(siteResources.siteId, siteId),
-                eq(siteResources.orgId, orgId)
-            ))
+            .where(eq(siteResources.siteResourceId, siteResourceIdNum))
             .limit(1);
 
         if (!siteResource) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    "Site resource not found"
+                    `Site resource with ID ${siteResourceIdNum} not found`
                 )
             );
         }
+
+        if (!siteResource.orgId) {
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    `Site resource with ID ${siteResourceIdNum} does not have an organization ID`
+                )
+            );
+        }
+
+        if (!req.userOrg) {
+            const userOrgRole = await db
+                .select()
+                .from(userOrgs)
+                .where(
+                    and(
+                        eq(userOrgs.userId, userId),
+                        eq(userOrgs.orgId, siteResource.orgId)
+                    )
+                )
+                .limit(1);
+            req.userOrg = userOrgRole[0];
+        }
+
+        if (!req.userOrg) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "User does not have access to this organization"
+                )
+            );
+        }
+
+        const userOrgRoleId = req.userOrg.roleId;
+        req.userOrgRoleId = userOrgRoleId;
+        req.userOrgId = siteResource.orgId;
 
         // Attach the siteResource to the request for use in the next middleware/route
         // @ts-ignore - Extending Request type
         req.siteResource = siteResource;
 
-        next();
+        const roleResourceAccess = await db
+            .select()
+            .from(roleSiteResources)
+            .where(
+                and(
+                    eq(roleSiteResources.siteResourceId, siteResourceIdNum),
+                    eq(roleSiteResources.roleId, userOrgRoleId)
+                )
+            )
+            .limit(1);
+
+        if (roleResourceAccess.length > 0) {
+            return next();
+        }
+
+        const userResourceAccess = await db
+            .select()
+            .from(userSiteResources)
+            .where(
+                and(
+                    eq(userSiteResources.userId, userId),
+                    eq(userSiteResources.siteResourceId, siteResourceIdNum)
+                )
+            )
+            .limit(1);
+
+        if (userResourceAccess.length > 0) {
+            return next();
+        }
+
+        return next(
+            createHttpError(
+                HttpCode.FORBIDDEN,
+                "User does not have access to this resource"
+            )
+        );
     } catch (error) {
         logger.error("Error verifying site resource access:", error);
         return next(

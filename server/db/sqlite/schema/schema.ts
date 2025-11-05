@@ -232,6 +232,24 @@ export const siteResources = sqliteTable("siteResources", {
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true)
 });
 
+export const roleSiteResources = sqliteTable("roleSiteResources", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const userSiteResources = sqliteTable("userSiteResources", {
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
 export const users = sqliteTable("user", {
     userId: text("id").primaryKey(),
     email: text("email"),
@@ -356,7 +374,8 @@ export const olms = sqliteTable("olms", {
         // we will switch this depending on the current org it wants to connect to
         onDelete: "set null"
     }),
-    userId: text("userId").references(() => users.userId, { // optionally tied to a user and in this case delete when the user deletes
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     })
 });
@@ -822,7 +841,9 @@ export const deviceWebAuthCodes = sqliteTable("deviceWebAuthCodes", {
     expiresAt: integer("expiresAt").notNull(),
     createdAt: integer("createdAt").notNull(),
     verified: integer("verified", { mode: "boolean" }).notNull().default(false),
-    userId: text("userId").references(() => users.userId, { onDelete: "cascade" })
+    userId: text("userId").references(() => users.userId, {
+        onDelete: "cascade"
+    })
 });
 
 export type Org = InferSelectModel<typeof orgs>;

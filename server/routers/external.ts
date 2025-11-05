@@ -285,6 +285,38 @@ authenticated.delete(
     siteResource.deleteSiteResource,
 );
 
+authenticated.get(
+    "/site-resource/:siteResourceId/roles",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceRoles),
+    siteResource.listSiteResourceRoles
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/users",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceUsers
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles",
+    verifySiteResourceAccess,
+    verifyRoleAccess,
+    verifyUserHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.setSiteResourceRoles,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users",
+    verifySiteResourceAccess,
+    verifySetResourceUsers,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceUsers,
+);
+
 authenticated.put(
     "/org/:orgId/resource",
     verifyOrgAccess,

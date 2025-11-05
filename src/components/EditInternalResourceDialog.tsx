@@ -37,6 +37,13 @@ import { useTranslations } from "next-intl";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { Separator } from "@app/components/ui/separator";
+import { ListRolesResponse } from "@server/routers/role";
+import { ListUsersResponse } from "@server/routers/user";
+import { ListSiteResourceRolesResponse } from "@server/routers/siteResource/listSiteResourceRoles";
+import { ListSiteResourceUsersResponse } from "@server/routers/siteResource/listSiteResourceUsers";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
+import { AxiosResponse } from "axios";
+import { UserType } from "@server/types/UserTypes";
 
 type InternalResourceData = {
     id: number;
@@ -74,10 +81,28 @@ export default function EditInternalResourceDialog({
         protocol: z.enum(["tcp", "udp"]),
         proxyPort: z.number().int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")),
         destinationIp: z.string(),
-        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax"))
+        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")),
+        roles: z.array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
+        ).optional(),
+        users: z.array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
+        ).optional()
     });
 
     type FormData = z.infer<typeof formSchema>;
+
+    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
+    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>([]);
+    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<number | null>(null);
+    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<number | null>(null);
+    const [loadingRolesUsers, setLoadingRolesUsers] = useState(false);
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -86,9 +111,70 @@ export default function EditInternalResourceDialog({
             protocol: resource.protocol as "tcp" | "udp",
             proxyPort: resource.proxyPort || undefined,
             destinationIp: resource.destinationIp || "",
-            destinationPort: resource.destinationPort || undefined
+            destinationPort: resource.destinationPort || undefined,
+            roles: [],
+            users: []
         }
     });
+
+    const fetchRolesAndUsers = async () => {
+        setLoadingRolesUsers(true);
+        try {
+            const [
+                rolesResponse,
+                resourceRolesResponse,
+                usersResponse,
+                resourceUsersResponse
+            ] = await Promise.all([
+                api.get<AxiosResponse<ListRolesResponse>>(`/org/${orgId}/roles`),
+                api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
+                    `/site-resource/${resource.id}/roles`
+                ),
+                api.get<AxiosResponse<ListUsersResponse>>(`/org/${orgId}/users`),
+                api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
+                    `/site-resource/${resource.id}/users`
+                )
+            ]);
+
+            setAllRoles(
+                rolesResponse.data.data.roles
+                    .map((role) => ({
+                        id: role.roleId.toString(),
+                        text: role.name
+                    }))
+                    .filter((role) => role.text !== "Admin")
+            );
+
+            form.setValue(
+                "roles",
+                resourceRolesResponse.data.data.roles
+                    .map((i) => ({
+                        id: i.roleId.toString(),
+                        text: i.name
+                    }))
+                    .filter((role) => role.text !== "Admin")
+            );
+
+            setAllUsers(
+                usersResponse.data.data.users.map((user) => ({
+                    id: user.id.toString(),
+                    text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+                }))
+            );
+
+            form.setValue(
+                "users",
+                resourceUsersResponse.data.data.users.map((i) => ({
+                    id: i.userId.toString(),
+                    text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+                }))
+            );
+        } catch (error) {
+            console.error("Error fetching roles and users:", error);
+        } finally {
+            setLoadingRolesUsers(false);
+        }
+    };
 
     useEffect(() => {
         if (open) {
@@ -97,10 +183,14 @@ export default function EditInternalResourceDialog({
                 protocol: resource.protocol as "tcp" | "udp",
                 proxyPort: resource.proxyPort || undefined,
                 destinationIp: resource.destinationIp || "",
-                destinationPort: resource.destinationPort || undefined
+                destinationPort: resource.destinationPort || undefined,
+                roles: [],
+                users: []
             });
+            fetchRolesAndUsers();
         }
-    }, [open, resource, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, resource]);
 
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
@@ -113,6 +203,16 @@ export default function EditInternalResourceDialog({
                 destinationIp: data.destinationIp,
                 destinationPort: data.destinationPort
             });
+
+            // Update roles and users
+            await Promise.all([
+                api.post(`/site-resource/${resource.id}/roles`, {
+                    roleIds: (data.roles || []).map((r) => parseInt(r.id))
+                }),
+                api.post(`/site-resource/${resource.id}/users`, {
+                    userIds: (data.users || []).map((u) => u.id)
+                })
+            ]);
 
             toast({
                 title: t("editInternalResourceDialogSuccess"),
@@ -249,6 +349,87 @@ export default function EditInternalResourceDialog({
                                         />
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Access Control Section */}
+                            <Separator />
+                            <div>
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {t("resourceUsersRoles")}
+                                </h3>
+                                {loadingRolesUsers ? (
+                                    <div className="text-sm text-muted-foreground">
+                                        {t("loading")}
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="roles"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col items-start">
+                                                    <FormLabel>{t("roles")}</FormLabel>
+                                                    <FormControl>
+                                                        <TagInput
+                                                            {...field}
+                                                            activeTagIndex={activeRolesTagIndex}
+                                                            setActiveTagIndex={setActiveRolesTagIndex}
+                                                            placeholder={t("accessRoleSelect2")}
+                                                            size="sm"
+                                                            tags={form.getValues().roles || []}
+                                                            setTags={(newRoles) => {
+                                                                form.setValue(
+                                                                    "roles",
+                                                                    newRoles as [Tag, ...Tag[]]
+                                                                );
+                                                            }}
+                                                            enableAutocomplete={true}
+                                                            autocompleteOptions={allRoles}
+                                                            allowDuplicates={false}
+                                                            restrictTagsToAutocompleteOptions={true}
+                                                            sortTags={true}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t("resourceRoleDescription")}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="users"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col items-start">
+                                                    <FormLabel>{t("users")}</FormLabel>
+                                                    <FormControl>
+                                                        <TagInput
+                                                            {...field}
+                                                            activeTagIndex={activeUsersTagIndex}
+                                                            setActiveTagIndex={setActiveUsersTagIndex}
+                                                            placeholder={t("accessUserSelect")}
+                                                            tags={form.getValues().users || []}
+                                                            size="sm"
+                                                            setTags={(newUsers) => {
+                                                                form.setValue(
+                                                                    "users",
+                                                                    newUsers as [Tag, ...Tag[]]
+                                                                );
+                                                            }}
+                                                            enableAutocomplete={true}
+                                                            autocompleteOptions={allUsers}
+                                                            allowDuplicates={false}
+                                                            restrictTagsToAutocompleteOptions={true}
+                                                            sortTags={true}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </Form>
