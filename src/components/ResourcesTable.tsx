@@ -35,6 +35,8 @@ import {
     Clock,
     Wifi,
     WifiOff,
+    CheckCircle2,
+    XCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -132,11 +134,11 @@ function StatusIcon({ status, className = "" }: {
 
     switch (status) {
         case 'online':
-            return <Wifi className={`${iconClass} text-green-500`} />;
+            return <CheckCircle2 className={`${iconClass} text-green-500`} />;
         case 'degraded':
-            return <Wifi className={`${iconClass} text-yellow-500`} />;
+            return <CheckCircle2 className={`${iconClass} text-yellow-500`} />;
         case 'offline':
-            return <WifiOff className={`${iconClass} text-red-500`} />;
+            return <XCircle className={`${iconClass} text-destructive`} />;
         case 'unknown':
             return <Clock className={`${iconClass} text-gray-400`} />;
         default:
@@ -457,9 +459,9 @@ export default function ResourcesTable({
                                             status={target.healthStatus === 'healthy' ? 'online' : 'offline'}
                                             className="h-3 w-3"
                                         />
-                                        <CopyToClipboard text={`${target.ip}:${target.port}`} />
+                                        {`${target.ip}:${target.port}`}
                                     </div>
-                                    <span className={`text-xs capitalize ${target.healthStatus === 'healthy' ? 'text-green-600' : 'text-red-600'
+                                    <span className={`capitalize ${target.healthStatus === 'healthy' ? 'text-green-500' : 'text-destructive'
                                         }`}>
                                         {target.healthStatus}
                                     </span>
@@ -473,9 +475,9 @@ export default function ResourcesTable({
                                 <DropdownMenuItem key={target.targetId} className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
                                         <StatusIcon status="unknown" className="h-3 w-3" />
-                                        <CopyToClipboard text={`${target.ip}:${target.port}`} />
+                                        {`${target.ip}:${target.port}`}
                                     </div>
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-muted-foreground">
                                         {!target.enabled ? 'Disabled' : 'Not monitored'}
                                     </span>
                                 </DropdownMenuItem>
