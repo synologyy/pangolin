@@ -216,13 +216,18 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
 
     const { tcpTargets, udpTargets } = allSiteResources.reduce(
         (acc, resource) => {
+            // Only process port mode resources
+            if (resource.mode !== "port") {
+                return acc;
+            }
+
             // Filter out invalid targets
-            if (!resource.proxyPort || !resource.destinationIp || !resource.destinationPort) {
+            if (!resource.proxyPort || !resource.destination || !resource.destinationPort || !resource.protocol) {
                 return acc;
             }
 
             // Format target into string
-            const formattedTarget = `${resource.proxyPort}:${resource.destinationIp}:${resource.destinationPort}`;
+            const formattedTarget = `${resource.proxyPort}:${resource.destination}:${resource.destinationPort}`;
 
             // Add to the appropriate protocol array
             if (resource.protocol === "tcp") {

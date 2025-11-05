@@ -225,11 +225,13 @@ export const siteResources = sqliteTable("siteResources", {
         .references(() => orgs.orgId, { onDelete: "cascade" }),
     niceId: text("niceId").notNull(),
     name: text("name").notNull(),
-    protocol: text("protocol").notNull(),
-    proxyPort: integer("proxyPort").notNull(),
-    destinationPort: integer("destinationPort").notNull(),
-    destinationIp: text("destinationIp").notNull(),
-    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true)
+    mode: text("mode").notNull(), // "host" | "cidr" | "port"
+    protocol: text("protocol"), // only for port mode
+    proxyPort: integer("proxyPort"), // only for port mode
+    destinationPort: integer("destinationPort"),  // only for port mode
+    destination: text("destination").notNull(), // ip, cidr, hostname
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    alias: text("alias")
 });
 
 export const roleSiteResources = sqliteTable("roleSiteResources", {

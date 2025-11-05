@@ -32,7 +32,7 @@ const listAllSiteResourcesByOrgQuerySchema = z.object({
 });
 
 export type ListAllSiteResourcesByOrgResponse = {
-    siteResources: (SiteResource & { siteName: string, siteNiceId: string })[];
+    siteResources: (SiteResource & { siteName: string, siteNiceId: string, siteAddress: string | null })[];
 };
 
 registry.registerPath({
@@ -82,14 +82,18 @@ export async function listAllSiteResourcesByOrg(
                 siteResourceId: siteResources.siteResourceId,
                 siteId: siteResources.siteId,
                 orgId: siteResources.orgId,
+                niceId: siteResources.niceId,
                 name: siteResources.name,
+                mode: siteResources.mode,
                 protocol: siteResources.protocol,
                 proxyPort: siteResources.proxyPort,
                 destinationPort: siteResources.destinationPort,
-                destinationIp: siteResources.destinationIp,
+                destination: siteResources.destination,
                 enabled: siteResources.enabled,
+                alias: siteResources.alias,
                 siteName: sites.name,
-                siteNiceId: sites.niceId
+                siteNiceId: sites.niceId,
+                siteAddress: sites.address
             })
             .from(siteResources)
             .innerJoin(sites, eq(siteResources.siteId, sites.siteId))

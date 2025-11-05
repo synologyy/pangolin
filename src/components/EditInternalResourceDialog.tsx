@@ -50,11 +50,13 @@ type InternalResourceData = {
     name: string;
     orgId: string;
     siteName: string;
-    protocol: string;
+    mode: "host" | "cidr" | "port";
+    protocol: string | null;
     proxyPort: number | null;
     siteId: number;
-    destinationIp?: string;
-    destinationPort?: number;
+    destination: string;
+    destinationPort?: number | null;
+    alias?: string | null;
 };
 
 type EditInternalResourceDialogProps = {
@@ -78,10 +80,12 @@ export default function EditInternalResourceDialog({
 
     const formSchema = z.object({
         name: z.string().min(1, t("editInternalResourceDialogNameRequired")).max(255, t("editInternalResourceDialogNameMaxLength")),
-        protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.number().int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")),
-        destinationIp: z.string(),
-        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")),
+        mode: z.enum(["host", "cidr", "port"]),
+        protocol: z.enum(["tcp", "udp"]).nullish(),
+        proxyPort: z.number().int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
+        destination: z.string().min(1),
+        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
+        alias: z.string().nullish(),
         roles: z.array(
             z.object({
                 id: z.string(),
@@ -94,7 +98,43 @@ export default function EditInternalResourceDialog({
                 text: z.string()
             })
         ).optional()
-    });
+    })
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.protocol !== undefined && data.protocol !== null;
+            }
+            return true;
+        },
+        {
+            message: t("editInternalResourceDialogProtocol") + " is required for port mode",
+            path: ["protocol"]
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.proxyPort !== undefined && data.proxyPort !== null;
+            }
+            return true;
+        },
+        {
+            message: t("editInternalResourceDialogSitePort") + " is required for port mode",
+            path: ["proxyPort"]
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.destinationPort !== undefined && data.destinationPort !== null;
+            }
+            return true;
+        },
+        {
+            message: t("targetPort") + " is required for port mode",
+            path: ["destinationPort"]
+        }
+    );
 
     type FormData = z.infer<typeof formSchema>;
 
@@ -108,14 +148,18 @@ export default function EditInternalResourceDialog({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: resource.name,
-            protocol: resource.protocol as "tcp" | "udp",
-            proxyPort: resource.proxyPort || undefined,
-            destinationIp: resource.destinationIp || "",
-            destinationPort: resource.destinationPort || undefined,
+            mode: resource.mode || "host",
+            protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
+            proxyPort: resource.proxyPort ?? undefined,
+            destination: resource.destination || "",
+            destinationPort: resource.destinationPort ?? undefined,
+            alias: resource.alias ?? null,
             roles: [],
             users: []
         }
     });
+
+    const mode = form.watch("mode");
 
     const fetchRolesAndUsers = async () => {
         setLoadingRolesUsers(true);
@@ -180,10 +224,12 @@ export default function EditInternalResourceDialog({
         if (open) {
             form.reset({
                 name: resource.name,
-                protocol: resource.protocol as "tcp" | "udp",
-                proxyPort: resource.proxyPort || undefined,
-                destinationIp: resource.destinationIp || "",
-                destinationPort: resource.destinationPort || undefined,
+                mode: resource.mode || "host",
+                protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
+                proxyPort: resource.proxyPort ?? undefined,
+                destination: resource.destination || "",
+                destinationPort: resource.destinationPort ?? undefined,
+                alias: resource.alias ?? null,
                 roles: [],
                 users: []
             });
@@ -198,10 +244,12 @@ export default function EditInternalResourceDialog({
             // Update the site resource
             await api.post(`/org/${orgId}/site/${resource.siteId}/resource/${resource.id}`, {
                 name: data.name,
-                protocol: data.protocol,
-                proxyPort: data.proxyPort,
-                destinationIp: data.destinationIp,
-                destinationPort: data.destinationPort
+                mode: data.mode,
+                protocol: data.mode === "port" ? data.protocol : null,
+                proxyPort: data.mode === "port" ? data.proxyPort : null,
+                destinationPort: data.mode === "port" ? data.destinationPort : null,
+                destination: data.destination,
+                alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : null
             });
 
             // Update roles and users
@@ -264,50 +312,78 @@ export default function EditInternalResourceDialog({
                                         )}
                                     />
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="protocol"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{t("editInternalResourceDialogProtocol")}</FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        value={field.value}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="tcp">TCP</SelectItem>
-                                                            <SelectItem value="udp">UDP</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="proxyPort"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{t("editInternalResourceDialogSitePort")}</FormLabel>
+                                    <FormField
+                                        control={form.control}
+                                        name="mode"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("editInternalResourceDialogMode")}</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
-                                                        <Input
-                                                            type="number"
-                                                            {...field}
-                                                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                                        />
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
                                                     </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                                    <SelectContent>
+                                                        <SelectItem value="port">{t("editInternalResourceDialogModePort")}</SelectItem>
+                                                        <SelectItem value="host">{t("editInternalResourceDialogModeHost")}</SelectItem>
+                                                        <SelectItem value="cidr">{t("editInternalResourceDialogModeCidr")}</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {mode === "port" && (
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="protocol"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{t("editInternalResourceDialogProtocol")}</FormLabel>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            value={field.value ?? undefined}
+                                                        >
+                                                            <FormControl>
+                                                                <SelectTrigger>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent>
+                                                                <SelectItem value="tcp">TCP</SelectItem>
+                                                                <SelectItem value="udp">UDP</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="proxyPort"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>{t("editInternalResourceDialogSitePort")}</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="number"
+                                                                value={field.value || ""}
+                                                                onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value) || 0)}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -315,21 +391,26 @@ export default function EditInternalResourceDialog({
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">{t("editInternalResourceDialogTargetConfiguration")}</h3>
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="destinationIp"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{t("targetAddr")}</FormLabel>
-                                                    <FormControl>
-                                                        <Input {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                    <FormField
+                                        control={form.control}
+                                        name="destination"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("editInternalResourceDialogDestination")}</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {mode === "host" && t("editInternalResourceDialogDestinationHostDescription")}
+                                                    {mode === "cidr" && t("editInternalResourceDialogDestinationCidrDescription")}
+                                                    {mode === "port" && t("editInternalResourceDialogDestinationIPDescription")}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
+                                    {mode === "port" && (
                                         <FormField
                                             control={form.control}
                                             name="destinationPort"
@@ -339,20 +420,41 @@ export default function EditInternalResourceDialog({
                                                     <FormControl>
                                                         <Input
                                                             type="number"
-                                                            {...field}
-                                                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                                            value={field.value || ""}
+                                                            onChange={(e) => field.onChange(e.target.value === "" ? undefined : parseInt(e.target.value) || 0)}
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
+                            {/* Alias */}
+                            {mode !== "cidr" && (
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="alias"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("editInternalResourceDialogAlias")}</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t("editInternalResourceDialogAliasDescription")}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
                             {/* Access Control Section */}
-                            <Separator />
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">
                                     {t("resourceUsersRoles")}

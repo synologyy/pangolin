@@ -204,11 +204,13 @@ export const siteResources = pgTable("siteResources", {
         .references(() => orgs.orgId, { onDelete: "cascade" }),
     niceId: varchar("niceId").notNull(),
     name: varchar("name").notNull(),
-    protocol: varchar("protocol").notNull(),
-    proxyPort: integer("proxyPort").notNull(),
-    destinationPort: integer("destinationPort").notNull(),
-    destinationIp: varchar("destinationIp").notNull(),
-    enabled: boolean("enabled").notNull().default(true)
+    mode: varchar("mode").notNull(), // "host" | "cidr" | "port"
+    protocol: varchar("protocol"), // only for port mode
+    proxyPort: integer("proxyPort"), // only for port mode
+    destinationPort: integer("destinationPort"),  // only for port mode
+    destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
+    enabled: boolean("enabled").notNull().default(true),
+    alias: varchar("alias")
 });
 
 export const roleSiteResources = pgTable("roleSiteResources", {

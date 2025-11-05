@@ -22,13 +22,30 @@ const createSiteResourceParamsSchema = z
 const createSiteResourceSchema = z
     .object({
         name: z.string().min(1).max(255),
-        protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.number().int().positive(),
-        destinationPort: z.number().int().positive(),
-        destinationIp: z.string(),
-        enabled: z.boolean().default(true)
-    })
-    .strict();
+        mode: z.enum(["host", "cidr", "port"]),
+        protocol: z.enum(["tcp", "udp"]).optional(),
+        proxyPort: z.number().int().positive().optional(),
+        destinationPort: z.number().int().positive().optional(),
+        destination: z.string().min(1),
+        enabled: z.boolean().default(true),
+        alias: z.string().optional()
+    }).strict()
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return (
+                    data.protocol !== undefined &&
+                    data.proxyPort !== undefined &&
+                    data.destinationPort !== undefined
+                );
+            }
+            return true;
+        },
+        {
+            message:
+                "Protocol, proxy port, and destination port are required for port mode"
+        }
+    );
 
 export type CreateSiteResourceBody = z.infer<typeof createSiteResourceSchema>;
 export type CreateSiteResourceResponse = SiteResource;
@@ -82,11 +99,13 @@ export async function createSiteResource(
         const { siteId, orgId } = parsedParams.data;
         const {
             name,
+            mode,
             protocol,
             proxyPort,
             destinationPort,
-            destinationIp,
-            enabled
+            destination,
+            enabled,
+            alias
         } = parsedBody.data;
 
         // Verify the site exists and belongs to the org
@@ -100,26 +119,28 @@ export async function createSiteResource(
             return next(createHttpError(HttpCode.NOT_FOUND, "Site not found"));
         }
 
-        // check if resource with same protocol and proxy port already exists
-        const [existingResource] = await db
-            .select()
-            .from(siteResources)
-            .where(
-                and(
-                    eq(siteResources.siteId, siteId),
-                    eq(siteResources.orgId, orgId),
-                    eq(siteResources.protocol, protocol),
-                    eq(siteResources.proxyPort, proxyPort)
+        // check if resource with same protocol and proxy port already exists (only for port mode)
+        if (mode === "port" && protocol && proxyPort) {
+            const [existingResource] = await db
+                .select()
+                .from(siteResources)
+                .where(
+                    and(
+                        eq(siteResources.siteId, siteId),
+                        eq(siteResources.orgId, orgId),
+                        eq(siteResources.protocol, protocol),
+                        eq(siteResources.proxyPort, proxyPort)
+                    )
                 )
-            )
-            .limit(1);
-        if (existingResource && existingResource.siteResourceId) {
-            return next(
-                createHttpError(
-                    HttpCode.CONFLICT,
-                    "A resource with the same protocol and proxy port already exists"
-                )
-            );
+                .limit(1);
+            if (existingResource && existingResource.siteResourceId) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        "A resource with the same protocol and proxy port already exists"
+                    )
+                );
+            }
         }
 
         const niceId = await getUniqueSiteResourceName(orgId);
@@ -132,11 +153,13 @@ export async function createSiteResource(
                 niceId,
                 orgId,
                 name,
-                protocol,
-                proxyPort,
-                destinationPort,
-                destinationIp,
-                enabled
+                mode,
+                protocol: mode === "port" ? protocol : null,
+                proxyPort: mode === "port" ? proxyPort : null,
+                destinationPort: mode === "port" ? destinationPort : null,
+                destination,
+                enabled,
+                alias: alias || null
             })
             .returning();
 
@@ -157,23 +180,28 @@ export async function createSiteResource(
             siteResourceId: newSiteResource.siteResourceId
         });
 
-        const [newt] = await db
-            .select()
-            .from(newts)
-            .where(eq(newts.siteId, site.siteId))
-            .limit(1);
+        // Only add targets for port mode
+        if (mode === "port" && protocol && proxyPort && destinationPort) {
+            const [newt] = await db
+                .select()
+                .from(newts)
+                .where(eq(newts.siteId, site.siteId))
+                .limit(1);
 
-        if (!newt) {
-            return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
+            if (!newt) {
+                return next(
+                    createHttpError(HttpCode.NOT_FOUND, "Newt not found")
+                );
+            }
+
+            await addTargets(
+                newt.newtId,
+                destination,
+                destinationPort,
+                protocol,
+                proxyPort
+            );
         }
-
-        await addTargets(
-            newt.newtId,
-            destinationIp,
-            destinationPort,
-            protocol,
-            proxyPort
-        );
 
         logger.info(
             `Created site resource ${newSiteResource.siteResourceId} for site ${siteId}`

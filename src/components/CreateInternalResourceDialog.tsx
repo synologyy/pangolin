@@ -86,20 +86,24 @@ export default function CreateInternalResourceDialog({
             .min(1, t("createInternalResourceDialogNameRequired"))
             .max(255, t("createInternalResourceDialogNameMaxLength")),
         siteId: z.number().int().positive(t("createInternalResourceDialogPleaseSelectSite")),
-        protocol: z.enum(["tcp", "udp"]),
+        mode: z.enum(["host", "cidr", "port"]),
+        protocol: z.enum(["tcp", "udp"]).nullish(),
         proxyPort: z
             .number()
             .int()
             .positive()
             .min(1, t("createInternalResourceDialogProxyPortMin"))
-            .max(65535, t("createInternalResourceDialogProxyPortMax")),
-        destinationIp: z.string(),
+            .max(65535, t("createInternalResourceDialogProxyPortMax"))
+            .nullish(),
+        destination: z.string().min(1),
         destinationPort: z
             .number()
             .int()
             .positive()
             .min(1, t("createInternalResourceDialogDestinationPortMin"))
-            .max(65535, t("createInternalResourceDialogDestinationPortMax")),
+            .max(65535, t("createInternalResourceDialogDestinationPortMax"))
+            .nullish(),
+        alias: z.string().nullish(),
         roles: z.array(
             z.object({
                 id: z.string(),
@@ -112,8 +116,44 @@ export default function CreateInternalResourceDialog({
                 text: z.string()
             })
         ).optional()
-    });
-    
+    })
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.protocol !== undefined && data.protocol !== null;
+            }
+            return true;
+        },
+        {
+            message: t("createInternalResourceDialogProtocol") + " is required for port mode",
+            path: ["protocol"]
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.proxyPort !== undefined && data.proxyPort !== null;
+            }
+            return true;
+        },
+        {
+            message: t("createInternalResourceDialogSitePort") + " is required for port mode",
+            path: ["proxyPort"]
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "port") {
+                return data.destinationPort !== undefined && data.destinationPort !== null;
+            }
+            return true;
+        },
+        {
+            message: t("targetPort") + " is required for port mode",
+            path: ["destinationPort"]
+        }
+    );
+
     type FormData = z.infer<typeof formSchema>;
 
     const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
@@ -130,24 +170,30 @@ export default function CreateInternalResourceDialog({
         defaultValues: {
             name: "",
             siteId: availableSites[0]?.siteId || 0,
+            mode: "host",
             protocol: "tcp",
             proxyPort: undefined,
-            destinationIp: "",
+            destination: "",
             destinationPort: undefined,
+            alias: "",
             roles: [],
             users: []
         }
     });
+
+    const mode = form.watch("mode");
 
     useEffect(() => {
         if (open && availableSites.length > 0) {
             form.reset({
                 name: "",
                 siteId: availableSites[0].siteId,
+                mode: "host",
                 protocol: "tcp",
                 proxyPort: undefined,
-                destinationIp: "",
+                destination: "",
                 destinationPort: undefined,
+                alias: "",
                 roles: [],
                 users: []
             });
@@ -194,11 +240,13 @@ export default function CreateInternalResourceDialog({
                 `/org/${orgId}/site/${data.siteId}/resource`,
                 {
                     name: data.name,
-                    protocol: data.protocol,
-                    proxyPort: data.proxyPort,
-                    destinationIp: data.destinationIp,
-                    destinationPort: data.destinationPort,
-                    enabled: true
+                    mode: data.mode,
+                    protocol: data.mode === "port" ? data.protocol : undefined,
+                    proxyPort: data.mode === "port" ? data.proxyPort : undefined,
+                    destinationPort: data.mode === "port" ? data.destinationPort : undefined,
+                    destination: data.destination,
+                    enabled: true,
+                    alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : undefined
                 }
             );
 
@@ -294,126 +342,151 @@ export default function CreateInternalResourceDialog({
                                         )}
                                     />
 
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="siteId"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel>{t("createInternalResourceDialogSite")}</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    role="combobox"
-                                                                    className={cn(
-                                                                        "w-full justify-between",
-                                                                        !field.value && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    {field.value
-                                                                        ? availableSites.find(
-                                                                              (site) => site.siteId === field.value
-                                                                          )?.name
-                                                                        : t("createInternalResourceDialogSelectSite")}
-                                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-full p-0">
-                                                            <Command>
-                                                                <CommandInput placeholder={t("createInternalResourceDialogSearchSites")} />
-                                                                <CommandList>
-                                                                    <CommandEmpty>{t("createInternalResourceDialogNoSitesFound")}</CommandEmpty>
-                                                                    <CommandGroup>
-                                                                        {availableSites.map((site) => (
-                                                                            <CommandItem
-                                                                                key={site.siteId}
-                                                                                value={site.name}
-                                                                                onSelect={() => {
-                                                                                    field.onChange(site.siteId);
-                                                                                }}
-                                                                            >
-                                                                                <Check
-                                                                                    className={cn(
-                                                                                        "mr-2 h-4 w-4",
-                                                                                        field.value === site.siteId
-                                                                                            ? "opacity-100"
-                                                                                            : "opacity-0"
-                                                                                    )}
-                                                                                />
-                                                                                {site.name}
-                                                                            </CommandItem>
-                                                                        ))}
-                                                                    </CommandGroup>
-                                                                </CommandList>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="protocol"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        {t("createInternalResourceDialogProtocol")}
-                                                    </FormLabel>
-                                                    <Select
-                                                        onValueChange={
-                                                            field.onChange
-                                                        }
-                                                        value={field.value}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="tcp">
-                                                                {t("createInternalResourceDialogTcp")}
-                                                            </SelectItem>
-                                                            <SelectItem value="udp">
-                                                                {t("createInternalResourceDialogUdp")}
-                                                            </SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-
                                     <FormField
                                         control={form.control}
-                                        name="proxyPort"
+                                        name="siteId"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{t("createInternalResourceDialogSitePort")}</FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        value={field.value || ""}
-                                                        onChange={(e) =>
-                                                            field.onChange(
-                                                                e.target.value === "" ? undefined : parseInt(e.target.value)
-                                                            )
-                                                        }
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t("createInternalResourceDialogSitePortDescription")}
-                                                </FormDescription>
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>{t("createInternalResourceDialogSite")}</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                className={cn(
+                                                                    "w-full justify-between",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value
+                                                                    ? availableSites.find(
+                                                                          (site) => site.siteId === field.value
+                                                                      )?.name
+                                                                    : t("createInternalResourceDialogSelectSite")}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-full p-0">
+                                                        <Command>
+                                                            <CommandInput placeholder={t("createInternalResourceDialogSearchSites")} />
+                                                            <CommandList>
+                                                                <CommandEmpty>{t("createInternalResourceDialogNoSitesFound")}</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {availableSites.map((site) => (
+                                                                        <CommandItem
+                                                                            key={site.siteId}
+                                                                            value={site.name}
+                                                                            onSelect={() => {
+                                                                                field.onChange(site.siteId);
+                                                                            }}
+                                                                        >
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    field.value === site.siteId
+                                                                                        ? "opacity-100"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                            {site.name}
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
+
+<FormField
+                                        control={form.control}
+                                        name="mode"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("createInternalResourceDialogMode")}</FormLabel>
+                                                <Select
+                                                    onValueChange={field.onChange}
+                                                    value={field.value}
+                                                >
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="port">{t("createInternalResourceDialogModePort")}</SelectItem>
+                                                        <SelectItem value="host">{t("createInternalResourceDialogModeHost")}</SelectItem>
+                                                        <SelectItem value="cidr">{t("createInternalResourceDialogModeCidr")}</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {mode === "port" && (
+                                        <>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="protocol"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t("createInternalResourceDialogProtocol")}
+                                                            </FormLabel>
+                                                            <Select
+                                                                onValueChange={field.onChange}
+                                                                value={field.value ?? undefined}
+                                                            >
+                                                                <FormControl>
+                                                                    <SelectTrigger>
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="tcp">
+                                                                        {t("createInternalResourceDialogTcp")}
+                                                                    </SelectItem>
+                                                                    <SelectItem value="udp">
+                                                                        {t("createInternalResourceDialogUdp")}
+                                                                    </SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={form.control}
+                                                    name="proxyPort"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>{t("createInternalResourceDialogSitePort")}</FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={field.value || ""}
+                                                                    onChange={(e) =>
+                                                                        field.onChange(
+                                                                            e.target.value === "" ? undefined : parseInt(e.target.value)
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -423,28 +496,28 @@ export default function CreateInternalResourceDialog({
                                     {t("createInternalResourceDialogTargetConfiguration")}
                                 </h3>
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="destinationIp"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        {t("targetAddr")}
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {t("createInternalResourceDialogDestinationIPDescription")}
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                    <FormField
+                                        control={form.control}
+                                        name="destination"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("createInternalResourceDialogDestination")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {mode === "host" && t("createInternalResourceDialogDestinationHostDescription")}
+                                                    {mode === "cidr" && t("createInternalResourceDialogDestinationCidrDescription")}
+                                                    {mode === "port" && t("createInternalResourceDialogDestinationIPDescription")}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
+                                    {mode === "port" && (
                                         <FormField
                                             control={form.control}
                                             name="destinationPort"
@@ -471,12 +544,33 @@ export default function CreateInternalResourceDialog({
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
+                            {/* Alias */}
+                            {mode !== "cidr" && (
+                                <div>
+                                    <FormField
+                                        control={form.control}
+                                        name="alias"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>{t("createInternalResourceDialogAlias")}</FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} value={field.value ?? ""} />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t("createInternalResourceDialogAliasDescription")}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+
                             {/* Access Control Section */}
-                            <Separator />
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">
                                     {t("resourceUsersRoles")}

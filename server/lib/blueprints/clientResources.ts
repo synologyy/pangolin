@@ -75,8 +75,9 @@ export async function updateClientResources(
                 .set({
                     name: resourceData.name || resourceNiceId,
                     siteId: site.siteId,
+                    mode: "port",
                     proxyPort: resourceData["proxy-port"]!,
-                    destinationIp: resourceData.hostname,
+                    destination: resourceData.hostname,
                     destinationPort: resourceData["internal-port"],
                     protocol: resourceData.protocol
                 })
@@ -98,8 +99,9 @@ export async function updateClientResources(
                     siteId: site.siteId,
                     niceId: resourceNiceId,
                     name: resourceData.name || resourceNiceId,
+                    mode: "port",
                     proxyPort: resourceData["proxy-port"]!,
-                    destinationIp: resourceData.hostname,
+                    destination: resourceData.hostname,
                     destinationPort: resourceData["internal-port"],
                     protocol: resourceData.protocol
                 })

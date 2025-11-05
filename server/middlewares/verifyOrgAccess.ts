@@ -53,8 +53,6 @@ export async function verifyOrgAccess(
             session: req.session
         });
 
-        logger.debug("Org check policy result", { policyCheck });
-
         if (!policyCheck.allowed || policyCheck.error) {
             return next(
                 createHttpError(

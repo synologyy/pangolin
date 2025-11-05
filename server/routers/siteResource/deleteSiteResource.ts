@@ -91,23 +91,26 @@ export async function deleteSiteResource(
                 eq(siteResources.orgId, orgId)
             ));
 
-        const [newt] = await db
-            .select()
-            .from(newts)
-            .where(eq(newts.siteId, site.siteId))
-            .limit(1);
+        // Only remove targets for port mode
+        if (existingSiteResource.mode === "port" && existingSiteResource.protocol && existingSiteResource.proxyPort && existingSiteResource.destinationPort) {
+            const [newt] = await db
+                .select()
+                .from(newts)
+                .where(eq(newts.siteId, site.siteId))
+                .limit(1);
 
-        if (!newt) {
-            return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
+            if (!newt) {
+                return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
+            }
+
+            await removeTargets(
+                newt.newtId,
+                existingSiteResource.destination,
+                existingSiteResource.destinationPort,
+                existingSiteResource.protocol,
+                existingSiteResource.proxyPort
+            );
         }
-
-        await removeTargets(
-            newt.newtId,
-            existingSiteResource.destinationIp,
-            existingSiteResource.destinationPort,
-            existingSiteResource.protocol,
-            existingSiteResource.proxyPort
-        );
 
         logger.info(`Deleted site resource ${siteResourceId} for site ${siteId}`);
 

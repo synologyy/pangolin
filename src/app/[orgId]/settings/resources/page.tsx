@@ -103,11 +103,14 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                 name: siteResource.name,
                 orgId: params.orgId,
                 siteName: siteResource.siteName,
+                siteAddress: siteResource.siteAddress || null,
+                mode: siteResource.mode || "port" as any,
                 protocol: siteResource.protocol,
                 proxyPort: siteResource.proxyPort,
                 siteId: siteResource.siteId,
-                destinationIp: siteResource.destinationIp,
+                destination: siteResource.destination,
                 destinationPort: siteResource.destinationPort,
+                alias: siteResource.alias || null,
                 siteNiceId: siteResource.siteNiceId
             };
         }

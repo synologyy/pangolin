@@ -90,12 +90,15 @@ export type InternalResourceRow = {
     name: string;
     orgId: string;
     siteName: string;
-    protocol: string;
+    siteAddress: string | null;
+    mode: "host" | "cidr" | "port";
+    protocol: string | null;
     proxyPort: number | null;
     siteId: number;
     siteNiceId: string;
-    destinationIp: string;
-    destinationPort: number;
+    destination: string;
+    destinationPort: number | null;
+    alias: string | null;
 };
 
 type Site = ListSitesResponse["sites"][0];
@@ -571,24 +574,16 @@ export default function ResourcesTable({
             }
         },
         {
-            accessorKey: "protocol",
-            header: () => (<span className="p-3">{t("protocol")}</span>),
+            accessorKey: "mode",
+            header: () => (<span className="p-3">{t("editInternalResourceDialogMode")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                return <span>{resourceRow.protocol.toUpperCase()}</span>;
-            }
-        },
-        {
-            accessorKey: "proxyPort",
-            header: () => (<span className="p-3">{t("proxyPort")}</span>),
-            cell: ({ row }) => {
-                const resourceRow = row.original;
-                return (
-                    <CopyToClipboard
-                        text={resourceRow.proxyPort?.toString() || ""}
-                        isLink={false}
-                    />
-                );
+                const modeLabels: Record<"host" | "cidr" | "port", string> = {
+                    host: t("editInternalResourceDialogModeHost"),
+                    cidr: t("editInternalResourceDialogModeCidr"),
+                    port: t("editInternalResourceDialogModePort")
+                };
+                return <span>{modeLabels[resourceRow.mode]}</span>;
             }
         },
         {
@@ -596,8 +591,35 @@ export default function ResourcesTable({
             header: () => (<span className="p-3">{t("resourcesTableDestination")}</span>),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                const destination = `${resourceRow.destinationIp}:${resourceRow.destinationPort}`;
-                return <CopyToClipboard text={destination} isLink={false} />;
+                let displayText: string;
+                let copyText: string;
+
+                if (resourceRow.mode === "port" && resourceRow.protocol && resourceRow.proxyPort && resourceRow.destinationPort) {
+                    const protocol = resourceRow.protocol.toUpperCase();
+                    // For port mode: site part uses alias or site address, destination part uses destination IP
+                    // If site address has CIDR notation, extract just the IP address
+                    let siteAddress = resourceRow.siteAddress;
+                    if (siteAddress && siteAddress.includes("/")) {
+                        siteAddress = siteAddress.split("/")[0];
+                    }
+                    const siteDisplay = resourceRow.alias || siteAddress;
+                    displayText = `${protocol} ${siteDisplay}:${resourceRow.proxyPort} -> ${resourceRow.destination}:${resourceRow.destinationPort}`;
+                    copyText = `${siteDisplay}:${resourceRow.proxyPort}`;
+                } else if (resourceRow.mode === "host") {
+                    // For host mode: use alias if available, otherwise use destination
+                    const destinationDisplay = resourceRow.alias || resourceRow.destination;
+                    displayText = destinationDisplay;
+                    copyText = destinationDisplay;
+                } else if (resourceRow.mode === "cidr") {
+                    displayText = resourceRow.destination;
+                    copyText = resourceRow.destination;
+                } else {
+                    const destinationDisplay = resourceRow.alias || resourceRow.destination;
+                    displayText = destinationDisplay;
+                    copyText = destinationDisplay;
+                }
+
+                return <CopyToClipboard text={copyText} isLink={false} displayText={displayText} />;
             }
         },
 
