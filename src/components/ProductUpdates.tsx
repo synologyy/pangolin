@@ -8,6 +8,7 @@ import { useQueries } from "@tanstack/react-query";
 import {
     ArrowRight,
     BellIcon,
+    CheckIcon,
     ChevronRightIcon,
     RocketIcon,
     XIcon
@@ -19,6 +20,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { timeAgoFormatter } from "@app/lib/timeAgoFormatter";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "./ui/tooltip";
 
 export default function ProductUpdates({
     isCollapsed
@@ -164,25 +171,51 @@ function ProductUpdatesListPopup({
                 <PopoverContent
                     side="right"
                     align="end"
-                    className="p-0 flex flex-col w-80"
+                    sideOffset={10}
+                    className="p-0 flex flex-col w-85"
                 >
                     <div className="p-3 flex justify-between border-b items-center">
                         <span className="text-sm inline-flex gap-2 items-center font-medium">
                             {t("productUpdateTitle")}
                             <Badge variant="secondary">{updates.length}</Badge>
                         </span>
-                        <Button variant="ghost">{t("dismissAll")}</Button>
+                        <Button variant="outline">{t("dismissAll")}</Button>
                     </div>
                     <ol className="p-3 flex flex-col gap-1 max-h-112 overflow-y-auto">
                         {updates.map((update) => (
                             <li
                                 key={update.id}
-                                className="border rounded-md flex flex-col p-4 gap-2"
+                                className="border rounded-md flex flex-col p-4 gap-2.5 group hover:bg-accent relative"
                             >
-                                <h4 className="text-sm font-medium inline-flex items-start gap-1">
-                                    <span>{update.title}</span>
-                                    <Badge variant="secondary">New</Badge>
-                                </h4>
+                                <div className="flex justify-between gap-2 items-start">
+                                    <h4 className="text-sm font-medium inline-flex items-start gap-1">
+                                        <span>{update.title}</span>
+                                        <Badge
+                                            variant="secondary"
+                                            className="bg-black text-white dark:bg-white dark:text-black"
+                                        >
+                                            New
+                                        </Badge>
+                                    </h4>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    className="p-1 py-1 opacity-100 h-auto group-hover:opacity-100"
+                                                >
+                                                    <CheckIcon className="flex-none size-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent
+                                                side="right"
+                                                sideOffset={8}
+                                            >
+                                                Mark as read
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <small className="text-muted-foreground">
                                     {update.contents}
                                 </small>
