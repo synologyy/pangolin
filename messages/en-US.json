@@ -1282,6 +1282,8 @@
     "productUpdateMoreInfo": "{noOfUpdates} more updates",
     "productUpdateInfo": "{noOfUpdates} updates",
     "productUpdateWhatsNew": "What's New",
+    "productUpdateTitle": "Product Updates",
+    "dismissAll": "Dismiss all",
     "pangolinUpdateAvailable": "New version available",
     "pangolinUpdateAvailableInfo": "Version {version} is ready to install",
     "pangolinUpdateAvailableReleaseNotes": "View release notes",

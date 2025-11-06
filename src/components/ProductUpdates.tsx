@@ -16,6 +16,9 @@ import { useTranslations } from "next-intl";
 import { Transition } from "@headlessui/react";
 import * as React from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { timeAgoFormatter } from "@app/lib/timeAgoFormatter";
 
 export default function ProductUpdates({
     isCollapsed
@@ -158,8 +161,40 @@ function ProductUpdatesListPopup({
                         </div>
                     </button>
                 </PopoverTrigger>
-                <PopoverContent side="right" align="end">
-                    Hello
+                <PopoverContent
+                    side="right"
+                    align="end"
+                    className="p-0 flex flex-col w-80"
+                >
+                    <div className="p-3 flex justify-between border-b items-center">
+                        <span className="text-sm inline-flex gap-2 items-center font-medium">
+                            {t("productUpdateTitle")}
+                            <Badge variant="secondary">{updates.length}</Badge>
+                        </span>
+                        <Button variant="ghost">{t("dismissAll")}</Button>
+                    </div>
+                    <ol className="p-3 flex flex-col gap-1 max-h-112 overflow-y-auto">
+                        {updates.map((update) => (
+                            <li
+                                key={update.id}
+                                className="border rounded-md flex flex-col p-4 gap-2"
+                            >
+                                <h4 className="text-sm font-medium inline-flex items-start gap-1">
+                                    <span>{update.title}</span>
+                                    <Badge variant="secondary">New</Badge>
+                                </h4>
+                                <small className="text-muted-foreground">
+                                    {update.contents}
+                                </small>
+                                <time
+                                    dateTime={update.publishedAt.toLocaleString()}
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    {timeAgoFormatter(update.publishedAt)}
+                                </time>
+                            </li>
+                        ))}
+                    </ol>
                 </PopoverContent>
             </Transition>
         </Popover>
