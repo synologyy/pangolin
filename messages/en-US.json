@@ -131,7 +131,7 @@
     "expireIn": "Expire In",
     "neverExpire": "Never expire",
     "shareExpireDescription": "Expiration time is how long the link will be usable and provide access to the resource. After this time, the link will no longer work, and users who used this link will lose access to the resource.",
-    "shareSeeOnce": "You will only be able to see this linkonce. Make sure to copy it.",
+    "shareSeeOnce": "You will only be able to see this link once. Make sure to copy it.",
     "shareAccessHint": "Anyone with this link can access the resource. Share it with care.",
     "shareTokenUsage": "See Access Token Usage",
     "createLink": "Create Link",
