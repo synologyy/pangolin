@@ -44,8 +44,13 @@ import {
 
 const STORAGE_KEYS = {
     PAGE_SIZE: "datatable-page-size",
+    COLUMN_VISIBILITY: "datatable-column-visibility",
     getTablePageSize: (tableId?: string) =>
-        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
+        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE,
+    getTableColumnVisibility: (tableId?: string) =>
+        tableId
+            ? `${tableId}-column-visibility`
+            : STORAGE_KEYS.COLUMN_VISIBILITY
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
@@ -78,6 +83,48 @@ const setStoredPageSize = (pageSize: number, tableId?: string): void => {
     }
 };
 
+const getStoredColumnVisibility = (
+    tableId?: string,
+    defaultVisibility?: Record<string, boolean>
+): Record<string, boolean> => {
+    if (typeof window === "undefined") return defaultVisibility || {};
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Validate that it's an object
+            if (typeof parsed === "object" && parsed !== null) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Failed to read column visibility from localStorage:",
+            error
+        );
+    }
+    return defaultVisibility || {};
+};
+
+const setStoredColumnVisibility = (
+    visibility: Record<string, boolean>,
+    tableId?: string
+): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        localStorage.setItem(key, JSON.stringify(visibility));
+    } catch (error) {
+        console.warn(
+            "Failed to save column visibility to localStorage:",
+            error
+        );
+    }
+};
+
 type TabFilter = {
     id: string;
     label: string;
@@ -104,6 +151,7 @@ type DataTableProps<TData, TValue> = {
     defaultPageSize?: number;
     columnVisibility?: Record<string, boolean>;
     enableColumnVisibility?: boolean;
+    persistColumnVisibility?: boolean | string;
 };
 
 export function DataTable<TData, TValue>({
@@ -122,13 +170,30 @@ export function DataTable<TData, TValue>({
     persistPageSize = false,
     defaultPageSize = 20,
     columnVisibility: defaultColumnVisibility,
-    enableColumnVisibility = false
+    enableColumnVisibility = false,
+    persistColumnVisibility = false
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
 
     // Determine table identifier for storage
+    // Use persistPageSize string if provided, otherwise use persistColumnVisibility string, otherwise undefined
     const tableId =
-        typeof persistPageSize === "string" ? persistPageSize : undefined;
+        typeof persistPageSize === "string"
+            ? persistPageSize
+            : typeof persistColumnVisibility === "string"
+              ? persistColumnVisibility
+              : undefined;
+
+    // Compute initial column visibility (from localStorage if enabled, otherwise from prop/default)
+    const initialColumnVisibility = (() => {
+        if (persistColumnVisibility) {
+            return getStoredColumnVisibility(
+                tableId,
+                defaultColumnVisibility
+            );
+        }
+        return defaultColumnVisibility || {};
+    })();
 
     // Initialize page size from storage or default
     const [pageSize, setPageSize] = useState<number>(() => {
@@ -143,9 +208,8 @@ export function DataTable<TData, TValue>({
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<any>([]);
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-        defaultColumnVisibility || {}
-    );
+    const [columnVisibility, setColumnVisibility] =
+        useState<VisibilityState>(initialColumnVisibility);
     const [activeTab, setActiveTab] = useState<string>(
         defaultTab || tabs?.[0]?.id || ""
     );
@@ -180,7 +244,7 @@ export function DataTable<TData, TValue>({
                 pageSize: pageSize,
                 pageIndex: 0
             },
-            columnVisibility: defaultColumnVisibility || {}
+            columnVisibility: initialColumnVisibility
         },
         state: {
             sorting,
@@ -201,6 +265,13 @@ export function DataTable<TData, TValue>({
             }
         }
     }, [pageSize, table, persistPageSize, tableId]);
+
+    useEffect(() => {
+        // Persist column visibility to localStorage when it changes
+        if (persistColumnVisibility) {
+            setStoredColumnVisibility(columnVisibility, tableId);
+        }
+    }, [columnVisibility, persistColumnVisibility, tableId]);
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);

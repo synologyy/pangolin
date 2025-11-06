@@ -89,8 +89,13 @@ type ClientTableProps = {
 
 const STORAGE_KEYS = {
     PAGE_SIZE: "datatable-page-size",
+    COLUMN_VISIBILITY: "datatable-column-visibility",
     getTablePageSize: (tableId?: string) =>
-        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE
+        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE,
+    getTableColumnVisibility: (tableId?: string) =>
+        tableId
+            ? `datatable-${tableId}-column-visibility`
+            : STORAGE_KEYS.COLUMN_VISIBILITY
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
@@ -119,6 +124,48 @@ const setStoredPageSize = (pageSize: number, tableId?: string): void => {
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
         console.warn("Failed to save page size to localStorage:", error);
+    }
+};
+
+const getStoredColumnVisibility = (
+    tableId?: string,
+    defaultVisibility?: Record<string, boolean>
+): Record<string, boolean> => {
+    if (typeof window === "undefined") return defaultVisibility || {};
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Validate that it's an object
+            if (typeof parsed === "object" && parsed !== null) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Failed to read column visibility from localStorage:",
+            error
+        );
+    }
+    return defaultVisibility || {};
+};
+
+const setStoredColumnVisibility = (
+    visibility: Record<string, boolean>,
+    tableId?: string
+): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        localStorage.setItem(key, JSON.stringify(visibility));
+    } catch (error) {
+        console.warn(
+            "Failed to save column visibility to localStorage:",
+            error
+        );
     }
 };
 
@@ -157,15 +204,22 @@ export default function ClientsTable({
         useState<ColumnFiltersState>([]);
     const [machineGlobalFilter, setMachineGlobalFilter] = useState<any>([]);
 
-    const [userColumnVisibility, setUserColumnVisibility] = useState<VisibilityState>({
+    const defaultUserColumnVisibility = {
         client: false,
         subnet: false
-    });
-    const [machineColumnVisibility, setMachineColumnVisibility] = useState<VisibilityState>({
+    };
+    const defaultMachineColumnVisibility = {
         client: false,
         subnet: false,
         userId: false
-    });
+    };
+
+    const [userColumnVisibility, setUserColumnVisibility] = useState<VisibilityState>(
+        () => getStoredColumnVisibility("user-clients", defaultUserColumnVisibility)
+    );
+    const [machineColumnVisibility, setMachineColumnVisibility] = useState<VisibilityState>(
+        () => getStoredColumnVisibility("machine-clients", defaultMachineColumnVisibility)
+    );
 
     const currentView = searchParams.get("view") || defaultView;
 
@@ -522,10 +576,7 @@ export default function ClientsTable({
                 pageSize: userPageSize,
                 pageIndex: 0
             },
-            columnVisibility: {
-                client: false,
-                subnet: false
-            }
+            columnVisibility: userColumnVisibility
         },
         state: {
             sorting: userSorting,
@@ -551,11 +602,7 @@ export default function ClientsTable({
                 pageSize: machinePageSize,
                 pageIndex: 0
             },
-            columnVisibility: {
-                client: false,
-                subnet: false,
-                userId: false
-            }
+            columnVisibility: machineColumnVisibility
         },
         state: {
             sorting: machineSorting,
@@ -574,6 +621,15 @@ export default function ClientsTable({
         setMachinePageSize(newPageSize);
         setStoredPageSize(newPageSize, "machine-clients");
     };
+
+    // Persist column visibility changes to localStorage
+    useEffect(() => {
+        setStoredColumnVisibility(userColumnVisibility, "user-clients");
+    }, [userColumnVisibility]);
+
+    useEffect(() => {
+        setStoredColumnVisibility(machineColumnVisibility, "machine-clients");
+    }, [machineColumnVisibility]);
 
     return (
         <>

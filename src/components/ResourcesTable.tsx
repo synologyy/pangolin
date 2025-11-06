@@ -116,8 +116,13 @@ type ResourcesTableProps = {
 
 const STORAGE_KEYS = {
     PAGE_SIZE: "datatable-page-size",
+    COLUMN_VISIBILITY: "datatable-column-visibility",
     getTablePageSize: (tableId?: string) =>
-        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE
+        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE,
+    getTableColumnVisibility: (tableId?: string) =>
+        tableId
+            ? `datatable-${tableId}-column-visibility`
+            : STORAGE_KEYS.COLUMN_VISIBILITY
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
@@ -146,6 +151,48 @@ const setStoredPageSize = (pageSize: number, tableId?: string): void => {
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
         console.warn("Failed to save page size to localStorage:", error);
+    }
+};
+
+const getStoredColumnVisibility = (
+    tableId?: string,
+    defaultVisibility?: Record<string, boolean>
+): Record<string, boolean> => {
+    if (typeof window === "undefined") return defaultVisibility || {};
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Validate that it's an object
+            if (typeof parsed === "object" && parsed !== null) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Failed to read column visibility from localStorage:",
+            error
+        );
+    }
+    return defaultVisibility || {};
+};
+
+const setStoredColumnVisibility = (
+    visibility: Record<string, boolean>,
+    tableId?: string
+): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        localStorage.setItem(key, JSON.stringify(visibility));
+    } catch (error) {
+        console.warn(
+            "Failed to save column visibility to localStorage:",
+            error
+        );
     }
 };
 
@@ -196,8 +243,12 @@ export default function ResourcesTable({
         useState<ColumnFiltersState>([]);
     const [internalGlobalFilter, setInternalGlobalFilter] = useState<any>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [proxyColumnVisibility, setProxyColumnVisibility] = useState<VisibilityState>({});
-    const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({});
+    const [proxyColumnVisibility, setProxyColumnVisibility] = useState<VisibilityState>(
+        () => getStoredColumnVisibility("proxy-resources", {})
+    );
+    const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>(
+        () => getStoredColumnVisibility("internal-resources", {})
+    );
 
     const currentView = searchParams.get("view") || defaultView;
 
@@ -684,7 +735,8 @@ export default function ResourcesTable({
             pagination: {
                 pageSize: proxyPageSize,
                 pageIndex: 0
-            }
+            },
+            columnVisibility: proxyColumnVisibility
         },
         state: {
             sorting: proxySorting,
@@ -709,7 +761,8 @@ export default function ResourcesTable({
             pagination: {
                 pageSize: internalPageSize,
                 pageIndex: 0
-            }
+            },
+            columnVisibility: internalColumnVisibility
         },
         state: {
             sorting: internalSorting,
@@ -728,6 +781,15 @@ export default function ResourcesTable({
         setInternalPageSize(newPageSize);
         setStoredPageSize(newPageSize, "internal-resources");
     };
+
+    // Persist column visibility changes to localStorage
+    useEffect(() => {
+        setStoredColumnVisibility(proxyColumnVisibility, "proxy-resources");
+    }, [proxyColumnVisibility]);
+
+    useEffect(() => {
+        setStoredColumnVisibility(internalColumnVisibility, "internal-resources");
+    }, [internalColumnVisibility]);
 
     return (
         <>
