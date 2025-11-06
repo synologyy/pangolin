@@ -31,8 +31,16 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
             <AlertDescription>
                 {/* 4 cols because of the certs */}
                 <InfoSections
-                    cols={resource.http && env.flags.usePangolinDns ? 4 : 3}
+                    cols={resource.http && env.flags.usePangolinDns ? 5 : 4}
                 >
+                    <InfoSection>
+                        <InfoSectionTitle>
+                            {t("identifier")}
+                        </InfoSectionTitle>
+                        <InfoSectionContent>
+                            {resource.niceId}
+                        </InfoSectionContent>
+                    </InfoSection>
                     {resource.http ? (
                         <>
                             <InfoSection>

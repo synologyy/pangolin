@@ -35,7 +35,15 @@ export default function SiteInfoCard({ }: SiteInfoCardProps) {
     return (
         <Alert>
             <AlertDescription>
-                <InfoSections cols={env.flags.enableClients ? 3 : 2}>
+                <InfoSections cols={env.flags.enableClients ? 4 : 3}>
+                    <InfoSection>
+                        <InfoSectionTitle>
+                            {t("identifier")}
+                        </InfoSectionTitle>
+                        <InfoSectionContent>
+                            {site.niceId}
+                        </InfoSectionContent>
+                    </InfoSection>
                     {(site.type == "newt" || site.type == "wireguard") && (
                         <>
                             <InfoSection>
