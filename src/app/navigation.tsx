@@ -88,18 +88,24 @@ export const orgNavSections = (
         items: [
             {
                 title: "sidebarUsers",
-                href: "/{orgId}/settings/access/users",
-                icon: <User className="h-4 w-4" />
+                icon: <User className="h-4 w-4" />,
+                items: [
+                    {
+                        title: "sidebarUsers",
+                        href: "/{orgId}/settings/access/users",
+                        icon: <User className="h-4 w-4" />
+                    },
+                    {
+                        title: "sidebarInvitations",
+                        href: "/{orgId}/settings/access/invitations",
+                        icon: <TicketCheck className="h-4 w-4" />
+                    }
+                ]
             },
             {
                 title: "sidebarRoles",
                 href: "/{orgId}/settings/access/roles",
                 icon: <Users className="h-4 w-4" />
-            },
-            {
-                title: "sidebarInvitations",
-                href: "/{orgId}/settings/access/invitations",
-                icon: <TicketCheck className="h-4 w-4" />
             },
             ...(build == "saas"
                 ? [
@@ -122,24 +128,30 @@ export const orgNavSections = (
         heading: "Analytics",
         items: [
             {
-                title: "sidebarLogsRequest",
-                href: "/{orgId}/settings/logs/request",
-                icon: <SquareMousePointer className="h-4 w-4" />
-            },
-            ...(build != "oss"
-                ? [
-                      {
-                          title: "sidebarLogsAccess",
-                          href: "/{orgId}/settings/logs/access",
-                          icon: <ScanEye className="h-4 w-4" />
-                      },
-                      {
-                          title: "sidebarLogsAction",
-                          href: "/{orgId}/settings/logs/action",
-                          icon: <Logs className="h-4 w-4" />
-                      }
-                  ]
-                : [])
+                title: "sidebarLogs",
+                icon: <Logs className="h-4 w-4" />,
+                items: [
+                    {
+                        title: "sidebarLogsRequest",
+                        href: "/{orgId}/settings/logs/request",
+                        icon: <SquareMousePointer className="h-4 w-4" />
+                    },
+                    ...(build != "oss"
+                        ? [
+                              {
+                                  title: "sidebarLogsAccess",
+                                  href: "/{orgId}/settings/logs/access",
+                                  icon: <ScanEye className="h-4 w-4" />
+                              },
+                              {
+                                  title: "sidebarLogsAction",
+                                  href: "/{orgId}/settings/logs/action",
+                                  icon: <Logs className="h-4 w-4" />
+                              }
+                          ]
+                        : [])
+                ]
+            }
         ]
     },
     {
