@@ -2128,5 +2128,20 @@
     "deviceAuthorize": "Authorize {applicationName}",
     "deviceConnected": "Device Connected!",
     "deviceAuthorizedMessage": "Your device is authorized to access your account.",
-    "pangolinCloud": "Pangolin Cloud"
+    "pangolinCloud": "Pangolin Cloud",
+    "viewDevices": "View Devices",
+    "viewDevicesDescription": "Manage your connected devices",
+    "noDevices": "No devices found",
+    "dateCreated": "Date Created",
+    "unnamedDevice": "Unnamed Device",
+    "deviceQuestionRemove": "Are you sure you want to delete this device?",
+    "deviceMessageRemove": "This action cannot be undone.",
+    "deviceDeleteConfirm": "Delete Device",
+    "deleteDevice": "Delete Device",
+    "errorLoadingDevices": "Error loading devices",
+    "failedToLoadDevices": "Failed to load devices",
+    "deviceDeleted": "Device deleted",
+    "deviceDeletedDescription": "The device has been successfully deleted.",
+    "errorDeletingDevice": "Error deleting device",
+    "failedToDeleteDevice": "Failed to delete device"
 }

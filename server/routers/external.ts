@@ -758,9 +758,22 @@ authenticated.delete(
 //     createNewt
 // );
 
+// only for logged in user
 authenticated.put(
     "/olm",
     olm.createOlm
+);
+
+// only for logged in user
+authenticated.get(
+    "/olms",
+    olm.listOlms
+);
+
+// only for logged in user
+authenticated.delete(
+    "/olm/:olmId",
+    olm.deleteOlm
 );
 
 authenticated.put(
