@@ -8,7 +8,6 @@ import { useQueries } from "@tanstack/react-query";
 import {
     ArrowRight,
     BellIcon,
-    CheckIcon,
     ChevronRightIcon,
     RocketIcon,
     XIcon
@@ -57,7 +56,11 @@ export default function ProductUpdates({
 
     const [ignoredVersionUpdate, setIgnoredVersionUpdate] = useLocalStorage<
         string | null
-    >("ignored-version", null);
+    >("product-updates:skip-version", null);
+
+    const [productUpdatesRead, setProductUpdatesRead] = useLocalStorage<
+        number[]
+    >("product-updates:read", []);
 
     if (!data) return null;
 
@@ -66,6 +69,10 @@ export default function ProductUpdates({
             ignoredVersionUpdate !==
                 data.latestVersion.data?.pangolin.latestVersion &&
             env.app.version !== data.latestVersion.data?.pangolin.latestVersion
+    );
+
+    const filteredUpdates = data.updates.filter(
+        (update) => !productUpdatesRead.includes(update.id)
     );
 
     return (
@@ -84,30 +91,39 @@ export default function ProductUpdates({
                             : "opacity-0"
                     )}
                 >
-                    {data.updates.length > 0 && (
+                    {filteredUpdates.length > 0 && (
                         <>
                             <BellIcon className="flex-none size-3" />
                             <span>
                                 {showNewVersionPopup
                                     ? t("productUpdateMoreInfo", {
-                                          noOfUpdates: data.updates.length
+                                          noOfUpdates: filteredUpdates.length
                                       })
                                     : t("productUpdateInfo", {
-                                          noOfUpdates: data.updates.length
+                                          noOfUpdates: filteredUpdates.length
                                       })}
                             </span>
                         </>
                     )}
                 </small>
                 <ProductUpdatesListPopup
-                    updates={data.updates}
-                    show={data.updates.length > 0}
+                    updates={filteredUpdates}
+                    show={filteredUpdates.length > 0}
+                    onDimissAll={() =>
+                        setProductUpdatesRead([
+                            ...productUpdatesRead,
+                            ...filteredUpdates.map((update) => update.id)
+                        ])
+                    }
+                    onDimiss={(id) =>
+                        setProductUpdatesRead([...productUpdatesRead, id])
+                    }
                 />
             </div>
 
             <NewVersionAvailable
                 version={data.latestVersion?.data}
-                onClose={() => {
+                onDimiss={() => {
                     setIgnoredVersionUpdate(
                         data.latestVersion?.data?.pangolin.latestVersion ?? null
                     );
@@ -118,29 +134,44 @@ export default function ProductUpdates({
     );
 }
 
-type ProductUpdatesListPopupProps = { updates: ProductUpdate[]; show: boolean };
+type ProductUpdatesListPopupProps = {
+    updates: ProductUpdate[];
+    show: boolean;
+    onDimiss: (id: number) => void;
+    onDimissAll: () => void;
+};
 
 function ProductUpdatesListPopup({
     updates,
-    show
+    show,
+    onDimiss,
+    onDimissAll
 }: ProductUpdatesListPopupProps) {
-    const [open, setOpen] = React.useState(false);
+    const [showContent, setShowContent] = React.useState(false);
+    const [popoverOpen, setPopoverOpen] = React.useState(false);
     const t = useTranslations();
 
     // we need to delay the initial opening state to have an animation on `appear`
     React.useEffect(() => {
         if (show) {
-            requestAnimationFrame(() => setOpen(true));
+            requestAnimationFrame(() => setShowContent(true));
         }
     }, [show]);
 
+    React.useEffect(() => {
+        if (updates.length === 0) {
+            setShowContent(false);
+            setPopoverOpen(false);
+        }
+    }, [updates.length]);
+
     return (
-        <Popover>
-            <Transition show={open}>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+            <Transition show={showContent}>
                 <PopoverTrigger asChild>
-                    <button
+                    <div
                         className={cn(
-                            "relative z-1 cursor-pointer",
+                            "relative z-1 cursor-pointer block",
                             "rounded-md border bg-muted p-2 py-3 w-full flex items-start gap-2 text-sm",
                             "transition duration-300 ease-in-out",
                             "data-closed:opacity-0 data-closed:translate-y-full"
@@ -160,82 +191,94 @@ function ProductUpdatesListPopup({
                                     "[-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]"
                                 )}
                             >
-                                {updates[0].contents}
+                                {updates[0]?.contents}
                             </small>
                         </div>
                         <div className="p-1 cursor-pointer">
                             <ChevronRightIcon className="size-4 flex-none" />
                         </div>
-                    </button>
-                </PopoverTrigger>
-                <PopoverContent
-                    side="right"
-                    align="end"
-                    sideOffset={10}
-                    className="p-0 flex flex-col w-85"
-                >
-                    <div className="p-3 flex justify-between border-b items-center">
-                        <span className="text-sm inline-flex gap-2 items-center font-medium">
-                            {t("productUpdateTitle")}
-                            <Badge variant="secondary">{updates.length}</Badge>
-                        </span>
-                        <Button variant="outline">{t("dismissAll")}</Button>
                     </div>
-                    <ol className="p-3 flex flex-col gap-1 max-h-112 overflow-y-auto">
-                        {updates.map((update) => (
-                            <li
-                                key={update.id}
-                                className="border rounded-md flex flex-col p-4 gap-2.5 group hover:bg-accent relative"
-                            >
-                                <div className="flex justify-between gap-2 items-start">
-                                    <h4 className="text-sm font-medium inline-flex items-start gap-1">
-                                        <span>{update.title}</span>
-                                        <Badge
-                                            variant="secondary"
-                                            className="bg-black text-white dark:bg-white dark:text-black"
-                                        >
-                                            New
-                                        </Badge>
-                                    </h4>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className="p-1 py-1 opacity-100 h-auto group-hover:opacity-100"
-                                                >
-                                                    <CheckIcon className="flex-none size-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent
-                                                side="right"
-                                                sideOffset={8}
-                                            >
-                                                Mark as read
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
-                                <small className="text-muted-foreground">
-                                    {update.contents}
-                                </small>
-                                <time
-                                    dateTime={update.publishedAt.toLocaleString()}
-                                    className="text-xs text-muted-foreground"
-                                >
-                                    {timeAgoFormatter(update.publishedAt)}
-                                </time>
-                            </li>
-                        ))}
-                    </ol>
-                </PopoverContent>
+                </PopoverTrigger>
             </Transition>
+            <PopoverContent
+                side="right"
+                align="end"
+                sideOffset={10}
+                className="p-0 flex flex-col w-85"
+            >
+                <div className="p-3 flex justify-between border-b items-center">
+                    <span className="text-sm inline-flex gap-2 items-center font-medium">
+                        {t("productUpdateTitle")}
+                        {updates.length > 0 && (
+                            <Badge variant="secondary">{updates.length}</Badge>
+                        )}
+                    </span>
+                    <Button variant="outline" onClick={onDimissAll}>
+                        {t("dismissAll")}
+                    </Button>
+                </div>
+                <ol className="p-3 flex flex-col gap-1 max-h-112 overflow-y-auto">
+                    {updates.length === 0 && (
+                        <small className="border rounded-md flex p-4 border-dashed justify-center items-center text-muted-foreground">
+                            No updates
+                        </small>
+                    )}
+                    {updates.map((update) => (
+                        <li
+                            key={update.id}
+                            className="border rounded-md flex flex-col p-4 gap-2.5 group hover:bg-accent relative"
+                        >
+                            <div className="flex justify-between gap-2 items-start">
+                                <h4 className="text-sm font-medium inline-flex items-start gap-1">
+                                    <span>{update.title}</span>
+                                    {/* <Badge
+                                        variant="secondary"
+                                        className="bg-black text-white dark:bg-white dark:text-black"
+                                    >
+                                        {t("new")}
+                                    </Badge> */}
+                                </h4>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className="p-1 py-1 opacity-100 h-auto group-hover:opacity-100"
+                                                onClick={() =>
+                                                    onDimiss(update.id)
+                                                }
+                                            >
+                                                <XIcon className="flex-none size-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                            side="right"
+                                            sideOffset={8}
+                                        >
+                                            {t("dismiss")}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                            <small className="text-muted-foreground">
+                                {update.contents}
+                            </small>
+                            <time
+                                dateTime={update.publishedAt.toLocaleString()}
+                                className="text-xs text-muted-foreground"
+                            >
+                                {timeAgoFormatter(update.publishedAt)}
+                            </time>
+                        </li>
+                    ))}
+                </ol>
+            </PopoverContent>
         </Popover>
     );
 }
 
 type NewVersionAvailableProps = {
-    onClose: () => void;
+    onDimiss: () => void;
     show: boolean;
     version:
         | Awaited<
@@ -251,7 +294,7 @@ type NewVersionAvailableProps = {
 function NewVersionAvailable({
     version,
     show,
-    onClose
+    onDimiss
 }: NewVersionAvailableProps) {
     const t = useTranslations();
     const [open, setOpen] = React.useState(false);
@@ -302,7 +345,7 @@ function NewVersionAvailable({
                             className="p-1 cursor-pointer"
                             onClick={() => {
                                 setOpen(false);
-                                onClose();
+                                onDimiss();
                             }}
                         >
                             <XIcon className="size-4 flex-none" />

@@ -39,10 +39,9 @@ export function timeAgoFormatter(
         unit = "year";
     }
 
-    const rtf = new Intl.RelativeTimeFormat("en", {
+    const rtf = new Intl.RelativeTimeFormat(navigator.languages[0] ?? "en", {
         numeric: "auto",
         style: short ? "narrow" : "long"
     });
-    const formatedValue = rtf.format(-value, unit);
-    return formatedValue === "now" ? "Just now" : formatedValue;
+    return rtf.format(-value, unit);
 }
