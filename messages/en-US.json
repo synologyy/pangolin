@@ -2098,7 +2098,7 @@
     "checkSelectedStatus": "Check Status of Selected",
     "credentials": "Credentials",
     "savecredentials": "Save Credentials",
-    "regeneratecredentials": "Regenerate Credentials",
+    "regeneratecredentials": "Re-key",
     "regenerateCredentials": "Regenerate and save your credentials",
     "generatedcredentials": "Generated Credentials",
     "copyandsavethesecredentials": "Copy and save these credentials",
