@@ -126,33 +126,43 @@ export const orgNavSections = (
     },
     {
         heading: "Analytics",
-        items: [
-            {
-                title: "sidebarLogs",
-                icon: <Logs className="h-4 w-4" />,
-                items: [
-                    {
-                        title: "sidebarLogsRequest",
-                        href: "/{orgId}/settings/logs/request",
-                        icon: <SquareMousePointer className="h-4 w-4" />
-                    },
-                    ...(build != "oss"
-                        ? [
-                              {
-                                  title: "sidebarLogsAccess",
-                                  href: "/{orgId}/settings/logs/access",
-                                  icon: <ScanEye className="h-4 w-4" />
-                              },
-                              {
-                                  title: "sidebarLogsAction",
-                                  href: "/{orgId}/settings/logs/action",
-                                  icon: <Logs className="h-4 w-4" />
-                              }
-                          ]
-                        : [])
-                ]
+        items: (() => {
+            const logItems: SidebarNavItem[] = [
+                {
+                    title: "sidebarLogsRequest",
+                    href: "/{orgId}/settings/logs/request",
+                    icon: <SquareMousePointer className="h-4 w-4" />
+                },
+                ...(build != "oss"
+                    ? [
+                          {
+                              title: "sidebarLogsAccess",
+                              href: "/{orgId}/settings/logs/access",
+                              icon: <ScanEye className="h-4 w-4" />
+                          },
+                          {
+                              title: "sidebarLogsAction",
+                              href: "/{orgId}/settings/logs/action",
+                              icon: <Logs className="h-4 w-4" />
+                          }
+                      ]
+                    : [])
+            ];
+
+            // If only one log item, return it directly without grouping
+            if (logItems.length === 1) {
+                return logItems;
             }
-        ]
+
+            // If multiple log items, create a group
+            return [
+                {
+                    title: "sidebarLogs",
+                    icon: <Logs className="h-4 w-4" />,
+                    items: logItems
+                }
+            ];
+        })()
     },
     {
         heading: "Organization",
