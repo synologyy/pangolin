@@ -1040,34 +1040,6 @@ export default function ResourcesTable({
                                     <DataTablePagination
                                         table={proxyTable}
                                         onPageSizeChange={handleProxyPageSizeChange}
-                                        renderAdditionalControls={() => (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline">
-                                                        <Settings2 className="mr-2 h-4 w-4" />
-                                                        {t("columns")}
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48">
-                                                    {proxyTable.getAllColumns()
-                                                        .filter(column => column.getCanHide())
-                                                        .map(column => (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                                            >
-                                                                {column.id === "target" ? t("target") :
-                                                                    column.id === "authState" ? t("authentication") :
-                                                                        column.id === "enabled" ? t("enabled") :
-                                                                            column.id === "status" ? t("status") :
-                                                                                column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        )}
                                     />
                                 </div>
                             </TabsContent>
@@ -1169,34 +1141,6 @@ export default function ResourcesTable({
                                     <DataTablePagination
                                         table={internalTable}
                                         onPageSizeChange={handleInternalPageSizeChange}
-                                        renderAdditionalControls={() => (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="outline">
-                                                        <Settings2 className="mr-2 h-4 w-4" />
-                                                        {t("columns")}
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48">
-                                                    {internalTable.getAllColumns()
-                                                        .filter(column => column.getCanHide())
-                                                        .map(column => (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                                            >
-                                                                {column.id === "target" ? t("target") :
-                                                                    column.id === "authState" ? t("authentication") :
-                                                                        column.id === "enabled" ? t("enabled") :
-                                                                            column.id === "status" ? t("status") :
-                                                                                column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        ))}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        )}
                                     />
                                 </div>
                             </TabsContent>
