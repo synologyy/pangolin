@@ -242,7 +242,12 @@ async function updateHttpResource(
         const [existingResource] = await db
             .select()
             .from(resources)
-            .where(eq(resources.niceId, updateData.niceId));
+            .where(
+            and(
+                eq(resources.niceId, updateData.niceId),
+                eq(resources.orgId, resource.orgId)
+            )
+        );
 
         if (
             existingResource &&
@@ -387,7 +392,12 @@ async function updateRawResource(
         const [existingResource] = await db
             .select()
             .from(resources)
-            .where(eq(resources.niceId, updateData.niceId));
+            .where(
+            and(
+                eq(resources.niceId, updateData.niceId),
+                eq(resources.orgId, resource.orgId)
+            )
+        );
 
         if (
             existingResource &&
