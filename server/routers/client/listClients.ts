@@ -10,7 +10,7 @@ import {
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { and, count, eq, inArray, or, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -96,10 +96,25 @@ const listClientsSchema = z.object({
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.number().int().nonnegative()),
+    filter: z
+        .enum(["user", "machine"])
+        .optional()
 });
 
-function queryClients(orgId: string, accessibleClientIds: number[]) {
+function queryClients(orgId: string, accessibleClientIds: number[], filter?: "user" | "machine") {
+    const conditions = [
+        inArray(clients.clientId, accessibleClientIds),
+        eq(clients.orgId, orgId)
+    ];
+
+    // Add filter condition based on filter type
+    if (filter === "user") {
+        conditions.push(isNotNull(clients.userId));
+    } else if (filter === "machine") {
+        conditions.push(isNull(clients.userId));
+    }
+
     return db
         .select({
             clientId: clients.clientId,
@@ -121,12 +136,7 @@ function queryClients(orgId: string, accessibleClientIds: number[]) {
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))
         .leftJoin(olms, eq(clients.clientId, olms.clientId))
         .leftJoin(users, eq(clients.userId, users.userId))
-        .where(
-            and(
-                inArray(clients.clientId, accessibleClientIds),
-                eq(clients.orgId, orgId)
-            )
-        );
+        .where(and(...conditions));
 }
 
 async function getSiteAssociations(clientIds: number[]) {
@@ -188,7 +198,7 @@ export async function listClients(
                 )
             );
         }
-        const { limit, offset } = parsedQuery.data;
+        const { limit, offset, filter } = parsedQuery.data;
 
         const parsedParams = listClientsParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -237,18 +247,24 @@ export async function listClients(
         const accessibleClientIds = accessibleClients.map(
             (client) => client.clientId
         );
-        const baseQuery = queryClients(orgId, accessibleClientIds);
+        const baseQuery = queryClients(orgId, accessibleClientIds, filter);
 
-        // Get client count
+        // Get client count with filter
+        const countConditions = [
+            inArray(clients.clientId, accessibleClientIds),
+            eq(clients.orgId, orgId)
+        ];
+
+        if (filter === "user") {
+            countConditions.push(isNotNull(clients.userId));
+        } else if (filter === "machine") {
+            countConditions.push(isNull(clients.userId));
+        }
+
         const countQuery = db
             .select({ count: count() })
             .from(clients)
-            .where(
-                and(
-                    inArray(clients.clientId, accessibleClientIds),
-                    eq(clients.orgId, orgId)
-                )
-            );
+            .where(and(...countConditions));
 
         const clientsList = await baseQuery.limit(limit).offset(offset);
         const totalCountResult = await countQuery;
