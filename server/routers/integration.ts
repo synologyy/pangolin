@@ -229,6 +229,42 @@ authenticated.post(
     siteResource.setSiteResourceUsers
 );
 
+authenticated.post(
+    "/site-resource/:siteResourceId/roles/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.addRoleToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.removeRoleFromSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addUserToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeUserFromSiteResource
+);
+
 authenticated.put(
     "/org/:orgId/resource",
     verifyApiKeyOrgAccess,
@@ -442,6 +478,42 @@ authenticated.post(
     verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
     resource.setResourceUsers
+);
+
+authenticated.post(
+    "/resource/:resourceId/roles/add",
+    verifyApiKeyResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    resource.addRoleToResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/roles/remove",
+    verifyApiKeyResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    resource.removeRoleFromResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/users/add",
+    verifyApiKeyResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    resource.addUserToResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/users/remove",
+    verifyApiKeyResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    resource.removeUserFromResource
 );
 
 authenticated.post(

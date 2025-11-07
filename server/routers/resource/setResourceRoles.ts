@@ -7,7 +7,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, inArray } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const setResourceRolesBodySchema = z
@@ -90,28 +90,20 @@ export async function setResourceRoles(
             );
         }
 
-        // get this org's admin role
-        const adminRole = await db
+        // Check if any of the roleIds are admin roles
+        const rolesToCheck = await db
             .select()
             .from(roles)
             .where(
                 and(
-                    eq(roles.name, "Admin"),
+                    inArray(roles.roleId, roleIds),
                     eq(roles.orgId, resource.orgId)
                 )
-            )
-            .limit(1);
-
-        if (!adminRole.length) {
-            return next(
-                createHttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Admin role not found"
-                )
             );
-        }
 
-        if (roleIds.includes(adminRole[0].roleId)) {
+        const hasAdminRole = rolesToCheck.some((role) => role.isAdmin);
+
+        if (hasAdminRole) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
@@ -120,13 +112,31 @@ export async function setResourceRoles(
             );
         }
 
-        await db.transaction(async (trx) => {
-            await trx.delete(roleResources).where(
+        // Get all admin role IDs for this org to exclude from deletion
+        const adminRoles = await db
+            .select()
+            .from(roles)
+            .where(
                 and(
-                    eq(roleResources.resourceId, resourceId),
-                    ne(roleResources.roleId, adminRole[0].roleId) // delete all but the admin role
+                    eq(roles.isAdmin, true),
+                    eq(roles.orgId, resource.orgId)
                 )
             );
+        const adminRoleIds = adminRoles.map((role) => role.roleId);
+
+        await db.transaction(async (trx) => {
+            if (adminRoleIds.length > 0) {
+                await trx.delete(roleResources).where(
+                    and(
+                        eq(roleResources.resourceId, resourceId),
+                        ne(roleResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                    )
+                );
+            } else {
+                await trx.delete(roleResources).where(
+                    eq(roleResources.resourceId, resourceId)
+                );
+            }
 
             const newRoleResources = await Promise.all(
                 roleIds.map((roleId) =>

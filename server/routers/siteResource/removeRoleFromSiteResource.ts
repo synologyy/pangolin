@@ -7,17 +7,17 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
-import { eq, and, ne, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 
-const setSiteResourceRolesBodySchema = z
+const removeRoleFromSiteResourceBodySchema = z
     .object({
-        roleIds: z.array(z.number().int().positive())
+        roleId: z.number().int().positive()
     })
     .strict();
 
-const setSiteResourceRolesParamsSchema = z
+const removeRoleFromSiteResourceParamsSchema = z
     .object({
         siteResourceId: z
             .string()
@@ -28,16 +28,15 @@ const setSiteResourceRolesParamsSchema = z
 
 registry.registerPath({
     method: "post",
-    path: "/site-resource/{siteResourceId}/roles",
-    description:
-        "Set roles for a site resource. This will replace all existing roles.",
+    path: "/site-resource/{siteResourceId}/roles/remove",
+    description: "Remove a single role from a site resource.",
     tags: [OpenAPITags.Resource, OpenAPITags.Role],
     request: {
-        params: setSiteResourceRolesParamsSchema,
+        params: removeRoleFromSiteResourceParamsSchema,
         body: {
             content: {
                 "application/json": {
-                    schema: setSiteResourceRolesBodySchema
+                    schema: removeRoleFromSiteResourceBodySchema
                 }
             }
         }
@@ -45,13 +44,15 @@ registry.registerPath({
     responses: {}
 });
 
-export async function setSiteResourceRoles(
+export async function removeRoleFromSiteResource(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = setSiteResourceRolesBodySchema.safeParse(req.body);
+        const parsedBody = removeRoleFromSiteResourceBodySchema.safeParse(
+            req.body
+        );
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -61,9 +62,9 @@ export async function setSiteResourceRoles(
             );
         }
 
-        const { roleIds } = parsedBody.data;
+        const { roleId } = parsedBody.data;
 
-        const parsedParams = setSiteResourceRolesParamsSchema.safeParse(
+        const parsedParams = removeRoleFromSiteResourceParamsSchema.safeParse(
             req.params
         );
         if (!parsedParams.success) {
@@ -86,79 +87,79 @@ export async function setSiteResourceRoles(
 
         if (!siteResource) {
             return next(
-                createHttpError(
-                    HttpCode.INTERNAL_SERVER_ERROR,
-                    "Site resource not found"
-                )
+                createHttpError(HttpCode.NOT_FOUND, "Site resource not found")
             );
         }
 
-        // Check if any of the roleIds are admin roles
-        const rolesToCheck = await db
+        // Check if the role is an admin role
+        const [roleToCheck] = await db
             .select()
             .from(roles)
             .where(
                 and(
-                    inArray(roles.roleId, roleIds),
+                    eq(roles.roleId, roleId),
                     eq(roles.orgId, siteResource.orgId)
                 )
+            )
+            .limit(1);
+
+        if (!roleToCheck) {
+            return next(
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    "Role not found or does not belong to the same organization"
+                )
             );
+        }
 
-        const hasAdminRole = rolesToCheck.some((role) => role.isAdmin);
-
-        if (hasAdminRole) {
+        if (roleToCheck.isAdmin) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
-                    "Admin role cannot be assigned to site resources"
+                    "Admin role cannot be removed from site resources"
                 )
             );
         }
 
-        // Get all admin role IDs for this org to exclude from deletion
-        const adminRoles = await db
+        // Check if role exists in site resource
+        const existingEntry = await db
             .select()
-            .from(roles)
+            .from(roleSiteResources)
             .where(
                 and(
-                    eq(roles.isAdmin, true),
-                    eq(roles.orgId, siteResource.orgId)
+                    eq(roleSiteResources.siteResourceId, siteResourceId),
+                    eq(roleSiteResources.roleId, roleId)
                 )
             );
-        const adminRoleIds = adminRoles.map((role) => role.roleId);
+
+        if (existingEntry.length === 0) {
+            return next(
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    "Role not found in site resource"
+                )
+            );
+        }
 
         await db.transaction(async (trx) => {
-            if (adminRoleIds.length > 0) {
-                await trx.delete(roleSiteResources).where(
+            await trx
+                .delete(roleSiteResources)
+                .where(
                     and(
                         eq(roleSiteResources.siteResourceId, siteResourceId),
-                        ne(roleSiteResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                        eq(roleSiteResources.roleId, roleId)
                     )
                 );
-            } else {
-                await trx.delete(roleSiteResources).where(
-                    eq(roleSiteResources.siteResourceId, siteResourceId)
-                );
-            }
 
-            await Promise.all(
-                roleIds.map((roleId) =>
-                    trx
-                        .insert(roleSiteResources)
-                        .values({ roleId, siteResourceId })
-                        .returning()
-                )
-            );
-
-            await rebuildSiteClientAssociations(siteResource, trx);
+             await rebuildSiteClientAssociations(siteResource, trx);
         });
 
         return response(res, {
             data: {},
             success: true,
             error: false,
-            message: "Roles set for site resource successfully",
-            status: HttpCode.CREATED
+            message: "Role removed from site resource successfully",
+            status: HttpCode.OK
         });
     } catch (error) {
         logger.error(error);
@@ -167,3 +168,4 @@ export async function setSiteResourceRoles(
         );
     }
 }
+

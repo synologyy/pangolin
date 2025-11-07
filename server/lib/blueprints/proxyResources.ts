@@ -780,10 +780,6 @@ async function syncRoleResources(
         .where(eq(roleResources.resourceId, resourceId));
 
     for (const roleName of ssoRoles) {
-        if (roleName === "Admin") {
-            continue; // never add admin access
-        }
-
         const [role] = await trx
             .select()
             .from(roles)
@@ -792,6 +788,10 @@ async function syncRoleResources(
 
         if (!role) {
             throw new Error(`Role not found: ${roleName} in org ${orgId}`);
+        }
+
+        if (role.isAdmin) {
+            continue; // never add admin access
         }
 
         const existingRoleResource = existingRoleResources.find(

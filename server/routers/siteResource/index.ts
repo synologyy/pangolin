@@ -8,3 +8,7 @@ export * from "./listSiteResourceRoles";
 export * from "./listSiteResourceUsers";
 export * from "./setSiteResourceRoles";
 export * from "./setSiteResourceUsers";
+export * from "./addRoleToSiteResource";
+export * from "./removeRoleFromSiteResource";
+export * from "./addUserToSiteResource";
+export * from "./removeUserFromSiteResource";

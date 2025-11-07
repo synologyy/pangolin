@@ -95,7 +95,6 @@ export async function verifySiteResourceAccess(
         req.userOrgId = siteResource.orgId;
 
         // Attach the siteResource to the request for use in the next middleware/route
-        // @ts-ignore - Extending Request type
         req.siteResource = siteResource;
 
         const roleResourceAccess = await db

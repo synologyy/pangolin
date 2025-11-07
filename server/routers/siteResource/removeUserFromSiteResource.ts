@@ -1,0 +1,141 @@
+import { Request, Response, NextFunction } from "express";
+import { z } from "zod";
+import { db, siteResources } from "@server/db";
+import { userSiteResources } from "@server/db";
+import response from "@server/lib/response";
+import HttpCode from "@server/types/HttpCode";
+import createHttpError from "http-errors";
+import logger from "@server/logger";
+import { fromError } from "zod-validation-error";
+import { eq, and } from "drizzle-orm";
+import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+
+const removeUserFromSiteResourceBodySchema = z
+    .object({
+        userId: z.string()
+    })
+    .strict();
+
+const removeUserFromSiteResourceParamsSchema = z
+    .object({
+        siteResourceId: z
+            .string()
+            .transform(Number)
+            .pipe(z.number().int().positive())
+    })
+    .strict();
+
+registry.registerPath({
+    method: "post",
+    path: "/site-resource/{siteResourceId}/users/remove",
+    description: "Remove a single user from a site resource.",
+    tags: [OpenAPITags.Resource, OpenAPITags.User],
+    request: {
+        params: removeUserFromSiteResourceParamsSchema,
+        body: {
+            content: {
+                "application/json": {
+                    schema: removeUserFromSiteResourceBodySchema
+                }
+            }
+        }
+    },
+    responses: {}
+});
+
+export async function removeUserFromSiteResource(
+    req: Request,
+    res: Response,
+    next: NextFunction
+): Promise<any> {
+    try {
+        const parsedBody = removeUserFromSiteResourceBodySchema.safeParse(
+            req.body
+        );
+        if (!parsedBody.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedBody.error).toString()
+                )
+            );
+        }
+
+        const { userId } = parsedBody.data;
+
+        const parsedParams = removeUserFromSiteResourceParamsSchema.safeParse(
+            req.params
+        );
+        if (!parsedParams.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedParams.error).toString()
+                )
+            );
+        }
+
+        const { siteResourceId } = parsedParams.data;
+
+        // get the site resource
+        const [siteResource] = await db
+            .select()
+            .from(siteResources)
+            .where(eq(siteResources.siteResourceId, siteResourceId))
+            .limit(1);
+
+        if (!siteResource) {
+            return next(
+                createHttpError(HttpCode.NOT_FOUND, "Site resource not found")
+            );
+        }
+
+        // Check if user exists in site resource
+        const existingEntry = await db
+            .select()
+            .from(userSiteResources)
+            .where(
+                and(
+                    eq(userSiteResources.siteResourceId, siteResourceId),
+                    eq(userSiteResources.userId, userId)
+                )
+            );
+
+        if (existingEntry.length === 0) {
+            return next(
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    "User not found in site resource"
+                )
+            );
+        }
+
+        await db.transaction(async (trx) => {
+            await trx
+                .delete(userSiteResources)
+                .where(
+                    and(
+                        eq(userSiteResources.siteResourceId, siteResourceId),
+                        eq(userSiteResources.userId, userId)
+                    )
+                );
+
+            await rebuildSiteClientAssociations(siteResource, trx);
+        });
+
+        return response(res, {
+            data: {},
+            success: true,
+            error: false,
+            message: "User removed from site resource successfully",
+            status: HttpCode.OK
+        });
+    } catch (error) {
+        logger.error(error);
+        return next(
+            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "An error occurred")
+        );
+    }
+}
+
