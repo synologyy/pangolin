@@ -1283,6 +1283,7 @@
     "productUpdateInfo": "{noOfUpdates} updates",
     "productUpdateWhatsNew": "What's New",
     "productUpdateTitle": "Product Updates",
+    "productUpdateEmpty": "No updates",
     "dismissAll": "Dismiss all",
     "pangolinUpdateAvailable": "New version available",
     "pangolinUpdateAvailableInfo": "Version {version} is ready to install",

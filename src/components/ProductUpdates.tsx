@@ -230,7 +230,7 @@ function ProductUpdatesListPopup({
                 <ol className="p-3 flex flex-col gap-1 max-h-112 overflow-y-auto">
                     {updates.length === 0 && (
                         <small className="border rounded-md flex p-4 border-dashed justify-center items-center text-muted-foreground">
-                            No updates
+                            {t("productUpdateEmpty")}
                         </small>
                     )}
                     {updates.map((update) => (
