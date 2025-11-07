@@ -30,7 +30,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId } = message.data;
+    const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient } =
+        message.data;
     let client: Client;
 
     if (orgId) {
@@ -39,7 +40,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 orgId,
                 olm.userId,
                 olm.olmId,
-                olm.name || "User Device"
+                olm.name || "User Device",
+                doNotCreateNewClient ? true : false
             );
         } catch (err) {
             logger.error(
@@ -295,10 +297,9 @@ async function getOrCreateOrgClient(
     userId: string | null,
     olmId: string,
     name: string,
+    doNotCreateNewClient: boolean,
     trx: Transaction | typeof db = db
 ): Promise<Client> {
-    let client: Client;
-
     // get the org
     const [org] = await trx
         .select()
@@ -327,7 +328,8 @@ async function getOrCreateOrgClient(
         ) // checking the olmid here because we want to create a new client PER OLM PER ORG
         .limit(1);
 
-    if (!existingClient) {
+    let client = existingClient;
+    if (!client && !doNotCreateNewClient) {
         logger.debug(
             `Client does not exist in org ${orgId}, creating new client for user ${userId}`
         );
@@ -388,7 +390,8 @@ async function getOrCreateOrgClient(
             clientId: newClient.clientId
         });
 
-        await trx.insert(userClients).values({ // we also want to make sure that the user can see their own client if they are not an admin
+        await trx.insert(userClients).values({
+            // we also want to make sure that the user can see their own client if they are not an admin
             userId,
             clientId: newClient.clientId
         });
@@ -402,8 +405,6 @@ async function getOrCreateOrgClient(
         }
 
         client = newClient;
-    } else {
-        client = existingClient;
     }
 
     return client;
