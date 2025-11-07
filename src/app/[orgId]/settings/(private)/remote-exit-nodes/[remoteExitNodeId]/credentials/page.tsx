@@ -59,7 +59,7 @@ export default function CredentialsPage() {
         setCredentials(data);
 
         await api.put<AxiosResponse<QuickStartRemoteExitNodeResponse>>(
-            `/org/${orgId}/reGenerate-remote-exit-node-secret`,
+            `/re-key/${orgId}/reGenerate-remote-exit-node-secret`,
             {
                 remoteExitNodeId: remoteExitNode.remoteExitNodeId,
                 secret: data.secret,

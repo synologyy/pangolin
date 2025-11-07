@@ -29,7 +29,7 @@ export type ReGenerateSecretBody = z.infer<typeof reGenerateSecretBodySchema>;
 
 registry.registerPath({
     method: "post",
-    path: "/client/{clientId}/regenerate-secret",
+    path: "/re-key/{clientId}/regenerate-client-secret",
     description: "Regenerate a client's OLM credentials by its client ID.",
     tags: [OpenAPITags.Client],
     request: {

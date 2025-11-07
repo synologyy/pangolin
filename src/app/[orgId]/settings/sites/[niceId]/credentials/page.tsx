@@ -95,7 +95,7 @@ PersistentKeepalive = 5`;
                 );
             }
 
-            await api.post(`/site/${site?.siteId}/regenerate-secret`, {
+            await api.post(`/re-key/${site?.siteId}/regenerate-site-secret`, {
                 type: "wireguard",
                 subnet: res.data.data.subnet,
                 exitNodeId: res.data.data.exitNodeId,
@@ -109,7 +109,7 @@ PersistentKeepalive = 5`;
                 const data = res.data.data;
                 setSiteDefaults(data);
 
-                await api.post(`/site/${site?.siteId}/regenerate-secret`, {
+                await api.post(`/re-key/${site?.siteId}/regenerate-site-secret`, {
                     type: "newt",
                     newtId: data.newtId,
                     newtSecret: data.newtSecret

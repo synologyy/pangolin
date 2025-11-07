@@ -23,11 +23,15 @@ import * as license from "#private/routers/license";
 import * as generateLicense from "./generatedLicense";
 import * as logs from "#private/routers/auditLogs";
 import * as misc from "#private/routers/misc";
+import * as reKey from "#private/routers/re-key";
 
 import {
     verifyOrgAccess,
     verifyUserHasAction,
-    verifyUserIsServerAdmin
+    verifyUserIsServerAdmin,
+    verifySiteAccess,
+    verifyClientAccess,
+    verifyClientsEnabled,
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 import {
@@ -236,14 +240,6 @@ authenticated.put(
     remoteExitNode.createRemoteExitNode
 );
 
-authenticated.put(
-    "/org/:orgId/reGenerate-remote-exit-node-secret",
-    verifyValidLicense,
-    verifyOrgAccess,
-    verifyUserHasAction(ActionsEnum.updateRemoteExitNode),
-    remoteExitNode.reGenerateExitNodeSecret
-);
-
 authenticated.get(
     "/org/:orgId/remote-exit-nodes",
     verifyValidLicense,
@@ -410,4 +406,27 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportAccessAuditLogs
+);
+
+authenticated.post(
+    "/re-key/:clientId/regenerate-client-secret",
+    verifyClientsEnabled,
+    verifyClientAccess,
+    verifyUserHasAction(ActionsEnum.reGenerateSecret),
+    reKey.reGenerateClientSecret
+);
+
+authenticated.post(
+    "/re-key/:siteId/regenerate-site-secret",
+    verifySiteAccess,
+    verifyUserHasAction(ActionsEnum.reGenerateSecret),
+    reKey.reGenerateSiteSecret
+);
+
+authenticated.put(
+    "/re-key/:orgId/reGenerate-remote-exit-node-secret",
+    verifyValidLicense,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateRemoteExitNode),
+    reKey.reGenerateExitNodeSecret
 );

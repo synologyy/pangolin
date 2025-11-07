@@ -8,6 +8,7 @@ import ClientProvider from "@app/providers/ClientProvider";
 import { redirect } from "next/navigation";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
 import { getTranslations } from "next-intl/server";
+import { build } from "@server/build";
 
 type SettingsLayoutProps = {
     children: React.ReactNode;
@@ -38,10 +39,13 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
             title: t('general'),
             href: `/{orgId}/settings/clients/{clientId}/general`
         },
-        {
-            title: t('credentials'),
-            href: `/{orgId}/settings/clients/{clientId}/credentials`
-        }
+        ...(build === 'enterprise'
+            ? [{
+                title: t('credentials'),
+                href: `/{orgId}/settings/clients/{clientId}/credentials`
+            },
+            ]
+            : []),
     ];
 
     return (

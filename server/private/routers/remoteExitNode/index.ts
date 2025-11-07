@@ -21,4 +21,3 @@ export * from "./deleteRemoteExitNode";
 export * from "./listRemoteExitNodes";
 export * from "./pickRemoteExitNodeDefaults";
 export * from "./quickStartRemoteExitNode";
-export * from "./reGenerateExitNodeSecret";

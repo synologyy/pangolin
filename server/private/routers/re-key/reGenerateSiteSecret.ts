@@ -9,7 +9,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
-import { addPeer } from "../gerbil/peers";
+import { addPeer } from "@server/routers/gerbil/peers";
 
 
 const updateSiteParamsSchema = z
@@ -31,7 +31,7 @@ const updateSiteBodySchema = z
 
 registry.registerPath({
     method: "post",
-    path: "/site/{siteId}/regenerate-secret",
+    path: "/re-key/{siteId}/regenerate-site-secret",
     description: "Regenerate a site's Newt or WireGuard credentials by its site ID.",
     tags: [OpenAPITags.Site],
     request: {

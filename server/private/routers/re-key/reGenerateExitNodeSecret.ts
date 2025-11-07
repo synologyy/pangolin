@@ -23,7 +23,11 @@ import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
 import { UpdateRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
-import { paramsSchema } from "./createRemoteExitNode";
+import { OpenAPITags, registry } from "@server/openApi";
+
+export const paramsSchema = z.object({
+    orgId: z.string()
+});
 
 const bodySchema = z
     .object({
@@ -31,6 +35,25 @@ const bodySchema = z
         secret: z.string().length(48)
     })
     .strict();
+
+
+registry.registerPath({
+    method: "post",
+    path: "/re-key/{orgId}/regenerate-secret",
+    description: "Regenerate a exit node credentials by its org ID.",
+    tags: [OpenAPITags.Org],
+    request: {
+        params: paramsSchema,
+        body: {
+            content: {
+                "application/json": {
+                    schema: bodySchema
+                }
+            }
+        }
+    },
+    responses: {}
+});
 
 export async function reGenerateExitNodeSecret(
     req: Request,

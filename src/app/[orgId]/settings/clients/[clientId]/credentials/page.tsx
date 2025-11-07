@@ -52,7 +52,7 @@ export default function CredentialsPage() {
             const data = res.data.data;
             setClientDefaults(data);
 
-            await api.post(`/client/${client?.clientId}/regenerate-secret`, {
+            await api.post(`/re-key/${client?.clientId}/regenerate-client-secret`, {
                 olmId: data.olmId,
                 secret: data.olmSecret,
             });
