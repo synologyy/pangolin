@@ -51,8 +51,14 @@ export const internal = axios.create({
     }
 });
 
+const remoteAPIURL =
+    process.env.NODE_ENV === "development"
+        ? (process.env.NEXT_PUBLIC_FOSSORIAL_REMOTE_API_URL ??
+          "https://api.fossorial.io")
+        : "https://api.fossorial.io";
+
 export const remote = axios.create({
-    baseURL: `${process.env.NEXT_PUBLIC_FOSSORIAL_REMOTE_API_URL}/api/v1`,
+    baseURL: `${remoteAPIURL}/api/v1`,
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",

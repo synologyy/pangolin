@@ -21,13 +21,11 @@ import {
     GeneratedLicenseKey,
     ListGeneratedLicenseKeysResponse
 } from "@server/routers/generatedLicense/types";
-import { pullEnv } from "@app/lib/pullEnv";
 
 async function fetchLicenseKeys(orgId: string): Promise<any> {
     try {
-        const env = pullEnv();
         const response = await fetch(
-            `${env.app.fossorialRemoteAPIBaseUrl}/api/v1/license-internal/enterprise/${orgId}/list`,
+            `https://api.fossorial.io/api/v1/license-internal/enterprise/${orgId}/list`,
             {
                 method: "GET",
                 headers: {

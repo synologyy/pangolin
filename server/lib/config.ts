@@ -6,7 +6,6 @@ import { eq } from "drizzle-orm";
 import { configSchema, readConfigFile } from "./readConfigFile";
 import { fromError } from "zod-validation-error";
 import { build } from "@server/build";
-import { pullEnv } from "@app/lib/pullEnv";
 
 export class Config {
     private rawConfig!: z.infer<typeof configSchema>;
@@ -150,7 +149,6 @@ export class Config {
 
     public async checkSupporterKey() {
         const [key] = await db.select().from(supporterKey).limit(1);
-        const env = pullEnv();
 
         if (!key) {
             return;
@@ -160,7 +158,7 @@ export class Config {
 
         try {
             const response = await fetch(
-                `${env.app.fossorialRemoteAPIBaseUrl}/api/v1/license/validate`,
+                `https://api.fossorial.io/api/v1/license/validate`,
                 {
                     method: "POST",
                     headers: {

@@ -4,7 +4,6 @@ export type Env = {
         sandbox_mode: boolean;
         version: string;
         dashboardUrl: string;
-        fossorialRemoteAPIBaseUrl: string;
     };
     server: {
         externalPort: string;

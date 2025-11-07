@@ -5,12 +5,9 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { response as sendResponse } from "@server/lib/response";
-import { suppressDeprecationWarnings } from "moment";
 import { supporterKey } from "@server/db";
 import { db } from "@server/db";
-import { eq } from "drizzle-orm";
 import config from "@server/lib/config";
-import { pullEnv } from "@app/lib/pullEnv";
 
 const validateSupporterKeySchema = z
     .object({
@@ -32,7 +29,6 @@ export async function validateSupporterKey(
     next: NextFunction
 ): Promise<any> {
     try {
-        const env = pullEnv();
         const parsedBody = validateSupporterKeySchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
@@ -46,7 +42,7 @@ export async function validateSupporterKey(
         const { githubUsername, key } = parsedBody.data;
 
         const response = await fetch(
-            `${env.app.fossorialRemoteAPIBaseUrl}/api/v1/license/validate`,
+            `https://api.fossorial.io/api/v1/license/validate`,
             {
                 method: "POST",
                 headers: {

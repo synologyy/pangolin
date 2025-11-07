@@ -21,11 +21,6 @@ const envSchema = z.object({
         .transform((val) => val === "true"),
     APP_VERSION: z.string(),
     DASHBOARD_URL: z.string(),
-    NEXT_PUBLIC_FOSSORIAL_REMOTE_API_URL: z
-        .string()
-        .url()
-        .default("https://api.fossorial.io")
-        .transform((url) => url.replace(/(.*)\/?$/, "$1")),
 
     // Email configuration
     EMAIL_ENABLED: z
@@ -117,8 +112,7 @@ export function pullEnv(): Env {
             environment: env.ENVIRONMENT,
             sandbox_mode: env.SANDBOX_MODE,
             version: env.APP_VERSION,
-            dashboardUrl: env.DASHBOARD_URL,
-            fossorialRemoteAPIBaseUrl: env.NEXT_PUBLIC_FOSSORIAL_REMOTE_API_URL
+            dashboardUrl: env.DASHBOARD_URL
         },
         email: {
             emailEnabled: env.EMAIL_ENABLED
