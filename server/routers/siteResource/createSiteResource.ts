@@ -11,6 +11,7 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { addTargets } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
+import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 
 const createSiteResourceParamsSchema = z
     .object({
@@ -29,7 +30,8 @@ const createSiteResourceSchema = z
         destination: z.string().min(1),
         enabled: z.boolean().default(true),
         alias: z.string().optional()
-    }).strict()
+    })
+    .strict()
     .refine(
         (data) => {
             if (data.mode === "port") {
@@ -145,61 +147,75 @@ export async function createSiteResource(
 
         const niceId = await getUniqueSiteResourceName(orgId);
 
-        // Create the site resource
-        const [newSiteResource] = await db
-            .insert(siteResources)
-            .values({
-                siteId,
-                niceId,
-                orgId,
-                name,
-                mode,
-                protocol: mode === "port" ? protocol : null,
-                proxyPort: mode === "port" ? proxyPort : null,
-                destinationPort: mode === "port" ? destinationPort : null,
-                destination,
-                enabled,
-                alias: alias || null
-            })
-            .returning();
+        let newSiteResource: SiteResource | undefined;
+        await db.transaction(async (trx) => {
+            // Create the site resource
+            [newSiteResource] = await trx
+                .insert(siteResources)
+                .values({
+                    siteId,
+                    niceId,
+                    orgId,
+                    name,
+                    mode,
+                    protocol: mode === "port" ? protocol : null,
+                    proxyPort: mode === "port" ? proxyPort : null,
+                    destinationPort: mode === "port" ? destinationPort : null,
+                    destination,
+                    enabled,
+                    alias: alias || null
+                })
+                .returning();
 
-        const adminRole = await db
-            .select()
-            .from(roles)
-            .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
-            .limit(1);
-
-        if (adminRole.length === 0) {
-            return next(
-                createHttpError(HttpCode.NOT_FOUND, `Admin role not found`)
-            );
-        }
-
-        await db.insert(roleSiteResources).values({
-            roleId: adminRole[0].roleId,
-            siteResourceId: newSiteResource.siteResourceId
-        });
-
-        // Only add targets for port mode
-        if (mode === "port" && protocol && proxyPort && destinationPort) {
-            const [newt] = await db
+            const [adminRole] = await trx
                 .select()
-                .from(newts)
-                .where(eq(newts.siteId, site.siteId))
+                .from(roles)
+                .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
                 .limit(1);
 
-            if (!newt) {
+            if (!adminRole) {
                 return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Newt not found")
+                    createHttpError(HttpCode.NOT_FOUND, `Admin role not found`)
                 );
             }
 
-            await addTargets(
-                newt.newtId,
-                destination,
-                destinationPort,
-                protocol,
-                proxyPort
+            await trx.insert(roleSiteResources).values({
+                roleId: adminRole.roleId,
+                siteResourceId: newSiteResource.siteResourceId
+            });
+
+            // Only add targets for port mode
+            if (mode === "port" && protocol && proxyPort && destinationPort) {
+                const [newt] = await trx
+                    .select()
+                    .from(newts)
+                    .where(eq(newts.siteId, site.siteId))
+                    .limit(1);
+
+                if (!newt) {
+                    return next(
+                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
+                    );
+                }
+
+                await addTargets(
+                    newt.newtId,
+                    destination,
+                    destinationPort,
+                    protocol,
+                    proxyPort
+                );
+            }
+
+            await rebuildSiteClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
+        });
+
+        if (!newSiteResource) {
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Site resource creation failed"
+                )
             );
         }
 

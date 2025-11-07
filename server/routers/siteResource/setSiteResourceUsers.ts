@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, siteResources } from "@server/db";
 import { userSiteResources } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -9,6 +9,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 
 const setSiteResourceUsersBodySchema = z
     .object({
@@ -74,6 +75,22 @@ export async function setSiteResourceUsers(
 
         const { siteResourceId } = parsedParams.data;
 
+        // get the site resource
+        const [siteResource] = await db
+            .select()
+            .from(siteResources)
+            .where(eq(siteResources.siteResourceId, siteResourceId))
+            .limit(1);
+
+        if (!siteResource) {
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Site resource not found"
+                )
+            );
+        }
+
         await db.transaction(async (trx) => {
             await trx
                 .delete(userSiteResources)
@@ -87,6 +104,8 @@ export async function setSiteResourceUsers(
                         .returning()
                 )
             );
+
+            await rebuildSiteClientAssociations(siteResource, trx);
         });
 
         return response(res, {

@@ -388,6 +388,11 @@ async function getOrCreateOrgClient(
             clientId: newClient.clientId
         });
 
+        await trx.insert(userClients).values({ // we also want to make sure that the user can see their own client if they are not an admin
+            userId,
+            clientId: newClient.clientId
+        });
+
         if (userOrg.roleId != adminRole.roleId) {
             // make sure the user can access the client
             trx.insert(userClients).values({

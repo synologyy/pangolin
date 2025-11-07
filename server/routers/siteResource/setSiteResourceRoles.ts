@@ -9,6 +9,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, and, ne } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 
 const setSiteResourceRolesBodySchema = z
     .object({
@@ -62,7 +63,9 @@ export async function setSiteResourceRoles(
 
         const { roleIds } = parsedBody.data;
 
-        const parsedParams = setSiteResourceRolesParamsSchema.safeParse(req.params);
+        const parsedParams = setSiteResourceRolesParamsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -136,6 +139,8 @@ export async function setSiteResourceRoles(
                         .returning()
                 )
             );
+
+            await rebuildSiteClientAssociations(siteResource, trx);
         });
 
         return response(res, {
@@ -152,4 +157,3 @@ export async function setSiteResourceRoles(
         );
     }
 }
-

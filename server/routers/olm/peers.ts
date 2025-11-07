@@ -13,18 +13,22 @@ export async function addPeer(
         serverIP: string | null;
         serverPort: number | null;
         remoteSubnets: string | null; // optional, comma-separated list of subnets that this site can access
-    }
+    },
+    olmId?: string
 ) {
-    const [olm] = await db
-        .select()
-        .from(olms)
-        .where(eq(olms.clientId, clientId))
-        .limit(1);
-    if (!olm) {
-        throw new Error(`Olm with ID ${clientId} not found`);
+    if (!olmId) {
+        const [olm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.clientId, clientId))
+            .limit(1);
+        if (!olm) {
+            throw new Error(`Olm with ID ${clientId} not found`);
+        }
+        olmId = olm.olmId;
     }
 
-    await sendToClient(olm.olmId, {
+    await sendToClient(olmId, {
         type: "olm/wg/peer/add",
         data: {
             siteId: peer.siteId,
@@ -36,20 +40,28 @@ export async function addPeer(
         }
     });
 
-    logger.info(`Added peer ${peer.publicKey} to olm ${olm.olmId}`);
+    logger.info(`Added peer ${peer.publicKey} to olm ${olmId}`);
 }
 
-export async function deletePeer(clientId: number, siteId: number, publicKey: string) {
-    const [olm] = await db
-        .select()
-        .from(olms)
-        .where(eq(olms.clientId, clientId))
-        .limit(1);
-    if (!olm) {
-        throw new Error(`Olm with ID ${clientId} not found`);
+export async function deletePeer(
+    clientId: number,
+    siteId: number,
+    publicKey: string,
+    olmId?: string
+) {
+    if (!olmId) {
+        const [olm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.clientId, clientId))
+            .limit(1);
+        if (!olm) {
+            throw new Error(`Olm with ID ${clientId} not found`);
+        }
+        olmId = olm.olmId;
     }
 
-    await sendToClient(olm.olmId, {
+    await sendToClient(olmId, {
         type: "olm/wg/peer/remove",
         data: {
             publicKey,
@@ -57,7 +69,7 @@ export async function deletePeer(clientId: number, siteId: number, publicKey: st
         }
     });
 
-    logger.info(`Deleted peer ${publicKey} from olm ${olm.olmId}`);
+    logger.info(`Deleted peer ${publicKey} from olm ${olmId}`);
 }
 
 export async function updatePeer(
@@ -69,18 +81,22 @@ export async function updatePeer(
         serverIP: string | null;
         serverPort: number | null;
         remoteSubnets?: string | null; // optional, comma-separated list of subnets that
-    }
+    },
+    olmId?: string
 ) {
-    const [olm] = await db
-        .select()
-        .from(olms)
-        .where(eq(olms.clientId, clientId))
-        .limit(1);
-    if (!olm) {
-        throw new Error(`Olm with ID ${clientId} not found`);
+    if (!olmId) {
+        const [olm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.clientId, clientId))
+            .limit(1);
+        if (!olm) {
+            throw new Error(`Olm with ID ${clientId} not found`);
+        }
+        olmId = olm.olmId;
     }
 
-    await sendToClient(olm.olmId, {
+    await sendToClient(olmId, {
         type: "olm/wg/peer/update",
         data: {
             siteId: peer.siteId,
@@ -92,5 +108,5 @@ export async function updatePeer(
         }
     });
 
-    logger.info(`Added peer ${peer.publicKey} to olm ${olm.olmId}`);
+    logger.info(`Added peer ${peer.publicKey} to olm ${olmId}`);
 }
