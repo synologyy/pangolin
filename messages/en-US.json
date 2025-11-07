@@ -2106,5 +2106,11 @@
     "credentialsSaved" : "Credentials Saved",
     "credentialsSavedDescription": "Credentials have been regenerated and saved successfully.",
     "credentialsSaveError": "Credentials Save Error",
-    "credentialsSaveErrorDescription": "An error occurred while regenerating and saving the credentials."
+    "credentialsSaveErrorDescription": "An error occurred while regenerating and saving the credentials.",
+    "regenerateCredentialsWarning": "Regenerating credentials will invalidate the previous ones. Make sure to update any configurations that use these credentials.",
+    "confirm": "Confirm",
+    "regenerateCredentialsConfirmation": "Are you sure you want to regenerate the credentials?",
+    "endpoint": "Endpoint",
+    "id": "Id",
+    "SecretKey": "Secret Key"
 }
