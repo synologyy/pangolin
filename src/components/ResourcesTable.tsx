@@ -30,7 +30,16 @@ import {
     ShieldOff,
     ShieldCheck,
     RefreshCw,
-    Columns
+    Columns,
+    Settings2,
+    Plus,
+    Search,
+    ChevronDown,
+    Clock,
+    Wifi,
+    WifiOff,
+    CheckCircle2,
+    XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -49,7 +58,6 @@ import { useTranslations } from "next-intl";
 import { InfoPopup } from "@app/components/ui/info-popup";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@app/components/ui/card";
 import {
     Table,
@@ -70,6 +78,14 @@ import EditInternalResourceDialog from "@app/components/EditInternalResourceDial
 import CreateInternalResourceDialog from "@app/components/CreateInternalResourceDialog";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 
+export type TargetHealth = {
+    targetId: number;
+    ip: string;
+    port: number;
+    enabled: boolean;
+    healthStatus?: "healthy" | "unhealthy" | "unknown";
+};
+
 export type ResourceRow = {
     id: number;
     nice: string | null;
@@ -83,8 +99,64 @@ export type ResourceRow = {
     enabled: boolean;
     domainId?: string;
     ssl: boolean;
+    targetHost?: string;
+    targetPort?: number;
+    targets?: TargetHealth[];
 };
 
+function getOverallHealthStatus(
+    targets?: TargetHealth[]
+): "online" | "degraded" | "offline" | "unknown" {
+    if (!targets || targets.length === 0) {
+        return "unknown";
+    }
+
+    const monitoredTargets = targets.filter(
+        (t) => t.enabled && t.healthStatus && t.healthStatus !== "unknown"
+    );
+
+    if (monitoredTargets.length === 0) {
+        return "unknown";
+    }
+
+    const healthyCount = monitoredTargets.filter(
+        (t) => t.healthStatus === "healthy"
+    ).length;
+    const unhealthyCount = monitoredTargets.filter(
+        (t) => t.healthStatus === "unhealthy"
+    ).length;
+
+    if (healthyCount === monitoredTargets.length) {
+        return "online";
+    } else if (unhealthyCount === monitoredTargets.length) {
+        return "offline";
+    } else {
+        return "degraded";
+    }
+}
+
+function StatusIcon({
+    status,
+    className = ""
+}: {
+    status: "online" | "degraded" | "offline" | "unknown";
+    className?: string;
+}) {
+    const iconClass = `h-4 w-4 ${className}`;
+
+    switch (status) {
+        case "online":
+            return <CheckCircle2 className={`${iconClass} text-green-500`} />;
+        case "degraded":
+            return <CheckCircle2 className={`${iconClass} text-yellow-500`} />;
+        case "offline":
+            return <XCircle className={`${iconClass} text-destructive`} />;
+        case "unknown":
+            return <Clock className={`${iconClass} text-gray-400`} />;
+        default:
+            return null;
+    }
+}
 export type InternalResourceRow = {
     id: number;
     name: string;
@@ -232,6 +304,7 @@ export default function ResourcesTable({
     const [proxySorting, setProxySorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
     );
+
     const [proxyColumnFilters, setProxyColumnFilters] =
         useState<ColumnFiltersState>([]);
     const [proxyGlobalFilter, setProxyGlobalFilter] = useState<any>([]);
@@ -243,12 +316,14 @@ export default function ResourcesTable({
         useState<ColumnFiltersState>([]);
     const [internalGlobalFilter, setInternalGlobalFilter] = useState<any>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [proxyColumnVisibility, setProxyColumnVisibility] = useState<VisibilityState>(
-        () => getStoredColumnVisibility("proxy-resources", {})
-    );
-    const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>(
-        () => getStoredColumnVisibility("internal-resources", {})
-    );
+    const [proxyColumnVisibility, setProxyColumnVisibility] =
+        useState<VisibilityState>(() =>
+            getStoredColumnVisibility("proxy-resources", {})
+        );
+    const [internalColumnVisibility, setInternalColumnVisibility] =
+        useState<VisibilityState>(() =>
+            getStoredColumnVisibility("internal-resources", {})
+        );
 
     const currentView = searchParams.get("view") || defaultView;
 
@@ -408,6 +483,106 @@ export default function ResourcesTable({
             });
     }
 
+    function TargetStatusCell({ targets }: { targets?: TargetHealth[] }) {
+        const overallStatus = getOverallHealthStatus(targets);
+
+        if (!targets || targets.length === 0) {
+            return (
+                <div className="flex items-center gap-2">
+                    <StatusIcon status="unknown" />
+                    <span className="text-sm text-muted-foreground">
+                        No targets
+                    </span>
+                </div>
+            );
+        }
+
+        const monitoredTargets = targets.filter(
+            (t) => t.enabled && t.healthStatus && t.healthStatus !== "unknown"
+        );
+        const unknownTargets = targets.filter(
+            (t) => !t.enabled || !t.healthStatus || t.healthStatus === "unknown"
+        );
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 h-8"
+                    >
+                        <StatusIcon status={overallStatus} />
+                        <span className="text-sm">
+                            {overallStatus === "online" && "Healthy"}
+                            {overallStatus === "degraded" && "Degraded"}
+                            {overallStatus === "offline" && "Offline"}
+                            {overallStatus === "unknown" && "Unknown"}
+                        </span>
+                        <ChevronDown className="h-3 w-3" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[280px]">
+                    {monitoredTargets.length > 0 && (
+                        <>
+                            {monitoredTargets.map((target) => (
+                                <DropdownMenuItem
+                                    key={target.targetId}
+                                    className="flex items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <StatusIcon
+                                            status={
+                                                target.healthStatus ===
+                                                "healthy"
+                                                    ? "online"
+                                                    : "offline"
+                                            }
+                                            className="h-3 w-3"
+                                        />
+                                        {`${target.ip}:${target.port}`}
+                                    </div>
+                                    <span
+                                        className={`capitalize ${
+                                            target.healthStatus === "healthy"
+                                                ? "text-green-500"
+                                                : "text-destructive"
+                                        }`}
+                                    >
+                                        {target.healthStatus}
+                                    </span>
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                    )}
+                    {unknownTargets.length > 0 && (
+                        <>
+                            {unknownTargets.map((target) => (
+                                <DropdownMenuItem
+                                    key={target.targetId}
+                                    className="flex items-center justify-between gap-4"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <StatusIcon
+                                            status="unknown"
+                                            className="h-3 w-3"
+                                        />
+                                        {`${target.ip}:${target.port}`}
+                                    </div>
+                                    <span className="text-muted-foreground">
+                                        {!target.enabled
+                                            ? "Disabled"
+                                            : "Not monitored"}
+                                    </span>
+                                </DropdownMenuItem>
+                            ))}
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    }
+
     const proxyColumns: ColumnDef<ResourceRow>[] = [
         {
             accessorKey: "name",
@@ -443,7 +618,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "protocol",
-            header: () => (<span className="p-3">{t("protocol")}</span>),
+            header: () => <span className="p-3">{t("protocol")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -458,8 +633,40 @@ export default function ResourcesTable({
             }
         },
         {
+            id: "status",
+            accessorKey: "status",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("status")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                const resourceRow = row.original;
+                return <TargetStatusCell targets={resourceRow.targets} />;
+            },
+            sortingFn: (rowA, rowB) => {
+                const statusA = getOverallHealthStatus(rowA.original.targets);
+                const statusB = getOverallHealthStatus(rowB.original.targets);
+                const statusOrder = {
+                    online: 3,
+                    degraded: 2,
+                    offline: 1,
+                    unknown: 0
+                };
+                return statusOrder[statusA] - statusOrder[statusB];
+            }
+        },
+        {
             accessorKey: "domain",
-            header: () => (<span className="p-3">{t("access")}</span>),
+            header: () => <span className="p-3">{t("access")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -522,7 +729,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "enabled",
-            header: () => (<span className="p-3">{t("enabled")}</span>),
+            header: () => <span className="p-3">{t("enabled")}</span>,
             cell: ({ row }) => (
                 <Switch
                     defaultChecked={
@@ -541,7 +748,7 @@ export default function ResourcesTable({
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -609,7 +816,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "siteName",
-            header: () => (<span className="p-3">{t("siteName")}</span>),
+            header: () => <span className="p-3">{t("siteName")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -626,7 +833,11 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "mode",
-            header: () => (<span className="p-3">{t("editInternalResourceDialogMode")}</span>),
+            header: () => (
+                <span className="p-3">
+                    {t("editInternalResourceDialogMode")}
+                </span>
+            ),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 const modeLabels: Record<"host" | "cidr" | "port", string> = {
@@ -639,13 +850,20 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "destination",
-            header: () => (<span className="p-3">{t("resourcesTableDestination")}</span>),
+            header: () => (
+                <span className="p-3">{t("resourcesTableDestination")}</span>
+            ),
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 let displayText: string;
                 let copyText: string;
 
-                if (resourceRow.mode === "port" && resourceRow.protocol && resourceRow.proxyPort && resourceRow.destinationPort) {
+                if (
+                    resourceRow.mode === "port" &&
+                    resourceRow.protocol &&
+                    resourceRow.proxyPort &&
+                    resourceRow.destinationPort
+                ) {
                     const protocol = resourceRow.protocol.toUpperCase();
                     // For port mode: site part uses alias or site address, destination part uses destination IP
                     // If site address has CIDR notation, extract just the IP address
@@ -658,25 +876,33 @@ export default function ResourcesTable({
                     copyText = `${siteDisplay}:${resourceRow.proxyPort}`;
                 } else if (resourceRow.mode === "host") {
                     // For host mode: use alias if available, otherwise use destination
-                    const destinationDisplay = resourceRow.alias || resourceRow.destination;
+                    const destinationDisplay =
+                        resourceRow.alias || resourceRow.destination;
                     displayText = destinationDisplay;
                     copyText = destinationDisplay;
                 } else if (resourceRow.mode === "cidr") {
                     displayText = resourceRow.destination;
                     copyText = resourceRow.destination;
                 } else {
-                    const destinationDisplay = resourceRow.alias || resourceRow.destination;
+                    const destinationDisplay =
+                        resourceRow.alias || resourceRow.destination;
                     displayText = destinationDisplay;
                     copyText = destinationDisplay;
                 }
 
-                return <CopyToClipboard text={copyText} isLink={false} displayText={displayText} />;
+                return (
+                    <CopyToClipboard
+                        text={copyText}
+                        isLink={false}
+                        displayText={displayText}
+                    />
+                );
             }
         },
 
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -788,7 +1014,10 @@ export default function ResourcesTable({
     }, [proxyColumnVisibility]);
 
     useEffect(() => {
-        setStoredColumnVisibility(internalColumnVisibility, "internal-resources");
+        setStoredColumnVisibility(
+            internalColumnVisibility,
+            "internal-resources"
+        );
     }, [internalColumnVisibility]);
 
     return (
@@ -861,80 +1090,122 @@ export default function ResourcesTable({
                                 )}
                             </div>
                             <div className="flex items-center gap-2 sm:justify-end">
-                                {currentView === "proxy" && proxyTable.getAllColumns().some((column) => column.getCanHide()) && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">
-                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                <span className="hidden sm:inline">
-                                                    {t("columns") || "Columns"}
-                                                </span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuLabel>
-                                                {t("toggleColumns") || "Toggle columns"}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {proxyTable
-                                                .getAllColumns()
-                                                .filter((column) => column.getCanHide())
-                                                .map((column) => {
-                                                    return (
-                                                        <DropdownMenuCheckboxItem
-                                                            key={column.id}
-                                                            className="capitalize"
-                                                            checked={column.getIsVisible()}
-                                                            onCheckedChange={(value) =>
-                                                                column.toggleVisibility(!!value)
-                                                            }
-                                                        >
-                                                            {typeof column.columnDef.header === "string"
-                                                                ? column.columnDef.header
-                                                                : column.id}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-                                {currentView === "internal" && internalTable.getAllColumns().some((column) => column.getCanHide()) && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">
-                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                <span className="hidden sm:inline">
-                                                    {t("columns") || "Columns"}
-                                                </span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuLabel>
-                                                {t("toggleColumns") || "Toggle columns"}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {internalTable
-                                                .getAllColumns()
-                                                .filter((column) => column.getCanHide())
-                                                .map((column) => {
-                                                    return (
-                                                        <DropdownMenuCheckboxItem
-                                                            key={column.id}
-                                                            className="capitalize"
-                                                            checked={column.getIsVisible()}
-                                                            onCheckedChange={(value) =>
-                                                                column.toggleVisibility(!!value)
-                                                            }
-                                                        >
-                                                            {typeof column.columnDef.header === "string"
-                                                                ? column.columnDef.header
-                                                                : column.id}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
+                                {currentView === "proxy" &&
+                                    proxyTable
+                                        .getAllColumns()
+                                        .some((column) =>
+                                            column.getCanHide()
+                                        ) && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                    <span className="hidden sm:inline">
+                                                        {t("columns") ||
+                                                            "Columns"}
+                                                    </span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-48"
+                                            >
+                                                <DropdownMenuLabel>
+                                                    {t("toggleColumns") ||
+                                                        "Toggle columns"}
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {proxyTable
+                                                    .getAllColumns()
+                                                    .filter((column) =>
+                                                        column.getCanHide()
+                                                    )
+                                                    .map((column) => {
+                                                        return (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={column.id}
+                                                                className="capitalize"
+                                                                checked={column.getIsVisible()}
+                                                                onCheckedChange={(
+                                                                    value
+                                                                ) =>
+                                                                    column.toggleVisibility(
+                                                                        !!value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {typeof column
+                                                                    .columnDef
+                                                                    .header ===
+                                                                "string"
+                                                                    ? column
+                                                                          .columnDef
+                                                                          .header
+                                                                    : column.id}
+                                                            </DropdownMenuCheckboxItem>
+                                                        );
+                                                    })}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
+                                {currentView === "internal" &&
+                                    internalTable
+                                        .getAllColumns()
+                                        .some((column) =>
+                                            column.getCanHide()
+                                        ) && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                    <span className="hidden sm:inline">
+                                                        {t("columns") ||
+                                                            "Columns"}
+                                                    </span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-48"
+                                            >
+                                                <DropdownMenuLabel>
+                                                    {t("toggleColumns") ||
+                                                        "Toggle columns"}
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {internalTable
+                                                    .getAllColumns()
+                                                    .filter((column) =>
+                                                        column.getCanHide()
+                                                    )
+                                                    .map((column) => {
+                                                        return (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={column.id}
+                                                                className="capitalize"
+                                                                checked={column.getIsVisible()}
+                                                                onCheckedChange={(
+                                                                    value
+                                                                ) =>
+                                                                    column.toggleVisibility(
+                                                                        !!value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {typeof column
+                                                                    .columnDef
+                                                                    .header ===
+                                                                "string"
+                                                                    ? column
+                                                                          .columnDef
+                                                                          .header
+                                                                    : column.id}
+                                                            </DropdownMenuCheckboxItem>
+                                                        );
+                                                    })}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 <div>
                                     <Button
                                         variant="outline"
@@ -961,24 +1232,24 @@ export default function ResourcesTable({
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers
-                                                        .filter((header) => header.column.getIsVisible())
-                                                        .map(
-                                                            (header) => (
-                                                                <TableHead
-                                                                    key={header.id}
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </TableHead>
-                                                            )
-                                                        )}
+                                                        .filter((header) =>
+                                                            header.column.getIsVisible()
+                                                        )
+                                                        .map((header) => (
+                                                            <TableHead
+                                                                key={header.id}
+                                                            >
+                                                                {header.isPlaceholder
+                                                                    ? null
+                                                                    : flexRender(
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
+                                                            </TableHead>
+                                                        ))}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>
@@ -1066,24 +1337,24 @@ export default function ResourcesTable({
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers
-                                                        .filter((header) => header.column.getIsVisible())
-                                                        .map(
-                                                            (header) => (
-                                                                <TableHead
-                                                                    key={header.id}
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </TableHead>
-                                                            )
-                                                        )}
+                                                        .filter((header) =>
+                                                            header.column.getIsVisible()
+                                                        )
+                                                        .map((header) => (
+                                                            <TableHead
+                                                                key={header.id}
+                                                            >
+                                                                {header.isPlaceholder
+                                                                    ? null
+                                                                    : flexRender(
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
+                                                            </TableHead>
+                                                        ))}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>

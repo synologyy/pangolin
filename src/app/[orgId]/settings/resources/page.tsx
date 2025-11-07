@@ -43,7 +43,7 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
             await authCookieHeader()
         );
         resources = res.data.data.resources;
-    } catch (e) { }
+    } catch (e) {}
 
     let siteResources: ListAllSiteResourcesByOrgResponse["siteResources"] = [];
     try {
@@ -51,7 +51,7 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
             AxiosResponse<ListAllSiteResourcesByOrgResponse>
         >(`/org/${params.orgId}/site-resources`, await authCookieHeader());
         siteResources = res.data.data.siteResources;
-    } catch (e) { }
+    } catch (e) {}
 
     let org = null;
     try {
@@ -88,11 +88,18 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                     resource.passwordId !== null ||
                     resource.whitelist ||
                     resource.headerAuthId
-                    ? "protected"
-                    : "not_protected",
+                  ? "protected"
+                  : "not_protected",
             enabled: resource.enabled,
             domainId: resource.domainId || undefined,
-            ssl: resource.ssl
+            ssl: resource.ssl,
+            targets: resource.targets?.map((target) => ({
+                targetId: target.targetId,
+                ip: target.ip,
+                port: target.port,
+                enabled: target.enabled,
+                healthStatus: target.healthStatus
+            }))
         };
     });
 
@@ -104,7 +111,7 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                 orgId: params.orgId,
                 siteName: siteResource.siteName,
                 siteAddress: siteResource.siteAddress || null,
-                mode: siteResource.mode || "port" as any,
+                mode: siteResource.mode || ("port" as any),
                 protocol: siteResource.protocol,
                 proxyPort: siteResource.proxyPort,
                 siteId: siteResource.siteId,
