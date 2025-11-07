@@ -365,9 +365,9 @@ export async function validateOidcCallback(
 
                     if (!existingUserOrgs.length) {
                         // delete the user
-                        await db
-                            .delete(users)
-                            .where(eq(users.userId, existingUser.userId));
+                        // await db
+                        //     .delete(users)
+                        //     .where(eq(users.userId, existingUser.userId));
                         return next(
                             createHttpError(
                                 HttpCode.UNAUTHORIZED,
