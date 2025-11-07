@@ -31,6 +31,13 @@ export const configSchema = z
                         anonymous_usage: z.boolean().optional().default(true)
                     })
                     .optional()
+                    .default({}),
+                notifications: z
+                    .object({
+                        product_updates: z.boolean().optional().default(true),
+                        new_releases: z.boolean().optional().default(true)
+                    })
+                    .optional()
                     .default({})
             })
             .optional()
@@ -40,6 +47,10 @@ export const configSchema = z
                 log_failed_attempts: false,
                 telemetry: {
                     anonymous_usage: true
+                },
+                notifications: {
+                    product_updates: true,
+                    new_releases: true
                 }
             }),
         domains: z
@@ -205,7 +216,10 @@ export const configSchema = z
                     .default(["newt", "wireguard", "local"]),
                 allow_raw_resources: z.boolean().optional().default(true),
                 file_mode: z.boolean().optional().default(false),
-                pp_transport_prefix: z.string().optional().default("pp-transport-v")
+                pp_transport_prefix: z
+                    .string()
+                    .optional()
+                    .default("pp-transport-v")
             })
             .optional()
             .default({}),
@@ -315,8 +329,15 @@ export const configSchema = z
                 nameservers: z
                     .array(z.string().optional().optional())
                     .optional()
-                    .default(["ns1.pangolin.net", "ns2.pangolin.net", "ns3.pangolin.net"]),
-                cname_extension: z.string().optional().default("cname.pangolin.net")
+                    .default([
+                        "ns1.pangolin.net",
+                        "ns2.pangolin.net",
+                        "ns3.pangolin.net"
+                    ]),
+                cname_extension: z
+                    .string()
+                    .optional()
+                    .default("cname.pangolin.net")
             })
             .optional()
             .default({})

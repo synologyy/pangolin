@@ -4,6 +4,10 @@ export type Env = {
         sandbox_mode: boolean;
         version: string;
         dashboardUrl: string;
+        notifications: {
+            product_updates: boolean;
+            new_releases: boolean;
+        };
     };
     server: {
         externalPort: string;

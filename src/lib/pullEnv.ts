@@ -21,6 +21,14 @@ const envSchema = z.object({
         .transform((val) => val === "true"),
     APP_VERSION: z.string(),
     DASHBOARD_URL: z.string(),
+    PRODUCT_UPDATES_NOTIFICATION_ENABLED: z
+        .string()
+        .default("true")
+        .transform((val) => val === "true"),
+    NEW_RELEASES_NOTIFICATION_ENABLED: z
+        .string()
+        .default("true")
+        .transform((val) => val === "true"),
 
     // Email configuration
     EMAIL_ENABLED: z
@@ -112,7 +120,11 @@ export function pullEnv(): Env {
             environment: env.ENVIRONMENT,
             sandbox_mode: env.SANDBOX_MODE,
             version: env.APP_VERSION,
-            dashboardUrl: env.DASHBOARD_URL
+            dashboardUrl: env.DASHBOARD_URL,
+            notifications: {
+                product_updates: env.PRODUCT_UPDATES_NOTIFICATION_ENABLED,
+                new_releases: env.NEW_RELEASES_NOTIFICATION_ENABLED
+            }
         },
         email: {
             emailEnabled: env.EMAIL_ENABLED

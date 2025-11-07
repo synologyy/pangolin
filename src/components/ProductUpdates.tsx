@@ -3,7 +3,11 @@
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLocalStorage } from "@app/hooks/useLocalStorage";
 import { cn } from "@app/lib/cn";
-import { type ProductUpdate, productUpdatesQueries } from "@app/lib/queries";
+import {
+    type LatestVersionResponse,
+    type ProductUpdate,
+    productUpdatesQueries
+} from "@app/lib/queries";
 import { useQueries } from "@tanstack/react-query";
 import {
     ArrowRight,
@@ -32,10 +36,14 @@ export default function ProductUpdates({
 }: {
     isCollapsed?: boolean;
 }) {
+    const { env } = useEnvContext();
+
     const data = useQueries({
         queries: [
-            productUpdatesQueries.list,
-            productUpdatesQueries.latestVersion
+            productUpdatesQueries.list(env.app.notifications.product_updates),
+            productUpdatesQueries.latestVersion(
+                env.app.notifications.new_releases
+            )
         ],
         combine(result) {
             if (result[0].isLoading || result[1].isLoading) return null;
@@ -45,7 +53,6 @@ export default function ProductUpdates({
             };
         }
     });
-    const { env } = useEnvContext();
     const t = useTranslations();
     const [showMoreUpdatesText, setShowMoreUpdatesText] = React.useState(false);
 
@@ -302,15 +309,7 @@ function ProductUpdatesListPopup({
 type NewVersionAvailableProps = {
     onDimiss: () => void;
     show: boolean;
-    version:
-        | Awaited<
-              ReturnType<
-                  NonNullable<
-                      typeof productUpdatesQueries.latestVersion.queryFn
-                  >
-              >
-          >["data"]
-        | undefined;
+    version: LatestVersionResponse | null | undefined;
 };
 
 function NewVersionAvailable({
