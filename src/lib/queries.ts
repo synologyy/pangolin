@@ -6,9 +6,9 @@ import type ResponseT from "@server/types/Response";
 
 export type ProductUpdate = {
     link: string | null;
-    edition: "enterprise" | "community" | "cloud" | null;
+    build: "enterprise" | "oss" | "saas" | null;
     id: number;
-    type: "Update" | "Important" | "New";
+    type: "Update" | "Important" | "New" | "Warning";
     title: string;
     contents: string;
     publishedAt: Date;
@@ -19,8 +19,11 @@ export const productUpdatesQueries = {
     list: queryOptions({
         queryKey: ["PRODUCT_UPDATES"] as const,
         queryFn: async ({ signal }) => {
+            const sp = new URLSearchParams({
+                build
+            });
             const data = await remote.get<ResponseT<ProductUpdate[]>>(
-                "/product-updates",
+                `/product-updates?${sp.toString()}`,
                 { signal }
             );
             return data.data;
