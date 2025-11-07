@@ -17,17 +17,15 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
-import moment from "moment";
-import { hashPassword } from "@server/auth/password";
 import { isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
-import { generateId } from "@server/auth/sessions/app";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const paramsSchema = z
     .object({
-        orgId: z.string()
+        orgId: z.string(),
+        userId: z.string()
     })
     .strict();
 
@@ -35,21 +33,21 @@ const bodySchema = z
     .object({
         name: z.string().min(1).max(255),
         olmId: z.string(),
-        secret: z.string(),
         subnet: z.string(),
         type: z.enum(["olm"])
     })
     .strict();
 
-export type CreateClientBody = z.infer<typeof bodySchema>;
+export type CreateClientAndOlmBody = z.infer<typeof bodySchema>;
 
-export type CreateClientResponse = Client;
+export type CreateClientAndOlmResponse = Client;
 
 registry.registerPath({
     method: "put",
-    path: "/org/{orgId}/client",
-    description: "Create a new client for an organization.",
-    tags: [OpenAPITags.Client, OpenAPITags.Org],
+    path: "/org/{orgId}/user/{userId}/client",
+    description:
+        "Create a new client for a user and associate it with an existing olm.",
+    tags: [OpenAPITags.Client, OpenAPITags.Org, OpenAPITags.User],
     request: {
         params: paramsSchema,
         body: {
@@ -63,7 +61,7 @@ registry.registerPath({
     responses: {}
 });
 
-export async function createClient(
+export async function createUserClient(
     req: Request,
     res: Response,
     next: NextFunction
@@ -79,7 +77,7 @@ export async function createClient(
             );
         }
 
-        const { name, type, olmId, secret, subnet } = parsedBody.data;
+        const { name, type, olmId, subnet } = parsedBody.data;
 
         const parsedParams = paramsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -91,13 +89,7 @@ export async function createClient(
             );
         }
 
-        const { orgId } = parsedParams.data;
-
-        if (req.user && !req.userOrgRoleId) {
-            return next(
-                createHttpError(HttpCode.FORBIDDEN, "User does not have a role")
-            );
-        }
+        const { orgId, userId } = parsedParams.data;
 
         if (!isValidIP(subnet)) {
             return next(
@@ -181,11 +173,11 @@ export async function createClient(
             .where(eq(olms.olmId, olmId))
             .limit(1);
 
-        if (existingOlm) {
+        if (!existingOlm) {
             return next(
                 createHttpError(
-                    HttpCode.CONFLICT,
-                    `OLM with ID ${olmId} already exists`
+                    HttpCode.NOT_FOUND,
+                    `OLM with ID ${olmId} does not exist`
                 )
             );
         }
@@ -216,7 +208,8 @@ export async function createClient(
                     name,
                     subnet: updatedSubnet,
                     type,
-                    olmId // this is to lock it to a specific olm even if the olm moves across clients
+                    olmId, // this is to lock it to a specific olm even if the olm moves across clients
+                    userId
                 })
                 .returning();
 
@@ -225,30 +218,12 @@ export async function createClient(
                 clientId: newClient.clientId
             });
 
-            if (req.user && req.userOrgRoleId != adminRole.roleId) {
-                // make sure the user can access the client
-                trx.insert(userClients).values({
-                    userId: req.user.userId,
-                    clientId: newClient.clientId
-                });
-            }
-
-            let secretToUse = secret;
-            if (!secretToUse) {
-                secretToUse = generateId(48);
-            }
-
-            const secretHash = await hashPassword(secretToUse);
-
-            await trx.insert(olms).values({
-                olmId,
-                secretHash,
-                name,
-                clientId: newClient.clientId,
-                dateCreated: moment().toISOString()
+            trx.insert(userClients).values({
+                userId,
+                clientId: newClient.clientId
             });
 
-            return response<CreateClientResponse>(res, {
+            return response<CreateClientAndOlmResponse>(res, {
                 data: newClient,
                 success: true,
                 error: false,

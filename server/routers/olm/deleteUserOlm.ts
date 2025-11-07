@@ -8,28 +8,33 @@ import response from "@server/lib/response";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
+import { OpenAPITags, registry } from "@server/openApi";
 
-const deleteOlmParamsSchema = z
+const paramsSchema = z
     .object({
+        userId: z.string(),
         olmId: z.string()
     })
     .strict();
 
-export async function deleteOlm(
+registry.registerPath({
+    method: "delete",
+    path: "/user/{userId}/olm/{olmId}",
+    description: "Delete an olm for a user.",
+    tags: [OpenAPITags.User, OpenAPITags.Client],
+    request: {
+        params: paramsSchema
+    },
+    responses: {}
+});
+
+export async function deleteUserOlm(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const userId = req.user?.userId;
-
-        if (!userId) {
-            return next(
-                createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
-            );
-        }
-
-        const parsedParams = deleteOlmParamsSchema.safeParse(req.params);
+        const parsedParams = paramsSchema.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -40,31 +45,6 @@ export async function deleteOlm(
         }
 
         const { olmId } = parsedParams.data;
-
-        // Verify the OLM belongs to the current user
-        const [existingOlm] = await db
-            .select()
-            .from(olms)
-            .where(eq(olms.olmId, olmId))
-            .limit(1);
-
-        if (!existingOlm) {
-            return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    `Olm with ID ${olmId} not found`
-                )
-            );
-        }
-
-        if (existingOlm.userId !== userId) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    "You do not have permission to delete this device"
-                )
-            );
-        }
 
         // Delete associated clients and the OLM in a transaction
         await db.transaction(async (trx) => {
@@ -83,9 +63,7 @@ export async function deleteOlm(
 
             // Delete all associated clients
             if (associatedClients.length > 0) {
-                await trx
-                    .delete(clients)
-                    .where(eq(clients.olmId, olmId));
+                await trx.delete(clients).where(eq(clients.olmId, olmId));
             }
 
             // Finally, delete the OLM itself
@@ -109,4 +87,3 @@ export async function deleteOlm(
         );
     }
 }
-

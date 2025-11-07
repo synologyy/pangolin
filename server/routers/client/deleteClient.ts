@@ -67,9 +67,14 @@ export async function deleteClient(
                 .where(eq(clientSites.clientId, clientId));
 
             // Then delete the client itself
-            await trx
-                .delete(clients)
-                .where(eq(clients.clientId, clientId));
+            await trx.delete(clients).where(eq(clients.clientId, clientId));
+
+            // this is a machine client
+            if (!client.userId && client.olmId) {
+                await trx
+                    .delete(clients)
+                    .where(eq(clients.olmId, client.olmId));
+            }
         });
 
         return response(res, {

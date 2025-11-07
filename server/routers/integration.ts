@@ -11,7 +11,6 @@ import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
 import * as siteResource from "./siteResource";
-import * as olm from "./olm";
 import {
     verifyApiKey,
     verifyApiKeyOrgAccess,
@@ -589,13 +588,6 @@ authenticated.delete(
 //     newt.createNewt
 // );
 
-authenticated.put(
-    "/user/:userId/olm",
-    verifyApiKeyUserAccess,
-    verifyApiKeyHasAction(ActionsEnum.createOlm),
-    olm.createOlm
-);
-
 authenticated.get(
     `/org/:orgId/api-keys`,
     verifyApiKeyIsRoot,
@@ -726,6 +718,16 @@ authenticated.put(
     verifyApiKeyHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
     client.createClient
+);
+
+authenticated.put(
+    "/org/:orgId/user/:userId/client",
+    verifyClientsEnabled,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyUserAccess,
+    verifyApiKeyHasAction(ActionsEnum.createClient),
+    logActionAudit(ActionsEnum.createClient),
+    client.createUserClient
 );
 
 authenticated.delete(

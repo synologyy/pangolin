@@ -1,46 +1,58 @@
 import { NextFunction, Request, Response } from "express";
 import { db } from "@server/db";
-import { hash } from "@node-rs/argon2";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
 import { olms } from "@server/db";
 import createHttpError from "http-errors";
 import response from "@server/lib/response";
-import { SqliteError } from "better-sqlite3";
 import moment from "moment";
-import { generateId, generateSessionToken } from "@server/auth/sessions/app";
-import { createOlmSession } from "@server/auth/sessions/olm";
+import { generateId } from "@server/auth/sessions/app";
 import { fromError } from "zod-validation-error";
 import { hashPassword } from "@server/auth/password";
+import { OpenAPITags, registry } from "@server/openApi";
 
-export const createOlmBodySchema = z.object({});
-
-export type CreateOlmBody = z.infer<typeof createOlmBodySchema>;
-
-export type CreateOlmResponse = {
-    // token: string;
-    olmId: string;
-    secret: string;
-};
-
-const createOlmSchema = z
+const bodySchema = z
     .object({
         name: z.string().min(1).max(255)
     })
     .strict();
 
-const createOlmParamsSchema = z
-    .object({
-        userId: z.string().optional()
-    });
+const paramsSchema = z.object({
+    userId: z.string()
+});
 
-export async function createOlm(
+export type CreateOlmBody = z.infer<typeof bodySchema>;
+
+export type CreateOlmResponse = {
+    olmId: string;
+    secret: string;
+};
+
+registry.registerPath({
+    method: "put",
+    path: "/user/{userId}/olm",
+    description: "Create a new olm for a user.",
+    tags: [OpenAPITags.User, OpenAPITags.Client],
+    request: {
+        body: {
+            content: {
+                "application/json": {
+                    schema: bodySchema
+                }
+            }
+        },
+        params: paramsSchema
+    },
+    responses: {}
+});
+
+export async function createUserOlm(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = createOlmSchema.safeParse(req.body);
+        const parsedBody = bodySchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -52,7 +64,7 @@ export async function createOlm(
 
         const { name } = parsedBody.data;
 
-        const parsedParams = createOlmParamsSchema.safeParse(req.params);
+        const parsedParams = paramsSchema.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -63,20 +75,6 @@ export async function createOlm(
         }
 
         const { userId } = parsedParams.data;
-        let userIdFinal = userId;
-
-        if (req.user) { // overwrite the user with the one calling because we want to assign the olm to the user creating it
-            userIdFinal = req.user.userId;
-        }
-        
-        if (!userIdFinal) {
-            return next(
-                createHttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Either userId must be provided or request must be authenticated"
-                )
-            );
-        }
 
         const olmId = generateId(15);
         const secret = generateId(48);
@@ -85,20 +83,16 @@ export async function createOlm(
 
         await db.insert(olms).values({
             olmId: olmId,
-            userId: userIdFinal,
+            userId,
             name,
             secretHash,
             dateCreated: moment().toISOString()
         });
 
-        // const token = generateSessionToken();
-        // await createOlmSession(token, olmId);
-
         return response<CreateOlmResponse>(res, {
             data: {
                 olmId,
                 secret
-                // token,
             },
             success: true,
             error: false,

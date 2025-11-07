@@ -39,7 +39,8 @@ import {
     verifyClientsEnabled,
     verifyUserHasAction,
     verifyUserIsOrgOwner,
-    verifySiteResourceAccess
+    verifySiteResourceAccess,
+    verifyOlmAccess
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
@@ -160,6 +161,7 @@ authenticated.put(
     client.createClient,
 );
 
+// TODO: Separate into a deleteUserClient (for user clients) and deleteClient (for machine clients)
 authenticated.delete(
     "/client/:clientId",
     verifyClientsEnabled,
@@ -758,22 +760,23 @@ authenticated.delete(
 //     createNewt
 // );
 
-// only for logged in user
 authenticated.put(
-    "/olm",
-    olm.createOlm
+    "/user/:userId/olm",
+    verifyIsLoggedInUser,
+    olm.createUserOlm
 );
 
-// only for logged in user
 authenticated.get(
-    "/olms",
-    olm.listOlms
+    "/user/:userId/olms",
+    verifyIsLoggedInUser,
+    olm.listUserOlms
 );
 
-// only for logged in user
 authenticated.delete(
-    "/olm/:olmId",
-    olm.deleteOlm
+    "/user/:userId/olm/:olmId",
+    verifyIsLoggedInUser,
+    verifyOlmAccess,
+    olm.deleteUserOlm
 );
 
 authenticated.put(

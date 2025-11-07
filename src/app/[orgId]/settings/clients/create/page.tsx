@@ -52,7 +52,7 @@ import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
     CreateClientBody,
     CreateClientResponse,
-    PickClientDefaultsResponse
+    PickClientDefaultsResponse,
 } from "@server/routers/client";
 import { ListSitesResponse } from "@server/routers/site";
 import { toast } from "@app/hooks/useToast";
@@ -258,7 +258,6 @@ export default function Page() {
         const payload: CreateClientBody = {
             name: data.name,
             type: data.method as "olm",
-            siteIds: data.siteIds.map((site) => parseInt(site.id)),
             olmId: clientDefaults.olmId,
             secret: clientDefaults.olmSecret,
             subnet: data.subnet

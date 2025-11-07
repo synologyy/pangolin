@@ -8,8 +8,9 @@ import response from "@server/lib/response";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
+import { OpenAPITags, registry } from "@server/openApi";
 
-const listOlmsSchema = z.object({
+const querySchema = z.object({
     limit: z
         .string()
         .optional()
@@ -24,7 +25,25 @@ const listOlmsSchema = z.object({
         .pipe(z.number().int().nonnegative())
 });
 
-export type ListOlmsResponse = {
+const paramsSchema = z
+    .object({
+        userId: z.string()
+    })
+    .strict();
+
+registry.registerPath({
+    method: "delete",
+    path: "/user/{userId}/olms",
+    description: "List all olms for a user.",
+    tags: [OpenAPITags.User, OpenAPITags.Client],
+    request: {
+        query: querySchema,
+        params: paramsSchema
+    },
+    responses: {}
+});
+
+export type ListUserOlmsResponse = {
     olms: Array<{
         olmId: string;
         dateCreated: string;
@@ -40,21 +59,13 @@ export type ListOlmsResponse = {
     };
 };
 
-export async function listOlms(
+export async function listUserOlms(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<any> {
     try {
-        const userId = req.user?.userId;
-
-        if (!userId) {
-            return next(
-                createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
-            );
-        }
-
-        const parsedQuery = listOlmsSchema.safeParse(req.query);
+        const parsedQuery = querySchema.safeParse(req.query);
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -65,6 +76,18 @@ export async function listOlms(
         }
 
         const { limit, offset } = parsedQuery.data;
+
+        const parsedParams = paramsSchema.safeParse(req.params);
+        if (!parsedParams.success) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedParams.error).toString()
+                )
+            );
+        }
+
+        const { userId } = parsedParams.data;
 
         // Get total count
         const [totalCountResult] = await db
@@ -90,7 +113,7 @@ export async function listOlms(
             .limit(limit)
             .offset(offset);
 
-        return response<ListOlmsResponse>(res, {
+        return response<ListUserOlmsResponse>(res, {
             data: {
                 olms: userOlms,
                 pagination: {
@@ -101,7 +124,7 @@ export async function listOlms(
             },
             success: true,
             error: false,
-            message: "OLMs retrieved successfully",
+            message: "Olms retrieved successfully",
             status: HttpCode.OK
         });
     } catch (error) {
@@ -114,4 +137,3 @@ export async function listOlms(
         );
     }
 }
-

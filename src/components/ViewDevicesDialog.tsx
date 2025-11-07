@@ -17,7 +17,7 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
-import { ListOlmsResponse } from "@server/routers/olm";
+import { ListUserOlmsResponse } from "@server/routers/olm";
 import { ResponseT } from "@server/types/Response";
 import {
     Table,
@@ -30,6 +30,7 @@ import {
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { RefreshCw } from "lucide-react";
 import moment from "moment";
+import { useUserContext } from "@app/hooks/useUserContext";
 
 type ViewDevicesDialogProps = {
     open: boolean;
@@ -45,11 +46,15 @@ type Device = {
     userId: string | null;
 };
 
-export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogProps) {
+export default function ViewDevicesDialog({
+    open,
+    setOpen
+}: ViewDevicesDialogProps) {
     const t = useTranslations();
     const { env } = useEnvContext();
     const api = createApiClient({ env });
-    
+    const { user } = useUserContext();
+
     const [devices, setDevices] = useState<Device[]>([]);
     const [loading, setLoading] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -58,7 +63,9 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
     const fetchDevices = async () => {
         setLoading(true);
         try {
-            const res = await api.get<ResponseT<ListOlmsResponse>>("/olms");
+            const res = await api.get<ResponseT<ListUserOlmsResponse>>(
+                `/user/${user?.userId}/olms`
+            );
             if (res.data.success && res.data.data) {
                 setDevices(res.data.data.olms);
             }
@@ -67,7 +74,10 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
             toast({
                 variant: "destructive",
                 title: t("errorLoadingDevices") || "Error loading devices",
-                description: formatAxiosError(error, t("failedToLoadDevices") || "Failed to load devices")
+                description: formatAxiosError(
+                    error,
+                    t("failedToLoadDevices") || "Failed to load devices"
+                )
             });
         } finally {
             setLoading(false);
@@ -78,17 +88,18 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
         if (open) {
             fetchDevices();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
     const deleteDevice = async (olmId: string) => {
         try {
-            await api.delete(`/olm/${olmId}`);
+            await api.delete(`/user/${user?.userId}/olm/${olmId}`);
             toast({
                 title: t("deviceDeleted") || "Device deleted",
-                description: t("deviceDeletedDescription") || "The device has been successfully deleted."
+                description:
+                    t("deviceDeletedDescription") ||
+                    "The device has been successfully deleted."
             });
-            setDevices(devices.filter(d => d.olmId !== olmId));
+            setDevices(devices.filter((d) => d.olmId !== olmId));
             setIsDeleteModalOpen(false);
             setSelectedDevice(null);
         } catch (error: any) {
@@ -96,7 +107,10 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
             toast({
                 variant: "destructive",
                 title: t("errorDeletingDevice") || "Error deleting device",
-                description: formatAxiosError(error, t("failedToDeleteDevice") || "Failed to delete device")
+                description: formatAxiosError(
+                    error,
+                    t("failedToDeleteDevice") || "Failed to delete device"
+                )
             });
         }
     };
@@ -124,7 +138,8 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
                             {t("viewDevices") || "View Devices"}
                         </CredenzaTitle>
                         <CredenzaDescription>
-                            {t("viewDevicesDescription") || "Manage your connected devices"}
+                            {t("viewDevicesDescription") ||
+                                "Manage your connected devices"}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -141,29 +156,45 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="pl-3">{t("name") || "Name"}</TableHead>
-                                            <TableHead>{t("dateCreated") || "Date Created"}</TableHead>
-                                            <TableHead >{t("actions") || "Actions"}</TableHead>
+                                            <TableHead className="pl-3">
+                                                {t("name") || "Name"}
+                                            </TableHead>
+                                            <TableHead>
+                                                {t("dateCreated") ||
+                                                    "Date Created"}
+                                            </TableHead>
+                                            <TableHead>
+                                                {t("actions") || "Actions"}
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {devices.map((device) => (
                                             <TableRow key={device.olmId}>
                                                 <TableCell className="font-medium">
-                                                    {device.name || t("unnamedDevice") || "Unnamed Device"}
+                                                    {device.name ||
+                                                        t("unnamedDevice") ||
+                                                        "Unnamed Device"}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {moment(device.dateCreated).format("lll")}
+                                                    {moment(
+                                                        device.dateCreated
+                                                    ).format("lll")}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button
                                                         variant="outline"
                                                         onClick={() => {
-                                                            setSelectedDevice(device);
-                                                            setIsDeleteModalOpen(true);
+                                                            setSelectedDevice(
+                                                                device
+                                                            );
+                                                            setIsDeleteModalOpen(
+                                                                true
+                                                            );
                                                         }}
                                                     >
-                                                        {t("delete") || "Delete"}
+                                                        {t("delete") ||
+                                                            "Delete"}
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -175,7 +206,9 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t("close") || "Close"}</Button>
+                            <Button variant="outline">
+                                {t("close") || "Close"}
+                            </Button>
                         </CredenzaClose>
                     </CredenzaFooter>
                 </CredenzaContent>
@@ -192,8 +225,14 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
                     }}
                     dialog={
                         <div>
-                            <p>{t("deviceQuestionRemove") || "Are you sure you want to delete this device?"}</p>
-                            <p>{t("deviceMessageRemove") || "This action cannot be undone."}</p>
+                            <p>
+                                {t("deviceQuestionRemove") ||
+                                    "Are you sure you want to delete this device?"}
+                            </p>
+                            <p>
+                                {t("deviceMessageRemove") ||
+                                    "This action cannot be undone."}
+                            </p>
                         </div>
                     }
                     buttonText={t("deviceDeleteConfirm") || "Delete Device"}
@@ -205,4 +244,3 @@ export default function ViewDevicesDialog({ open, setOpen }: ViewDevicesDialogPr
         </>
     );
 }
-
