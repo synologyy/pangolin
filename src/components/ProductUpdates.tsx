@@ -9,6 +9,7 @@ import {
     ArrowRight,
     BellIcon,
     ChevronRightIcon,
+    ExternalLinkIcon,
     RocketIcon,
     XIcon
 } from "lucide-react";
@@ -181,9 +182,14 @@ function ProductUpdatesListPopup({
                             <BellIcon className="flex-none size-4" />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <p className="font-medium text-start">
-                                {t("productUpdateWhatsNew")}
-                            </p>
+                            <div className="flex justify-between items-center">
+                                <p className="font-medium text-start">
+                                    {t("productUpdateWhatsNew")}
+                                </p>
+                                <div className="p-1 cursor-pointer">
+                                    <ChevronRightIcon className="size-4 flex-none" />
+                                </div>
+                            </div>
                             <small
                                 className={cn(
                                     "text-start text-muted-foreground",
@@ -193,9 +199,6 @@ function ProductUpdatesListPopup({
                             >
                                 {updates[0]?.contents}
                             </small>
-                        </div>
-                        <div className="p-1 cursor-pointer">
-                            <ChevronRightIcon className="size-4 flex-none" />
                         </div>
                     </div>
                 </PopoverTrigger>
@@ -267,9 +270,21 @@ function ProductUpdatesListPopup({
                                     </Tooltip>
                                 </TooltipProvider>
                             </div>
-                            <small className="text-muted-foreground">
-                                {update.contents}
-                            </small>
+                            <div className="flex flex-col gap-0.5">
+                                <small className="text-muted-foreground">
+                                    {update.contents}{" "}
+                                    {update.link && (
+                                        <a
+                                            href={update.link}
+                                            target="_blank"
+                                            className="underline text-foreground inline-flex flex-wrap items-center gap-1 text-xs"
+                                        >
+                                            Read more{" "}
+                                            <ExternalLinkIcon className="size-3 flex-none" />
+                                        </a>
+                                    )}
+                                </small>
+                            </div>
                             <time
                                 dateTime={update.publishedAt.toLocaleString()}
                                 className="text-xs text-muted-foreground"
