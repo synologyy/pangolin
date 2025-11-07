@@ -767,13 +767,6 @@ export default function ClientsTable({
                         </CardHeader>
                         <CardContent>
                             <TabsContent value="user">
-                                <div className="mb-4">
-                                    <Alert variant="neutral">
-                                        <AlertDescription>
-                                            {t("clientsTableUserClientsDescription")}
-                                        </AlertDescription>
-                                    </Alert>
-                                </div>
                                 <Table>
                                     <TableHeader>
                                         {userTable
@@ -858,13 +851,6 @@ export default function ClientsTable({
                                 </div>
                             </TabsContent>
                             <TabsContent value="machine">
-                                <div className="mb-4">
-                                    <Alert variant="neutral">
-                                        <AlertDescription>
-                                            {t("clientsTableMachineClientsDescription")}
-                                        </AlertDescription>
-                                    </Alert>
-                                </div>
                                 <Table>
                                     <TableHeader>
                                         {machineTable

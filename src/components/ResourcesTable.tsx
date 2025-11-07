@@ -1311,25 +1311,6 @@ export default function ResourcesTable({
                                 </div>
                             </TabsContent>
                             <TabsContent value="internal">
-                                <div className="mb-4">
-                                    <Alert variant="neutral">
-                                        <AlertDescription>
-                                            {t(
-                                                "resourcesTableTheseResourcesForUseWith"
-                                            )}{" "}
-                                            <Link
-                                                href={`/${orgId}/settings/clients`}
-                                                className="font-medium underline hover:opacity-80 inline-flex items-center"
-                                            >
-                                                {t("resourcesTableClients")}
-                                                <ArrowUpRight className="ml-1 h-3 w-3" />
-                                            </Link>{" "}
-                                            {t(
-                                                "resourcesTableAndOnlyAccessibleInternally"
-                                            )}
-                                        </AlertDescription>
-                                    </Alert>
-                                </div>
                                 <Table>
                                     <TableHeader>
                                         {internalTable
