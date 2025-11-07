@@ -18,6 +18,10 @@ import { useTranslations } from "next-intl";
 import { PickClientDefaultsResponse } from "@server/routers/client";
 import { useClientContext } from "@app/hooks/useClientContext";
 import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
+import { build } from "@server/build";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -26,12 +30,23 @@ export default function CredentialsPage() {
     const router = useRouter();
     const t = useTranslations();
     const { client } = useClientContext();
-    
+
     const [modalOpen, setModalOpen] = useState(false);
     const [clientDefaults, setClientDefaults] = useState<PickClientDefaultsResponse | null>(null);
 
+    const { licenseStatus, isUnlocked } = useLicenseStatusContext();
+    const subscription = useSubscriptionStatusContext();
+
+    const isSecurityFeatureDisabled = () => {
+        const isEnterpriseNotLicensed = build === "enterprise" && !isUnlocked();
+        const isSaasNotSubscribed =
+            build === "saas" && !subscription?.isSubscribed();
+        return isEnterpriseNotLicensed || isSaasNotSubscribed;
+    };
+
+
     const handleConfirmRegenerate = async () => {
-    
+
         const res = await api.get(`/org/${orgId}/pick-client-defaults`);
         if (res && res.status === 200) {
             const data = res.data.data;
@@ -74,9 +89,25 @@ export default function CredentialsPage() {
                 </SettingsSectionHeader>
 
                 <SettingsSectionBody>
-                    <Button onClick={() => setModalOpen(true)}>
-                        {t("regeneratecredentials")}
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="inline-block">
+                                    <Button
+                                        onClick={() => setModalOpen(true)}
+                                        disabled={isSecurityFeatureDisabled()}>
+                                        {t("regeneratecredentials")}
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+
+                            {isSecurityFeatureDisabled() && (
+                                <TooltipContent side="top">
+                                    {t("featureDisabledTooltip")}
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    </TooltipProvider>
                 </SettingsSectionBody>
             </SettingsSection>
 

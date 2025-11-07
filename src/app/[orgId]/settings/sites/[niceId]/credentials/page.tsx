@@ -19,6 +19,10 @@ import { PickSiteDefaultsResponse } from "@server/routers/site";
 import { useSiteContext } from "@app/hooks/useSiteContext";
 import { generateKeypair } from "../wireguardConfig";
 import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { build } from "@server/build";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -27,11 +31,22 @@ export default function CredentialsPage() {
     const router = useRouter();
     const t = useTranslations();
     const { site } = useSiteContext();
-    
+
     const [modalOpen, setModalOpen] = useState(false);
     const [siteDefaults, setSiteDefaults] = useState<PickSiteDefaultsResponse | null>(null);
     const [wgConfig, setWgConfig] = useState("");
     const [publicKey, setPublicKey] = useState("");
+
+    const { licenseStatus, isUnlocked } = useLicenseStatusContext();
+    const subscription = useSubscriptionStatusContext();
+
+    const isSecurityFeatureDisabled = () => {
+        const isEnterpriseNotLicensed = build === "enterprise" && !isUnlocked();
+        const isSaasNotSubscribed =
+            build === "saas" && !subscription?.isSubscribed();
+        return isEnterpriseNotLicensed || isSaasNotSubscribed;
+    };
+
 
     const hydrateWireGuardConfig = (
         privateKey: string,
@@ -113,7 +128,7 @@ PersistentKeepalive = 5`;
     const getCredentialType = () => {
         if (site?.type === "wireguard") return "site-wireguard";
         if (site?.type === "newt") return "site-newt";
-        return "site-newt"; 
+        return "site-newt";
     };
 
     const getCredentials = () => {
@@ -142,12 +157,26 @@ PersistentKeepalive = 5`;
                 </SettingsSectionHeader>
 
                 <SettingsSectionBody>
-                    <Button
-                        onClick={() => setModalOpen(true)}
-                        disabled={site?.type === "local"}
-                    >
-                        {t("regeneratecredentials")}
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="inline-block">
+                                    <Button
+                                        onClick={() => setModalOpen(true)}
+                                        disabled={isSecurityFeatureDisabled()}
+                                    >
+                                        {t("regeneratecredentials")}
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+
+                            {isSecurityFeatureDisabled() && (
+                                <TooltipContent side="top">
+                                    {t("featureDisabledTooltip")}
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    </TooltipProvider>
                 </SettingsSectionBody>
             </SettingsSection>
 

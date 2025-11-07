@@ -22,6 +22,10 @@ import {
 } from "@server/routers/remoteExitNode/types";
 import { useRemoteExitNodeContext } from "@app/hooks/useRemoteExitNodeContext";
 import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { build } from "@server/build";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -34,8 +38,19 @@ export default function CredentialsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [credentials, setCredentials] = useState<PickRemoteExitNodeDefaultsResponse | null>(null);
 
+    const { licenseStatus, isUnlocked } = useLicenseStatusContext();
+    const subscription = useSubscriptionStatusContext();
+
+    const isSecurityFeatureDisabled = () => {
+        const isEnterpriseNotLicensed = build === "enterprise" && !isUnlocked();
+        const isSaasNotSubscribed =
+            build === "saas" && !subscription?.isSubscribed();
+        return isEnterpriseNotLicensed || isSaasNotSubscribed;
+    };
+
+
     const handleConfirmRegenerate = async () => {
-  
+
         const response = await api.get<AxiosResponse<PickRemoteExitNodeDefaultsResponse>>(
             `/org/${orgId}/pick-remote-exit-node-defaults`
         );
@@ -82,9 +97,26 @@ export default function CredentialsPage() {
                 </SettingsSectionHeader>
 
                 <SettingsSectionBody>
-                    <Button onClick={() => setModalOpen(true)}>
-                        {t("regeneratecredentials")}
-                    </Button>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="inline-block">
+                                    <Button
+                                        onClick={() => setModalOpen(true)}
+                                        disabled={isSecurityFeatureDisabled()}
+                                    >
+                                        {t("regeneratecredentials")}
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+
+                            {isSecurityFeatureDisabled() && (
+                                <TooltipContent side="top">
+                                    {t("featureDisabledTooltip")}
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    </TooltipProvider>
                 </SettingsSectionBody>
             </SettingsSection>
 

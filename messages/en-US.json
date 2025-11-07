@@ -2112,5 +2112,6 @@
     "regenerateCredentialsConfirmation": "Are you sure you want to regenerate the credentials?",
     "endpoint": "Endpoint",
     "id": "Id",
-    "SecretKey": "Secret Key"
+    "SecretKey": "Secret Key",
+    "featureDisabledTooltip": "This feature is only available in the enterprise plan and require a license to use it."
 }
