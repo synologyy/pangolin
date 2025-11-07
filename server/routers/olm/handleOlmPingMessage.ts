@@ -1,8 +1,9 @@
 import { db } from "@server/db";
-import { MessageHandler } from "@server/routers/ws";
+import { disconnectClient, MessageHandler } from "#dynamic/routers/ws";
 import { clients, Olm } from "@server/db";
 import { eq, lt, isNull, and, or } from "drizzle-orm";
 import logger from "@server/logger";
+import { validateSessionToken } from "@server/auth/sessions/app";
 
 // Track if the offline checker interval is running
 let offlineCheckerInterval: NodeJS.Timeout | null = null;
@@ -20,10 +21,14 @@ export const startOlmOfflineChecker = (): void => {
 
     offlineCheckerInterval = setInterval(async () => {
         try {
-            const twoMinutesAgo = Math.floor((Date.now() - OFFLINE_THRESHOLD_MS) / 1000);
+            const twoMinutesAgo = Math.floor(
+                (Date.now() - OFFLINE_THRESHOLD_MS) / 1000
+            );
+
+            // TODO: WE NEED TO MAKE SURE THIS WORKS WITH DISTRIBUTED NODES ALL DOING THE SAME THING
 
             // Find clients that haven't pinged in the last 2 minutes and mark them as offline
-            await db
+            const offlineClients = await db
                 .update(clients)
                 .set({ online: false })
                 .where(
@@ -34,8 +39,31 @@ export const startOlmOfflineChecker = (): void => {
                             isNull(clients.lastPing)
                         )
                     )
+                )
+                .returning();
+
+            for (const offlineClient of offlineClients) {
+                logger.info(
+                    `Kicking offline olm client ${offlineClient.clientId} due to inactivity`
                 );
 
+                if (!offlineClient.olmId) {
+                    logger.warn(
+                        `Offline client ${offlineClient.clientId} has no olmId, cannot disconnect`
+                    );
+                    continue;
+                }
+
+                // Send a disconnect message to the client if connected
+                try {
+                    await disconnectClient(offlineClient.olmId);
+                } catch (error) {
+                    logger.error(
+                        `Error sending disconnect to offline olm ${offlineClient.clientId}`,
+                        { error }
+                    );
+                }
+            }
         } catch (error) {
             logger.error("Error in offline checker interval", { error });
         }
@@ -62,9 +90,25 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
     const { message, client: c, sendToClient } = context;
     const olm = c as Olm;
 
+    const { userToken } = message.data;
+
     if (!olm) {
         logger.warn("Olm not found");
         return;
+    }
+
+    if (olm.userId) {
+        // we need to check a user token to make sure its still valid
+        const { session: userSession, user } =
+            await validateSessionToken(userToken);
+        if (!userSession || !user) {
+            logger.warn("Invalid user session for olm ping");
+            return; // by returning here we just ignore the ping and the setInterval will force it to disconnect
+        }
+        if (user.userId !== olm.userId) {
+            logger.warn("User ID mismatch for olm ping");
+            return;
+        }
     }
 
     if (!olm.clientId) {
@@ -78,7 +122,7 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
             .update(clients)
             .set({
                 lastPing: Math.floor(Date.now() / 1000),
-                online: true,
+                online: true
             })
             .where(eq(clients.clientId, olm.clientId));
     } catch (error) {
@@ -89,7 +133,7 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
         message: {
             type: "pong",
             data: {
-                timestamp: new Date().toISOString(),
+                timestamp: new Date().toISOString()
             }
         },
         broadcast: false,

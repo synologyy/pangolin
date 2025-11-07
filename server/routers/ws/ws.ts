@@ -11,6 +11,7 @@ import { messageHandlers } from "./messageHandlers";
 import logger from "@server/logger";
 import { v4 as uuidv4 } from "uuid";
 import { ClientType, TokenPayload, WebSocketRequest, WSMessage, AuthenticatedWebSocket } from "./types";
+import { validateSessionToken } from "@server/auth/sessions/app";
 
 // Subset of TokenPayload for public ws.ts (newt and olm only)
 interface PublicTokenPayload {
@@ -117,7 +118,7 @@ const getActiveNodes = async (clientType: ClientType, clientId: string): Promise
 };
 
 // Token verification middleware
-const verifyToken = async (token: string, clientType: ClientType): Promise<PublicTokenPayload | null> => {
+const verifyToken = async (token: string, clientType: ClientType, userToken: string): Promise<PublicTokenPayload | null> => {
 
 try {
         if (clientType === 'newt') {
@@ -145,6 +146,17 @@ try {
             if (!existingOlm || !existingOlm[0]) {
                 return null;
             }
+
+            if (olm.userId) { // this is a user device and we need to check the user token
+                const { session: userSession, user } = await validateSessionToken(userToken);
+                if (!userSession || !user) {
+                    return null;
+                }
+                if (user.userId !== olm.userId) {
+                    return null;
+                }
+            }
+
             return { client: existingOlm[0], session, clientType };
         }
         
@@ -239,6 +251,7 @@ const handleWSUpgrade = (server: HttpServer): void => {
         try {
             const url = new URL(request.url || '', `http://${request.headers.host}`);
             const token = url.searchParams.get('token') || request.headers["sec-websocket-protocol"] || '';
+            const userToken = url.searchParams.get('userToken') || '';
             let clientType = url.searchParams.get('clientType') as ClientType;
 
             if (!clientType) {
@@ -252,7 +265,7 @@ const handleWSUpgrade = (server: HttpServer): void => {
                 return;
             }
 
-            const tokenPayload = await verifyToken(token, clientType);
+            const tokenPayload = await verifyToken(token, clientType, userToken);
             if (!tokenPayload) {
                 logger.warn("Unauthorized connection attempt: invalid token...");
                 socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
@@ -269,6 +282,28 @@ const handleWSUpgrade = (server: HttpServer): void => {
             socket.destroy();
         }
     });
+};
+
+// Disconnect a specific client and force them to reconnect
+const disconnectClient = async (clientId: string): Promise<boolean> => {
+    const mapKey = getClientMapKey(clientId);
+    const clients = connectedClients.get(mapKey);
+    
+    if (!clients || clients.length === 0) {
+        logger.debug(`No connections found for client ID: ${clientId}`);
+        return false;
+    }
+
+    logger.info(`Disconnecting client ID: ${clientId} (${clients.length} connection(s))`);
+    
+    // Close all connections for this client
+    clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.close(1000, "Disconnected by server");
+        }
+    });
+
+    return true;
 };
 
 // Cleanup function for graceful shutdown
@@ -297,6 +332,7 @@ export {
     connectedClients,
     hasActiveConnections,
     getActiveNodes,
+    disconnectClient,
     NODE_ID,
     cleanup
 };

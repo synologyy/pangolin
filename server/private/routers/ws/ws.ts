@@ -38,6 +38,7 @@ import { rateLimitService } from "#private/lib/rateLimit";
 import { messageHandlers } from "@server/routers/ws/messageHandlers";
 import { messageHandlers as privateMessageHandlers } from "#private/routers/ws/messageHandlers";
 import { AuthenticatedWebSocket, ClientType, WSMessage, TokenPayload, WebSocketRequest, RedisMessage } from "@server/routers/ws";
+import { validateSessionToken } from "@server/auth/sessions/app";
 
 // Merge public and private message handlers
 Object.assign(messageHandlers, privateMessageHandlers);
@@ -478,7 +479,8 @@ const getActiveNodes = async (
 // Token verification middleware
 const verifyToken = async (
     token: string,
-    clientType: ClientType
+    clientType: ClientType,
+    userToken: string
 ): Promise<TokenPayload | null> => {
     try {
         if (clientType === "newt") {
@@ -506,6 +508,17 @@ const verifyToken = async (
             if (!existingOlm || !existingOlm[0]) {
                 return null;
             }
+
+            if (olm.userId) { // this is a user device and we need to check the user token
+                const { session: userSession, user } = await validateSessionToken(userToken);
+                if (!userSession || !user) {
+                    return null;
+                }
+                if (user.userId !== olm.userId) {
+                    return null;
+                }
+            }
+
             return { client: existingOlm[0], session, clientType };
         } else if (clientType === "remoteExitNode") {
             const { session, remoteExitNode } =
@@ -652,6 +665,7 @@ const handleWSUpgrade = (server: HttpServer): void => {
                     url.searchParams.get("token") ||
                     request.headers["sec-websocket-protocol"] ||
                     "";
+                const userToken = url.searchParams.get('userToken') || '';
                 let clientType = url.searchParams.get(
                     "clientType"
                 ) as ClientType;
@@ -673,7 +687,7 @@ const handleWSUpgrade = (server: HttpServer): void => {
                     return;
                 }
 
-                const tokenPayload = await verifyToken(token, clientType);
+                const tokenPayload = await verifyToken(token, clientType, userToken);
                 if (!tokenPayload) {
                     logger.debug(
                         "Unauthorized connection attempt: invalid token..."
@@ -792,6 +806,28 @@ if (redisManager.isRedisEnabled()) {
     );
 }
 
+// Disconnect a specific client and force them to reconnect
+const disconnectClient = async (clientId: string): Promise<boolean> => {
+    const mapKey = getClientMapKey(clientId);
+    const clients = connectedClients.get(mapKey);
+    
+    if (!clients || clients.length === 0) {
+        logger.debug(`No connections found for client ID: ${clientId}`);
+        return false;
+    }
+
+    logger.info(`Disconnecting client ID: ${clientId} (${clients.length} connection(s))`);
+    
+    // Close all connections for this client
+    clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.close(1000, "Disconnected by server");
+        }
+    });
+
+    return true;
+};
+
 // Cleanup function for graceful shutdown
 const cleanup = async (): Promise<void> => {
     try {
@@ -829,6 +865,7 @@ export {
     connectedClients,
     hasActiveConnections,
     getActiveNodes,
+    disconnectClient,
     NODE_ID,
     cleanup
 };
