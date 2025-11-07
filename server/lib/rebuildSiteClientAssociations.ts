@@ -64,7 +64,7 @@ export async function rebuildSiteClientAssociations(
     // get all of the users in these roles
     const userIdsFromRoles = await trx
         .select({
-            userId: users.userId
+            userId: userOrgs.userId
         })
         .from(userOrgs)
         .where(inArray(userOrgs.roleId, roleIds))
