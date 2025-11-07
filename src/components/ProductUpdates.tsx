@@ -232,8 +232,15 @@ function ProductUpdatesListPopup({
                                 <h4 className="text-sm font-medium inline-flex items-start gap-1">
                                     <span>{update.title}</span>
                                     <Badge
-                                        variant="secondary"
-                                        className="bg-black text-white dark:bg-white dark:text-black"
+                                        variant={
+                                            update.type === "Important"
+                                                ? "yellow"
+                                                : "secondary"
+                                        }
+                                        className={cn(
+                                            update.type === "New" &&
+                                                "bg-black text-white dark:bg-white dark:text-black"
+                                        )}
                                     >
                                         {update.type}
                                     </Badge>
