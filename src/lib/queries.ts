@@ -8,7 +8,7 @@ export type ProductUpdate = {
     link: string | null;
     edition: "enterprise" | "community" | "cloud" | null;
     id: number;
-    priority: "CRITICAL" | "IMPORTANT" | "NORMAL" | null;
+    type: "Update" | "Important" | "New";
     title: string;
     contents: string;
     publishedAt: Date;

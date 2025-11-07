@@ -231,12 +231,12 @@ function ProductUpdatesListPopup({
                             <div className="flex justify-between gap-2 items-start">
                                 <h4 className="text-sm font-medium inline-flex items-start gap-1">
                                     <span>{update.title}</span>
-                                    {/* <Badge
+                                    <Badge
                                         variant="secondary"
                                         className="bg-black text-white dark:bg-white dark:text-black"
                                     >
-                                        {t("new")}
-                                    </Badge> */}
+                                        {update.type}
+                                    </Badge>
                                 </h4>
                                 <TooltipProvider>
                                     <Tooltip>
