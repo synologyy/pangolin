@@ -193,9 +193,16 @@ export function DataTable<TData, TValue>({
               ? persistColumnVisibility
               : undefined;
 
+    // Auto-enable persistence if column visibility is enabled
+    // Use explicit persistColumnVisibility if provided, otherwise auto-enable when enableColumnVisibility is true and we have a tableId
+    const shouldPersistColumnVisibility = 
+        persistColumnVisibility === true || 
+        typeof persistColumnVisibility === "string" ||
+        (enableColumnVisibility && tableId !== undefined);
+
     // Compute initial column visibility (from localStorage if enabled, otherwise from prop/default)
     const initialColumnVisibility = (() => {
-        if (persistColumnVisibility) {
+        if (shouldPersistColumnVisibility) {
             return getStoredColumnVisibility(
                 tableId,
                 defaultColumnVisibility
@@ -277,10 +284,10 @@ export function DataTable<TData, TValue>({
 
     useEffect(() => {
         // Persist column visibility to localStorage when it changes
-        if (persistColumnVisibility) {
+        if (shouldPersistColumnVisibility) {
             setStoredColumnVisibility(columnVisibility, tableId);
         }
-    }, [columnVisibility, persistColumnVisibility, tableId]);
+    }, [columnVisibility, shouldPersistColumnVisibility, tableId]);
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);
@@ -440,6 +447,7 @@ export function DataTable<TData, TValue>({
                                                                                         onCheckedChange={(value) =>
                                                                                             column.toggleVisibility(!!value)
                                                                                         }
+                                                                                        onSelect={(e) => e.preventDefault()}
                                                                                     >
                                                                                         {displayName}
                                                                                     </DropdownMenuCheckboxItem>

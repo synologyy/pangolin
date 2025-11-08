@@ -568,6 +568,12 @@ export default function ClientsTable({
                                         .getAllColumns()
                                         .filter((column) => column.getCanHide())
                                         .map((column) => {
+                                            const columnDef = column.columnDef as any;
+                                            const friendlyName = columnDef.friendlyName;
+                                            const displayName = friendlyName ||
+                                                (typeof columnDef.header === "string"
+                                                    ? columnDef.header
+                                                    : column.id);
                                             return (
                                                 <DropdownMenuCheckboxItem
                                                     key={column.id}
@@ -576,11 +582,9 @@ export default function ClientsTable({
                                                     onCheckedChange={(value) =>
                                                         column.toggleVisibility(!!value)
                                                     }
+                                                    onSelect={(e) => e.preventDefault()}
                                                 >
-                                                    {typeof column.columnDef.header ===
-                                                    "string"
-                                                        ? column.columnDef.header
-                                                        : column.id}
+                                                    {displayName}
                                                 </DropdownMenuCheckboxItem>
                                             );
                                         })}
