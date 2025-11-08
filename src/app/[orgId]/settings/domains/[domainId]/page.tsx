@@ -73,7 +73,7 @@ export default async function DomainSettingsPage({
 
                 <DNSRecordsTable records={dnsRecords} type={domain.type} />
 
-                {domain.type == "wildcard" && (
+                {domain.type == "wildcard" && !domain.configManaged && (
                     <DomainCertForm
                         orgId={orgId}
                         domainId={domain.domainId}
