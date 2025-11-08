@@ -1,5 +1,6 @@
 import { db } from "@server/db";
-import { disconnectClient, MessageHandler } from "#dynamic/routers/ws";
+import { disconnectClient } from "#dynamic/routers/ws";
+import { MessageHandler } from "@server/routers/ws";
 import { clients, Olm } from "@server/db";
 import { eq, lt, isNull, and, or } from "drizzle-orm";
 import logger from "@server/logger";

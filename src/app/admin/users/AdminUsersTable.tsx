@@ -1,6 +1,5 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
 import { UsersDataTable } from "@app/components/AdminUsersDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
@@ -18,6 +17,7 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 
 export type GlobalUserRow = {
     id: string;

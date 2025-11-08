@@ -5,6 +5,8 @@ WORKDIR /app
 ARG BUILD=oss
 ARG DATABASE=sqlite
 
+RUN apk add --no-cache curl tzdata python3 make g++
+
 # COPY package.json package-lock.json ./
 COPY package*.json ./
 RUN npm ci
@@ -40,12 +42,13 @@ RUN test -f dist/server.mjs
 
 RUN npm run build:cli
 
-FROM node:22-alpine AS runner
+FROM node:25-alpine AS runner
 
 WORKDIR /app
 
 # Curl used for the health checks
-RUN apk add --no-cache curl tzdata
+# Python and build tools needed for better-sqlite3 native compilation
+RUN apk add --no-cache curl tzdata python3 make g++
 
 # COPY package.json package-lock.json ./
 COPY package*.json ./
