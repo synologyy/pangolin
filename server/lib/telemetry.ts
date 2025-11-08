@@ -188,7 +188,7 @@ class TelemetryClient {
                     license_tier: licenseStatus.tier || "unknown"
                 }
             };
-            logger.debug("Sending enterprise startup telemtry payload:", {
+            logger.debug("Sending enterprise startup telemetry payload:", {
                 payload
             });
             // this.client.capture(payload);
