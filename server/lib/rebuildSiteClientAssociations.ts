@@ -70,34 +70,45 @@ export async function rebuildSiteClientAssociations(
         .where(inArray(userOrgs.roleId, roleIds))
         .then((rows) => rows.map((row) => row.userId));
 
-    const allUserIds = Array.from(
+    const newAllUserIds = Array.from(
         new Set([...directUserIds, ...userIdsFromRoles])
     );
 
-    const allClients = await trx
+    const newAllClients = await trx
         .select({
             clientId: clients.clientId,
             pubKey: clients.pubKey,
             subnet: clients.subnet
         })
         .from(clients)
-        .where(inArray(clients.userId, allUserIds));
+        .where(inArray(clients.userId, newAllUserIds));
 
-    const allClientIds = allClients.map((client) => client.clientId);
+    const newAllClientIds = newAllClients.map((client) => client.clientId);
 
-    const existingClientSiteIds = await trx
+    const existingClientSites = await trx
         .select({
             clientId: clientSites.clientId
         })
         .from(clientSites)
-        .where(eq(clientSites.siteId, siteId))
-        .then((rows) => rows.map((row) => row.clientId));
+        .where(eq(clientSites.siteId, siteId));
 
-    const clientSitesToAdd = allClientIds.filter(
+    const existingClientSiteIds = existingClientSites.map((row) => row.clientId);
+
+    // Get full client details for existing clients (needed for sending delete messages)
+    const existingClients = await trx
+        .select({
+            clientId: clients.clientId,
+            pubKey: clients.pubKey,
+            subnet: clients.subnet
+        })
+        .from(clients)
+        .where(inArray(clients.clientId, existingClientSiteIds));
+
+    const clientSitesToAdd = newAllClientIds.filter(
         (clientId) => !existingClientSiteIds.includes(clientId)
     );
 
-    const clientSitesToInsert = allClientIds
+    const clientSitesToInsert = newAllClientIds
         .filter((clientId) => !existingClientSiteIds.includes(clientId))
         .map((clientId) => ({
             clientId,
@@ -110,7 +121,7 @@ export async function rebuildSiteClientAssociations(
 
     // Now remove any client-site associations that should no longer exist
     const clientSitesToRemove = existingClientSiteIds.filter(
-        (clientId) => !allClientIds.includes(clientId)
+        (clientId) => !newAllClientIds.includes(clientId)
     );
 
     if (clientSitesToRemove.length > 0) {
@@ -128,7 +139,8 @@ export async function rebuildSiteClientAssociations(
     await handleMessagesForSiteClients(
         site,
         siteId,
-        allClients,
+        newAllClients,
+        existingClients,
         clientSitesToAdd,
         clientSitesToRemove,
         trx
@@ -139,6 +151,11 @@ async function handleMessagesForSiteClients(
     site: Site,
     siteId: number,
     allClients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[],
+    existingClients: {
         clientId: number;
         pubKey: string | null;
         subnet: string | null;
@@ -192,7 +209,29 @@ async function handleMessagesForSiteClients(
     let newtJobs: Promise<any>[] = [];
     let olmJobs: Promise<any>[] = [];
     let exitNodeJobs: Promise<any>[] = [];
+    
+    // Combine all clients that need processing (those being added or removed)
+    const clientsToProcess = new Map<number, {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }>();
+    
+    // Add clients that are being added (from newAllClients)
     for (const client of allClients) {
+        if (clientSitesToAdd.includes(client.clientId)) {
+            clientsToProcess.set(client.clientId, client);
+        }
+    }
+    
+    // Add clients that are being removed (from existingClients)
+    for (const client of existingClients) {
+        if (clientSitesToRemove.includes(client.clientId)) {
+            clientsToProcess.set(client.clientId, client);
+        }
+    }
+    
+    for (const client of clientsToProcess.values()) {
         // UPDATE THE NEWT
         if (!client.subnet || !client.pubKey) {
             logger.debug("Client subnet, pubKey or endpoint is not set");
@@ -245,7 +284,7 @@ async function handleMessagesForSiteClients(
                     siteId,
                     {
                         publicKey: client.pubKey,
-                        allowedIps: [`${client.subnet.split("/")[-1]}/32`], // we want to only allow from that client
+                        allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
                         // endpoint: isRelayed ? "" : clientSite.endpoint
                         endpoint: isRelayed ? "" : "" // we are not HPing yet so no endpoint
                     },
@@ -318,7 +357,7 @@ export async function updateClientSiteDestinations(
         }
 
         if (!site.clientSites.endpoint) {
-            logger.warn(`Site ${site.sites.siteId} has no endpoint, skipping`);
+            logger.warn(`Site ${site.sites.siteId} has no endpoint, skipping`); // if this is a new association the endpoint is not set yet // TODO: FIX THIS
             continue;
         }
 

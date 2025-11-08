@@ -72,7 +72,13 @@ export async function deleteSiteResource(
         const [existingSiteResource] = await db
             .select()
             .from(siteResources)
-            .where(and(eq(siteResources.siteResourceId, siteResourceId)))
+            .where(
+                and(
+                    eq(siteResources.siteResourceId, siteResourceId),
+                    eq(siteResources.siteId, siteId),
+                    eq(siteResources.orgId, orgId)
+                )
+            )
             .limit(1);
 
         if (!existingSiteResource) {
