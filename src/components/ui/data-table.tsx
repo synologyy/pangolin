@@ -195,8 +195,8 @@ export function DataTable<TData, TValue>({
 
     // Auto-enable persistence if column visibility is enabled
     // Use explicit persistColumnVisibility if provided, otherwise auto-enable when enableColumnVisibility is true and we have a tableId
-    const shouldPersistColumnVisibility = 
-        persistColumnVisibility === true || 
+    const shouldPersistColumnVisibility =
+        persistColumnVisibility === true ||
         typeof persistColumnVisibility === "string" ||
         (enableColumnVisibility && tableId !== undefined);
 
@@ -320,10 +320,10 @@ export function DataTable<TData, TValue>({
     // Get sticky column classes
     const getStickyClasses = (columnId: string | undefined, accessorKey: string | undefined): string => {
         if (isStickyColumn(columnId, accessorKey, "left")) {
-            return "md:sticky md:left-0 z-10 bg-card";
+            return "md:sticky md:left-0 z-10 bg-card [mask-image:linear-gradient(to_left,transparent_0%,black_20px)]";
         }
         if (isStickyColumn(columnId, accessorKey, "right")) {
-            return "sticky right-0 z-10 w-auto min-w-fit bg-card";
+            return "sticky right-0 z-10 w-auto min-w-fit bg-card [mask-image:linear-gradient(to_right,transparent_0%,black_20px)]";
         }
         return "";
     };
@@ -406,7 +406,7 @@ export function DataTable<TData, TValue>({
                                             const isRightSticky = isStickyColumn(columnId, accessorKey, "right");
                                             const hasHideableColumns = enableColumnVisibility &&
                                                 table.getAllColumns().some((col) => col.getCanHide());
-                                            
+
                                             return (
                                                 <TableHead
                                                     key={header.id}
@@ -435,9 +435,9 @@ export function DataTable<TData, TValue>({
                                                                             .map((column) => {
                                                                                 const columnDef = column.columnDef as any;
                                                                                 const friendlyName = columnDef.friendlyName;
-                                                                                const displayName = friendlyName || 
-                                                                                    (typeof columnDef.header === "string" 
-                                                                                        ? columnDef.header 
+                                                                                const displayName = friendlyName ||
+                                                                                    (typeof columnDef.header === "string"
+                                                                                        ? columnDef.header
                                                                                         : column.id);
                                                                                 return (
                                                                                     <DropdownMenuCheckboxItem

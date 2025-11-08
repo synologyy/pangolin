@@ -241,7 +241,7 @@ export default function VerifyEmailForm({
 
                             <Button
                                 type="button"
-                                variant={"secondary"}
+                                variant={"outline"}
                                 className="w-full"
                                 onClick={logout}
                             >

@@ -49,7 +49,7 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
-                    variant="secondary"
+                    variant="outline"
                     size={isCollapsed ? "icon" : "lg"}
                     role="combobox"
                     aria-expanded={open}
@@ -62,7 +62,7 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                     ) : (
                         <div className="flex items-center justify-between w-full min-w-0">
                             <div className="flex items-center min-w-0 flex-1">
-                                <Building2 className="h-4 w-4 mr-2 shrink-0" />
+                                <Building2 className="h-4 w-4 mr-3 shrink-0" />
                                 <div className="flex flex-col items-start min-w-0 flex-1">
                                     <span className="font-bold text-sm">
                                         {t('org')}

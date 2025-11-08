@@ -20,11 +20,11 @@ export function LayoutHeader({ showTopBar }: LayoutHeaderProps) {
     const { isUnlocked } = useLicenseStatusContext();
 
     const logoWidth = isUnlocked()
-        ? env.branding.logo?.navbar?.width || 98
-        : 98;
+        ? env.branding.logo?.navbar?.width || 118
+        : 118;
     const logoHeight = isUnlocked()
-        ? env.branding.logo?.navbar?.height || 32
-        : 32;
+        ? env.branding.logo?.navbar?.height || 29.5
+        : 29.5;
 
     useEffect(() => {
         function getPath() {
