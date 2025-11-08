@@ -89,3 +89,7 @@ Pangolin is dual licensed under the AGPL-3 and the [Fossorial Commercial License
 ## Contributions
 
 Please see [CONTRIBUTING](./CONTRIBUTING.md) in the repository for guidelines and best practices.
+
+---
+
+WireGuard® is a registered trademark of Jason A. Donenfeld.
