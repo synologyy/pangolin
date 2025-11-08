@@ -33,6 +33,7 @@ export function LicenseKeysDataTable({
     const columns: ColumnDef<LicenseKeyCache>[] = [
         {
             accessorKey: "licenseKey",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -123,9 +124,10 @@ export function LicenseKeysDataTable({
         },
         {
             id: "delete",
-            header: () => <span className="p-3">{t("actions")}</span>,
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 justify-end">
                     <Button variant={"outline"}
                         onClick={() => onDelete(row.original)}
                     >
@@ -146,6 +148,9 @@ export function LicenseKeysDataTable({
             searchColumn="licenseKey"
             onAdd={onCreate}
             addButtonText={t("licenseKeyAdd")}
+            enableColumnVisibility={true}
+            stickyLeftColumn="licenseKey"
+            stickyRightColumn="delete"
         />
     );
 }

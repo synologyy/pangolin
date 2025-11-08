@@ -64,6 +64,7 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
     const columns: ColumnDef<RoleRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -84,12 +85,13 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const roleRow = row.original;
 
                 return (
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2 justify-end">
                         <Button
                             variant={"outline"}
                             disabled={roleRow.isAdmin || false}

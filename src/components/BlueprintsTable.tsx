@@ -61,6 +61,7 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -157,10 +158,11 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 return (
-                    <div className="flex">
+                    <div className="flex justify-end">
                         <Button
                             variant="outline"
                             className="items-center"
@@ -187,6 +189,9 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
             title={t("blueprints")}
             searchPlaceholder={t("searchBlueprintProgress")}
             searchColumn="name"
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
             onAdd={() => {
                 router.push(`/${orgId}/settings/blueprints/create`);
             }}

@@ -73,6 +73,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
     const columns: ColumnDef<UserRow>[] = [
         {
             accessorKey: "displayUsername",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -133,9 +134,6 @@ export default function UsersTable({ users: u }: UsersTableProps) {
 
                 return (
                     <div className="flex flex-row items-center gap-2">
-                        {userRow.isOwner && (
-                            <Crown className="w-4 h-4 text-yellow-600" />
-                        )}
                         <span>{userRow.role}</span>
                     </div>
                 );
@@ -143,21 +141,58 @@ export default function UsersTable({ users: u }: UsersTableProps) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const userRow = row.original;
                 return (
-                    <div className="flex items-center">
-                        {userRow.isOwner && (
-                            <Button
-                                variant={"outline"}
-                                className="ml-2"
-                                disabled={true}
-                            >
-                                {t("manage")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        )}
+                    <div className="flex items-center justify-end">
+                        <div>
+                            {!userRow.isOwner && (
+                                <>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                <span className="sr-only">
+                                                    {t("openMenu")}
+                                                </span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <Link
+                                                href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
+                                                className="block w-full"
+                                            >
+                                                <DropdownMenuItem>
+                                                    {t("accessUsersManage")}
+                                                </DropdownMenuItem>
+                                            </Link>
+                                            {`${userRow.username}-${userRow.idpId}` !==
+                                                `${user?.username}-${user?.idpId}` && (
+                                                <DropdownMenuItem
+                                                    onClick={() => {
+                                                        setIsDeleteModalOpen(
+                                                            true
+                                                        );
+                                                        setSelectedUser(
+                                                            userRow
+                                                        );
+                                                    }}
+                                                >
+                                                    <span className="text-red-500">
+                                                        {t("accessUserRemove")}
+                                                    </span>
+                                                </DropdownMenuItem>
+                                            )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </>
+                            )}
+                        </div>
                         {!userRow.isOwner && (
                             <Link
                                 href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
@@ -172,59 +207,6 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                                 </Button>
                             </Link>
                         )}
-                        <>
-                            <div>
-                                {userRow.isOwner && (
-                                    <MoreHorizontal className="h-4 w-4 opacity-0" />
-                                )}
-                                {!userRow.isOwner && (
-                                    <>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    <span className="sr-only">
-                                                        {t("openMenu")}
-                                                    </span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <Link
-                                                    href={`/${org?.org.orgId}/settings/access/users/${userRow.id}`}
-                                                    className="block w-full"
-                                                >
-                                                    <DropdownMenuItem>
-                                                        {t("accessUsersManage")}
-                                                    </DropdownMenuItem>
-                                                </Link>
-                                                {`${userRow.username}-${userRow.idpId}` !==
-                                                    `${user?.username}-${user?.idpId}` && (
-                                                    <DropdownMenuItem
-                                                        onClick={() => {
-                                                            setIsDeleteModalOpen(
-                                                                true
-                                                            );
-                                                            setSelectedUser(
-                                                                userRow
-                                                            );
-                                                        }}
-                                                    >
-                                                        <span className="text-red-500">
-                                                            {t(
-                                                                "accessUserRemove"
-                                                            )}
-                                                        </span>
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </>
-                                )}
-                            </div>
-                        </>
                     </div>
                 );
             }
@@ -273,9 +255,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                 }}
                 dialog={
                     <div>
-                        <p>
-                            {t("userQuestionOrgRemove")}
-                        </p>
+                        <p>{t("userQuestionOrgRemove")}</p>
                         <p>{t("userMessageOrgRemove")}</p>
                     </div>
                 }

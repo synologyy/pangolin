@@ -152,6 +152,8 @@ type DataTableProps<TData, TValue> = {
     columnVisibility?: Record<string, boolean>;
     enableColumnVisibility?: boolean;
     persistColumnVisibility?: boolean | string;
+    stickyLeftColumn?: string; // Column ID or accessorKey for left sticky column
+    stickyRightColumn?: string; // Column ID or accessorKey for right sticky column (typically "actions")
 };
 
 export function DataTable<TData, TValue>({
@@ -171,7 +173,9 @@ export function DataTable<TData, TValue>({
     defaultPageSize = 20,
     columnVisibility: defaultColumnVisibility,
     enableColumnVisibility = false,
-    persistColumnVisibility = false
+    persistColumnVisibility = false,
+    stickyLeftColumn,
+    stickyRightColumn
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
 
@@ -290,6 +294,28 @@ export function DataTable<TData, TValue>({
         }
     };
 
+    // Helper function to check if a column should be sticky
+    const isStickyColumn = (columnId: string | undefined, accessorKey: string | undefined, position: "left" | "right"): boolean => {
+        if (position === "left" && stickyLeftColumn) {
+            return columnId === stickyLeftColumn || accessorKey === stickyLeftColumn;
+        }
+        if (position === "right" && stickyRightColumn) {
+            return columnId === stickyRightColumn || accessorKey === stickyRightColumn;
+        }
+        return false;
+    };
+
+    // Get sticky column classes
+    const getStickyClasses = (columnId: string | undefined, accessorKey: string | undefined): string => {
+        if (isStickyColumn(columnId, accessorKey, "left")) {
+            return "md:sticky md:left-0 z-10 bg-card";
+        }
+        if (isStickyColumn(columnId, accessorKey, "right")) {
+            return "sticky right-0 z-10 w-auto min-w-fit bg-card";
+        }
+        return "";
+    };
+
     return (
         <div className="container mx-auto max-w-12xl">
             <Card>
@@ -329,131 +355,150 @@ export function DataTable<TData, TValue>({
                         )}
                     </div>
                     <div className="flex items-center gap-2 sm:justify-end">
-                        {enableColumnVisibility &&
-                            table
-                                .getAllColumns()
-                                .some((column) => column.getCanHide()) && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">
-                                        <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                        <span className="hidden sm:inline">
-                                            {t("columns") || "Columns"}
-                                        </span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="end"
-                                    className="w-48"
-                                >
-                                    <DropdownMenuLabel>
-                                        {t("toggleColumns") || "Toggle columns"}
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {table
-                                        .getAllColumns()
-                                        .filter((column) => column.getCanHide())
-                                        .map((column) => {
-                                            return (
-                                                <DropdownMenuCheckboxItem
-                                                    key={column.id}
-                                                    className="capitalize"
-                                                    checked={column.getIsVisible()}
-                                                    onCheckedChange={(value) =>
-                                                        column.toggleVisibility(
-                                                            !!value
-                                                        )
-                                                    }
-                                                >
-                                                    {typeof column.columnDef
-                                                        .header === "string"
-                                                        ? column.columnDef
-                                                              .header
-                                                        : column.id}
-                                                </DropdownMenuCheckboxItem>
-                                            );
-                                        })}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
                         {onRefresh && (
-                            <Button
-                                variant="outline"
-                                onClick={onRefresh}
-                                disabled={isRefreshing}
-                            >
-                                <RefreshCw
-                                    className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                                />
-                                <span className="hidden sm:inline">
-                                    {t("refresh")}
-                                </span>
-                            </Button>
+                            <div>
+                                <Button
+                                    variant="outline"
+                                    onClick={onRefresh}
+                                    disabled={isRefreshing}
+                                >
+                                    <RefreshCw
+                                        className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                                    />
+                                    <span className="hidden sm:inline">
+                                        {t("refresh")}
+                                    </span>
+                                </Button>
+                            </div>
                         )}
                         {onAdd && addButtonText && (
-                            <Button onClick={onAdd}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                {addButtonText}
-                            </Button>
+                            <div>
+                                <Button onClick={onAdd}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    {addButtonText}
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead
-                                            key={header.id}
-                                            className="whitespace-nowrap"
-                                        >
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                      header.column.columnDef
-                                                          .header,
-                                                      header.getContext()
-                                                  )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        data-state={
-                                            row.getIsSelected() && "selected"
-                                        }
-                                    >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell
-                                                key={cell.id}
-                                                className="whitespace-nowrap"
-                                            >
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext()
-                                                )}
-                                            </TableCell>
-                                        ))}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id}>
+                                        {headerGroup.headers.map((header) => {
+                                            const columnId = header.column.id;
+                                            const accessorKey = (header.column.columnDef as any).accessorKey as string | undefined;
+                                            const stickyClasses = getStickyClasses(columnId, accessorKey);
+                                            const isRightSticky = isStickyColumn(columnId, accessorKey, "right");
+                                            const hasHideableColumns = enableColumnVisibility &&
+                                                table.getAllColumns().some((col) => col.getCanHide());
+                                            
+                                            return (
+                                                <TableHead
+                                                    key={header.id}
+                                                    className={`whitespace-nowrap ${stickyClasses}`}
+                                                >
+                                                    {header.isPlaceholder ? null : (
+                                                        isRightSticky && hasHideableColumns ? (
+                                                            <div className="flex flex-col items-end pr-3">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="outline" size="sm" className="h-7 w-7 p-0 mb-1">
+                                                                            <Columns className="h-4 w-4" />
+                                                                            <span className="sr-only">
+                                                                                {t("columns") || "Columns"}
+                                                                            </span>
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-48">
+                                                                        <DropdownMenuLabel>
+                                                                            {t("toggleColumns") || "Toggle columns"}
+                                                                        </DropdownMenuLabel>
+                                                                        <DropdownMenuSeparator />
+                                                                        {table
+                                                                            .getAllColumns()
+                                                                            .filter((column) => column.getCanHide())
+                                                                            .map((column) => {
+                                                                                return (
+                                                                                    <DropdownMenuCheckboxItem
+                                                                                        key={column.id}
+                                                                                        className="capitalize"
+                                                                                        checked={column.getIsVisible()}
+                                                                                        onCheckedChange={(value) =>
+                                                                                            column.toggleVisibility(!!value)
+                                                                                        }
+                                                                                    >
+                                                                                        {typeof column.columnDef.header === "string"
+                                                                                            ? column.columnDef.header
+                                                                                            : column.id}
+                                                                                    </DropdownMenuCheckboxItem>
+                                                                                );
+                                                                            })}
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                                <div className="h-0 opacity-0 pointer-events-none overflow-hidden">
+                                                                    {flexRender(
+                                                                        header.column.columnDef.header,
+                                                                        header.getContext()
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            flexRender(
+                                                                header.column.columnDef.header,
+                                                                header.getContext()
+                                                            )
+                                                        )
+                                                    )}
+                                                </TableHead>
+                                            );
+                                        })}
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={columns.length}
-                                        className="h-24 text-center"
-                                    >
-                                        No results found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                ))}
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                        <TableRow
+                                            key={row.id}
+                                            data-state={
+                                                row.getIsSelected() && "selected"
+                                            }
+                                        >
+                                            {row.getVisibleCells().map((cell) => {
+                                                const columnId = cell.column.id;
+                                                const accessorKey = (cell.column.columnDef as any).accessorKey as string | undefined;
+                                                const stickyClasses = getStickyClasses(columnId, accessorKey);
+                                                const isRightSticky = isStickyColumn(columnId, accessorKey, "right");
+                                                return (
+                                                    <TableCell
+                                                        key={cell.id}
+                                                        className={`whitespace-nowrap ${stickyClasses} ${isRightSticky ? "text-right" : ""}`}
+                                                    >
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                );
+                                            })}
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="h-24 text-center"
+                                        >
+                                            No results found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                     <div className="mt-4">
                         <DataTablePagination
                             table={table}

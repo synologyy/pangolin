@@ -586,6 +586,7 @@ export default function ResourcesTable({
     const proxyColumns: ColumnDef<ResourceRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -748,19 +749,59 @@ export default function ResourcesTable({
         },
         {
             id: "actions",
-            header: () => <span className="p-3">{t("actions")}</span>,
+            enableHiding: false,
+            header: ({ table }) => {
+                const hasHideableColumns = table
+                    .getAllColumns()
+                    .some((column) => column.getCanHide());
+                if (!hasHideableColumns) {
+                    return <span className="p-3"></span>;
+                }
+                return (
+                    <div className="flex flex-col items-end gap-1 p-3">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                                    <Columns className="h-4 w-4" />
+                                    <span className="sr-only">
+                                        {t("columns") || "Columns"}
+                                    </span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>
+                                    {t("toggleColumns") || "Toggle columns"}
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {table
+                                    .getAllColumns()
+                                    .filter((column) => column.getCanHide())
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) =>
+                                                    column.toggleVisibility(!!value)
+                                                }
+                                            >
+                                                {typeof column.columnDef.header ===
+                                                "string"
+                                                    ? column.columnDef.header
+                                                    : column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        );
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
-                        >
-                            <Button variant={"outline"}>
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -791,6 +832,14 @@ export default function ResourcesTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link
+                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
+                        >
+                            <Button variant={"outline"}>
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }
@@ -800,6 +849,7 @@ export default function ResourcesTable({
     const internalColumns: ColumnDef<InternalResourceRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -902,20 +952,59 @@ export default function ResourcesTable({
 
         {
             id: "actions",
-            header: () => <span className="p-3">{t("actions")}</span>,
+            enableHiding: false,
+            header: ({ table }) => {
+                const hasHideableColumns = table
+                    .getAllColumns()
+                    .some((column) => column.getCanHide());
+                if (!hasHideableColumns) {
+                    return <span className="p-3"></span>;
+                }
+                return (
+                    <div className="flex flex-col items-end gap-1 p-3">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                                    <Columns className="h-4 w-4" />
+                                    <span className="sr-only">
+                                        {t("columns") || "Columns"}
+                                    </span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuLabel>
+                                    {t("toggleColumns") || "Toggle columns"}
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {table
+                                    .getAllColumns()
+                                    .filter((column) => column.getCanHide())
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) =>
+                                                    column.toggleVisibility(!!value)
+                                                }
+                                            >
+                                                {typeof column.columnDef.header ===
+                                                "string"
+                                                    ? column.columnDef.header
+                                                    : column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        );
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                );
+            },
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant={"outline"}
-                            onClick={() => {
-                                setEditingResource(resourceRow);
-                                setIsEditDialogOpen(true);
-                            }}
-                        >
-                            {t("edit")}
-                        </Button>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -940,6 +1029,15 @@ export default function ResourcesTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Button
+                            variant={"outline"}
+                            onClick={() => {
+                                setEditingResource(resourceRow);
+                                setIsEditDialogOpen(true);
+                            }}
+                        >
+                            {t("edit")}
+                        </Button>
                     </div>
                 );
             }
@@ -1090,122 +1188,6 @@ export default function ResourcesTable({
                                 )}
                             </div>
                             <div className="flex items-center gap-2 sm:justify-end">
-                                {currentView === "proxy" &&
-                                    proxyTable
-                                        .getAllColumns()
-                                        .some((column) =>
-                                            column.getCanHide()
-                                        ) && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                    <span className="hidden sm:inline">
-                                                        {t("columns") ||
-                                                            "Columns"}
-                                                    </span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="w-48"
-                                            >
-                                                <DropdownMenuLabel>
-                                                    {t("toggleColumns") ||
-                                                        "Toggle columns"}
-                                                </DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {proxyTable
-                                                    .getAllColumns()
-                                                    .filter((column) =>
-                                                        column.getCanHide()
-                                                    )
-                                                    .map((column) => {
-                                                        return (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(
-                                                                    value
-                                                                ) =>
-                                                                    column.toggleVisibility(
-                                                                        !!value
-                                                                    )
-                                                                }
-                                                            >
-                                                                {typeof column
-                                                                    .columnDef
-                                                                    .header ===
-                                                                "string"
-                                                                    ? column
-                                                                          .columnDef
-                                                                          .header
-                                                                    : column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        );
-                                                    })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                {currentView === "internal" &&
-                                    internalTable
-                                        .getAllColumns()
-                                        .some((column) =>
-                                            column.getCanHide()
-                                        ) && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                    <span className="hidden sm:inline">
-                                                        {t("columns") ||
-                                                            "Columns"}
-                                                    </span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="w-48"
-                                            >
-                                                <DropdownMenuLabel>
-                                                    {t("toggleColumns") ||
-                                                        "Toggle columns"}
-                                                </DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {internalTable
-                                                    .getAllColumns()
-                                                    .filter((column) =>
-                                                        column.getCanHide()
-                                                    )
-                                                    .map((column) => {
-                                                        return (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(
-                                                                    value
-                                                                ) =>
-                                                                    column.toggleVisibility(
-                                                                        !!value
-                                                                    )
-                                                                }
-                                                            >
-                                                                {typeof column
-                                                                    .columnDef
-                                                                    .header ===
-                                                                "string"
-                                                                    ? column
-                                                                          .columnDef
-                                                                          .header
-                                                                    : column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        );
-                                                    })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
                                 <div>
                                     <Button
                                         variant="outline"
@@ -1225,7 +1207,8 @@ export default function ResourcesTable({
                         </CardHeader>
                         <CardContent>
                             <TabsContent value="proxy">
-                                <Table>
+                                <div className="overflow-x-auto">
+                                    <Table>
                                     <TableHeader>
                                         {proxyTable
                                             .getHeaderGroups()
@@ -1238,6 +1221,15 @@ export default function ResourcesTable({
                                                         .map((header) => (
                                                             <TableHead
                                                                 key={header.id}
+                                                                className={`whitespace-nowrap ${
+                                                                    header.column.id ===
+                                                                    "actions"
+                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                        : header.column.id ===
+                                                                          "name"
+                                                                        ? "md:sticky md:left-0 z-10 bg-card"
+                                                                        : ""
+                                                                }`}
                                                             >
                                                                 {header.isPlaceholder
                                                                     ? null
@@ -1273,6 +1265,15 @@ export default function ResourcesTable({
                                                                     key={
                                                                         cell.id
                                                                     }
+                                                                    className={`whitespace-nowrap ${
+                                                                        cell.column.id ===
+                                                                        "actions"
+                                                                            ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                            : cell.column.id ===
+                                                                              "name"
+                                                                            ? "md:sticky md:left-0 z-10 bg-card"
+                                                                            : ""
+                                                                    }`}
                                                                 >
                                                                     {flexRender(
                                                                         cell
@@ -1301,6 +1302,7 @@ export default function ResourcesTable({
                                         )}
                                     </TableBody>
                                 </Table>
+                                </div>
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={proxyTable}
@@ -1311,7 +1313,8 @@ export default function ResourcesTable({
                                 </div>
                             </TabsContent>
                             <TabsContent value="internal">
-                                <Table>
+                                <div className="overflow-x-auto">
+                                    <Table>
                                     <TableHeader>
                                         {internalTable
                                             .getHeaderGroups()
@@ -1324,6 +1327,15 @@ export default function ResourcesTable({
                                                         .map((header) => (
                                                             <TableHead
                                                                 key={header.id}
+                                                                className={`whitespace-nowrap ${
+                                                                    header.column.id ===
+                                                                    "actions"
+                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                        : header.column.id ===
+                                                                          "name"
+                                                                        ? "md:sticky md:left-0 z-10 bg-card"
+                                                                        : ""
+                                                                }`}
                                                             >
                                                                 {header.isPlaceholder
                                                                     ? null
@@ -1359,6 +1371,15 @@ export default function ResourcesTable({
                                                                     key={
                                                                         cell.id
                                                                     }
+                                                                    className={`whitespace-nowrap ${
+                                                                        cell.column.id ===
+                                                                        "actions"
+                                                                            ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                            : cell.column.id ===
+                                                                              "name"
+                                                                            ? "md:sticky md:left-0 z-10 bg-card"
+                                                                            : ""
+                                                                    }`}
                                                                 >
                                                                     {flexRender(
                                                                         cell
@@ -1387,6 +1408,7 @@ export default function ResourcesTable({
                                         )}
                                     </TableBody>
                                 </Table>
+                                </div>
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={internalTable}

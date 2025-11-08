@@ -38,33 +38,8 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
     const t = useTranslations();
     const columns: ColumnDef<PolicyRow>[] = [
         {
-            id: "dots",
-            cell: ({ row }) => {
-                const r = row.original;
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">{t('openMenu')}</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                                onClick={() => {
-                                    onDelete(r.orgId);
-                                }}
-                            >
-                                <span className="text-red-500">{t('delete')}</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
-        {
             accessorKey: "orgId",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -135,14 +110,31 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t('actions')}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const policy = row.original;
                 return (
-                    <div className="flex items-center">
+                    <div className="flex items-center gap-2 justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">{t('openMenu')}</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        onDelete(policy.orgId);
+                                    }}
+                                >
+                                    <span className="text-red-500">{t('delete')}</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button
                             variant={"outline"}
-                            className="ml-2"
                             onClick={() => onEdit(policy)}
                         >
                             {t('edit')}

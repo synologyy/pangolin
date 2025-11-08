@@ -59,6 +59,9 @@ export function ApiKeysDataTable<TData, TValue>({
             addButtonText={t('apiKeysAdd')}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

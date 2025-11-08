@@ -105,6 +105,7 @@ export default function ShareLinksTable({
     const columns: ColumnDef<ShareLinkRow>[] = [
         {
             accessorKey: "resourceName",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -254,11 +255,12 @@ export default function ShareLinksTable({
         },
         {
             id: "delete",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 justify-end">
                         {/* <DropdownMenu> */}
                         {/*     <DropdownMenuTrigger asChild> */}
                         {/*         <Button variant="ghost" className="h-8 w-8 p-0"> */}

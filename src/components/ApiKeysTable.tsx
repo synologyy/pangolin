@@ -88,6 +88,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
     const columns: ColumnDef<ApiKeyRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -120,19 +121,12 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <div className="flex items-center gap-2">
-                        <Link href={`/admin/api-keys/${r.id}`}>
-                            <Button
-                                variant={"outline"}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -162,6 +156,14 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link href={`/admin/api-keys/${r.id}`}>
+                            <Button
+                                variant={"outline"}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }

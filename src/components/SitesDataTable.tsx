@@ -44,6 +44,8 @@ export function SitesDataTable<TData, TValue>({
             }}
             columnVisibility={columnVisibility}
             enableColumnVisibility={enableColumnVisibility}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

@@ -109,6 +109,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
     const columns: ColumnDef<SiteRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -361,19 +362,12 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             : []),
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center gap-2">
-                        <Link
-                            href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
-                        >
-                            <Button variant={"outline"}>
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -402,6 +396,14 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link
+                            href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
+                        >
+                            <Button variant={"outline"}>
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }

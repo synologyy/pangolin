@@ -103,6 +103,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "username",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -201,46 +202,45 @@ export default function UsersTable({ users }: Props) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant={"outline"}
-                                onClick={() => {
-                                    router.push(`/admin/users/${r.id}`);
-                                }}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <span className="sr-only">
-                                            Open menu
-                                        </span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            setSelected(r);
-                                            setIsDeleteModalOpen(true);
-                                        }}
-                                    >
-                                        {t("delete")}
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    </>
+                    <div className="flex items-center gap-2 justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                >
+                                    <span className="sr-only">
+                                        Open menu
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelected(r);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    {t("delete")}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button
+                            variant={"outline"}
+                            onClick={() => {
+                                router.push(`/admin/users/${r.id}`);
+                            }}
+                        >
+                            {t("edit")}
+                            <ArrowRight className="ml-2 w-4 h-4" />
+                        </Button>
+                    </div>
                 );
             }
         }

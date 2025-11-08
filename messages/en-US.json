@@ -2156,5 +2156,6 @@
     "checkSelectedStatus": "Check Status of Selected",
     "clients": "Clients",
     "accessClientSelect": "Select machine clients",
-    "resourceClientDescription": "Machine clients that can access this resource"
+    "resourceClientDescription": "Machine clients that can access this resource",
+    "regenerate": "Regenerate"
 }

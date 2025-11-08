@@ -137,6 +137,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
     const columns: ColumnDef<DomainRow>[] = [
         {
             accessorKey: "baseDomain",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -209,13 +210,47 @@ export default function DomainsTable({ domains, orgId }: Props) {
         },
         {
             id: "actions",
-            header: () => <span className="p-3">{t("actions")}</span>,
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const domain = row.original;
                 const isRestarting = restartingDomains.has(domain.domainId);
 
                 return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                >
+                                    <span className="sr-only">
+                                        Open menu
+                                    </span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <Link
+                                    className="block w-full"
+                                    href={`/${orgId}/settings/domains/${domain.domainId}`}
+                                >
+                                    <DropdownMenuItem>
+                                        {t("viewSettings")}
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelectedDomain(domain);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">
+                                        {t("delete")}
+                                    </span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                         {domain.failed && (
                             <Button
                                 variant="outline"
@@ -240,41 +275,6 @@ export default function DomainsTable({ domains, orgId }: Props) {
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
                         </Link>
-                        <div className="flex items-center justify-end gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <span className="sr-only">
-                                            Open menu
-                                        </span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <Link
-                                        className="block w-full"
-                                        href={`/${orgId}/settings/domains/${domain.domainId}`}
-                                    >
-                                        <DropdownMenuItem>
-                                            {t("viewSettings")}
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            setSelectedDomain(domain);
-                                            setIsDeleteModalOpen(true);
-                                        }}
-                                    >
-                                        <span className="text-red-500">
-                                            {t("delete")}
-                                        </span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
                         {/* <Button
                             variant="secondary"
                             size="sm"

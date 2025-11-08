@@ -91,6 +91,7 @@ export default function OrgApiKeysTable({
     const columns: ColumnDef<OrgApiKeyRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -123,19 +124,12 @@ export default function OrgApiKeysTable({
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <div className="flex items-center">
-                        <Link href={`/${orgId}/settings/api-keys/${r.id}`}>
-                            <Button
-                                variant={"outline"}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -167,6 +161,14 @@ export default function OrgApiKeysTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link href={`/${orgId}/settings/api-keys/${r.id}`}>
+                            <Button
+                                variant={"outline"}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }

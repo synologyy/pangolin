@@ -69,6 +69,7 @@ export default function InvitationsTable({
     const columns: ColumnDef<InvitationRow>[] = [
         {
             accessorKey: "email",
+            enableHiding: false,
             header: () => (<span className="p-3">{t("email")}</span>)
         },
         {
@@ -91,6 +92,8 @@ export default function InvitationsTable({
         },
         {
             id: "dots",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const invitation = row.original;
                 return (
@@ -119,13 +122,13 @@ export default function InvitationsTable({
                         </DropdownMenu>
 
                         <Button
-                            variant={"secondary"}
+                            variant={"outline"}
                             onClick={() => {
                                 setIsRegenerateModalOpen(true);
                                 setSelectedInvitation(invitation);
                             }}
                         >
-                            <span>{t("inviteRegenerate")}</span>
+                            {t("regenerate", { fallback: "Regenerate" })}
                         </Button>
                     </div>
                 );

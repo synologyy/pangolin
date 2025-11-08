@@ -334,6 +334,7 @@ export default function ClientsTable({
         const baseColumns: ColumnDef<ClientRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -531,19 +532,59 @@ export default function ClientsTable({
         if (hasRowsWithoutUserId) {
             baseColumns.push({
                 id: "actions",
-                header: () => <span className="p-3">{t("actions")}</span>,
+                enableHiding: false,
+                header: ({ table }) => {
+                    const hasHideableColumns = table
+                        .getAllColumns()
+                        .some((column) => column.getCanHide());
+                    if (!hasHideableColumns) {
+                        return <span className="p-3"></span>;
+                    }
+                    return (
+                        <div className="flex flex-col items-end gap-1 p-3">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                                        <Columns className="h-4 w-4" />
+                                        <span className="sr-only">
+                                            {t("columns") || "Columns"}
+                                        </span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuLabel>
+                                        {t("toggleColumns") || "Toggle columns"}
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {table
+                                        .getAllColumns()
+                                        .filter((column) => column.getCanHide())
+                                        .map((column) => {
+                                            return (
+                                                <DropdownMenuCheckboxItem
+                                                    key={column.id}
+                                                    className="capitalize"
+                                                    checked={column.getIsVisible()}
+                                                    onCheckedChange={(value) =>
+                                                        column.toggleVisibility(!!value)
+                                                    }
+                                                >
+                                                    {typeof column.columnDef.header ===
+                                                    "string"
+                                                        ? column.columnDef.header
+                                                        : column.id}
+                                                </DropdownMenuCheckboxItem>
+                                            );
+                                        })}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    );
+                },
                 cell: ({ row }) => {
                     const clientRow = row.original;
                     return !clientRow.userId ? (
-                        <div className="flex items-center">
-                            <Link
-                                href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
-                            >
-                                <Button variant={"outline"}>
-                                    Edit
-                                    <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            </Link>
+                        <div className="flex items-center gap-2 justify-end">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -570,6 +611,14 @@ export default function ClientsTable({
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                            <Link
+                                href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
+                            >
+                                <Button variant={"outline"}>
+                                    Edit
+                                    <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
+                            </Link>
                         </div>
                     ) : null;
                 }
@@ -693,122 +742,6 @@ export default function ClientsTable({
                                 </TabsList>
                             </div>
                             <div className="flex items-center gap-2 sm:justify-end">
-                                {currentView === "user" &&
-                                    userTable
-                                        .getAllColumns()
-                                        .some((column) =>
-                                            column.getCanHide()
-                                        ) && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                    <span className="hidden sm:inline">
-                                                        {t("columns") ||
-                                                            "Columns"}
-                                                    </span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="w-48"
-                                            >
-                                                <DropdownMenuLabel>
-                                                    {t("toggleColumns") ||
-                                                        "Toggle columns"}
-                                                </DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {userTable
-                                                    .getAllColumns()
-                                                    .filter((column) =>
-                                                        column.getCanHide()
-                                                    )
-                                                    .map((column) => {
-                                                        return (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(
-                                                                    value
-                                                                ) =>
-                                                                    column.toggleVisibility(
-                                                                        !!value
-                                                                    )
-                                                                }
-                                                            >
-                                                                {typeof column
-                                                                    .columnDef
-                                                                    .header ===
-                                                                "string"
-                                                                    ? column
-                                                                          .columnDef
-                                                                          .header
-                                                                    : column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        );
-                                                    })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                {currentView === "machine" &&
-                                    machineTable
-                                        .getAllColumns()
-                                        .some((column) =>
-                                            column.getCanHide()
-                                        ) && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="outline">
-                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                    <span className="hidden sm:inline">
-                                                        {t("columns") ||
-                                                            "Columns"}
-                                                    </span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                className="w-48"
-                                            >
-                                                <DropdownMenuLabel>
-                                                    {t("toggleColumns") ||
-                                                        "Toggle columns"}
-                                                </DropdownMenuLabel>
-                                                <DropdownMenuSeparator />
-                                                {machineTable
-                                                    .getAllColumns()
-                                                    .filter((column) =>
-                                                        column.getCanHide()
-                                                    )
-                                                    .map((column) => {
-                                                        return (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={column.id}
-                                                                className="capitalize"
-                                                                checked={column.getIsVisible()}
-                                                                onCheckedChange={(
-                                                                    value
-                                                                ) =>
-                                                                    column.toggleVisibility(
-                                                                        !!value
-                                                                    )
-                                                                }
-                                                            >
-                                                                {typeof column
-                                                                    .columnDef
-                                                                    .header ===
-                                                                "string"
-                                                                    ? column
-                                                                          .columnDef
-                                                                          .header
-                                                                    : column.id}
-                                                            </DropdownMenuCheckboxItem>
-                                                        );
-                                                    })}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
                                 <div>
                                     <Button
                                         variant="outline"
@@ -828,7 +761,8 @@ export default function ClientsTable({
                         </CardHeader>
                         <CardContent>
                             <TabsContent value="user">
-                                <Table>
+                                <div className="overflow-x-auto">
+                                    <Table>
                                     <TableHeader>
                                         {userTable
                                             .getHeaderGroups()
@@ -841,6 +775,15 @@ export default function ClientsTable({
                                                         .map((header) => (
                                                             <TableHead
                                                                 key={header.id}
+                                                                className={`whitespace-nowrap ${
+                                                                    header.column.id ===
+                                                                    "actions"
+                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                        : header.column.id ===
+                                                                          "name"
+                                                                        ? "md:sticky md:left-0 z-10 bg-card"
+                                                                        : ""
+                                                                }`}
                                                             >
                                                                 {header.isPlaceholder
                                                                     ? null
@@ -876,6 +819,15 @@ export default function ClientsTable({
                                                                     key={
                                                                         cell.id
                                                                     }
+                                                                    className={`whitespace-nowrap ${
+                                                                        cell.column.id ===
+                                                                        "actions"
+                                                                            ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                            : cell.column.id ===
+                                                                              "name"
+                                                                            ? "md:sticky md:left-0 z-10 bg-card"
+                                                                            : ""
+                                                                    }`}
                                                                 >
                                                                     {flexRender(
                                                                         cell
@@ -900,6 +852,7 @@ export default function ClientsTable({
                                         )}
                                     </TableBody>
                                 </Table>
+                                </div>
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={userTable}
@@ -910,7 +863,8 @@ export default function ClientsTable({
                                 </div>
                             </TabsContent>
                             <TabsContent value="machine">
-                                <Table>
+                                <div className="overflow-x-auto">
+                                    <Table>
                                     <TableHeader>
                                         {machineTable
                                             .getHeaderGroups()
@@ -923,6 +877,15 @@ export default function ClientsTable({
                                                         .map((header) => (
                                                             <TableHead
                                                                 key={header.id}
+                                                                className={`whitespace-nowrap ${
+                                                                    header.column.id ===
+                                                                    "actions"
+                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                        : header.column.id ===
+                                                                          "name"
+                                                                        ? "md:sticky md:left-0 z-10 bg-card"
+                                                                        : ""
+                                                                }`}
                                                             >
                                                                 {header.isPlaceholder
                                                                     ? null
@@ -958,6 +921,15 @@ export default function ClientsTable({
                                                                     key={
                                                                         cell.id
                                                                     }
+                                                                    className={`whitespace-nowrap ${
+                                                                        cell.column.id ===
+                                                                        "actions"
+                                                                            ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                            : cell.column.id ===
+                                                                              "name"
+                                                                            ? "md:sticky md:left-0 z-10 bg-card"
+                                                                            : ""
+                                                                    }`}
                                                                 >
                                                                     {flexRender(
                                                                         cell
@@ -982,6 +954,7 @@ export default function ClientsTable({
                                         )}
                                     </TableBody>
                                 </Table>
+                                </div>
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={machineTable}

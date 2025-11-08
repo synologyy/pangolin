@@ -96,6 +96,7 @@ export default function IdpTable({ idps }: Props) {
         },
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -133,19 +134,12 @@ export default function IdpTable({ idps }: Props) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center">
-                        <Link href={`/admin/idp/${siteRow.idpId}/general`}>
-                            <Button
-                                variant={"outline"}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -176,6 +170,14 @@ export default function IdpTable({ idps }: Props) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link href={`/admin/idp/${siteRow.idpId}/general`}>
+                            <Button
+                                variant={"outline"}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }
