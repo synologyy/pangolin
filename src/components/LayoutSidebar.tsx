@@ -87,14 +87,14 @@ export function LayoutSidebar({
                 isSidebarCollapsed ? "w-16" : "w-64"
             )}
         >
+            <div className="p-4 shrink-0">
+                <OrgSelector
+                    orgId={orgId}
+                    orgs={orgs}
+                    isCollapsed={isSidebarCollapsed}
+                />
+            </div>
             <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
-                    <OrgSelector
-                        orgId={orgId}
-                        orgs={orgs}
-                        isCollapsed={isSidebarCollapsed}
-                    />
-                </div>
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
