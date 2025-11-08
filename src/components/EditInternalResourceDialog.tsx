@@ -41,6 +41,8 @@ import { ListRolesResponse } from "@server/routers/role";
 import { ListUsersResponse } from "@server/routers/user";
 import { ListSiteResourceRolesResponse } from "@server/routers/siteResource/listSiteResourceRoles";
 import { ListSiteResourceUsersResponse } from "@server/routers/siteResource/listSiteResourceUsers";
+import { ListSiteResourceClientsResponse } from "@server/routers/siteResource/listSiteResourceClients";
+import { ListClientsResponse } from "@server/routers/client/listClients";
 import { Tag, TagInput } from "@app/components/tags/tag-input";
 import { AxiosResponse } from "axios";
 import { UserType } from "@server/types/UserTypes";
@@ -97,6 +99,12 @@ export default function EditInternalResourceDialog({
                 id: z.string(),
                 text: z.string()
             })
+        ).optional(),
+        clients: z.array(
+            z.object({
+                id: z.string(),
+                text: z.string()
+            })
         ).optional()
     })
     .refine(
@@ -140,9 +148,12 @@ export default function EditInternalResourceDialog({
 
     const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
     const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>([]);
+    const [allClients, setAllClients] = useState<{ id: string; text: string }[]>([]);
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<number | null>(null);
     const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<number | null>(null);
+    const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<number | null>(null);
     const [loadingRolesUsers, setLoadingRolesUsers] = useState(false);
+    const [hasMachineClients, setHasMachineClients] = useState(false);
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -155,7 +166,8 @@ export default function EditInternalResourceDialog({
             destinationPort: resource.destinationPort ?? undefined,
             alias: resource.alias ?? null,
             roles: [],
-            users: []
+            users: [],
+            clients: []
         }
     });
 
@@ -168,7 +180,8 @@ export default function EditInternalResourceDialog({
                 rolesResponse,
                 resourceRolesResponse,
                 usersResponse,
-                resourceUsersResponse
+                resourceUsersResponse,
+                clientsResponse
             ] = await Promise.all([
                 api.get<AxiosResponse<ListRolesResponse>>(`/org/${orgId}/roles`),
                 api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
@@ -177,8 +190,28 @@ export default function EditInternalResourceDialog({
                 api.get<AxiosResponse<ListUsersResponse>>(`/org/${orgId}/users`),
                 api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
                     `/site-resource/${resource.id}/users`
-                )
+                ),
+                api.get<AxiosResponse<ListClientsResponse>>(`/org/${orgId}/clients?filter=machine&limit=1000`)
             ]);
+
+            let resourceClientsResponse: AxiosResponse<AxiosResponse<ListSiteResourceClientsResponse>>;
+            try {
+                resourceClientsResponse = await api.get<AxiosResponse<ListSiteResourceClientsResponse>>(
+                    `/site-resource/${resource.id}/clients`
+                );
+            } catch {
+                resourceClientsResponse = {
+                    data: {
+                        data: {
+                            clients: []
+                        }
+                    },
+                    status: 200,
+                    statusText: "OK",
+                    headers: {} as any,
+                    config: {} as any
+                } as any;
+            }
 
             setAllRoles(
                 rolesResponse.data.data.roles
@@ -213,8 +246,27 @@ export default function EditInternalResourceDialog({
                     text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
                 }))
             );
+
+            const machineClients = clientsResponse.data.data.clients
+                .filter((client) => !client.userId)
+                .map((client) => ({
+                    id: client.clientId.toString(),
+                    text: client.name
+                }));
+
+            setAllClients(machineClients);
+            
+            const existingClients = resourceClientsResponse.data.data.clients.map((c: { clientId: number; name: string }) => ({
+                id: c.clientId.toString(),
+                text: c.name
+            }));
+
+            form.setValue("clients", existingClients);
+
+            // Show clients tag input if there are machine clients OR existing client access
+            setHasMachineClients(machineClients.length > 0 || existingClients.length > 0);
         } catch (error) {
-            console.error("Error fetching roles and users:", error);
+            console.error("Error fetching roles, users, and clients:", error);
         } finally {
             setLoadingRolesUsers(false);
         }
@@ -231,7 +283,8 @@ export default function EditInternalResourceDialog({
                 destinationPort: resource.destinationPort ?? undefined,
                 alias: resource.alias ?? null,
                 roles: [],
-                users: []
+                users: [],
+                clients: []
             });
             fetchRolesAndUsers();
         }
@@ -252,13 +305,16 @@ export default function EditInternalResourceDialog({
                 alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : null
             });
 
-            // Update roles and users
+            // Update roles, users, and clients
             await Promise.all([
                 api.post(`/site-resource/${resource.id}/roles`, {
                     roleIds: (data.roles || []).map((r) => parseInt(r.id))
                 }),
                 api.post(`/site-resource/${resource.id}/users`, {
                     userIds: (data.users || []).map((u) => u.id)
+                }),
+                api.post(`/site-resource/${resource.id}/clients`, {
+                    clientIds: (data.clients || []).map((c) => parseInt(c.id))
                 })
             ]);
 
@@ -530,6 +586,42 @@ export default function EditInternalResourceDialog({
                                                 </FormItem>
                                             )}
                                         />
+                                    {hasMachineClients && (
+                                        <FormField
+                                            control={form.control}
+                                            name="clients"
+                                            render={({ field }) => (
+                                                <FormItem className="flex flex-col items-start">
+                                                    <FormLabel>{t("clients")}</FormLabel>
+                                                    <FormControl>
+                                                        <TagInput
+                                                            {...field}
+                                                            activeTagIndex={activeClientsTagIndex}
+                                                            setActiveTagIndex={setActiveClientsTagIndex}
+                                                            placeholder={t("accessClientSelect") || "Select machine clients"}
+                                                            size="sm"
+                                                            tags={form.getValues().clients || []}
+                                                            setTags={(newClients) => {
+                                                                form.setValue(
+                                                                    "clients",
+                                                                    newClients as [Tag, ...Tag[]]
+                                                                );
+                                                            }}
+                                                            enableAutocomplete={true}
+                                                            autocompleteOptions={allClients}
+                                                            allowDuplicates={false}
+                                                            restrictTagsToAutocompleteOptions={true}
+                                                            sortTags={true}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t("resourceClientDescription") || "Machine clients that can access this resource"}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
                                     </div>
                                 )}
                             </div>

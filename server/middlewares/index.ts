@@ -11,6 +11,7 @@ export * from "./verifyRoleAccess";
 export * from "./verifyUserAccess";
 export * from "./verifyAdmin";
 export * from "./verifySetResourceUsers";
+export * from "./verifySetResourceClients";
 export * from "./verifyUserInRole";
 export * from "./verifyAccessTokenAccess";
 export * from "./requestTimeout";

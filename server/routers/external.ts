@@ -29,6 +29,7 @@ import {
     verifyTargetAccess,
     verifyRoleAccess,
     verifySetResourceUsers,
+    verifySetResourceClients,
     verifyUserAccess,
     getUserOrgs,
     verifyUserIsServerAdmin,
@@ -301,6 +302,13 @@ authenticated.get(
     siteResource.listSiteResourceUsers
 );
 
+authenticated.get(
+    "/site-resource/:siteResourceId/clients",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceClients
+);
+
 authenticated.post(
     "/site-resource/:siteResourceId/roles",
     verifySiteResourceAccess,
@@ -317,6 +325,33 @@ authenticated.post(
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
     siteResource.setSiteResourceUsers,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceClients,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/add",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addClientToSiteResource,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/remove",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeClientFromSiteResource,
 );
 
 authenticated.put(

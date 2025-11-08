@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
@@ -214,12 +214,20 @@ export default function ClientsTable({
         userId: false
     };
 
-    const [userColumnVisibility, setUserColumnVisibility] = useState<VisibilityState>(
-        () => getStoredColumnVisibility("user-clients", defaultUserColumnVisibility)
-    );
-    const [machineColumnVisibility, setMachineColumnVisibility] = useState<VisibilityState>(
-        () => getStoredColumnVisibility("machine-clients", defaultMachineColumnVisibility)
-    );
+    const [userColumnVisibility, setUserColumnVisibility] =
+        useState<VisibilityState>(() =>
+            getStoredColumnVisibility(
+                "user-clients",
+                defaultUserColumnVisibility
+            )
+        );
+    const [machineColumnVisibility, setMachineColumnVisibility] =
+        useState<VisibilityState>(() =>
+            getStoredColumnVisibility(
+                "machine-clients",
+                defaultMachineColumnVisibility
+            )
+        );
 
     const currentView = searchParams.get("view") || defaultView;
 
@@ -276,9 +284,7 @@ export default function ClientsTable({
                         placeholder={t("resourcesSearch")}
                         value={machineGlobalFilter ?? ""}
                         onChange={(e) =>
-                            machineTable.setGlobalFilter(
-                                String(e.target.value)
-                            )
+                            machineTable.setGlobalFilter(String(e.target.value))
                         }
                         className="w-full pl-8"
                     />
@@ -318,8 +324,14 @@ export default function ClientsTable({
         return null;
     };
 
+    // Check if there are any rows without userIds in the current view's data
+    const hasRowsWithoutUserId = useMemo(() => {
+        const currentData = currentView === "machine" ? machineClients : userClients;
+        return currentData?.some((client) => !client.userId) ?? false;
+    }, [currentView, machineClients, userClients]);
 
-    const columns: ColumnDef<ClientRow>[] = [
+    const columns: ColumnDef<ClientRow>[] = useMemo(() => {
+        const baseColumns: ColumnDef<ClientRow>[] = [
         {
             accessorKey: "name",
             header: ({ column }) => {
@@ -513,52 +525,59 @@ export default function ClientsTable({
                 );
             }
         },
-        {
-            id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
-            cell: ({ row }) => {
-                const clientRow = row.original;
-                return (
-                    <div className="flex items-center">
-                        <Link
-                            href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
-                        >
-                            <Button variant={"outline"}>
-                                Edit
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
-                        </Link>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
+        ];
+
+        // Only include actions column if there are rows without userIds
+        if (hasRowsWithoutUserId) {
+            baseColumns.push({
+                id: "actions",
+                header: () => <span className="p-3">{t("actions")}</span>,
+                cell: ({ row }) => {
+                    const clientRow = row.original;
+                    return !clientRow.userId ? (
+                        <div className="flex items-center">
+                            <Link
+                                href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
+                            >
+                                <Button variant={"outline"}>
+                                    Edit
+                                    <ArrowRight className="ml-2 w-4 h-4" />
                                 </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                {/* <Link */}
-                                {/*     className="block w-full" */}
-                                {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
-                                {/* > */}
-                                {/*     <DropdownMenuItem> */}
-                                {/*         View settings */}
-                                {/*     </DropdownMenuItem> */}
-                                {/* </Link> */}
-                                <DropdownMenuItem
-                                    onClick={() => {
-                                        setSelectedClient(clientRow);
-                                        setIsDeleteModalOpen(true);
-                                    }}
-                                >
-                                    <span className="text-red-500">Delete</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                );
-            }
+                            </Link>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    {/* <Link */}
+                                    {/*     className="block w-full" */}
+                                    {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
+                                    {/* > */}
+                                    {/*     <DropdownMenuItem> */}
+                                    {/*         View settings */}
+                                    {/*     </DropdownMenuItem> */}
+                                    {/* </Link> */}
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            setSelectedClient(clientRow);
+                                            setIsDeleteModalOpen(true);
+                                        }}
+                                    >
+                                        <span className="text-red-500">Delete</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    ) : null;
+                }
+            });
         }
-    ];
+
+        return baseColumns;
+    }, [hasRowsWithoutUserId, t]);
 
     const userTable = useReactTable({
         data: userClients || [],
@@ -674,80 +693,122 @@ export default function ClientsTable({
                                 </TabsList>
                             </div>
                             <div className="flex items-center gap-2 sm:justify-end">
-                                {currentView === "user" && userTable.getAllColumns().some((column) => column.getCanHide()) && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">
-                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                <span className="hidden sm:inline">
-                                                    {t("columns") || "Columns"}
-                                                </span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuLabel>
-                                                {t("toggleColumns") || "Toggle columns"}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {userTable
-                                                .getAllColumns()
-                                                .filter((column) => column.getCanHide())
-                                                .map((column) => {
-                                                    return (
-                                                        <DropdownMenuCheckboxItem
-                                                            key={column.id}
-                                                            className="capitalize"
-                                                            checked={column.getIsVisible()}
-                                                            onCheckedChange={(value) =>
-                                                                column.toggleVisibility(!!value)
-                                                            }
-                                                        >
-                                                            {typeof column.columnDef.header === "string"
-                                                                ? column.columnDef.header
-                                                                : column.id}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
-                                {currentView === "machine" && machineTable.getAllColumns().some((column) => column.getCanHide()) && (
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="outline">
-                                                <Columns className="mr-0 sm:mr-2 h-4 w-4" />
-                                                <span className="hidden sm:inline">
-                                                    {t("columns") || "Columns"}
-                                                </span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuLabel>
-                                                {t("toggleColumns") || "Toggle columns"}
-                                            </DropdownMenuLabel>
-                                            <DropdownMenuSeparator />
-                                            {machineTable
-                                                .getAllColumns()
-                                                .filter((column) => column.getCanHide())
-                                                .map((column) => {
-                                                    return (
-                                                        <DropdownMenuCheckboxItem
-                                                            key={column.id}
-                                                            className="capitalize"
-                                                            checked={column.getIsVisible()}
-                                                            onCheckedChange={(value) =>
-                                                                column.toggleVisibility(!!value)
-                                                            }
-                                                        >
-                                                            {typeof column.columnDef.header === "string"
-                                                                ? column.columnDef.header
-                                                                : column.id}
-                                                        </DropdownMenuCheckboxItem>
-                                                    );
-                                                })}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                )}
+                                {currentView === "user" &&
+                                    userTable
+                                        .getAllColumns()
+                                        .some((column) =>
+                                            column.getCanHide()
+                                        ) && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                    <span className="hidden sm:inline">
+                                                        {t("columns") ||
+                                                            "Columns"}
+                                                    </span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-48"
+                                            >
+                                                <DropdownMenuLabel>
+                                                    {t("toggleColumns") ||
+                                                        "Toggle columns"}
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {userTable
+                                                    .getAllColumns()
+                                                    .filter((column) =>
+                                                        column.getCanHide()
+                                                    )
+                                                    .map((column) => {
+                                                        return (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={column.id}
+                                                                className="capitalize"
+                                                                checked={column.getIsVisible()}
+                                                                onCheckedChange={(
+                                                                    value
+                                                                ) =>
+                                                                    column.toggleVisibility(
+                                                                        !!value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {typeof column
+                                                                    .columnDef
+                                                                    .header ===
+                                                                "string"
+                                                                    ? column
+                                                                          .columnDef
+                                                                          .header
+                                                                    : column.id}
+                                                            </DropdownMenuCheckboxItem>
+                                                        );
+                                                    })}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
+                                {currentView === "machine" &&
+                                    machineTable
+                                        .getAllColumns()
+                                        .some((column) =>
+                                            column.getCanHide()
+                                        ) && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline">
+                                                    <Columns className="mr-0 sm:mr-2 h-4 w-4" />
+                                                    <span className="hidden sm:inline">
+                                                        {t("columns") ||
+                                                            "Columns"}
+                                                    </span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                className="w-48"
+                                            >
+                                                <DropdownMenuLabel>
+                                                    {t("toggleColumns") ||
+                                                        "Toggle columns"}
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                {machineTable
+                                                    .getAllColumns()
+                                                    .filter((column) =>
+                                                        column.getCanHide()
+                                                    )
+                                                    .map((column) => {
+                                                        return (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={column.id}
+                                                                className="capitalize"
+                                                                checked={column.getIsVisible()}
+                                                                onCheckedChange={(
+                                                                    value
+                                                                ) =>
+                                                                    column.toggleVisibility(
+                                                                        !!value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {typeof column
+                                                                    .columnDef
+                                                                    .header ===
+                                                                "string"
+                                                                    ? column
+                                                                          .columnDef
+                                                                          .header
+                                                                    : column.id}
+                                                            </DropdownMenuCheckboxItem>
+                                                        );
+                                                    })}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 <div>
                                     <Button
                                         variant="outline"
@@ -774,24 +835,24 @@ export default function ClientsTable({
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers
-                                                        .filter((header) => header.column.getIsVisible())
-                                                        .map(
-                                                            (header) => (
-                                                                <TableHead
-                                                                    key={header.id}
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </TableHead>
-                                                            )
-                                                        )}
+                                                        .filter((header) =>
+                                                            header.column.getIsVisible()
+                                                        )
+                                                        .map((header) => (
+                                                            <TableHead
+                                                                key={header.id}
+                                                            >
+                                                                {header.isPlaceholder
+                                                                    ? null
+                                                                    : flexRender(
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
+                                                            </TableHead>
+                                                        ))}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>
@@ -830,9 +891,7 @@ export default function ClientsTable({
                                         ) : (
                                             <TableRow>
                                                 <TableCell
-                                                    colSpan={
-                                                        columns.length
-                                                    }
+                                                    colSpan={columns.length}
                                                     className="h-24 text-center"
                                                 >
                                                     {t("noResults")}
@@ -858,24 +917,24 @@ export default function ClientsTable({
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers
-                                                        .filter((header) => header.column.getIsVisible())
-                                                        .map(
-                                                            (header) => (
-                                                                <TableHead
-                                                                    key={header.id}
-                                                                >
-                                                                    {header.isPlaceholder
-                                                                        ? null
-                                                                        : flexRender(
-                                                                              header
-                                                                                  .column
-                                                                                  .columnDef
-                                                                                  .header,
-                                                                              header.getContext()
-                                                                          )}
-                                                                </TableHead>
-                                                            )
-                                                        )}
+                                                        .filter((header) =>
+                                                            header.column.getIsVisible()
+                                                        )
+                                                        .map((header) => (
+                                                            <TableHead
+                                                                key={header.id}
+                                                            >
+                                                                {header.isPlaceholder
+                                                                    ? null
+                                                                    : flexRender(
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
+                                                            </TableHead>
+                                                        ))}
                                                 </TableRow>
                                             ))}
                                     </TableHeader>
@@ -914,9 +973,7 @@ export default function ClientsTable({
                                         ) : (
                                             <TableRow>
                                                 <TableCell
-                                                    colSpan={
-                                                        columns.length
-                                                    }
+                                                    colSpan={columns.length}
                                                     className="h-24 text-center"
                                                 >
                                                     {t("noResults")}

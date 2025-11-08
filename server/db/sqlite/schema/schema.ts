@@ -228,10 +228,19 @@ export const siteResources = sqliteTable("siteResources", {
     mode: text("mode").notNull(), // "host" | "cidr" | "port"
     protocol: text("protocol"), // only for port mode
     proxyPort: integer("proxyPort"), // only for port mode
-    destinationPort: integer("destinationPort"),  // only for port mode
+    destinationPort: integer("destinationPort"), // only for port mode
     destination: text("destination").notNull(), // ip, cidr, hostname
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     alias: text("alias")
+});
+
+export const clientSiteResources = sqliteTable("clientSiteResources", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
 });
 
 export const roleSiteResources = sqliteTable("roleSiteResources", {
@@ -350,7 +359,7 @@ export const clients = sqliteTable("clients", {
     type: text("type").notNull(), // "olm"
     online: integer("online", { mode: "boolean" }).notNull().default(false),
     // endpoint: text("endpoint"),
-    lastHolePunch: integer("lastHolePunch")
+    lastHolePunch: integer("lastHolePunch"),
 });
 
 export const clientSites = sqliteTable("clientSites", {

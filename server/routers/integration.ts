@@ -25,7 +25,8 @@ import {
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
     verifyClientsEnabled,
-    verifyApiKeySiteResourceAccess
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -211,6 +212,13 @@ authenticated.get(
     siteResource.listSiteResourceUsers
 );
 
+authenticated.get(
+    "/site-resource/:siteResourceId/clients",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceClients
+);
+
 authenticated.post(
     "/site-resource/:siteResourceId/roles",
     verifyApiKeySiteResourceAccess,
@@ -263,6 +271,33 @@ authenticated.post(
     verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
     siteResource.removeUserFromSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceClients
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addClientToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeClientFromSiteResource
 );
 
 authenticated.put(

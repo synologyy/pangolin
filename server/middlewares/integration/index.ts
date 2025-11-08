@@ -7,6 +7,7 @@ export * from "./verifyApiKeyTargetAccess";
 export * from "./verifyApiKeyRoleAccess";
 export * from "./verifyApiKeyUserAccess";
 export * from "./verifyApiKeySetResourceUsers";
+export * from "./verifyApiKeySetResourceClients";
 export * from "./verifyAccessTokenAccess";
 export * from "./verifyApiKeyIsRoot";
 export * from "./verifyApiKeyApiKeyAccess";

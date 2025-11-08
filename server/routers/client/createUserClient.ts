@@ -182,6 +182,15 @@ export async function createUserClient(
             );
         }
 
+        if (existingOlm.userId !== userId) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `OLM with ID ${olmId} does not belong to user with ID ${userId}`
+                )
+            );
+        }
+
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
             const exitNodesList = await listExitNodes(orgId);

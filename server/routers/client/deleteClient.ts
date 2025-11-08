@@ -60,6 +60,15 @@ export async function deleteClient(
             );
         }
 
+        if (client.userId) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Cannot delete a user client with this endpoint`
+                )
+            );
+        }
+
         await db.transaction(async (trx) => {
             // Delete the client-site associations first
             await trx

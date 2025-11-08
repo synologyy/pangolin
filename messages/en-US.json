@@ -671,7 +671,7 @@
     "resourcePincodeSetupTitle": "Set Pincode",
     "resourcePincodeSetupTitleDescription": "Set a pincode to protect this resource",
     "resourceRoleDescription": "Admins can always access this resource.",
-    "resourceUsersRoles": "Users & Roles",
+    "resourceUsersRoles": "Access Controls",
     "resourceUsersRolesDescription": "Configure which users and roles can visit this resource",
     "resourceUsersRolesSubmit": "Save Users & Roles",
     "resourceWhitelistSave": "Saved successfully",
@@ -2153,5 +2153,8 @@
     "selectedResources": "Selected Resources",
     "enableSelected": "Enable Selected",
     "disableSelected": "Disable Selected",
-    "checkSelectedStatus": "Check Status of Selected"
+    "checkSelectedStatus": "Check Status of Selected",
+    "clients": "Clients",
+    "accessClientSelect": "Select machine clients",
+    "resourceClientDescription": "Machine clients that can access this resource"
 }

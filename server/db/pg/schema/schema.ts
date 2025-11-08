@@ -213,6 +213,15 @@ export const siteResources = pgTable("siteResources", {
     alias: varchar("alias")
 });
 
+export const clientSiteResources = pgTable("clientSiteResources", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
 export const roleSiteResources = pgTable("roleSiteResources", {
     roleId: integer("roleId")
         .notNull()
