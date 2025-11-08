@@ -1,6 +1,7 @@
 import {
     Client,
     clients,
+    clientSiteResources,
     clientSites,
     db,
     exitNodes,
@@ -83,8 +84,6 @@ export async function rebuildSiteClientAssociations(
         .from(clients)
         .where(inArray(clients.userId, newAllUserIds));
 
-    const newAllClientIds = newAllClients.map((client) => client.clientId);
-
     const existingClientSites = await trx
         .select({
             clientId: clientSites.clientId
@@ -92,7 +91,9 @@ export async function rebuildSiteClientAssociations(
         .from(clientSites)
         .where(eq(clientSites.siteId, siteId));
 
-    const existingClientSiteIds = existingClientSites.map((row) => row.clientId);
+    const existingClientSiteIds = existingClientSites.map(
+        (row) => row.clientId
+    );
 
     // Get full client details for existing clients (needed for sending delete messages)
     const existingClients = await trx
@@ -104,11 +105,39 @@ export async function rebuildSiteClientAssociations(
         .from(clients)
         .where(inArray(clients.clientId, existingClientSiteIds));
 
-    const clientSitesToAdd = newAllClientIds.filter(
+    const allClientSiteResources = await trx // this is for if a client is directly associated with a resource instead of implicitly via a user
+        .select()
+        .from(clientSiteResources)
+        .where(
+            eq(clientSiteResources.siteResourceId, siteResource.siteResourceId)
+        );
+
+    const directClientIds = allClientSiteResources.map((row) => row.clientId);
+
+    // Get full client details for directly associated clients
+    const directClients = await trx
+        .select({
+            clientId: clients.clientId,
+            pubKey: clients.pubKey,
+            subnet: clients.subnet
+        })
+        .from(clients)
+        .where(inArray(clients.clientId, directClientIds));
+
+    // Merge user-based clients with directly associated clients
+    const allClientsMap = new Map(
+        [...newAllClients, ...directClients].map((c) => [c.clientId, c])
+    );
+    const mergedAllClients = Array.from(allClientsMap.values());
+    const mergedAllClientIds = mergedAllClients.map((c) => c.clientId);
+
+    // ------------- calculations begin below -------------
+
+    const clientSitesToAdd = mergedAllClientIds.filter(
         (clientId) => !existingClientSiteIds.includes(clientId)
     );
 
-    const clientSitesToInsert = newAllClientIds
+    const clientSitesToInsert = mergedAllClientIds
         .filter((clientId) => !existingClientSiteIds.includes(clientId))
         .map((clientId) => ({
             clientId,
@@ -121,7 +150,7 @@ export async function rebuildSiteClientAssociations(
 
     // Now remove any client-site associations that should no longer exist
     const clientSitesToRemove = existingClientSiteIds.filter(
-        (clientId) => !newAllClientIds.includes(clientId)
+        (clientId) => !mergedAllClientIds.includes(clientId)
     );
 
     if (clientSitesToRemove.length > 0) {
@@ -139,7 +168,7 @@ export async function rebuildSiteClientAssociations(
     await handleMessagesForSiteClients(
         site,
         siteId,
-        newAllClients,
+        mergedAllClients,
         existingClients,
         clientSitesToAdd,
         clientSitesToRemove,
@@ -209,28 +238,31 @@ async function handleMessagesForSiteClients(
     let newtJobs: Promise<any>[] = [];
     let olmJobs: Promise<any>[] = [];
     let exitNodeJobs: Promise<any>[] = [];
-    
+
     // Combine all clients that need processing (those being added or removed)
-    const clientsToProcess = new Map<number, {
-        clientId: number;
-        pubKey: string | null;
-        subnet: string | null;
-    }>();
-    
+    const clientsToProcess = new Map<
+        number,
+        {
+            clientId: number;
+            pubKey: string | null;
+            subnet: string | null;
+        }
+    >();
+
     // Add clients that are being added (from newAllClients)
     for (const client of allClients) {
         if (clientSitesToAdd.includes(client.clientId)) {
             clientsToProcess.set(client.clientId, client);
         }
     }
-    
+
     // Add clients that are being removed (from existingClients)
     for (const client of existingClients) {
         if (clientSitesToRemove.includes(client.clientId)) {
             clientsToProcess.set(client.clientId, client);
         }
     }
-    
+
     for (const client of clientsToProcess.values()) {
         // UPDATE THE NEWT
         if (!client.subnet || !client.pubKey) {
