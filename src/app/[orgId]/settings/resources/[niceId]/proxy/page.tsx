@@ -1420,21 +1420,25 @@ export default function ReverseProxyTargets(props: {
                                             .map((headerGroup) => (
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers.map(
-                                                        (header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
-                                                            </TableHead>
-                                                        )
+                                                        (header) => {
+                                                            const isActionsColumn = header.column.id === "actions";
+                                                            return (
+                                                                <TableHead
+                                                                    key={header.id}
+                                                                    className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                >
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                            header
+                                                                                .column
+                                                                                .columnDef
+                                                                                .header,
+                                                                            header.getContext()
+                                                                        )}
+                                                                </TableHead>
+                                                            );
+                                                        }
                                                     )}
                                                 </TableRow>
                                             ))}
@@ -1447,21 +1451,25 @@ export default function ReverseProxyTargets(props: {
                                                     <TableRow key={row.id}>
                                                         {row
                                                             .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <TableCell
-                                                                    key={
-                                                                        cell.id
-                                                                    }
-                                                                >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </TableCell>
-                                                            ))}
+                                                            .map((cell) => {
+                                                                const isActionsColumn = cell.column.id === "actions";
+                                                                return (
+                                                                    <TableCell
+                                                                        key={
+                                                                            cell.id
+                                                                        }
+                                                                        className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                    >
+                                                                        {flexRender(
+                                                                            cell
+                                                                                .column
+                                                                                .columnDef
+                                                                                .cell,
+                                                                            cell.getContext()
+                                                                        )}
+                                                                    </TableCell>
+                                                                );
+                                                            })}
                                                     </TableRow>
                                                 ))
                                         ) : (

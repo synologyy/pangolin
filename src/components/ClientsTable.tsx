@@ -552,7 +552,7 @@ export default function ClientsTable({
                         <div className="flex flex-col items-end gap-1 p-3">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                                         <Columns className="h-4 w-4" />
                                         <span className="sr-only">
                                             {t("columns") || "Columns"}

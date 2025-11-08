@@ -832,7 +832,7 @@ export default function ResourceRules(props: {
                                     />
                                     <Button
                                         type="submit"
-                                        variant="secondary"
+                                        variant="outline"
                                         disabled={!rulesEnabled}
                                     >
                                         {t('ruleSubmit')}
@@ -844,17 +844,23 @@ export default function ResourceRules(props: {
                             <TableHeader>
                                 {table.getHeaderGroups().map((headerGroup) => (
                                     <TableRow key={headerGroup.id}>
-                                        {headerGroup.headers.map((header) => (
-                                            <TableHead key={header.id}>
-                                                {header.isPlaceholder
-                                                    ? null
-                                                    : flexRender(
-                                                          header.column.columnDef
-                                                              .header,
-                                                          header.getContext()
-                                                      )}
-                                            </TableHead>
-                                        ))}
+                                        {headerGroup.headers.map((header) => {
+                                            const isActionsColumn = header.column.id === "actions";
+                                            return (
+                                                <TableHead
+                                                    key={header.id}
+                                                    className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                >
+                                                    {header.isPlaceholder
+                                                        ? null
+                                                        : flexRender(
+                                                              header.column.columnDef
+                                                                  .header,
+                                                              header.getContext()
+                                                          )}
+                                                </TableHead>
+                                            );
+                                        })}
                                     </TableRow>
                                 ))}
                             </TableHeader>
@@ -862,14 +868,20 @@ export default function ResourceRules(props: {
                                 {table.getRowModel().rows?.length ? (
                                     table.getRowModel().rows.map((row) => (
                                         <TableRow key={row.id}>
-                                            {row.getVisibleCells().map((cell) => (
-                                                <TableCell key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef.cell,
-                                                        cell.getContext()
-                                                    )}
-                                                </TableCell>
-                                            ))}
+                                            {row.getVisibleCells().map((cell) => {
+                                                const isActionsColumn = cell.column.id === "actions";
+                                                return (
+                                                    <TableCell
+                                                        key={cell.id}
+                                                        className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                    >
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                );
+                                            })}
                                         </TableRow>
                                     ))
                                 ) : (

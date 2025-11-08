@@ -417,7 +417,7 @@ export function DataTable<TData, TValue>({
                                                             <div className="flex flex-col items-end pr-3">
                                                                 <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild>
-                                                                        <Button variant="outline" size="sm" className="h-7 w-7 p-0 mb-1">
+                                                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 mb-1">
                                                                             <Columns className="h-4 w-4" />
                                                                             <span className="sr-only">
                                                                                 {t("columns") || "Columns"}
