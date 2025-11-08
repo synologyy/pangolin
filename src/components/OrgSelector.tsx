@@ -49,7 +49,7 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
                 <Button
-                    variant="outline"
+                    variant="secondary"
                     size={isCollapsed ? "icon" : "lg"}
                     role="combobox"
                     aria-expanded={open}
