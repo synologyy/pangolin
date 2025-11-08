@@ -12,6 +12,11 @@ import {
     getFilteredRowModel,
     VisibilityState
 } from "@tanstack/react-table";
+
+// Extended ColumnDef type that includes optional friendlyName for column visibility dropdown
+export type ExtendedColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
+    friendlyName?: string;
+};
 import {
     Table,
     TableBody,
@@ -132,7 +137,7 @@ type TabFilter = {
 };
 
 type DataTableProps<TData, TValue> = {
-    columns: ColumnDef<TData, TValue>[];
+    columns: ExtendedColumnDef<TData, TValue>[];
     data: TData[];
     title?: string;
     addButtonText?: string;
@@ -421,6 +426,12 @@ export function DataTable<TData, TValue>({
                                                                             .getAllColumns()
                                                                             .filter((column) => column.getCanHide())
                                                                             .map((column) => {
+                                                                                const columnDef = column.columnDef as any;
+                                                                                const friendlyName = columnDef.friendlyName;
+                                                                                const displayName = friendlyName || 
+                                                                                    (typeof columnDef.header === "string" 
+                                                                                        ? columnDef.header 
+                                                                                        : column.id);
                                                                                 return (
                                                                                     <DropdownMenuCheckboxItem
                                                                                         key={column.id}
@@ -430,9 +441,7 @@ export function DataTable<TData, TValue>({
                                                                                             column.toggleVisibility(!!value)
                                                                                         }
                                                                                     >
-                                                                                        {typeof column.columnDef.header === "string"
-                                                                                            ? column.columnDef.header
-                                                                                            : column.id}
+                                                                                        {displayName}
                                                                                     </DropdownMenuCheckboxItem>
                                                                                 );
                                                                             })}

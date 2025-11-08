@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { useTranslations } from "next-intl";
 import { Badge } from "@app/components/ui/badge";
 import { DNSRecordsDataTable } from "./DNSRecordsDataTable";
@@ -25,9 +26,10 @@ export default function DNSRecordsTable({
 }: Props) {
     const t = useTranslations();
 
-    const columns: ColumnDef<DNSRecordRow>[] = [
+    const columns: ExtendedColumnDef<DNSRecordRow>[] = [
         {
             accessorKey: "baseDomain",
+            friendlyName: t("recordName", { fallback: "Record name" }),
             header: ({ column }) => {
                 return (
                     <div>{t("recordName", { fallback: "Record name" })}</div>
@@ -48,6 +50,7 @@ export default function DNSRecordsTable({
         },
         {
             accessorKey: "recordType",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return <div>{t("type")}</div>;
             },
@@ -58,6 +61,7 @@ export default function DNSRecordsTable({
         },
         {
             accessorKey: "ttl",
+            friendlyName: t("TTL"),
             header: ({ column }) => {
                 return <div>{t("TTL")}</div>;
             },
@@ -67,6 +71,7 @@ export default function DNSRecordsTable({
         },
         {
             accessorKey: "value",
+            friendlyName: t("value"),
             header: () => {
                 return <div>{t("value")}</div>;
             },
@@ -83,6 +88,7 @@ export default function DNSRecordsTable({
         },
         {
             accessorKey: "verified",
+            friendlyName: t("status"),
             header: ({ column }) => {
                 return <div>{t("status")}</div>;
             },

@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { DomainsDataTable } from "@app/components/DomainsDataTable";
 import { Button } from "@app/components/ui/button";
 import {
@@ -134,10 +135,11 @@ export default function DomainsTable({ domains, orgId }: Props) {
         }
     };
 
-    const columns: ColumnDef<DomainRow>[] = [
+    const columns: ExtendedColumnDef<DomainRow>[] = [
         {
             accessorKey: "baseDomain",
             enableHiding: false,
+            friendlyName: t("domain"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -154,6 +156,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
         },
         {
             accessorKey: "type",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -176,6 +179,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
         },
         {
             accessorKey: "verified",
+            friendlyName: t("status"),
             header: ({ column }) => {
                 return (
                     <Button

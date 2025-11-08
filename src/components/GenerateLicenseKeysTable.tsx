@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { Button } from "./ui/button";
 import { ArrowUpDown } from "lucide-react";
 import CopyToClipboard from "./CopyToClipboard";
@@ -63,9 +64,10 @@ export default function GenerateLicenseKeysTable({
         }
     };
 
-    const columns: ColumnDef<GeneratedLicenseKey>[] = [
+    const columns: ExtendedColumnDef<GeneratedLicenseKey>[] = [
         {
             accessorKey: "licenseKey",
+            friendlyName: t("licenseKey"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -91,6 +93,7 @@ export default function GenerateLicenseKeysTable({
         },
         {
             accessorKey: "instanceName",
+            friendlyName: t("instanceName"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -110,6 +113,7 @@ export default function GenerateLicenseKeysTable({
         },
         {
             accessorKey: "valid",
+            friendlyName: t("valid"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -133,6 +137,7 @@ export default function GenerateLicenseKeysTable({
         },
         {
             accessorKey: "type",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -155,6 +160,7 @@ export default function GenerateLicenseKeysTable({
         },
         {
             accessorKey: "terminateAt",
+            friendlyName: t("licenseTableValidUntil"),
             header: ({ column }) => {
                 return (
                     <Button

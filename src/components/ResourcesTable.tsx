@@ -12,6 +12,7 @@ import {
     getFilteredRowModel,
     VisibilityState
 } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -583,10 +584,11 @@ export default function ResourcesTable({
         );
     }
 
-    const proxyColumns: ColumnDef<ResourceRow>[] = [
+    const proxyColumns: ExtendedColumnDef<ResourceRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -603,6 +605,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "nice",
+            friendlyName: t("resource"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -619,6 +622,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "protocol",
+            friendlyName: t("protocol"),
             header: () => <span className="p-3">{t("protocol")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
@@ -636,6 +640,7 @@ export default function ResourcesTable({
         {
             id: "status",
             accessorKey: "status",
+            friendlyName: t("status"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -667,6 +672,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "domain",
+            friendlyName: t("access"),
             header: () => <span className="p-3">{t("access")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
@@ -694,6 +700,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "authState",
+            friendlyName: t("authentication"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -730,6 +737,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "enabled",
+            friendlyName: t("enabled"),
             header: () => <span className="p-3">{t("enabled")}</span>,
             cell: ({ row }) => (
                 <Switch
@@ -846,10 +854,11 @@ export default function ResourcesTable({
         }
     ];
 
-    const internalColumns: ColumnDef<InternalResourceRow>[] = [
+    const internalColumns: ExtendedColumnDef<InternalResourceRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -866,6 +875,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "siteName",
+            friendlyName: t("siteName"),
             header: () => <span className="p-3">{t("siteName")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
@@ -883,6 +893,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "mode",
+            friendlyName: t("editInternalResourceDialogMode"),
             header: () => (
                 <span className="p-3">
                     {t("editInternalResourceDialogMode")}
@@ -900,6 +911,7 @@ export default function ResourcesTable({
         },
         {
             accessorKey: "destination",
+            friendlyName: t("resourcesTableDestination"),
             header: () => (
                 <span className="p-3">{t("resourcesTableDestination")}</span>
             ),

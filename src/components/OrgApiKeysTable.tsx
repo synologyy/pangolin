@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { OrgApiKeysDataTable } from "@app/components/OrgApiKeysDataTable";
 import {
     DropdownMenu,
@@ -88,10 +89,11 @@ export default function OrgApiKeysTable({
             });
     };
 
-    const columns: ColumnDef<OrgApiKeyRow>[] = [
+    const columns: ExtendedColumnDef<OrgApiKeyRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -108,6 +110,7 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "key",
+            friendlyName: t("key"),
             header: () => (<span className="p-3">{t("key")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
@@ -116,6 +119,7 @@ export default function OrgApiKeysTable({
         },
         {
             accessorKey: "createdAt",
+            friendlyName: t("createdAt"),
             header: () => (<span className="p-3">{t("createdAt")}</span>),
             cell: ({ row }) => {
                 const r = row.original;

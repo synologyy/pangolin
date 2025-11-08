@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -66,14 +67,16 @@ export default function InvitationsTable({
         }
     };
 
-    const columns: ColumnDef<InvitationRow>[] = [
+    const columns: ExtendedColumnDef<InvitationRow>[] = [
         {
             accessorKey: "email",
             enableHiding: false,
+            friendlyName: t("email"),
             header: () => (<span className="p-3">{t("email")}</span>)
         },
         {
             accessorKey: "expiresAt",
+            friendlyName: t("expiresAt"),
             header: () => (<span className="p-3">{t("expiresAt")}</span>),
             cell: ({ row }) => {
                 const expiresAt = new Date(row.original.expiresAt);
@@ -88,6 +91,7 @@ export default function InvitationsTable({
         },
         {
             accessorKey: "role",
+            friendlyName: t("role"),
             header: () => (<span className="p-3">{t("role")}</span>)
         },
         {

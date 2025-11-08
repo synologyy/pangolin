@@ -12,6 +12,7 @@ import {
     getFilteredRowModel,
     VisibilityState
 } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -330,11 +331,12 @@ export default function ClientsTable({
         return currentData?.some((client) => !client.userId) ?? false;
     }, [currentView, machineClients, userClients]);
 
-    const columns: ColumnDef<ClientRow>[] = useMemo(() => {
-        const baseColumns: ColumnDef<ClientRow>[] = [
+    const columns: ExtendedColumnDef<ClientRow>[] = useMemo(() => {
+        const baseColumns: ExtendedColumnDef<ClientRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: "Name",
             header: ({ column }) => {
                 return (
                     <Button
@@ -351,6 +353,7 @@ export default function ClientsTable({
         },
         {
             accessorKey: "userId",
+            friendlyName: "User",
             header: ({ column }) => {
                 return (
                     <Button
@@ -409,6 +412,7 @@ export default function ClientsTable({
         // },
         {
             accessorKey: "online",
+            friendlyName: "Connectivity",
             header: ({ column }) => {
                 return (
                     <Button
@@ -443,6 +447,7 @@ export default function ClientsTable({
         },
         {
             accessorKey: "mbIn",
+            friendlyName: "Data In",
             header: ({ column }) => {
                 return (
                     <Button
@@ -459,6 +464,7 @@ export default function ClientsTable({
         },
         {
             accessorKey: "mbOut",
+            friendlyName: "Data Out",
             header: ({ column }) => {
                 return (
                     <Button
@@ -475,6 +481,7 @@ export default function ClientsTable({
         },
         {
             accessorKey: "client",
+            friendlyName: t("client"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -512,6 +519,7 @@ export default function ClientsTable({
         },
         {
             accessorKey: "subnet",
+            friendlyName: "Address",
             header: ({ column }) => {
                 return (
                     <Button

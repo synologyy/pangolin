@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -61,10 +62,11 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         }
     };
 
-    const columns: ColumnDef<RoleRow>[] = [
+    const columns: ExtendedColumnDef<RoleRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -81,6 +83,7 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         },
         {
             accessorKey: "description",
+            friendlyName: t("description"),
             header: () => (<span className="p-3">{t("description")}</span>)
         },
         {

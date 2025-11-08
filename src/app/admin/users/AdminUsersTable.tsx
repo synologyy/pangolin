@@ -66,9 +66,10 @@ export default function UsersTable({ users }: Props) {
             });
     };
 
-    const columns: ColumnDef<GlobalUserRow>[] = [
+    const columns: ExtendedColumnDef<GlobalUserRow>[] = [
         {
             accessorKey: "id",
+            friendlyName: "ID",
             header: ({ column }) => {
                 return (
                     <Button
@@ -84,6 +85,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "username",
+            friendlyName: t("username"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -100,6 +102,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "email",
+            friendlyName: t("email"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -116,6 +119,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "name",
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -132,6 +136,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "idpName",
+            friendlyName: t("identityProvider"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -148,6 +153,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "twoFactorEnabled",
+            friendlyName: t("twoFactor"),
             header: ({ column }) => {
                 return (
                     <Button

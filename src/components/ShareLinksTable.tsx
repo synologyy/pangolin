@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { ShareLinksDataTable } from "@app/components/ShareLinksDataTable";
 import {
     DropdownMenu,
@@ -102,10 +103,11 @@ export default function ShareLinksTable({
         });
     }
 
-    const columns: ColumnDef<ShareLinkRow>[] = [
+    const columns: ExtendedColumnDef<ShareLinkRow>[] = [
         {
             accessorKey: "resourceName",
             enableHiding: false,
+            friendlyName: t("resource"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -133,6 +135,7 @@ export default function ShareLinksTable({
         },
         {
             accessorKey: "title",
+            friendlyName: t("title"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -212,6 +215,7 @@ export default function ShareLinksTable({
         // },
         {
             accessorKey: "createdAt",
+            friendlyName: t("created"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -232,6 +236,7 @@ export default function ShareLinksTable({
         },
         {
             accessorKey: "expiresAt",
+            friendlyName: t("expires"),
             header: ({ column }) => {
                 return (
                     <Button

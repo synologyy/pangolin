@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -85,10 +86,11 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
             });
     };
 
-    const columns: ColumnDef<ApiKeyRow>[] = [
+    const columns: ExtendedColumnDef<ApiKeyRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -105,6 +107,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             accessorKey: "key",
+            friendlyName: t("key"),
             header: () => (<span className="p-3">{t("key")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
@@ -113,6 +116,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             accessorKey: "createdAt",
+            friendlyName: t("createdAt"),
             header: () => (<span className="p-3">{t("createdAt")}</span>),
             cell: ({ row }) => {
                 const r = row.original;

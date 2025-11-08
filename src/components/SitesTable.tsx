@@ -1,6 +1,7 @@
 "use client";
 
 import { Column, ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { SitesDataTable } from "@app/components/SitesDataTable";
 import {
     DropdownMenu,
@@ -106,7 +107,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             });
     };
 
-    const columns: ColumnDef<SiteRow>[] = [
+    const columns: ExtendedColumnDef<SiteRow>[] = [
         {
             accessorKey: "name",
             enableHiding: false,
@@ -126,6 +127,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "online",
+            friendlyName: t("online"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -167,6 +169,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "nice",
+            friendlyName: t("site"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -191,6 +194,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "mbIn",
+            friendlyName: t("dataIn"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -210,6 +214,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "mbOut",
+            friendlyName: t("dataOut"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -229,6 +234,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "type",
+            friendlyName: t("connectionType"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -286,6 +292,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "exitNode",
+            friendlyName: t("exitNode"),
             header: ({ column }) => {
                 return (
                     <Button

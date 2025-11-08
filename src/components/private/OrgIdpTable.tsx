@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { IdpDataTable } from "@app/components/private/OrgIdpDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
@@ -59,9 +60,10 @@ export default function IdpTable({ idps, orgId }: Props) {
     };
 
 
-    const columns: ColumnDef<IdpRow>[] = [
+    const columns: ExtendedColumnDef<IdpRow>[] = [
         {
             accessorKey: "idpId",
+            friendlyName: "ID",
             header: ({ column }) => {
                 return (
                     <Button
@@ -78,6 +80,7 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             accessorKey: "name",
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -94,6 +97,7 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             accessorKey: "type",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button

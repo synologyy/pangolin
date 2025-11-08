@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { Button } from "@app/components/ui/button";
 import {
     ArrowUpDown,
@@ -36,10 +37,11 @@ interface Props {
 
 export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props) {
     const t = useTranslations();
-    const columns: ColumnDef<PolicyRow>[] = [
+    const columns: ExtendedColumnDef<PolicyRow>[] = [
         {
             accessorKey: "orgId",
             enableHiding: false,
+            friendlyName: t('orgId'),
             header: ({ column }) => {
                 return (
                     <Button
@@ -56,6 +58,7 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
         },
         {
             accessorKey: "roleMapping",
+            friendlyName: t('roleMapping'),
             header: ({ column }) => {
                 return (
                     <Button
@@ -83,6 +86,7 @@ export default function PolicyTable({ policies, onDelete, onAdd, onEdit }: Props
         },
         {
             accessorKey: "orgMapping",
+            friendlyName: t('orgMapping'),
             header: ({ column }) => {
                 return (
                     <Button

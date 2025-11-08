@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { DataTable } from "@app/components/ui/data-table";
 import { Button } from "@app/components/ui/button";
 import { Badge } from "@app/components/ui/badge";
@@ -30,10 +31,11 @@ export function LicenseKeysDataTable({
 }: LicenseKeysDataTableProps) {
     const t = useTranslations();
 
-    const columns: ColumnDef<LicenseKeyCache>[] = [
+    const columns: ExtendedColumnDef<LicenseKeyCache>[] = [
         {
             accessorKey: "licenseKey",
             enableHiding: false,
+            friendlyName: t("licenseKey"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -59,6 +61,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "valid",
+            friendlyName: t("valid"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -82,6 +85,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "tier",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -104,6 +108,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "terminateAt",
+            friendlyName: t("licenseTableValidUntil"),
             header: ({ column }) => {
                 return (
                     <Button

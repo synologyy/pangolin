@@ -7,6 +7,7 @@ import {
     getFilteredRowModel,
     VisibilityState
 } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import {
     Credenza,
@@ -181,9 +182,10 @@ const DockerContainersTable: FC<{
         [getExposedPorts]
     );
 
-    const columns: ColumnDef<Container>[] = [
+    const columns: ExtendedColumnDef<Container>[] = [
         {
             accessorKey: "name",
+            friendlyName: t("containerName"),
             header: () => (<span className="p-3">{t("containerName")}</span>),
             cell: ({ row }) => (
                 <div className="font-medium">{row.original.name}</div>
@@ -191,6 +193,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "image",
+            friendlyName: t("containerImage"),
             header: () => (<span className="p-3">{t("containerImage")}</span>),
             cell: ({ row }) => (
                 <div className="text-sm text-muted-foreground">
@@ -200,6 +203,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "state",
+            friendlyName: t("containerState"),
             header: () => (<span className="p-3">{t("containerState")}</span>),
             cell: ({ row }) => (
                 <Badge
@@ -215,6 +219,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "networks",
+            friendlyName: t("containerNetworks"),
             header: () => (<span className="p-3">{t("containerNetworks")}</span>),
             cell: ({ row }) => {
                 const networks = Object.keys(row.original.networks);
@@ -233,6 +238,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "hostname",
+            friendlyName: t("containerHostnameIp"),
             header: () => (<span className="p-3">{t("containerHostnameIp")}</span>),
             enableHiding: false,
             cell: ({ row }) => (
@@ -243,6 +249,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "labels",
+            friendlyName: t("containerLabels"),
             header: () => (<span className="p-3">{t("containerLabels")}</span>),
             cell: ({ row }) => {
                 const labels = row.original.labels || {};
