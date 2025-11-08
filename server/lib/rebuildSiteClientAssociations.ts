@@ -10,6 +10,7 @@ import {
     roleSiteResources,
     Site,
     SiteResource,
+    siteResources,
     sites,
     Transaction,
     userOrgs,
@@ -324,6 +325,20 @@ async function handleMessagesForSiteClients(
                 )
             );
 
+            // TODO: should we have this here?
+            const allSiteResources = await trx
+                .select()
+                .from(siteResources)
+                .where(eq(siteResources.siteId, site.siteId));
+
+            let remoteSubnets = allSiteResources
+                .filter((sr) => sr.mode == "cidr")
+                .map((sr) => sr.destination);
+            // remove duplicates
+            remoteSubnets = Array.from(new Set(remoteSubnets));
+            const remoteSubnetsStr =
+                remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
+
             olmJobs.push(
                 olmAddPeer(
                     client.clientId,
@@ -336,7 +351,7 @@ async function handleMessagesForSiteClients(
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets: site.remoteSubnets
+                        remoteSubnets: remoteSubnetsStr
                     },
                     olm.olmId
                 )

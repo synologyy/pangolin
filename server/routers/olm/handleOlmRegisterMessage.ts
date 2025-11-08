@@ -5,6 +5,7 @@ import {
     orgs,
     roleClients,
     roles,
+    siteResources,
     Transaction,
     userClients,
     userOrgs,
@@ -231,6 +232,16 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             )
             .limit(1);
 
+        const allSiteResources = await db
+            .select()
+            .from(siteResources)
+            .where(eq(siteResources.siteId, site.siteId));
+
+        let remoteSubnets = allSiteResources.filter((sr => sr.mode == "cidr")).map(sr => sr.destination);
+        // remove duplicates
+        remoteSubnets = Array.from(new Set(remoteSubnets));
+        const remoteSubnetsStr = remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
+
         // Add the peer to the exit node for this site
         if (clientSite.endpoint) {
             logger.info(
@@ -268,7 +279,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: site.remoteSubnets
+            remoteSubnets: remoteSubnetsStr
         });
     }
 

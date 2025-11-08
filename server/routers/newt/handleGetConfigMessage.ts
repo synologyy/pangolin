@@ -66,7 +66,9 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
 
     // we need to wait for hole punch success
     if (!existingSite.endpoint) {
-        logger.debug(`In newt get config: existing site ${existingSite.siteId} has no endpoint, skipping`);
+        logger.debug(
+            `In newt get config: existing site ${existingSite.siteId} has no endpoint, skipping`
+        );
         return;
     }
 
@@ -181,13 +183,28 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                         return null;
                     }
 
+                    const allSiteResources = await db
+                        .select()
+                        .from(siteResources)
+                        .where(eq(siteResources.siteId, site.siteId));
+
+                    let remoteSubnets = allSiteResources
+                        .filter((sr) => sr.mode == "cidr")
+                        .map((sr) => sr.destination);
+                    // remove duplicates
+                    remoteSubnets = Array.from(new Set(remoteSubnets));
+                    const remoteSubnetsStr =
+                        remoteSubnets.length > 0
+                            ? remoteSubnets.join(",")
+                            : null;
+
                     await updatePeer(client.clients.clientId, {
                         siteId: site.siteId,
                         endpoint: endpoint,
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets: site.remoteSubnets
+                        remoteSubnets: remoteSubnetsStr
                     });
                 } catch (error) {
                     logger.error(
@@ -222,7 +239,12 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             }
 
             // Filter out invalid targets
-            if (!resource.proxyPort || !resource.destination || !resource.destinationPort || !resource.protocol) {
+            if (
+                !resource.proxyPort ||
+                !resource.destination ||
+                !resource.destinationPort ||
+                !resource.protocol
+            ) {
                 return acc;
             }
 

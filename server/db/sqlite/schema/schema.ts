@@ -93,8 +93,7 @@ export const sites = sqliteTable("sites", {
     listenPort: integer("listenPort"),
     dockerSocketEnabled: integer("dockerSocketEnabled", { mode: "boolean" })
         .notNull()
-        .default(true),
-    remoteSubnets: text("remoteSubnets") // comma-separated list of subnets that this site can access
+        .default(true)
 });
 
 export const resources = sqliteTable("resources", {
@@ -359,7 +358,7 @@ export const clients = sqliteTable("clients", {
     type: text("type").notNull(), // "olm"
     online: integer("online", { mode: "boolean" }).notNull().default(false),
     // endpoint: text("endpoint"),
-    lastHolePunch: integer("lastHolePunch"),
+    lastHolePunch: integer("lastHolePunch")
 });
 
 export const clientSites = sqliteTable("clientSites", {
