@@ -179,7 +179,7 @@
     "baseDomain": "Base Domain",
     "subdomnainDescription": "The subdomain where your resource will be accessible.",
     "resourceRawSettings": "TCP/UDP Settings",
-    "resourceRawSettingsDescription": "Configure how your resource will be accessed over TCP/UDP. You map the resource to a port on the host Pangolin server, so you can access the resource from <server-public-ip>:<mapped-port>. (https://docs.pangolin.net/manage/resources/tcp-udp-resources)",
+    "resourceRawSettingsDescription": "Configure how your resource will be accessed over TCP/UDP. You map the resource to a port on the host Pangolin server, so you can access the resource from server-public-ip:mapped-port.",
     "protocol": "Protocol",
     "protocolSelect": "Select a protocol",
     "resourcePortNumber": "Port Number",
