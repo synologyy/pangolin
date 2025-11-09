@@ -92,7 +92,7 @@ export async function updateOrg(
         const { orgId } = parsedParams.data;
 
         const isLicensed = await isLicensedOrSubscribed(orgId);
-        if (!isLicensed) {
+        if (build == "enterprise" && !isLicensed) {
             parsedBody.data.requireTwoFactor = undefined;
             parsedBody.data.maxSessionLengthHours = undefined;
             parsedBody.data.passwordExpiryDays = undefined;
@@ -100,6 +100,7 @@ export async function updateOrg(
 
         const { tier } = await getOrgTierData(orgId);
         if (
+            build == "saas" &&
             tier != TierId.STANDARD &&
             parsedBody.data.settingsLogRetentionDaysRequest &&
             parsedBody.data.settingsLogRetentionDaysRequest > 30

@@ -30,6 +30,7 @@ import { pickPort } from "@server/routers/target/helpers";
 import { resourcePassword } from "@server/db";
 import { hashPassword } from "@server/auth/password";
 import { isValidCIDR, isValidIP, isValidUrlGlobPattern } from "../validators";
+import { get } from "http";
 
 export type ProxyResourcesResults = {
     proxyResource: Resource;
@@ -544,7 +545,7 @@ export async function updateProxyResources(
                     if (
                         existingRule.action !== getRuleAction(rule.action) ||
                         existingRule.match !== rule.match.toUpperCase() ||
-                        existingRule.value !== rule.value.toUpperCase()
+                        existingRule.value !== getRuleValue(rule.match.toUpperCase(), rule.value)
                     ) {
                         validateRule(rule);
                         await trx
@@ -552,7 +553,7 @@ export async function updateProxyResources(
                             .set({
                                 action: getRuleAction(rule.action),
                                 match: rule.match.toUpperCase(),
-                                value: rule.value.toUpperCase()
+                                value: getRuleValue(rule.match.toUpperCase(), rule.value),
                             })
                             .where(
                                 eq(resourceRules.ruleId, existingRule.ruleId)
@@ -564,7 +565,7 @@ export async function updateProxyResources(
                         resourceId: existingResource.resourceId,
                         action: getRuleAction(rule.action),
                         match: rule.match.toUpperCase(),
-                        value: rule.value.toUpperCase(),
+                        value: getRuleValue(rule.match.toUpperCase(), rule.value),
                         priority: index + 1 // start priorities at 1
                     });
                 }
@@ -722,7 +723,7 @@ export async function updateProxyResources(
                     resourceId: newResource.resourceId,
                     action: getRuleAction(rule.action),
                     match: rule.match.toUpperCase(),
-                    value: rule.value.toUpperCase(),
+                    value: getRuleValue(rule.match.toUpperCase(), rule.value),
                     priority: index + 1 // start priorities at 1
                 });
             }
@@ -750,6 +751,14 @@ function getRuleAction(input: string) {
         action = "PASS";
     }
     return action;
+}
+
+function getRuleValue(match: string, value: string) {
+    // if the match is a country, uppercase the value
+    if (match == "COUNTRY") {
+        return value.toUpperCase();
+    }
+    return value;
 }
 
 function validateRule(rule: any) {
