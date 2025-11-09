@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
-import { db } from "@server/db";
+import { db, olms } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
-import { olms } from "@server/db";
 import createHttpError from "http-errors";
 import response from "@server/lib/response";
 import moment from "moment";
@@ -10,6 +9,7 @@ import { generateId } from "@server/auth/sessions/app";
 import { fromError } from "zod-validation-error";
 import { hashPassword } from "@server/auth/password";
 import { OpenAPITags, registry } from "@server/openApi";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const bodySchema = z
     .object({
@@ -81,12 +81,16 @@ export async function createUserOlm(
 
         const secretHash = await hashPassword(secret);
 
-        await db.insert(olms).values({
-            olmId: olmId,
-            userId,
-            name,
-            secretHash,
-            dateCreated: moment().toISOString()
+        await db.transaction(async (trx) => {
+            await trx.insert(olms).values({
+                olmId: olmId,
+                userId,
+                name,
+                secretHash,
+                dateCreated: moment().toISOString()
+            });
+
+            await calculateUserClientsForOrgs(userId, trx);
         });
 
         return response<CreateOlmResponse>(res, {

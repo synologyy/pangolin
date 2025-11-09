@@ -12,6 +12,7 @@ import { checkValidInvite } from "@server/auth/checkValidInvite";
 import { verifySession } from "@server/auth/sessions/verifySession";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const acceptInviteBodySchema = z
     .object({
@@ -131,6 +132,8 @@ export async function acceptInvite(
                 .select()
                 .from(userOrgs)
                 .where(eq(userOrgs.orgId, existingInvite.orgId));
+
+            await calculateUserClientsForOrgs(existingUser[0].userId, trx);
         });
 
         if (totalUsers) {
