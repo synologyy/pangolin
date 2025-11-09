@@ -2153,14 +2153,9 @@
     "selectedResources": "Selected Resources",
     "enableSelected": "Enable Selected",
     "disableSelected": "Disable Selected",
-<<<<<<< HEAD
     "checkSelectedStatus": "Check Status of Selected",
     "clients": "Clients",
     "accessClientSelect": "Select machine clients",
     "resourceClientDescription": "Machine clients that can access this resource",
     "regenerate": "Regenerate"
 }
-=======
-    "checkSelectedStatus": "Check Status of Selected"
-}
->>>>>>> dev
