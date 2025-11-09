@@ -116,10 +116,13 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
                     }
                     case "UI": {
                         return (
-                            <Badge variant="secondary">
+                            <Badge
+                                variant="secondary"
+                                className="inline-flex items-center gap-1"
+                            >
                                 <span className="inline-flex items-center gap-1 ">
-                                    Dashboard{" "}
-                                    <Globe className="size-4 flex-none" />
+                                    <Globe className="w-3 h-3" />
+                                    Dashboard
                                 </span>
                             </Badge>
                         );
@@ -163,18 +166,14 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
             cell: ({ row }) => {
                 return (
                     <div className="flex justify-end">
-                        <Button
-                            variant="outline"
-                            className="items-center"
-                            asChild
+                        <Link
+                            href={`/${orgId}/settings/blueprints/${row.original.blueprintId}`}
                         >
-                            <Link
-                                href={`/${orgId}/settings/blueprints/${row.original.blueprintId}`}
-                            >
-                                View details{" "}
-                                <ArrowRight className="size-4 flex-none" />
-                            </Link>
-                        </Button>
+                            <Button variant="outline" className="items-center">
+                                View Details
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }

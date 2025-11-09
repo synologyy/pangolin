@@ -80,7 +80,8 @@ export async function getTraefikConfig(
             subnet: sites.subnet,
             exitNodeId: sites.exitNodeId,
             // Domain cert resolver fields
-            domainCertResolver: domains.certResolver
+            domainCertResolver: domains.certResolver,
+            preferWildcardCert: domains.preferWildcardCert
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
@@ -178,7 +179,8 @@ export async function getTraefikConfig(
                 rewritePathType: row.rewritePathType,
                 priority: priority,
                 // Store domain cert resolver fields
-                domainCertResolver: row.domainCertResolver
+                domainCertResolver: row.domainCertResolver,
+                preferWildcardCert: row.preferWildcardCert
             });
         }
 
