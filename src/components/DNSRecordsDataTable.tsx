@@ -124,7 +124,6 @@ export function DNSRecordsDataTable<TData, TValue>({
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow
                                     key={headerGroup.id}
-                                    className="bg-secondary dark:bg-transparent"
                                 >
                                     {headerGroup.headers.map((header) => (
                                         <TableHead key={header.id}>
