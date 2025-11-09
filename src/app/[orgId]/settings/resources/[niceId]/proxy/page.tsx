@@ -501,25 +501,6 @@ export default function ReverseProxyTargets(props: {
             return;
         }
 
-        // Check if target with same IP, port and method already exists
-        const isDuplicate = targets.some(
-            (t) =>
-                t.targetId !== target.targetId &&
-                t.ip === target.ip &&
-                t.port === target.port &&
-                t.method === target.method &&
-                t.siteId === target.siteId
-        );
-
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorDuplicate"),
-                description: t("targetErrorDuplicateDescription")
-            });
-            return;
-        }
-
         try {
             setTargetsLoading(true);
 
@@ -585,24 +566,6 @@ export default function ReverseProxyTargets(props: {
     }
 
     async function addTarget(data: z.infer<typeof addTargetSchema>) {
-        // Check if target with same IP, port and method already exists
-        const isDuplicate = targets.some(
-            (target) =>
-                target.ip === data.ip &&
-                target.port === data.port &&
-                target.method === data.method &&
-                target.siteId === data.siteId
-        );
-
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorDuplicate"),
-                description: t("targetErrorDuplicateDescription")
-            });
-            return;
-        }
-
         // if (site && site.type == "wireguard" && site.subnet) {
         //     // make sure that the target IP is within the site subnet
         //     const targetIp = data.ip;

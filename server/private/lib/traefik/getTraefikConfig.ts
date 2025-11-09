@@ -111,7 +111,8 @@ export async function getTraefikConfig(
             domainNamespaceId: domainNamespaces.domainNamespaceId,
             // Certificate
             certificateStatus: certificates.status,
-            domainCertResolver: domains.certResolver
+            domainCertResolver: domains.certResolver,
+            preferWildcardCert: domains.preferWildcardCert
         })
         .from(sites)
         .innerJoin(targets, eq(targets.siteId, sites.siteId))
@@ -218,7 +219,8 @@ export async function getTraefikConfig(
                 rewritePath: row.rewritePath,
                 rewritePathType: row.rewritePathType,
                 priority: priority, // may be null, we fallback later
-                domainCertResolver: row.domainCertResolver
+                domainCertResolver: row.domainCertResolver,
+                preferWildcardCert: row.preferWildcardCert
             });
         }
 

@@ -425,24 +425,6 @@ export default function Page() {
     };
 
     async function addTarget(data: z.infer<typeof addTargetSchema>) {
-        // Check if target with same IP, port and method already exists
-        const isDuplicate = targets.some(
-            (target) =>
-                target.ip === data.ip &&
-                target.port === data.port &&
-                target.method === data.method &&
-                target.siteId === data.siteId
-        );
-
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorDuplicate"),
-                description: t("targetErrorDuplicateDescription")
-            });
-            return;
-        }
-
         const site = sites.find((site) => site.siteId === data.siteId);
 
         const isHttp = baseForm.watch("http");

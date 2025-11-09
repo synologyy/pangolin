@@ -54,22 +54,7 @@ export default function BlueprintDetailsForm({
             <div className="flex flex-col gap-6">
                 <Alert>
                     <AlertDescription>
-                        <InfoSections cols={2}>
-                            <InfoSection>
-                                <InfoSectionTitle>
-                                    {t("appliedAt")}
-                                </InfoSectionTitle>
-                                <InfoSectionContent>
-                                    <time
-                                        className="text-muted-foreground"
-                                        dateTime={blueprint.createdAt.toString()}
-                                    >
-                                        {new Date(
-                                            blueprint.createdAt * 1000
-                                        ).toLocaleString()}
-                                    </time>
-                                </InfoSectionContent>
-                            </InfoSection>
+                        <InfoSections cols={3}>
                             <InfoSection>
                                 <InfoSectionTitle>
                                     {t("status")}
@@ -90,51 +75,65 @@ export default function BlueprintDetailsForm({
                             </InfoSection>
                             <InfoSection>
                                 <InfoSectionTitle>
-                                    {t("message")}
-                                </InfoSectionTitle>
-                                <InfoSectionContent>
-                                    <p className="text-muted-foreground">
-                                        {blueprint.message}
-                                    </p>
-                                </InfoSectionContent>
-                            </InfoSection>
-                            <InfoSection>
-                                <InfoSectionTitle>
                                     {t("source")}
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {blueprint.source === "API" && (
                                         <Badge
                                             variant="secondary"
-                                            className="-mx-2"
+                                            className="inline-flex items-center gap-1 "
                                         >
-                                            <span className="inline-flex items-center gap-1 ">
-                                                API
-                                                <Webhook className="size-4 flex-none" />
-                                            </span>
+                                            API
+                                            <Webhook className="w-3 h-3 flex-none" />
                                         </Badge>
                                     )}
                                     {blueprint.source === "NEWT" && (
-                                        <Badge variant="secondary">
-                                            <span className="inline-flex items-center gap-1 ">
-                                                Newt CLI
-                                                <Terminal className="size-4 flex-none" />
-                                            </span>
+                                        <Badge
+                                            variant="secondary"
+                                            className="inline-flex items-center gap-1 "
+                                        >
+                                            <Terminal className="w-3 h-3 flex-none" />
+                                            Newt CLI
                                         </Badge>
                                     )}
                                     {blueprint.source === "UI" && (
                                         <Badge
                                             variant="secondary"
-                                            className="-mx-1 py-1"
+                                            className="inline-flex items-center gap-1 "
                                         >
-                                            <span className="inline-flex items-center gap-1 ">
-                                                Dashboard{" "}
-                                                <Globe className="size-4 flex-none" />
-                                            </span>
+                                            <Globe className="w-3 h-3 flex-none" />
+                                            Dashboard
                                         </Badge>
                                     )}{" "}
                                 </InfoSectionContent>
                             </InfoSection>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("appliedAt")}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    <time
+                                        className="text-muted-foreground"
+                                        dateTime={blueprint.createdAt.toString()}
+                                    >
+                                        {new Date(
+                                            blueprint.createdAt * 1000
+                                        ).toLocaleString()}
+                                    </time>
+                                </InfoSectionContent>
+                            </InfoSection>
+                            {blueprint.message && (
+                                <InfoSection>
+                                    <InfoSectionTitle>
+                                        {t("message")}
+                                    </InfoSectionTitle>
+                                    <InfoSectionContent>
+                                        <p className="text-muted-foreground">
+                                            {blueprint.message}
+                                        </p>
+                                    </InfoSectionContent>
+                                </InfoSection>
+                            )}
                         </InfoSections>
                     </AlertDescription>
                 </Alert>
@@ -169,11 +168,6 @@ export default function BlueprintDetailsForm({
                                             <FormLabel>
                                                 {t("parsedContents")}
                                             </FormLabel>
-                                            <FormDescription>
-                                                {t(
-                                                    "blueprintContentsDescription"
-                                                )}
-                                            </FormDescription>
                                             <FormControl>
                                                 <div
                                                     className={cn(
