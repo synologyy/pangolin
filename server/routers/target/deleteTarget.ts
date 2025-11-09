@@ -48,12 +48,10 @@ export async function deleteTarget(
 
         const { targetId } = parsedParams.data;
 
-        const [deletedTarget] = await db.transaction(async (tx) => {
-            return await tx
-                .delete(targets)
-                .where(eq(targets.targetId, targetId))
-                .returning();
-        });
+        const [deletedTarget] = await db
+            .delete(targets)
+            .where(eq(targets.targetId, targetId))
+            .returning();
 
         if (!deletedTarget) {
             return next(
