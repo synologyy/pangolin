@@ -873,3 +873,4 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
+export type OrgAuthPage = InferSelectModel<typeof orgAuthPages>;
