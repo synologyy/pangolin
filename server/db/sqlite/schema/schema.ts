@@ -1,6 +1,12 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import {
+    sqliteTable,
+    text,
+    integer,
+    index,
+    uniqueIndex
+} from "drizzle-orm/sqlite-core";
 import { boolean } from "yargs";
 
 export const domains = sqliteTable("domains", {
@@ -66,19 +72,25 @@ export const orgDomains = sqliteTable("orgDomains", {
         .references(() => domains.domainId, { onDelete: "cascade" })
 });
 
-export const orgAuthPages = sqliteTable("orgAuthPages", {
-    orgId: text("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    orgAuthPageId: integer("orgAuthPageId").primaryKey({ autoIncrement: true }),
-    logoUrl: text("logoUrl"),
-    logoWidth: integer("logoWidth"),
-    logoHeight: integer("logoHeight"),
-    title: text("title"),
-    subtitle: text("subtitle"),
-    resourceTitle: text("resourceTitle"),
-    resourceSubtitle: text("resourceSubtitle")
-});
+export const orgAuthPages = sqliteTable(
+    "orgAuthPages",
+    {
+        orgId: text("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        orgAuthPageId: integer("orgAuthPageId").primaryKey({
+            autoIncrement: true
+        }),
+        logoUrl: text("logoUrl").notNull(),
+        logoWidth: integer("logoWidth").notNull(),
+        logoHeight: integer("logoHeight").notNull(),
+        title: text("title").notNull(),
+        subtitle: text("subtitle"),
+        resourceTitle: text("resourceTitle").notNull(),
+        resourceSubtitle: text("resourceSubtitle")
+    },
+    (t) => [uniqueIndex("uniqueAuthPagePerOrgIdx").on(t.orgId)]
+);
 
 export const sites = sqliteTable("sites", {
     siteId: integer("siteId").primaryKey({ autoIncrement: true }),

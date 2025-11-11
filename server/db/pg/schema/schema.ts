@@ -7,7 +7,8 @@ import {
     bigint,
     real,
     text,
-    index
+    index,
+    uniqueIndex
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -64,19 +65,23 @@ export const orgDomains = pgTable("orgDomains", {
         .references(() => domains.domainId, { onDelete: "cascade" })
 });
 
-export const orgAuthPages = pgTable("orgAuthPages", {
-    orgId: varchar("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    orgAuthPageId: serial("orgAuthPageId").primaryKey(),
-    logoUrl: text("logoUrl"),
-    logoWidth: integer("logoWidth"),
-    logoHeight: integer("logoHeight"),
-    title: text("title"),
-    subtitle: text("subtitle"),
-    resourceTitle: text("resourceTitle"),
-    resourceSubtitle: text("resourceSubtitle")
-});
+export const orgAuthPages = pgTable(
+    "orgAuthPages",
+    {
+        orgId: varchar("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        orgAuthPageId: serial("orgAuthPageId").primaryKey(),
+        logoUrl: text("logoUrl").notNull(),
+        logoWidth: integer("logoWidth").notNull(),
+        logoHeight: integer("logoHeight").notNull(),
+        title: text("title").notNull(),
+        subtitle: text("subtitle"),
+        resourceTitle: text("resourceTitle").notNull(),
+        resourceSubtitle: text("resourceSubtitle")
+    },
+    (t) => [uniqueIndex("uniqueAuthPagePerOrgIdx").on(t.orgId)]
+);
 
 export const sites = pgTable("sites", {
     siteId: serial("siteId").primaryKey(),

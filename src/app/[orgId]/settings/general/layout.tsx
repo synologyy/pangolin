@@ -1,7 +1,7 @@
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { HorizontalTabs } from "@app/components/HorizontalTabs";
+import { HorizontalTabs, type TabItem } from "@app/components/HorizontalTabs";
 import { verifySession } from "@app/lib/auth/verifySession";
 import OrgProvider from "@app/providers/OrgProvider";
 import OrgUserProvider from "@app/providers/OrgUserProvider";
@@ -10,7 +10,7 @@ import { GetOrgUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type GeneralSettingsProps = {
     children: React.ReactNode;
@@ -19,7 +19,7 @@ type GeneralSettingsProps = {
 
 export default async function GeneralSettingsPage({
     children,
-    params,
+    params
 }: GeneralSettingsProps) {
     const { orgId } = await params;
 
@@ -35,8 +35,8 @@ export default async function GeneralSettingsPage({
         const getOrgUser = cache(async () =>
             internal.get<AxiosResponse<GetOrgUserResponse>>(
                 `/org/${orgId}/user/${user.userId}`,
-                await authCookieHeader(),
-            ),
+                await authCookieHeader()
+            )
         );
         const res = await getOrgUser();
         orgUser = res.data.data;
@@ -49,8 +49,8 @@ export default async function GeneralSettingsPage({
         const getOrg = cache(async () =>
             internal.get<AxiosResponse<GetOrgResponse>>(
                 `/org/${orgId}`,
-                await authCookieHeader(),
-            ),
+                await authCookieHeader()
+            )
         );
         const res = await getOrg();
         org = res.data.data;
@@ -60,11 +60,16 @@ export default async function GeneralSettingsPage({
 
     const t = await getTranslations();
 
-    const navItems = [
+    const navItems: TabItem[] = [
         {
-            title: t('general'),
+            title: t("general"),
             href: `/{orgId}/settings/general`,
+            exact: true
         },
+        {
+            title: t("authPages"),
+            href: `/{orgId}/settings/general/auth-pages`
+        }
     ];
 
     return (
@@ -72,13 +77,11 @@ export default async function GeneralSettingsPage({
             <OrgProvider org={org}>
                 <OrgUserProvider orgUser={orgUser}>
                     <SettingsSectionTitle
-                        title={t('orgGeneralSettings')}
-                        description={t('orgSettingsDescription')}
+                        title={t("orgGeneralSettings")}
+                        description={t("orgSettingsDescription")}
                     />
 
-                    <HorizontalTabs items={navItems}>
-                        {children}
-                    </HorizontalTabs>
+                    <HorizontalTabs items={navItems}>{children}</HorizontalTabs>
                 </OrgUserProvider>
             </OrgProvider>
         </>

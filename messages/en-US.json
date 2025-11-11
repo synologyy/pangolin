@@ -150,6 +150,7 @@
     "resourceAdd": "Add Resource",
     "resourceErrorDelte": "Error deleting resource",
     "authentication": "Authentication",
+    "authPages": "Auth Page",
     "protected": "Protected",
     "notProtected": "Not Protected",
     "resourceMessageRemove": "Once removed, the resource will no longer be accessible. All targets associated with the resource will also be removed.",

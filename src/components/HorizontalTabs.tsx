@@ -8,16 +8,17 @@ import { Badge } from "@app/components/ui/badge";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useTranslations } from "next-intl";
 
-export type HorizontalTabs = Array<{
+export type TabItem = {
     title: string;
     href: string;
     icon?: React.ReactNode;
     showProfessional?: boolean;
-}>;
+    exact?: boolean;
+};
 
 interface HorizontalTabsProps {
     children: React.ReactNode;
-    items: HorizontalTabs;
+    items: TabItem[];
     disabled?: boolean;
 }
 
@@ -49,8 +50,11 @@ export function HorizontalTabs({
                         {items.map((item) => {
                             const hydratedHref = hydrateHref(item.href);
                             const isActive =
-                                pathname.startsWith(hydratedHref) &&
+                                (item.exact
+                                    ? pathname === hydratedHref
+                                    : pathname.startsWith(hydratedHref)) &&
                                 !pathname.includes("create");
+
                             const isProfessional =
                                 item.showProfessional && !isUnlocked();
                             const isDisabled =
@@ -88,7 +92,7 @@ export function HorizontalTabs({
                                                 variant="outlinePrimary"
                                                 className="ml-2"
                                             >
-                                                {t('licenseBadge')}
+                                                {t("licenseBadge")}
                                             </Badge>
                                         )}
                                     </div>
