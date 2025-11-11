@@ -25,10 +25,9 @@ export const dnsRecords = sqliteTable("dnsRecords", {
 
     recordType: text("recordType").notNull(), // "NS" | "CNAME" | "A" | "TXT"
     baseDomain: text("baseDomain"),
-    value: text("value").notNull(), 
-    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    value: text("value").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false)
 });
-
 
 export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
@@ -65,6 +64,20 @@ export const orgDomains = sqliteTable("orgDomains", {
     domainId: text("domainId")
         .notNull()
         .references(() => domains.domainId, { onDelete: "cascade" })
+});
+
+export const orgAuthPages = sqliteTable("orgAuthPages", {
+    orgId: text("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" }),
+    orgAuthPageId: integer("orgAuthPageId").primaryKey({ autoIncrement: true }),
+    logoUrl: text("logoUrl"),
+    logoWidth: integer("logoWidth"),
+    logoHeight: integer("logoHeight"),
+    title: text("title"),
+    subtitle: text("subtitle"),
+    resourceTitle: text("resourceTitle"),
+    resourceSubtitle: text("resourceSubtitle")
 });
 
 export const sites = sqliteTable("sites", {
@@ -142,9 +155,10 @@ export const resources = sqliteTable("resources", {
         onDelete: "set null"
     }),
     headers: text("headers"), // comma-separated list of headers to add to the request
-    proxyProtocol: integer("proxyProtocol", { mode: "boolean" }).notNull().default(false),
+    proxyProtocol: integer("proxyProtocol", { mode: "boolean" })
+        .notNull()
+        .default(false),
     proxyProtocolVersion: integer("proxyProtocolVersion").default(1)
-
 });
 
 export const targets = sqliteTable("targets", {
