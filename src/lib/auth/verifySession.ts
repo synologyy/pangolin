@@ -3,9 +3,10 @@ import { authCookieHeader } from "@app/lib/api/cookies";
 import { GetUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { pullEnv } from "../pullEnv";
+import { cache } from "react";
 
-export async function verifySession({
-    skipCheckVerifyEmail,
+export const verifySession = cache(async function ({
+    skipCheckVerifyEmail
 }: {
     skipCheckVerifyEmail?: boolean;
 } = {}): Promise<GetUserResponse | null> {
@@ -14,7 +15,7 @@ export async function verifySession({
     try {
         const res = await internal.get<AxiosResponse<GetUserResponse>>(
             "/user",
-            await authCookieHeader(),
+            await authCookieHeader()
         );
 
         const user = res.data.data;
@@ -35,4 +36,4 @@ export async function verifySession({
     } catch (e) {
         return null;
     }
-}
+});

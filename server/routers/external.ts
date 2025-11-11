@@ -80,7 +80,7 @@ authenticated.post(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.updateOrg),
     logActionAudit(ActionsEnum.updateOrg),
-    org.updateOrg,
+    org.updateOrg
 );
 
 if (build !== "saas") {
@@ -90,7 +90,7 @@ if (build !== "saas") {
         verifyUserIsOrgOwner,
         verifyUserHasAction(ActionsEnum.deleteOrg),
         logActionAudit(ActionsEnum.deleteOrg),
-        org.deleteOrg,
+        org.deleteOrg
     );
 }
 
@@ -157,7 +157,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
-    client.createClient,
+    client.createClient
 );
 
 authenticated.delete(
@@ -166,7 +166,7 @@ authenticated.delete(
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
-    client.deleteClient,
+    client.deleteClient
 );
 
 authenticated.post(
@@ -175,7 +175,7 @@ authenticated.post(
     verifyClientAccess, // this will check if the user has access to the client
     verifyUserHasAction(ActionsEnum.updateClient), // this will check if the user has permission to update the client
     logActionAudit(ActionsEnum.updateClient),
-    client.updateClient,
+    client.updateClient
 );
 
 // authenticated.get(
@@ -189,14 +189,14 @@ authenticated.post(
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.updateSite),
     logActionAudit(ActionsEnum.updateSite),
-    site.updateSite,
+    site.updateSite
 );
 authenticated.delete(
     "/site/:siteId",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.deleteSite),
     logActionAudit(ActionsEnum.deleteSite),
-    site.deleteSite,
+    site.deleteSite
 );
 
 // TODO: BREAK OUT THESE ACTIONS SO THEY ARE NOT ALL "getSite"
@@ -216,13 +216,13 @@ authenticated.post(
     "/site/:siteId/docker/check",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
-    site.checkDockerSocket,
+    site.checkDockerSocket
 );
 authenticated.post(
     "/site/:siteId/docker/trigger",
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
-    site.triggerFetchContainers,
+    site.triggerFetchContainers
 );
 authenticated.get(
     "/site/:siteId/docker/containers",
@@ -238,7 +238,7 @@ authenticated.put(
     verifySiteAccess,
     verifyUserHasAction(ActionsEnum.createSiteResource),
     logActionAudit(ActionsEnum.createSiteResource),
-    siteResource.createSiteResource,
+    siteResource.createSiteResource
 );
 
 authenticated.get(
@@ -272,7 +272,7 @@ authenticated.post(
     verifySiteResourceAccess,
     verifyUserHasAction(ActionsEnum.updateSiteResource),
     logActionAudit(ActionsEnum.updateSiteResource),
-    siteResource.updateSiteResource,
+    siteResource.updateSiteResource
 );
 
 authenticated.delete(
@@ -282,7 +282,7 @@ authenticated.delete(
     verifySiteResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteSiteResource),
     logActionAudit(ActionsEnum.deleteSiteResource),
-    siteResource.deleteSiteResource,
+    siteResource.deleteSiteResource
 );
 
 authenticated.put(
@@ -290,7 +290,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createResource),
     logActionAudit(ActionsEnum.createResource),
-    resource.createResource,
+    resource.createResource
 );
 
 authenticated.get(
@@ -352,7 +352,7 @@ authenticated.delete(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.removeInvitation),
     logActionAudit(ActionsEnum.removeInvitation),
-    user.removeInvitation,
+    user.removeInvitation
 );
 
 authenticated.post(
@@ -360,7 +360,7 @@ authenticated.post(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.inviteUser),
     logActionAudit(ActionsEnum.inviteUser),
-    user.inviteUser,
+    user.inviteUser
 ); // maybe make this /invite/create instead
 
 unauthenticated.post("/invite/accept", user.acceptInvite); // this is supposed to be unauthenticated
@@ -396,14 +396,14 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.updateResource),
     logActionAudit(ActionsEnum.updateResource),
-    resource.updateResource,
+    resource.updateResource
 );
 authenticated.delete(
     "/resource/:resourceId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteResource),
     logActionAudit(ActionsEnum.deleteResource),
-    resource.deleteResource,
+    resource.deleteResource
 );
 
 authenticated.put(
@@ -411,7 +411,7 @@ authenticated.put(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.createTarget),
     logActionAudit(ActionsEnum.createTarget),
-    target.createTarget,
+    target.createTarget
 );
 authenticated.get(
     "/resource/:resourceId/targets",
@@ -425,7 +425,7 @@ authenticated.put(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.createResourceRule),
     logActionAudit(ActionsEnum.createResourceRule),
-    resource.createResourceRule,
+    resource.createResourceRule
 );
 authenticated.get(
     "/resource/:resourceId/rules",
@@ -438,14 +438,14 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.updateResourceRule),
     logActionAudit(ActionsEnum.updateResourceRule),
-    resource.updateResourceRule,
+    resource.updateResourceRule
 );
 authenticated.delete(
     "/resource/:resourceId/rule/:ruleId",
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.deleteResourceRule),
     logActionAudit(ActionsEnum.deleteResourceRule),
-    resource.deleteResourceRule,
+    resource.deleteResourceRule
 );
 
 authenticated.get(
@@ -459,14 +459,14 @@ authenticated.post(
     verifyTargetAccess,
     verifyUserHasAction(ActionsEnum.updateTarget),
     logActionAudit(ActionsEnum.updateTarget),
-    target.updateTarget,
+    target.updateTarget
 );
 authenticated.delete(
     "/target/:targetId",
     verifyTargetAccess,
     verifyUserHasAction(ActionsEnum.deleteTarget),
     logActionAudit(ActionsEnum.deleteTarget),
-    target.deleteTarget,
+    target.deleteTarget
 );
 
 authenticated.put(
@@ -474,7 +474,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createRole),
     logActionAudit(ActionsEnum.createRole),
-    role.createRole,
+    role.createRole
 );
 authenticated.get(
     "/org/:orgId/roles",
@@ -500,7 +500,7 @@ authenticated.delete(
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.deleteRole),
     logActionAudit(ActionsEnum.deleteRole),
-    role.deleteRole,
+    role.deleteRole
 );
 authenticated.post(
     "/role/:roleId/add/:userId",
@@ -508,7 +508,7 @@ authenticated.post(
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.addUserRole),
     logActionAudit(ActionsEnum.addUserRole),
-    user.addUserRole,
+    user.addUserRole
 );
 
 authenticated.post(
@@ -517,7 +517,7 @@ authenticated.post(
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.setResourceRoles),
     logActionAudit(ActionsEnum.setResourceRoles),
-    resource.setResourceRoles,
+    resource.setResourceRoles
 );
 
 authenticated.post(
@@ -526,7 +526,7 @@ authenticated.post(
     verifySetResourceUsers,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    resource.setResourceUsers,
+    resource.setResourceUsers
 );
 
 authenticated.post(
@@ -534,7 +534,7 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourcePassword),
     logActionAudit(ActionsEnum.setResourcePassword),
-    resource.setResourcePassword,
+    resource.setResourcePassword
 );
 
 authenticated.post(
@@ -542,7 +542,7 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourcePincode),
     logActionAudit(ActionsEnum.setResourcePincode),
-    resource.setResourcePincode,
+    resource.setResourcePincode
 );
 
 authenticated.post(
@@ -550,7 +550,7 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourceHeaderAuth),
     logActionAudit(ActionsEnum.setResourceHeaderAuth),
-    resource.setResourceHeaderAuth,
+    resource.setResourceHeaderAuth
 );
 
 authenticated.post(
@@ -558,7 +558,7 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.setResourceWhitelist),
     logActionAudit(ActionsEnum.setResourceWhitelist),
-    resource.setResourceWhitelist,
+    resource.setResourceWhitelist
 );
 
 authenticated.get(
@@ -573,7 +573,7 @@ authenticated.post(
     verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.generateAccessToken),
     logActionAudit(ActionsEnum.generateAccessToken),
-    accessToken.generateAccessToken,
+    accessToken.generateAccessToken
 );
 
 authenticated.delete(
@@ -581,7 +581,7 @@ authenticated.delete(
     verifyAccessTokenAccess,
     verifyUserHasAction(ActionsEnum.deleteAcessToken),
     logActionAudit(ActionsEnum.deleteAcessToken),
-    accessToken.deleteAccessToken,
+    accessToken.deleteAccessToken
 );
 
 authenticated.get(
@@ -655,7 +655,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createOrgUser),
     logActionAudit(ActionsEnum.createOrgUser),
-    user.createOrgUser,
+    user.createOrgUser
 );
 
 authenticated.post(
@@ -664,7 +664,7 @@ authenticated.post(
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.updateOrgUser),
     logActionAudit(ActionsEnum.updateOrgUser),
-    user.updateOrgUser,
+    user.updateOrgUser
 );
 
 authenticated.get("/org/:orgId/user/:userId", verifyOrgAccess, user.getOrgUser);
@@ -688,7 +688,7 @@ authenticated.delete(
     verifyUserAccess,
     verifyUserHasAction(ActionsEnum.removeUser),
     logActionAudit(ActionsEnum.removeUser),
-    user.removeUserOrg,
+    user.removeUserOrg
 );
 
 // authenticated.put(
@@ -819,7 +819,7 @@ authenticated.post(
     verifyApiKeyAccess,
     verifyUserHasAction(ActionsEnum.setApiKeyActions),
     logActionAudit(ActionsEnum.setApiKeyActions),
-    apiKeys.setApiKeyActions,
+    apiKeys.setApiKeyActions
 );
 
 authenticated.get(
@@ -835,7 +835,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createApiKey),
     logActionAudit(ActionsEnum.createApiKey),
-    apiKeys.createOrgApiKey,
+    apiKeys.createOrgApiKey
 );
 
 authenticated.delete(
@@ -844,7 +844,7 @@ authenticated.delete(
     verifyApiKeyAccess,
     verifyUserHasAction(ActionsEnum.deleteApiKey),
     logActionAudit(ActionsEnum.deleteApiKey),
-    apiKeys.deleteOrgApiKey,
+    apiKeys.deleteOrgApiKey
 );
 
 authenticated.get(
@@ -860,7 +860,7 @@ authenticated.put(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createOrgDomain),
     logActionAudit(ActionsEnum.createOrgDomain),
-    domain.createOrgDomain,
+    domain.createOrgDomain
 );
 
 authenticated.post(
@@ -869,7 +869,7 @@ authenticated.post(
     verifyDomainAccess,
     verifyUserHasAction(ActionsEnum.restartOrgDomain),
     logActionAudit(ActionsEnum.restartOrgDomain),
-    domain.restartOrgDomain,
+    domain.restartOrgDomain
 );
 
 authenticated.delete(
@@ -878,7 +878,7 @@ authenticated.delete(
     verifyDomainAccess,
     verifyUserHasAction(ActionsEnum.deleteOrgDomain),
     logActionAudit(ActionsEnum.deleteOrgDomain),
-    domain.deleteAccountDomain,
+    domain.deleteAccountDomain
 );
 
 authenticated.get(

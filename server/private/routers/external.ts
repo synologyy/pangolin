@@ -17,6 +17,7 @@ import * as billing from "#private/routers/billing";
 import * as remoteExitNode from "#private/routers/remoteExitNode";
 import * as loginPage from "#private/routers/loginPage";
 import * as orgIdp from "#private/routers/orgIdp";
+import * as authPage from "#private/routers/authPage";
 import * as domain from "#private/routers/domain";
 import * as auth from "#private/routers/auth";
 import * as license from "#private/routers/license";
@@ -402,4 +403,24 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportAccessAuditLogs
+);
+
+authenticated.put(
+    "/org/:orgId/auth-page",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateOrgAuthPage),
+    logActionAudit(ActionsEnum.updateOrgAuthPage),
+    authPage.updateOrgAuthPage
+);
+
+authenticated.get(
+    "/org/:orgId/auth-page",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getOrgAuthPage),
+    logActionAudit(ActionsEnum.getOrgAuthPage),
+    authPage.getOrgAuthPage
 );

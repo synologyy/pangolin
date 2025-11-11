@@ -9,8 +9,14 @@ import { GetOrgResponse } from "@server/routers/org";
 import { GetOrgUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
-import { cache } from "react";
+
 import { getTranslations } from "next-intl/server";
+import { getCachedOrg } from "@app/lib/api/getCachedOrg";
+import { getCachedOrgUser } from "@app/lib/api/getCachedOrgUser";
+import { GetOrgTierResponse } from "@server/routers/billing/types";
+import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
+import { build } from "@server/build";
+import { TierId } from "@server/lib/billing/tiers";
 
 type GeneralSettingsProps = {
     children: React.ReactNode;
@@ -23,8 +29,7 @@ export default async function GeneralSettingsPage({
 }: GeneralSettingsProps) {
     const { orgId } = await params;
 
-    const getUser = cache(verifySession);
-    const user = await getUser();
+    const user = await verifySession();
 
     if (!user) {
         redirect(`/`);
@@ -32,13 +37,7 @@ export default async function GeneralSettingsPage({
 
     let orgUser = null;
     try {
-        const getOrgUser = cache(async () =>
-            internal.get<AxiosResponse<GetOrgUserResponse>>(
-                `/org/${orgId}/user/${user.userId}`,
-                await authCookieHeader()
-            )
-        );
-        const res = await getOrgUser();
+        const res = await getCachedOrgUser(orgId, user.userId);
         orgUser = res.data.data;
     } catch {
         redirect(`/${orgId}`);
@@ -46,17 +45,21 @@ export default async function GeneralSettingsPage({
 
     let org = null;
     try {
-        const getOrg = cache(async () =>
-            internal.get<AxiosResponse<GetOrgResponse>>(
-                `/org/${orgId}`,
-                await authCookieHeader()
-            )
-        );
-        const res = await getOrg();
+        const res = await getCachedOrg(orgId);
         org = res.data.data;
     } catch {
         redirect(`/${orgId}`);
     }
+
+    let subscriptionStatus: GetOrgTierResponse | null = null;
+    try {
+        const subRes = await getCachedSubscription(orgId);
+        subscriptionStatus = subRes.data.data;
+    } catch {}
+    const subscribed =
+        build === "enterprise"
+            ? true
+            : subscriptionStatus?.tier === TierId.STANDARD;
 
     const t = await getTranslations();
 
@@ -65,12 +68,14 @@ export default async function GeneralSettingsPage({
             title: t("general"),
             href: `/{orgId}/settings/general`,
             exact: true
-        },
-        {
-            title: t("authPages"),
-            href: `/{orgId}/settings/general/auth-pages`
         }
     ];
+    if (subscribed) {
+        navItems.push({
+            title: t("authPage"),
+            href: `/{orgId}/settings/general/auth-pages`
+        });
+    }
 
     return (
         <>
