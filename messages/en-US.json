@@ -1746,7 +1746,7 @@
     "brandingResourceTitle": "Title for Resource Auth Page",
     "brandingResourceSubtitle": "Subtitle for Resource Auth Page",
     "brandingResourceDescription": "{resourceName}  will be replaced with the organization's name",
-    "saveAuthPage": "Save Auth Page",
+    "saveAuthPageDomain": "Save Domain",
     "saveAuthPageBranding": "Save Branding",
     "removeAuthPageBranding": "Remove Branding",
     "noDomainSet": "No domain set",

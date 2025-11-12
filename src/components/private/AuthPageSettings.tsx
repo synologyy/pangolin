@@ -68,8 +68,6 @@ const AuthPageFormSchema = z.object({
     authPageSubdomain: z.string().optional()
 });
 
-type AuthPageFormValues = z.infer<typeof AuthPageFormSchema>;
-
 interface AuthPageSettingsProps {
     onSaveSuccess?: () => void;
     onSaveError?: (error: any) => void;
@@ -118,18 +116,6 @@ function AuthPageSettings({
         },
         mode: "onChange"
     });
-
-    // Expose save function to parent component
-    // useImperativeHandle(
-    //     ref,
-    //     () => ({
-    //         saveAuthSettings: async () => {
-    //             await form.handleSubmit(onSubmit)();
-    //         },
-    //         hasUnsavedChanges: () => hasUnsavedChanges
-    //     }),
-    //     [form, hasUnsavedChanges]
-    // );
 
     // Fetch login page and domains data
     useEffect(() => {
@@ -452,7 +438,7 @@ function AuthPageSettings({
                         loading={isSubmitting}
                         disabled={isSubmitting || !hasUnsavedChanges}
                     >
-                        {t("saveAuthPage")}
+                        {t("saveAuthPageDomain")}
                     </Button>
                 </div>
             </SettingsSection>
