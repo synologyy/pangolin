@@ -29,7 +29,9 @@ export const certificates = sqliteTable("certificates", {
 });
 
 export const dnsChallenge = sqliteTable("dnsChallenges", {
-    dnsChallengeId: integer("dnsChallengeId").primaryKey({ autoIncrement: true }),
+    dnsChallengeId: integer("dnsChallengeId").primaryKey({
+        autoIncrement: true
+    }),
     domain: text("domain").notNull(),
     token: text("token").notNull(),
     keyAuthorization: text("keyAuthorization").notNull(),
@@ -61,9 +63,7 @@ export const customers = sqliteTable("customers", {
 });
 
 export const subscriptions = sqliteTable("subscriptions", {
-    subscriptionId: text("subscriptionId")
-        .primaryKey()
-        .notNull(),
+    subscriptionId: text("subscriptionId").primaryKey().notNull(),
     customerId: text("customerId")
         .notNull()
         .references(() => customers.customerId, { onDelete: "cascade" }),
@@ -75,7 +75,9 @@ export const subscriptions = sqliteTable("subscriptions", {
 });
 
 export const subscriptionItems = sqliteTable("subscriptionItems", {
-    subscriptionItemId: integer("subscriptionItemId").primaryKey({ autoIncrement: true }),
+    subscriptionItemId: integer("subscriptionItemId").primaryKey({
+        autoIncrement: true
+    }),
     subscriptionId: text("subscriptionId")
         .notNull()
         .references(() => subscriptions.subscriptionId, {
@@ -129,7 +131,9 @@ export const limits = sqliteTable("limits", {
 });
 
 export const usageNotifications = sqliteTable("usageNotifications", {
-    notificationId: integer("notificationId").primaryKey({ autoIncrement: true }),
+    notificationId: integer("notificationId").primaryKey({
+        autoIncrement: true
+    }),
     orgId: text("orgId")
         .notNull()
         .references(() => orgs.orgId, { onDelete: "cascade" }),
@@ -199,6 +203,30 @@ export const loginPageOrg = sqliteTable("loginPageOrg", {
         .references(() => orgs.orgId, { onDelete: "cascade" })
 });
 
+export const loginPageBranding = sqliteTable("loginPageBranding", {
+    loginPageBrandingId: integer("loginPageBrandingId").primaryKey({
+        autoIncrement: true
+    }),
+    logoUrl: text("logoUrl").notNull(),
+    logoWidth: integer("logoWidth").notNull(),
+    logoHeight: integer("logoHeight").notNull(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle"),
+    resourceTitle: text("resourceTitle").notNull(),
+    resourceSubtitle: text("resourceSubtitle")
+});
+
+export const loginPageBrandingOrg = sqliteTable("loginPageBrandingOrg", {
+    loginPageBrandingId: integer("loginPageBrandingId")
+        .notNull()
+        .references(() => loginPageBranding.loginPageBrandingId, {
+            onDelete: "cascade"
+        }),
+    orgId: text("orgId")
+        .notNull()
+        .references(() => orgs.orgId, { onDelete: "cascade" })
+});
+
 export const sessionTransferToken = sqliteTable("sessionTransferToken", {
     token: text("token").primaryKey(),
     sessionId: text("sessionId")
@@ -210,42 +238,56 @@ export const sessionTransferToken = sqliteTable("sessionTransferToken", {
     expiresAt: integer("expiresAt").notNull()
 });
 
-export const actionAuditLog = sqliteTable("actionAuditLog", {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-    orgId: text("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: text("actorType").notNull(),
-    actor: text("actor").notNull(),
-    actorId: text("actorId").notNull(),
-    action: text("action").notNull(),
-    metadata: text("metadata")
-}, (table) => ([
-    index("idx_actionAuditLog_timestamp").on(table.timestamp),
-    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const actionAuditLog = sqliteTable(
+    "actionAuditLog",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        actorType: text("actorType").notNull(),
+        actor: text("actor").notNull(),
+        actorId: text("actorId").notNull(),
+        action: text("action").notNull(),
+        metadata: text("metadata")
+    },
+    (table) => [
+        index("idx_actionAuditLog_timestamp").on(table.timestamp),
+        index("idx_actionAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
-export const accessAuditLog = sqliteTable("accessAuditLog", {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
-    orgId: text("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: text("actorType"),
-    actor: text("actor"),
-    actorId: text("actorId"),
-    resourceId: integer("resourceId"),
-    ip: text("ip"),
-    location: text("location"),
-    type: text("type").notNull(),
-    action: integer("action", { mode: "boolean" }).notNull(),
-    userAgent: text("userAgent"),
-    metadata: text("metadata")
-}, (table) => ([
-    index("idx_identityAuditLog_timestamp").on(table.timestamp),
-    index("idx_identityAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const accessAuditLog = sqliteTable(
+    "accessAuditLog",
+    {
+        id: integer("id").primaryKey({ autoIncrement: true }),
+        timestamp: integer("timestamp").notNull(), // this is EPOCH time in seconds
+        orgId: text("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        actorType: text("actorType"),
+        actor: text("actor"),
+        actorId: text("actorId"),
+        resourceId: integer("resourceId"),
+        ip: text("ip"),
+        location: text("location"),
+        type: text("type").notNull(),
+        action: integer("action", { mode: "boolean" }).notNull(),
+        userAgent: text("userAgent"),
+        metadata: text("metadata")
+    },
+    (table) => [
+        index("idx_identityAuditLog_timestamp").on(table.timestamp),
+        index("idx_identityAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
 export type Limit = InferSelectModel<typeof limits>;
 export type Account = InferSelectModel<typeof account>;
@@ -264,5 +306,6 @@ export type RemoteExitNodeSession = InferSelectModel<
 >;
 export type ExitNodeOrg = InferSelectModel<typeof exitNodeOrgs>;
 export type LoginPage = InferSelectModel<typeof loginPage>;
+export type LoginPageBranding = InferSelectModel<typeof loginPageBranding>;
 export type ActionAuditLog = InferSelectModel<typeof actionAuditLog>;
 export type AccessAuditLog = InferSelectModel<typeof accessAuditLog>;

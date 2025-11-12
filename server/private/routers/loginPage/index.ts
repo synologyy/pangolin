@@ -17,3 +17,6 @@ export * from "./getLoginPage";
 export * from "./loadLoginPage";
 export * from "./updateLoginPage";
 export * from "./deleteLoginPage";
+export * from "./upsertLoginPageBranding";
+export * from "./deleteLoginPageBranding";
+export * from "./getLoginPageBranding";

@@ -17,7 +17,6 @@ import * as billing from "#private/routers/billing";
 import * as remoteExitNode from "#private/routers/remoteExitNode";
 import * as loginPage from "#private/routers/loginPage";
 import * as orgIdp from "#private/routers/orgIdp";
-import * as authPage from "#private/routers/authPage";
 import * as domain from "#private/routers/domain";
 import * as auth from "#private/routers/auth";
 import * as license from "#private/routers/license";
@@ -309,6 +308,33 @@ authenticated.get(
     loginPage.getLoginPage
 );
 
+authenticated.get(
+    "/org/:orgId/login-page-branding",
+    verifyValidLicense,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.getLoginPage),
+    logActionAudit(ActionsEnum.getLoginPage),
+    loginPage.getLoginPageBranding
+);
+
+authenticated.put(
+    "/org/:orgId/login-page-branding",
+    verifyValidLicense,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.updateLoginPage),
+    logActionAudit(ActionsEnum.updateLoginPage),
+    loginPage.upsertLoginPageBranding
+);
+
+authenticated.delete(
+    "/org/:orgId/login-page-branding",
+    verifyValidLicense,
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.deleteLoginPage),
+    logActionAudit(ActionsEnum.deleteLoginPage),
+    loginPage.deleteLoginPageBranding
+);
+
 authRouter.post(
     "/remoteExitNode/get-token",
     verifyValidLicense,
@@ -403,24 +429,4 @@ authenticated.get(
     verifyUserHasAction(ActionsEnum.exportLogs),
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportAccessAuditLogs
-);
-
-authenticated.put(
-    "/org/:orgId/auth-page",
-    verifyValidLicense,
-    verifyValidSubscription,
-    verifyOrgAccess,
-    verifyUserHasAction(ActionsEnum.updateOrgAuthPage),
-    logActionAudit(ActionsEnum.updateOrgAuthPage),
-    authPage.updateOrgAuthPage
-);
-
-authenticated.get(
-    "/org/:orgId/auth-page",
-    verifyValidLicense,
-    verifyValidSubscription,
-    verifyOrgAccess,
-    verifyUserHasAction(ActionsEnum.getOrgAuthPage),
-    logActionAudit(ActionsEnum.getOrgAuthPage),
-    authPage.getOrgAuthPage
 );

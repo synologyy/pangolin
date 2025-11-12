@@ -43,8 +43,7 @@ import {
     SettingsSectionTitle,
     SettingsSectionDescription,
     SettingsSectionBody,
-    SettingsSectionForm,
-    SettingsSectionFooter
+    SettingsSectionForm
 } from "@app/components/Settings";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useTranslations } from "next-intl";
@@ -129,7 +128,6 @@ export default function GeneralPage() {
     const [loadingSave, setLoadingSave] = useState(false);
     const [isSecurityPolicyConfirmOpen, setIsSecurityPolicyConfirmOpen] =
         useState(false);
-    const authPageSettingsRef = useRef<AuthPageSettingsRef>(null);
 
     const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
@@ -251,14 +249,6 @@ export default function GeneralPage() {
 
             // Update organization
             await api.post(`/org/${org?.org.orgId}`, reqData);
-
-            // Also save auth page settings if they have unsaved changes
-            if (
-                build === "saas" &&
-                authPageSettingsRef.current?.hasUnsavedChanges()
-            ) {
-                await authPageSettingsRef.current.saveAuthSettings();
-            }
 
             toast({
                 title: t("orgUpdated"),
@@ -600,7 +590,7 @@ export default function GeneralPage() {
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
                                 <SettingsSectionForm>
-                                <SecurityFeaturesAlert />
+                                    <SecurityFeaturesAlert />
                                     <FormField
                                         control={form.control}
                                         name="requireTwoFactor"
@@ -831,8 +821,6 @@ export default function GeneralPage() {
                     )}
                 </form>
             </Form>
-
-            {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
 
             <div className="flex justify-end gap-2">
                 {build !== "saas" && (

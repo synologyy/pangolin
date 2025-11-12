@@ -72,26 +72,6 @@ export const orgDomains = sqliteTable("orgDomains", {
         .references(() => domains.domainId, { onDelete: "cascade" })
 });
 
-export const orgAuthPages = sqliteTable(
-    "orgAuthPages",
-    {
-        orgId: text("orgId")
-            .notNull()
-            .references(() => orgs.orgId, { onDelete: "cascade" }),
-        orgAuthPageId: integer("orgAuthPageId").primaryKey({
-            autoIncrement: true
-        }),
-        logoUrl: text("logoUrl").notNull(),
-        logoWidth: integer("logoWidth").notNull(),
-        logoHeight: integer("logoHeight").notNull(),
-        title: text("title").notNull(),
-        subtitle: text("subtitle"),
-        resourceTitle: text("resourceTitle").notNull(),
-        resourceSubtitle: text("resourceSubtitle")
-    },
-    (t) => [uniqueIndex("uniqueAuthPagePerOrgIdx").on(t.orgId)]
-);
-
 export const sites = sqliteTable("sites", {
     siteId: integer("siteId").primaryKey({ autoIncrement: true }),
     orgId: text("orgId")
@@ -885,4 +865,3 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
-export type OrgAuthPage = InferSelectModel<typeof orgAuthPages>;

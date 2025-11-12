@@ -1,4 +1,4 @@
-import { LoginPage } from "@server/db";
+import type { LoginPage, LoginPageBranding } from "@server/db";
 
 export type CreateLoginPageResponse = LoginPage;
 
@@ -9,3 +9,5 @@ export type GetLoginPageResponse = LoginPage;
 export type UpdateLoginPageResponse = LoginPage;
 
 export type LoadLoginPageResponse = LoginPage & { orgId: string };
+
+export type GetLoginPageBrandingResponse = LoginPageBranding;

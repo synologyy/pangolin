@@ -73,7 +73,7 @@ export default async function GeneralSettingsPage({
     if (subscribed) {
         navItems.push({
             title: t("authPage"),
-            href: `/{orgId}/settings/general/auth-pages`
+            href: `/{orgId}/settings/general/auth-page`
         });
     }
 

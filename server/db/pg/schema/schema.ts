@@ -65,24 +65,6 @@ export const orgDomains = pgTable("orgDomains", {
         .references(() => domains.domainId, { onDelete: "cascade" })
 });
 
-export const orgAuthPages = pgTable(
-    "orgAuthPages",
-    {
-        orgId: varchar("orgId")
-            .notNull()
-            .references(() => orgs.orgId, { onDelete: "cascade" }),
-        orgAuthPageId: serial("orgAuthPageId").primaryKey(),
-        logoUrl: text("logoUrl").notNull(),
-        logoWidth: integer("logoWidth").notNull(),
-        logoHeight: integer("logoHeight").notNull(),
-        title: text("title").notNull(),
-        subtitle: text("subtitle"),
-        resourceTitle: text("resourceTitle").notNull(),
-        resourceSubtitle: text("resourceSubtitle")
-    },
-    (t) => [uniqueIndex("uniqueAuthPagePerOrgIdx").on(t.orgId)]
-);
-
 export const sites = pgTable("sites", {
     siteId: serial("siteId").primaryKey(),
     orgId: varchar("orgId")
@@ -828,4 +810,3 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
-export type OrgAuthPage = InferSelectModel<typeof orgAuthPages>;
