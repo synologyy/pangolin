@@ -3,7 +3,7 @@ import { GetIdpResponse } from "@server/routers/idp";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import { HorizontalTabs } from "@app/components/HorizontalTabs";
+import { HorizontalTabs, TabItem } from "@app/components/HorizontalTabs";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { getTranslations } from "next-intl/server";
 
@@ -28,13 +28,13 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
         redirect("/admin/idp");
     }
 
-    const navItems: HorizontalTabs = [
+    const navItems: TabItem[] = [
         {
-            title: t('general'),
+            title: t("general"),
             href: `/admin/idp/${params.idpId}/general`
         },
         {
-            title: t('orgPolicies'),
+            title: t("orgPolicies"),
             href: `/admin/idp/${params.idpId}/policies`
         }
     ];
@@ -42,8 +42,8 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('idpSettings', { idpName: idp.idp.name })}
-                description={t('idpSettingsDescription')}
+                title={t("idpSettings", { idpName: idp.idp.name })}
+                description={t("idpSettingsDescription")}
             />
 
             <div className="space-y-6">
