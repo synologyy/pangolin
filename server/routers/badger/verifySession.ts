@@ -60,6 +60,7 @@ type BasicUserData = {
     username: string;
     email: string | null;
     name: string | null;
+    role: string | null;
 };
 
 export type VerifyUserResponse = {
@@ -883,7 +884,8 @@ async function isUserAllowedToAccessResource(
         return {
             username: user.username,
             email: user.email,
-            name: user.name
+            name: user.name,
+            role: user.role
         };
     }
 
@@ -896,7 +898,8 @@ async function isUserAllowedToAccessResource(
         return {
             username: user.username,
             email: user.email,
-            name: user.name
+            name: user.name,
+            role: user.role
         };
     }
 
