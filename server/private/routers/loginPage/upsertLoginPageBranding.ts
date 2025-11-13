@@ -38,8 +38,8 @@ const paramsSchema = z
 const bodySchema = z
     .object({
         logoUrl: z.string().url(),
-        logoWidth: z.number().min(1),
-        logoHeight: z.number().min(1),
+        logoWidth: z.coerce.number().min(1),
+        logoHeight: z.coerce.number().min(1),
         title: z.string(),
         subtitle: z.string().optional(),
         resourceTitle: z.string(),

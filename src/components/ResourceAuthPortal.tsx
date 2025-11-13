@@ -23,7 +23,7 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
-import { LockIcon, Binary, Key, User, Send, AtSign } from "lucide-react";
+import { LockIcon, Binary, Key, User, Send, AtSign, Regex } from "lucide-react";
 import {
     InputOTP,
     InputOTPGroup,
@@ -88,6 +88,15 @@ type ResourceAuthPortalProps = {
     redirect: string;
     idps?: LoginFormIDP[];
     orgId?: string;
+    branding?: {
+        title: string;
+        logoUrl: string;
+        logoWidth: number;
+        logoHeight: number;
+        subtitle: string | null;
+        resourceTitle: string;
+        resourceSubtitle: string | null;
+    } | null;
 };
 
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
@@ -104,7 +113,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         return colLength;
     };
 
-    const [numMethods, setNumMethods] = useState(getNumMethods());
+    const [numMethods] = useState(() => getNumMethods());
 
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const [pincodeError, setPincodeError] = useState<string | null>(null);
@@ -309,13 +318,37 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         }
     }
 
-    function getTitle() {
+    function replacePlaceholder(
+        stringWithPlaceholder: string,
+        data: Record<string, string>
+    ) {
+        let newString = stringWithPlaceholder;
+
+        const keys = Object.keys(data);
+
+        for (const key of keys) {
+            newString = newString.replace(
+                new RegExp(`{{${key}}}`, "gm"),
+                data[key]
+            );
+        }
+
+        return newString;
+    }
+
+    function getTitle(resourceName: string) {
         if (
             isUnlocked() &&
             build !== "oss" &&
-            env.branding.resourceAuthPage?.titleText
+            (!!env.branding.resourceAuthPage?.titleText ||
+                !!props.branding?.resourceTitle)
         ) {
-            return env.branding.resourceAuthPage.titleText;
+            if (props.branding?.resourceTitle) {
+                return replacePlaceholder(props.branding?.resourceTitle, {
+                    resourceName
+                });
+            }
+            return env.branding.resourceAuthPage?.titleText;
         }
         return t("authenticationRequired");
     }
@@ -324,10 +357,16 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         if (
             isUnlocked() &&
             build !== "oss" &&
-            env.branding.resourceAuthPage?.subtitleText
+            (env.branding.resourceAuthPage?.subtitleText ||
+                props.branding?.resourceSubtitle)
         ) {
-            return env.branding.resourceAuthPage.subtitleText
-                .split("{{resourceName}}")
+            if (props.branding?.resourceSubtitle) {
+                return replacePlaceholder(props.branding?.resourceSubtitle, {
+                    resourceName
+                });
+            }
+            return env.branding.resourceAuthPage?.subtitleText
+                ?.split("{{resourceName}}")
                 .join(resourceName);
         }
         return numMethods > 1
@@ -335,8 +374,16 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             : t("authenticationRequest", { name: resourceName });
     }
 
-    const logoWidth = isUnlocked() ? env.branding.logo?.authPage?.width || 100 : 100;
-    const logoHeight = isUnlocked() ? env.branding.logo?.authPage?.height || 100 : 100;
+    const logoWidth = isUnlocked()
+        ? (props.branding?.logoWidth ??
+          env.branding.logo?.authPage?.width ??
+          100)
+        : 100;
+    const logoHeight = isUnlocked()
+        ? (props.branding?.logoHeight ??
+          env.branding.logo?.authPage?.height ??
+          100)
+        : 100;
 
     return (
         <div>
@@ -377,15 +424,19 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                         <CardHeader>
                             {isUnlocked() &&
                                 build !== "oss" &&
-                                env.branding?.resourceAuthPage?.showLogo && (
+                                (env.branding?.resourceAuthPage?.showLogo ||
+                                    props.branding) && (
                                     <div className="flex flex-row items-center justify-center mb-3">
                                         <BrandingLogo
                                             height={logoHeight}
                                             width={logoWidth}
+                                            logoPath={props.branding?.logoUrl}
                                         />
                                     </div>
                                 )}
-                            <CardTitle>{getTitle()}</CardTitle>
+                            <CardTitle>
+                                {getTitle(props.resource.name)}
+                            </CardTitle>
                             <CardDescription>
                                 {getSubtitle(props.resource.name)}
                             </CardDescription>

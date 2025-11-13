@@ -19,7 +19,10 @@ import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import AutoLoginHandler from "@app/components/AutoLoginHandler";
 import { build } from "@server/build";
 import { headers } from "next/headers";
-import { GetLoginPageResponse } from "@server/routers/loginPage/types";
+import {
+    GetLoginPageBrandingResponse,
+    GetLoginPageResponse
+} from "@server/routers/loginPage/types";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 import { CheckOrgUserAccessResponse } from "@server/routers/org";
@@ -261,6 +264,23 @@ export default async function ResourceAuthPage(props: {
         }
     }
 
+    let loginPageBranding: Omit<
+        GetLoginPageBrandingResponse,
+        "loginPageBrandingId"
+    > | null = null;
+    try {
+        const res = await internal.get<
+            AxiosResponse<GetLoginPageBrandingResponse>
+        >(
+            `/org/${authInfo.orgId}/login-page-branding`,
+            await authCookieHeader()
+        );
+        if (res.status === 200) {
+            const { loginPageBrandingId, ...rest } = res.data.data;
+            loginPageBranding = rest;
+        }
+    } catch (error) {}
+
     return (
         <>
             {userIsUnauthorized && isSSOOnly ? (
@@ -283,6 +303,7 @@ export default async function ResourceAuthPage(props: {
                         redirect={redirectUrl}
                         idps={loginIdps}
                         orgId={build === "saas" ? authInfo.orgId : undefined}
+                        branding={loginPageBranding}
                     />
                 </div>
             )}

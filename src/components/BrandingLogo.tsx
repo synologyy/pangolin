@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type BrandingLogoProps = {
+    logoPath?: string;
     width: number;
     height: number;
 };
@@ -38,16 +39,17 @@ export default function BrandingLogo(props: BrandingLogoProps) {
             if (isUnlocked() && env.branding.logo?.darkPath) {
                 return env.branding.logo.darkPath;
             }
-            return  "/logo/word_mark_white.png";
+            return "/logo/word_mark_white.png";
         }
 
-        const path = getPath();
-        setPath(path);
-    }, [theme, env]);
+        setPath(props.logoPath ?? getPath());
+    }, [theme, env, props.logoPath]);
+
+    const Component = props.logoPath ? "img" : Image;
 
     return (
         path && (
-            <Image
+            <Component
                 src={path}
                 alt="Logo"
                 width={props.width}

@@ -69,8 +69,8 @@ const AuthPageFormSchema = z.object({
                 message: "Invalid logo URL, must be a valid image URL"
             }
         ),
-    logoWidth: z.number().min(1),
-    logoHeight: z.number().min(1),
+    logoWidth: z.coerce.number().min(1),
+    logoHeight: z.coerce.number().min(1),
     title: z.string(),
     subtitle: z.string().optional(),
     resourceTitle: z.string(),
@@ -102,8 +102,8 @@ export default function AuthPageBrandingForm({
         resolver: zodResolver(AuthPageFormSchema),
         defaultValues: {
             logoUrl: branding?.logoUrl ?? "",
-            logoWidth: branding?.logoWidth ?? 500,
-            logoHeight: branding?.logoHeight ?? 500,
+            logoWidth: branding?.logoWidth ?? 100,
+            logoHeight: branding?.logoHeight ?? 100,
             title: branding?.title ?? `Log in to {{orgName}}`,
             subtitle: branding?.subtitle ?? `Log in to {{orgName}}`,
             resourceTitle:
@@ -240,7 +240,7 @@ export default function AuthPageBrandingForm({
 
                                         <FormField
                                             control={form.control}
-                                            name="logoWidth"
+                                            name="logoHeight"
                                             render={({ field }) => (
                                                 <FormItem className="grow">
                                                     <FormLabel>
