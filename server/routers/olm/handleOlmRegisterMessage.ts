@@ -42,7 +42,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 olm.userId,
                 olm.olmId,
                 olm.name || "User Device",
-                doNotCreateNewClient ? true : false
+                // doNotCreateNewClient ? true : false
+                true // for now never create a new client automatically because we create the users clients when they are added to the org
             );
         } catch (err) {
             logger.error(
