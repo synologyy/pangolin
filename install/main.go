@@ -238,7 +238,6 @@ func main() {
 				}
 
 				fmt.Println("CrowdSec installed successfully!")
-				return
 			}
 		}
 	}
