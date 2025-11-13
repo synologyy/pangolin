@@ -68,7 +68,7 @@ export async function sendSupportEmail(
                 {
                     name: req.user?.email || "Support User",
                     to: "support@pangolin.net",
-                    from: req.user?.email || config.getNoReplyEmail(),
+                    from: config.getNoReplyEmail(),
                     subject: `Support Request: ${subject}`
                 }
             );
