@@ -1,7 +1,8 @@
 import AuthPageBrandingForm from "@app/components/AuthPageBrandingForm";
 import AuthPageSettings from "@app/components/private/AuthPageSettings";
 import { SettingsContainer } from "@app/components/Settings";
-import { priv } from "@app/lib/api";
+import { internal, priv } from "@app/lib/api";
+import { authCookieHeader } from "@app/lib/api/cookies";
 import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
 import { pullEnv } from "@app/lib/pullEnv";
 import { build } from "@server/build";
@@ -37,8 +38,9 @@ export default async function AuthPage(props: AuthPageProps) {
 
     let loginPage: GetLoginPageResponse | null = null;
     try {
-        const res = await priv.get<AxiosResponse<GetLoginPageResponse>>(
-            `/org/${orgId}/login-page`
+        const res = await internal.get<AxiosResponse<GetLoginPageResponse>>(
+            `/org/${orgId}/login-page`,
+            await authCookieHeader()
         );
         if (res.status === 200) {
             loginPage = res.data.data;
@@ -47,9 +49,9 @@ export default async function AuthPage(props: AuthPageProps) {
 
     let loginPageBranding: GetLoginPageBrandingResponse | null = null;
     try {
-        const res = await priv.get<AxiosResponse<GetLoginPageBrandingResponse>>(
-            `/org/${orgId}/login-page-branding`
-        );
+        const res = await internal.get<
+            AxiosResponse<GetLoginPageBrandingResponse>
+        >(`/org/${orgId}/login-page-branding`, await authCookieHeader());
         if (res.status === 200) {
             loginPageBranding = res.data.data;
         }

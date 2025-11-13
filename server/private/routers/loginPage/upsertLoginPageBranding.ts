@@ -143,7 +143,7 @@ export async function upsertLoginPageBranding(
             message: existingLoginPageBranding
                 ? "Login page branding updated successfully"
                 : "Login page branding created successfully",
-            status: HttpCode.CREATED
+            status: existingLoginPageBranding ? HttpCode.OK : HttpCode.CREATED
         });
     } catch (error) {
         logger.error(error);

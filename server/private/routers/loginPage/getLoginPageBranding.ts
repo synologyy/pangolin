@@ -92,7 +92,7 @@ export async function getLoginPageBranding(
             success: true,
             error: false,
             message: "Login page branding retrieved successfully",
-            status: HttpCode.CREATED
+            status: HttpCode.OK
         });
     } catch (error) {
         logger.error(error);

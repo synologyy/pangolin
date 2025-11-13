@@ -102,7 +102,7 @@ export async function deleteLoginPageBranding(
             success: true,
             error: false,
             message: "Login page branding deleted successfully",
-            status: HttpCode.CREATED
+            status: HttpCode.OK
         });
     } catch (error) {
         logger.error(error);
