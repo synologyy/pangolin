@@ -827,15 +827,15 @@ authenticated.put(
     client.createClient
 );
 
-authenticated.put(
-    "/org/:orgId/user/:userId/client",
-    verifyClientsEnabled,
-    verifyApiKeyOrgAccess,
-    verifyApiKeyUserAccess,
-    verifyApiKeyHasAction(ActionsEnum.createClient),
-    logActionAudit(ActionsEnum.createClient),
-    client.createUserClient
-);
+// authenticated.put(
+//     "/org/:orgId/user/:userId/client",
+//     verifyClientsEnabled,
+//     verifyApiKeyOrgAccess,
+//     verifyApiKeyUserAccess,
+//     verifyApiKeyHasAction(ActionsEnum.createClient),
+//     logActionAudit(ActionsEnum.createClient),
+//     client.createUserClient
+// );
 
 authenticated.delete(
     "/client/:clientId",

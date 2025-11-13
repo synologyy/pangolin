@@ -168,7 +168,7 @@ export async function createLoginPage(
                     .select()
                     .from(exitNodes)
                     .where(and(eq(exitNodes.type, "gerbil"), eq(exitNodes.online, true)))
-                    .limit(10); 
+                    .limit(10);
             }
 
             // select a random exit node
