@@ -512,9 +512,18 @@ export default function ReverseProxyTargets(props: {
                 port: target.port,
                 enabled: target.enabled,
                 hcEnabled: target.hcEnabled,
-                hcPath: target.hcPath,
-                hcInterval: target.hcInterval,
-                hcTimeout: target.hcTimeout
+                hcPath: target.hcPath || null,
+                hcScheme: target.hcScheme || null,
+                hcHostname: target.hcHostname || null,
+                hcPort: target.hcPort || null,
+                hcInterval: target.hcInterval || null,
+                hcTimeout: target.hcTimeout || null,
+                hcHeaders: target.hcHeaders || null,
+                hcFollowRedirects: target.hcFollowRedirects || null,
+                hcMethod: target.hcMethod || null,
+                hcStatus: target.hcStatus || null,
+                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                hcMode: target.hcMode || null
             };
 
             // Only include path-related fields for HTTP resources
@@ -718,7 +727,9 @@ export default function ReverseProxyTargets(props: {
                     hcHeaders: target.hcHeaders || null,
                     hcFollowRedirects: target.hcFollowRedirects || null,
                     hcMethod: target.hcMethod || null,
-                    hcStatus: target.hcStatus || null
+                    hcStatus: target.hcStatus || null,
+                    hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                    hcMode: target.hcMode || null
                 };
 
                 // Only include path-related fields for HTTP resources
@@ -1814,6 +1825,7 @@ export default function ReverseProxyTargets(props: {
                             30
                     }}
                     onChanges={async (config) => {
+                        console.log("here");
                         if (selectedTargetForHealthCheck) {
                             console.log(config);
                             updateTargetHealthCheck(
