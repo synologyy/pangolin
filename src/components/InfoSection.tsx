@@ -50,5 +50,11 @@ export function InfoSectionContent({
     children: React.ReactNode;
     className?: string;
 }) {
-    return <div className={cn("break-words", className)}>{children}</div>;
+    return (
+        <div className={cn("min-w-0 overflow-hidden", className)}>
+            <div className="w-full truncate [&>div.flex]:min-w-0 [&>div.flex]:!whitespace-normal [&>div.flex>span]:truncate [&>div.flex>a]:truncate">
+                {children}
+            </div>
+        </div>
+    );
 }
