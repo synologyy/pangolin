@@ -53,8 +53,8 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
                                         authInfo.sso ||
                                         authInfo.whitelist ||
                                         authInfo.headerAuth ? (
-                                        <div className="flex items-start space-x-2 text-green-500">
-                                            <ShieldCheck className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                        <div className="flex items-start space-x-2">
+                                            <ShieldCheck className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-500" />
                                             <span>{t("protected")}</span>
                                         </div>
                                     ) : (
@@ -163,13 +163,13 @@ export default function ResourceInfoBox({ }: ResourceInfoBoxType) {
                         <InfoSectionTitle>{t("visibility")}</InfoSectionTitle>
                         <InfoSectionContent>
                             {resource.enabled ? (
-                                <div className="flex items-center space-x-2 text-green-500">
-                                    <Eye className="w-4 h-4 flex-shrink-0" />
+                                <div className="flex items-center space-x-2">
+                                    <Eye className="w-4 h-4 flex-shrink-0 text-green-500" />
                                     <span>{t("enabled")}</span>
                                 </div>
                             ) : (
-                                <div className="flex items-center space-x-2 text-neutral-500">
-                                    <EyeOff className="w-4 h-4 flex-shrink-0" />
+                                <div className="flex items-center space-x-2">
+                                    <EyeOff className="w-4 h-4 flex-shrink-0 text-neutral-500" />
                                     <span>{t("disabled")}</span>
                                 </div>
                             )}
