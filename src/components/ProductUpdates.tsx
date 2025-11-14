@@ -188,12 +188,12 @@ function ProductUpdatesListPopup({
                         <div className="rounded-md bg-muted-foreground/20 p-2">
                             <BellIcon className="flex-none size-4" />
                         </div>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center">
+                        <div className="flex flex-col gap-2 flex-1">
+                            <div className="flex justify-between items-center w-full">
                                 <p className="font-medium text-start">
                                     {t("productUpdateWhatsNew")}
                                 </p>
-                                <div className="p-1 cursor-pointer">
+                                <div className="p-1 cursor-pointer ml-auto">
                                     <ChevronRightIcon className="size-4 flex-none" />
                                 </div>
                             </div>

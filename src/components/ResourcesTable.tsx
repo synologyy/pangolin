@@ -454,7 +454,7 @@ export default function ResourcesTable({
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 h-8 px-0"
+                        className="flex items-center gap-2 h-8 px-0 font-normal"
                     >
                         <StatusIcon status={overallStatus} />
                         <span className="text-sm">
