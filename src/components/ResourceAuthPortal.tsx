@@ -49,6 +49,8 @@ import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext"
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { usePaidStatus } from "@app/hooks/usePaidStatus";
 
 const pinSchema = z.object({
     pin: z
@@ -98,6 +100,19 @@ type ResourceAuthPortalProps = {
         resourceSubtitle: string | null;
     } | null;
 };
+
+/**
+ * TODO: remove
+- Auth page domain => only in SaaS 
+- Branding => saas & enterprise for a paid user ?
+- ...
+- resource auth page: `/auth/resource/[guid]` || (auth page domain/...)
+- org auth page: `/auth/org/[orgId]` 
+    => only in SaaS 
+    => branding org title/subtitle only in SaaS 
+    => unauthenticated 
+
+ */
 
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     const router = useRouter();

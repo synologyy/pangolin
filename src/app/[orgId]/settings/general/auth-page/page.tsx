@@ -38,12 +38,14 @@ export default async function AuthPage(props: AuthPageProps) {
 
     let loginPage: GetLoginPageResponse | null = null;
     try {
-        const res = await internal.get<AxiosResponse<GetLoginPageResponse>>(
-            `/org/${orgId}/login-page`,
-            await authCookieHeader()
-        );
-        if (res.status === 200) {
-            loginPage = res.data.data;
+        if (build === "saas") {
+            const res = await internal.get<AxiosResponse<GetLoginPageResponse>>(
+                `/org/${orgId}/login-page`,
+                await authCookieHeader()
+            );
+            if (res.status === 200) {
+                loginPage = res.data.data;
+            }
         }
     } catch (error) {}
 
@@ -59,7 +61,7 @@ export default async function AuthPage(props: AuthPageProps) {
 
     return (
         <SettingsContainer>
-            <AuthPageSettings loginPage={loginPage} />
+            {build === "saas" && <AuthPageSettings loginPage={loginPage} />}
             <AuthPageBrandingForm orgId={orgId} branding={loginPageBranding} />
         </SettingsContainer>
     );
