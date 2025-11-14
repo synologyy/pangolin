@@ -72,6 +72,38 @@ export class RateLimitService {
         return `ratelimit:${clientId}:${messageType}`;
     }
 
+    // Helper function to clean up old timestamp fields from a Redis hash
+    private async cleanupOldTimestamps(key: string, windowStart: number): Promise<void> {
+        if (!redisManager.isRedisEnabled()) return;
+
+        try {
+            const client = redisManager.getClient();
+            if (!client) return;
+
+            // Get all fields in the hash
+            const allData = await redisManager.hgetall(key);
+            if (!allData || Object.keys(allData).length === 0) return;
+
+            // Find fields that are older than the window
+            const fieldsToDelete: string[] = [];
+            for (const timestamp of Object.keys(allData)) {
+                const time = parseInt(timestamp);
+                if (time < windowStart) {
+                    fieldsToDelete.push(timestamp);
+                }
+            }
+
+            // Delete old fields in batch
+            if (fieldsToDelete.length > 0) {
+                await client.hdel(key, ...fieldsToDelete);
+                logger.debug(`Cleaned up ${fieldsToDelete.length} old timestamp fields from ${key}`);
+            }
+        } catch (error) {
+            logger.error(`Failed to cleanup old timestamps for key ${key}:`, error);
+            // Don't throw - cleanup failures shouldn't block rate limiting
+        }
+    }
+
     // Helper function to sync local rate limit data to Redis
     private async syncRateLimitToRedis(
         clientId: string,
@@ -81,7 +113,11 @@ export class RateLimitService {
 
         try {
             const currentTime = Math.floor(Date.now() / 1000);
+            const windowStart = currentTime - RATE_LIMIT_WINDOW;
             const globalKey = this.getRateLimitKey(clientId);
+
+            // Clean up old timestamp fields before writing
+            await this.cleanupOldTimestamps(globalKey, windowStart);
 
             // Get current value and add pending count
             const currentValue = await redisManager.hget(
@@ -93,7 +129,7 @@ export class RateLimitService {
             ).toString();
             await redisManager.hset(globalKey, currentTime.toString(), newValue);
 
-            // Set TTL using the client directly
+            // Set TTL using the client directly - this prevents the key from persisting forever
             if (redisManager.getClient()) {
                 await redisManager
                     .getClient()
@@ -119,7 +155,11 @@ export class RateLimitService {
 
         try {
             const currentTime = Math.floor(Date.now() / 1000);
+            const windowStart = currentTime - RATE_LIMIT_WINDOW;
             const messageTypeKey = this.getMessageTypeRateLimitKey(clientId, messageType);
+
+            // Clean up old timestamp fields before writing
+            await this.cleanupOldTimestamps(messageTypeKey, windowStart);
 
             // Get current value and add pending count
             const currentValue = await redisManager.hget(
@@ -135,7 +175,7 @@ export class RateLimitService {
                 newValue
             );
 
-            // Set TTL using the client directly
+            // Set TTL using the client directly - this prevents the key from persisting forever
             if (redisManager.getClient()) {
                 await redisManager
                     .getClient()
@@ -170,6 +210,10 @@ export class RateLimitService {
 
         try {
             const globalKey = this.getRateLimitKey(clientId);
+            
+            // Clean up old timestamp fields before reading
+            await this.cleanupOldTimestamps(globalKey, windowStart);
+            
             const globalRateLimitData = await redisManager.hgetall(globalKey);
 
             let count = 0;
@@ -215,6 +259,10 @@ export class RateLimitService {
 
         try {
             const messageTypeKey = this.getMessageTypeRateLimitKey(clientId, messageType);
+            
+            // Clean up old timestamp fields before reading
+            await this.cleanupOldTimestamps(messageTypeKey, windowStart);
+            
             const messageTypeRateLimitData = await redisManager.hgetall(messageTypeKey);
 
             let count = 0;
