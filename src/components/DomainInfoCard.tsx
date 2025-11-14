@@ -9,6 +9,7 @@ import {
 } from "@app/components/InfoSection";
 import { useTranslations } from "next-intl";
 import { Badge } from "./ui/badge";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 
 type DomainInfoCardProps = {
     failed: boolean;
@@ -22,6 +23,7 @@ export default function DomainInfoCard({
     type
 }: DomainInfoCardProps) {
     const t = useTranslations();
+    const env = useEnvContext();
 
     const getTypeDisplay = (type: string) => {
         switch (type) {
@@ -46,32 +48,34 @@ export default function DomainInfoCard({
                             <span>{getTypeDisplay(type ? type : "")}</span>
                         </InfoSectionContent>
                     </InfoSection>
-                    <InfoSection>
-                        <InfoSectionTitle>{t("status")}</InfoSectionTitle>
-                        <InfoSectionContent>
-                            {failed ? (
-                                <Badge variant="red">
-                                    {t("failed", { fallback: "Failed" })}
-                                </Badge>
-                            ) : verified ? (
-                                type === "wildcard" ? (
-                                    <Badge variant="outlinePrimary">
-                                        {t("manual", {
-                                            fallback: "Manual"
-                                        })}
+                    {env.env.flags.usePangolinDns && (
+                        <InfoSection>
+                            <InfoSectionTitle>{t("status")}</InfoSectionTitle>
+                            <InfoSectionContent>
+                                {failed ? (
+                                    <Badge variant="red">
+                                        {t("failed", { fallback: "Failed" })}
                                     </Badge>
+                                ) : verified ? (
+                                    type === "wildcard" ? (
+                                        <Badge variant="outlinePrimary">
+                                            {t("manual", {
+                                                fallback: "Manual"
+                                            })}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="green">
+                                            {t("verified")}
+                                        </Badge>
+                                    )
                                 ) : (
-                                    <Badge variant="green">
-                                        {t("verified")}
+                                    <Badge variant="yellow">
+                                        {t("pending", { fallback: "Pending" })}
                                     </Badge>
-                                )
-                            ) : (
-                                <Badge variant="yellow">
-                                    {t("pending", { fallback: "Pending" })}
-                                </Badge>
-                            )}
-                        </InfoSectionContent>
-                    </InfoSection>
+                                )}
+                            </InfoSectionContent>
+                        </InfoSection>
+                    )}
                 </InfoSections>
             </AlertDescription>
         </Alert>

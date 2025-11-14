@@ -11,4 +11,6 @@
  * This file is not licensed under the AGPLv3.
  */
 
-export * from "./sendSupportEmail";
+export * from "./reGenerateClientSecret";
+export * from "./reGenerateSiteSecret";
+export * from "./reGenerateExitNodeSecret";

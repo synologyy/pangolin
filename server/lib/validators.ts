@@ -1,4 +1,5 @@
 import z from "zod";
+import ipaddr from "ipaddr.js";
 
 export function isValidCIDR(cidr: string): boolean {
     return z.string().cidr().safeParse(cidr).success;
@@ -68,11 +69,11 @@ export function isUrlValid(url: string | undefined) {
     if (!url) return true; // the link is optional in the schema so if it's empty it's valid
     var pattern = new RegExp(
         "^(https?:\\/\\/)?" + // protocol
-            "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-            "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-            "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-            "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-            "(\\#[-a-z\\d_]*)?$",
+        "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
+        "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
+        "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
+        "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
+        "(\\#[-a-z\\d_]*)?$",
         "i"
     );
     return !!pattern.test(url);
@@ -83,12 +84,15 @@ export function isTargetValid(value: string | undefined) {
 
     const DOMAIN_REGEX =
         /^[a-zA-Z0-9_](?:[a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?(?:\.[a-zA-Z0-9_](?:[a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_])?)*$/;
-    const IPV4_REGEX =
-        /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    const IPV6_REGEX = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
+    // const IPV4_REGEX =
+    //     /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    // const IPV6_REGEX = /^(?:[A-F0-9]{1,4}:){7}[A-F0-9]{1,4}$/i;
 
-    if (IPV4_REGEX.test(value) || IPV6_REGEX.test(value)) {
-        return true;
+    try {
+        const addr = ipaddr.parse(value);
+        return addr.kind() === "ipv4" || addr.kind() === "ipv6";
+    } catch {
+        // fall through to domain regex check
     }
 
     return DOMAIN_REGEX.test(value);
@@ -169,10 +173,10 @@ export function isSecondLevelDomain(domain: string): boolean {
     }
 
     const trimmedDomain = domain.trim().toLowerCase();
-    
+
     // Split into parts
     const parts = trimmedDomain.split('.');
-    
+
     // Should have exactly 2 parts for a second-level domain (e.g., "example.com")
     if (parts.length !== 2) {
         return false;

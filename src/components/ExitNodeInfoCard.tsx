@@ -1,7 +1,7 @@
 "use client";
 
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useClientContext } from "@app/hooks/useClientContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 import {
     InfoSection,
     InfoSectionContent,
@@ -9,22 +9,23 @@ import {
     InfoSectionTitle
 } from "@app/components/InfoSection";
 import { useTranslations } from "next-intl";
+import { useRemoteExitNodeContext } from "@app/hooks/useRemoteExitNodeContext";
 
-type ClientInfoCardProps = {};
+type ExitNodeInfoCardProps = {};
 
-export default function SiteInfoCard({}: ClientInfoCardProps) {
-    const { client, updateClient } = useClientContext();
+export default function ExitNodeInfoCard({}: ExitNodeInfoCardProps) {
+    const { remoteExitNode, updateRemoteExitNode } = useRemoteExitNodeContext();
     const t = useTranslations();
 
     return (
         <Alert>
-            <AlertDescription>
+            <AlertDescription className="mt-4">
                 <InfoSections cols={2}>
                         <>
                             <InfoSection>
                                 <InfoSectionTitle>{t("status")}</InfoSectionTitle>
                                 <InfoSectionContent>
-                                    {client.online ? (
+                                    {remoteExitNode.online ? (
                                         <div className="text-green-500 flex items-center space-x-2">
                                             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                             <span>{t("online")}</span>
@@ -41,7 +42,7 @@ export default function SiteInfoCard({}: ClientInfoCardProps) {
                     <InfoSection>
                         <InfoSectionTitle>{t("address")}</InfoSectionTitle>
                         <InfoSectionContent>
-                            {client.subnet.split("/")[0]}
+                            {remoteExitNode.address}
                         </InfoSectionContent>
                     </InfoSection>
                 </InfoSections>

@@ -501,25 +501,6 @@ export default function ReverseProxyTargets(props: {
             return;
         }
 
-        // Check if target with same IP, port and method already exists
-        const isDuplicate = targets.some(
-            (t) =>
-                t.targetId !== target.targetId &&
-                t.ip === target.ip &&
-                t.port === target.port &&
-                t.method === target.method &&
-                t.siteId === target.siteId
-        );
-
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorDuplicate"),
-                description: t("targetErrorDuplicateDescription")
-            });
-            return;
-        }
-
         try {
             setTargetsLoading(true);
 
@@ -531,9 +512,18 @@ export default function ReverseProxyTargets(props: {
                 port: target.port,
                 enabled: target.enabled,
                 hcEnabled: target.hcEnabled,
-                hcPath: target.hcPath,
-                hcInterval: target.hcInterval,
-                hcTimeout: target.hcTimeout
+                hcPath: target.hcPath || null,
+                hcScheme: target.hcScheme || null,
+                hcHostname: target.hcHostname || null,
+                hcPort: target.hcPort || null,
+                hcInterval: target.hcInterval || null,
+                hcTimeout: target.hcTimeout || null,
+                hcHeaders: target.hcHeaders || null,
+                hcFollowRedirects: target.hcFollowRedirects || null,
+                hcMethod: target.hcMethod || null,
+                hcStatus: target.hcStatus || null,
+                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                hcMode: target.hcMode || null
             };
 
             // Only include path-related fields for HTTP resources
@@ -585,24 +575,6 @@ export default function ReverseProxyTargets(props: {
     }
 
     async function addTarget(data: z.infer<typeof addTargetSchema>) {
-        // Check if target with same IP, port and method already exists
-        const isDuplicate = targets.some(
-            (target) =>
-                target.ip === data.ip &&
-                target.port === data.port &&
-                target.method === data.method &&
-                target.siteId === data.siteId
-        );
-
-        if (isDuplicate) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorDuplicate"),
-                description: t("targetErrorDuplicateDescription")
-            });
-            return;
-        }
-
         // if (site && site.type == "wireguard" && site.subnet) {
         //     // make sure that the target IP is within the site subnet
         //     const targetIp = data.ip;
@@ -755,7 +727,9 @@ export default function ReverseProxyTargets(props: {
                     hcHeaders: target.hcHeaders || null,
                     hcFollowRedirects: target.hcFollowRedirects || null,
                     hcMethod: target.hcMethod || null,
-                    hcStatus: target.hcStatus || null
+                    hcStatus: target.hcStatus || null,
+                    hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                    hcMode: target.hcMode || null
                 };
 
                 // Only include path-related fields for HTTP resources
@@ -899,7 +873,7 @@ export default function ReverseProxyTargets(props: {
 
         const healthCheckColumn: ColumnDef<LocalTarget> = {
             accessorKey: "healthCheck",
-            header: t("healthCheck"),
+            header: () => (<span className="p-3">{t("healthCheck")}</span>),
             cell: ({ row }) => {
                 const status = row.original.hcHealth || "unknown";
                 const isEnabled = row.original.hcEnabled;
@@ -971,7 +945,7 @@ export default function ReverseProxyTargets(props: {
 
         const matchPathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "path",
-            header: t("matchPath"),
+            header: () => (<span className="p-3">{t("matchPath")}</span>),
             cell: ({ row }) => {
                 const hasPathMatch = !!(
                     row.original.path || row.original.pathMatchType
@@ -1033,7 +1007,7 @@ export default function ReverseProxyTargets(props: {
 
         const addressColumn: ColumnDef<LocalTarget> = {
             accessorKey: "address",
-            header: t("address"),
+            header: () => (<span className="p-3">{t("address")}</span>),
             cell: ({ row }) => {
                 const selectedSite = sites.find(
                     (site) => site.siteId === row.original.siteId
@@ -1052,7 +1026,7 @@ export default function ReverseProxyTargets(props: {
 
                 return (
                     <div className="flex items-center w-full">
-                        <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input shadow-2xs rounded-md">
+                        <div className="flex items-center w-full justify-start py-0 space-x-2 px-0 cursor-default border border-input rounded-md">
                             {selectedSite &&
                                 selectedSite.type === "newt" &&
                                 (() => {
@@ -1247,7 +1221,7 @@ export default function ReverseProxyTargets(props: {
 
         const rewritePathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "rewritePath",
-            header: t("rewritePath"),
+            header: () => (<span className="p-3">{t("rewritePath")}</span>),
             cell: ({ row }) => {
                 const hasRewritePath = !!(
                     row.original.rewritePath || row.original.rewritePathType
@@ -1317,7 +1291,7 @@ export default function ReverseProxyTargets(props: {
 
         const enabledColumn: ColumnDef<LocalTarget> = {
             accessorKey: "enabled",
-            header: t("enabled"),
+            header: () => (<span className="p-3">{t("enabled")}</span>),
             cell: ({ row }) => (
                 <div className="flex items-center justify-center w-full">
                     <Switch
@@ -1338,8 +1312,9 @@ export default function ReverseProxyTargets(props: {
 
         const actionsColumn: ColumnDef<LocalTarget> = {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => (
-                <div className="flex items-center justify-end w-full">
+                <div className="flex items-center w-full">
                     <Button
                         variant="outline"
                         onClick={() => removeTarget(row.original.targetId)}
@@ -1850,6 +1825,7 @@ export default function ReverseProxyTargets(props: {
                             30
                     }}
                     onChanges={async (config) => {
+                        console.log("here");
                         if (selectedTargetForHealthCheck) {
                             console.log(config);
                             updateTargetHealthCheck(
