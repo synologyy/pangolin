@@ -37,7 +37,7 @@ async function createNewLicense(orgId: string, licenseData: any): Promise<any> {
 
         const data = await response.json();
 
-        logger.debug("Fossorial API response:", {data});
+        logger.debug("Fossorial API response:", { data });
         return data;
     } catch (error) {
         console.error("Error creating new license:", error);

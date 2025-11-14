@@ -1,105 +1,175 @@
+import z from "zod";
 import { Env } from "./types/env";
 
+const envSchema = z.object({
+    // Server configuration
+    NEXT_PORT: z.string(),
+    SERVER_EXTERNAL_PORT: z.string(),
+    SESSION_COOKIE_NAME: z.string(),
+    RESOURCE_ACCESS_TOKEN_PARAM: z.string(),
+    RESOURCE_SESSION_REQUEST_PARAM: z.string(),
+    RESOURCE_ACCESS_TOKEN_HEADERS_ID: z.string(),
+    RESOURCE_ACCESS_TOKEN_HEADERS_TOKEN: z.string(),
+    REO_CLIENT_ID: z.string().optional(),
+    MAXMIND_DB_PATH: z.string().optional(),
+
+    // App configuration
+    ENVIRONMENT: z.string(),
+    SANDBOX_MODE: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    APP_VERSION: z.string(),
+    DASHBOARD_URL: z.string(),
+    PRODUCT_UPDATES_NOTIFICATION_ENABLED: z
+        .string()
+        .default("true")
+        .transform((val) => val === "true"),
+    NEW_RELEASES_NOTIFICATION_ENABLED: z
+        .string()
+        .default("true")
+        .transform((val) => val === "true"),
+
+    // Email configuration
+    EMAIL_ENABLED: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+
+    // Feature flags
+    DISABLE_USER_CREATE_ORG: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    DISABLE_SIGNUP_WITHOUT_INVITE: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    FLAGS_EMAIL_VERIFICATION_REQUIRED: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    FLAGS_ALLOW_RAW_RESOURCES: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    FLAGS_DISABLE_LOCAL_SITES: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    FLAGS_DISABLE_BASIC_WIREGUARD_SITES: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    FLAGS_ENABLE_CLIENTS: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    HIDE_SUPPORTER_KEY: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+    USE_PANGOLIN_DNS: z
+        .string()
+        .default("false")
+        .transform((val) => val === "true"),
+
+    // Branding configuration (all optional)
+    BRANDING_APP_NAME: z.string().optional(),
+    BACKGROUND_IMAGE_PATH: z.string().optional(),
+    BRANDING_LOGO_LIGHT_PATH: z.string().optional(),
+    BRANDING_LOGO_DARK_PATH: z.string().optional(),
+    BRANDING_LOGO_AUTH_WIDTH: z.coerce.number().optional(),
+    BRANDING_LOGO_AUTH_HEIGHT: z.coerce.number().optional(),
+    BRANDING_LOGO_NAVBAR_WIDTH: z.coerce.number().optional(),
+    BRANDING_LOGO_NAVBAR_HEIGHT: z.coerce.number().optional(),
+    LOGIN_PAGE_TITLE_TEXT: z.string().optional(),
+    LOGIN_PAGE_SUBTITLE_TEXT: z.string().optional(),
+    SIGNUP_PAGE_TITLE_TEXT: z.string().optional(),
+    SIGNUP_PAGE_SUBTITLE_TEXT: z.string().optional(),
+    RESOURCE_AUTH_PAGE_SHOW_LOGO: z
+        .string()
+        .transform((val) => val === "true")
+        .optional(),
+    RESOURCE_AUTH_PAGE_HIDE_POWERED_BY: z
+        .string()
+        .transform((val) => val === "true")
+        .optional(),
+    RESOURCE_AUTH_PAGE_TITLE_TEXT: z.string().optional(),
+    RESOURCE_AUTH_PAGE_SUBTITLE_TEXT: z.string().optional(),
+    BRANDING_FOOTER: z.string().optional()
+});
+
 export function pullEnv(): Env {
+    const env = envSchema.parse(process.env);
+
     return {
         server: {
-            nextPort: process.env.NEXT_PORT as string,
-            externalPort: process.env.SERVER_EXTERNAL_PORT as string,
-            sessionCookieName: process.env.SESSION_COOKIE_NAME as string,
-            resourceAccessTokenParam: process.env
-                .RESOURCE_ACCESS_TOKEN_PARAM as string,
-            resourceSessionRequestParam: process.env
-                .RESOURCE_SESSION_REQUEST_PARAM as string,
-            resourceAccessTokenHeadersId: process.env
-                .RESOURCE_ACCESS_TOKEN_HEADERS_ID as string,
-            resourceAccessTokenHeadersToken: process.env
-                .RESOURCE_ACCESS_TOKEN_HEADERS_TOKEN as string,
-            reoClientId: process.env.REO_CLIENT_ID as string,
-            maxmind_db_path: process.env.MAXMIND_DB_PATH as string
+            nextPort: env.NEXT_PORT,
+            externalPort: env.SERVER_EXTERNAL_PORT,
+            sessionCookieName: env.SESSION_COOKIE_NAME,
+            resourceAccessTokenParam: env.RESOURCE_ACCESS_TOKEN_PARAM,
+            resourceSessionRequestParam: env.RESOURCE_SESSION_REQUEST_PARAM,
+            resourceAccessTokenHeadersId: env.RESOURCE_ACCESS_TOKEN_HEADERS_ID,
+            resourceAccessTokenHeadersToken:
+                env.RESOURCE_ACCESS_TOKEN_HEADERS_TOKEN,
+            reoClientId: env.REO_CLIENT_ID,
+            maxmind_db_path: env.MAXMIND_DB_PATH
         },
         app: {
-            environment: process.env.ENVIRONMENT as string,
-            sandbox_mode: process.env.SANDBOX_MODE === "true" ? true : false,
-            version: process.env.APP_VERSION as string,
-            dashboardUrl: process.env.DASHBOARD_URL as string
+            environment: env.ENVIRONMENT,
+            sandbox_mode: env.SANDBOX_MODE,
+            version: env.APP_VERSION,
+            dashboardUrl: env.DASHBOARD_URL,
+            notifications: {
+                product_updates: env.PRODUCT_UPDATES_NOTIFICATION_ENABLED,
+                new_releases: env.NEW_RELEASES_NOTIFICATION_ENABLED
+            }
         },
         email: {
-            emailEnabled: process.env.EMAIL_ENABLED === "true" ? true : false
+            emailEnabled: env.EMAIL_ENABLED
         },
         flags: {
-            disableUserCreateOrg:
-                process.env.DISABLE_USER_CREATE_ORG === "true" ? true : false,
-            disableSignupWithoutInvite:
-                process.env.DISABLE_SIGNUP_WITHOUT_INVITE === "true"
-                    ? true
-                    : false,
-            emailVerificationRequired:
-                process.env.FLAGS_EMAIL_VERIFICATION_REQUIRED === "true"
-                    ? true
-                    : false,
-            allowRawResources:
-                process.env.FLAGS_ALLOW_RAW_RESOURCES === "true" ? true : false,
-            disableLocalSites:
-                process.env.FLAGS_DISABLE_LOCAL_SITES === "true" ? true : false,
-            disableBasicWireguardSites:
-                process.env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES === "true"
-                    ? true
-                    : false,
-            enableClients:
-                process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
-            hideSupporterKey:
-                process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
-            usePangolinDns:
-                process.env.USE_PANGOLIN_DNS === "true"
-                    ? true
-                    : false
+            disableUserCreateOrg: env.DISABLE_USER_CREATE_ORG,
+            disableSignupWithoutInvite: env.DISABLE_SIGNUP_WITHOUT_INVITE,
+            emailVerificationRequired: env.FLAGS_EMAIL_VERIFICATION_REQUIRED,
+            allowRawResources: env.FLAGS_ALLOW_RAW_RESOURCES,
+            disableLocalSites: env.FLAGS_DISABLE_LOCAL_SITES,
+            disableBasicWireguardSites: env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES,
+            enableClients: env.FLAGS_ENABLE_CLIENTS,
+            hideSupporterKey: env.HIDE_SUPPORTER_KEY,
+            usePangolinDns: env.USE_PANGOLIN_DNS
         },
-
         branding: {
-            appName: process.env.BRANDING_APP_NAME as string,
-            background_image_path: process.env.BACKGROUND_IMAGE_PATH as string,
+            appName: env.BRANDING_APP_NAME,
+            background_image_path: env.BACKGROUND_IMAGE_PATH,
             logo: {
-                lightPath: process.env.BRANDING_LOGO_LIGHT_PATH as string,
-                darkPath: process.env.BRANDING_LOGO_DARK_PATH as string,
+                lightPath: env.BRANDING_LOGO_LIGHT_PATH,
+                darkPath: env.BRANDING_LOGO_DARK_PATH,
                 authPage: {
-                    width: parseInt(
-                        process.env.BRANDING_LOGO_AUTH_WIDTH as string
-                    ),
-                    height: parseInt(
-                        process.env.BRANDING_LOGO_AUTH_HEIGHT as string
-                    )
+                    width: env.BRANDING_LOGO_AUTH_WIDTH,
+                    height: env.BRANDING_LOGO_AUTH_HEIGHT
                 },
                 navbar: {
-                    width: parseInt(
-                        process.env.BRANDING_LOGO_NAVBAR_WIDTH as string
-                    ),
-                    height: parseInt(
-                        process.env.BRANDING_LOGO_NAVBAR_HEIGHT as string
-                    )
+                    width: env.BRANDING_LOGO_NAVBAR_WIDTH,
+                    height: env.BRANDING_LOGO_NAVBAR_HEIGHT
                 }
             },
             loginPage: {
-                titleText: process.env.LOGIN_PAGE_TITLE_TEXT as string,
-                subtitleText: process.env.LOGIN_PAGE_SUBTITLE_TEXT as string
+                titleText: env.LOGIN_PAGE_TITLE_TEXT,
+                subtitleText: env.LOGIN_PAGE_SUBTITLE_TEXT
             },
             signupPage: {
-                titleText: process.env.SIGNUP_PAGE_TITLE_TEXT as string,
-                subtitleText: process.env.SIGNUP_PAGE_SUBTITLE_TEXT as string
+                titleText: env.SIGNUP_PAGE_TITLE_TEXT,
+                subtitleText: env.SIGNUP_PAGE_SUBTITLE_TEXT
             },
             resourceAuthPage: {
-                showLogo:
-                    process.env.RESOURCE_AUTH_PAGE_SHOW_LOGO === "true"
-                        ? true
-                        : false,
-                hidePoweredBy:
-                    process.env.RESOURCE_AUTH_PAGE_HIDE_POWERED_BY === "true"
-                        ? true
-                        : false,
-                titleText: process.env.RESOURCE_AUTH_PAGE_TITLE_TEXT as string,
-                subtitleText: process.env
-                    .RESOURCE_AUTH_PAGE_SUBTITLE_TEXT as string
+                showLogo: env.RESOURCE_AUTH_PAGE_SHOW_LOGO,
+                hidePoweredBy: env.RESOURCE_AUTH_PAGE_HIDE_POWERED_BY,
+                titleText: env.RESOURCE_AUTH_PAGE_TITLE_TEXT,
+                subtitleText: env.RESOURCE_AUTH_PAGE_SUBTITLE_TEXT
             },
-            footer: process.env.BRANDING_FOOTER as string
+            footer: env.BRANDING_FOOTER
         }
     };
 }
