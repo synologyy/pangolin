@@ -20,3 +20,4 @@ export * from "./deleteLoginPage";
 export * from "./upsertLoginPageBranding";
 export * from "./deleteLoginPageBranding";
 export * from "./getLoginPageBranding";
+export * from "./loadLoginPageBranding";

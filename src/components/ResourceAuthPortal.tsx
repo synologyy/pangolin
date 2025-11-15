@@ -87,7 +87,14 @@ type ResourceAuthPortalProps = {
     redirect: string;
     idps?: LoginFormIDP[];
     orgId?: string;
-    branding?: Omit<GetLoginPageBrandingResponse, "loginPageBrandingId"> | null;
+    branding?: {
+        logoUrl: string;
+        logoWidth: number;
+        logoHeight: number;
+        primaryColor: string | null;
+        resourceTitle: string;
+        resourceSubtitle: string | null;
+    };
 };
 
 /**
@@ -342,8 +349,8 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
 
     function getTitle(resourceName: string) {
         if (
-            isUnlocked() &&
             build !== "oss" &&
+            isUnlocked() &&
             (!!env.branding.resourceAuthPage?.titleText ||
                 !!props.branding?.resourceTitle)
         ) {

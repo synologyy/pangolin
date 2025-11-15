@@ -19,9 +19,9 @@ import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import AutoLoginHandler from "@app/components/AutoLoginHandler";
 import { build } from "@server/build";
 import { headers } from "next/headers";
-import {
-    GetLoginPageBrandingResponse,
-    GetLoginPageResponse
+import type {
+    LoadLoginPageBrandingResponse,
+    LoadLoginPageResponse
 } from "@server/routers/loginPage/types";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
@@ -93,9 +93,9 @@ export default async function ResourceAuthPage(props: {
             redirect(env.app.dashboardUrl);
         }
 
-        let loginPage: GetLoginPageResponse | undefined;
+        let loginPage: LoadLoginPageResponse | undefined;
         try {
-            const res = await priv.get<AxiosResponse<GetLoginPageResponse>>(
+            const res = await priv.get<AxiosResponse<LoadLoginPageResponse>>(
                 `/login-page?resourceId=${authInfo.resourceId}&fullDomain=${host}`
             );
 
@@ -110,6 +110,7 @@ export default async function ResourceAuthPage(props: {
     }
 
     let redirectUrl = authInfo.url;
+
     if (searchParams.redirect) {
         try {
             const serverResourceHost = new URL(authInfo.url).host;
@@ -261,20 +262,13 @@ export default async function ResourceAuthPage(props: {
         }
     }
 
-    let loginPageBranding: Omit<
-        GetLoginPageBrandingResponse,
-        "loginPageBrandingId"
-    > | null = null;
+    let branding: LoadLoginPageBrandingResponse | null = null;
     try {
-        const res = await internal.get<
-            AxiosResponse<GetLoginPageBrandingResponse>
-        >(
-            `/org/${authInfo.orgId}/login-page-branding`,
-            await authCookieHeader()
-        );
+        const res = await priv.get<
+            AxiosResponse<LoadLoginPageBrandingResponse>
+        >(`/login-page-branding?orgId=${authInfo.orgId}`);
         if (res.status === 200) {
-            const { loginPageBrandingId, ...rest } = res.data.data;
-            loginPageBranding = rest;
+            branding = res.data.data;
         }
     } catch (error) {}
 
@@ -300,7 +294,19 @@ export default async function ResourceAuthPage(props: {
                         redirect={redirectUrl}
                         idps={loginIdps}
                         orgId={build === "saas" ? authInfo.orgId : undefined}
-                        branding={loginPageBranding}
+                        branding={
+                            !branding || build === "oss"
+                                ? undefined
+                                : {
+                                      logoHeight: branding.logoHeight,
+                                      logoUrl: branding.logoUrl,
+                                      logoWidth: branding.logoWidth,
+                                      primaryColor: branding.primaryColor,
+                                      resourceTitle: branding.resourceTitle,
+                                      resourceSubtitle:
+                                          branding.resourceSubtitle
+                                  }
+                        }
                     />
                 </div>
             )}

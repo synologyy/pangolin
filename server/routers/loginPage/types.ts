@@ -10,4 +10,8 @@ export type UpdateLoginPageResponse = LoginPage;
 
 export type LoadLoginPageResponse = LoginPage & { orgId: string };
 
+export type LoadLoginPageBrandingResponse = LoginPageBranding & {
+    orgId: string;
+};
+
 export type GetLoginPageBrandingResponse = LoginPageBranding;
