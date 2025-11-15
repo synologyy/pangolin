@@ -521,13 +521,13 @@ export default function DomainPicker2({
                                     <div className="flex items-center space-x-2 min-w-0 flex-1">
                                         {selectedBaseDomain.type ===
                                         "organization" ? null : (
-                                            <Zap className="h-4 w-4 flex-shrink-0" />
+                                            <Zap className="h-4 w-4 shrink-0" />
                                         )}
                                         <span className="truncate">
                                             {selectedBaseDomain.domain}
                                         </span>
                                         {selectedBaseDomain.verified && (
-                                            <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                            <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
                                         )}
                                     </div>
                                 ) : (
@@ -747,7 +747,11 @@ export default function DomainPicker2({
                                         handleProvidedDomainSelect(option);
                                     }
                                 }}
-                                className={`grid gap-2 grid-cols-1 sm:grid-cols-${cols}`}
+                                style={{
+                                    // @ts-expect-error CSS variable
+                                    "--cols": cols
+                                }}
+                                className="grid gap-2 grid-cols-1 sm:grid-cols-(--cols)"
                             >
                                 {displayedProvidedOptions.map((option) => (
                                     <label
