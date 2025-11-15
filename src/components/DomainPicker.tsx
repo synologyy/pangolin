@@ -749,7 +749,7 @@ export default function DomainPicker2({
                                 }}
                                 style={{
                                     // @ts-expect-error CSS variable
-                                    "--cols": cols
+                                    "--cols": `repeat(${cols}, minmax(0, 1fr))`
                                 }}
                                 className="grid gap-2 grid-cols-1 sm:grid-cols-(--cols)"
                             >
