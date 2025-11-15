@@ -98,19 +98,6 @@ type ResourceAuthPortalProps = {
     };
 };
 
-/**
- * TODO: remove
-- Auth page domain => only in SaaS 
-- Branding => saas & enterprise for a paid user ?
-- ...
-- resource auth page: `/auth/resource/[guid]` || (auth page domain/...)
-- org auth page: `/auth/org/[orgId]` 
-    => only in SaaS 
-    => branding org title/subtitle only in SaaS 
-    => unauthenticated 
-
- */
-
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     const router = useRouter();
     const t = useTranslations();

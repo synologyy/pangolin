@@ -137,14 +137,16 @@ export default async function OrgAuthPage(props: {
     }
 
     let branding: LoadLoginPageBrandingResponse | null = null;
-    try {
-        const res = await priv.get<
-            AxiosResponse<LoadLoginPageBrandingResponse>
-        >(`/login-page-branding?orgId=${loginPage.orgId}`);
-        if (res.status === 200) {
-            branding = res.data.data;
-        }
-    } catch (error) {}
+    if (build === "saas") {
+        try {
+            const res = await priv.get<
+                AxiosResponse<LoadLoginPageBrandingResponse>
+            >(`/login-page-branding?orgId=${loginPage.orgId}`);
+            if (res.status === 200) {
+                branding = res.data.data;
+            }
+        } catch (error) {}
+    }
 
     return (
         <div>
