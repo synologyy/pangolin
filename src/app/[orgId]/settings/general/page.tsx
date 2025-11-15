@@ -113,7 +113,7 @@ export default function GeneralPage() {
     const { user } = useUserContext();
     const t = useTranslations();
     const { env } = useEnvContext();
-    const { licenseStatus, isUnlocked } = useLicenseStatusContext();
+    const { isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
 
     // Check if security features are disabled due to licensing/subscription
