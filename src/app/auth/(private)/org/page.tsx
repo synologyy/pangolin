@@ -9,9 +9,7 @@ import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import { build } from "@server/build";
 import { headers } from "next/headers";
-import {
-    LoadLoginPageResponse
-} from "@server/routers/loginPage/types";
+import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
 import IdpLoginButtons from "@app/components/private/IdpLoginButtons";
 import {
     Card,
@@ -27,6 +25,7 @@ import { GetSessionTransferTokenRenponse } from "@server/routers/auth/types";
 import ValidateSessionTransferToken from "@app/components/private/ValidateSessionTransferToken";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
+import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
 
 export const dynamic = "force-dynamic";
 
@@ -78,12 +77,7 @@ export default async function OrgAuthPage(props: {
         let subscriptionStatus: GetOrgTierResponse | null = null;
         if (build === "saas") {
             try {
-                const getSubscription = cache(() =>
-                    priv.get<AxiosResponse<GetOrgTierResponse>>(
-                        `/org/${loginPage!.orgId}/billing/tier`
-                    )
-                );
-                const subRes = await getSubscription();
+                const subRes = await getCachedSubscription(loginPage.orgId);
                 subscriptionStatus = subRes.data.data;
             } catch {}
         }
