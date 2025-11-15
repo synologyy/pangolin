@@ -272,6 +272,11 @@ function AuthPageSettings({
             setHasUnsavedChanges(false);
             router.refresh();
             onSaveSuccess?.();
+            toast({
+                variant: "default",
+                title: t("success"),
+                description: t("authPageDomainUpdated")
+            });
         } catch (e) {
             toast({
                 variant: "destructive",
