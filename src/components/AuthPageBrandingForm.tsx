@@ -41,6 +41,8 @@ import {
     CredenzaHeader,
     CredenzaTitle
 } from "./Credenza";
+import { usePaidStatus } from "@app/hooks/usePaidStatus";
+import { build } from "@server/build";
 
 export type AuthPageCustomizationProps = {
     orgId: string;
@@ -71,7 +73,7 @@ const AuthPageFormSchema = z.object({
         ),
     logoWidth: z.coerce.number().min(1),
     logoHeight: z.coerce.number().min(1),
-    title: z.string(),
+    title: z.string().optional(),
     subtitle: z.string().optional(),
     resourceTitle: z.string(),
     resourceSubtitle: z.string().optional()
@@ -83,6 +85,7 @@ export default function AuthPageBrandingForm({
 }: AuthPageCustomizationProps) {
     const env = useEnvContext();
     const api = createApiClient(env);
+    const { hasSaasSubscription } = usePaidStatus();
 
     const router = useRouter();
 
@@ -258,58 +261,66 @@ export default function AuthPageBrandingForm({
                                     </div>
                                 </div>
 
-                                <Separator />
+                                {hasSaasSubscription && (
+                                    <>
+                                        <Separator />
 
-                                <div className="flex flex-col gap-3">
-                                    <FormField
-                                        control={form.control}
-                                        name="title"
-                                        render={({ field }) => (
-                                            <FormItem className="md:col-span-3">
-                                                <FormLabel>
-                                                    {t("brandingOrgTitle")}
-                                                </FormLabel>
-                                                <FormDescription>
-                                                    {t(
-                                                        "brandingOrgDescription",
-                                                        {
-                                                            orgName:
-                                                                "{{orgName}}"
-                                                        }
-                                                    )}
-                                                </FormDescription>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="subtitle"
-                                        render={({ field }) => (
-                                            <FormItem className="md:col-span-3">
-                                                <FormLabel>
-                                                    {t("brandingOrgSubtitle")}
-                                                </FormLabel>
-                                                <FormDescription>
-                                                    {t(
-                                                        "brandingOrgDescription",
-                                                        {
-                                                            orgName:
-                                                                "{{orgName}}"
-                                                        }
-                                                    )}
-                                                </FormDescription>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
+                                        <div className="flex flex-col gap-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="title"
+                                                render={({ field }) => (
+                                                    <FormItem className="md:col-span-3">
+                                                        <FormLabel>
+                                                            {t(
+                                                                "brandingOrgTitle"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormDescription>
+                                                            {t(
+                                                                "brandingOrgDescription",
+                                                                {
+                                                                    orgName:
+                                                                        "{{orgName}}"
+                                                                }
+                                                            )}
+                                                        </FormDescription>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="subtitle"
+                                                render={({ field }) => (
+                                                    <FormItem className="md:col-span-3">
+                                                        <FormLabel>
+                                                            {t(
+                                                                "brandingOrgSubtitle"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormDescription>
+                                                            {t(
+                                                                "brandingOrgDescription",
+                                                                {
+                                                                    orgName:
+                                                                        "{{orgName}}"
+                                                                }
+                                                            )}
+                                                        </FormDescription>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
                                 <Separator />
 
