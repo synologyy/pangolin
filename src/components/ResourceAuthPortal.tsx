@@ -23,7 +23,7 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
-import { LockIcon, Binary, Key, User, Send, AtSign, Regex } from "lucide-react";
+import { LockIcon, Binary, Key, User, Send, AtSign } from "lucide-react";
 import {
     InputOTP,
     InputOTPGroup,
@@ -47,7 +47,6 @@ import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext"
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
-import type { GetLoginPageBrandingResponse } from "@server/routers/loginPage/types";
 import { replacePlaceholder } from "@app/lib/replacePlaceholder";
 
 const pinSchema = z.object({
