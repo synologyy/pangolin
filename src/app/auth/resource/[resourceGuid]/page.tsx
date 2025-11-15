@@ -57,8 +57,7 @@ export default async function ResourceAuthPage(props: {
         console.error(e);
     }
 
-    const getUser = cache(verifySession);
-    const user = await getUser({ skipCheckVerifyEmail: true });
+    const user = await verifySession({ skipCheckVerifyEmail: true });
 
     if (!authInfo) {
         return (
@@ -69,7 +68,7 @@ export default async function ResourceAuthPage(props: {
     }
 
     let subscriptionStatus: GetOrgTierResponse | null = null;
-    if (build == "saas") {
+    if (build === "saas") {
         try {
             const getSubscription = cache(() =>
                 priv.get<AxiosResponse<GetOrgTierResponse>>(
@@ -235,9 +234,7 @@ export default async function ResourceAuthPage(props: {
             })) as LoginFormIDP[];
         }
     } else {
-        const idpsRes = await cache(
-            async () => await priv.get<AxiosResponse<ListIdpsResponse>>("/idp")
-        )();
+        const idpsRes = await priv.get<AxiosResponse<ListIdpsResponse>>("/idp");
         loginIdps = idpsRes.data.data.idps.map((idp) => ({
             idpId: idp.idpId,
             name: idp.name,
