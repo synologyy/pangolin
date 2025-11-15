@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
 import { sites } from "@server/db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -20,6 +20,7 @@ const updateSiteParamsSchema = z
 const updateSiteBodySchema = z
     .object({
         name: z.string().min(1).max(255).optional(),
+        niceId: z.string().min(1).max(255).optional(),
         dockerSocketEnabled: z.boolean().optional(),
         remoteSubnets: z
             .string()
@@ -88,6 +89,29 @@ export async function updateSite(
 
         const { siteId } = parsedParams.data;
         const updateData = parsedBody.data;
+
+        // if niceId is provided, check if it's already in use by another site
+        if (updateData.niceId) {
+            const existingSite = await db
+                .select()
+                .from(sites)
+                .where(
+                    and(
+                        eq(sites.niceId, updateData.niceId),
+                        eq(sites.orgId, sites.orgId)
+                    )
+                )
+                .limit(1);
+
+            if (existingSite.length > 0 && existingSite[0].siteId !== siteId) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        `A site with niceId "${updateData.niceId}" already exists`
+                    )
+                );
+            }
+        }
 
         // if remoteSubnets is provided, ensure it's a valid comma-separated list of cidrs
         if (updateData.remoteSubnets) {

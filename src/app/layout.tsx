@@ -20,6 +20,7 @@ import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
+import { ReactQueryProvider } from "@app/components/react-query-provider";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -94,38 +95,40 @@ export default async function RootLayout({
                         strategy="afterInteractive"
                     />
                 )}
-                <NextIntlClientProvider>
-                    <ThemeProvider
-                        attribute="class"
-                        defaultTheme="system"
-                        enableSystem
-                        disableTransitionOnChange
-                    >
-                        <ThemeDataProvider colors={loadBrandingColors()}>
-                            <EnvProvider env={pullEnv()}>
-                                <LicenseStatusProvider
-                                    licenseStatus={licenseStatus}
-                                >
-                                    <SupportStatusProvider
-                                        supporterStatus={supporterData}
+                <ReactQueryProvider>
+                    <NextIntlClientProvider>
+                        <ThemeProvider
+                            attribute="class"
+                            defaultTheme="system"
+                            enableSystem
+                            disableTransitionOnChange
+                        >
+                            <ThemeDataProvider colors={loadBrandingColors()}>
+                                <EnvProvider env={pullEnv()}>
+                                    <LicenseStatusProvider
+                                        licenseStatus={licenseStatus}
                                     >
-                                        {/* Main content */}
-                                        <div className="h-full flex flex-col">
-                                            <div className="flex-1 overflow-auto">
-                                                <SplashImage>
+                                        <SupportStatusProvider
+                                            supporterStatus={supporterData}
+                                        >
+                                            {/* Main content */}
+                                            <div className="h-full flex flex-col">
+                                                <div className="flex-1 overflow-auto">
+                                                    <SplashImage>
+                                                        <LicenseViolation />
+                                                        {children}
+                                                    </SplashImage>
                                                     <LicenseViolation />
-                                                    {children}
-                                                </SplashImage>
-                                                <LicenseViolation />
+                                                </div>
                                             </div>
-                                        </div>
-                                    </SupportStatusProvider>
-                                </LicenseStatusProvider>
-                                <Toaster />
-                            </EnvProvider>
-                        </ThemeDataProvider>
-                    </ThemeProvider>
-                </NextIntlClientProvider>
+                                        </SupportStatusProvider>
+                                    </LicenseStatusProvider>
+                                    <Toaster />
+                                </EnvProvider>
+                            </ThemeDataProvider>
+                        </ThemeProvider>
+                    </NextIntlClientProvider>
+                </ReactQueryProvider>
             </body>
         </html>
     );

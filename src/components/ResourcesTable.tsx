@@ -17,7 +17,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuCheckboxItem,
+    DropdownMenuCheckboxItem
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
 import {
@@ -36,7 +36,7 @@ import {
     Wifi,
     WifiOff,
     CheckCircle2,
-    XCircle,
+    XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -75,13 +75,12 @@ import EditInternalResourceDialog from "@app/components/EditInternalResourceDial
 import CreateInternalResourceDialog from "@app/components/CreateInternalResourceDialog";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 
-
 export type TargetHealth = {
     targetId: number;
     ip: string;
     port: number;
     enabled: boolean;
-    healthStatus?: 'healthy' | 'unhealthy' | 'unknown';
+    healthStatus?: "healthy" | "unhealthy" | "unknown";
 };
 
 export type ResourceRow = {
@@ -102,45 +101,55 @@ export type ResourceRow = {
     targets?: TargetHealth[];
 };
 
-
-function getOverallHealthStatus(targets?: TargetHealth[]): 'online' | 'degraded' | 'offline' | 'unknown' {
+function getOverallHealthStatus(
+    targets?: TargetHealth[]
+): "online" | "degraded" | "offline" | "unknown" {
     if (!targets || targets.length === 0) {
-        return 'unknown';
+        return "unknown";
     }
 
-    const monitoredTargets = targets.filter(t => t.enabled && t.healthStatus && t.healthStatus !== 'unknown');
+    const monitoredTargets = targets.filter(
+        (t) => t.enabled && t.healthStatus && t.healthStatus !== "unknown"
+    );
 
     if (monitoredTargets.length === 0) {
-        return 'unknown';
+        return "unknown";
     }
 
-    const healthyCount = monitoredTargets.filter(t => t.healthStatus === 'healthy').length;
-    const unhealthyCount = monitoredTargets.filter(t => t.healthStatus === 'unhealthy').length;
+    const healthyCount = monitoredTargets.filter(
+        (t) => t.healthStatus === "healthy"
+    ).length;
+    const unhealthyCount = monitoredTargets.filter(
+        (t) => t.healthStatus === "unhealthy"
+    ).length;
 
     if (healthyCount === monitoredTargets.length) {
-        return 'online';
+        return "online";
     } else if (unhealthyCount === monitoredTargets.length) {
-        return 'offline';
+        return "offline";
     } else {
-        return 'degraded';
+        return "degraded";
     }
 }
 
-function StatusIcon({ status, className = "" }: {
-    status: 'online' | 'degraded' | 'offline' | 'unknown';
+function StatusIcon({
+    status,
+    className = ""
+}: {
+    status: "online" | "degraded" | "offline" | "unknown";
     className?: string;
 }) {
     const iconClass = `h-4 w-4 ${className}`;
 
     switch (status) {
-        case 'online':
+        case "online":
             return <CheckCircle2 className={`${iconClass} text-green-500`} />;
-        case 'degraded':
+        case "degraded":
             return <CheckCircle2 className={`${iconClass} text-yellow-500`} />;
-        case 'offline':
+        case "offline":
             return <XCircle className={`${iconClass} text-destructive`} />;
-        case 'unknown':
-            return <Clock className={`${iconClass} text-gray-400`} />;
+        case "unknown":
+            return <Clock className={`${iconClass} text-muted-foreground`} />;
         default:
             return null;
     }
@@ -171,15 +180,14 @@ type ResourcesTableProps = {
     };
 };
 
-
 const STORAGE_KEYS = {
-    PAGE_SIZE: 'datatable-page-size',
+    PAGE_SIZE: "datatable-page-size",
     getTablePageSize: (tableId?: string) =>
         tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
-    if (typeof window === 'undefined') return defaultSize;
+    if (typeof window === "undefined") return defaultSize;
 
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
@@ -191,23 +199,21 @@ const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
             }
         }
     } catch (error) {
-        console.warn('Failed to read page size from localStorage:', error);
+        console.warn("Failed to read page size from localStorage:", error);
     }
     return defaultSize;
 };
 
 const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
-        console.warn('Failed to save page size to localStorage:', error);
+        console.warn("Failed to save page size to localStorage:", error);
     }
 };
-
-
 
 export default function ResourcesTable({
     resources,
@@ -224,12 +230,11 @@ export default function ResourcesTable({
 
     const api = createApiClient({ env });
 
-
     const [proxyPageSize, setProxyPageSize] = useState<number>(() =>
-        getStoredPageSize('proxy-resources', 20)
+        getStoredPageSize("proxy-resources", 20)
     );
     const [internalPageSize, setInternalPageSize] = useState<number>(() =>
-        getStoredPageSize('internal-resources', 20)
+        getStoredPageSize("internal-resources", 20)
     );
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -247,8 +252,10 @@ export default function ResourcesTable({
         defaultSort ? [defaultSort] : []
     );
 
-    const [proxyColumnVisibility, setProxyColumnVisibility] = useState<VisibilityState>({});
-    const [internalColumnVisibility, setInternalColumnVisibility] = useState<VisibilityState>({});
+    const [proxyColumnVisibility, setProxyColumnVisibility] =
+        useState<VisibilityState>({});
+    const [internalColumnVisibility, setInternalColumnVisibility] =
+        useState<VisibilityState>({});
 
     const [proxyColumnFilters, setProxyColumnFilters] =
         useState<ColumnFiltersState>([]);
@@ -427,24 +434,34 @@ export default function ResourcesTable({
             return (
                 <div className="flex items-center gap-2">
                     <StatusIcon status="unknown" />
-                    <span className="text-sm text-muted-foreground">No targets</span>
+                    <span className="text-sm">
+                        {t("resourcesTableNoTargets")}
+                    </span>
                 </div>
             );
         }
 
-        const monitoredTargets = targets.filter(t => t.enabled && t.healthStatus && t.healthStatus !== 'unknown');
-        const unknownTargets = targets.filter(t => !t.enabled || !t.healthStatus || t.healthStatus === 'unknown');
+        const monitoredTargets = targets.filter(
+            (t) => t.enabled && t.healthStatus && t.healthStatus !== "unknown"
+        );
+        const unknownTargets = targets.filter(
+            (t) => !t.enabled || !t.healthStatus || t.healthStatus === "unknown"
+        );
 
         return (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-2 h-8">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2 h-8 px-0 font-normal"
+                    >
                         <StatusIcon status={overallStatus} />
                         <span className="text-sm">
-                            {overallStatus === 'online' && 'Healthy'}
-                            {overallStatus === 'degraded' && 'Degraded'}
-                            {overallStatus === 'offline' && 'Offline'}
-                            {overallStatus === 'unknown' && 'Unknown'}
+                            {overallStatus === "online" && t("resourcesTableHealthy")}
+                            {overallStatus === "degraded" && t("resourcesTableDegraded")}
+                            {overallStatus === "offline" && t("resourcesTableOffline")}
+                            {overallStatus === "unknown" && t("resourcesTableUnknown")}
                         </span>
                         <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -453,16 +470,29 @@ export default function ResourcesTable({
                     {monitoredTargets.length > 0 && (
                         <>
                             {monitoredTargets.map((target) => (
-                                <DropdownMenuItem key={target.targetId} className="flex items-center justify-between gap-4">
+                                <DropdownMenuItem
+                                    key={target.targetId}
+                                    className="flex items-center justify-between gap-4"
+                                >
                                     <div className="flex items-center gap-2">
                                         <StatusIcon
-                                            status={target.healthStatus === 'healthy' ? 'online' : 'offline'}
+                                            status={
+                                                target.healthStatus ===
+                                                "healthy"
+                                                    ? "online"
+                                                    : "offline"
+                                            }
                                             className="h-3 w-3"
                                         />
                                         {`${target.ip}:${target.port}`}
                                     </div>
-                                    <span className={`capitalize ${target.healthStatus === 'healthy' ? 'text-green-500' : 'text-destructive'
-                                        }`}>
+                                    <span
+                                        className={`capitalize ${
+                                            target.healthStatus === "healthy"
+                                                ? "text-green-500"
+                                                : "text-destructive"
+                                        }`}
+                                    >
                                         {target.healthStatus}
                                     </span>
                                 </DropdownMenuItem>
@@ -472,13 +502,21 @@ export default function ResourcesTable({
                     {unknownTargets.length > 0 && (
                         <>
                             {unknownTargets.map((target) => (
-                                <DropdownMenuItem key={target.targetId} className="flex items-center justify-between gap-4">
+                                <DropdownMenuItem
+                                    key={target.targetId}
+                                    className="flex items-center justify-between gap-4"
+                                >
                                     <div className="flex items-center gap-2">
-                                        <StatusIcon status="unknown" className="h-3 w-3" />
+                                        <StatusIcon
+                                            status="unknown"
+                                            className="h-3 w-3"
+                                        />
                                         {`${target.ip}:${target.port}`}
                                     </div>
                                     <span className="text-muted-foreground">
-                                        {!target.enabled ? 'Disabled' : 'Not monitored'}
+                                        {!target.enabled
+                                            ? t("disabled")
+                                            : t("resourcesTableNotMonitored")}
                                     </span>
                                 </DropdownMenuItem>
                             ))}
@@ -489,7 +527,6 @@ export default function ResourcesTable({
         );
     }
 
-    
     const proxyColumns: ColumnDef<ResourceRow>[] = [
         {
             accessorKey: "name",
@@ -508,27 +545,19 @@ export default function ResourcesTable({
             }
         },
         {
-            accessorKey: "nice",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("resource")}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                );
-            }
-        },
-        {
             accessorKey: "protocol",
             header: t("protocol"),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                return <span>{resourceRow.http ? (resourceRow.ssl ? "HTTPS" : "HTTP") : resourceRow.protocol.toUpperCase()}</span>;
+                return (
+                    <span>
+                        {resourceRow.http
+                            ? resourceRow.ssl
+                                ? "HTTPS"
+                                : "HTTP"
+                            : resourceRow.protocol.toUpperCase()}
+                    </span>
+                );
             }
         },
         {
@@ -554,7 +583,12 @@ export default function ResourcesTable({
             sortingFn: (rowA, rowB) => {
                 const statusA = getOverallHealthStatus(rowA.original.targets);
                 const statusB = getOverallHealthStatus(rowB.original.targets);
-                const statusOrder = { online: 3, degraded: 2, offline: 1, unknown: 0 };
+                const statusOrder = {
+                    online: 3,
+                    degraded: 2,
+                    offline: 1,
+                    unknown: 0
+                };
                 return statusOrder[statusA] - statusOrder[statusB];
             }
         },
@@ -605,13 +639,13 @@ export default function ResourcesTable({
                 return (
                     <div>
                         {resourceRow.authState === "protected" ? (
-                            <span className="text-green-500 flex items-center space-x-2">
-                                <ShieldCheck className="w-4 h-4" />
+                            <span className="flex items-center space-x-2">
+                                <ShieldCheck className="w-4 h-4 text-green-500" />
                                 <span>{t("protected")}</span>
                             </span>
                         ) : resourceRow.authState === "not_protected" ? (
-                            <span className="text-yellow-500 flex items-center space-x-2">
-                                <ShieldOff className="w-4 h-4" />
+                            <span className="flex items-center space-x-2">
+                                <ShieldOff className="w-4 h-4 text-yellow-500" />
                                 <span>{t("notProtected")}</span>
                             </span>
                         ) : (
@@ -857,12 +891,12 @@ export default function ResourcesTable({
 
     const handleProxyPageSizeChange = (newPageSize: number) => {
         setProxyPageSize(newPageSize);
-        setStoredPageSize(newPageSize, 'proxy-resources');
+        setStoredPageSize(newPageSize, "proxy-resources");
     };
 
     const handleInternalPageSizeChange = (newPageSize: number) => {
         setInternalPageSize(newPageSize);
-        setStoredPageSize(newPageSize, 'internal-resources');
+        setStoredPageSize(newPageSize, "internal-resources");
     };
 
     return (
@@ -876,12 +910,8 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("resourceQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("resourceMessageRemove")}
-                            </p>
+                            <p>{t("resourceQuestionRemove")}</p>
+                            <p>{t("resourceMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
@@ -900,12 +930,8 @@ export default function ResourcesTable({
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("resourceQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("resourceMessageRemove")}
-                            </p>
+                            <p>{t("resourceQuestionRemove")}</p>
+                            <p>{t("resourceMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("resourceDeleteConfirm")}
@@ -955,9 +981,7 @@ export default function ResourcesTable({
                                         {t("refresh")}
                                     </Button>
                                 </div>
-                                <div>
-                                    {getActionButton()}
-                                </div>
+                                <div>{getActionButton()}</div>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -976,12 +1000,12 @@ export default function ResourcesTable({
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1039,7 +1063,9 @@ export default function ResourcesTable({
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={proxyTable}
-                                        onPageSizeChange={handleProxyPageSizeChange}
+                                        onPageSizeChange={
+                                            handleProxyPageSizeChange
+                                        }
                                     />
                                 </div>
                             </TabsContent>
@@ -1077,12 +1103,12 @@ export default function ResourcesTable({
                                                                 {header.isPlaceholder
                                                                     ? null
                                                                     : flexRender(
-                                                                        header
-                                                                            .column
-                                                                            .columnDef
-                                                                            .header,
-                                                                        header.getContext()
-                                                                    )}
+                                                                          header
+                                                                              .column
+                                                                              .columnDef
+                                                                              .header,
+                                                                          header.getContext()
+                                                                      )}
                                                             </TableHead>
                                                         )
                                                     )}
@@ -1140,7 +1166,9 @@ export default function ResourcesTable({
                                 <div className="mt-4">
                                     <DataTablePagination
                                         table={internalTable}
-                                        onPageSizeChange={handleInternalPageSizeChange}
+                                        onPageSizeChange={
+                                            handleInternalPageSizeChange
+                                        }
                                     />
                                 </div>
                             </TabsContent>

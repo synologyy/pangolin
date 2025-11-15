@@ -55,7 +55,8 @@ export default function DomainsTable({ domains, orgId }: Props) {
     const [restartingDomains, setRestartingDomains] = useState<Set<string>>(
         new Set()
     );
-    const api = createApiClient(useEnvContext());
+    const env = useEnvContext();
+    const api = createApiClient(env);
     const router = useRouter();
     const t = useTranslations();
     const { toast } = useToast();
@@ -134,6 +135,41 @@ export default function DomainsTable({ domains, orgId }: Props) {
         }
     };
 
+    const statusColumn: ColumnDef<DomainRow> = {
+        accessorKey: "verified",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() =>
+                        column.toggleSorting(column.getIsSorted() === "asc")
+                    }
+                >
+                    {t("status")}
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            );
+        },
+        cell: ({ row }) => {
+            const { verified, failed, type } = row.original;
+            if (verified) {
+                return type == "wildcard" ? (
+                    <Badge variant="outlinePrimary">{t("manual")}</Badge>
+                ) : (
+                    <Badge variant="green">{t("verified")}</Badge>
+                );
+            } else if (failed) {
+                return (
+                    <Badge variant="red">
+                        {t("failed", { fallback: "Failed" })}
+                    </Badge>
+                );
+            } else {
+                return <Badge variant="yellow">{t("pending")}</Badge>;
+            }
+        }
+    };
+
     const columns: ColumnDef<DomainRow>[] = [
         {
             accessorKey: "baseDomain",
@@ -173,40 +209,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
                 );
             }
         },
-        {
-            accessorKey: "verified",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("status")}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                );
-            },
-            cell: ({ row }) => {
-                const { verified, failed, type } = row.original;
-                if (verified) {
-                    return type == "wildcard" ? (
-                        <Badge variant="outlinePrimary">{t("manual")}</Badge>
-                    ) : (
-                        <Badge variant="green">{t("verified")}</Badge>
-                    );
-                } else if (failed) {
-                    return (
-                        <Badge variant="red">
-                            {t("failed", { fallback: "Failed" })}
-                        </Badge>
-                    );
-                } else {
-                    return <Badge variant="yellow">{t("pending")}</Badge>;
-                }
-            }
-        },
+        ...(env.env.flags.usePangolinDns ? [statusColumn] : []),
         {
             id: "actions",
             cell: ({ row }) => {

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { Client, db, exitNodes, sites } from "@server/db";
+import { Client, db, exitNodes, olms, sites } from "@server/db";
 import { clients, clientSites } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -18,6 +18,7 @@ import {
     deletePeer as olmDeletePeer
 } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
+import { hashPassword } from "@server/auth/password";
 
 const updateClientParamsSchema = z
     .object({
@@ -30,7 +31,7 @@ const updateClientSchema = z
         name: z.string().min(1).max(255).optional(),
         siteIds: z
             .array(z.number().int().positive())
-            .optional()
+            .optional(),
     })
     .strict();
 
@@ -88,6 +89,7 @@ export async function updateClient(
         }
 
         const { clientId } = parsedParams.data;
+
 
         // Fetch the client to make sure it exists and the user has access to it
         const [client] = await db

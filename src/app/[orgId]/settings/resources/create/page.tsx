@@ -574,7 +574,9 @@ export default function Page() {
                                 hcPort: target.hcPort || null,
                                 hcFollowRedirects:
                                     target.hcFollowRedirects || null,
-                                hcStatus: target.hcStatus || null
+                                hcStatus: target.hcStatus || null,
+                                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                                hcMode: target.hcMode || null
                             };
 
                             // Only include path-related fields for HTTP resources
