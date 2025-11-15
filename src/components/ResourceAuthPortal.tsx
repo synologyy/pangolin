@@ -39,18 +39,15 @@ import {
     resourceWhitelistProxy,
     resourceAccessProxy
 } from "@app/actions/server";
-import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import Link from "next/link";
-import Image from "next/image";
 import BrandingLogo from "@app/components/BrandingLogo";
 import { useSupporterStatusContext } from "@app/hooks/useSupporterStatusContext";
 import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
-import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { usePaidStatus } from "@app/hooks/usePaidStatus";
+import type { GetLoginPageBrandingResponse } from "@server/routers/loginPage/types";
 
 const pinSchema = z.object({
     pin: z
@@ -90,15 +87,7 @@ type ResourceAuthPortalProps = {
     redirect: string;
     idps?: LoginFormIDP[];
     orgId?: string;
-    branding?: {
-        title: string;
-        logoUrl: string;
-        logoWidth: number;
-        logoHeight: number;
-        subtitle: string | null;
-        resourceTitle: string;
-        resourceSubtitle: string | null;
-    } | null;
+    branding?: Omit<GetLoginPageBrandingResponse, "loginPageBrandingId"> | null;
 };
 
 /**
