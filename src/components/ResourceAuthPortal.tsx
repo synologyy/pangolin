@@ -48,6 +48,7 @@ import { useTranslations } from "next-intl";
 import { build } from "@server/build";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import type { GetLoginPageBrandingResponse } from "@server/routers/loginPage/types";
+import { replacePlaceholder } from "@app/lib/replacePlaceholder";
 
 const pinSchema = z.object({
     pin: z
@@ -329,24 +330,6 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         }
     }
 
-    function replacePlaceholder(
-        stringWithPlaceholder: string,
-        data: Record<string, string>
-    ) {
-        let newString = stringWithPlaceholder;
-
-        const keys = Object.keys(data);
-
-        for (const key of keys) {
-            newString = newString.replace(
-                new RegExp(`{{${key}}}`, "gm"),
-                data[key]
-            );
-        }
-
-        return newString;
-    }
-
     function getTitle(resourceName: string) {
         if (
             build !== "oss" &&
@@ -399,7 +382,7 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     return (
         <div
             style={{
-                // @ts-expect-error
+                // @ts-expect-error CSS variable
                 "--primary": isUnlocked() ? props.branding?.primaryColor : null
             }}
         >

@@ -9,7 +9,10 @@ import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import { build } from "@server/build";
 import { headers } from "next/headers";
-import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
+import {
+    LoadLoginPageBrandingResponse,
+    LoadLoginPageResponse
+} from "@server/routers/loginPage/types";
 import IdpLoginButtons from "@app/components/private/IdpLoginButtons";
 import {
     Card,
@@ -26,6 +29,7 @@ import ValidateSessionTransferToken from "@app/components/private/ValidateSessio
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
+import { replacePlaceholder } from "@app/lib/replacePlaceholder";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +37,6 @@ export default async function OrgAuthPage(props: {
     params: Promise<{}>;
     searchParams: Promise<{ token?: string }>;
 }) {
-    const params = await props.params;
     const searchParams = await props.searchParams;
 
     const env = pullEnv();
@@ -122,18 +125,26 @@ export default async function OrgAuthPage(props: {
 
     let loginIdps: LoginFormIDP[] = [];
     if (build === "saas") {
-        const idpsRes = await cache(
-            async () =>
-                await priv.get<AxiosResponse<ListOrgIdpsResponse>>(
-                    `/org/${loginPage!.orgId}/idp`
-                )
-        )();
+        const idpsRes = await priv.get<AxiosResponse<ListOrgIdpsResponse>>(
+            `/org/${loginPage.orgId}/idp`
+        );
+
         loginIdps = idpsRes.data.data.idps.map((idp) => ({
             idpId: idp.idpId,
             name: idp.name,
             variant: idp.variant
         })) as LoginFormIDP[];
     }
+
+    let branding: LoadLoginPageBrandingResponse | null = null;
+    try {
+        const res = await priv.get<
+            AxiosResponse<LoadLoginPageBrandingResponse>
+        >(`/login-page-branding?orgId=${loginPage.orgId}`);
+        if (res.status === 200) {
+            branding = res.data.data;
+        }
+    } catch (error) {}
 
     return (
         <div>
@@ -152,11 +163,30 @@ export default async function OrgAuthPage(props: {
             </div>
             <Card className="shadow-md w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>{t("orgAuthSignInTitle")}</CardTitle>
+                    {branding?.logoUrl && (
+                        <div className="flex flex-row items-center justify-center mb-3">
+                            <img
+                                src={branding.logoUrl}
+                                height={branding.logoHeight}
+                                width={branding.logoWidth}
+                            />
+                        </div>
+                    )}
+                    <CardTitle>
+                        {branding?.orgTitle
+                            ? replacePlaceholder(branding.orgTitle, {
+                                  orgName: branding.orgName
+                              })
+                            : t("orgAuthSignInTitle")}
+                    </CardTitle>
                     <CardDescription>
-                        {loginIdps.length > 0
-                            ? t("orgAuthChooseIdpDescription")
-                            : ""}
+                        {branding?.orgSubtitle
+                            ? replacePlaceholder(branding.orgSubtitle, {
+                                  orgName: branding.orgName
+                              })
+                            : loginIdps.length > 0
+                              ? t("orgAuthChooseIdpDescription")
+                              : ""}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

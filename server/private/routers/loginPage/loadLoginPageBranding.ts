@@ -13,16 +13,8 @@
 
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import {
-    db,
-    idpOrg,
-    loginPage,
-    loginPageBranding,
-    loginPageBrandingOrg,
-    loginPageOrg,
-    resources
-} from "@server/db";
-import { eq, and, type InferSelectModel } from "drizzle-orm";
+import { db, loginPageBranding, loginPageBrandingOrg, orgs } from "@server/db";
+import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -31,37 +23,15 @@ import { fromError } from "zod-validation-error";
 import type { LoadLoginPageBrandingResponse } from "@server/routers/loginPage/types";
 
 const querySchema = z.object({
-    resourceId: z.coerce.number().int().positive().optional(),
-    idpId: z.coerce.number().int().positive().optional(),
-    orgId: z.string().min(1).optional(),
-    fullDomain: z.string().min(1).optional()
+    orgId: z.string().min(1)
 });
 
-async function query(orgId?: string, fullDomain?: string) {
-    let orgLink: InferSelectModel<typeof loginPageBrandingOrg> | null = null;
-    if (orgId !== undefined) {
-        [orgLink] = await db
-            .select()
-            .from(loginPageBrandingOrg)
-            .where(eq(loginPageBrandingOrg.orgId, orgId));
-    } else if (fullDomain) {
-        const [res] = await db
-            .select()
-            .from(loginPage)
-            .where(eq(loginPage.fullDomain, fullDomain))
-            .innerJoin(
-                loginPageOrg,
-                eq(loginPage.loginPageId, loginPageOrg.loginPageId)
-            )
-            .innerJoin(
-                loginPageBrandingOrg,
-                eq(loginPageBrandingOrg.orgId, loginPageOrg.orgId)
-            )
-            .limit(1);
-
-        orgLink = res.loginPageBrandingOrg;
-    }
-
+async function query(orgId: string) {
+    const [orgLink] = await db
+        .select()
+        .from(loginPageBrandingOrg)
+        .where(eq(loginPageBrandingOrg.orgId, orgId))
+        .innerJoin(orgs, eq(loginPageBrandingOrg.orgId, orgs.orgId));
     if (!orgLink) {
         return null;
     }
@@ -73,14 +43,15 @@ async function query(orgId?: string, fullDomain?: string) {
             and(
                 eq(
                     loginPageBranding.loginPageBrandingId,
-                    orgLink.loginPageBrandingId
+                    orgLink.loginPageBrandingOrg.loginPageBrandingId
                 )
             )
         )
         .limit(1);
     return {
         ...res,
-        orgId: orgLink.orgId
+        orgId: orgLink.orgs.orgId,
+        orgName: orgLink.orgs.name
     };
 }
 
@@ -100,41 +71,9 @@ export async function loadLoginPageBranding(
             );
         }
 
-        const { resourceId, idpId, fullDomain } = parsedQuery.data;
+        const { orgId } = parsedQuery.data;
 
-        let orgId: string | undefined = undefined;
-        if (resourceId) {
-            const [resource] = await db
-                .select()
-                .from(resources)
-                .where(eq(resources.resourceId, resourceId))
-                .limit(1);
-
-            if (!resource) {
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "Resource not found")
-                );
-            }
-
-            orgId = resource.orgId;
-        } else if (idpId) {
-            const [idpOrgLink] = await db
-                .select()
-                .from(idpOrg)
-                .where(eq(idpOrg.idpId, idpId));
-
-            if (!idpOrgLink) {
-                return next(
-                    createHttpError(HttpCode.NOT_FOUND, "IdP not found")
-                );
-            }
-
-            orgId = idpOrgLink.orgId;
-        } else if (parsedQuery.data.orgId) {
-            orgId = parsedQuery.data.orgId;
-        }
-
-        const branding = await query(orgId, fullDomain);
+        const branding = await query(orgId);
 
         if (!branding) {
             return next(
