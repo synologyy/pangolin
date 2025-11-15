@@ -53,9 +53,7 @@ export default async function ResourceAuthPage(props: {
         if (res && res.status === 200) {
             authInfo = res.data.data;
         }
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) {}
 
     const user = await verifySession({ skipCheckVerifyEmail: true });
 
