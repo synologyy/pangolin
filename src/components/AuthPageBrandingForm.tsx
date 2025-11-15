@@ -73,8 +73,8 @@ const AuthPageFormSchema = z.object({
         ),
     logoWidth: z.coerce.number().min(1),
     logoHeight: z.coerce.number().min(1),
-    title: z.string().optional(),
-    subtitle: z.string().optional(),
+    orgTitle: z.string().optional(),
+    orgSubtitle: z.string().optional(),
     resourceTitle: z.string(),
     resourceSubtitle: z.string().optional()
 });
@@ -107,8 +107,8 @@ export default function AuthPageBrandingForm({
             logoUrl: branding?.logoUrl ?? "",
             logoWidth: branding?.logoWidth ?? 100,
             logoHeight: branding?.logoHeight ?? 100,
-            title: branding?.title ?? `Log in to {{orgName}}`,
-            subtitle: branding?.subtitle ?? `Log in to {{orgName}}`,
+            orgTitle: branding?.orgTitle ?? `Log in to {{orgName}}`,
+            orgSubtitle: branding?.orgSubtitle ?? `Log in to {{orgName}}`,
             resourceTitle:
                 branding?.resourceTitle ??
                 `Authenticate to access {{resourceName}}`,
@@ -268,7 +268,7 @@ export default function AuthPageBrandingForm({
                                         <div className="flex flex-col gap-3">
                                             <FormField
                                                 control={form.control}
-                                                name="title"
+                                                name="orgTitle"
                                                 render={({ field }) => (
                                                     <FormItem className="md:col-span-3">
                                                         <FormLabel>
@@ -294,7 +294,7 @@ export default function AuthPageBrandingForm({
                                             />
                                             <FormField
                                                 control={form.control}
-                                                name="subtitle"
+                                                name="orgSubtitle"
                                                 render={({ field }) => (
                                                     <FormItem className="md:col-span-3">
                                                         <FormLabel>

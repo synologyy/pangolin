@@ -209,11 +209,11 @@ export const loginPageBranding = pgTable("loginPageBranding", {
     logoUrl: text("logoUrl").notNull(),
     logoWidth: integer("logoWidth").notNull(),
     logoHeight: integer("logoHeight").notNull(),
-    title: text("title"),
-    subtitle: text("subtitle"),
     primaryColor: text("primaryColor"),
     resourceTitle: text("resourceTitle").notNull(),
-    resourceSubtitle: text("resourceSubtitle")
+    resourceSubtitle: text("resourceSubtitle"),
+    orgTitle: text("orgTitle"),
+    orgSubtitle: text("orgSubtitle")
 });
 
 export const loginPageBrandingOrg = pgTable("loginPageBrandingOrg", {
