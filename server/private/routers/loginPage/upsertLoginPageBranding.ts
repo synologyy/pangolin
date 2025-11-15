@@ -24,7 +24,7 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
-import { eq } from "drizzle-orm";
+import { eq, InferInsertModel } from "drizzle-orm";
 import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
@@ -40,10 +40,10 @@ const bodySchema = z
         logoUrl: z.string().url(),
         logoWidth: z.coerce.number().min(1),
         logoHeight: z.coerce.number().min(1),
-        title: z.string(),
-        subtitle: z.string().optional(),
         resourceTitle: z.string(),
-        resourceSubtitle: z.string().optional()
+        resourceSubtitle: z.string().optional(),
+        orgTitle: z.string().optional(),
+        orgSubtitle: z.string().optional()
     })
     .strict();
 
@@ -64,8 +64,6 @@ export async function upsertLoginPageBranding(
                 )
             );
         }
-
-        const updateData = parsedBody.data;
 
         const parsedParams = paramsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -90,6 +88,16 @@ export async function upsertLoginPageBranding(
                     )
                 );
             }
+        }
+
+        let updateData = parsedBody.data satisfies InferInsertModel<
+            typeof loginPageBranding
+        >;
+
+        if (build !== "saas") {
+            // org branding settings are only considered in the saas build
+            const { orgTitle, orgSubtitle, ...rest } = updateData;
+            updateData = rest;
         }
 
         const [existingLoginPageBranding] = await db
