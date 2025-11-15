@@ -43,7 +43,11 @@ const bodySchema = z
         resourceTitle: z.string(),
         resourceSubtitle: z.string().optional(),
         orgTitle: z.string().optional(),
-        orgSubtitle: z.string().optional()
+        orgSubtitle: z.string().optional(),
+        primaryColor: z
+            .string()
+            .regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i)
+            .optional()
     })
     .strict();
 

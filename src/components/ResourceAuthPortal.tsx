@@ -390,7 +390,12 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
         : 100;
 
     return (
-        <div>
+        <div
+            style={{
+                // @ts-expect-error
+                "--primary": isUnlocked() ? props.branding?.primaryColor : null
+            }}
+        >
             {!accessDenied ? (
                 <div>
                     {isUnlocked() && build === "enterprise" ? (

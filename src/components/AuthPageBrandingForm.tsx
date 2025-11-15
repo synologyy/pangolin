@@ -76,7 +76,11 @@ const AuthPageFormSchema = z.object({
     orgTitle: z.string().optional(),
     orgSubtitle: z.string().optional(),
     resourceTitle: z.string(),
-    resourceSubtitle: z.string().optional()
+    resourceSubtitle: z.string().optional(),
+    primaryColor: z
+        .string()
+        .regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i)
+        .optional()
 });
 
 export default function AuthPageBrandingForm({
@@ -114,7 +118,8 @@ export default function AuthPageBrandingForm({
                 `Authenticate to access {{resourceName}}`,
             resourceSubtitle:
                 branding?.resourceSubtitle ??
-                `Choose your preferred authentication method for {{resourceName}}`
+                `Choose your preferred authentication method for {{resourceName}}`,
+            primaryColor: branding?.primaryColor ?? `#f36117` // default pangolin primary color
         }
     });
 
@@ -204,6 +209,40 @@ export default function AuthPageBrandingForm({
                                 id="auth-page-branding-form"
                                 className="flex flex-col gap-8 items-stretch"
                             >
+                                <FormField
+                                    control={form.control}
+                                    name="primaryColor"
+                                    render={({ field }) => (
+                                        <FormItem className="">
+                                            <FormLabel>
+                                                {t("brandingPrimaryColor")}
+                                            </FormLabel>
+
+                                            <div className="flex items-center gap-2">
+                                                <label
+                                                    className="size-8 rounded-sm"
+                                                    aria-hidden="true"
+                                                    style={{
+                                                        backgroundColor:
+                                                            field.value
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="color"
+                                                        {...field}
+                                                        className="sr-only"
+                                                    />
+                                                </label>
+                                                <FormControl>
+                                                    <Input {...field} />
+                                                </FormControl>
+                                            </div>
+
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
                                 <div className="grid md:grid-cols-5 gap-3 items-start">
                                     <FormField
                                         control={form.control}
