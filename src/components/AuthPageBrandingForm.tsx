@@ -129,7 +129,6 @@ export default function AuthPageBrandingForm({
 
         if (!isValid) return;
         try {
-            // Update or existing auth page domain
             const updateRes = await api.put(
                 `/org/${orgId}/login-page-branding`,
                 {
@@ -138,7 +137,6 @@ export default function AuthPageBrandingForm({
             );
 
             if (updateRes.status === 200 || updateRes.status === 201) {
-                // update the data from the API
                 router.refresh();
                 toast({
                     variant: "default",
@@ -160,13 +158,11 @@ export default function AuthPageBrandingForm({
 
     async function deleteBranding() {
         try {
-            // Update or existing auth page domain
             const updateRes = await api.delete(
                 `/org/${orgId}/login-page-branding`
             );
 
             if (updateRes.status === 200) {
-                // update the data from the API
                 router.refresh();
                 form.reset();
                 setIsDeleteModalOpen(false);
