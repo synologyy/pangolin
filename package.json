@@ -19,9 +19,9 @@
         "db:sqlite:studio": "drizzle-kit studio --config=./drizzle.sqlite.config.ts",
         "db:pg:studio": "drizzle-kit studio --config=./drizzle.pg.config.ts",
         "db:clear-migrations": "rm -rf server/migrations",
-        "set:oss": "echo 'export const build = \"oss\" as any;' > server/build.ts && cp tsconfig.oss.json tsconfig.json",
-        "set:saas": "echo 'export const build = \"saas\" as any;' > server/build.ts && cp tsconfig.saas.json tsconfig.json",
-        "set:enterprise": "echo 'export const build = \"enterprise\" as any;' > server/build.ts && cp tsconfig.enterprise.json tsconfig.json",
+        "set:oss": "echo 'export const build = \"oss\" as \"saas\" | \"enterprise\" | \"oss\";' > server/build.ts && cp tsconfig.oss.json tsconfig.json",
+        "set:saas": "echo 'export const build = \"saas\" as \"saas\" | \"enterprise\" | \"oss\";' > server/build.ts && cp tsconfig.saas.json tsconfig.json",
+        "set:enterprise": "echo 'export const build = \"enterprise\" as \"saas\" | \"enterprise\" | \"oss\";' > server/build.ts && cp tsconfig.enterprise.json tsconfig.json",
         "set:sqlite": "echo 'export * from \"./sqlite\";' > server/db/index.ts",
         "set:pg": "echo 'export * from \"./pg\";' > server/db/index.ts",
         "next:build": "next build",
@@ -79,7 +79,7 @@
         "date-fns": "4.1.0",
         "drizzle-orm": "0.44.7",
         "eslint": "9.39.0",
-        "eslint-config-next": "16.0.1",
+        "eslint-config-next": "15.5.6",
         "express": "5.1.0",
         "express-rate-limit": "8.2.1",
         "glob": "11.0.3",
@@ -133,10 +133,10 @@
         "@faker-js/faker": "^10.1.0"
     },
     "devDependencies": {
-        "@dotenvx/dotenvx": "1.51.1",
+        "@dotenvx/dotenvx": "1.51.0",
         "@esbuild-plugins/tsconfig-paths": "0.1.2",
         "@react-email/preview-server": "4.3.2",
-        "@tailwindcss/postcss": "^4.1.17",
+        "@tailwindcss/postcss": "^4.1.16",
         "@types/better-sqlite3": "7.6.12",
         "@types/cookie-parser": "1.4.10",
         "@types/cors": "2.8.19",
@@ -157,7 +157,7 @@
         "@types/ws": "8.18.1",
         "@types/yargs": "17.0.34",
         "drizzle-kit": "0.31.6",
-        "esbuild": "0.25.12",
+        "esbuild": "0.25.11",
         "esbuild-node-externals": "1.18.0",
         "postcss": "^8",
         "react-email": "4.3.2",
@@ -165,7 +165,7 @@
         "tsc-alias": "1.8.16",
         "tsx": "4.20.6",
         "typescript": "^5",
-        "typescript-eslint": "^8.46.3"
+        "typescript-eslint": "^8.46.2"
     },
     "overrides": {
         "emblor": {
