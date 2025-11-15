@@ -210,8 +210,9 @@ export const loginPageBranding = sqliteTable("loginPageBranding", {
     logoUrl: text("logoUrl").notNull(),
     logoWidth: integer("logoWidth").notNull(),
     logoHeight: integer("logoHeight").notNull(),
-    title: text("title").notNull(),
+    title: text("title"),
     subtitle: text("subtitle"),
+    primaryColor: text("primaryColor"),
     resourceTitle: text("resourceTitle").notNull(),
     resourceSubtitle: text("resourceSubtitle")
 });
