@@ -93,9 +93,14 @@ export class RateLimitService {
                 }
             }
 
-            // Delete old fields in batch
+            // Delete old fields in batches to avoid call stack size exceeded errors
+            // The spread operator can cause issues with very large arrays
             if (fieldsToDelete.length > 0) {
-                await client.hdel(key, ...fieldsToDelete);
+                const batchSize = 1000; // Process 1000 fields at a time
+                for (let i = 0; i < fieldsToDelete.length; i += batchSize) {
+                    const batch = fieldsToDelete.slice(i, i + batchSize);
+                    await client.hdel(key, ...batch);
+                }
                 logger.debug(`Cleaned up ${fieldsToDelete.length} old timestamp fields from ${key}`);
             }
         } catch (error) {
