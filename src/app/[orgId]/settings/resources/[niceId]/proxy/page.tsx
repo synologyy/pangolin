@@ -122,7 +122,7 @@ const addTargetSchema = z
     .object({
         ip: z.string().refine(isTargetValid),
         method: z.string().nullable(),
-        port: z.coerce.number().int().positive(),
+        port: z.coerce.number<number>().int().positive(),
         siteId: z.int()
             .positive({
                 error: "You must select a site for a target."

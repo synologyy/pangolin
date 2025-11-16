@@ -31,7 +31,7 @@ import { UpdateLoginPageResponse } from "@server/routers/loginPage/types";
 const paramsSchema = z
     .object({
         orgId: z.string(),
-        loginPageId: z.coerce.number()
+        loginPageId: z.coerce.number<number>()
     })
     .strict();
 

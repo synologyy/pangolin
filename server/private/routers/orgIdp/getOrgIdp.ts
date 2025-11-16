@@ -30,7 +30,7 @@ import { GetOrgIdpResponse } from "@server/routers/orgIdp/types";
 const paramsSchema = z
     .object({
         orgId: z.string().nonempty(),
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 

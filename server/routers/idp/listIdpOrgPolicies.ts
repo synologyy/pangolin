@@ -11,7 +11,7 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const paramsSchema = z.object({
-    idpId: z.coerce.number()
+    idpId: z.coerce.number<number>()
 });
 
 const querySchema = z.strictObject({

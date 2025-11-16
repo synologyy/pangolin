@@ -31,7 +31,7 @@ import { TierId } from "@server/lib/billing/tiers";
 const paramsSchema = z
     .object({
         orgId: z.string().nonempty(),
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 

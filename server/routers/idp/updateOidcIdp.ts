@@ -14,7 +14,7 @@ import config from "@server/lib/config";
 
 const paramsSchema = z
     .object({
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 

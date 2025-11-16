@@ -11,7 +11,7 @@ import { eq, and } from "drizzle-orm";
 import { idp, idpOrg } from "@server/db";
 
 const paramsSchema = z.strictObject({
-        idpId: z.coerce.number(),
+        idpId: z.coerce.number<number>(),
         orgId: z.string()
     });
 

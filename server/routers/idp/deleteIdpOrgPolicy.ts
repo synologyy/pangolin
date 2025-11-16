@@ -11,7 +11,7 @@ import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const paramsSchema = z.strictObject({
-        idpId: z.coerce.number(),
+        idpId: z.coerce.number<number>(),
         orgId: z.string()
     });
 
