@@ -12,15 +12,13 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { BlueprintData } from "./types";
 
-const getBlueprintSchema = z
-    .object({
+const getBlueprintSchema = z.strictObject({
         blueprintId: z
             .string()
             .transform(stoi)
-            .pipe(z.number().int().positive()),
+            .pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 async function query(blueprintId: number, orgId: string) {
     // Get the client

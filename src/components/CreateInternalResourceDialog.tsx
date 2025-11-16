@@ -79,18 +79,14 @@ export default function CreateInternalResourceDialog({
             .string()
             .min(1, t("createInternalResourceDialogNameRequired"))
             .max(255, t("createInternalResourceDialogNameMaxLength")),
-        siteId: z.number().int().positive(t("createInternalResourceDialogPleaseSelectSite")),
+        siteId: z.int().positive(t("createInternalResourceDialogPleaseSelectSite")),
         protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z
-            .number()
-            .int()
+        proxyPort: z.int()
             .positive()
             .min(1, t("createInternalResourceDialogProxyPortMin"))
             .max(65535, t("createInternalResourceDialogProxyPortMax")),
         destinationIp: z.string(),
-        destinationPort: z
-            .number()
-            .int()
+        destinationPort: z.int()
             .positive()
             .min(1, t("createInternalResourceDialogDestinationPortMin"))
             .max(65535, t("createInternalResourceDialogDestinationPortMax"))

@@ -10,19 +10,17 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const getSiteResourceParamsSchema = z
-    .object({
+const getSiteResourceParamsSchema = z.strictObject({
         siteResourceId: z
             .string()
             .optional()
             .transform((val) => val ? Number(val) : undefined)
-            .pipe(z.number().int().positive().optional())
+            .pipe(z.int().positive().optional())
             .optional(),
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         niceId: z.string().optional(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 async function query(siteResourceId?: number, siteId?: number, niceId?: string, orgId?: string) {
     if (siteResourceId && siteId && orgId) {

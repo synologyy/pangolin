@@ -11,18 +11,16 @@ import logger from "@server/logger";
 import stoi from "@server/lib/stoi";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const getResourceSchema = z
-    .object({
+const getResourceSchema = z.strictObject({
         resourceId: z
             .string()
             .optional()
             .transform(stoi)
-            .pipe(z.number().int().positive().optional())
+            .pipe(z.int().positive().optional())
             .optional(),
         niceId: z.string().optional(),
         orgId: z.string().optional()
-    })
-    .strict();
+    });
 
 async function query(resourceId?: number, niceId?: string, orgId?: string) {
     if (resourceId) {

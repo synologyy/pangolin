@@ -13,11 +13,9 @@ import { sendToClient } from "#dynamic/routers/ws";
 import { deletePeer } from "../gerbil/peers";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const deleteOrgSchema = z
-    .object({
+const deleteOrgSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export type DeleteOrgResponse = {};
 

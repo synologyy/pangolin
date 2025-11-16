@@ -14,11 +14,9 @@ import {
 import logger from "@server/logger";
 import { hashPassword } from "@server/auth/password";
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         name: z.string().min(1).max(255)
-    })
-    .strict();
+    });
 
 export type CreateRootApiKeyBody = z.infer<typeof bodySchema>;
 

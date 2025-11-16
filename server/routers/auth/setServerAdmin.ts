@@ -14,7 +14,7 @@ import { UserType } from "@server/types/UserTypes";
 import moment from "moment";
 
 export const bodySchema = z.object({
-    email: z.string().toLowerCase().email(),
+    email: z.email().toLowerCase(),
     password: passwordSchema,
     setupToken: z.string().min(1, "Setup token is required")
 });

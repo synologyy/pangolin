@@ -22,11 +22,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { GetLoginPageResponse } from "@server/routers/loginPage/types";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 async function query(orgId: string) {
     const [res] = await db

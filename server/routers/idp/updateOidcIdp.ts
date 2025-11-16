@@ -18,8 +18,7 @@ const paramsSchema = z
     })
     .strict();
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         name: z.string().optional(),
         clientId: z.string().optional(),
         clientSecret: z.string().optional(),
@@ -32,8 +31,7 @@ const bodySchema = z
         autoProvision: z.boolean().optional(),
         defaultRoleMapping: z.string().optional(),
         defaultOrgMapping: z.string().optional()
-    })
-    .strict();
+    });
 
 export type UpdateIdpResponse = {
     idpId: number;

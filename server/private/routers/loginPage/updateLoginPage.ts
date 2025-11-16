@@ -35,14 +35,12 @@ const paramsSchema = z
     })
     .strict();
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         subdomain: subdomainSchema.nullable().optional(),
         domainId: z.string().optional()
     })
-    .strict()
     .refine((data) => Object.keys(data).length > 0, {
-        message: "At least one field must be provided for update"
+        error: "At least one field must be provided for update"
     })
     .refine(
         (data) => {
@@ -51,7 +49,9 @@ const bodySchema = z
             }
             return true;
         },
-        { message: "Invalid subdomain" }
+        {
+            error: "Invalid subdomain"
+        }
     );
 
 export type UpdateLoginPageBody = z.infer<typeof bodySchema>;

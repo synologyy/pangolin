@@ -16,14 +16,12 @@ import { response } from "@server/lib/response";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
-const getExchangeTokenParams = z
-    .object({
+const getExchangeTokenParams = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 export type GetExchangeTokenResponse = {
     requestToken: string;

@@ -23,11 +23,9 @@ const paramsSchema = z
     })
     .strict();
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         redirectUrl: z.string()
-    })
-    .strict();
+    });
 
 const querySchema = z.object({
     orgId: z.string().optional() // check what actuall calls it

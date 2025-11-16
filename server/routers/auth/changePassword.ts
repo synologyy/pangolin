@@ -22,13 +22,11 @@ import { sendEmail } from "@server/emails";
 import ConfirmPasswordReset from "@server/emails/templates/NotifyResetPassword";
 import config from "@server/lib/config";
 
-export const changePasswordBody = z
-    .object({
+export const changePasswordBody = z.strictObject({
         oldPassword: z.string(),
         newPassword: passwordSchema,
         code: z.string().optional()
-    })
-    .strict();
+    });
 
 export type ChangePasswordBody = z.infer<typeof changePasswordBody>;
 

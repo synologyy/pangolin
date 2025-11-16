@@ -24,19 +24,15 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
 
-const reGenerateSecretParamsSchema = z
-    .object({
-        clientId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const reGenerateSecretParamsSchema = z.strictObject({
+        clientId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
-const reGenerateSecretBodySchema = z
-    .object({
+const reGenerateSecretBodySchema = z.strictObject({
         olmId: z.string().min(1).optional(),
         secret: z.string().min(1).optional(),
 
-    })
-    .strict();
+    });
 
 export type ReGenerateSecretBody = z.infer<typeof reGenerateSecretBodySchema>;
 

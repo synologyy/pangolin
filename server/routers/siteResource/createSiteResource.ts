@@ -12,23 +12,19 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { addTargets } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
 
-const createSiteResourceParamsSchema = z
-    .object({
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+const createSiteResourceParamsSchema = z.strictObject({
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const createSiteResourceSchema = z
-    .object({
+const createSiteResourceSchema = z.strictObject({
         name: z.string().min(1).max(255),
         protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.number().int().positive(),
-        destinationPort: z.number().int().positive(),
+        proxyPort: z.int().positive(),
+        destinationPort: z.int().positive(),
         destinationIp: z.string(),
         enabled: z.boolean().default(true)
-    })
-    .strict();
+    });
 
 export type CreateSiteResourceBody = z.infer<typeof createSiteResourceSchema>;
 export type CreateSiteResourceResponse = SiteResource;

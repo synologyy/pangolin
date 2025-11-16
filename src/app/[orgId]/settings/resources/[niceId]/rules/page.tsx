@@ -440,9 +440,7 @@ export default function ResourceRules(props: {
                     type="number"
                     onClick={(e) => e.currentTarget.focus()}
                     onBlur={(e) => {
-                        const parsed = z.coerce
-                            .number()
-                            .int()
+                        const parsed = z.int()
                             .optional()
                             .safeParse(e.target.value);
 

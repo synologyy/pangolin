@@ -30,13 +30,13 @@ export const queryActionAuditLogsQuery = z.object({
     timeStart: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
-            message: "timeStart must be a valid ISO date string"
+            error: "timeStart must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000)),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
-            message: "timeEnd must be a valid ISO date string"
+            error: "timeEnd must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
@@ -50,13 +50,13 @@ export const queryActionAuditLogsQuery = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 export const queryActionAuditLogsParams = z.object({
