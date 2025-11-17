@@ -199,6 +199,8 @@ export type UserSessionWithUser = {
 export const hybridRouter = Router();
 hybridRouter.use(verifySessionRemoteExitNodeMiddleware);
 
+// TODO: ADD RATE LIMITING TO THESE ROUTES AS NEEDED BASED ON USAGE PATTERNS
+
 hybridRouter.get(
     "/general-config",
     async (req: Request, res: Response, next: NextFunction) => {
