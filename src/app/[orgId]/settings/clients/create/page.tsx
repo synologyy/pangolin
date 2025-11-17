@@ -103,7 +103,8 @@ export default function Page() {
             .refine((val) => val.length > 0, {
                 message: t("siteRequired")
             }),
-        subnet: z.union([z.ipv4(), z.ipv6()]).min(1, {
+        subnet: z.union([z.ipv4(), z.ipv6()])
+            .refine((val) => val.length > 0, {
             message: t("subnetRequired")
         })
     });

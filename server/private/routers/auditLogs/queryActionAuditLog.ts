@@ -40,7 +40,7 @@ export const queryActionAuditLogsQuery = z.object({
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .default(new Date().toISOString()),
+        .prefault(new Date().toISOString()),
     action: z.string().optional(),
     actorType: z.string().optional(),
     actorId: z.string().optional(),

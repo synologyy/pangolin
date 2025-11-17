@@ -116,6 +116,20 @@ export const ResourceSchema = z
                     (target) => target == null || target.method !== undefined
                 );
             }
+            return true;
+        },
+        {
+            path: ["targets"],
+            error: "When protocol is 'http', all targets must have a 'method' field"
+
+        }
+    )
+    .refine(
+        (resource) => {
+            if (isTargetsOnlyResource(resource)) {
+                return true;
+            }
+
             // If protocol is tcp or udp, no target should have method field
             if (resource.protocol === "tcp" || resource.protocol === "udp") {
                 return resource.targets.every(
@@ -124,19 +138,9 @@ export const ResourceSchema = z
             }
             return true;
         },
-        (resource) => {
-            if (resource.protocol === "http") {
-                return {
-                    message:
-                        "When protocol is 'http', all targets must have a 'method' field",
-                    path: ["targets"]
-                };
-            }
-            return {
-                message:
-                    "When protocol is 'tcp' or 'udp', targets must not have a 'method' field",
-                path: ["targets"]
-            };
+        {
+            path: ["targets"],
+            error: "When protocol is 'tcp' or 'udp', targets must not have a 'method' field"
         }
     )
     .refine(
@@ -219,30 +223,6 @@ export const ConfigSchema = z
     .refine(
         // Enforce the full-domain uniqueness across resources in the same stack
         (config) => {
-            // Extract all full-domain values with their resource keys
-            const fullDomainMap = new Map<string, string[]>();
-
-            Object.entries(config["proxy-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const fullDomain = resource["full-domain"];
-                    if (fullDomain) {
-                        // Only process if full-domain is defined
-                        if (!fullDomainMap.has(fullDomain)) {
-                            fullDomainMap.set(fullDomain, []);
-                        }
-                        fullDomainMap.get(fullDomain)!.push(resourceKey);
-                    }
-                }
-            );
-
-            // Find duplicates
-            const duplicates = Array.from(fullDomainMap.entries()).filter(
-                ([_, resourceKeys]) => resourceKeys.length > 1
-            );
-
-            return duplicates.length === 0;
-        },
-        (config) => {
             // Extract duplicates for error message
             const fullDomainMap = new Map<string, string[]>();
 
@@ -267,38 +247,16 @@ export const ConfigSchema = z
                 )
                 .join("; ");
 
-            return {
-                message: `Duplicate 'full-domain' values found: ${duplicates}`,
-                path: ["resources"]
-            };
+            if (duplicates.length !== 0) {
+                return {
+                    path: ["resources"],
+                    error: `Duplicate 'full-domain' values found: ${duplicates}`
+                };
+            }
         }
     )
     .refine(
         // Enforce proxy-port uniqueness within proxy-resources per protocol
-        (config) => {
-            const protocolPortMap = new Map<string, string[]>();
-
-            Object.entries(config["proxy-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const proxyPort = resource["proxy-port"];
-                    const protocol = resource.protocol;
-                    if (proxyPort !== undefined && protocol !== undefined) {
-                        const key = `${protocol}:${proxyPort}`;
-                        if (!protocolPortMap.has(key)) {
-                            protocolPortMap.set(key, []);
-                        }
-                        protocolPortMap.get(key)!.push(resourceKey);
-                    }
-                }
-            );
-
-            // Find duplicates
-            const duplicates = Array.from(protocolPortMap.entries()).filter(
-                ([_, resourceKeys]) => resourceKeys.length > 1
-            );
-
-            return duplicates.length === 0;
-        },
         (config) => {
             // Extract duplicates for error message
             const protocolPortMap = new Map<string, string[]>();
@@ -327,36 +285,16 @@ export const ConfigSchema = z
                 )
                 .join("; ");
 
-            return {
-                message: `Duplicate 'proxy-port' values found in proxy-resources: ${duplicates}`,
-                path: ["proxy-resources"]
-            };
+            if (duplicates.length !== 0) {
+                return {
+                    path: ["proxy-resources"],
+                    error: `Duplicate 'proxy-port' values found in proxy-resources: ${duplicates}`
+                };
+            }
         }
     )
     .refine(
         // Enforce proxy-port uniqueness within client-resources
-        (config) => {
-            const proxyPortMap = new Map<number, string[]>();
-
-            Object.entries(config["client-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const proxyPort = resource["proxy-port"];
-                    if (proxyPort !== undefined) {
-                        if (!proxyPortMap.has(proxyPort)) {
-                            proxyPortMap.set(proxyPort, []);
-                        }
-                        proxyPortMap.get(proxyPort)!.push(resourceKey);
-                    }
-                }
-            );
-
-            // Find duplicates
-            const duplicates = Array.from(proxyPortMap.entries()).filter(
-                ([_, resourceKeys]) => resourceKeys.length > 1
-            );
-
-            return duplicates.length === 0;
-        },
         (config) => {
             // Extract duplicates for error message
             const proxyPortMap = new Map<number, string[]>();
@@ -381,10 +319,12 @@ export const ConfigSchema = z
                 )
                 .join("; ");
 
-            return {
-                message: `Duplicate 'proxy-port' values found in client-resources: ${duplicates}`,
-                path: ["client-resources"]
-            };
+            if (duplicates.length !== 0) {
+                return {
+                    path: ["client-resources"],
+                    error: `Duplicate 'proxy-port' values found in client-resources: ${duplicates}`
+                };
+            }
         }
     );
 

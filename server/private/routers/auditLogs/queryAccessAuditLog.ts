@@ -40,7 +40,7 @@ export const queryAccessAuditLogsQuery = z.object({
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .default(new Date().toISOString()),
+        .prefault(new Date().toISOString()),
     action: z
         .union([z.boolean(), z.string()])
         .transform((val) => (typeof val === "string" ? val === "true" : val))
