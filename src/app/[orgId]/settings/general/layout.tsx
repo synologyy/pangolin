@@ -17,6 +17,7 @@ import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
 import { build } from "@server/build";
 import { TierId } from "@server/lib/billing/tiers";
+import { isSubscribed } from "@app/lib/api/getSubscriptionStatus";
 
 type GeneralSettingsProps = {
     children: React.ReactNode;
@@ -51,16 +52,6 @@ export default async function GeneralSettingsPage({
         redirect(`/${orgId}`);
     }
 
-    let subscriptionStatus: GetOrgTierResponse | null = null;
-    try {
-        const subRes = await getCachedSubscription(orgId);
-        subscriptionStatus = subRes.data.data;
-    } catch {}
-    const subscribed =
-        build === "enterprise"
-            ? true
-            : subscriptionStatus?.tier === TierId.STANDARD;
-
     const t = await getTranslations();
 
     const navItems: TabItem[] = [
@@ -70,7 +61,7 @@ export default async function GeneralSettingsPage({
             exact: true
         }
     ];
-    if (subscribed) {
+    if (build === "saas") {
         navItems.push({
             title: t("authPage"),
             href: `/{orgId}/settings/general/auth-page`
