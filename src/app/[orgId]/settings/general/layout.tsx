@@ -1,23 +1,15 @@
-import { internal } from "@app/lib/api";
-import { authCookieHeader } from "@app/lib/api/cookies";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { HorizontalTabs, type TabItem } from "@app/components/HorizontalTabs";
 import { verifySession } from "@app/lib/auth/verifySession";
 import OrgProvider from "@app/providers/OrgProvider";
 import OrgUserProvider from "@app/providers/OrgUserProvider";
-import { GetOrgResponse } from "@server/routers/org";
-import { GetOrgUserResponse } from "@server/routers/user";
-import { AxiosResponse } from "axios";
+
 import { redirect } from "next/navigation";
 
 import { getTranslations } from "next-intl/server";
 import { getCachedOrg } from "@app/lib/api/getCachedOrg";
 import { getCachedOrgUser } from "@app/lib/api/getCachedOrgUser";
-import { GetOrgTierResponse } from "@server/routers/billing/types";
-import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
 import { build } from "@server/build";
-import { TierId } from "@server/lib/billing/tiers";
-import { isSubscribed } from "@app/lib/api/getSubscriptionStatus";
 
 type GeneralSettingsProps = {
     children: React.ReactNode;
