@@ -23,12 +23,10 @@ export type CreateNewtResponse = {
     secret: string;
 };
 
-const createNewtSchema = z
-    .object({
+const createNewtSchema = z.strictObject({
         newtId: z.string(),
         secret: z.string()
-    })
-    .strict();
+    });
 
 export async function createNewt(
     req: Request,

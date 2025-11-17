@@ -17,18 +17,16 @@ import stoi from "@server/lib/stoi";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listAccessTokensParamsSchema = z
-    .object({
+const listAccessTokensParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .optional()
             .transform(stoi)
-            .pipe(z.number().int().positive().optional()),
+            .pipe(z.int().positive().optional()),
         orgId: z.string().optional()
     })
-    .strict()
     .refine((data) => !!data.resourceId !== !!data.orgId, {
-        message: "Either resourceId or orgId must be provided, but not both"
+        error: "Either resourceId or orgId must be provided, but not both"
     });
 
 const listAccessTokensSchema = z.object({
@@ -37,14 +35,14 @@ const listAccessTokensSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().nonnegative()),
+        .pipe(z.int().nonnegative()),
 
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 function queryAccessTokens(

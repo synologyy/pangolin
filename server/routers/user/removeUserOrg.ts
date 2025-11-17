@@ -14,12 +14,10 @@ import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 import { UserType } from "@server/types/UserTypes";
 
-const removeUserSchema = z
-    .object({
+const removeUserSchema = z.strictObject({
         userId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "delete",

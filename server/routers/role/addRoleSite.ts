@@ -9,17 +9,13 @@ import logger from "@server/logger";
 import { eq } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 
-const addRoleSiteParamsSchema = z
-    .object({
-        roleId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const addRoleSiteParamsSchema = z.strictObject({
+        roleId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
-const addRoleSiteSchema = z
-    .object({
-        siteId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const addRoleSiteSchema = z.strictObject({
+        siteId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
 export async function addRoleSite(
     req: Request,

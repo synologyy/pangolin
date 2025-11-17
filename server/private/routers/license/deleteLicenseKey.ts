@@ -23,11 +23,9 @@ import { eq } from "drizzle-orm";
 import { licenseKey } from "@server/db";
 import license from "#private/license/license";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         licenseKey: z.string().min(1).max(255)
-    })
-    .strict();
+    });
 
 export async function deleteLicenseKey(
     req: Request,

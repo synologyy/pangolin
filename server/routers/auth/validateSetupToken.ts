@@ -8,11 +8,9 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
-const validateSetupTokenSchema = z
-    .object({
+const validateSetupTokenSchema = z.strictObject({
         token: z.string().min(1, "Token is required")
-    })
-    .strict();
+    });
 
 export type ValidateSetupTokenResponse = {
     valid: boolean;

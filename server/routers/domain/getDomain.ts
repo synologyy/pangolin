@@ -10,14 +10,12 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { domain } from "zod/v4/core/regexes";
 
-const getDomainSchema = z
-    .object({
+const getDomainSchema = z.strictObject({
         domainId: z
             .string()
             .optional(),
         orgId: z.string().optional()
-    })
-    .strict();
+    });
 
 async function query(domainId?: string, orgId?: string) {
     if (domainId) {

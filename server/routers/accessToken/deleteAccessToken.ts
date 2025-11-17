@@ -10,11 +10,9 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@server/db";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const deleteAccessTokenParamsSchema = z
-    .object({
+const deleteAccessTokenParamsSchema = z.strictObject({
         accessTokenId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "delete",

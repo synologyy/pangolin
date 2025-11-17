@@ -9,18 +9,14 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
-const removeUserActionParamsSchema = z
-    .object({
+const removeUserActionParamsSchema = z.strictObject({
         userId: z.string()
-    })
-    .strict();
+    });
 
-const removeUserActionSchema = z
-    .object({
+const removeUserActionSchema = z.strictObject({
         actionId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export async function removeUserAction(
     req: Request,

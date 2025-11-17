@@ -50,14 +50,14 @@ export const privateConfigSchema = z.object({
             host: z.string(),
             port: portSchema,
             password: z.string().optional(),
-            db: z.number().int().nonnegative().optional().default(0),
+            db: z.int().nonnegative().optional().default(0),
             replicas: z
                 .array(
                     z.object({
                         host: z.string(),
                         port: portSchema,
                         password: z.string().optional(),
-                        db: z.number().int().nonnegative().optional().default(0)
+                        db: z.int().nonnegative().optional().default(0)
                     })
                 )
                 .optional()
@@ -79,14 +79,14 @@ export const privateConfigSchema = z.object({
                 .default("http://gerbil:3004")
         })
         .optional()
-        .default({}),
+        .prefault({}),
     flags: z
         .object({
             enable_redis: z.boolean().optional().default(false),
             use_pangolin_dns: z.boolean().optional().default(false)
         })
         .optional()
-        .default({}),
+        .prefault({}),
     branding: z
         .object({
             app_name: z.string().optional(),

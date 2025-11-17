@@ -10,28 +10,24 @@ import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listInvitationsParamsSchema = z
-    .object({
+const listInvitationsParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const listInvitationsQuerySchema = z
-    .object({
+const listInvitationsQuerySchema = z.strictObject({
         limit: z
             .string()
             .optional()
             .default("1000")
             .transform(Number)
-            .pipe(z.number().int().nonnegative()),
+            .pipe(z.int().nonnegative()),
         offset: z
             .string()
             .optional()
             .default("0")
             .transform(Number)
-            .pipe(z.number().int().nonnegative())
-    })
-    .strict();
+            .pipe(z.int().nonnegative())
+    });
 
 async function queryInvitations(orgId: string, limit: number, offset: number) {
     return await db

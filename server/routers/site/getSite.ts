@@ -11,18 +11,16 @@ import stoi from "@server/lib/stoi";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const getSiteSchema = z
-    .object({
+const getSiteSchema = z.strictObject({
         siteId: z
             .string()
             .optional()
             .transform(stoi)
-            .pipe(z.number().int().positive().optional())
+            .pipe(z.int().positive().optional())
             .optional(),
         niceId: z.string().optional(),
         orgId: z.string().optional()
-    })
-    .strict();
+    });
 
 async function query(siteId?: number, niceId?: string, orgId?: string) {
     if (siteId) {

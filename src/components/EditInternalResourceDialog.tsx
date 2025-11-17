@@ -72,9 +72,9 @@ export default function EditInternalResourceDialog({
     const formSchema = z.object({
         name: z.string().min(1, t("editInternalResourceDialogNameRequired")).max(255, t("editInternalResourceDialogNameMaxLength")),
         protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.number().int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")),
+        proxyPort: z.int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")),
         destinationIp: z.string(),
-        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax"))
+        destinationPort: z.int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax"))
     });
 
     type FormData = z.infer<typeof formSchema>;

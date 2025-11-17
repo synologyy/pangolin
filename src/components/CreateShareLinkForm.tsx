@@ -108,7 +108,7 @@ export default function CreateShareLinkForm({
         resourceName: z.string(),
         resourceUrl: z.string(),
         timeUnit: z.string(),
-        timeValue: z.coerce.number().int().positive().min(1),
+        timeValue: z.coerce.number<number>().int().positive().min(1),
         title: z.string().optional()
     });
 

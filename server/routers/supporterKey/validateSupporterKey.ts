@@ -9,12 +9,10 @@ import { supporterKey } from "@server/db";
 import { db } from "@server/db";
 import config from "@server/lib/config";
 
-const validateSupporterKeySchema = z
-    .object({
+const validateSupporterKeySchema = z.strictObject({
         githubUsername: z.string().nonempty(),
         key: z.string().nonempty()
-    })
-    .strict();
+    });
 
 export type ValidateSupporterKeyResponse = {
     valid: boolean;

@@ -15,24 +15,20 @@ import {
 } from "@server/lib/validators";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const createResourceRuleSchema = z
-    .object({
+const createResourceRuleSchema = z.strictObject({
         action: z.enum(["ACCEPT", "DROP", "PASS"]),
         match: z.enum(["CIDR", "IP", "PATH", "COUNTRY"]),
         value: z.string().min(1),
-        priority: z.number().int(),
+        priority: z.int(),
         enabled: z.boolean().optional()
-    })
-    .strict();
+    });
 
-const createResourceRuleParamsSchema = z
-    .object({
+const createResourceRuleParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 registry.registerPath({
     method: "put",

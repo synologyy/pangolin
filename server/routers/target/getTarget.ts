@@ -10,11 +10,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const getTargetSchema = z
-    .object({
-        targetId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const getTargetSchema = z.strictObject({
+        targetId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
 type GetTargetResponse = Target & Omit<TargetHealthCheck, 'hcHeaders'> & {
     hcHeaders: { name: string; value: string; }[] | null;
