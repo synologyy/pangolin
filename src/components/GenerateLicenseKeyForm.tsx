@@ -63,7 +63,7 @@ export default function GenerateLicenseKeyForm({
 
     // Personal form schema
     const personalFormSchema = z.object({
-        email: z.string().email(),
+        email: z.email(),
         firstName: z.string().min(1),
         lastName: z.string().min(1),
         primaryUse: z.string().min(1),
@@ -75,14 +75,14 @@ export default function GenerateLicenseKeyForm({
 
     // Business form schema
     const businessFormSchema = z.object({
-        email: z.string().email(),
+        email: z.email(),
         firstName: z.string().min(1),
         lastName: z.string().min(1),
         jobTitle: z.string().min(1),
         primaryUse: z.string().min(1),
         industry: z.string().min(1),
-        prospectiveUsers: z.coerce.number().optional(),
-        prospectiveSites: z.coerce.number().optional(),
+        prospectiveUsers: z.coerce.number<number>().optional(),
+        prospectiveSites: z.coerce.number<number>().optional(),
         companyName: z.string().min(1),
         countryOfResidence: z.string().min(1),
         stateProvinceRegion: z.string().min(1),

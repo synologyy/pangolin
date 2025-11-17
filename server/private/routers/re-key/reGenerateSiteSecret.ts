@@ -25,22 +25,18 @@ import { hashPassword } from "@server/auth/password";
 import { addPeer } from "@server/routers/gerbil/peers";
 
 
-const updateSiteParamsSchema = z
-    .object({
-        siteId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const updateSiteParamsSchema = z.strictObject({
+        siteId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
-const updateSiteBodySchema = z
-    .object({
+const updateSiteBodySchema = z.strictObject({
         type: z.enum(["newt", "wireguard"]),
         newtId: z.string().min(1).max(255).optional(),
         newtSecret: z.string().min(1).max(255).optional(),
-        exitNodeId: z.number().int().positive().optional(),
+        exitNodeId: z.int().positive().optional(),
         pubKey: z.string().optional(),
         subnet: z.string().optional(),
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "post",

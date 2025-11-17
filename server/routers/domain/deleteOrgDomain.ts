@@ -10,12 +10,10 @@ import { and, eq } from "drizzle-orm";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         domainId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export type DeleteAccountDomainResponse = {
     success: boolean;

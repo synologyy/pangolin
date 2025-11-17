@@ -20,20 +20,16 @@ import {
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import { hashPassword } from "@server/auth/password";
 
-const updateClientParamsSchema = z
-    .object({
-        clientId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const updateClientParamsSchema = z.strictObject({
+        clientId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
-const updateClientSchema = z
-    .object({
+const updateClientSchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
         siteIds: z
-            .array(z.number().int().positive())
+            .array(z.int().positive())
             .optional(),
-    })
-    .strict();
+    });
 
 export type UpdateClientBody = z.infer<typeof updateClientSchema>;
 

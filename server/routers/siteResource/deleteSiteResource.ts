@@ -11,13 +11,11 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { removeTargets } from "../client/targets";
 
-const deleteSiteResourceParamsSchema = z
-    .object({
-        siteResourceId: z.string().transform(Number).pipe(z.number().int().positive()),
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+const deleteSiteResourceParamsSchema = z.strictObject({
+        siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export type DeleteSiteResourceResponse = {
     message: string;

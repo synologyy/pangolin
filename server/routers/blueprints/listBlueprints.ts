@@ -10,28 +10,24 @@ import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { BlueprintData } from "./types";
 
-const listBluePrintsParamsSchema = z
-    .object({
+const listBluePrintsParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const listBluePrintsSchema = z
-    .object({
+const listBluePrintsSchema = z.strictObject({
         limit: z
             .string()
             .optional()
             .default("1000")
             .transform(Number)
-            .pipe(z.number().int().nonnegative()),
+            .pipe(z.int().nonnegative()),
         offset: z
             .string()
             .optional()
             .default("0")
             .transform(Number)
-            .pipe(z.number().int().nonnegative())
-    })
-    .strict();
+            .pipe(z.int().nonnegative())
+    });
 
 async function queryBlueprints(orgId: string, limit: number, offset: number) {
     const res = await db

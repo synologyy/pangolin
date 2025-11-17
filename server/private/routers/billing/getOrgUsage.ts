@@ -27,11 +27,9 @@ import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 import { GetOrgUsageResponse } from "@server/routers/billing/types";
 
-const getOrgSchema = z
-    .object({
+const getOrgSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "get",

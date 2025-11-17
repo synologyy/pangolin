@@ -93,7 +93,7 @@ const addRuleSchema = z.object({
     action: z.enum(["ACCEPT", "DROP", "PASS"]),
     match: z.string(),
     value: z.string(),
-    priority: z.coerce.number().int().optional()
+    priority: z.coerce.number<number>().int().optional()
 });
 
 type LocalRule = ArrayElement<ListResourceRulesResponse["rules"]> & {
@@ -440,9 +440,7 @@ export default function ResourceRules(props: {
                     type="number"
                     onClick={(e) => e.currentTarget.focus()}
                     onBlur={(e) => {
-                        const parsed = z.coerce
-                            .number()
-                            .int()
+                        const parsed = z.int()
                             .optional()
                             .safeParse(e.target.value);
 

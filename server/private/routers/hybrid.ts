@@ -78,105 +78,78 @@ import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToke
 import semver from "semver";
 
 // Zod schemas for request validation
-const getResourceByDomainParamsSchema = z
-    .object({
+const getResourceByDomainParamsSchema = z.strictObject({
         domain: z.string().min(1, "Domain is required")
-    })
-    .strict();
+    });
 
-const getUserSessionParamsSchema = z
-    .object({
+const getUserSessionParamsSchema = z.strictObject({
         userSessionId: z.string().min(1, "User session ID is required")
-    })
-    .strict();
+    });
 
-const getUserOrgRoleParamsSchema = z
-    .object({
+const getUserOrgRoleParamsSchema = z.strictObject({
         userId: z.string().min(1, "User ID is required"),
         orgId: z.string().min(1, "Organization ID is required")
-    })
-    .strict();
+    });
 
-const getRoleResourceAccessParamsSchema = z
-    .object({
+const getRoleResourceAccessParamsSchema = z.strictObject({
         roleId: z
             .string()
             .transform(Number)
             .pipe(
-                z.number().int().positive("Role ID must be a positive integer")
+                z.int().positive("Role ID must be a positive integer")
             ),
         resourceId: z
             .string()
             .transform(Number)
             .pipe(
-                z
-                    .number()
-                    .int()
+                z.int()
                     .positive("Resource ID must be a positive integer")
             )
-    })
-    .strict();
+    });
 
-const getUserResourceAccessParamsSchema = z
-    .object({
+const getUserResourceAccessParamsSchema = z.strictObject({
         userId: z.string().min(1, "User ID is required"),
         resourceId: z
             .string()
             .transform(Number)
             .pipe(
-                z
-                    .number()
-                    .int()
+                z.int()
                     .positive("Resource ID must be a positive integer")
             )
-    })
-    .strict();
+    });
 
-const getResourceRulesParamsSchema = z
-    .object({
+const getResourceRulesParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
             .pipe(
-                z
-                    .number()
-                    .int()
+                z.int()
                     .positive("Resource ID must be a positive integer")
             )
-    })
-    .strict();
+    });
 
-const validateResourceSessionTokenParamsSchema = z
-    .object({
+const validateResourceSessionTokenParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
             .pipe(
-                z
-                    .number()
-                    .int()
+                z.int()
                     .positive("Resource ID must be a positive integer")
             )
-    })
-    .strict();
+    });
 
-const validateResourceSessionTokenBodySchema = z
-    .object({
+const validateResourceSessionTokenBodySchema = z.strictObject({
         token: z.string().min(1, "Token is required")
-    })
-    .strict();
+    });
 
-const validateResourceAccessTokenBodySchema = z
-    .object({
+const validateResourceAccessTokenBodySchema = z.strictObject({
         accessTokenId: z.string().optional(),
         resourceId: z.number().optional(),
         accessToken: z.string()
-    })
-    .strict();
+    });
 
 // Certificates by domains query validation
-const getCertificatesByDomainsQuerySchema = z
-    .object({
+const getCertificatesByDomainsQuerySchema = z.strictObject({
         // Accept domains as string or array (domains or domains[])
         domains: z
             .union([z.array(z.string().min(1)), z.string().min(1)])
@@ -185,8 +158,7 @@ const getCertificatesByDomainsQuerySchema = z
         "domains[]": z
             .union([z.array(z.string().min(1)), z.string().min(1)])
             .optional()
-    })
-    .strict();
+    });
 
 // Type exports for request schemas
 export type GetResourceByDomainParams = z.infer<
@@ -226,6 +198,8 @@ export type UserSessionWithUser = {
 // Root routes
 export const hybridRouter = Router();
 hybridRouter.use(verifySessionRemoteExitNodeMiddleware);
+
+// TODO: ADD RATE LIMITING TO THESE ROUTES AS NEEDED BASED ON USAGE PATTERNS
 
 hybridRouter.get(
     "/general-config",
@@ -591,11 +565,9 @@ hybridRouter.get(
     }
 );
 
-const getOrgLoginPageParamsSchema = z
-    .object({
+const getOrgLoginPageParamsSchema = z.strictObject({
         orgId: z.string().min(1)
-    })
-    .strict();
+    });
 
 hybridRouter.get(
     "/org/:orgId/login-page",
@@ -1217,7 +1189,7 @@ hybridRouter.post(
 );
 
 const geoIpLookupParamsSchema = z.object({
-    ip: z.string().ip()
+    ip: z.union([z.ipv4(), z.ipv6()])
 });
 hybridRouter.get(
     "/geoip/:ip",

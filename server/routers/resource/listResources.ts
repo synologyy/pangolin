@@ -20,11 +20,9 @@ import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { warn } from "console";
 
-const listResourcesParamsSchema = z
-    .object({
+const listResourcesParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 const listResourcesSchema = z.object({
     limit: z
@@ -32,14 +30,14 @@ const listResourcesSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().nonnegative()),
+        .pipe(z.int().nonnegative()),
 
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 // (resource fields + a single joined target)

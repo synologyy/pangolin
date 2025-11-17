@@ -9,11 +9,9 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
-const listRoleActionsSchema = z
-    .object({
-        roleId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const listRoleActionsSchema = z.strictObject({
+        roleId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
 export async function listRoleActions(
     req: Request,

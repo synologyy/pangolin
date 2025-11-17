@@ -18,7 +18,7 @@ import { sendToExitNode } from "#dynamic/lib/exitNodes";
 
 const inputSchema = z.object({
     publicKey: z.string(),
-    port: z.number().int().positive()
+    port: z.int().positive()
 });
 
 type Input = z.infer<typeof inputSchema>;

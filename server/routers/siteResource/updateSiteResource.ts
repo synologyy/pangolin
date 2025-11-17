@@ -11,27 +11,23 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { addTargets } from "../client/targets";
 
-const updateSiteResourceParamsSchema = z
-    .object({
+const updateSiteResourceParamsSchema = z.strictObject({
         siteResourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive()),
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+            .pipe(z.int().positive()),
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const updateSiteResourceSchema = z
-    .object({
+const updateSiteResourceSchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
         protocol: z.enum(["tcp", "udp"]).optional(),
-        proxyPort: z.number().int().positive().optional(),
-        destinationPort: z.number().int().positive().optional(),
+        proxyPort: z.int().positive().optional(),
+        destinationPort: z.int().positive().optional(),
         destinationIp: z.string().optional(),
         enabled: z.boolean().optional()
-    })
-    .strict();
+    });
 
 export type UpdateSiteResourceBody = z.infer<typeof updateSiteResourceSchema>;
 export type UpdateSiteResourceResponse = SiteResource;

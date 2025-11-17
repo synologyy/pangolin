@@ -9,19 +9,15 @@ import { fromError } from "zod-validation-error";
 import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         orgId: z.string(),
         domainId: z.string()
-    })
-    .strict();
+    });
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         certResolver: z.string().optional().nullable(),
         preferWildcardCert: z.boolean().optional().nullable()
-    })
-    .strict();
+    });
 
 export type UpdateDomainResponse = {
     domainId: string;

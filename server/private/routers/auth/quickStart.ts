@@ -62,10 +62,10 @@ import { isTargetValid } from "@server/lib/validators";
 import { listExitNodes } from "#private/lib/exitNodes";
 
 const bodySchema = z.object({
-    email: z.string().toLowerCase().email(),
+    email: z.email().toLowerCase(),
     ip: z.string().refine(isTargetValid),
     method: z.enum(["http", "https"]),
-    port: z.number().int().min(1).max(65535),
+    port: z.int().min(1).max(65535),
     pincode: z
         .string()
         .regex(/^\d{6}$/)

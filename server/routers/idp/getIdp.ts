@@ -14,7 +14,7 @@ import { decrypt } from "@server/lib/crypto";
 
 const paramsSchema = z
     .object({
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 

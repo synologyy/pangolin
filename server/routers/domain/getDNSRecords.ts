@@ -10,12 +10,10 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { getServerIp } from "@server/lib/serverIpService"; // your in-memory IP module
 
-const getDNSRecordsSchema = z
-    .object({
+const getDNSRecordsSchema = z.strictObject({
         domainId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 async function query(domainId: string) {
     const records = await db

@@ -24,12 +24,10 @@ import stoi from "@server/lib/stoi";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const restartCertificateParamsSchema = z
-    .object({
-        certId: z.string().transform(stoi).pipe(z.number().int().positive()),
+const restartCertificateParamsSchema = z.strictObject({
+        certId: z.string().transform(stoi).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "post",
@@ -41,7 +39,7 @@ registry.registerPath({
             certId: z
                 .string()
                 .transform(stoi)
-                .pipe(z.number().int().positive()),
+                .pipe(z.int().positive()),
             orgId: z.string()
         })
     },
