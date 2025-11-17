@@ -29,6 +29,8 @@ import {
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
+import z from "zod";
+import { generateRemoteSubnetsStr } from "@server/lib/ip";
 
 export async function rebuildSiteClientAssociations(
     siteResource: SiteResource,
@@ -331,14 +333,6 @@ async function handleMessagesForSiteClients(
                 .from(siteResources)
                 .where(eq(siteResources.siteId, site.siteId));
 
-            let remoteSubnets = allSiteResources
-                .filter((sr) => sr.mode == "cidr")
-                .map((sr) => sr.destination);
-            // remove duplicates
-            remoteSubnets = Array.from(new Set(remoteSubnets));
-            const remoteSubnetsStr =
-                remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
-
             olmJobs.push(
                 olmAddPeer(
                     client.clientId,
@@ -351,7 +345,7 @@ async function handleMessagesForSiteClients(
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets: remoteSubnetsStr
+                        remoteSubnets: generateRemoteSubnetsStr(allSiteResources)
                     },
                     olm.olmId
                 )

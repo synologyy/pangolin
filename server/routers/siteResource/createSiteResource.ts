@@ -47,7 +47,39 @@ const createSiteResourceSchema = z
             message:
                 "Protocol, proxy port, and destination port are required for port mode"
         }
-    );
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "host") {
+                // Check if it's a valid IP address using zod
+                const isValidIP = z.string().ip().safeParse(data.destination).success;
+                
+                // Check if it's a valid domain (hostname pattern, TLD not required)
+                const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+                const isValidDomain = domainRegex.test(data.destination);
+                
+                return isValidIP || isValidDomain;
+            }
+            return true;
+        },
+        {
+            message:
+                "Destination must be a valid IP address or domain name for host mode"
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "cidr") {
+                // Check if it's a valid CIDR
+                const isValidCIDR = z.string().cidr().safeParse(data.destination).success;
+                return isValidCIDR;
+            }
+            return true;
+        },
+        {
+            message: "Destination must be a valid CIDR notation for cidr mode"
+        }
+    );  
 
 export type CreateSiteResourceBody = z.infer<typeof createSiteResourceSchema>;
 export type CreateSiteResourceResponse = SiteResource;

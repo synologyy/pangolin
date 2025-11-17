@@ -1,7 +1,8 @@
-import { db } from "@server/db";
+import { db, SiteResource } from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
+import z from "zod";
 
 interface IPRange {
     start: bigint;
@@ -299,4 +300,29 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     }
 
     return subnet;
+}
+
+export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
+    let remoteSubnets = allSiteResources
+        .filter((sr) => {
+            if (sr.mode === "cidr") return true;
+            if (sr.mode === "host") {
+                // check if its a valid IP using zod
+                const ipSchema = z.string().ip();
+                const parseResult = ipSchema.safeParse(sr.destination);
+                return parseResult.success;
+            }
+            return false;
+        })
+        .map((sr) => {
+            if (sr.mode === "cidr") return sr.destination;
+            if (sr.mode === "host") {
+                return `${sr.destination}/32`;
+            }
+        });
+    // remove duplicates
+    remoteSubnets = Array.from(new Set(remoteSubnets));
+    const remoteSubnetsStr =
+        remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
+    return remoteSubnetsStr;
 }

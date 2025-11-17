@@ -18,6 +18,7 @@ import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { getNextAvailableClientSubnet } from "@server/lib/ip";
+import { generateRemoteSubnetsStr } from "@server/lib/ip";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -238,11 +239,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             .from(siteResources)
             .where(eq(siteResources.siteId, site.siteId));
 
-        let remoteSubnets = allSiteResources.filter((sr => sr.mode == "cidr")).map(sr => sr.destination);
-        // remove duplicates
-        remoteSubnets = Array.from(new Set(remoteSubnets));
-        const remoteSubnetsStr = remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
-
         // Add the peer to the exit node for this site
         if (clientSite.endpoint) {
             logger.info(
@@ -280,7 +276,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: remoteSubnetsStr
+            remoteSubnets: generateRemoteSubnetsStr(allSiteResources)
         });
     }
 

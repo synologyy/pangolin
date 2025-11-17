@@ -15,6 +15,7 @@ import { clients, clientSites, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
+import { generateRemoteSubnetsStr } from "@server/lib/ip";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -188,23 +189,13 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                         .from(siteResources)
                         .where(eq(siteResources.siteId, site.siteId));
 
-                    let remoteSubnets = allSiteResources
-                        .filter((sr) => sr.mode == "cidr")
-                        .map((sr) => sr.destination);
-                    // remove duplicates
-                    remoteSubnets = Array.from(new Set(remoteSubnets));
-                    const remoteSubnetsStr =
-                        remoteSubnets.length > 0
-                            ? remoteSubnets.join(",")
-                            : null;
-
                     await updatePeer(client.clients.clientId, {
                         siteId: site.siteId,
                         endpoint: endpoint,
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets: remoteSubnetsStr
+                        remoteSubnets: generateRemoteSubnetsStr(allSiteResources)
                     });
                 } catch (error) {
                     logger.error(
@@ -231,46 +222,35 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         .from(siteResources)
         .where(eq(siteResources.siteId, siteId));
 
-    const { tcpTargets, udpTargets } = allSiteResources.reduce(
-        (acc, resource) => {
-            // Only process port mode resources
-            if (resource.mode !== "port") {
-                return acc;
+    let targets: {
+        cidr: string;
+        portRange?: {
+            min: number;
+            max: number;
+        }[];
+    }[] = [];
+
+    for (const siteResource of allSiteResources) {
+        if (siteResource.mode == "host") {
+            // check if this is a valid ip
+            const ipSchema = z.string().ip();
+            if (ipSchema.safeParse(siteResource.destination).success) {
+                targets.push({
+                    cidr: `${siteResource.destination}/32`
+                });
             }
-
-            // Filter out invalid targets
-            if (
-                !resource.proxyPort ||
-                !resource.destination ||
-                !resource.destinationPort ||
-                !resource.protocol
-            ) {
-                return acc;
-            }
-
-            // Format target into string
-            const formattedTarget = `${resource.proxyPort}:${resource.destination}:${resource.destinationPort}`;
-
-            // Add to the appropriate protocol array
-            if (resource.protocol === "tcp") {
-                acc.tcpTargets.push(formattedTarget);
-            } else {
-                acc.udpTargets.push(formattedTarget);
-            }
-
-            return acc;
-        },
-        { tcpTargets: [] as string[], udpTargets: [] as string[] }
-    );
+        } else if (siteResource.mode == "cidr") {
+            targets.push({
+                cidr: siteResource.destination
+            });
+        }
+    }
 
     // Build the configuration response
     const configResponse = {
         ipAddress: site.address,
         peers: validPeers,
-        targets: {
-            udp: udpTargets,
-            tcp: tcpTargets
-        }
+        targets: targets
     };
 
     logger.debug("Sending config: ", configResponse);
