@@ -21,7 +21,17 @@ export function pullEnv(): Env {
             environment: process.env.ENVIRONMENT as string,
             sandbox_mode: process.env.SANDBOX_MODE === "true" ? true : false,
             version: process.env.APP_VERSION as string,
-            dashboardUrl: process.env.DASHBOARD_URL as string
+            dashboardUrl: process.env.DASHBOARD_URL as string,
+            notifications: {
+                product_updates:
+                    process.env.PRODUCT_UPDATES_NOTIFICATION_ENABLED === "true"
+                        ? true
+                        : false,
+                new_releases:
+                    process.env.NEW_RELEASES_NOTIFICATION_ENABLED === "true"
+                        ? true
+                        : false
+            }
         },
         email: {
             emailEnabled: process.env.EMAIL_ENABLED === "true" ? true : false

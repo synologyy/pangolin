@@ -35,18 +35,14 @@ import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
 import { CreateLoginPageResponse } from "@server/routers/loginPage/types";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         subdomain: z.string().nullable().optional(),
         domainId: z.string()
-    })
-    .strict();
+    });
 
 export type CreateLoginPageBody = z.infer<typeof bodySchema>;
 

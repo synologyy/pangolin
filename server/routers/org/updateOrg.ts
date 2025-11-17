@@ -15,14 +15,11 @@ import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { cache } from "@server/lib/cache";
 
-const updateOrgParamsSchema = z
-    .object({
+const updateOrgParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const updateOrgBodySchema = z
-    .object({
+const updateOrgBodySchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
         requireTwoFactor: z.boolean().optional(),
         maxSessionLengthHours: z.number().nullable().optional(),
@@ -40,9 +37,8 @@ const updateOrgBodySchema = z
             .min(build === "saas" ? 0 : -1)
             .optional()
     })
-    .strict()
     .refine((data) => Object.keys(data).length > 0, {
-        message: "At least one field must be provided for update"
+        error: "At least one field must be provided for update"
     });
 
 registry.registerPath({

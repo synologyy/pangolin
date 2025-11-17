@@ -10,28 +10,24 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listDomainsParamsSchema = z
-    .object({
+const listDomainsParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const listDomainsSchema = z
-    .object({
+const listDomainsSchema = z.strictObject({
         limit: z
             .string()
             .optional()
             .default("1000")
             .transform(Number)
-            .pipe(z.number().int().nonnegative()),
+            .pipe(z.int().nonnegative()),
         offset: z
             .string()
             .optional()
             .default("0")
             .transform(Number)
-            .pipe(z.number().int().nonnegative())
-    })
-    .strict();
+            .pipe(z.int().nonnegative())
+    });
 
 async function queryDomains(orgId: string, limit: number, offset: number) {
     const res = await db

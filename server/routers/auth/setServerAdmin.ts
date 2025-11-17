@@ -13,8 +13,8 @@ import { eq, and } from "drizzle-orm";
 import { UserType } from "@server/types/UserTypes";
 import moment from "moment";
 
-const bodySchema = z.object({
-    email: z.string().toLowerCase().email(),
+export const bodySchema = z.object({
+    email: z.email().toLowerCase(),
     password: passwordSchema,
     setupToken: z.string().min(1, "Setup token is required")
 });

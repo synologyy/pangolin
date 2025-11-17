@@ -181,6 +181,7 @@ authenticated.post(
     client.updateClient,
 );
 
+
 // authenticated.get(
 //     "/site/:siteId/roles",
 //     verifySiteAccess,
@@ -194,6 +195,7 @@ authenticated.post(
     logActionAudit(ActionsEnum.updateSite),
     site.updateSite,
 );
+
 authenticated.delete(
     "/site/:siteId",
     verifySiteAccess,

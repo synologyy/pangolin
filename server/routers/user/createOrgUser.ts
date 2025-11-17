@@ -17,21 +17,17 @@ import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         orgId: z.string().nonempty()
-    })
-    .strict();
+    });
 
-const bodySchema = z
-    .object({
-        email: z
-            .string()
+const bodySchema = z.strictObject({
+        email: z.email()
             .toLowerCase()
             .optional()
             .refine((data) => {
                 if (data) {
-                    return z.string().email().safeParse(data).success;
+                    return z.email().safeParse(data).success;
                 }
                 return true;
             }),
@@ -40,8 +36,7 @@ const bodySchema = z
         type: z.enum(["internal", "oidc"]).optional(),
         idpId: z.number().optional(),
         roleId: z.number()
-    })
-    .strict();
+    });
 
 export type CreateOrgUserResponse = {};
 

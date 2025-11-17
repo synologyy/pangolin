@@ -11,18 +11,14 @@ import { ActionsEnum } from "@server/auth/actions";
 import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const createRoleParamsSchema = z
-    .object({
+const createRoleParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const createRoleSchema = z
-    .object({
+const createRoleSchema = z.strictObject({
         name: z.string().min(1).max(255),
         description: z.string().optional()
-    })
-    .strict();
+    });
 
 export const defaultRoleAllowedActions: ActionsEnum[] = [
     ActionsEnum.getOrg,

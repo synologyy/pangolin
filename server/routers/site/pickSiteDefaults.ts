@@ -44,11 +44,9 @@ registry.registerPath({
     responses: {}
 });
 
-const pickSiteDefaultsSchema = z
-    .object({
+const pickSiteDefaultsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export async function pickSiteDefaults(
     req: Request,

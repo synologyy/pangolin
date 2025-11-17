@@ -17,17 +17,17 @@ export const queryAccessAuditLogsQuery = z.object({
     timeStart: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
-            message: "timeStart must be a valid ISO date string"
+            error: "timeStart must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000)),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
-            message: "timeEnd must be a valid ISO date string"
+            error: "timeEnd must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .default(new Date().toISOString()),
+        .prefault(new Date().toISOString()),
     action: z
         .union([z.boolean(), z.string()])
         .transform((val) => (typeof val === "string" ? val === "true" : val))
@@ -37,13 +37,13 @@ export const queryAccessAuditLogsQuery = z.object({
         .string()
         .optional()
         .transform(Number)
-        .pipe(z.number().int().positive())
+        .pipe(z.int().positive())
         .optional(),
     resourceId: z
         .string()
         .optional()
         .transform(Number)
-        .pipe(z.number().int().positive())
+        .pipe(z.int().positive())
         .optional(),
     actor: z.string().optional(),
     location: z.string().optional(),
@@ -54,13 +54,13 @@ export const queryAccessAuditLogsQuery = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 export const queryRequestAuditLogsParams = z.object({

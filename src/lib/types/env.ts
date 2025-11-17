@@ -4,6 +4,10 @@ export type Env = {
         sandbox_mode: boolean;
         version: string;
         dashboardUrl: string;
+        notifications: {
+            product_updates: boolean;
+            new_releases: boolean;
+        };
     };
     server: {
         externalPort: string;
@@ -29,7 +33,7 @@ export type Env = {
         enableClients: boolean;
         hideSupporterKey: boolean;
         usePangolinDns: boolean;
-    },
+    };
     branding: {
         appName?: string;
         background_image_path?: string;
@@ -44,22 +48,22 @@ export type Env = {
             navbar?: {
                 width?: number;
                 height?: number;
-            }
-        },
-        loginPage?: {
+            };
+        };
+        loginPage: {
             titleText?: string;
             subtitleText?: string;
-        },
-        signupPage?: {
+        };
+        signupPage: {
             titleText?: string;
             subtitleText?: string;
-        },
-        resourceAuthPage?: {
+        };
+        resourceAuthPage: {
             showLogo?: boolean;
             hidePoweredBy?: boolean;
             titleText?: string;
             subtitleText?: string;
-        },
+        };
         footer?: string;
     };
 };

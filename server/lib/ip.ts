@@ -308,7 +308,7 @@ export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
             if (sr.mode === "cidr") return true;
             if (sr.mode === "host") {
                 // check if its a valid IP using zod
-                const ipSchema = z.string().ip();
+                const ipSchema = z.union([z.ipv4(), z.ipv6()]);
                 const parseResult = ipSchema.safeParse(sr.destination);
                 return parseResult.success;
             }

@@ -18,9 +18,9 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-    DropdownMenuCheckboxItem,
     DropdownMenuLabel,
-    DropdownMenuSeparator
+    DropdownMenuSeparator,      
+    DropdownMenuCheckboxItem
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
 import {
@@ -153,7 +153,7 @@ function StatusIcon({
         case "offline":
             return <XCircle className={`${iconClass} text-destructive`} />;
         case "unknown":
-            return <Clock className={`${iconClass} text-gray-400`} />;
+            return <Clock className={`${iconClass} text-muted-foreground`} />;
         default:
             return null;
     }
@@ -491,8 +491,8 @@ export default function ResourcesTable({
             return (
                 <div className="flex items-center gap-2">
                     <StatusIcon status="unknown" />
-                    <span className="text-sm text-muted-foreground">
-                        No targets
+                    <span className="text-sm">
+                        {t("resourcesTableNoTargets")}
                     </span>
                 </div>
             );
@@ -511,14 +511,14 @@ export default function ResourcesTable({
                     <Button
                         variant="ghost"
                         size="sm"
-                        className="flex items-center gap-2 h-8"
+                        className="flex items-center gap-2 h-8 px-0 font-normal"
                     >
                         <StatusIcon status={overallStatus} />
                         <span className="text-sm">
-                            {overallStatus === "online" && "Healthy"}
-                            {overallStatus === "degraded" && "Degraded"}
-                            {overallStatus === "offline" && "Offline"}
-                            {overallStatus === "unknown" && "Unknown"}
+                            {overallStatus === "online" && t("resourcesTableHealthy")}
+                            {overallStatus === "degraded" && t("resourcesTableDegraded")}
+                            {overallStatus === "offline" && t("resourcesTableOffline")}
+                            {overallStatus === "unknown" && t("resourcesTableUnknown")}
                         </span>
                         <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -572,8 +572,8 @@ export default function ResourcesTable({
                                     </div>
                                     <span className="text-muted-foreground">
                                         {!target.enabled
-                                            ? "Disabled"
-                                            : "Not monitored"}
+                                            ? t("disabled")
+                                            : t("resourcesTableNotMonitored")}
                                     </span>
                                 </DropdownMenuItem>
                             ))}
@@ -606,6 +606,7 @@ export default function ResourcesTable({
         {
             accessorKey: "nice",
             friendlyName: t("resource"),
+            enableHiding: true,
             header: ({ column }) => {
                 return (
                     <Button
@@ -719,13 +720,13 @@ export default function ResourcesTable({
                 return (
                     <div>
                         {resourceRow.authState === "protected" ? (
-                            <span className="text-green-500 flex items-center space-x-2">
-                                <ShieldCheck className="w-4 h-4" />
+                            <span className="flex items-center space-x-2">
+                                <ShieldCheck className="w-4 h-4 text-green-500" />
                                 <span>{t("protected")}</span>
                             </span>
                         ) : resourceRow.authState === "not_protected" ? (
-                            <span className="text-yellow-500 flex items-center space-x-2">
-                                <ShieldOff className="w-4 h-4" />
+                            <span className="flex items-center space-x-2">
+                                <ShieldOff className="w-4 h-4 text-yellow-500" />
                                 <span>{t("notProtected")}</span>
                             </span>
                         ) : (

@@ -80,24 +80,20 @@ export default function HealthCheckDialog({
         hcMethod: z
             .string()
             .min(1, { message: t("healthCheckMethodRequired") }),
-        hcInterval: z
-            .number()
-            .int()
+        hcInterval: z.int()
             .positive()
             .min(5, { message: t("healthCheckIntervalMin") }),
-        hcTimeout: z
-            .number()
-            .int()
+        hcTimeout: z.int()
             .positive()
             .min(1, { message: t("healthCheckTimeoutMin") }),
-        hcStatus: z.number().int().positive().min(100).optional().nullable(),
+        hcStatus: z.int().positive().min(100).optional().nullable(),
         hcHeaders: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
         hcScheme: z.string().optional(),
         hcHostname: z.string(),
         hcPort: z.number().positive().gt(0).lte(65535),
         hcFollowRedirects: z.boolean(),
         hcMode: z.string(),
-        hcUnhealthyInterval: z.number().int().positive().min(5)
+        hcUnhealthyInterval: z.int().positive().min(5)
     });
 
     const form = useForm<z.infer<typeof healthCheckSchema>>({

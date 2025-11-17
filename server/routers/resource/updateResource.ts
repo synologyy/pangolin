@@ -25,18 +25,16 @@ import { validateAndConstructDomain } from "@server/lib/domainUtils";
 import { validateHeaders } from "@server/lib/validators";
 import { build } from "@server/build";
 
-const updateResourceParamsSchema = z
-    .object({
+const updateResourceParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
-const updateHttpResourceBodySchema = z
-    .object({
+const updateHttpResourceBodySchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
+        niceId: z.string().min(1).max(255).optional(),
         subdomain: subdomainSchema.nullable().optional(),
         ssl: z.boolean().optional(),
         sso: z.boolean().optional(),
@@ -48,15 +46,14 @@ const updateHttpResourceBodySchema = z
         stickySession: z.boolean().optional(),
         tlsServerName: z.string().nullable().optional(),
         setHostHeader: z.string().nullable().optional(),
-        skipToIdpId: z.number().int().positive().nullable().optional(),
+        skipToIdpId: z.int().positive().nullable().optional(),
         headers: z
-            .array(z.object({ name: z.string(), value: z.string() }))
+            .array(z.strictObject({ name: z.string(), value: z.string() }))
             .nullable()
             .optional()
     })
-    .strict()
     .refine((data) => Object.keys(data).length > 0, {
-        message: "At least one field must be provided for update"
+        error: "At least one field must be provided for update"
     })
     .refine(
         (data) => {
@@ -65,7 +62,9 @@ const updateHttpResourceBodySchema = z
             }
             return true;
         },
-        { message: "Invalid subdomain" }
+        {
+            error: "Invalid subdomain"
+        }
     )
     .refine(
         (data) => {
@@ -75,8 +74,7 @@ const updateHttpResourceBodySchema = z
             return true;
         },
         {
-            message:
-                "Invalid TLS Server Name. Use domain name format, or save empty to remove the TLS Server Name."
+            error: "Invalid TLS Server Name. Use domain name format, or save empty to remove the TLS Server Name."
         }
     )
     .refine(
@@ -87,25 +85,23 @@ const updateHttpResourceBodySchema = z
             return true;
         },
         {
-            message:
-                "Invalid custom Host Header value. Use domain name format, or save empty to unset custom Host Header."
+            error: "Invalid custom Host Header value. Use domain name format, or save empty to unset custom Host Header."
         }
     );
 
 export type UpdateResourceResponse = Resource;
 
-const updateRawResourceBodySchema = z
-    .object({
+const updateRawResourceBodySchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
-        proxyPort: z.number().int().min(1).max(65535).optional(),
+        niceId: z.string().min(1).max(255).optional(),
+        proxyPort: z.int().min(1).max(65535).optional(),
         stickySession: z.boolean().optional(),
         enabled: z.boolean().optional(),
         proxyProtocol: z.boolean().optional(),
-        proxyProtocolVersion: z.number().int().min(1).optional()
+        proxyProtocolVersion: z.int().min(1).optional()
     })
-    .strict()
     .refine((data) => Object.keys(data).length > 0, {
-        message: "At least one field must be provided for update"
+        error: "At least one field must be provided for update"
     })
     .refine(
         (data) => {
@@ -116,7 +112,9 @@ const updateRawResourceBodySchema = z
             }
             return true;
         },
-        { message: "Cannot update proxyPort" }
+        {
+            error: "Cannot update proxyPort"
+        }
     );
 
 registry.registerPath({
@@ -235,6 +233,30 @@ async function updateHttpResource(
     }
 
     const updateData = parsedBody.data;
+
+    if (updateData.niceId) {
+        const [existingResource] = await db
+            .select()
+            .from(resources)
+            .where(
+            and(
+                eq(resources.niceId, updateData.niceId),
+                eq(resources.orgId, resource.orgId)
+            )
+        );
+
+        if (
+            existingResource &&
+            existingResource.resourceId !== resource.resourceId
+        ) {
+            return next(
+                createHttpError(
+                    HttpCode.CONFLICT,
+                    `A resource with niceId "${updateData.niceId}" already exists`
+                )
+            );
+        }
+    }
 
     if (updateData.domainId) {
         const domainId = updateData.domainId;
@@ -361,6 +383,30 @@ async function updateRawResource(
     }
 
     const updateData = parsedBody.data;
+
+    if (updateData.niceId) {
+        const [existingResource] = await db
+            .select()
+            .from(resources)
+            .where(
+            and(
+                eq(resources.niceId, updateData.niceId),
+                eq(resources.orgId, resource.orgId)
+            )
+        );
+
+        if (
+            existingResource &&
+            existingResource.resourceId !== resource.resourceId
+        ) {
+            return next(
+                createHttpError(
+                    HttpCode.CONFLICT,
+                    `A resource with niceId "${updateData.niceId}" already exists`
+                )
+            );
+        }
+    }
 
     const updatedResource = await db
         .update(resources)

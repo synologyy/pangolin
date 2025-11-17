@@ -8,12 +8,10 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { and, eq } from "drizzle-orm";
 
-const paramsSchema = z
-    .object({
+const paramsSchema = z.strictObject({
         domainId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export type RestartOrgDomainResponse = {
     success: boolean;

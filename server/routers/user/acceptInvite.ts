@@ -14,12 +14,10 @@ import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
-const acceptInviteBodySchema = z
-    .object({
+const acceptInviteBodySchema = z.strictObject({
         token: z.string(),
         inviteId: z.string()
-    })
-    .strict();
+    });
 
 export type AcceptInviteResponse = {
     accepted: boolean;

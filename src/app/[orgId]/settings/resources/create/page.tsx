@@ -128,7 +128,7 @@ const httpResourceFormSchema = z.object({
 
 const tcpUdpResourceFormSchema = z.object({
     protocol: z.string(),
-    proxyPort: z.number().int().min(1).max(65535)
+    proxyPort: z.int().min(1).max(65535)
     // enableProxy: z.boolean().default(false)
 });
 
@@ -136,8 +136,8 @@ const addTargetSchema = z
     .object({
         ip: z.string().refine(isTargetValid),
         method: z.string().nullable(),
-        port: z.coerce.number().int().positive(),
-        siteId: z.number().int().positive(),
+        port: z.coerce.number<number>().int().positive(),
+        siteId: z.int().positive(),
         path: z.string().optional().nullable(),
         pathMatchType: z
             .enum(["exact", "prefix", "regex"])
@@ -148,7 +148,7 @@ const addTargetSchema = z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
             .nullable(),
-        priority: z.number().int().min(1).max(1000).optional()
+        priority: z.int().min(1).max(1000).optional()
     })
     .refine(
         (data) => {
@@ -180,7 +180,7 @@ const addTargetSchema = z
             return true;
         },
         {
-            message: "Invalid path configuration"
+            error: "Invalid path configuration"
         }
     )
     .refine(
@@ -196,7 +196,7 @@ const addTargetSchema = z
             return true;
         },
         {
-            message: "Invalid rewrite path configuration"
+            error: "Invalid rewrite path configuration"
         }
     );
 
@@ -574,7 +574,9 @@ export default function Page() {
                                 hcPort: target.hcPort || null,
                                 hcFollowRedirects:
                                     target.hcFollowRedirects || null,
-                                hcStatus: target.hcStatus || null
+                                hcStatus: target.hcStatus || null,
+                                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                                hcMode: target.hcMode || null
                             };
 
                             // Only include path-related fields for HTTP resources

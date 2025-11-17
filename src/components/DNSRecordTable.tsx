@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@app/components/ui/badge";
 import { DNSRecordsDataTable } from "./DNSRecordsDataTable";
 import CopyToClipboard from "@app/components/CopyToClipboard";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 
 export type DNSRecordRow = {
     id: string;
@@ -25,6 +26,30 @@ export default function DNSRecordsTable({
     type
 }: Props) {
     const t = useTranslations();
+    const env = useEnvContext();
+
+    const statusColumn: ColumnDef<DNSRecordRow> = {
+        accessorKey: "verified",
+        header: ({ column }) => {
+            return <div>{t("status")}</div>;
+        },
+        cell: ({ row }) => {
+            const verified = row.original.verified;
+            return verified ? (
+                type === "wildcard" ? (
+                    <Badge variant="outlinePrimary">
+                        {t("manual", { fallback: "Manual" })}
+                    </Badge>
+                ) : (
+                    <Badge variant="green">{t("verified")}</Badge>
+                )
+            ) : (
+                <Badge variant="yellow">
+                    {t("pending", { fallback: "Pending" })}
+                </Badge>
+            );
+        }
+    };
 
     const columns: ExtendedColumnDef<DNSRecordRow>[] = [
         {
@@ -86,29 +111,7 @@ export default function DNSRecordsTable({
                 );
             }
         },
-        {
-            accessorKey: "verified",
-            friendlyName: t("status"),
-            header: ({ column }) => {
-                return <div>{t("status")}</div>;
-            },
-            cell: ({ row }) => {
-                const verified = row.original.verified;
-                return verified ? (
-                    type === "wildcard" ? (
-                        <Badge variant="outlinePrimary">
-                            {t("manual", { fallback: "Manual" })}
-                        </Badge>
-                    ) : (
-                        <Badge variant="green">{t("verified")}</Badge>
-                    )
-                ) : (
-                    <Badge variant="yellow">
-                        {t("pending", { fallback: "Pending" })}
-                    </Badge>
-                );
-            }
-        }
+        ...(env.env.flags.usePangolinDns ? [statusColumn] : [])
     ];
 
     return (

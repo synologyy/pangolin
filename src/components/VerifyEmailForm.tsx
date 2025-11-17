@@ -74,7 +74,7 @@ export default function VerifyEmailForm({
     }
 
     const FormSchema = z.object({
-        email: z.string().email({ message: t("emailInvalid") }),
+        email: z.email({ message: t("emailInvalid") }),
         pin: z.string().min(8, {
             message: t("verificationCodeLengthRequirements")
         })

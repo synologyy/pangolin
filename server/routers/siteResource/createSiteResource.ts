@@ -13,20 +13,17 @@ import { addTargets } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 
-const createSiteResourceParamsSchema = z
-    .object({
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+const createSiteResourceParamsSchema = z.strictObject({
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const createSiteResourceSchema = z
-    .object({
+const createSiteResourceSchema = z.strictObject({
         name: z.string().min(1).max(255),
         mode: z.enum(["host", "cidr", "port"]),
         protocol: z.enum(["tcp", "udp"]).optional(),
-        proxyPort: z.number().int().positive().optional(),
-        destinationPort: z.number().int().positive().optional(),
+        proxyPort: z.int().positive().optional(),
+        destinationPort: z.int().positive().optional(),
         destination: z.string().min(1),
         enabled: z.boolean().default(true),
         alias: z.string().optional()
@@ -51,8 +48,8 @@ const createSiteResourceSchema = z
     .refine(
         (data) => {
             if (data.mode === "host") {
-                // Check if it's a valid IP address using zod
-                const isValidIP = z.string().ip().safeParse(data.destination).success;
+                // Check if it's a valid IP address using zod (v4 or v6)
+                const isValidIP = z.union([z.ipv4(), z.ipv6()]).safeParse(data.destination).success;
                 
                 // Check if it's a valid domain (hostname pattern, TLD not required)
                 const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
@@ -70,8 +67,8 @@ const createSiteResourceSchema = z
     .refine(
         (data) => {
             if (data.mode === "cidr") {
-                // Check if it's a valid CIDR
-                const isValidCIDR = z.string().cidr().safeParse(data.destination).success;
+                // Check if it's a valid CIDR (v4 or v6)
+                const isValidCIDR = z.union([z.cidrv4(), z.cidrv6()]).safeParse(data.destination).success;
                 return isValidCIDR;
             }
             return true;

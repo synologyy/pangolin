@@ -84,9 +84,9 @@ export default function EditInternalResourceDialog({
         name: z.string().min(1, t("editInternalResourceDialogNameRequired")).max(255, t("editInternalResourceDialogNameMaxLength")),
         mode: z.enum(["host", "cidr", "port"]),
         protocol: z.enum(["tcp", "udp"]).nullish(),
-        proxyPort: z.number().int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
+        proxyPort: z.int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
         destination: z.string().min(1),
-        destinationPort: z.number().int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
+        destinationPort: z.int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
         alias: z.string().nullish(),
         roles: z.array(
             z.object({

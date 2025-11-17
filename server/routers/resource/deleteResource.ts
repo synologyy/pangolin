@@ -14,14 +14,12 @@ import { getAllowedIps } from "../target/helpers";
 import { OpenAPITags, registry } from "@server/openApi";
 
 // Define Zod schema for request parameters validation
-const deleteResourceSchema = z
-    .object({
+const deleteResourceSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 registry.registerPath({
     method: "delete",

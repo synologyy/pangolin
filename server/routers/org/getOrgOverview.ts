@@ -18,11 +18,9 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 
-const getOrgParamsSchema = z
-    .object({
+const getOrgParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export type GetOrgOverviewResponse = {
     orgName: string;

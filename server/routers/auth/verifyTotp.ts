@@ -18,13 +18,11 @@ import { generateBackupCodes } from "@server/lib/totp";
 import { verifySession } from "@server/auth/sessions/verifySession";
 import { unauthorized } from "@server/auth/unauthorizedResponse";
 
-export const verifyTotpBody = z
-    .object({
-        email: z.string().email().optional(),
+export const verifyTotpBody = z.strictObject({
+        email: z.email().optional(),
         password: z.string().optional(),
         code: z.string()
-    })
-    .strict();
+    });
 
 export type VerifyTotpBody = z.infer<typeof verifyTotpBody>;
 

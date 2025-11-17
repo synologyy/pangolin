@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { Client, db, exitNodes, sites } from "@server/db";
+import { Client, db, exitNodes, olms, sites } from "@server/db";
 import { clients, clientSites } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -10,17 +10,13 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const updateClientParamsSchema = z
-    .object({
-        clientId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const updateClientParamsSchema = z.strictObject({
+    clientId: z.string().transform(Number).pipe(z.int().positive())
+});
 
-const updateClientSchema = z
-    .object({
-        name: z.string().min(1).max(255).optional()
-    })
-    .strict();
+const updateClientSchema = z.strictObject({
+    name: z.string().min(1).max(255).optional()
+});
 
 export type UpdateClientBody = z.infer<typeof updateClientSchema>;
 

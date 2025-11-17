@@ -11,12 +11,10 @@ import { fromError } from "zod-validation-error";
 import stoi from "@server/lib/stoi";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const addUserRoleParamsSchema = z
-    .object({
+const addUserRoleParamsSchema = z.strictObject({
         userId: z.string(),
         roleId: z.string().transform(stoi).pipe(z.number())
-    })
-    .strict();
+    });
 
 export type AddUserRoleResponse = z.infer<typeof addUserRoleParamsSchema>;
 

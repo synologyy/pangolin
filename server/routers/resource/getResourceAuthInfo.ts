@@ -15,11 +15,9 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { build } from "@server/build";
 
-const getResourceAuthInfoSchema = z
-    .object({
+const getResourceAuthInfoSchema = z.strictObject({
         resourceGuid: z.string()
-    })
-    .strict();
+    });
 
 export type GetResourceAuthInfoResponse = {
     resourceId: number;

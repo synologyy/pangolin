@@ -10,11 +10,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const deleteClientSchema = z
-    .object({
-        clientId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const deleteClientSchema = z.strictObject({
+        clientId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
 registry.registerPath({
     method: "delete",

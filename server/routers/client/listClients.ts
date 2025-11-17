@@ -78,11 +78,9 @@ async function getLatestOlmVersion(): Promise<string | null> {
 }
 
 
-const listClientsParamsSchema = z
-    .object({
+const listClientsParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 const listClientsSchema = z.object({
     limit: z
@@ -90,13 +88,13 @@ const listClientsSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative()),
+        .pipe(z.int().nonnegative()),
     filter: z
         .enum(["user", "machine"])
         .optional()

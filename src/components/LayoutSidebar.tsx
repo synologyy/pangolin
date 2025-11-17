@@ -32,6 +32,11 @@ import {
 import { build } from "@server/build";
 import SidebarLicenseButton from "./SidebarLicenseButton";
 import { SidebarSupportButton } from "./SidebarSupportButton";
+import dynamic from "next/dynamic";
+
+const ProductUpdates = dynamic(() => import("./ProductUpdates"), {
+    ssr: false
+});
 
 interface LayoutSidebarProps {
     orgId?: string;
@@ -101,7 +106,7 @@ export function LayoutSidebar({
                             <Link
                                 href="/admin"
                                 className={cn(
-                                    "flex items-center rounded transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
+                                    "flex items-center transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
                                     isSidebarCollapsed
                                         ? "px-2 py-2 justify-center"
                                         : "px-3 py-1.5"
@@ -114,7 +119,7 @@ export function LayoutSidebar({
                             >
                                 <span
                                     className={cn(
-                                        "flex-shrink-0",
+                                        "shrink-0",
                                         !isSidebarCollapsed && "mr-2"
                                     )}
                                 >
@@ -133,7 +138,9 @@ export function LayoutSidebar({
                 </div>
             </div>
 
-            <div className="p-4 space-y-4 shrink-0">
+            <div className="p-4 flex flex-col gap-4 shrink-0">
+                <ProductUpdates isCollapsed={isSidebarCollapsed} />
+
                 {build === "enterprise" && (
                     <div className="mb-3">
                         <SidebarLicenseButton
@@ -148,7 +155,9 @@ export function LayoutSidebar({
                 )}
                 {build === "saas" && (
                     <div className="mb-3">
-                        <SidebarSupportButton isCollapsed={isSidebarCollapsed} />
+                        <SidebarSupportButton
+                            isCollapsed={isSidebarCollapsed}
+                        />
                     </div>
                 )}
                 {!isSidebarCollapsed && (

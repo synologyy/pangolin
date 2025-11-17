@@ -25,23 +25,19 @@ import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { generateId } from "@server/auth/sessions/app";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const paramsSchema = z
-    .object({
+const createClientParamsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const bodySchema = z
-    .object({
+const createClientSchema = z.strictObject({
         name: z.string().min(1).max(255),
         olmId: z.string(),
         secret: z.string(),
         subnet: z.string(),
         type: z.enum(["olm"])
-    })
-    .strict();
+    });
 
-export type CreateClientBody = z.infer<typeof bodySchema>;
+export type CreateClientBody = z.infer<typeof createClientSchema>;
 
 export type CreateClientResponse = Client;
 
@@ -51,11 +47,11 @@ registry.registerPath({
     description: "Create a new client for an organization.",
     tags: [OpenAPITags.Client, OpenAPITags.Org],
     request: {
-        params: paramsSchema,
+        params: createClientParamsSchema,
         body: {
             content: {
                 "application/json": {
-                    schema: bodySchema
+                    schema: createClientSchema
                 }
             }
         }
@@ -69,7 +65,7 @@ export async function createClient(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = bodySchema.safeParse(req.body);
+        const parsedBody = createClientSchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -81,7 +77,7 @@ export async function createClient(
 
         const { name, type, olmId, secret, subnet } = parsedBody.data;
 
-        const parsedParams = paramsSchema.safeParse(req.params);
+        const parsedParams = createClientParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
                 createHttpError(

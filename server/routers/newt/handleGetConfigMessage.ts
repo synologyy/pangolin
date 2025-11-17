@@ -19,7 +19,7 @@ import { generateRemoteSubnetsStr } from "@server/lib/ip";
 
 const inputSchema = z.object({
     publicKey: z.string(),
-    port: z.number().int().positive()
+    port: z.int().positive()
 });
 
 type Input = z.infer<typeof inputSchema>;
@@ -233,7 +233,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     for (const siteResource of allSiteResources) {
         if (siteResource.mode == "host") {
             // check if this is a valid ip
-            const ipSchema = z.string().ip();
+            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
             if (ipSchema.safeParse(siteResource.destination).success) {
                 targets.push({
                     cidr: `${siteResource.destination}/32`

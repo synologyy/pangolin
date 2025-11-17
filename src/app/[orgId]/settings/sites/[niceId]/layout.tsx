@@ -8,6 +8,7 @@ import { HorizontalTabs } from "@app/components/HorizontalTabs";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import SiteInfoCard from "../../../../../components/SiteInfoCard";
 import { getTranslations } from "next-intl/server";
+import { build } from "@server/build";
 
 interface SettingsLayoutProps {
     children: React.ReactNode;
@@ -35,14 +36,23 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     const navItems = [
         {
             title: t('general'),
-            href: "/{orgId}/settings/sites/{niceId}/general"
-        }
+            href: `/${params.orgId}/settings/sites/${params.niceId}/general`,
+        },
+        ...(site.type !== 'local' && build === 'enterprise'
+            ? [
+                {
+                    title: t('credentials'),
+                    href: `/${params.orgId}/settings/sites/${params.niceId}/credentials`,
+                },
+            ]
+            : []),
     ];
+
 
     return (
         <>
             <SettingsSectionTitle
-                title={t('siteSetting', {siteName: site?.name})}
+                title={t('siteSetting', { siteName: site?.name })}
                 description={t('siteSettingDescription')}
             />
 

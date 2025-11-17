@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useSiteContext } from "@app/hooks/useSiteContext";
 import { useForm } from "react-hook-form";
-import { toast } from "@app/hooks/useToast";
+import { toast, useToast } from "@app/hooks/useToast";
 import { useRouter } from "next/navigation";
 import {
     SettingsContainer,
@@ -36,7 +36,8 @@ import Link from "next/link";
 
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
-    dockerSocketEnabled: z.boolean().optional()
+    niceId: z.string().min(1).max(255).optional(),
+    dockerSocketEnabled: z.boolean().optional(),
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -46,20 +47,19 @@ export default function GeneralPage() {
 
     const { env } = useEnvContext();
     const api = createApiClient(useEnvContext());
-
-    const [loading, setLoading] = useState(false);
-    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(
-        null
-    );
-
     const router = useRouter();
     const t = useTranslations();
+    const { toast } = useToast();
+
+    const [loading, setLoading] = useState(false);
+    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(null);
 
     const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: site?.name,
-            dockerSocketEnabled: site?.dockerSocketEnabled ?? false
+            niceId: site?.niceId || "",
+            dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
         },
         mode: "onChange"
     });
@@ -67,31 +67,34 @@ export default function GeneralPage() {
     async function onSubmit(data: GeneralFormValues) {
         setLoading(true);
 
-        await api
-            .post(`/site/${site?.siteId}`, {
+        try {
+            await api.post(`/site/${site?.siteId}`, {
                 name: data.name,
-                dockerSocketEnabled: data.dockerSocketEnabled
-            })
-            .catch((e) => {
-                toast({
-                    variant: "destructive",
-                    title: t("siteErrorUpdate"),
-                    description: formatAxiosError(
-                        e,
-                        t("siteErrorUpdateDescription")
-                    )
-                });
+                niceId: data.niceId,
+                dockerSocketEnabled: data.dockerSocketEnabled,
             });
 
-        updateSite({
-            name: data.name,
-            dockerSocketEnabled: data.dockerSocketEnabled
-        });
+            updateSite({
+                name: data.name,
+                niceId: data.niceId,
+                dockerSocketEnabled: data.dockerSocketEnabled,
+            });
 
-        toast({
-            title: t("siteUpdated"),
-            description: t("siteUpdatedDescription")
-        });
+            if (data.niceId && data.niceId !== site?.niceId) {
+                router.replace(`/${site?.orgId}/settings/sites/${data.niceId}/general`);
+            }
+
+            toast({
+                title: t("siteUpdated"),
+                description: t("siteUpdatedDescription")
+            });
+        } catch (e) {
+            toast({
+                variant: "destructive",
+                title: t("siteErrorUpdate"),
+                description: formatAxiosError(e, t("siteErrorUpdateDescription"))
+            });
+        }
 
         setLoading(false);
 
@@ -126,6 +129,24 @@ export default function GeneralPage() {
                                             <FormLabel>{t("name")}</FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="niceId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t("identifier")}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder={t("enterIdentifier")}
+                                                    className="flex-1"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

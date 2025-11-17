@@ -1,7 +1,6 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useClientContext } from "@app/hooks/useClientContext";
 import {
     InfoSection,

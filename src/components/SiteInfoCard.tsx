@@ -1,7 +1,6 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon } from "lucide-react";
 import { useSiteContext } from "@app/hooks/useSiteContext";
 import {
     InfoSection,
@@ -12,9 +11,10 @@ import {
 import { useTranslations } from "next-intl";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 
+
 type SiteInfoCardProps = {};
 
-export default function SiteInfoCard({}: SiteInfoCardProps) {
+export default function SiteInfoCard({ }: SiteInfoCardProps) {
     const { site, updateSite } = useSiteContext();
     const t = useTranslations();
     const { env } = useEnvContext();
@@ -31,10 +31,19 @@ export default function SiteInfoCard({}: SiteInfoCardProps) {
         }
     };
 
+
     return (
         <Alert>
             <AlertDescription>
-                <InfoSections cols={env.flags.enableClients ? 3 : 2}>
+                <InfoSections cols={env.flags.enableClients ? 4 : 3}>
+                    <InfoSection>
+                        <InfoSectionTitle>
+                            {t("identifier")}
+                        </InfoSectionTitle>
+                        <InfoSectionContent>
+                            {site.niceId}
+                        </InfoSectionContent>
+                    </InfoSection>
                     {(site.type == "newt" || site.type == "wireguard") && (
                         <>
                             <InfoSection>

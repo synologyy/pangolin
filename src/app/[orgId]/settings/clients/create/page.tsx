@@ -99,8 +99,12 @@ export default function Page() {
                     id: z.string(),
                     text: z.string()
                 })
-            ),
-        subnet: z.string().ip().min(1, {
+            )
+            .refine((val) => val.length > 0, {
+                message: t("siteRequired")
+            }),
+        subnet: z.union([z.ipv4(), z.ipv6()])
+            .refine((val) => val.length > 0, {
             message: t("subnetRequired")
         })
     });

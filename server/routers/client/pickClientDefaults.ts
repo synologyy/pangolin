@@ -15,11 +15,9 @@ export type PickClientDefaultsResponse = {
     subnet: string;
 };
 
-const pickClientDefaultsSchema = z
-    .object({
+const pickClientDefaultsSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "get",

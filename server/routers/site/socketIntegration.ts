@@ -46,18 +46,14 @@ export interface Container {
     networks: Record<string, ContainerNetwork>;
 }
 
-const siteIdParamsSchema = z
-    .object({
-        siteId: z.string().transform(stoi).pipe(z.number().int().positive())
-    })
-    .strict();
+const siteIdParamsSchema = z.strictObject({
+        siteId: z.string().transform(stoi).pipe(z.int().positive())
+    });
 
-const DockerStatusSchema = z
-    .object({
+const DockerStatusSchema = z.strictObject({
         isAvailable: z.boolean(),
         socketPath: z.string().optional()
-    })
-    .strict();
+    });
 
 function validateSiteIdParams(params: any) {
     const parsedParams = siteIdParamsSchema.safeParse(params);

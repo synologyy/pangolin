@@ -23,11 +23,9 @@ import config from "@server/lib/config";
 import { fromError } from "zod-validation-error";
 import stripe from "#private/lib/stripe";
 
-const createPortalSessionSchema = z
-    .object({
+const createPortalSessionSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export async function createPortalSession(
     req: Request,

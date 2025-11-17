@@ -40,10 +40,10 @@ import { logRequestAudit } from "./logRequestAudit";
 import cache from "@server/lib/cache";
 
 const verifyResourceSessionSchema = z.object({
-    sessions: z.record(z.string()).optional(),
-    headers: z.record(z.string()).optional(),
-    query: z.record(z.string()).optional(),
-    originalRequestURL: z.string().url(),
+    sessions: z.record(z.string(), z.string()).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
+    query: z.record(z.string(), z.string()).optional(),
+    originalRequestURL: z.url(),
     scheme: z.string(),
     host: z.string(),
     path: z.string(),
@@ -60,6 +60,7 @@ type BasicUserData = {
     username: string;
     email: string | null;
     name: string | null;
+    role: string | null;
 };
 
 export type VerifyUserResponse = {
@@ -883,7 +884,8 @@ async function isUserAllowedToAccessResource(
         return {
             username: user.username,
             email: user.email,
-            name: user.name
+            name: user.name,
+            role: user.role
         };
     }
 
@@ -896,7 +898,8 @@ async function isUserAllowedToAccessResource(
         return {
             username: user.username,
             email: user.email,
-            name: user.name
+            name: user.name,
+            role: user.role
         };
     }
 
