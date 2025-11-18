@@ -9,7 +9,9 @@ export function usePaidStatus() {
     // Check if features are disabled due to licensing/subscription
     const hasEnterpriseLicense = build === "enterprise" && isUnlocked();
     const hasSaasSubscription =
-        build === "saas" && subscription?.isSubscribed();
+        build === "saas" &&
+        subscription?.isSubscribed() &&
+        subscription.isActive();
 
     return {
         hasEnterpriseLicense,
