@@ -27,6 +27,7 @@ import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 import { CheckOrgUserAccessResponse } from "@server/routers/org";
 import OrgPolicyRequired from "@app/components/OrgPolicyRequired";
+import { isOrgSubscribed } from "@app/lib/api/isOrgSubscribed";
 
 export const dynamic = "force-dynamic";
 
@@ -65,22 +66,7 @@ export default async function ResourceAuthPage(props: {
         );
     }
 
-    let subscriptionStatus: GetOrgTierResponse | null = null;
-    if (build === "saas") {
-        try {
-            const getSubscription = cache(() =>
-                priv.get<AxiosResponse<GetOrgTierResponse>>(
-                    `/org/${authInfo.orgId}/billing/tier`
-                )
-            );
-            const subRes = await getSubscription();
-            subscriptionStatus = subRes.data.data;
-        } catch {}
-    }
-    const subscribed =
-        build === "enterprise"
-            ? true
-            : subscriptionStatus?.tier === TierId.STANDARD;
+    const subscribed = await isOrgSubscribed(authInfo.orgId);
 
     const allHeaders = await headers();
     const host = allHeaders.get("host");
@@ -254,7 +240,7 @@ export default async function ResourceAuthPage(props: {
                     resourceId={authInfo.resourceId}
                     skipToIdpId={authInfo.skipToIdpId}
                     redirectUrl={redirectUrl}
-                    orgId={build == "saas" ? authInfo.orgId : undefined}
+                    orgId={build === "saas" ? authInfo.orgId : undefined}
                 />
             );
         }
@@ -262,11 +248,13 @@ export default async function ResourceAuthPage(props: {
 
     let branding: LoadLoginPageBrandingResponse | null = null;
     try {
-        const res = await priv.get<
-            AxiosResponse<LoadLoginPageBrandingResponse>
-        >(`/login-page-branding?orgId=${authInfo.orgId}`);
-        if (res.status === 200) {
-            branding = res.data.data;
+        if (subscribed) {
+            const res = await priv.get<
+                AxiosResponse<LoadLoginPageBrandingResponse>
+            >(`/login-page-branding?orgId=${authInfo.orgId}`);
+            if (res.status === 200) {
+                branding = res.data.data;
+            }
         }
     } catch (error) {}
 

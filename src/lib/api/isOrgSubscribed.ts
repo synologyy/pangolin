@@ -4,7 +4,7 @@ import { cache } from "react";
 import { getCachedSubscription } from "./getCachedSubscription";
 import type { GetOrgTierResponse } from "@server/routers/billing/types";
 
-export const isSubscribed = cache(async (orgId: string) => {
+export const isOrgSubscribed = cache(async (orgId: string) => {
     let subscriptionStatus: GetOrgTierResponse | null = null;
     try {
         const subRes = await getCachedSubscription(orgId);
@@ -14,7 +14,8 @@ export const isSubscribed = cache(async (orgId: string) => {
     const subscribed =
         build === "enterprise"
             ? true
-            : subscriptionStatus?.tier === TierId.STANDARD;
+            : subscriptionStatus?.tier === TierId.STANDARD &&
+              subscriptionStatus.active;
 
     return subscribed;
 });
