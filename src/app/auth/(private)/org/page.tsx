@@ -30,6 +30,7 @@ import { GetOrgTierResponse } from "@server/routers/billing/types";
 import { TierId } from "@server/lib/billing/tiers";
 import { getCachedSubscription } from "@app/lib/api/getCachedSubscription";
 import { replacePlaceholder } from "@app/lib/replacePlaceholder";
+import { isOrgSubscribed } from "@app/lib/api/isOrgSubscribed";
 
 export const dynamic = "force-dynamic";
 
@@ -77,17 +78,7 @@ export default async function OrgAuthPage(props: {
             redirect(env.app.dashboardUrl);
         }
 
-        let subscriptionStatus: GetOrgTierResponse | null = null;
-        if (build === "saas") {
-            try {
-                const subRes = await getCachedSubscription(loginPage.orgId);
-                subscriptionStatus = subRes.data.data;
-            } catch {}
-        }
-        const subscribed =
-            build === "enterprise"
-                ? true
-                : subscriptionStatus?.tier === TierId.STANDARD;
+        const subscribed = await isOrgSubscribed(loginPage.orgId);
 
         if (build === "saas" && !subscribed) {
             console.log(
