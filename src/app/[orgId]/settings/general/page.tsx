@@ -102,12 +102,11 @@ const LOG_RETENTION_OPTIONS = [
     { label: "logRetention14Days", value: 14 },
     { label: "logRetention30Days", value: 30 },
     { label: "logRetention90Days", value: 90 },
-    ...(build != "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
+    ...(build !== "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
 ];
 
 export default function GeneralPage() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const { orgUser } = userOrgUserContext();
     const router = useRouter();
     const { org } = useOrgContext();
     const api = createApiClient(useEnvContext());
