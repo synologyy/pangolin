@@ -43,6 +43,7 @@ import {
 } from "./Credenza";
 import { usePaidStatus } from "@app/hooks/usePaidStatus";
 import { build } from "@server/build";
+import { PaidFeaturesAlert } from "./PaidFeaturesAlert";
 
 export type AuthPageCustomizationProps = {
     orgId: string;
@@ -86,7 +87,7 @@ export default function AuthPageBrandingForm({
 }: AuthPageCustomizationProps) {
     const env = useEnvContext();
     const api = createApiClient(env);
-    const { hasSaasSubscription } = usePaidStatus();
+    const { isPaidUser } = usePaidStatus();
 
     const router = useRouter();
 
@@ -117,14 +118,15 @@ export default function AuthPageBrandingForm({
                 branding?.resourceSubtitle ??
                 `Choose your preferred authentication method for {{resourceName}}`,
             primaryColor: branding?.primaryColor ?? `#f36117` // default pangolin primary color
-        }
+        },
+        disabled: !isPaidUser
     });
 
     async function updateBranding() {
         const isValid = await form.trigger();
         const brandingData = form.getValues();
 
-        if (!isValid) return;
+        if (!isValid || !isPaidUser) return;
         try {
             const updateRes = await api.put(
                 `/org/${orgId}/login-page-branding`,
@@ -154,6 +156,8 @@ export default function AuthPageBrandingForm({
     }
 
     async function deleteBranding() {
+        if (!isPaidUser) return;
+
         try {
             const updateRes = await api.delete(
                 `/org/${orgId}/login-page-branding`
@@ -193,6 +197,8 @@ export default function AuthPageBrandingForm({
                         {t("authPageBrandingDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
+
+                <PaidFeaturesAlert />
 
                 <SettingsSectionBody>
                     <SettingsSectionForm>
@@ -293,7 +299,7 @@ export default function AuthPageBrandingForm({
                                     </div>
                                 </div>
 
-                                {hasSaasSubscription && (
+                                {build === "saas" && (
                                     <>
                                         <Separator />
 
@@ -446,7 +452,7 @@ export default function AuthPageBrandingForm({
                                 type="submit"
                                 form="confirm-delete-branding-form"
                                 loading={isDeletingBranding}
-                                disabled={isDeletingBranding}
+                                disabled={isDeletingBranding || !isPaidUser}
                             >
                                 {t("authPageBrandingDeleteConfirm")}
                             </Button>
@@ -460,7 +466,11 @@ export default function AuthPageBrandingForm({
                             variant="destructive"
                             type="button"
                             loading={isUpdatingBranding || isDeletingBranding}
-                            disabled={isUpdatingBranding || isDeletingBranding}
+                            disabled={
+                                isUpdatingBranding ||
+                                isDeletingBranding ||
+                                !isPaidUser
+                            }
                             onClick={() => {
                                 setIsDeleteModalOpen(true);
                             }}
@@ -474,7 +484,11 @@ export default function AuthPageBrandingForm({
                         type="submit"
                         form="auth-page-branding-form"
                         loading={isUpdatingBranding || isDeletingBranding}
-                        disabled={isUpdatingBranding || isDeletingBranding}
+                        disabled={
+                            isUpdatingBranding ||
+                            isDeletingBranding ||
+                            !isPaidUser
+                        }
                     >
                         {t("saveAuthPageBranding")}
                     </Button>

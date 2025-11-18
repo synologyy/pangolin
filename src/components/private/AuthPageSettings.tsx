@@ -43,8 +43,8 @@ import DomainPicker from "@app/components/DomainPicker";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 import { InfoPopup } from "@app/components/ui/info-popup";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
-import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { build } from "@server/build";
+import { usePaidStatus } from "@app/hooks/usePaidStatus";
 
 // Auth page form schema
 const AuthPageFormSchema = z.object({
@@ -74,7 +74,7 @@ function AuthPageSettings({
     const t = useTranslations();
     const { env } = useEnvContext();
 
-    const subscription = useSubscriptionStatusContext();
+    const { hasSaasSubscription } = usePaidStatus();
 
     // Auth page domain state
     const [loginPage, setLoginPage] = useState(defaultLoginPage);
@@ -176,10 +176,7 @@ function AuthPageSettings({
         try {
             // Handle auth page domain
             if (data.authPageDomainId) {
-                if (
-                    build === "enterprise" ||
-                    (build === "saas" && subscription?.subscribed)
-                ) {
+                if (build === "enterprise" || hasSaasSubscription) {
                     const sanitizedSubdomain = data.authPageSubdomain
                         ? finalizeSubdomainSanitize(data.authPageSubdomain)
                         : "";
@@ -284,7 +281,7 @@ function AuthPageSettings({
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
-                    {build === "saas" && !subscription?.subscribed ? (
+                    {!hasSaasSubscription ? (
                         <Alert variant="info" className="mb-6">
                             <AlertDescription>
                                 {t("orgAuthPageDisabled")}{" "}
@@ -368,6 +365,7 @@ function AuthPageSettings({
                                                 onClick={() =>
                                                     setEditDomainOpen(true)
                                                 }
+                                                disabled={!hasSaasSubscription}
                                             >
                                                 {form.watch("authPageDomainId")
                                                     ? t("changeDomain")
@@ -380,6 +378,9 @@ function AuthPageSettings({
                                                     size="sm"
                                                     onClick={
                                                         clearAuthPageDomain
+                                                    }
+                                                    disabled={
+                                                        !hasSaasSubscription
                                                     }
                                                 >
                                                     <Trash2 size="14" />
@@ -398,8 +399,7 @@ function AuthPageSettings({
 
                                     {env.flags.usePangolinDns &&
                                         (build === "enterprise" ||
-                                            (build === "saas" &&
-                                                subscription?.subscribed)) &&
+                                            !hasSaasSubscription) &&
                                         loginPage?.domainId &&
                                         loginPage?.fullDomain &&
                                         !hasUnsavedChanges && (
@@ -425,7 +425,11 @@ function AuthPageSettings({
                         type="submit"
                         form="auth-page-settings-form"
                         loading={isSubmitting}
-                        disabled={isSubmitting || !hasUnsavedChanges}
+                        disabled={
+                            isSubmitting ||
+                            !hasUnsavedChanges ||
+                            !hasSaasSubscription
+                        }
                     >
                         {t("saveAuthPageDomain")}
                     </Button>
@@ -474,7 +478,7 @@ function AuthPageSettings({
                                     handleDomainSelection(selectedDomain);
                                 }
                             }}
-                            disabled={!selectedDomain}
+                            disabled={!selectedDomain || !hasSaasSubscription}
                         >
                             {t("selectDomain")}
                         </Button>
