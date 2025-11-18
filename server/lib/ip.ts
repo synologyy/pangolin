@@ -326,3 +326,35 @@ export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
         remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
     return remoteSubnetsStr;
 }
+
+export type SubnetProxyTarget = {
+    cidr: string;
+    portRange?: {
+        min: number;
+        max: number;
+    }[];
+};
+
+export function generateSubnetProxyTargets(
+    allSiteResources: SiteResource[]
+): SubnetProxyTarget[] {
+    let targets: SubnetProxyTarget[] = [];
+
+    for (const siteResource of allSiteResources) {
+        if (siteResource.mode == "host") {
+            // check if this is a valid ip
+            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+            if (ipSchema.safeParse(siteResource.destination).success) {
+                targets.push({
+                    cidr: `${siteResource.destination}/32`
+                });
+            }
+        } else if (siteResource.mode == "cidr") {
+            targets.push({
+                cidr: siteResource.destination
+            });
+        }
+    }
+
+    return targets;
+}

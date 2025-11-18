@@ -9,14 +9,15 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { removeTargets } from "../client/targets";
+import { removeTarget } from "../client/targets";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+import { generateSubnetProxyTargets } from "@server/lib/ip";
 
 const deleteSiteResourceParamsSchema = z.strictObject({
-        siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
-        siteId: z.string().transform(Number).pipe(z.int().positive()),
-        orgId: z.string()
-    });
+    siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
+    siteId: z.string().transform(Number).pipe(z.int().positive()),
+    orgId: z.string()
+});
 
 export type DeleteSiteResourceResponse = {
     message: string;
@@ -84,7 +85,7 @@ export async function deleteSiteResource(
 
         await db.transaction(async (trx) => {
             // Delete the site resource
-            await trx
+            const [removedSiteResource] = await trx
                 .delete(siteResources)
                 .where(
                     and(
@@ -92,35 +93,23 @@ export async function deleteSiteResource(
                         eq(siteResources.siteId, siteId),
                         eq(siteResources.orgId, orgId)
                     )
-                );
+                )
+                .returning();
 
-            // Only remove targets for port mode
-            if (
-                existingSiteResource.mode === "port" &&
-                existingSiteResource.protocol &&
-                existingSiteResource.proxyPort &&
-                existingSiteResource.destinationPort
-            ) {
-                const [newt] = await trx
-                    .select()
-                    .from(newts)
-                    .where(eq(newts.siteId, site.siteId))
-                    .limit(1);
+            const [newt] = await trx
+                .select()
+                .from(newts)
+                .where(eq(newts.siteId, site.siteId))
+                .limit(1);
 
-                if (!newt) {
-                    return next(
-                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
-                    );
-                }
-
-                await removeTargets(
-                    newt.newtId,
-                    existingSiteResource.destination,
-                    existingSiteResource.destinationPort,
-                    existingSiteResource.protocol,
-                    existingSiteResource.proxyPort
+            if (!newt) {
+                return next(
+                    createHttpError(HttpCode.NOT_FOUND, "Newt not found")
                 );
             }
+
+            const [target] = generateSubnetProxyTargets([removedSiteResource]);
+            await removeTarget(newt.newtId, target);
 
             await rebuildSiteClientAssociations(existingSiteResource, trx);
         });

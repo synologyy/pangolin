@@ -1,35 +1,30 @@
 import { sendToClient } from "#dynamic/routers/ws";
+import { SubnetProxyTarget } from "@server/lib/ip";
 
-export async function addTargets(
-    newtId: string,
-    destinationIp: string,
-    destinationPort: number,
-    protocol: string,
-    port: number
-) {
-    const target = `${port}:${destinationIp}:${destinationPort}`;
-
+export async function addTarget(newtId: string, target: SubnetProxyTarget) {
     await sendToClient(newtId, {
-        type: `newt/wg/${protocol}/add`,
-        data: {
-            targets: [target] // We can only use one target for WireGuard right now
-        }
+        type: `newt/wg/target/add`,
+        data: target
     });
 }
 
-export async function removeTargets(
-    newtId: string,
-    destinationIp: string,
-    destinationPort: number,
-    protocol: string,
-    port: number
-) {
-    const target = `${port}:${destinationIp}:${destinationPort}`;
-
+export async function removeTarget(newtId: string, target: SubnetProxyTarget) {
     await sendToClient(newtId, {
-        type: `newt/wg/${protocol}/remove`,
+        type: `newt/wg/target/remove`,
+        data: target
+    });
+}
+
+export async function updateTarget(
+    newtId: string,
+    oldTarget: SubnetProxyTarget,
+    newTarget: SubnetProxyTarget
+) {
+    await sendToClient(newtId, {
+        type: `newt/wg/target/update`,
         data: {
-            targets: [target] // We can only use one target for WireGuard right now
+            oldTarget,
+            newTarget
         }
     });
 }

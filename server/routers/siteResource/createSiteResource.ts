@@ -9,16 +9,18 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { addTargets } from "../client/targets";
+import { addTarget } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+import { generateSubnetProxyTargets } from "@server/lib/ip";
 
 const createSiteResourceParamsSchema = z.strictObject({
-        siteId: z.string().transform(Number).pipe(z.int().positive()),
-        orgId: z.string()
-    });
+    siteId: z.string().transform(Number).pipe(z.int().positive()),
+    orgId: z.string()
+});
 
-const createSiteResourceSchema = z.strictObject({
+const createSiteResourceSchema = z
+    .strictObject({
         name: z.string().min(1).max(255),
         mode: z.enum(["host", "cidr", "port"]),
         protocol: z.enum(["tcp", "udp"]).optional(),
@@ -49,12 +51,15 @@ const createSiteResourceSchema = z.strictObject({
         (data) => {
             if (data.mode === "host") {
                 // Check if it's a valid IP address using zod (v4 or v6)
-                const isValidIP = z.union([z.ipv4(), z.ipv6()]).safeParse(data.destination).success;
-                
+                const isValidIP = z
+                    .union([z.ipv4(), z.ipv6()])
+                    .safeParse(data.destination).success;
+
                 // Check if it's a valid domain (hostname pattern, TLD not required)
-                const domainRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+                const domainRegex =
+                    /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
-                
+
                 return isValidIP || isValidDomain;
             }
             return true;
@@ -68,7 +73,9 @@ const createSiteResourceSchema = z.strictObject({
         (data) => {
             if (data.mode === "cidr") {
                 // Check if it's a valid CIDR (v4 or v6)
-                const isValidCIDR = z.union([z.cidrv4(), z.cidrv6()]).safeParse(data.destination).success;
+                const isValidCIDR = z
+                    .union([z.cidrv4(), z.cidrv6()])
+                    .safeParse(data.destination).success;
                 return isValidCIDR;
             }
             return true;
@@ -76,7 +83,7 @@ const createSiteResourceSchema = z.strictObject({
         {
             message: "Destination must be a valid CIDR notation for cidr mode"
         }
-    );  
+    );
 
 export type CreateSiteResourceBody = z.infer<typeof createSiteResourceSchema>;
 export type CreateSiteResourceResponse = SiteResource;
@@ -213,28 +220,21 @@ export async function createSiteResource(
                 siteResourceId: newSiteResource.siteResourceId
             });
 
-            // Only add targets for port mode
-            if (mode === "port" && protocol && proxyPort && destinationPort) {
-                const [newt] = await trx
-                    .select()
-                    .from(newts)
-                    .where(eq(newts.siteId, site.siteId))
-                    .limit(1);
+            const [newt] = await trx
+                .select()
+                .from(newts)
+                .where(eq(newts.siteId, site.siteId))
+                .limit(1);
 
-                if (!newt) {
-                    return next(
-                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
-                    );
-                }
-
-                await addTargets(
-                    newt.newtId,
-                    destination,
-                    destinationPort,
-                    protocol,
-                    proxyPort
+            if (!newt) {
+                return next(
+                    createHttpError(HttpCode.NOT_FOUND, "Newt not found")
                 );
             }
+
+            const [target] = generateSubnetProxyTargets([newSiteResource]);
+
+            await addTarget(newt.newtId, target);
 
             await rebuildSiteClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
         });

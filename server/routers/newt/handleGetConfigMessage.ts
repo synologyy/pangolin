@@ -15,7 +15,7 @@ import { clients, clientSites, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
-import { generateRemoteSubnetsStr } from "@server/lib/ip";
+import { generateRemoteSubnetsStr, generateSubnetProxyTargets } from "@server/lib/ip";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -222,35 +222,11 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         .from(siteResources)
         .where(eq(siteResources.siteId, siteId));
 
-    let targets: {
-        cidr: string;
-        portRange?: {
-            min: number;
-            max: number;
-        }[];
-    }[] = [];
-
-    for (const siteResource of allSiteResources) {
-        if (siteResource.mode == "host") {
-            // check if this is a valid ip
-            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
-            if (ipSchema.safeParse(siteResource.destination).success) {
-                targets.push({
-                    cidr: `${siteResource.destination}/32`
-                });
-            }
-        } else if (siteResource.mode == "cidr") {
-            targets.push({
-                cidr: siteResource.destination
-            });
-        }
-    }
-
     // Build the configuration response
     const configResponse = {
         ipAddress: site.address,
         peers: validPeers,
-        targets: targets
+        targets: generateSubnetProxyTargets(allSiteResources)
     };
 
     logger.debug("Sending config: ", configResponse);
