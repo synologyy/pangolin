@@ -27,7 +27,12 @@ export const queryAccessAuditLogsQuery = z.object({
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .prefault(new Date().toISOString()),
+        .prefault(new Date().toISOString())
+        .openapi({
+            type: "string",
+            format: "date-time",
+            description: "End time as ISO date string (defaults to current time)"
+        }),
     action: z
         .union([z.boolean(), z.string()])
         .transform((val) => (typeof val === "string" ? val === "true" : val))

@@ -30,7 +30,8 @@ export const signupBodySchema = z.object({
     password: passwordSchema,
     inviteToken: z.string().optional(),
     inviteId: z.string().optional(),
-    termsAcceptedTimestamp: z.string().nullable().optional()
+    termsAcceptedTimestamp: z.string().nullable().optional(),
+    marketingEmailConsent: z.boolean().optional()
 });
 
 export type SignUpBody = z.infer<typeof signupBodySchema>;
@@ -55,7 +56,7 @@ export async function signup(
         );
     }
 
-    const { email, password, inviteToken, inviteId, termsAcceptedTimestamp } =
+    const { email, password, inviteToken, inviteId, termsAcceptedTimestamp, marketingEmailConsent } =
         parsedBody.data;
 
     const passwordHash = await hashPassword(password);
@@ -220,8 +221,8 @@ export async function signup(
             new Date(sess.expiresAt)
         );
         res.appendHeader("Set-Cookie", cookie);
-
-        if (build == "saas") {
+        if (build == "saas" && marketingEmailConsent) {
+            logger.debug(`User ${email} opted in to marketing emails during signup.`);
             moveEmailToAudience(email, AudienceIds.SignUps);
         }
 
