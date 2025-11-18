@@ -29,27 +29,23 @@ import { getOrgTierData } from "#private/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { build } from "@server/build";
 
-const paramsSchema = z
-    .object({
-        orgId: z.string()
-    })
-    .strict();
+const paramsSchema = z.strictObject({
+    orgId: z.string()
+});
 
-const bodySchema = z
-    .object({
-        logoUrl: z.string().url(),
-        logoWidth: z.coerce.number().min(1),
-        logoHeight: z.coerce.number().min(1),
-        resourceTitle: z.string(),
-        resourceSubtitle: z.string().optional(),
-        orgTitle: z.string().optional(),
-        orgSubtitle: z.string().optional(),
-        primaryColor: z
-            .string()
-            .regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i)
-            .optional()
-    })
-    .strict();
+const bodySchema = z.strictObject({
+    logoUrl: z.url(),
+    logoWidth: z.coerce.number<number>().min(1),
+    logoHeight: z.coerce.number<number>().min(1),
+    resourceTitle: z.string(),
+    resourceSubtitle: z.string().optional(),
+    orgTitle: z.string().optional(),
+    orgSubtitle: z.string().optional(),
+    primaryColor: z
+        .string()
+        .regex(/^#([0-9a-f]{6}|[0-9a-f]{3})$/i)
+        .optional()
+});
 
 export type UpdateLoginPageBrandingBody = z.infer<typeof bodySchema>;
 

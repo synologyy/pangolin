@@ -50,29 +50,26 @@ export type AuthPageCustomizationProps = {
 };
 
 const AuthPageFormSchema = z.object({
-    logoUrl: z
-        .string()
-        .url()
-        .refine(
-            async (url) => {
-                try {
-                    const response = await fetch(url);
-                    return (
-                        response.status === 200 &&
-                        (response.headers.get("content-type") ?? "").startsWith(
-                            "image/"
-                        )
-                    );
-                } catch (error) {
-                    return false;
-                }
-            },
-            {
-                message: "Invalid logo URL, must be a valid image URL"
+    logoUrl: z.url().refine(
+        async (url) => {
+            try {
+                const response = await fetch(url);
+                return (
+                    response.status === 200 &&
+                    (response.headers.get("content-type") ?? "").startsWith(
+                        "image/"
+                    )
+                );
+            } catch (error) {
+                return false;
             }
-        ),
-    logoWidth: z.coerce.number().min(1),
-    logoHeight: z.coerce.number().min(1),
+        },
+        {
+            error: "Invalid logo URL, must be a valid image URL"
+        }
+    ),
+    logoWidth: z.coerce.number<number>().min(1),
+    logoHeight: z.coerce.number<number>().min(1),
     orgTitle: z.string().optional(),
     orgSubtitle: z.string().optional(),
     resourceTitle: z.string(),
@@ -272,7 +269,7 @@ export default function AuthPageBrandingForm({
                                             )}
                                         />
 
-                                        <span className="self-center relative top-2.5">
+                                        <span className="relative top-8">
                                             <XIcon className="text-muted-foreground size-4" />
                                         </span>
 
@@ -300,7 +297,7 @@ export default function AuthPageBrandingForm({
                                     <>
                                         <Separator />
 
-                                        <div className="flex flex-col gap-3">
+                                        <div className="flex flex-col gap-5">
                                             <FormField
                                                 control={form.control}
                                                 name="orgTitle"
@@ -311,6 +308,10 @@ export default function AuthPageBrandingForm({
                                                                 "brandingOrgTitle"
                                                             )}
                                                         </FormLabel>
+
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
                                                         <FormDescription>
                                                             {t(
                                                                 "brandingOrgDescription",
@@ -320,9 +321,6 @@ export default function AuthPageBrandingForm({
                                                                 }
                                                             )}
                                                         </FormDescription>
-                                                        <FormControl>
-                                                            <Input {...field} />
-                                                        </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -337,6 +335,10 @@ export default function AuthPageBrandingForm({
                                                                 "brandingOrgSubtitle"
                                                             )}
                                                         </FormLabel>
+
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
                                                         <FormDescription>
                                                             {t(
                                                                 "brandingOrgDescription",
@@ -346,9 +348,6 @@ export default function AuthPageBrandingForm({
                                                                 }
                                                             )}
                                                         </FormDescription>
-                                                        <FormControl>
-                                                            <Input {...field} />
-                                                        </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -359,7 +358,7 @@ export default function AuthPageBrandingForm({
 
                                 <Separator />
 
-                                <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-5">
                                     <FormField
                                         control={form.control}
                                         name="resourceTitle"
@@ -368,6 +367,10 @@ export default function AuthPageBrandingForm({
                                                 <FormLabel>
                                                     {t("brandingResourceTitle")}
                                                 </FormLabel>
+
+                                                <FormControl>
+                                                    <Input {...field} />
+                                                </FormControl>
                                                 <FormDescription>
                                                     {t(
                                                         "brandingResourceDescription",
@@ -377,9 +380,6 @@ export default function AuthPageBrandingForm({
                                                         }
                                                     )}
                                                 </FormDescription>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -394,6 +394,9 @@ export default function AuthPageBrandingForm({
                                                         "brandingResourceSubtitle"
                                                     )}
                                                 </FormLabel>
+                                                <FormControl>
+                                                    <Input {...field} />
+                                                </FormControl>
                                                 <FormDescription>
                                                     {t(
                                                         "brandingResourceDescription",
@@ -403,9 +406,6 @@ export default function AuthPageBrandingForm({
                                                         }
                                                     )}
                                                 </FormDescription>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
