@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { removeTarget } from "../client/targets";
+import { removeTargets } from "../client/targets";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 import { generateSubnetProxyTargets } from "@server/lib/ip";
 
@@ -108,8 +108,8 @@ export async function deleteSiteResource(
                 );
             }
 
-            const [target] = generateSubnetProxyTargets([removedSiteResource]);
-            await removeTarget(newt.newtId, target);
+            const targets = await generateSubnetProxyTargets([removedSiteResource], trx);
+            await removeTargets(newt.newtId, targets);
 
             await rebuildSiteClientAssociations(existingSiteResource, trx);
         });

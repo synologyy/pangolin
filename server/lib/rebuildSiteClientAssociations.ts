@@ -29,24 +29,21 @@ import {
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
-import z from "zod";
 import { generateRemoteSubnetsStr } from "@server/lib/ip";
 
-export async function rebuildSiteClientAssociations(
+export async function getClientSiteResourceAccess(
     siteResource: SiteResource,
     trx: Transaction | typeof db = db
-): Promise<void> {
-    const siteId = siteResource.siteId;
-
+) {
     // get the site
     const [site] = await trx
         .select()
         .from(sites)
-        .where(eq(sites.siteId, siteId))
+        .where(eq(sites.siteId, siteResource.siteId))
         .limit(1);
 
     if (!site) {
-        throw new Error(`Site with ID ${siteId} not found`);
+        throw new Error(`Site with ID ${siteResource.siteId} not found`);
     }
 
     const roleIds = await trx
@@ -87,27 +84,6 @@ export async function rebuildSiteClientAssociations(
         .from(clients)
         .where(inArray(clients.userId, newAllUserIds));
 
-    const existingClientSites = await trx
-        .select({
-            clientId: clientSites.clientId
-        })
-        .from(clientSites)
-        .where(eq(clientSites.siteId, siteId));
-
-    const existingClientSiteIds = existingClientSites.map(
-        (row) => row.clientId
-    );
-
-    // Get full client details for existing clients (needed for sending delete messages)
-    const existingClients = await trx
-        .select({
-            clientId: clients.clientId,
-            pubKey: clients.pubKey,
-            subnet: clients.subnet
-        })
-        .from(clients)
-        .where(inArray(clients.clientId, existingClientSiteIds));
-
     const allClientSiteResources = await trx // this is for if a client is directly associated with a resource instead of implicitly via a user
         .select()
         .from(clientSiteResources)
@@ -133,6 +109,43 @@ export async function rebuildSiteClientAssociations(
     );
     const mergedAllClients = Array.from(allClientsMap.values());
     const mergedAllClientIds = mergedAllClients.map((c) => c.clientId);
+
+    return {
+        site,
+        mergedAllClients,
+        mergedAllClientIds
+    };
+}
+
+export async function rebuildSiteClientAssociations(
+    siteResource: SiteResource,
+    trx: Transaction | typeof db = db
+): Promise<void> {
+    const siteId = siteResource.siteId;
+
+    const { site, mergedAllClients, mergedAllClientIds } =
+        await getClientSiteResourceAccess(siteResource, trx);
+
+    const existingClientSites = await trx
+        .select({
+            clientId: clientSites.clientId
+        })
+        .from(clientSites)
+        .where(eq(clientSites.siteId, siteResource.siteId));
+
+    const existingClientSiteIds = existingClientSites.map(
+        (row) => row.clientId
+    );
+
+    // Get full client details for existing clients (needed for sending delete messages)
+    const existingClients = await trx
+        .select({
+            clientId: clients.clientId,
+            pubKey: clients.pubKey,
+            subnet: clients.subnet
+        })
+        .from(clients)
+        .where(inArray(clients.clientId, existingClientSiteIds));
 
     // ------------- calculations begin below -------------
 
@@ -345,7 +358,8 @@ async function handleMessagesForSiteClients(
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets: generateRemoteSubnetsStr(allSiteResources)
+                        remoteSubnets:
+                            generateRemoteSubnetsStr(allSiteResources)
                     },
                     olm.olmId
                 )

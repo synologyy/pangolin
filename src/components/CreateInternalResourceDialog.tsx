@@ -86,19 +86,20 @@ export default function CreateInternalResourceDialog({
             .string()
             .min(1, t("createInternalResourceDialogNameRequired"))
             .max(255, t("createInternalResourceDialogNameMaxLength")),
-        mode: z.enum(["host", "cidr", "port"]),
+        // mode: z.enum(["host", "cidr", "port"]),
+        mode: z.enum(["host", "cidr"]),
         destination: z.string().min(1),
         siteId: z.int().positive(t("createInternalResourceDialogPleaseSelectSite")),
         protocol: z.enum(["tcp", "udp"]),
-        proxyPort: z.int()
-            .positive()
-            .min(1, t("createInternalResourceDialogProxyPortMin"))
-            .max(65535, t("createInternalResourceDialogProxyPortMax")),
-        destinationPort: z.int()
-            .positive()
-            .min(1, t("createInternalResourceDialogDestinationPortMin"))
-            .max(65535, t("createInternalResourceDialogDestinationPortMax"))
-            .nullish(),
+        // proxyPort: z.int()
+        //     .positive()
+        //     .min(1, t("createInternalResourceDialogProxyPortMin"))
+        //     .max(65535, t("createInternalResourceDialogProxyPortMax")),
+        // destinationPort: z.int()
+        //     .positive()
+        //     .min(1, t("createInternalResourceDialogDestinationPortMin"))
+        //     .max(65535, t("createInternalResourceDialogDestinationPortMax"))
+        //     .nullish(),
         alias: z.string().nullish(),
         roles: z.array(
             z.object({
@@ -119,42 +120,42 @@ export default function CreateInternalResourceDialog({
             })
         ).optional()
     })
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.protocol !== undefined && data.protocol !== null;
-            }
-            return true;
-        },
-        {
-            message: t("createInternalResourceDialogProtocol") + " is required for port mode",
-            path: ["protocol"]
-        }
-    )
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.proxyPort !== undefined && data.proxyPort !== null;
-            }
-            return true;
-        },
-        {
-            message: t("createInternalResourceDialogSitePort") + " is required for port mode",
-            path: ["proxyPort"]
-        }
-    )
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.destinationPort !== undefined && data.destinationPort !== null;
-            }
-            return true;
-        },
-        {
-            message: t("targetPort") + " is required for port mode",
-            path: ["destinationPort"]
-        }
-    );
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.protocol !== undefined && data.protocol !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         error: t("createInternalResourceDialogProtocol") + " is required for port mode",
+    //         path: ["protocol"]
+    //     }
+    // )
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.proxyPort !== undefined && data.proxyPort !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         error: t("createInternalResourceDialogSitePort") + " is required for port mode",
+    //         path: ["proxyPort"]
+    //     }
+    // )
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.destinationPort !== undefined && data.destinationPort !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         error: t("targetPort") + " is required for port mode",
+    //         path: ["destinationPort"]
+    //     }
+    // );
 
     type FormData = z.infer<typeof formSchema>;
 
@@ -177,9 +178,9 @@ export default function CreateInternalResourceDialog({
             siteId: availableSites[0]?.siteId || 0,
             mode: "host",
             protocol: "tcp",
-            proxyPort: undefined,
+            // proxyPort: undefined,
             destination: "",
-            destinationPort: undefined,
+            // destinationPort: undefined,
             alias: "",
             roles: [],
             users: [],
@@ -196,9 +197,9 @@ export default function CreateInternalResourceDialog({
                 siteId: availableSites[0].siteId,
                 mode: "host",
                 protocol: "tcp",
-                proxyPort: undefined,
+                // proxyPort: undefined,
                 destination: "",
-                destinationPort: undefined,
+                // destinationPort: undefined,
                 alias: "",
                 roles: [],
                 users: [],
@@ -260,8 +261,8 @@ export default function CreateInternalResourceDialog({
                     name: data.name,
                     mode: data.mode,
                     protocol: data.mode === "port" ? data.protocol : undefined,
-                    proxyPort: data.mode === "port" ? data.proxyPort : undefined,
-                    destinationPort: data.mode === "port" ? data.destinationPort : undefined,
+                    // proxyPort: data.mode === "port" ? data.proxyPort : undefined,
+                    // destinationPort: data.mode === "port" ? data.destinationPort : undefined,
                     destination: data.destination,
                     enabled: true,
                     alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : undefined
@@ -452,7 +453,7 @@ export default function CreateInternalResourceDialog({
                                             </FormItem>
                                         )}
                                     />
-
+{/* 
                                     {mode === "port" && (
                                         <>
                                             <div className="grid grid-cols-2 gap-4">
@@ -510,7 +511,7 @@ export default function CreateInternalResourceDialog({
                                                 />
                                             </div>
                                         </>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 
@@ -541,7 +542,7 @@ export default function CreateInternalResourceDialog({
                                         )}
                                     />
 
-                                    {mode === "port" && (
+                                    {/* {mode === "port" && (
                                         <FormField
                                             control={form.control}
                                             name="destinationPort"
@@ -568,7 +569,7 @@ export default function CreateInternalResourceDialog({
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 

@@ -6,7 +6,7 @@ import logger from "@server/logger";
 import { sites } from "@server/db";
 import { eq, and, isNotNull } from "drizzle-orm";
 import { addTargets as addProxyTargets } from "@server/routers/newt/targets";
-import { addTarget as addClientTargets } from "@server/routers/client/targets";
+import { addTargets as addClientTargets } from "@server/routers/client/targets";
 import {
     ClientResourcesResults,
     updateClientResources
@@ -122,19 +122,17 @@ export async function applyBlueprint({
                 )
                 .limit(1);
 
-            if (site && result.resource.mode === "port" && result.resource.protocol && result.resource.proxyPort && result.resource.destinationPort) {
-                logger.debug(
-                    `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
-                );
+            logger.debug(
+                `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
+            );
 
-                await addClientTargets(
-                    site.newt.newtId,
-                    result.resource.destination,
-                    result.resource.destinationPort,
-                    result.resource.protocol,
-                    result.resource.proxyPort
-                );
-            }
+            // await addClientTargets(
+            //     site.newt.newtId,
+            //     result.resource.destination,
+            //     result.resource.destinationPort,
+            //     result.resource.protocol,
+            //     result.resource.proxyPort
+            // );
         }
 
         blueprintSucceeded = true;

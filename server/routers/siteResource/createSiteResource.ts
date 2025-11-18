@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { addTarget } from "../client/targets";
+import { addTargets } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
 import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
 import { generateSubnetProxyTargets } from "@server/lib/ip";
@@ -24,29 +24,29 @@ const createSiteResourceSchema = z
         name: z.string().min(1).max(255),
         mode: z.enum(["host", "cidr", "port"]),
         protocol: z.enum(["tcp", "udp"]).optional(),
-        proxyPort: z.int().positive().optional(),
-        destinationPort: z.int().positive().optional(),
+        // proxyPort: z.int().positive().optional(),
+        // destinationPort: z.int().positive().optional(),
         destination: z.string().min(1),
         enabled: z.boolean().default(true),
         alias: z.string().optional()
     })
     .strict()
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return (
-                    data.protocol !== undefined &&
-                    data.proxyPort !== undefined &&
-                    data.destinationPort !== undefined
-                );
-            }
-            return true;
-        },
-        {
-            message:
-                "Protocol, proxy port, and destination port are required for port mode"
-        }
-    )
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return (
+    //                 data.protocol !== undefined &&
+    //                 data.proxyPort !== undefined &&
+    //                 data.destinationPort !== undefined
+    //             );
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         message:
+    //             "Protocol, proxy port, and destination port are required for port mode"
+    //     }
+    // )
     .refine(
         (data) => {
             if (data.mode === "host") {
@@ -139,8 +139,8 @@ export async function createSiteResource(
             name,
             mode,
             protocol,
-            proxyPort,
-            destinationPort,
+            // proxyPort,
+            // destinationPort,
             destination,
             enabled,
             alias
@@ -157,29 +157,29 @@ export async function createSiteResource(
             return next(createHttpError(HttpCode.NOT_FOUND, "Site not found"));
         }
 
-        // check if resource with same protocol and proxy port already exists (only for port mode)
-        if (mode === "port" && protocol && proxyPort) {
-            const [existingResource] = await db
-                .select()
-                .from(siteResources)
-                .where(
-                    and(
-                        eq(siteResources.siteId, siteId),
-                        eq(siteResources.orgId, orgId),
-                        eq(siteResources.protocol, protocol),
-                        eq(siteResources.proxyPort, proxyPort)
-                    )
-                )
-                .limit(1);
-            if (existingResource && existingResource.siteResourceId) {
-                return next(
-                    createHttpError(
-                        HttpCode.CONFLICT,
-                        "A resource with the same protocol and proxy port already exists"
-                    )
-                );
-            }
-        }
+        // // check if resource with same protocol and proxy port already exists (only for port mode)
+        // if (mode === "port" && protocol && proxyPort) {
+        //     const [existingResource] = await db
+        //         .select()
+        //         .from(siteResources)
+        //         .where(
+        //             and(
+        //                 eq(siteResources.siteId, siteId),
+        //                 eq(siteResources.orgId, orgId),
+        //                 eq(siteResources.protocol, protocol),
+        //                 eq(siteResources.proxyPort, proxyPort)
+        //             )
+        //         )
+        //         .limit(1);
+        //     if (existingResource && existingResource.siteResourceId) {
+        //         return next(
+        //             createHttpError(
+        //                 HttpCode.CONFLICT,
+        //                 "A resource with the same protocol and proxy port already exists"
+        //             )
+        //         );
+        //     }
+        // }
 
         const niceId = await getUniqueSiteResourceName(orgId);
 
@@ -195,8 +195,8 @@ export async function createSiteResource(
                     name,
                     mode,
                     protocol: mode === "port" ? protocol : null,
-                    proxyPort: mode === "port" ? proxyPort : null,
-                    destinationPort: mode === "port" ? destinationPort : null,
+                    // proxyPort: mode === "port" ? proxyPort : null,
+                    // destinationPort: mode === "port" ? destinationPort : null,
                     destination,
                     enabled,
                     alias: alias || null
@@ -232,9 +232,8 @@ export async function createSiteResource(
                 );
             }
 
-            const [target] = generateSubnetProxyTargets([newSiteResource]);
-
-            await addTarget(newt.newtId, target);
+            const targets = await generateSubnetProxyTargets([newSiteResource], trx);
+            await addTargets(newt.newtId, targets);
 
             await rebuildSiteClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
         });

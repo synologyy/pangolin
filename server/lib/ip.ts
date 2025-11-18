@@ -1,8 +1,10 @@
-import { db, SiteResource } from "@server/db";
+import { clientSites, db, SiteResource, Transaction } from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
 import z from "zod";
+import { getClientSiteResourceAccess } from "./rebuildSiteClientAssociations";
+import logger from "@server/logger";
 
 interface IPRange {
     start: bigint;
@@ -328,31 +330,47 @@ export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
 }
 
 export type SubnetProxyTarget = {
-    cidr: string;
+    sourcePrefix: string;
+    destPrefix: string;
     portRange?: {
         min: number;
         max: number;
     }[];
 };
 
-export function generateSubnetProxyTargets(
-    allSiteResources: SiteResource[]
-): SubnetProxyTarget[] {
+export async function generateSubnetProxyTargets(
+    allSiteResources: SiteResource[],
+    trx: Transaction | typeof db = db
+): Promise<SubnetProxyTarget[]> {
     let targets: SubnetProxyTarget[] = [];
 
     for (const siteResource of allSiteResources) {
-        if (siteResource.mode == "host") {
-            // check if this is a valid ip
-            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
-            if (ipSchema.safeParse(siteResource.destination).success) {
+        const { mergedAllClients } =
+            await getClientSiteResourceAccess(siteResource, trx);
+
+        if (mergedAllClients.length === 0) {
+            logger.debug(`No clients have access to site resource ${siteResource.siteResourceId}, skipping target generation.`);
+            continue;
+        }
+
+        for (const clientSite of mergedAllClients) {
+            const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
+
+            if (siteResource.mode == "host") {
+                // check if this is a valid ip
+                const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+                if (ipSchema.safeParse(siteResource.destination).success) {
+                    targets.push({
+                        sourcePrefix: clientPrefix,
+                        destPrefix: `${siteResource.destination}/32`
+                    });
+                }
+            } else if (siteResource.mode == "cidr") {
                 targets.push({
-                    cidr: `${siteResource.destination}/32`
+                    sourcePrefix: clientPrefix,
+                    destPrefix: siteResource.destination
                 });
             }
-        } else if (siteResource.mode == "cidr") {
-            targets.push({
-                cidr: siteResource.destination
-            });
         }
     }
 

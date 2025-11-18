@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { updateTarget } from "@server/routers/client/targets";
+import { updateTargets } from "@server/routers/client/targets";
 import { generateSubnetProxyTargets } from "@server/lib/ip";
 
 const updateSiteResourceParamsSchema = z.strictObject({
@@ -21,10 +21,11 @@ const updateSiteResourceParamsSchema = z.strictObject({
 const updateSiteResourceSchema = z
     .strictObject({
         name: z.string().min(1).max(255).optional(),
-        mode: z.enum(["host", "cidr", "port"]).optional(),
+        // mode: z.enum(["host", "cidr", "port"]).optional(),
+        mode: z.enum(["host", "cidr"]).optional(),
         protocol: z.enum(["tcp", "udp"]).nullish(),
-        proxyPort: z.int().positive().nullish(),
-        destinationPort: z.int().positive().nullish(),
+        // proxyPort: z.int().positive().nullish(),
+        // destinationPort: z.int().positive().nullish(),
         destination: z.string().min(1).optional(),
         enabled: z.boolean().optional(),
         alias: z.string().nullish()
@@ -115,8 +116,8 @@ export async function updateSiteResource(
         // Determine the final mode and validate port mode requirements
         const finalMode = updateData.mode || existingSiteResource.mode;
         const finalProtocol = updateData.protocol !== undefined ? updateData.protocol : existingSiteResource.protocol;
-        const finalProxyPort = updateData.proxyPort !== undefined ? updateData.proxyPort : existingSiteResource.proxyPort;
-        const finalDestinationPort = updateData.destinationPort !== undefined ? updateData.destinationPort : existingSiteResource.destinationPort;
+        // const finalProxyPort = updateData.proxyPort !== undefined ? updateData.proxyPort : existingSiteResource.proxyPort;
+        // const finalDestinationPort = updateData.destinationPort !== undefined ? updateData.destinationPort : existingSiteResource.destinationPort;
 
         // Prepare update data
         const updateValues: any = {};
@@ -136,25 +137,25 @@ export async function updateSiteResource(
         }
 
         // Handle port mode fields - include in update if explicitly provided (null or value) or if mode changed
-        const isModeChangingFromPort =
-            existingSiteResource.mode === "port" &&
-            updateData.mode &&
-            updateData.mode !== "port";
+        // const isModeChangingFromPort =
+        //     existingSiteResource.mode === "port" &&
+        //     updateData.mode &&
+        //     updateData.mode !== "port";
 
-        if (updateData.protocol !== undefined || isModeChangingFromPort) {
-            updateValues.protocol = finalMode === "port" ? finalProtocol : null;
-        }
-        if (updateData.proxyPort !== undefined || isModeChangingFromPort) {
-            updateValues.proxyPort =
-                finalMode === "port" ? finalProxyPort : null;
-        }
-        if (
-            updateData.destinationPort !== undefined ||
-            isModeChangingFromPort
-        ) {
-            updateValues.destinationPort =
-                finalMode === "port" ? finalDestinationPort : null;
-        }
+        // if (updateData.protocol !== undefined || isModeChangingFromPort) {
+        //     updateValues.protocol = finalMode === "port" ? finalProtocol : null;
+        // }
+        // if (updateData.proxyPort !== undefined || isModeChangingFromPort) {
+        //     updateValues.proxyPort =
+        //         finalMode === "port" ? finalProxyPort : null;
+        // }
+        // if (
+        //     updateData.destinationPort !== undefined ||
+        //     isModeChangingFromPort
+        // ) {
+        //     updateValues.destinationPort =
+        //         finalMode === "port" ? finalDestinationPort : null;
+        // }
 
         // Update the site resource
         const [updatedSiteResource] = await db
@@ -179,10 +180,13 @@ export async function updateSiteResource(
             return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
         }
 
-        const [oldTarget] = generateSubnetProxyTargets([existingSiteResource]);
-        const [newTarget] = generateSubnetProxyTargets([updatedSiteResource]);
+        const oldTargets = await generateSubnetProxyTargets([existingSiteResource]);
+        const newTargets = await generateSubnetProxyTargets([updatedSiteResource]);
 
-        await updateTarget(newt.newtId, oldTarget, newTarget);
+        await updateTargets(newt.newtId, {
+            oldTargets: oldTargets,
+            newTargets: newTargets
+        });
 
         logger.info(
             `Updated site resource ${siteResourceId} for site ${siteId}`

@@ -42,17 +42,14 @@ import {
     FaFreebsd,
     FaWindows
 } from "react-icons/fa";
-import {
-    SiNixos,
-    SiKubernetes
-} from "react-icons/si";
+import { SiNixos, SiKubernetes } from "react-icons/si";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
     CreateClientBody,
     CreateClientResponse,
-    PickClientDefaultsResponse,
+    PickClientDefaultsResponse
 } from "@server/routers/client";
 import { ListSitesResponse } from "@server/routers/site";
 import { toast } from "@app/hooks/useToast";
@@ -93,18 +90,7 @@ export default function Page() {
             .min(2, { message: t("nameMin", { len: 2 }) })
             .max(30, { message: t("nameMax", { len: 30 }) }),
         method: z.enum(["olm"]),
-        siteIds: z
-            .array(
-                z.object({
-                    id: z.string(),
-                    text: z.string()
-                })
-            )
-            .refine((val) => val.length > 0, {
-                message: t("siteRequired")
-            }),
-        subnet: z.union([z.ipv4(), z.ipv6()])
-            .refine((val) => val.length > 0, {
+        subnet: z.union([z.ipv4(), z.ipv6()]).refine((val) => val.length > 0, {
             message: t("subnetRequired")
         })
     });
@@ -123,10 +109,6 @@ export default function Page() {
     ]);
 
     const [loadingPage, setLoadingPage] = useState(true);
-    const [sites, setSites] = useState<Tag[]>([]);
-    const [activeSitesTagIndex, setActiveSitesTagIndex] = useState<
-        number | null
-    >(null);
 
     const [platform, setPlatform] = useState<Platform>("unix");
     const [architecture, setArchitecture] = useState("All");
@@ -236,12 +218,11 @@ export default function Page() {
         }
     };
 
-    const form = useForm({
+    const form = useForm<CreateClientFormValues>({
         resolver: zodResolver(createClientFormSchema),
         defaultValues: {
             name: "",
             method: "olm",
-            siteIds: [],
             subnet: ""
         }
     });
@@ -330,7 +311,7 @@ export default function Page() {
                 const latestVersion = data.tag_name;
                 olmVersion = latestVersion;
             } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
+                if (error instanceof Error && error.name === "AbortError") {
                     console.error(t("olmErrorFetchTimeout"));
                 } else {
                     console.error(
@@ -456,13 +437,17 @@ export default function Page() {
                                                         <FormControl>
                                                             <Input
                                                                 autoComplete="off"
-                                                                placeholder={t("subnetPlaceholder")}
+                                                                placeholder={t(
+                                                                    "subnetPlaceholder"
+                                                                )}
                                                                 {...field}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
                                                         <FormDescription>
-                                                            {t("addressDescription")}
+                                                            {t(
+                                                                "addressDescription"
+                                                            )}
                                                         </FormDescription>
                                                     </FormItem>
                                                 )}
@@ -536,7 +521,9 @@ export default function Page() {
                                             {t("clientOlmCredentials")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t("clientOlmCredentialsDescription")}
+                                            {t(
+                                                "clientOlmCredentialsDescription"
+                                            )}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>

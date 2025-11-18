@@ -1,30 +1,32 @@
 import { sendToClient } from "#dynamic/routers/ws";
 import { SubnetProxyTarget } from "@server/lib/ip";
 
-export async function addTarget(newtId: string, target: SubnetProxyTarget) {
+export async function addTargets(newtId: string, targets: SubnetProxyTarget[]) {
     await sendToClient(newtId, {
         type: `newt/wg/target/add`,
-        data: target
+        data: targets
     });
 }
 
-export async function removeTarget(newtId: string, target: SubnetProxyTarget) {
+export async function removeTargets(
+    newtId: string,
+    targets: SubnetProxyTarget[]
+) {
     await sendToClient(newtId, {
         type: `newt/wg/target/remove`,
-        data: target
+        data: targets
     });
 }
 
-export async function updateTarget(
+export async function updateTargets(
     newtId: string,
-    oldTarget: SubnetProxyTarget,
-    newTarget: SubnetProxyTarget
+    targets: {
+        oldTargets: SubnetProxyTarget[],
+        newTargets: SubnetProxyTarget[]
+    }
 ) {
     await sendToClient(newtId, {
         type: `newt/wg/target/update`,
-        data: {
-            oldTarget,
-            newTarget
-        }
+        data: targets
     });
 }
