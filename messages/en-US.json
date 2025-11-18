@@ -1421,6 +1421,9 @@
         "and": "and",
         "privacyPolicy": "privacy policy"
     },
+    "signUpMarketing": {
+        "keepMeInTheLoop": "Keep me in the loop with news, updates, and new features by email."
+    },
     "siteRequired": "Site is required.",
     "olmTunnel": "Olm Tunnel",
     "olmTunnelDescription": "Use Olm for client connectivity",
