@@ -14,7 +14,9 @@ import {
     Transaction,
     userOrgs,
     userResources,
-    users
+    users,
+    idp,
+    idpOrg
 } from "@server/db";
 import { resources, targets, sites } from "@server/db";
 import { eq, and, asc, or, ne, count, isNotNull } from "drizzle-orm";
@@ -208,6 +210,16 @@ export async function updateProxyResources(
                 );
                 resource = existingResource;
             } else {
+                // Lookup IDP ID if auto-login-idp is specified
+                let skipToIdpId: number | null = null;
+                if (resourceData.auth?.["auto-login-idp"]) {
+                    skipToIdpId = await getIdpIdByName(
+                        orgId,
+                        resourceData.auth["auto-login-idp"],
+                        trx
+                    );
+                }
+
                 // Update existing resource
                 [resource] = await trx
                     .update(resources)
@@ -221,6 +233,7 @@ export async function updateProxyResources(
                         domainId: domain ? domain.domainId : null,
                         enabled: resourceEnabled,
                         sso: resourceData.auth?.["sso-enabled"] || false,
+                        skipToIdpId: skipToIdpId,
                         ssl: resourceSsl,
                         setHostHeader: resourceData["host-header"] || null,
                         tlsServerName: resourceData["tls-server-name"] || null,
@@ -595,6 +608,16 @@ export async function updateProxyResources(
                 );
             }
 
+            // Lookup IDP ID if auto-login-idp is specified
+            let skipToIdpId: number | null = null;
+            if (resourceData.auth?.["auto-login-idp"]) {
+                skipToIdpId = await getIdpIdByName(
+                    orgId,
+                    resourceData.auth["auto-login-idp"],
+                    trx
+                );
+            }
+
             // Create new resource
             const [newResource] = await trx
                 .insert(resources)
@@ -610,6 +633,7 @@ export async function updateProxyResources(
                     domainId: domain ? domain.domainId : null,
                     enabled: resourceEnabled,
                     sso: resourceData.auth?.["sso-enabled"] || false,
+                    skipToIdpId: skipToIdpId,
                     setHostHeader: resourceData["host-header"] || null,
                     tlsServerName: resourceData["tls-server-name"] || null,
                     ssl: resourceSsl,
@@ -1083,4 +1107,23 @@ async function getDomainId(
         subdomain: subdomain,
         domainId: domainSelection.domainId
     };
+}
+
+async function getIdpIdByName(
+    orgId: string,
+    idpName: string,
+    trx: Transaction
+): Promise<number | null> {
+    const [idpResult] = await trx
+        .select({ idpId: idp.idpId })
+        .from(idp)
+        .innerJoin(idpOrg, eq(idp.idpId, idpOrg.idpId))
+        .where(and(eq(idp.name, idpName), eq(idpOrg.orgId, orgId)))
+        .limit(1);
+
+    if (!idpResult) {
+        throw new Error(`IDP not found: ${idpName} in org ${orgId}`);
+    }
+
+    return idpResult.idpId;
 }
