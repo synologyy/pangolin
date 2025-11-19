@@ -37,13 +37,7 @@ import { ListSitesResponse } from "@server/routers/site";
 import { useTranslations } from "next-intl";
 
 const GeneralFormSchema = z.object({
-    name: z.string().nonempty("Name is required"),
-    siteIds: z.array(
-        z.object({
-            id: z.string(),
-            text: z.string()
-        })
-    )
+    name: z.string().nonempty("Name is required")
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -54,15 +48,11 @@ export default function GeneralPage() {
     const api = createApiClient(useEnvContext());
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const [sites, setSites] = useState<Tag[]>([]);
-    const [clientSites, setClientSites] = useState<Tag[]>([]);
-    const [activeSitesTagIndex, setActiveSitesTagIndex] = useState<number | null>(null);
 
     const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
-            name: client?.name,
-            siteIds: []
+            name: client?.name
         },
         mode: "onChange"
     });
@@ -75,23 +65,6 @@ export default function GeneralPage() {
                 const res = await api.get<AxiosResponse<ListSitesResponse>>(
                     `/org/${client?.orgId}/sites/`
                 );
-
-                const availableSites = res.data.data.sites
-                    .filter((s) => s.type === "newt" && s.subnet)
-                    .map((site) => ({
-                        id: site.siteId.toString(),
-                        text: site.name
-                    }));
-
-                setSites(availableSites);
-
-                // Filter sites to only include those assigned to the client
-                const assignedSites = availableSites.filter((site) =>
-                    client?.siteIds?.includes(parseInt(site.id))
-                );
-                setClientSites(assignedSites);
-                // Set the default values for the form
-                form.setValue("siteIds", assignedSites);
             } catch (e) {
                 toast({
                     variant: "destructive",
@@ -114,8 +87,7 @@ export default function GeneralPage() {
 
         try {
             await api.post(`/client/${client?.clientId}`, {
-                name: data.name,
-                siteIds: data.siteIds.map(site => parseInt(site.id))
+                name: data.name
             });
 
             updateClient({ name: data.name });
@@ -130,10 +102,7 @@ export default function GeneralPage() {
             toast({
                 variant: "destructive",
                 title: t("clientUpdateFailed"),
-                description: formatAxiosError(
-                    e,
-                    t("clientUpdateError")
-                )
+                description: formatAxiosError(e, t("clientUpdateError"))
             });
         } finally {
             setLoading(false);

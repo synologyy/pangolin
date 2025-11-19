@@ -1,4 +1,4 @@
-import { clients, clientSites, db, olms, orgs, roleClients, roles, userClients, userOrgs, Transaction } from "@server/db";
+import { clients, clientSitesAssociationsCache, db, olms, orgs, roleClients, roles, userClients, userOrgs, Transaction } from "@server/db";
 import { eq, and, notInArray } from "drizzle-orm";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { getNextAvailableClientSubnet } from "@server/lib/ip";
@@ -228,8 +228,8 @@ async function cleanupOrphanedClients(
     // Delete client-site associations first, then delete the clients
     for (const client of clientsToDelete) {
         await trx
-            .delete(clientSites)
-            .where(eq(clientSites.clientId, client.clientId));
+            .delete(clientSitesAssociationsCache)
+            .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
     }
 
     if (clientsToDelete.length > 0) {

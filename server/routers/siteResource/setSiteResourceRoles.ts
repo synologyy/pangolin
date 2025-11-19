@@ -9,7 +9,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, and, ne, inArray } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
-import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
 
 const setSiteResourceRolesBodySchema = z
     .object({
@@ -141,16 +141,13 @@ export async function setSiteResourceRoles(
                 );
             }
 
-            await Promise.all(
-                roleIds.map((roleId) =>
-                    trx
-                        .insert(roleSiteResources)
-                        .values({ roleId, siteResourceId })
-                        .returning()
-                )
-            );
+            if (roleIds.length > 0) {
+                await trx
+                    .insert(roleSiteResources)
+                    .values(roleIds.map((roleId) => ({ roleId, siteResourceId })));
+            }
 
-            await rebuildSiteClientAssociations(siteResource, trx);
+            await rebuildClientAssociations(siteResource, trx);
         });
 
         return response(res, {

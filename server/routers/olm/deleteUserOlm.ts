@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { db } from "@server/db";
-import { olms, clients, clientSites } from "@server/db";
+import { olms, clients, clientSitesAssociationsCache } from "@server/db";
 import { eq } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -57,8 +57,8 @@ export async function deleteUserOlm(
             // Delete client-site associations for each associated client
             for (const client of associatedClients) {
                 await trx
-                    .delete(clientSites)
-                    .where(eq(clientSites.clientId, client.clientId));
+                    .delete(clientSitesAssociationsCache)
+                    .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
             }
 
             // Delete all associated clients

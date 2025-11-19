@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { db } from "@server/db";
-import { clients, clientSites } from "@server/db";
+import { clients, clientSitesAssociationsCache } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -29,9 +29,9 @@ async function query(clientId: number) {
 
     // Get the siteIds associated with this client
     const sites = await db
-        .select({ siteId: clientSites.siteId })
-        .from(clientSites)
-        .where(eq(clientSites.clientId, clientId));
+        .select({ siteId: clientSitesAssociationsCache.siteId })
+        .from(clientSitesAssociationsCache)
+        .where(eq(clientSitesAssociationsCache.clientId, clientId));
 
     // Add the siteIds to the client object
     return {

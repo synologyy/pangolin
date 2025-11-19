@@ -12,7 +12,7 @@ import {
     users
 } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
-import { clients, clientSites, exitNodes, Olm, olms, sites } from "@server/db";
+import { clients, clientSitesAssociationsCache, exitNodes, Olm, olms, sites } from "@server/db";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
@@ -159,19 +159,19 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         // set isRelay to false for all of the client's sites to reset the connection metadata
         await db
-            .update(clientSites)
+            .update(clientSitesAssociationsCache)
             .set({
                 isRelayed: relay == true
             })
-            .where(eq(clientSites.clientId, client.clientId));
+            .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
     }
 
     // Get all sites data
     const sitesData = await db
         .select()
         .from(sites)
-        .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
-        .where(eq(clientSites.clientId, client.clientId));
+        .innerJoin(clientSitesAssociationsCache, eq(sites.siteId, clientSitesAssociationsCache.siteId))
+        .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
 
     // Prepare an array to store site configurations
     const siteConfigurations = [];
@@ -225,11 +225,11 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         const [clientSite] = await db
             .select()
-            .from(clientSites)
+            .from(clientSitesAssociationsCache)
             .where(
                 and(
-                    eq(clientSites.clientId, client.clientId),
-                    eq(clientSites.siteId, site.siteId)
+                    eq(clientSitesAssociationsCache.clientId, client.clientId),
+                    eq(clientSitesAssociationsCache.siteId, site.siteId)
                 )
             )
             .limit(1);

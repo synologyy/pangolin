@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { Client, db, exitNodes, olms, sites } from "@server/db";
-import { clients, clientSites } from "@server/db";
+import { clients, clientSitesAssociationsCache } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";

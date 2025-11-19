@@ -1,9 +1,9 @@
-import { clientSites, db, SiteResource, Transaction } from "@server/db";
+import { clientSitesAssociationsCache, db, SiteResource, Transaction } from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
 import z from "zod";
-import { getClientSiteResourceAccess } from "./rebuildSiteClientAssociations";
+import { getClientSiteResourceAccess } from "./rebuildClientAssociations";
 import logger from "@server/logger";
 
 interface IPRange {
@@ -338,41 +338,54 @@ export type SubnetProxyTarget = {
     }[];
 };
 
-export async function generateSubnetProxyTargets(
-    allSiteResources: SiteResource[],
-    trx: Transaction | typeof db = db
-): Promise<SubnetProxyTarget[]> {
+export function generateSingleSubnetProxyTargets(
+    siteResource: SiteResource,
+    clients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[]
+): SubnetProxyTarget[] {
     let targets: SubnetProxyTarget[] = [];
 
-    for (const siteResource of allSiteResources) {
-        const { mergedAllClients } =
-            await getClientSiteResourceAccess(siteResource, trx);
+    if (clients.length === 0) {
+        logger.debug(
+            `No clients have access to site resource ${siteResource.siteResourceId}, skipping target generation.`
+        );
+        return [];
+    }
 
-        if (mergedAllClients.length === 0) {
-            logger.debug(`No clients have access to site resource ${siteResource.siteResourceId}, skipping target generation.`);
+    for (const clientSite of clients) {
+        if (!clientSite.subnet) {
+            logger.debug(
+                `Client ${clientSite.clientId} has no subnet, skipping for site resource ${siteResource.siteResourceId}.`
+            );
             continue;
         }
 
-        for (const clientSite of mergedAllClients) {
-            const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
+        const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
 
-            if (siteResource.mode == "host") {
-                // check if this is a valid ip
-                const ipSchema = z.union([z.ipv4(), z.ipv6()]);
-                if (ipSchema.safeParse(siteResource.destination).success) {
-                    targets.push({
-                        sourcePrefix: clientPrefix,
-                        destPrefix: `${siteResource.destination}/32`
-                    });
-                }
-            } else if (siteResource.mode == "cidr") {
+        if (siteResource.mode == "host") {
+            // check if this is a valid ip
+            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+            if (ipSchema.safeParse(siteResource.destination).success) {
                 targets.push({
                     sourcePrefix: clientPrefix,
-                    destPrefix: siteResource.destination
+                    destPrefix: `${siteResource.destination}/32`
                 });
             }
+        } else if (siteResource.mode == "cidr") {
+            targets.push({
+                sourcePrefix: clientPrefix,
+                destPrefix: siteResource.destination
+            });
         }
     }
+
+    // print a nice representation of the targets
+    logger.debug(
+        `Generated subnet proxy targets for: ${JSON.stringify(targets, null, 2)}`
+    );
 
     return targets;
 }

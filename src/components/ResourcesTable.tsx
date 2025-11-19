@@ -19,7 +19,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
     DropdownMenuLabel,
-    DropdownMenuSeparator,      
+    DropdownMenuSeparator,
     DropdownMenuCheckboxItem
 } from "@app/components/ui/dropdown-menu";
 import { Button } from "@app/components/ui/button";
@@ -164,13 +164,14 @@ export type InternalResourceRow = {
     orgId: string;
     siteName: string;
     siteAddress: string | null;
-    mode: "host" | "cidr" | "port";
-    protocol: string | null;
-    proxyPort: number | null;
+    // mode: "host" | "cidr" | "port";
+    mode: "host" | "cidr";
+    // protocol: string | null;
+    // proxyPort: number | null;
     siteId: number;
     siteNiceId: string;
     destination: string;
-    destinationPort: number | null;
+    // destinationPort: number | null;
     alias: string | null;
 };
 
@@ -515,10 +516,14 @@ export default function ResourcesTable({
                     >
                         <StatusIcon status={overallStatus} />
                         <span className="text-sm">
-                            {overallStatus === "online" && t("resourcesTableHealthy")}
-                            {overallStatus === "degraded" && t("resourcesTableDegraded")}
-                            {overallStatus === "offline" && t("resourcesTableOffline")}
-                            {overallStatus === "unknown" && t("resourcesTableUnknown")}
+                            {overallStatus === "online" &&
+                                t("resourcesTableHealthy")}
+                            {overallStatus === "degraded" &&
+                                t("resourcesTableDegraded")}
+                            {overallStatus === "offline" &&
+                                t("resourcesTableOffline")}
+                            {overallStatus === "unknown" &&
+                                t("resourcesTableUnknown")}
                         </span>
                         <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -770,7 +775,11 @@ export default function ResourcesTable({
                     <div className="flex flex-col items-end gap-1 p-3">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                >
                                     <Columns className="h-4 w-4" />
                                     <span className="sr-only">
                                         {t("columns") || "Columns"}
@@ -786,10 +795,14 @@ export default function ResourcesTable({
                                     .getAllColumns()
                                     .filter((column) => column.getCanHide())
                                     .map((column) => {
-                                        const columnDef = column.columnDef as any;
-                                        const friendlyName = columnDef.friendlyName;
-                                        const displayName = friendlyName ||
-                                            (typeof columnDef.header === "string"
+                                        const columnDef =
+                                            column.columnDef as any;
+                                        const friendlyName =
+                                            columnDef.friendlyName;
+                                        const displayName =
+                                            friendlyName ||
+                                            (typeof columnDef.header ===
+                                            "string"
                                                 ? columnDef.header
                                                 : column.id);
                                         return (
@@ -798,9 +811,13 @@ export default function ResourcesTable({
                                                 className="capitalize"
                                                 checked={column.getIsVisible()}
                                                 onCheckedChange={(value) =>
-                                                    column.toggleVisibility(!!value)
+                                                    column.toggleVisibility(
+                                                        !!value
+                                                    )
                                                 }
-                                                onSelect={(e) => e.preventDefault()}
+                                                onSelect={(e) =>
+                                                    e.preventDefault()
+                                                }
                                             >
                                                 {displayName}
                                             </DropdownMenuCheckboxItem>
@@ -925,23 +942,24 @@ export default function ResourcesTable({
                 let displayText: string;
                 let copyText: string;
 
-                if (
-                    resourceRow.mode === "port" &&
-                    resourceRow.protocol &&
-                    resourceRow.proxyPort &&
-                    resourceRow.destinationPort
-                ) {
-                    const protocol = resourceRow.protocol.toUpperCase();
-                    // For port mode: site part uses alias or site address, destination part uses destination IP
-                    // If site address has CIDR notation, extract just the IP address
-                    let siteAddress = resourceRow.siteAddress;
-                    if (siteAddress && siteAddress.includes("/")) {
-                        siteAddress = siteAddress.split("/")[0];
-                    }
-                    const siteDisplay = resourceRow.alias || siteAddress;
-                    displayText = `${protocol} ${siteDisplay}:${resourceRow.proxyPort} -> ${resourceRow.destination}:${resourceRow.destinationPort}`;
-                    copyText = `${siteDisplay}:${resourceRow.proxyPort}`;
-                } else if (resourceRow.mode === "host") {
+                // if (
+                //     resourceRow.mode === "port" &&
+                //     // resourceRow.protocol &&
+                //     // resourceRow.proxyPort &&
+                //     // resourceRow.destinationPort
+                // ) {
+                //     // const protocol = resourceRow.protocol.toUpperCase();
+                //     // For port mode: site part uses alias or site address, destination part uses destination IP
+                //     // If site address has CIDR notation, extract just the IP address
+                //     let siteAddress = resourceRow.siteAddress;
+                //     if (siteAddress && siteAddress.includes("/")) {
+                //         siteAddress = siteAddress.split("/")[0];
+                //     }
+                //     const siteDisplay = resourceRow.alias || siteAddress;
+                //     // displayText = `${protocol} ${siteDisplay}:${resourceRow.proxyPort} -> ${resourceRow.destination}:${resourceRow.destinationPort}`;
+                //     // copyText = `${siteDisplay}:${resourceRow.proxyPort}`;
+                // } else if (resourceRow.mode === "host") {
+                if (resourceRow.mode === "host") {
                     // For host mode: use alias if available, otherwise use destination
                     const destinationDisplay =
                         resourceRow.alias || resourceRow.destination;
@@ -981,7 +999,11 @@ export default function ResourcesTable({
                     <div className="flex flex-col items-end gap-1 p-3">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-7 w-7 p-0">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 w-7 p-0"
+                                >
                                     <Columns className="h-4 w-4" />
                                     <span className="sr-only">
                                         {t("columns") || "Columns"}
@@ -997,10 +1019,14 @@ export default function ResourcesTable({
                                     .getAllColumns()
                                     .filter((column) => column.getCanHide())
                                     .map((column) => {
-                                        const columnDef = column.columnDef as any;
-                                        const friendlyName = columnDef.friendlyName;
-                                        const displayName = friendlyName ||
-                                            (typeof columnDef.header === "string"
+                                        const columnDef =
+                                            column.columnDef as any;
+                                        const friendlyName =
+                                            columnDef.friendlyName;
+                                        const displayName =
+                                            friendlyName ||
+                                            (typeof columnDef.header ===
+                                            "string"
                                                 ? columnDef.header
                                                 : column.id);
                                         return (
@@ -1009,9 +1035,13 @@ export default function ResourcesTable({
                                                 className="capitalize"
                                                 checked={column.getIsVisible()}
                                                 onCheckedChange={(value) =>
-                                                    column.toggleVisibility(!!value)
+                                                    column.toggleVisibility(
+                                                        !!value
+                                                    )
                                                 }
-                                                onSelect={(e) => e.preventDefault()}
+                                                onSelect={(e) =>
+                                                    e.preventDefault()
+                                                }
                                             >
                                                 {displayName}
                                             </DropdownMenuCheckboxItem>
@@ -1230,99 +1260,111 @@ export default function ResourcesTable({
                             <TabsContent value="proxy">
                                 <div className="overflow-x-auto">
                                     <Table>
-                                    <TableHeader>
-                                        {proxyTable
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <TableRow key={headerGroup.id}>
-                                                    {headerGroup.headers
-                                                        .filter((header) =>
-                                                            header.column.getIsVisible()
-                                                        )
-                                                        .map((header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                                className={`whitespace-nowrap ${
-                                                                    header.column.id ===
-                                                                    "actions"
-                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                        : header.column.id ===
-                                                                          "name"
-                                                                        ? "md:sticky md:left-0 z-10 bg-card"
-                                                                        : ""
-                                                                }`}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
-                                                            </TableHead>
-                                                        ))}
-                                                </TableRow>
-                                            ))}
-                                    </TableHeader>
-                                    <TableBody>
-                                        {proxyTable.getRowModel().rows
-                                            ?.length ? (
-                                            proxyTable
-                                                .getRowModel()
-                                                .rows.map((row) => (
+                                        <TableHeader>
+                                            {proxyTable
+                                                .getHeaderGroups()
+                                                .map((headerGroup) => (
                                                     <TableRow
-                                                        key={row.id}
-                                                        data-state={
-                                                            row.getIsSelected() &&
-                                                            "selected"
-                                                        }
+                                                        key={headerGroup.id}
                                                     >
-                                                        {row
-                                                            .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <TableCell
+                                                        {headerGroup.headers
+                                                            .filter((header) =>
+                                                                header.column.getIsVisible()
+                                                            )
+                                                            .map((header) => (
+                                                                <TableHead
                                                                     key={
-                                                                        cell.id
+                                                                        header.id
                                                                     }
                                                                     className={`whitespace-nowrap ${
-                                                                        cell.column.id ===
+                                                                        header
+                                                                            .column
+                                                                            .id ===
                                                                         "actions"
                                                                             ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                            : cell.column.id ===
-                                                                              "name"
-                                                                            ? "md:sticky md:left-0 z-10 bg-card"
-                                                                            : ""
+                                                                            : header
+                                                                                    .column
+                                                                                    .id ===
+                                                                                "name"
+                                                                              ? "md:sticky md:left-0 z-10 bg-card"
+                                                                              : ""
                                                                     }`}
                                                                 >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </TableCell>
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </TableHead>
                                                             ))}
                                                     </TableRow>
-                                                ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={
-                                                        proxyColumns.length
-                                                    }
-                                                    className="h-24 text-center"
-                                                >
-                                                    {t(
-                                                        "resourcesTableNoProxyResourcesFound"
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                                ))}
+                                        </TableHeader>
+                                        <TableBody>
+                                            {proxyTable.getRowModel().rows
+                                                ?.length ? (
+                                                proxyTable
+                                                    .getRowModel()
+                                                    .rows.map((row) => (
+                                                        <TableRow
+                                                            key={row.id}
+                                                            data-state={
+                                                                row.getIsSelected() &&
+                                                                "selected"
+                                                            }
+                                                        >
+                                                            {row
+                                                                .getVisibleCells()
+                                                                .map((cell) => (
+                                                                    <TableCell
+                                                                        key={
+                                                                            cell.id
+                                                                        }
+                                                                        className={`whitespace-nowrap ${
+                                                                            cell
+                                                                                .column
+                                                                                .id ===
+                                                                            "actions"
+                                                                                ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                                : cell
+                                                                                        .column
+                                                                                        .id ===
+                                                                                    "name"
+                                                                                  ? "md:sticky md:left-0 z-10 bg-card"
+                                                                                  : ""
+                                                                        }`}
+                                                                    >
+                                                                        {flexRender(
+                                                                            cell
+                                                                                .column
+                                                                                .columnDef
+                                                                                .cell,
+                                                                            cell.getContext()
+                                                                        )}
+                                                                    </TableCell>
+                                                                ))}
+                                                        </TableRow>
+                                                    ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={
+                                                            proxyColumns.length
+                                                        }
+                                                        className="h-24 text-center"
+                                                    >
+                                                        {t(
+                                                            "resourcesTableNoProxyResourcesFound"
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                                 <div className="mt-4">
                                     <DataTablePagination
@@ -1336,99 +1378,111 @@ export default function ResourcesTable({
                             <TabsContent value="internal">
                                 <div className="overflow-x-auto">
                                     <Table>
-                                    <TableHeader>
-                                        {internalTable
-                                            .getHeaderGroups()
-                                            .map((headerGroup) => (
-                                                <TableRow key={headerGroup.id}>
-                                                    {headerGroup.headers
-                                                        .filter((header) =>
-                                                            header.column.getIsVisible()
-                                                        )
-                                                        .map((header) => (
-                                                            <TableHead
-                                                                key={header.id}
-                                                                className={`whitespace-nowrap ${
-                                                                    header.column.id ===
-                                                                    "actions"
-                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                        : header.column.id ===
-                                                                          "name"
-                                                                        ? "md:sticky md:left-0 z-10 bg-card"
-                                                                        : ""
-                                                                }`}
-                                                            >
-                                                                {header.isPlaceholder
-                                                                    ? null
-                                                                    : flexRender(
-                                                                          header
-                                                                              .column
-                                                                              .columnDef
-                                                                              .header,
-                                                                          header.getContext()
-                                                                      )}
-                                                            </TableHead>
-                                                        ))}
-                                                </TableRow>
-                                            ))}
-                                    </TableHeader>
-                                    <TableBody>
-                                        {internalTable.getRowModel().rows
-                                            ?.length ? (
-                                            internalTable
-                                                .getRowModel()
-                                                .rows.map((row) => (
+                                        <TableHeader>
+                                            {internalTable
+                                                .getHeaderGroups()
+                                                .map((headerGroup) => (
                                                     <TableRow
-                                                        key={row.id}
-                                                        data-state={
-                                                            row.getIsSelected() &&
-                                                            "selected"
-                                                        }
+                                                        key={headerGroup.id}
                                                     >
-                                                        {row
-                                                            .getVisibleCells()
-                                                            .map((cell) => (
-                                                                <TableCell
+                                                        {headerGroup.headers
+                                                            .filter((header) =>
+                                                                header.column.getIsVisible()
+                                                            )
+                                                            .map((header) => (
+                                                                <TableHead
                                                                     key={
-                                                                        cell.id
+                                                                        header.id
                                                                     }
                                                                     className={`whitespace-nowrap ${
-                                                                        cell.column.id ===
+                                                                        header
+                                                                            .column
+                                                                            .id ===
                                                                         "actions"
                                                                             ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                            : cell.column.id ===
-                                                                              "name"
-                                                                            ? "md:sticky md:left-0 z-10 bg-card"
-                                                                            : ""
+                                                                            : header
+                                                                                    .column
+                                                                                    .id ===
+                                                                                "name"
+                                                                              ? "md:sticky md:left-0 z-10 bg-card"
+                                                                              : ""
                                                                     }`}
                                                                 >
-                                                                    {flexRender(
-                                                                        cell
-                                                                            .column
-                                                                            .columnDef
-                                                                            .cell,
-                                                                        cell.getContext()
-                                                                    )}
-                                                                </TableCell>
+                                                                    {header.isPlaceholder
+                                                                        ? null
+                                                                        : flexRender(
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
+                                                                </TableHead>
                                                             ))}
                                                     </TableRow>
-                                                ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell
-                                                    colSpan={
-                                                        internalColumns.length
-                                                    }
-                                                    className="h-24 text-center"
-                                                >
-                                                    {t(
-                                                        "resourcesTableNoInternalResourcesFound"
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                                ))}
+                                        </TableHeader>
+                                        <TableBody>
+                                            {internalTable.getRowModel().rows
+                                                ?.length ? (
+                                                internalTable
+                                                    .getRowModel()
+                                                    .rows.map((row) => (
+                                                        <TableRow
+                                                            key={row.id}
+                                                            data-state={
+                                                                row.getIsSelected() &&
+                                                                "selected"
+                                                            }
+                                                        >
+                                                            {row
+                                                                .getVisibleCells()
+                                                                .map((cell) => (
+                                                                    <TableCell
+                                                                        key={
+                                                                            cell.id
+                                                                        }
+                                                                        className={`whitespace-nowrap ${
+                                                                            cell
+                                                                                .column
+                                                                                .id ===
+                                                                            "actions"
+                                                                                ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                                : cell
+                                                                                        .column
+                                                                                        .id ===
+                                                                                    "name"
+                                                                                  ? "md:sticky md:left-0 z-10 bg-card"
+                                                                                  : ""
+                                                                        }`}
+                                                                    >
+                                                                        {flexRender(
+                                                                            cell
+                                                                                .column
+                                                                                .columnDef
+                                                                                .cell,
+                                                                            cell.getContext()
+                                                                        )}
+                                                                    </TableCell>
+                                                                ))}
+                                                        </TableRow>
+                                                    ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={
+                                                            internalColumns.length
+                                                        }
+                                                        className="h-24 text-center"
+                                                    >
+                                                        {t(
+                                                            "resourcesTableNoInternalResourcesFound"
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
                                 </div>
                                 <div className="mt-4">
                                     <DataTablePagination

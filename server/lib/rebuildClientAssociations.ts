@@ -2,7 +2,7 @@ import {
     Client,
     clients,
     clientSiteResources,
-    clientSites,
+    clientSitesAssociationsCache,
     db,
     exitNodes,
     newts,
@@ -29,7 +29,15 @@ import {
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
-import { generateRemoteSubnetsStr } from "@server/lib/ip";
+import {
+    generateRemoteSubnetsStr,
+    generateSingleSubnetProxyTargets,
+    SubnetProxyTarget
+} from "@server/lib/ip";
+import {
+    addTargets as addSubnetProxyTargets,
+    removeTargets as removeSubnetProxyTargets
+} from "@server/routers/client/targets";
 
 export async function getClientSiteResourceAccess(
     siteResource: SiteResource,
@@ -117,21 +125,29 @@ export async function getClientSiteResourceAccess(
     };
 }
 
-export async function rebuildSiteClientAssociations(
+export async function rebuildClientAssociations(
     siteResource: SiteResource,
     trx: Transaction | typeof db = db
-): Promise<void> {
+): Promise<{
+    mergedAllClients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[];
+}> {
     const siteId = siteResource.siteId;
 
     const { site, mergedAllClients, mergedAllClientIds } =
         await getClientSiteResourceAccess(siteResource, trx);
 
+    /////////// process the client-site associations ///////////
+
     const existingClientSites = await trx
         .select({
-            clientId: clientSites.clientId
+            clientId: clientSitesAssociationsCache.clientId
         })
-        .from(clientSites)
-        .where(eq(clientSites.siteId, siteResource.siteId));
+        .from(clientSitesAssociationsCache)
+        .where(eq(clientSitesAssociationsCache.siteId, siteResource.siteId));
 
     const existingClientSiteIds = existingClientSites.map(
         (row) => row.clientId
@@ -153,15 +169,16 @@ export async function rebuildSiteClientAssociations(
         (clientId) => !existingClientSiteIds.includes(clientId)
     );
 
-    const clientSitesToInsert = mergedAllClientIds
-        .filter((clientId) => !existingClientSiteIds.includes(clientId))
-        .map((clientId) => ({
-            clientId,
-            siteId
-        }));
+    const clientSitesToInsert = clientSitesToAdd.map((clientId) => ({
+        clientId,
+        siteId
+    }));
 
     if (clientSitesToInsert.length > 0) {
-        await trx.insert(clientSites).values(clientSitesToInsert);
+        await trx
+            .insert(clientSitesAssociationsCache)
+            .values(clientSitesToInsert)
+            .returning();
     }
 
     // Now remove any client-site associations that should no longer exist
@@ -171,11 +188,68 @@ export async function rebuildSiteClientAssociations(
 
     if (clientSitesToRemove.length > 0) {
         await trx
-            .delete(clientSites)
+            .delete(clientSitesAssociationsCache)
             .where(
                 and(
-                    eq(clientSites.siteId, siteId),
-                    inArray(clientSites.clientId, clientSitesToRemove)
+                    eq(clientSitesAssociationsCache.siteId, siteId),
+                    inArray(
+                        clientSitesAssociationsCache.clientId,
+                        clientSitesToRemove
+                    )
+                )
+            );
+    }
+
+    /////////// process the client-siteResource associations ///////////
+
+    const existingClientSiteResources = await trx
+        .select({
+            clientId: clientSiteResources.clientId
+        })
+        .from(clientSiteResources)
+        .where(
+            eq(clientSiteResources.siteResourceId, siteResource.siteResourceId)
+        );
+
+    const existingClientSiteResourceIds = existingClientSiteResources.map(
+        (row) => row.clientId
+    );
+
+    const clientSiteResourcesToAdd = mergedAllClientIds.filter(
+        (clientId) => !existingClientSiteResourceIds.includes(clientId)
+    );
+
+    const clientSiteResourcesToInsert = clientSiteResourcesToAdd.map(
+        (clientId) => ({
+            clientId,
+            siteResourceId: siteResource.siteResourceId
+        })
+    );
+
+    if (clientSiteResourcesToInsert.length > 0) {
+        await trx
+            .insert(clientSiteResources)
+            .values(clientSiteResourcesToInsert)
+            .returning();
+    }
+
+    const clientSiteResourcesToRemove = existingClientSiteResourceIds.filter(
+        (clientId) => !mergedAllClientIds.includes(clientId)
+    );
+
+    if (clientSiteResourcesToRemove.length > 0) {
+        await trx
+            .delete(clientSiteResources)
+            .where(
+                and(
+                    eq(
+                        clientSiteResources.siteResourceId,
+                        siteResource.siteResourceId
+                    ),
+                    inArray(
+                        clientSiteResources.clientId,
+                        clientSiteResourcesToRemove
+                    )
                 )
             );
     }
@@ -190,6 +264,20 @@ export async function rebuildSiteClientAssociations(
         clientSitesToRemove,
         trx
     );
+
+    // Handle subnet proxy target updates for the resource associations
+    await handleSubnetProxyTargetUpdates(
+        siteResource,
+        mergedAllClients,
+        existingClients,
+        clientSiteResourcesToAdd,
+        clientSiteResourcesToRemove,
+        trx
+    );
+
+    return {
+        mergedAllClients
+    }
 }
 
 async function handleMessagesForSiteClients(
@@ -401,9 +489,12 @@ export async function updateClientSiteDestinations(
     const sitesData = await trx
         .select()
         .from(sites)
-        .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+        .innerJoin(
+            clientSitesAssociationsCache,
+            eq(sites.siteId, clientSitesAssociationsCache.siteId)
+        )
         .leftJoin(exitNodes, eq(sites.exitNodeId, exitNodes.exitNodeId))
-        .where(eq(clientSites.clientId, client.clientId));
+        .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
 
     for (const site of sitesData) {
         if (!site.sites.subnet) {
@@ -411,7 +502,7 @@ export async function updateClientSiteDestinations(
             continue;
         }
 
-        if (!site.clientSites.endpoint) {
+        if (!site.clientSitesAssociationsCache.endpoint) {
             logger.warn(`Site ${site.sites.siteId} has no endpoint, skipping`); // if this is a new association the endpoint is not set yet // TODO: FIX THIS
             continue;
         }
@@ -427,9 +518,9 @@ export async function updateClientSiteDestinations(
                 exitNodeId: site.exitNodes?.exitNodeId || 0,
                 type: site.exitNodes?.type || "",
                 name: site.exitNodes?.name || "",
-                sourceIp: site.clientSites.endpoint.split(":")[0] || "",
+                sourceIp: site.clientSitesAssociationsCache.endpoint.split(":")[0] || "",
                 sourcePort:
-                    parseInt(site.clientSites.endpoint.split(":")[1]) || 0,
+                    parseInt(site.clientSitesAssociationsCache.endpoint.split(":")[1]) || 0,
                 destinations: [
                     {
                         destinationIP: site.sites.subnet.split("/")[0],
@@ -479,5 +570,78 @@ export async function updateClientSiteDestinations(
             method: "POST",
             data: payload
         });
+    }
+}
+
+async function handleSubnetProxyTargetUpdates(
+    siteResource: SiteResource,
+    allClients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[],
+    existingClients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[],
+    clientSiteResourcesToAdd: number[],
+    clientSiteResourcesToRemove: number[],
+    trx: Transaction | typeof db = db
+): Promise<void> {
+    // Get the newt for this site
+    const [newt] = await trx
+        .select()
+        .from(newts)
+        .where(eq(newts.siteId, siteResource.siteId))
+        .limit(1);
+
+    if (!newt) {
+        logger.warn(
+            `Newt not found for site ${siteResource.siteId}, skipping subnet proxy target updates`
+        );
+        return;
+    }
+
+    // Generate targets for added associations
+    if (clientSiteResourcesToAdd.length > 0) {
+        const addedClients = allClients.filter((client) =>
+            clientSiteResourcesToAdd.includes(client.clientId)
+        );
+
+        if (addedClients.length > 0) {
+            const targetsToAdd = generateSingleSubnetProxyTargets(
+                siteResource,
+                addedClients
+            );
+
+            if (targetsToAdd.length > 0) {
+                logger.info(
+                    `Adding ${targetsToAdd.length} subnet proxy targets for siteResource ${siteResource.siteResourceId}`
+                );
+                await addSubnetProxyTargets(newt.newtId, targetsToAdd);
+            }
+        }
+    }
+
+    // Generate targets for removed associations
+    if (clientSiteResourcesToRemove.length > 0) {
+        const removedClients = existingClients.filter((client) =>
+            clientSiteResourcesToRemove.includes(client.clientId)
+        );
+
+        if (removedClients.length > 0) {
+            const targetsToRemove = generateSingleSubnetProxyTargets(
+                siteResource,
+                removedClients
+            );
+
+            if (targetsToRemove.length > 0) {
+                logger.info(
+                    `Removing ${targetsToRemove.length} subnet proxy targets for siteResource ${siteResource.siteResourceId}`
+                );
+                await removeSubnetProxyTargets(newt.newtId, targetsToRemove);
+            }
+        }
     }
 }

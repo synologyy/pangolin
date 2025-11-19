@@ -434,9 +434,9 @@ export async function getTraefikConfig(
                         routerMiddlewares.push(rewriteMiddlewareName);
                     }
 
-                    logger.debug(
-                        `Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`
-                    );
+                    // logger.debug(
+                    //     `Created path rewrite middleware ${rewriteMiddlewareName}: ${resource.pathMatchType}(${resource.path}) -> ${resource.rewritePathType}(${resource.rewritePath})`
+                    // );
                 } catch (error) {
                     logger.error(
                         `Failed to create path rewrite middleware for resource ${resource.resourceId}: ${error}`

@@ -654,7 +654,7 @@ export const clients = pgTable("clients", {
     maxConnections: integer("maxConnections")
 });
 
-export const clientSites = pgTable("clientSites", {
+export const clientSitesAssociationsCache = pgTable("clientSitesAssociationsCache", {
     clientId: integer("clientId")
         .notNull()
         .references(() => clients.clientId, { onDelete: "cascade" }),
@@ -663,6 +663,15 @@ export const clientSites = pgTable("clientSites", {
         .references(() => sites.siteId, { onDelete: "cascade" }),
     isRelayed: boolean("isRelayed").notNull().default(false),
     endpoint: varchar("endpoint")
+});
+
+export const clientSiteResourcesAssociationsCache = pgTable("clientSiteResourcesAssociationsCache", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
 });
 
 export const olms = pgTable("olms", {
@@ -847,7 +856,7 @@ export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
 export type Client = InferSelectModel<typeof clients>;
-export type ClientSite = InferSelectModel<typeof clientSites>;
+export type ClientSite = InferSelectModel<typeof clientSitesAssociationsCache>;
 export type Olm = InferSelectModel<typeof olms>;
 export type OlmSession = InferSelectModel<typeof olmSessions>;
 export type UserClient = InferSelectModel<typeof userClients>;

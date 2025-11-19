@@ -36,7 +36,6 @@ import { toast } from "@app/hooks/useToast";
 import { useTranslations } from "next-intl";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { Separator } from "@app/components/ui/separator";
 import { ListRolesResponse } from "@server/routers/role";
 import { ListUsersResponse } from "@server/routers/user";
 import { ListSiteResourceRolesResponse } from "@server/routers/siteResource/listSiteResourceRoles";
@@ -52,12 +51,13 @@ type InternalResourceData = {
     name: string;
     orgId: string;
     siteName: string;
-    mode: "host" | "cidr" | "port";
-    protocol: string | null;
-    proxyPort: number | null;
+    // mode: "host" | "cidr" | "port";
+    mode: "host" | "cidr";
+    // protocol: string | null;
+    // proxyPort: number | null;
     siteId: number;
     destination: string;
-    destinationPort?: number | null;
+    // destinationPort?: number | null;
     alias?: string | null;
 };
 
@@ -83,10 +83,10 @@ export default function EditInternalResourceDialog({
     const formSchema = z.object({
         name: z.string().min(1, t("editInternalResourceDialogNameRequired")).max(255, t("editInternalResourceDialogNameMaxLength")),
         mode: z.enum(["host", "cidr", "port"]),
-        protocol: z.enum(["tcp", "udp"]).nullish(),
-        proxyPort: z.int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
+        // protocol: z.enum(["tcp", "udp"]).nullish(),
+        // proxyPort: z.int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
         destination: z.string().min(1),
-        destinationPort: z.int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
+        // destinationPort: z.int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
         alias: z.string().nullish(),
         roles: z.array(
             z.object({
@@ -107,42 +107,42 @@ export default function EditInternalResourceDialog({
             })
         ).optional()
     })
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.protocol !== undefined && data.protocol !== null;
-            }
-            return true;
-        },
-        {
-            message: t("editInternalResourceDialogProtocol") + " is required for port mode",
-            path: ["protocol"]
-        }
-    )
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.proxyPort !== undefined && data.proxyPort !== null;
-            }
-            return true;
-        },
-        {
-            message: t("editInternalResourceDialogSitePort") + " is required for port mode",
-            path: ["proxyPort"]
-        }
-    )
-    .refine(
-        (data) => {
-            if (data.mode === "port") {
-                return data.destinationPort !== undefined && data.destinationPort !== null;
-            }
-            return true;
-        },
-        {
-            message: t("targetPort") + " is required for port mode",
-            path: ["destinationPort"]
-        }
-    );
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.protocol !== undefined && data.protocol !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         message: t("editInternalResourceDialogProtocol") + " is required for port mode",
+    //         path: ["protocol"]
+    //     }
+    // )
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.proxyPort !== undefined && data.proxyPort !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         message: t("editInternalResourceDialogSitePort") + " is required for port mode",
+    //         path: ["proxyPort"]
+    //     }
+    // )
+    // .refine(
+    //     (data) => {
+    //         if (data.mode === "port") {
+    //             return data.destinationPort !== undefined && data.destinationPort !== null;
+    //         }
+    //         return true;
+    //     },
+    //     {
+    //         message: t("targetPort") + " is required for port mode",
+    //         path: ["destinationPort"]
+    //     }
+    // );
 
     type FormData = z.infer<typeof formSchema>;
 
@@ -160,10 +160,10 @@ export default function EditInternalResourceDialog({
         defaultValues: {
             name: resource.name,
             mode: resource.mode || "host",
-            protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
-            proxyPort: resource.proxyPort ?? undefined,
+            // protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
+            // proxyPort: resource.proxyPort ?? undefined,
             destination: resource.destination || "",
-            destinationPort: resource.destinationPort ?? undefined,
+            // destinationPort: resource.destinationPort ?? undefined,
             alias: resource.alias ?? null,
             roles: [],
             users: [],
@@ -277,10 +277,10 @@ export default function EditInternalResourceDialog({
             form.reset({
                 name: resource.name,
                 mode: resource.mode || "host",
-                protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
-                proxyPort: resource.proxyPort ?? undefined,
+                // protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
+                // proxyPort: resource.proxyPort ?? undefined,
                 destination: resource.destination || "",
-                destinationPort: resource.destinationPort ?? undefined,
+                // destinationPort: resource.destinationPort ?? undefined,
                 alias: resource.alias ?? null,
                 roles: [],
                 users: [],
@@ -298,25 +298,28 @@ export default function EditInternalResourceDialog({
             await api.post(`/org/${orgId}/site/${resource.siteId}/resource/${resource.id}`, {
                 name: data.name,
                 mode: data.mode,
-                protocol: data.mode === "port" ? data.protocol : null,
-                proxyPort: data.mode === "port" ? data.proxyPort : null,
-                destinationPort: data.mode === "port" ? data.destinationPort : null,
+                // protocol: data.mode === "port" ? data.protocol : null,
+                // proxyPort: data.mode === "port" ? data.proxyPort : null,
+                // destinationPort: data.mode === "port" ? data.destinationPort : null,
                 destination: data.destination,
-                alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : null
+                alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : null,
+                roleIds: (data.roles || []).map((r) => parseInt(r.id)),
+                userIds: (data.users || []).map((u) => u.id),
+                clientIds: (data.clients || []).map((c) => parseInt(c.id))
             });
 
             // Update roles, users, and clients
-            await Promise.all([
-                api.post(`/site-resource/${resource.id}/roles`, {
-                    roleIds: (data.roles || []).map((r) => parseInt(r.id))
-                }),
-                api.post(`/site-resource/${resource.id}/users`, {
-                    userIds: (data.users || []).map((u) => u.id)
-                }),
-                api.post(`/site-resource/${resource.id}/clients`, {
-                    clientIds: (data.clients || []).map((c) => parseInt(c.id))
-                })
-            ]);
+            // await Promise.all([
+            //     api.post(`/site-resource/${resource.id}/roles`, {
+            //         roleIds: (data.roles || []).map((r) => parseInt(r.id))
+            //     }),
+            //     api.post(`/site-resource/${resource.id}/users`, {
+            //         userIds: (data.users || []).map((u) => u.id)
+            //     }),
+            //     api.post(`/site-resource/${resource.id}/clients`, {
+            //         clientIds: (data.clients || []).map((c) => parseInt(c.id))
+            //     })
+            // ]);
 
             toast({
                 title: t("editInternalResourceDialogSuccess"),
@@ -384,7 +387,7 @@ export default function EditInternalResourceDialog({
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="port">{t("editInternalResourceDialogModePort")}</SelectItem>
+                                                        {/* <SelectItem value="port">{t("editInternalResourceDialogModePort")}</SelectItem> */}
                                                         <SelectItem value="host">{t("editInternalResourceDialogModeHost")}</SelectItem>
                                                         <SelectItem value="cidr">{t("editInternalResourceDialogModeCidr")}</SelectItem>
                                                     </SelectContent>
@@ -394,7 +397,7 @@ export default function EditInternalResourceDialog({
                                         )}
                                     />
 
-                                    {mode === "port" && (
+                                    {/* {mode === "port" && (
                                         <div className="grid grid-cols-2 gap-4">
                                             <FormField
                                                 control={form.control}
@@ -439,7 +442,7 @@ export default function EditInternalResourceDialog({
                                                 )}
                                             />
                                         </div>
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 
@@ -459,14 +462,14 @@ export default function EditInternalResourceDialog({
                                                 <FormDescription>
                                                     {mode === "host" && t("editInternalResourceDialogDestinationHostDescription")}
                                                     {mode === "cidr" && t("editInternalResourceDialogDestinationCidrDescription")}
-                                                    {mode === "port" && t("editInternalResourceDialogDestinationIPDescription")}
+                                                    {/* {mode === "port" && t("editInternalResourceDialogDestinationIPDescription")} */}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
 
-                                    {mode === "port" && (
+                                    {/* {mode === "port" && (
                                         <FormField
                                             control={form.control}
                                             name="destinationPort"
@@ -484,7 +487,7 @@ export default function EditInternalResourceDialog({
                                                 </FormItem>
                                             )}
                                         />
-                                    )}
+                                    )} */}
                                 </div>
                             </div>
 

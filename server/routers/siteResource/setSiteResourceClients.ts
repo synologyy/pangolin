@@ -8,7 +8,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, inArray } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
-import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
 
 const setSiteResourceClientsBodySchema = z
     .object({
@@ -119,17 +119,12 @@ export async function setSiteResourceClients(
                 .where(eq(clientSiteResources.siteResourceId, siteResourceId));
 
             if (clientIds.length > 0) {
-                await Promise.all(
-                    clientIds.map((clientId) =>
-                        trx
-                            .insert(clientSiteResources)
-                            .values({ clientId, siteResourceId })
-                            .returning()
-                    )
-                );
+                await trx
+                    .insert(clientSiteResources)
+                    .values(clientIds.map((clientId) => ({ clientId, siteResourceId })));
             }
 
-            await rebuildSiteClientAssociations(siteResource, trx);
+            await rebuildClientAssociations(siteResource, trx);
         });
 
         return response(res, {

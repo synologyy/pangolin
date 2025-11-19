@@ -361,7 +361,7 @@ export const clients = sqliteTable("clients", {
     lastHolePunch: integer("lastHolePunch")
 });
 
-export const clientSites = sqliteTable("clientSites", {
+export const clientSitesAssociationsCache = sqliteTable("clientSitesAssociationsCache", {
     clientId: integer("clientId")
         .notNull()
         .references(() => clients.clientId, { onDelete: "cascade" }),
@@ -372,6 +372,15 @@ export const clientSites = sqliteTable("clientSites", {
         .notNull()
         .default(false),
     endpoint: text("endpoint")
+});
+
+export const clientSiteResourcesAssociationsCache = sqliteTable("clientSiteResourcesAssociationsCache", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
 });
 
 export const olms = sqliteTable("olms", {
@@ -894,7 +903,7 @@ export type ResourceRule = InferSelectModel<typeof resourceRules>;
 export type Domain = InferSelectModel<typeof domains>;
 export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
-export type ClientSite = InferSelectModel<typeof clientSites>;
+export type ClientSite = InferSelectModel<typeof clientSitesAssociationsCache>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
 export type UserClient = InferSelectModel<typeof userClients>;
 export type SupporterKey = InferSelectModel<typeof supporterKey>;

@@ -5,7 +5,7 @@ import {
     roleClients,
     sites,
     userClients,
-    clientSites
+    clientSitesAssociationsCache
 } from "@server/db";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
@@ -142,14 +142,14 @@ async function getSiteAssociations(clientIds: number[]) {
 
     return db
         .select({
-            clientId: clientSites.clientId,
-            siteId: clientSites.siteId,
+            clientId: clientSitesAssociationsCache.clientId,
+            siteId: clientSitesAssociationsCache.siteId,
             siteName: sites.name,
             siteNiceId: sites.niceId
         })
-        .from(clientSites)
-        .leftJoin(sites, eq(clientSites.siteId, sites.siteId))
-        .where(inArray(clientSites.clientId, clientIds));
+        .from(clientSitesAssociationsCache)
+        .leftJoin(sites, eq(clientSitesAssociationsCache.siteId, sites.siteId))
+        .where(inArray(clientSitesAssociationsCache.clientId, clientIds));
 }
 
 type OlmWithUpdateAvailable = Awaited<ReturnType<typeof queryClients>>[0] & {

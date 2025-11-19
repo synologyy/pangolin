@@ -1,16 +1,28 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, newts, sites } from "@server/db";
+import {
+    clientSiteResources,
+    db,
+    newts,
+    roles,
+    roleSiteResources,
+    sites,
+    userSiteResources
+} from "@server/db";
 import { siteResources, SiteResource } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { updateTargets } from "@server/routers/client/targets";
-import { generateSubnetProxyTargets } from "@server/lib/ip";
+import { generateSingleSubnetProxyTargets } from "@server/lib/ip";
+import {
+    getClientSiteResourceAccess,
+    rebuildClientAssociations
+} from "@server/lib/rebuildClientAssociations";
 
 const updateSiteResourceParamsSchema = z.strictObject({
     siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
@@ -23,12 +35,15 @@ const updateSiteResourceSchema = z
         name: z.string().min(1).max(255).optional(),
         // mode: z.enum(["host", "cidr", "port"]).optional(),
         mode: z.enum(["host", "cidr"]).optional(),
-        protocol: z.enum(["tcp", "udp"]).nullish(),
+        // protocol: z.enum(["tcp", "udp"]).nullish(),
         // proxyPort: z.int().positive().nullish(),
         // destinationPort: z.int().positive().nullish(),
         destination: z.string().min(1).optional(),
         enabled: z.boolean().optional(),
-        alias: z.string().nullish()
+        alias: z.string().nullish(),
+        userIds: z.array(z.string()),
+        roleIds: z.array(z.int()),
+        clientIds: z.array(z.int())
     })
     .strict();
 
@@ -82,7 +97,16 @@ export async function updateSiteResource(
         }
 
         const { siteResourceId, siteId, orgId } = parsedParams.data;
-        const updateData = parsedBody.data;
+        const {
+            name,
+            mode,
+            destination,
+            alias,
+            enabled,
+            userIds,
+            roleIds,
+            clientIds
+        } = parsedBody.data;
 
         const [site] = await db
             .select()
@@ -113,84 +137,130 @@ export async function updateSiteResource(
             );
         }
 
-        // Determine the final mode and validate port mode requirements
-        const finalMode = updateData.mode || existingSiteResource.mode;
-        const finalProtocol = updateData.protocol !== undefined ? updateData.protocol : existingSiteResource.protocol;
-        // const finalProxyPort = updateData.proxyPort !== undefined ? updateData.proxyPort : existingSiteResource.proxyPort;
-        // const finalDestinationPort = updateData.destinationPort !== undefined ? updateData.destinationPort : existingSiteResource.destinationPort;
-
-        // Prepare update data
-        const updateValues: any = {};
-        if (updateData.name !== undefined) updateValues.name = updateData.name;
-        if (updateData.mode !== undefined) updateValues.mode = updateData.mode;
-        if (updateData.destination !== undefined)
-            updateValues.destination = updateData.destination;
-        if (updateData.enabled !== undefined)
-            updateValues.enabled = updateData.enabled;
-
-        // Handle nullish fields (can be undefined, null, or a value)
-        if (updateData.alias !== undefined) {
-            updateValues.alias =
-                updateData.alias && updateData.alias.trim()
-                    ? updateData.alias
-                    : null;
-        }
-
-        // Handle port mode fields - include in update if explicitly provided (null or value) or if mode changed
-        // const isModeChangingFromPort =
-        //     existingSiteResource.mode === "port" &&
-        //     updateData.mode &&
-        //     updateData.mode !== "port";
-
-        // if (updateData.protocol !== undefined || isModeChangingFromPort) {
-        //     updateValues.protocol = finalMode === "port" ? finalProtocol : null;
-        // }
-        // if (updateData.proxyPort !== undefined || isModeChangingFromPort) {
-        //     updateValues.proxyPort =
-        //         finalMode === "port" ? finalProxyPort : null;
-        // }
-        // if (
-        //     updateData.destinationPort !== undefined ||
-        //     isModeChangingFromPort
-        // ) {
-        //     updateValues.destinationPort =
-        //         finalMode === "port" ? finalDestinationPort : null;
-        // }
-
-        // Update the site resource
-        const [updatedSiteResource] = await db
-            .update(siteResources)
-            .set(updateValues)
-            .where(
-                and(
-                    eq(siteResources.siteResourceId, siteResourceId),
-                    eq(siteResources.siteId, siteId),
-                    eq(siteResources.orgId, orgId)
+        let updatedSiteResource: SiteResource | undefined;
+        await db.transaction(async (trx) => {
+            // Update the site resource
+            [updatedSiteResource] = await trx
+                .update(siteResources)
+                .set({
+                    name: name,
+                    mode: mode,
+                    destination: destination,
+                    enabled: enabled,
+                    alias: alias && alias.trim() ? alias : null
+                })
+                .where(
+                    and(
+                        eq(siteResources.siteResourceId, siteResourceId),
+                        eq(siteResources.siteId, siteId),
+                        eq(siteResources.orgId, orgId)
+                    )
                 )
-            )
-            .returning();
+                .returning();
 
-        const [newt] = await db
-            .select()
-            .from(newts)
-            .where(eq(newts.siteId, site.siteId))
-            .limit(1);
+            //////////////////// update the associations ////////////////////
 
-        if (!newt) {
-            return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
-        }
+            await trx
+                .delete(clientSiteResources)
+                .where(eq(clientSiteResources.siteResourceId, siteResourceId));
 
-        const oldTargets = await generateSubnetProxyTargets([existingSiteResource]);
-        const newTargets = await generateSubnetProxyTargets([updatedSiteResource]);
+            if (clientIds.length > 0) {
+                await trx.insert(clientSiteResources).values(
+                    clientIds.map((clientId) => ({
+                        clientId,
+                        siteResourceId
+                    }))
+                );
+            }
 
-        await updateTargets(newt.newtId, {
-            oldTargets: oldTargets,
-            newTargets: newTargets
+            await trx
+                .delete(userSiteResources)
+                .where(eq(userSiteResources.siteResourceId, siteResourceId));
+
+            if (userIds.length > 0) {
+                await trx
+                    .insert(userSiteResources)
+                    .values(
+                        userIds.map((userId) => ({ userId, siteResourceId }))
+                    );
+            }
+
+            // Get all admin role IDs for this org to exclude from deletion
+            const adminRoles = await trx
+                .select()
+                .from(roles)
+                .where(
+                    and(
+                        eq(roles.isAdmin, true),
+                        eq(roles.orgId, updatedSiteResource.orgId)
+                    )
+                );
+            const adminRoleIds = adminRoles.map((role) => role.roleId);
+
+            if (adminRoleIds.length > 0) {
+                await trx.delete(roleSiteResources).where(
+                    and(
+                        eq(roleSiteResources.siteResourceId, siteResourceId),
+                        ne(roleSiteResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                    )
+                );
+            } else {
+                await trx
+                    .delete(roleSiteResources)
+                    .where(
+                        eq(roleSiteResources.siteResourceId, siteResourceId)
+                    );
+            }
+
+            if (roleIds.length > 0) {
+                await trx
+                    .insert(roleSiteResources)
+                    .values(
+                        roleIds.map((roleId) => ({ roleId, siteResourceId }))
+                    );
+            }
+
+            const { mergedAllClients } = await rebuildClientAssociations(
+                updatedSiteResource,
+                trx
+            ); // we need to call this because we added to the admin role
+
+            // after everything is rebuilt above we still need to update the targets if the destination changed
+            if (
+                existingSiteResource.destination !==
+                updatedSiteResource.destination
+            ) {
+                const [newt] = await trx
+                    .select()
+                    .from(newts)
+                    .where(eq(newts.siteId, site.siteId))
+                    .limit(1);
+
+                if (!newt) {
+                    return next(
+                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
+                    );
+                }
+
+                const oldTargets = generateSingleSubnetProxyTargets(
+                    existingSiteResource,
+                    mergedAllClients
+                );
+                const newTargets = generateSingleSubnetProxyTargets(
+                    updatedSiteResource,
+                    mergedAllClients
+                );
+
+                await updateTargets(newt.newtId, {
+                    oldTargets: oldTargets,
+                    newTargets: newTargets
+                });
+            }
+
+            logger.info(
+                `Updated site resource ${siteResourceId} for site ${siteId}`
+            );
         });
-
-        logger.info(
-            `Updated site resource ${siteResourceId} for site ${siteId}`
-        );
 
         return response(res, {
             data: updatedSiteResource,

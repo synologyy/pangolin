@@ -8,7 +8,7 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
-import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
+import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
 
 const removeClientFromSiteResourceBodySchema = z
     .object({
@@ -142,7 +142,7 @@ export async function removeClientFromSiteResource(
                     )
                 );
 
-            await rebuildSiteClientAssociations(siteResource, trx);
+            await rebuildClientAssociations(siteResource, trx);
         });
 
         return response(res, {

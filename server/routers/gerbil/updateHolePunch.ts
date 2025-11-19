@@ -6,7 +6,7 @@ import {
     olms,
     Site,
     sites,
-    clientSites,
+    clientSitesAssociationsCache,
     exitNodes,
     ExitNode
 } from "@server/db";
@@ -174,11 +174,11 @@ export async function updateAndGenerateEndpointDestinations(
                 listenPort: sites.listenPort
             })
             .from(sites)
-            .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
+            .innerJoin(clientSitesAssociationsCache, eq(sites.siteId, clientSitesAssociationsCache.siteId))
             .where(
                 and(
                     eq(sites.exitNodeId, exitNode.exitNodeId),
-                    eq(clientSites.clientId, olm.clientId)
+                    eq(clientSitesAssociationsCache.clientId, olm.clientId)
                 )
             );
 
@@ -189,14 +189,14 @@ export async function updateAndGenerateEndpointDestinations(
             );
 
             await db
-                .update(clientSites)
+                .update(clientSitesAssociationsCache)
                 .set({
                     endpoint: `${ip}:${port}`
                 })
                 .where(
                     and(
-                        eq(clientSites.clientId, olm.clientId),
-                        eq(clientSites.siteId, site.siteId)
+                        eq(clientSitesAssociationsCache.clientId, olm.clientId),
+                        eq(clientSitesAssociationsCache.siteId, site.siteId)
                     )
                 );
         }

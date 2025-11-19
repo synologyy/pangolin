@@ -112,11 +112,11 @@ export default async function ResourcesPage(props: ResourcesPageProps) {
                 siteName: siteResource.siteName,
                 siteAddress: siteResource.siteAddress || null,
                 mode: siteResource.mode || ("port" as any),
-                protocol: siteResource.protocol,
-                proxyPort: siteResource.proxyPort,
+                // protocol: siteResource.protocol,
+                // proxyPort: siteResource.proxyPort,
                 siteId: siteResource.siteId,
                 destination: siteResource.destination,
-                destinationPort: siteResource.destinationPort,
+                // destinationPort: siteResource.destinationPort,
                 alias: siteResource.alias || null,
                 siteNiceId: siteResource.siteNiceId
             };

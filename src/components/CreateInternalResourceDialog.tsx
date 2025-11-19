@@ -90,7 +90,7 @@ export default function CreateInternalResourceDialog({
         mode: z.enum(["host", "cidr"]),
         destination: z.string().min(1),
         siteId: z.int().positive(t("createInternalResourceDialogPleaseSelectSite")),
-        protocol: z.enum(["tcp", "udp"]),
+        // protocol: z.enum(["tcp", "udp"]),
         // proxyPort: z.int()
         //     .positive()
         //     .min(1, t("createInternalResourceDialogProxyPortMin"))
@@ -177,7 +177,7 @@ export default function CreateInternalResourceDialog({
             name: "",
             siteId: availableSites[0]?.siteId || 0,
             mode: "host",
-            protocol: "tcp",
+            // protocol: "tcp",
             // proxyPort: undefined,
             destination: "",
             // destinationPort: undefined,
@@ -196,7 +196,7 @@ export default function CreateInternalResourceDialog({
                 name: "",
                 siteId: availableSites[0].siteId,
                 mode: "host",
-                protocol: "tcp",
+                // protocol: "tcp",
                 // proxyPort: undefined,
                 destination: "",
                 // destinationPort: undefined,
@@ -260,35 +260,38 @@ export default function CreateInternalResourceDialog({
                 {
                     name: data.name,
                     mode: data.mode,
-                    protocol: data.mode === "port" ? data.protocol : undefined,
+                    // protocol: data.protocol,
                     // proxyPort: data.mode === "port" ? data.proxyPort : undefined,
                     // destinationPort: data.mode === "port" ? data.destinationPort : undefined,
                     destination: data.destination,
                     enabled: true,
-                    alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : undefined
+                    alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : undefined,
+                    roleIds: data.roles ? data.roles.map((r) => parseInt(r.id)) : [],
+                    userIds: data.users ? data.users.map((u) => u.id) : [],
+                    clientIds: data.clients ? data.clients.map((c) => parseInt(c.id)) : []
                 }
             );
 
             const siteResourceId = response.data.data.siteResourceId;
 
-            // Set roles and users if provided
-            if (data.roles && data.roles.length > 0) {
-                await api.post(`/site-resource/${siteResourceId}/roles`, {
-                    roleIds: data.roles.map((r) => parseInt(r.id))
-                });
-            }
+            // // Set roles and users if provided
+            // if (data.roles && data.roles.length > 0) {
+            //     await api.post(`/site-resource/${siteResourceId}/roles`, {
+            //         roleIds: data.roles.map((r) => parseInt(r.id))
+            //     });
+            // }
 
-            if (data.users && data.users.length > 0) {
-                await api.post(`/site-resource/${siteResourceId}/users`, {
-                    userIds: data.users.map((u) => u.id)
-                });
-            }
+            // if (data.users && data.users.length > 0) {
+            //     await api.post(`/site-resource/${siteResourceId}/users`, {
+            //         userIds: data.users.map((u) => u.id)
+            //     });
+            // }
 
-            if (data.clients && data.clients.length > 0) {
-                await api.post(`/site-resource/${siteResourceId}/clients`, {
-                    clientIds: data.clients.map((c) => parseInt(c.id))
-                });
-            }
+            // if (data.clients && data.clients.length > 0) {
+            //     await api.post(`/site-resource/${siteResourceId}/clients`, {
+            //         clientIds: data.clients.map((c) => parseInt(c.id))
+            //     });
+            // }
 
             toast({
                 title: t("createInternalResourceDialogSuccess"),
@@ -444,7 +447,7 @@ export default function CreateInternalResourceDialog({
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="port">{t("createInternalResourceDialogModePort")}</SelectItem>
+                                                        {/* <SelectItem value="port">{t("createInternalResourceDialogModePort")}</SelectItem> */}
                                                         <SelectItem value="host">{t("createInternalResourceDialogModeHost")}</SelectItem>
                                                         <SelectItem value="cidr">{t("createInternalResourceDialogModeCidr")}</SelectItem>
                                                     </SelectContent>
@@ -535,7 +538,7 @@ export default function CreateInternalResourceDialog({
                                                 <FormDescription>
                                                     {mode === "host" && t("createInternalResourceDialogDestinationHostDescription")}
                                                     {mode === "cidr" && t("createInternalResourceDialogDestinationCidrDescription")}
-                                                    {mode === "port" && t("createInternalResourceDialogDestinationIPDescription")}
+                                                    {/* {mode === "port" && t("createInternalResourceDialogDestinationIPDescription")} */}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>

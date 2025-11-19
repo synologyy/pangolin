@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, newts, roleResources, roles, roleSiteResources } from "@server/db";
-import { siteResources, sites, orgs, SiteResource } from "@server/db";
+import {
+    clientSiteResources,
+    db,
+    newts,
+    roles,
+    roleSiteResources,
+    userSiteResources
+} from "@server/db";
+import { siteResources, sites, SiteResource } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -9,10 +16,8 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { addTargets } from "../client/targets";
 import { getUniqueSiteResourceName } from "@server/db/names";
-import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
-import { generateSubnetProxyTargets } from "@server/lib/ip";
+import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
 
 const createSiteResourceParamsSchema = z.strictObject({
     siteId: z.string().transform(Number).pipe(z.int().positive()),
@@ -23,12 +28,15 @@ const createSiteResourceSchema = z
     .strictObject({
         name: z.string().min(1).max(255),
         mode: z.enum(["host", "cidr", "port"]),
-        protocol: z.enum(["tcp", "udp"]).optional(),
+        // protocol: z.enum(["tcp", "udp"]).optional(),
         // proxyPort: z.int().positive().optional(),
         // destinationPort: z.int().positive().optional(),
         destination: z.string().min(1),
         enabled: z.boolean().default(true),
-        alias: z.string().optional()
+        alias: z.string().optional(),
+        userIds: z.array(z.string()),
+        roleIds: z.array(z.int()),
+        clientIds: z.array(z.int())
     })
     .strict()
     // .refine(
@@ -138,12 +146,15 @@ export async function createSiteResource(
         const {
             name,
             mode,
-            protocol,
+            // protocol,
             // proxyPort,
             // destinationPort,
             destination,
             enabled,
-            alias
+            alias,
+            userIds,
+            roleIds,
+            clientIds
         } = parsedBody.data;
 
         // Verify the site exists and belongs to the org
@@ -194,7 +205,7 @@ export async function createSiteResource(
                     orgId,
                     name,
                     mode,
-                    protocol: mode === "port" ? protocol : null,
+                    // protocol: mode === "port" ? protocol : null,
                     // proxyPort: mode === "port" ? proxyPort : null,
                     // destinationPort: mode === "port" ? destinationPort : null,
                     destination,
@@ -202,6 +213,10 @@ export async function createSiteResource(
                     alias: alias || null
                 })
                 .returning();
+
+            const siteResourceId = newSiteResource.siteResourceId;
+
+            //////////////////// update the associations ////////////////////
 
             const [adminRole] = await trx
                 .select()
@@ -217,8 +232,33 @@ export async function createSiteResource(
 
             await trx.insert(roleSiteResources).values({
                 roleId: adminRole.roleId,
-                siteResourceId: newSiteResource.siteResourceId
+                siteResourceId: siteResourceId
             });
+
+            if (roleIds.length > 0) {
+                await trx
+                    .insert(roleSiteResources)
+                    .values(
+                        roleIds.map((roleId) => ({ roleId, siteResourceId }))
+                    );
+            }
+
+            if (userIds.length > 0) {
+                await trx
+                    .insert(userSiteResources)
+                    .values(
+                        userIds.map((userId) => ({ userId, siteResourceId }))
+                    );
+            }
+
+            if (clientIds.length > 0) {
+                await trx.insert(clientSiteResources).values(
+                    clientIds.map((clientId) => ({
+                        clientId,
+                        siteResourceId
+                    }))
+                );
+            }
 
             const [newt] = await trx
                 .select()
@@ -232,10 +272,10 @@ export async function createSiteResource(
                 );
             }
 
-            const targets = await generateSubnetProxyTargets([newSiteResource], trx);
-            await addTargets(newt.newtId, targets);
+            // const targets = await generateSubnetProxyTargets([newSiteResource], trx);
+            // await addTargets(newt.newtId, targets);
 
-            await rebuildSiteClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
+            await rebuildClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
         });
 
         if (!newSiteResource) {

@@ -9,9 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { removeTargets } from "../client/targets";
-import { rebuildSiteClientAssociations } from "@server/lib/rebuildSiteClientAssociations";
-import { generateSubnetProxyTargets } from "@server/lib/ip";
+import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
 
 const deleteSiteResourceParamsSchema = z.strictObject({
     siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
@@ -108,10 +106,10 @@ export async function deleteSiteResource(
                 );
             }
 
-            const targets = await generateSubnetProxyTargets([removedSiteResource], trx);
-            await removeTargets(newt.newtId, targets);
+            // const targets = await generateSubnetProxyTargets([removedSiteResource], trx);
+            // await removeTargets(newt.newtId, targets);
 
-            await rebuildSiteClientAssociations(existingSiteResource, trx);
+            await rebuildClientAssociations(existingSiteResource, trx);
         });
 
         logger.info(

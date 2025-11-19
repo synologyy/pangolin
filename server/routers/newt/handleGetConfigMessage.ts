@@ -11,7 +11,7 @@ import {
     Target,
     targets
 } from "@server/db";
-import { clients, clientSites, Newt, sites } from "@server/db";
+import { clients, clientSitesAssociationsCache, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
@@ -138,8 +138,8 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     const clientsRes = await db
         .select()
         .from(clients)
-        .innerJoin(clientSites, eq(clients.clientId, clientSites.clientId))
-        .where(eq(clientSites.siteId, siteId));
+        .innerJoin(clientSitesAssociationsCache, eq(clients.clientId, clientSitesAssociationsCache.clientId))
+        .where(eq(clientSitesAssociationsCache.siteId, siteId));
 
     // Prepare peers data for the response
     const peers = await Promise.all(
