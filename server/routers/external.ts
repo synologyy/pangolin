@@ -308,6 +308,13 @@ authenticated.get(
 );
 
 authenticated.get(
+    "/org/:orgId/resource-names",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listResources),
+    resource.listAllResourceNames
+);
+
+authenticated.get(
     "/org/:orgId/user-resources",
     verifyOrgAccess,
     resource.getUserResources
