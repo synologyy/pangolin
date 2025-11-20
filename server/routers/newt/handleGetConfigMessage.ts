@@ -6,10 +6,8 @@ import {
     db,
     ExitNode,
     exitNodes,
-    resources,
     siteResources,
-    Target,
-    targets
+    clientSiteResourcesAssociationsCache,
 } from "@server/db";
 import { clients, clientSitesAssociationsCache, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
@@ -17,7 +15,8 @@ import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import {
     generateRemoteSubnetsStr,
-    generateSubnetProxyTargets
+    generateSubnetProxyTargets,
+    SubnetProxyTarget,
 } from "@server/lib/ip";
 
 const inputSchema = z.object({
@@ -163,7 +162,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                         return null;
                     }
                     let endpoint = site.endpoint;
-                    if (client.clientSites.isRelayed) {
+                    if (client.clientSitesAssociationsCache.isRelayed) {
                         if (!site.exitNodeId) {
                             logger.warn(
                                 `Site ${site.siteId} has no exit node, skipping`
@@ -210,9 +209,9 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                 return {
                     publicKey: client.clients.pubKey!,
                     allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                    endpoint: client.clientSites.isRelayed
+                    endpoint: client.clientSitesAssociationsCache.isRelayed
                         ? ""
-                        : client.clientSites.endpoint! // if its relayed it should be localhost
+                        : client.clientSitesAssociationsCache.endpoint! // if its relayed it should be localhost
                 };
             })
     );
@@ -220,13 +219,37 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     // Filter out any null values from peers that didn't have an olm
     const validPeers = peers.filter((peer) => peer !== null);
 
-    // Get all enabled targets with their resource protocol information
+    // Get all enabled site resources for this site
     const allSiteResources = await db
         .select()
         .from(siteResources)
         .where(eq(siteResources.siteId, siteId));
 
-    const targetsToSend = await generateSubnetProxyTargets(allSiteResources);
+    let targetsToSend: SubnetProxyTarget[] = [];
+
+    for (const resource of allSiteResources) {
+        // Get clients associated with this specific resource
+        const resourceClients = await db
+            .select({
+                clientId: clients.clientId,
+                pubKey: clients.pubKey,
+                subnet: clients.subnet
+            })
+            .from(clients)
+            .innerJoin(
+                clientSiteResourcesAssociationsCache,
+                eq(clients.clientId, clientSiteResourcesAssociationsCache.clientId)
+            )
+            .where(
+                eq(
+                    clientSiteResourcesAssociationsCache.siteResourceId,
+                    resource.siteResourceId
+                )
+            );
+
+        const resourceTargets = generateSubnetProxyTargets(resource, resourceClients);
+        targetsToSend.push(...resourceTargets);
+    }
 
     // Build the configuration response
     const configResponse = {

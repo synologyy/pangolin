@@ -18,7 +18,7 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { updateTargets } from "@server/routers/client/targets";
-import { generateSingleSubnetProxyTargets } from "@server/lib/ip";
+import { generateSubnetProxyTargets } from "@server/lib/ip";
 import {
     getClientSiteResourceAccess,
     rebuildClientAssociations
@@ -242,11 +242,11 @@ export async function updateSiteResource(
                     );
                 }
 
-                const oldTargets = generateSingleSubnetProxyTargets(
+                const oldTargets = generateSubnetProxyTargets(
                     existingSiteResource,
                     mergedAllClients
                 );
-                const newTargets = generateSingleSubnetProxyTargets(
+                const newTargets = generateSubnetProxyTargets(
                     updatedSiteResource,
                     mergedAllClients
                 );

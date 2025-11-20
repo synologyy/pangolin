@@ -338,7 +338,7 @@ export type SubnetProxyTarget = {
     }[];
 };
 
-export function generateSingleSubnetProxyTargets(
+export function generateSubnetProxyTargets(
     siteResource: SiteResource,
     clients: {
         clientId: number;

@@ -31,7 +31,7 @@ import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
 import {
     generateRemoteSubnetsStr,
-    generateSingleSubnetProxyTargets,
+    generateSubnetProxyTargets,
     SubnetProxyTarget
 } from "@server/lib/ip";
 import {
@@ -610,7 +610,7 @@ async function handleSubnetProxyTargetUpdates(
         );
 
         if (addedClients.length > 0) {
-            const targetsToAdd = generateSingleSubnetProxyTargets(
+            const targetsToAdd = generateSubnetProxyTargets(
                 siteResource,
                 addedClients
             );
@@ -631,7 +631,7 @@ async function handleSubnetProxyTargetUpdates(
         );
 
         if (removedClients.length > 0) {
-            const targetsToRemove = generateSingleSubnetProxyTargets(
+            const targetsToRemove = generateSubnetProxyTargets(
                 siteResource,
                 removedClients
             );
