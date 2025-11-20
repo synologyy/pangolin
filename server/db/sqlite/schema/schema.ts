@@ -361,27 +361,27 @@ export const clients = sqliteTable("clients", {
     lastHolePunch: integer("lastHolePunch")
 });
 
-export const clientSitesAssociationsCache = sqliteTable("clientSitesAssociationsCache", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteId: integer("siteId")
-        .notNull()
-        .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: integer("isRelayed", { mode: "boolean" })
-        .notNull()
-        .default(false),
-    endpoint: text("endpoint")
-});
+export const clientSitesAssociationsCache = sqliteTable(
+    "clientSitesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteId: integer("siteId").notNull(),
+        isRelayed: integer("isRelayed", { mode: "boolean" })
+            .notNull()
+            .default(false),
+        endpoint: text("endpoint")
+    }
+);
 
-export const clientSiteResourcesAssociationsCache = sqliteTable("clientSiteResourcesAssociationsCache", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteResourceId: integer("siteResourceId")
-        .notNull()
-        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
-});
+export const clientSiteResourcesAssociationsCache = sqliteTable(
+    "clientSiteResourcesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteResourceId: integer("siteResourceId").notNull()
+    }
+);
 
 export const olms = sqliteTable("olms", {
     olmId: text("id").primaryKey(),

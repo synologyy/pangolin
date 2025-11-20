@@ -7,16 +7,16 @@ import {
     ExitNode,
     exitNodes,
     siteResources,
-    clientSiteResourcesAssociationsCache,
+    clientSiteResourcesAssociationsCache
 } from "@server/db";
 import { clients, clientSitesAssociationsCache, Newt, sites } from "@server/db";
 import { eq, and, inArray } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import {
-    generateRemoteSubnetsStr,
+    generateRemoteSubnets,
     generateSubnetProxyTargets,
-    SubnetProxyTarget,
+    SubnetProxyTarget
 } from "@server/lib/ip";
 
 const inputSchema = z.object({
@@ -137,7 +137,10 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     const clientsRes = await db
         .select()
         .from(clients)
-        .innerJoin(clientSitesAssociationsCache, eq(clients.clientId, clientSitesAssociationsCache.clientId))
+        .innerJoin(
+            clientSitesAssociationsCache,
+            eq(clients.clientId, clientSitesAssociationsCache.clientId)
+        )
         .where(eq(clientSitesAssociationsCache.siteId, siteId));
 
     // Prepare peers data for the response
@@ -186,10 +189,25 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                         return null;
                     }
 
-                    const allSiteResources = await db
+                    const allSiteResources = await db // only get the site resources that this client has access to
                         .select()
                         .from(siteResources)
-                        .where(eq(siteResources.siteId, site.siteId));
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                siteResources.siteResourceId,
+                                clientSiteResourcesAssociationsCache.siteResourceId
+                            )
+                        )
+                        .where(
+                            and(
+                                eq(siteResources.siteId, site.siteId),
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clients.clientId
+                                )
+                            )
+                        );
 
                     await updatePeer(client.clients.clientId, {
                         siteId: site.siteId,
@@ -197,8 +215,11 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets:
-                            generateRemoteSubnetsStr(allSiteResources)
+                        remoteSubnets: generateRemoteSubnets(
+                            allSiteResources.map(
+                                ({ siteResources }) => siteResources
+                            )
+                        )
                     });
                 } catch (error) {
                     logger.error(
@@ -238,7 +259,10 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             .from(clients)
             .innerJoin(
                 clientSiteResourcesAssociationsCache,
-                eq(clients.clientId, clientSiteResourcesAssociationsCache.clientId)
+                eq(
+                    clients.clientId,
+                    clientSiteResourcesAssociationsCache.clientId
+                )
             )
             .where(
                 eq(
@@ -247,7 +271,10 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
                 )
             );
 
-        const resourceTargets = generateSubnetProxyTargets(resource, resourceClients);
+        const resourceTargets = generateSubnetProxyTargets(
+            resource,
+            resourceClients
+        );
         targetsToSend.push(...resourceTargets);
     }
 

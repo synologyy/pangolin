@@ -1,5 +1,6 @@
 import {
     Client,
+    clientSiteResourcesAssociationsCache,
     db,
     ExitNode,
     orgs,
@@ -12,13 +13,20 @@ import {
     users
 } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
-import { clients, clientSitesAssociationsCache, exitNodes, Olm, olms, sites } from "@server/db";
+import {
+    clients,
+    clientSitesAssociationsCache,
+    exitNodes,
+    Olm,
+    olms,
+    sites
+} from "@server/db";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { getNextAvailableClientSubnet } from "@server/lib/ip";
-import { generateRemoteSubnetsStr } from "@server/lib/ip";
+import { generateRemoteSubnets } from "@server/lib/ip";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -170,7 +178,10 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     const sitesData = await db
         .select()
         .from(sites)
-        .innerJoin(clientSitesAssociationsCache, eq(sites.siteId, clientSitesAssociationsCache.siteId))
+        .innerJoin(
+            clientSitesAssociationsCache,
+            eq(sites.siteId, clientSitesAssociationsCache.siteId)
+        )
         .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
 
     // Prepare an array to store site configurations
@@ -234,11 +245,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             )
             .limit(1);
 
-        const allSiteResources = await db
-            .select()
-            .from(siteResources)
-            .where(eq(siteResources.siteId, site.siteId));
-
         // Add the peer to the exit node for this site
         if (clientSite.endpoint) {
             logger.info(
@@ -269,6 +275,26 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             endpoint = `${exitNode.endpoint}:21820`;
         }
 
+        const allSiteResources = await db // only get the site resources that this client has access to
+            .select()
+            .from(siteResources)
+            .innerJoin(
+                clientSiteResourcesAssociationsCache,
+                eq(
+                    siteResources.siteResourceId,
+                    clientSiteResourcesAssociationsCache.siteResourceId
+                )
+            )
+            .where(
+                and(
+                    eq(siteResources.siteId, site.siteId),
+                    eq(
+                        clientSiteResourcesAssociationsCache.clientId,
+                        client.clientId
+                    )
+                )
+            );
+
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
@@ -276,7 +302,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: generateRemoteSubnetsStr(allSiteResources)
+            remoteSubnets: generateRemoteSubnets(allSiteResources.map(({ siteResources }) => siteResources))
         });
     }
 

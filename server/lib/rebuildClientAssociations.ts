@@ -2,6 +2,7 @@ import {
     Client,
     clients,
     clientSiteResources,
+    clientSiteResourcesAssociationsCache,
     clientSitesAssociationsCache,
     db,
     exitNodes,
@@ -30,7 +31,7 @@ import {
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
 import {
-    generateRemoteSubnetsStr,
+    generateRemoteSubnets,
     generateSubnetProxyTargets,
     SubnetProxyTarget
 } from "@server/lib/ip";
@@ -204,16 +205,34 @@ export async function rebuildClientAssociations(
 
     const existingClientSiteResources = await trx
         .select({
-            clientId: clientSiteResources.clientId
+            clientId: clientSiteResourcesAssociationsCache.clientId
         })
-        .from(clientSiteResources)
+        .from(clientSiteResourcesAssociationsCache)
         .where(
-            eq(clientSiteResources.siteResourceId, siteResource.siteResourceId)
+            eq(
+                clientSiteResourcesAssociationsCache.siteResourceId,
+                siteResource.siteResourceId
+            )
         );
 
     const existingClientSiteResourceIds = existingClientSiteResources.map(
         (row) => row.clientId
     );
+
+    // Get full client details for existing resource clients (needed for sending delete messages)
+    const existingResourceClients =
+        existingClientSiteResourceIds.length > 0
+            ? await trx
+                  .select({
+                      clientId: clients.clientId,
+                      pubKey: clients.pubKey,
+                      subnet: clients.subnet
+                  })
+                  .from(clients)
+                  .where(
+                      inArray(clients.clientId, existingClientSiteResourceIds)
+                  )
+            : [];
 
     const clientSiteResourcesToAdd = mergedAllClientIds.filter(
         (clientId) => !existingClientSiteResourceIds.includes(clientId)
@@ -228,7 +247,7 @@ export async function rebuildClientAssociations(
 
     if (clientSiteResourcesToInsert.length > 0) {
         await trx
-            .insert(clientSiteResources)
+            .insert(clientSiteResourcesAssociationsCache)
             .values(clientSiteResourcesToInsert)
             .returning();
     }
@@ -239,15 +258,15 @@ export async function rebuildClientAssociations(
 
     if (clientSiteResourcesToRemove.length > 0) {
         await trx
-            .delete(clientSiteResources)
+            .delete(clientSiteResourcesAssociationsCache)
             .where(
                 and(
                     eq(
-                        clientSiteResources.siteResourceId,
+                        clientSiteResourcesAssociationsCache.siteResourceId,
                         siteResource.siteResourceId
                     ),
                     inArray(
-                        clientSiteResources.clientId,
+                        clientSiteResourcesAssociationsCache.clientId,
                         clientSiteResourcesToRemove
                     )
                 )
@@ -269,7 +288,7 @@ export async function rebuildClientAssociations(
     await handleSubnetProxyTargetUpdates(
         siteResource,
         mergedAllClients,
-        existingClients,
+        existingResourceClients,
         clientSiteResourcesToAdd,
         clientSiteResourcesToRemove,
         trx
@@ -277,7 +296,7 @@ export async function rebuildClientAssociations(
 
     return {
         mergedAllClients
-    }
+    };
 }
 
 async function handleMessagesForSiteClients(
@@ -429,10 +448,25 @@ async function handleMessagesForSiteClients(
             );
 
             // TODO: should we have this here?
-            const allSiteResources = await trx
+            const allSiteResources = await db // only get the site resources that this client has access to
                 .select()
                 .from(siteResources)
-                .where(eq(siteResources.siteId, site.siteId));
+                .innerJoin(
+                    clientSiteResourcesAssociationsCache,
+                    eq(
+                        siteResources.siteResourceId,
+                        clientSiteResourcesAssociationsCache.siteResourceId
+                    )
+                )
+                .where(
+                    and(
+                        eq(siteResources.siteId, site.siteId),
+                        eq(
+                            clientSiteResourcesAssociationsCache.clientId,
+                            client.clientId
+                        )
+                    )
+                );
 
             olmJobs.push(
                 olmAddPeer(
@@ -446,8 +480,11 @@ async function handleMessagesForSiteClients(
                         publicKey: site.publicKey,
                         serverIP: site.address,
                         serverPort: site.listenPort,
-                        remoteSubnets:
-                            generateRemoteSubnetsStr(allSiteResources)
+                        remoteSubnets: generateRemoteSubnets(
+                            allSiteResources.map(
+                                ({ siteResources }) => siteResources
+                            )
+                        )
                     },
                     olm.olmId
                 )
@@ -518,9 +555,13 @@ export async function updateClientSiteDestinations(
                 exitNodeId: site.exitNodes?.exitNodeId || 0,
                 type: site.exitNodes?.type || "",
                 name: site.exitNodes?.name || "",
-                sourceIp: site.clientSitesAssociationsCache.endpoint.split(":")[0] || "",
+                sourceIp:
+                    site.clientSitesAssociationsCache.endpoint.split(":")[0] ||
+                    "",
                 sourcePort:
-                    parseInt(site.clientSitesAssociationsCache.endpoint.split(":")[1]) || 0,
+                    parseInt(
+                        site.clientSitesAssociationsCache.endpoint.split(":")[1]
+                    ) || 0,
                 destinations: [
                     {
                         destinationIP: site.sites.subnet.split("/")[0],

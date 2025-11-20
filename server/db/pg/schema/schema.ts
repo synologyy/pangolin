@@ -88,7 +88,7 @@ export const sites = pgTable("sites", {
     publicKey: varchar("publicKey"),
     lastHolePunch: bigint("lastHolePunch", { mode: "number" }),
     listenPort: integer("listenPort"),
-    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true),
+    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true)
 });
 
 export const resources = pgTable("resources", {
@@ -206,7 +206,7 @@ export const siteResources = pgTable("siteResources", {
     mode: varchar("mode").notNull(), // "host" | "cidr" | "port"
     protocol: varchar("protocol"), // only for port mode
     proxyPort: integer("proxyPort"), // only for port mode
-    destinationPort: integer("destinationPort"),  // only for port mode
+    destinationPort: integer("destinationPort"), // only for port mode
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
     alias: varchar("alias")
@@ -654,25 +654,25 @@ export const clients = pgTable("clients", {
     maxConnections: integer("maxConnections")
 });
 
-export const clientSitesAssociationsCache = pgTable("clientSitesAssociationsCache", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteId: integer("siteId")
-        .notNull()
-        .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: boolean("isRelayed").notNull().default(false),
-    endpoint: varchar("endpoint")
-});
+export const clientSitesAssociationsCache = pgTable(
+    "clientSitesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteId: integer("siteId").notNull(),
+        isRelayed: boolean("isRelayed").notNull().default(false),
+        endpoint: varchar("endpoint")
+    }
+);
 
-export const clientSiteResourcesAssociationsCache = pgTable("clientSiteResourcesAssociationsCache", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteResourceId: integer("siteResourceId")
-        .notNull()
-        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
-});
+export const clientSiteResourcesAssociationsCache = pgTable(
+    "clientSiteResourcesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteResourceId: integer("siteResourceId").notNull()
+    }
+);
 
 export const olms = pgTable("olms", {
     olmId: varchar("id").primaryKey(),

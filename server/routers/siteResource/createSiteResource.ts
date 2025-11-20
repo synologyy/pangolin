@@ -272,9 +272,6 @@ export async function createSiteResource(
                 );
             }
 
-            // const targets = await generateSubnetProxyTargets([newSiteResource], trx);
-            // await addTargets(newt.newtId, targets);
-
             await rebuildClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
         });
 

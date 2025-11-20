@@ -106,10 +106,7 @@ export async function deleteSiteResource(
                 );
             }
 
-            // const targets = await generateSubnetProxyTargets([removedSiteResource], trx);
-            // await removeTargets(newt.newtId, targets);
-
-            await rebuildClientAssociations(existingSiteResource, trx);
+            await rebuildClientAssociations(removedSiteResource, trx);
         });
 
         logger.info(

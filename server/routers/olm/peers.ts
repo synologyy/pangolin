@@ -12,7 +12,7 @@ export async function addPeer(
         endpoint: string;
         serverIP: string | null;
         serverPort: number | null;
-        remoteSubnets: string | null; // optional, comma-separated list of subnets that this site can access
+        remoteSubnets: string[] | null; // optional, comma-separated list of subnets that this site can access
     },
     olmId?: string
 ) {
@@ -80,7 +80,7 @@ export async function updatePeer(
         endpoint: string;
         serverIP: string | null;
         serverPort: number | null;
-        remoteSubnets?: string | null; // optional, comma-separated list of subnets that
+        remoteSubnets?: string[] | null; // optional, comma-separated list of subnets that
     },
     olmId?: string
 ) {

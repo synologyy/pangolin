@@ -304,7 +304,7 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     return subnet;
 }
 
-export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
+export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[] {
     let remoteSubnets = allSiteResources
         .filter((sr) => {
             if (sr.mode === "cidr") return true;
@@ -321,12 +321,11 @@ export function generateRemoteSubnetsStr(allSiteResources: SiteResource[]) {
             if (sr.mode === "host") {
                 return `${sr.destination}/32`;
             }
-        });
+            return ""; // This should never be reached due to filtering, but satisfies TypeScript
+        })
+        .filter((subnet) => subnet !== ""); // Remove empty strings just to be safe
     // remove duplicates
-    remoteSubnets = Array.from(new Set(remoteSubnets));
-    const remoteSubnetsStr =
-        remoteSubnets.length > 0 ? remoteSubnets.join(",") : null;
-    return remoteSubnetsStr;
+    return Array.from(new Set(remoteSubnets));
 }
 
 export type SubnetProxyTarget = {
