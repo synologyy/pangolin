@@ -31,7 +31,8 @@ export const queryAccessAuditLogsQuery = z.object({
         .openapi({
             type: "string",
             format: "date-time",
-            description: "End time as ISO date string (defaults to current time)"
+            description:
+                "End time as ISO date string (defaults to current time)"
         }),
     action: z
         .union([z.boolean(), z.string()])
@@ -72,8 +73,9 @@ export const queryRequestAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export const queryRequestAuditLogsCombined =
-    queryAccessAuditLogsQuery.merge(queryRequestAuditLogsParams);
+export const queryRequestAuditLogsCombined = queryAccessAuditLogsQuery.merge(
+    queryRequestAuditLogsParams
+);
 type Q = z.infer<typeof queryRequestAuditLogsCombined>;
 
 function getWhere(data: Q) {
@@ -209,11 +211,21 @@ async function queryUniqueFilterAttributes(
         .where(baseConditions);
 
     return {
-        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
-        resources: uniqueResources.filter((row): row is { id: number; name: string | null } => row.id !== null),
-        locations: uniqueLocations.map(row => row.locations).filter((location): location is string => location !== null),
-        hosts: uniqueHosts.map(row => row.hosts).filter((host): host is string => host !== null),
-        paths: uniquePaths.map(row => row.paths).filter((path): path is string => path !== null)
+        actors: uniqueActors
+            .map((row) => row.actor)
+            .filter((actor): actor is string => actor !== null),
+        resources: uniqueResources.filter(
+            (row): row is { id: number; name: string | null } => row.id !== null
+        ),
+        locations: uniqueLocations
+            .map((row) => row.locations)
+            .filter((location): location is string => location !== null),
+        hosts: uniqueHosts
+            .map((row) => row.hosts)
+            .filter((host): host is string => host !== null),
+        paths: uniquePaths
+            .map((row) => row.paths)
+            .filter((path): path is string => path !== null)
     };
 }
 
@@ -270,7 +282,7 @@ export async function queryRequestAuditLogs(
             },
             success: true,
             error: false,
-            message: "Action audit logs retrieved successfully",
+            message: "Request audit logs retrieved successfully",
             status: HttpCode.OK
         });
     } catch (error) {
