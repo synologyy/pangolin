@@ -17,6 +17,7 @@ import {
     verifyExitNodeOrgAccess
 } from "#dynamic/lib/exitNodes";
 import { fetchContainers } from "./dockerSocket";
+import { lockManager } from "#dynamic/lib/lock";
 
 export type ExitNodePingResult = {
     exitNodeId: number;
@@ -362,26 +363,34 @@ async function getUniqueSubnetForSite(
     exitNode: ExitNode,
     trx: Transaction | typeof db = db
 ): Promise<string | null> {
-    const sitesQuery = await trx
-        .select({
-            subnet: sites.subnet
-        })
-        .from(sites)
-        .where(eq(sites.exitNodeId, exitNode.exitNodeId));
+    const lockKey = `subnet-allocation:${exitNode.exitNodeId}`;
+    
+    return await lockManager.withLock(
+        lockKey,
+        async () => {
+            const sitesQuery = await trx
+                .select({
+                    subnet: sites.subnet
+                })
+                .from(sites)
+                .where(eq(sites.exitNodeId, exitNode.exitNodeId));
 
-    const blockSize = config.getRawConfig().gerbil.site_block_size;
-    const subnets = sitesQuery
-        .map((site) => site.subnet)
-        .filter(
-            (subnet) =>
-                subnet && /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(subnet)
-        )
-        .filter((subnet) => subnet !== null);
-    subnets.push(exitNode.address.replace(/\/\d+$/, `/${blockSize}`));
-    const newSubnet = findNextAvailableCidr(
-        subnets,
-        blockSize,
-        exitNode.address
+            const blockSize = config.getRawConfig().gerbil.site_block_size;
+            const subnets = sitesQuery
+                .map((site) => site.subnet)
+                .filter(
+                    (subnet) =>
+                        subnet && /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(subnet)
+                )
+                .filter((subnet) => subnet !== null);
+            subnets.push(exitNode.address.replace(/\/\d+$/, `/${blockSize}`));
+            const newSubnet = findNextAvailableCidr(
+                subnets,
+                blockSize,
+                exitNode.address
+            );
+            return newSubnet;
+        },
+        5000 // 5 second lock TTL - subnet allocation should be quick
     );
-    return newSubnet;
 }
