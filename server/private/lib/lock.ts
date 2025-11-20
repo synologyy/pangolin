@@ -26,6 +26,10 @@ export class LockManager {
         lockKey: string,
         ttlMs: number = 30000
     ): Promise<boolean> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return true;
+        }
+
         const lockValue = `${
             config.getRawConfig().gerbil.exit_node_name
         }:${Date.now()}`;
@@ -81,6 +85,10 @@ export class LockManager {
      * @param lockKey - Unique identifier for the lock
      */
     async releaseLock(lockKey: string): Promise<void> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return;
+        }
+
         const redisKey = `lock:${lockKey}`;
 
         // Lua script to ensure we only delete the lock if it belongs to this worker
@@ -127,6 +135,10 @@ export class LockManager {
      * @param lockKey - Unique identifier for the lock
      */
     async forceReleaseLock(lockKey: string): Promise<void> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return;
+        }
+
         const redisKey = `lock:${lockKey}`;
 
         try {
@@ -150,6 +162,10 @@ export class LockManager {
         ttl: number;
         owner?: string;
     }> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return { exists: false, ownedByMe: true, ttl: 0 };
+        }
+
         const redisKey = `lock:${lockKey}`;
 
         try {
@@ -183,6 +199,10 @@ export class LockManager {
      * @returns Promise<boolean> - true if extended successfully
      */
     async extendLock(lockKey: string, ttlMs: number): Promise<boolean> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return true;
+        }
+
         const redisKey = `lock:${lockKey}`;
 
         // Lua script to extend TTL only if lock is owned by this worker
@@ -237,6 +257,10 @@ export class LockManager {
         maxRetries: number = 5,
         baseDelayMs: number = 100
     ): Promise<boolean> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return true;
+        }
+
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
             const acquired = await this.acquireLock(lockKey, ttlMs);
 
@@ -270,6 +294,10 @@ export class LockManager {
         fn: () => Promise<T>,
         ttlMs: number = 30000
     ): Promise<T> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return await fn();
+        }
+
         const acquired = await this.acquireLock(lockKey, ttlMs);
 
         if (!acquired) {
@@ -292,6 +320,10 @@ export class LockManager {
         activeLocksCount: number;
         locksOwnedByMe: number;
     }> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return { activeLocksCount: 0, locksOwnedByMe: 0 };
+        }
+
         try {
             const keys = await redis.keys("lock:*");
             let locksOwnedByMe = 0;
@@ -321,6 +353,9 @@ export class LockManager {
      * Close the Redis connection
      */
     async disconnect(): Promise<void> {
+        if (!redis || !redis.status || redis.status !== "ready") {
+            return;
+        }
         await redis.quit();
     }
 }
