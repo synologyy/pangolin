@@ -17,8 +17,12 @@ import { eq, and, ne } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { updateTargets } from "@server/routers/client/targets";
-import { generateSubnetProxyTargets } from "@server/lib/ip";
+import {
+    addRemoteSubnets,
+    removeRemoteSubnets,
+    updateTargets
+} from "@server/routers/client/targets";
+import { generateRemoteSubnets, generateSubnetProxyTargets } from "@server/lib/ip";
 import {
     getClientSiteResourceAccess,
     rebuildClientAssociations
@@ -221,11 +225,11 @@ export async function updateSiteResource(
             }
 
             const { mergedAllClients } = await rebuildClientAssociations(
-                updatedSiteResource,
+                existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
                 trx
-            ); // we need to call this because we added to the admin role
+            );
 
-            // after everything is rebuilt above we still need to update the targets if the destination changed
+            // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
             if (
                 existingSiteResource.destination !==
                 updatedSiteResource.destination
@@ -255,6 +259,26 @@ export async function updateSiteResource(
                     oldTargets: oldTargets,
                     newTargets: newTargets
                 });
+
+                let olmJobs: Promise<void>[] = [];
+                for (const client of mergedAllClients) { // we also need to update the remote subnets on the olms for each client that has access to this site
+                    olmJobs.push(
+                        removeRemoteSubnets(
+                            client.clientId,
+                            updatedSiteResource.siteId,
+                            generateRemoteSubnets([existingSiteResource])
+                        )
+                    );
+                    olmJobs.push(
+                        addRemoteSubnets(
+                            client.clientId,
+                            updatedSiteResource.siteId,
+                            generateRemoteSubnets([updatedSiteResource])
+                        )
+                    );
+                }
+
+                await Promise.all(olmJobs);
             }
 
             logger.info(

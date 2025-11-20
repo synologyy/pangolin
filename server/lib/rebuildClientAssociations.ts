@@ -36,6 +36,7 @@ import {
     SubnetProxyTarget
 } from "@server/lib/ip";
 import {
+    addRemoteSubnets,
     addTargets as addSubnetProxyTargets,
     removeTargets as removeSubnetProxyTargets
 } from "@server/routers/client/targets";
@@ -644,6 +645,8 @@ async function handleSubnetProxyTargetUpdates(
         return;
     }
 
+    let proxyJobs = [];
+    let olmJobs = [];
     // Generate targets for added associations
     if (clientSiteResourcesToAdd.length > 0) {
         const addedClients = allClients.filter((client) =>
@@ -660,10 +663,20 @@ async function handleSubnetProxyTargetUpdates(
                 logger.info(
                     `Adding ${targetsToAdd.length} subnet proxy targets for siteResource ${siteResource.siteResourceId}`
                 );
-                await addSubnetProxyTargets(newt.newtId, targetsToAdd);
+                proxyJobs.push(
+                    addSubnetProxyTargets(newt.newtId, targetsToAdd)
+                );
+            }
+
+            for (const client of addedClients) {
+                olmJobs.push(
+                    addRemoteSubnets(client.clientId, siteResource.siteId, generateRemoteSubnets([siteResource]))
+                );
             }
         }
     }
+
+    // here we use the existingSiteResource from BEFORE we updated the destination so we dont need to worry about updating destinations here
 
     // Generate targets for removed associations
     if (clientSiteResourcesToRemove.length > 0) {
@@ -681,8 +694,18 @@ async function handleSubnetProxyTargetUpdates(
                 logger.info(
                     `Removing ${targetsToRemove.length} subnet proxy targets for siteResource ${siteResource.siteResourceId}`
                 );
-                await removeSubnetProxyTargets(newt.newtId, targetsToRemove);
+                proxyJobs.push(
+                    removeSubnetProxyTargets(newt.newtId, targetsToRemove)
+                );
+            }
+
+            for (const client of removedClients) {
+                olmJobs.push(
+                    addRemoteSubnets(client.clientId, siteResource.siteId, generateRemoteSubnets([siteResource]))
+                );
             }
         }
     }
+
+    await Promise.all(proxyJobs);
 }

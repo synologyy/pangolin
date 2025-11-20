@@ -3,7 +3,6 @@ import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
 import z from "zod";
-import { getClientSiteResourceAccess } from "./rebuildClientAssociations";
 import logger from "@server/logger";
 
 interface IPRange {
