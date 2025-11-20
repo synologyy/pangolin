@@ -71,13 +71,13 @@ async function query(query: Q) {
         );
     }
 
-    const [totalRequests] = await db
+    const [all] = await db
         .select({ total: count() })
         .from(requestAuditLog)
         .where(baseConditions);
 
-    const [totalBlocked] = await db
-        .select({ blocked: count() })
+    const [blocked] = await db
+        .select({ total: count() })
         .from(requestAuditLog)
         .where(and(baseConditions, eq(requestAuditLog.action, false)));
 
@@ -92,7 +92,11 @@ async function query(query: Q) {
         .where(baseConditions)
         .groupBy(requestAuditLog.location);
 
-    return { requestsPerCountry, totalBlocked, totalRequests };
+    return {
+        requestsPerCountry,
+        totalBlocked: blocked.total,
+        totalRequests: all.total
+    };
 }
 
 registry.registerPath({

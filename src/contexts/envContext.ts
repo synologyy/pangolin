@@ -1,7 +1,7 @@
-import { Env } from "@app/lib/types/env";
+import type { Env } from "@app/lib/types/env";
 import { createContext } from "react";
 
-interface EnvContextType {
+export interface EnvContextType {
     env: Env;
 }
 

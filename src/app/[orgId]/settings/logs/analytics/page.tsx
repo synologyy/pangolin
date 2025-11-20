@@ -1,11 +1,18 @@
+import { LogAnalyticsData } from "@app/components/LogAnalyticsData";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { Card, CardContent, CardHeader } from "@app/components/ui/card";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 
-export interface AnalyticsPageProps {}
+export interface AnalyticsPageProps {
+    params: Promise<{ orgId: string }>;
+    searchParams: Promise<Record<string, string>>;
+}
 
 export default async function AnalyticsPage(props: AnalyticsPageProps) {
     const t = await getTranslations();
+
+    const orgId = (await props.params).orgId;
+
     return (
         <>
             <SettingsSectionTitle
@@ -14,10 +21,7 @@ export default async function AnalyticsPage(props: AnalyticsPageProps) {
             />
 
             <div className="container mx-auto max-w-12xl">
-                <Card className="">
-                    <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-4"></CardHeader>
-                    <CardContent></CardContent>
-                </Card>
+                <LogAnalyticsData orgId={orgId} />
             </div>
         </>
     );
