@@ -18,11 +18,13 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import {
-    addRemoteSubnets,
-    removeRemoteSubnets,
+    updateRemoteSubnets,
     updateTargets
 } from "@server/routers/client/targets";
-import { generateRemoteSubnets, generateSubnetProxyTargets } from "@server/lib/ip";
+import {
+    generateRemoteSubnets,
+    generateSubnetProxyTargets
+} from "@server/lib/ip";
 import {
     getClientSiteResourceAccess,
     rebuildClientAssociations
@@ -261,19 +263,20 @@ export async function updateSiteResource(
                 });
 
                 let olmJobs: Promise<void>[] = [];
-                for (const client of mergedAllClients) { // we also need to update the remote subnets on the olms for each client that has access to this site
+                for (const client of mergedAllClients) {
+                    // we also need to update the remote subnets on the olms for each client that has access to this site
                     olmJobs.push(
-                        removeRemoteSubnets(
+                        updateRemoteSubnets(
                             client.clientId,
                             updatedSiteResource.siteId,
-                            generateRemoteSubnets([existingSiteResource])
-                        )
-                    );
-                    olmJobs.push(
-                        addRemoteSubnets(
-                            client.clientId,
-                            updatedSiteResource.siteId,
-                            generateRemoteSubnets([updatedSiteResource])
+                            {
+                                oldRemoteSubnets: generateRemoteSubnets([
+                                    existingSiteResource
+                                ]),
+                                newRemoteSubnets: generateRemoteSubnets([
+                                    updatedSiteResource
+                                ])
+                            }
                         )
                     );
                 }
