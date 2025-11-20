@@ -163,7 +163,7 @@ const countryClass = cn(
     sharedCountryClass,
     "stroke-1",
     "fill-[#fafafa]",
-    "stroke-[#dae1e7]",
+    "stroke-[#E7DADA]",
     "dark:fill-[#323236]",
     "dark:stroke-[#18181b]"
 );
