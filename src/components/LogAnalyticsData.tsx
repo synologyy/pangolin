@@ -33,6 +33,14 @@ import {
     InfoSectionTitle
 } from "./InfoSection";
 import { WorldMap } from "./WorldMap";
+import { countryCodeToFlagEmoji } from "@app/lib/countryCodeToFlagEmoji";
+import { useTheme } from "next-themes";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "./ui/tooltip";
 
 export type AnalyticsContentProps = {
     orgId: string;
@@ -77,8 +85,8 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
 
     const percentBlocked = stats
         ? new Intl.NumberFormat(navigator.language, {
-              maximumFractionDigits: 5
-          }).format(stats.totalBlocked / stats.totalRequests)
+              maximumFractionDigits: 2
+          }).format((stats.totalBlocked / stats.totalRequests) * 100)
         : null;
     const totalRequests = stats
         ? new Intl.NumberFormat(navigator.language, {
@@ -251,8 +259,8 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 </CardHeader>
             </Card>
 
-            <div className="flex flex-col lg:flex-row items-stretch gap-5">
-                <Card className="w-full">
+            <div className="grid lg:grid-cols-2 gap-5">
+                <Card className="w-full h-full">
                     <CardHeader className="flex flex-col gap-4">
                         <h3 className="font-medium">
                             {t("requestsByCountry")}
@@ -260,12 +268,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
                         <WorldMap
-                            data={
-                                stats?.requestsPerCountry.map((item) => ({
-                                    count: item.total,
-                                    code: item.country_code ?? "US"
-                                })) ?? []
-                            }
+                            data={stats?.requestsPerCountry ?? []}
                             label={{
                                 singular: "request",
                                 plural: "requests"
@@ -274,15 +277,108 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                     </CardContent>
                 </Card>
 
-                <Card className="w-full">
+                <Card className="w-full h-full">
                     <CardHeader className="flex flex-col gap-4">
                         <h3 className="font-medium">{t("topCountries")}</h3>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
-                        {/* ... */}
+                    <CardContent className="flex h-full flex-col gap-4">
+                        <TopCountriesList
+                            countries={stats?.requestsPerCountry ?? []}
+                            total={stats?.totalRequests ?? 0}
+                        />
                     </CardContent>
                 </Card>
             </div>
+        </div>
+    );
+}
+
+type TopCountriesListProps = {
+    countries: {
+        code: string;
+        count: number;
+    }[];
+    total: number;
+};
+
+function TopCountriesList(props: TopCountriesListProps) {
+    const t = useTranslations();
+    const displayNames = new Intl.DisplayNames(navigator.language, {
+        type: "region",
+        fallback: "code"
+    });
+
+    const formatter = new Intl.NumberFormat(navigator.language, {
+        maximumFractionDigits: 1,
+        notation: "compact",
+        compactDisplay: "short"
+    });
+    const percentFormatter = new Intl.NumberFormat(navigator.language, {
+        maximumFractionDigits: 0,
+        style: "percent"
+    });
+
+    return (
+        <div className="h-full flex flex-col gap-2">
+            <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium h-4">
+                <div className="col-span-5">{t("countries")}</div>
+                <div className="text-end">{t("total")}</div>
+                <div className="text-end">%</div>
+            </div>
+            {/* `aspect-475/335` is the same aspect ratio as the world map component */}
+            <ol className="w-full overflow-auto grid gap-1 aspect-475/335">
+                {props.countries.map((country) => {
+                    const percent = country.count / props.total;
+                    return (
+                        <li
+                            key={country.code}
+                            className="grid grid-cols-7 rounded-xs hover:bg-muted relative items-center text-sm"
+                        >
+                            <div
+                                className={cn(
+                                    "absolute bg-[#f36117]/40 top-0 bottom-0 left-0 rounded-xs"
+                                )}
+                                style={{
+                                    width: `${percent * 100}%`
+                                }}
+                            />
+                            <div className="col-span-5 px-2 py-1 relative z-1">
+                                <span className="inline-flex gap-2 items-center">
+                                    {countryCodeToFlagEmoji(country.code)}{" "}
+                                    {displayNames.of(country.code)}
+                                </span>
+                            </div>
+                            <TooltipProvider>
+                                <div className="text-end">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <button className="inline">
+                                                {formatter.format(
+                                                    country.count
+                                                )}
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <strong>
+                                                {Intl.NumberFormat(
+                                                    navigator.language
+                                                ).format(country.count)}
+                                            </strong>{" "}
+                                            {country.count === 1
+                                                ? t("request")
+                                                : t("requests")}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
+
+                                <div className="text-end">
+                                    {percentFormatter.format(percent)}
+                                </div>
+                            </TooltipProvider>
+                        </li>
+                    );
+                })}
+            </ol>
         </div>
     );
 }

@@ -709,6 +709,7 @@
     "resourceTransferSubmit": "Transfer Resource",
     "siteDestination": "Destination Site",
     "searchSites": "Search sites",
+    "countries": "Countries",
     "accessRoleCreate": "Create Role",
     "accessRoleCreateDescription": "Create a new role to group users and manage their permissions.",
     "accessRoleCreateSubmit": "Create Role",

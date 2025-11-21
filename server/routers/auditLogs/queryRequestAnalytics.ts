@@ -2,7 +2,7 @@ import { db, requestAuditLog, resources } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
-import { eq, gt, lt, and, count, sql } from "drizzle-orm";
+import { eq, gt, lt, and, count, sql, desc, not, isNull } from "drizzle-orm";
 import { OpenAPITags } from "@server/openApi";
 import { z } from "zod";
 import createHttpError from "http-errors";
@@ -81,19 +81,25 @@ async function query(query: Q) {
         .from(requestAuditLog)
         .where(and(baseConditions, eq(requestAuditLog.action, false)));
 
+    const totalQ = sql<number>`count(${requestAuditLog.id})`
+        .mapWith(Number)
+        .as("total");
+
     const requestsPerCountry = await db
-        .select({
-            country_code: requestAuditLog.location,
-            total: sql<number>`count(${requestAuditLog.id})`
-                .mapWith(Number)
-                .as("total")
+        .selectDistinct({
+            code: requestAuditLog.location,
+            count: totalQ
         })
         .from(requestAuditLog)
-        .where(baseConditions)
-        .groupBy(requestAuditLog.location);
+        .where(and(baseConditions, not(isNull(requestAuditLog.location))))
+        .groupBy(requestAuditLog.location)
+        .orderBy(desc(totalQ));
 
     return {
-        requestsPerCountry,
+        requestsPerCountry: requestsPerCountry as Array<{
+            code: string;
+            count: number;
+        }>,
         totalBlocked: blocked.total,
         totalRequests: all.total
     };
