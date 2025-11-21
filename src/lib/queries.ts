@@ -113,6 +113,12 @@ export const logQueries = {
                     signal
                 });
                 return res.data.data;
+            },
+            refetchInterval: (query) => {
+                if (query.state.data) {
+                    return durationToMs(30, "seconds");
+                }
+                return false;
             }
         })
 };
