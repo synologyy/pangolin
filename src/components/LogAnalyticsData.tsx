@@ -412,51 +412,13 @@ function RequestChart(props: RequestChartProps) {
                     }}
                 />
 
-                <defs>
-                    <linearGradient
-                        id="fillAllowed"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                    >
-                        <stop
-                            offset="5%"
-                            stopColor="var(--color-allowedCount)"
-                            stopOpacity={0.8}
-                        />
-                        <stop
-                            offset="95%"
-                            stopColor="var(--color-allowedCount)"
-                            stopOpacity={0.1}
-                        />
-                    </linearGradient>
-                    <linearGradient
-                        id="fillBlocked"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                    >
-                        <stop
-                            offset="5%"
-                            stopColor="var(--color-blockedCount)"
-                            stopOpacity={0.8}
-                        />
-                        <stop
-                            offset="95%"
-                            stopColor="var(--color-blockedCount)"
-                            stopOpacity={0.1}
-                        />
-                    </linearGradient>
-                </defs>
-
                 <Area
                     dataKey="allowedCount"
                     stroke="var(--color-allowedCount)"
                     strokeWidth={2}
                     fill="transparent"
                     radius={4}
+                    isAnimationActive={false}
                 />
                 <Area
                     dataKey="blockedCount"
@@ -464,6 +426,7 @@ function RequestChart(props: RequestChartProps) {
                     strokeWidth={2}
                     fill="transparent"
                     radius={4}
+                    isAnimationActive={false}
                 />
             </AreaChart>
         </ChartContainer>
