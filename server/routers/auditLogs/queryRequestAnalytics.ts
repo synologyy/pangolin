@@ -1,4 +1,4 @@
-import { db, requestAuditLog, resources } from "@server/db";
+import { db, requestAuditLog, driver } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -95,11 +95,41 @@ async function query(query: Q) {
         .groupBy(requestAuditLog.location)
         .orderBy(desc(totalQ));
 
+    const groupByDayFunction =
+        driver === "pg"
+            ? sql<string>`DATE_TRUNC('day', TO_TIMESTAMP(${requestAuditLog.timestamp}))`.as(
+                  "day"
+              )
+            : sql<string>`DATE(${requestAuditLog.timestamp}, 'unixepoch')`.as(
+                  "day"
+              );
+
+    const booleanTrue = driver === "pg" ? sql`true` : sql`1`;
+    const booleanFalse = driver === "pg" ? sql`false` : sql`0`;
+
+    const requestsPerDay = await db
+        .select({
+            day: groupByDayFunction,
+            allowedCount:
+                sql<number>`SUM(CASE WHEN ${requestAuditLog.action} = ${booleanTrue} THEN 1 ELSE 0 END)`.as(
+                    "allowed_count"
+                ),
+            blockedCount:
+                sql<number>`SUM(CASE WHEN ${requestAuditLog.action} = ${booleanFalse} THEN 1 ELSE 0 END)`.as(
+                    "blocked_count"
+                ),
+            totalCount: sql<number>`COUNT(*)`.as("total_count")
+        })
+        .from(requestAuditLog)
+        .groupBy(groupByDayFunction)
+        .orderBy(groupByDayFunction);
+
     return {
         requestsPerCountry: requestsPerCountry as Array<{
             code: string;
             count: number;
         }>,
+        requestsPerDay,
         totalBlocked: blocked.total,
         totalRequests: all.total
     };
