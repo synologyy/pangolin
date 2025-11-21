@@ -2154,5 +2154,6 @@
     "niceIdUpdateErrorDescription": "An error occurred while updating the Nice ID.",
     "niceIdCannotBeEmpty": "Nice ID cannot be empty",
     "enterIdentifier": "Enter identifier",
-    "identifier": "Identifier"
+    "identifier": "Identifier",
+    "noData": "No Data"
 }

@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import { RefreshCw, XIcon } from "lucide-react";
+import { LoaderIcon, RefreshCw, XIcon } from "lucide-react";
 import { DateRangePicker, type DateTimeValue } from "./DateTimePicker";
 import { Button } from "./ui/button";
 import { cn } from "@app/lib/cn";
@@ -74,7 +74,8 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
     const {
         data: stats,
         isFetching: isFetchingAnalytics,
-        refetch: refreshAnalytics
+        refetch: refreshAnalytics,
+        isLoading: isLoadingAnalytics // only `true` when there is no data yet
     } = useQuery(
         logQueries.requestAnalytics({
             orgId: props.orgId,
@@ -296,6 +297,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                         <TopCountriesList
                             countries={stats?.requestsPerCountry ?? []}
                             total={stats?.totalRequests ?? 0}
+                            isLoading={isLoadingAnalytics}
                         />
                     </CardContent>
                 </Card>
@@ -310,6 +312,7 @@ type TopCountriesListProps = {
         count: number;
     }[];
     total: number;
+    isLoading: boolean;
 };
 
 function TopCountriesList(props: TopCountriesListProps) {
@@ -331,13 +334,27 @@ function TopCountriesList(props: TopCountriesListProps) {
 
     return (
         <div className="h-full flex flex-col gap-2">
-            <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium h-4">
-                <div className="col-span-5">{t("countries")}</div>
-                <div className="text-end">{t("total")}</div>
-                <div className="text-end">%</div>
-            </div>
+            {props.countries.length > 0 && (
+                <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium h-4">
+                    <div className="col-span-5">{t("countries")}</div>
+                    <div className="text-end">{t("total")}</div>
+                    <div className="text-end">%</div>
+                </div>
+            )}
             {/* `aspect-475/335` is the same aspect ratio as the world map component */}
             <ol className="w-full overflow-auto grid gap-1 aspect-475/335">
+                {props.countries.length === 0 && (
+                    <div className="flex items-center justify-center size-full text-muted-foreground font-mono gap-1">
+                        {props.isLoading ? (
+                            <>
+                                <LoaderIcon className="size-4 animate-spin" />{" "}
+                                {t("loading")}
+                            </>
+                        ) : (
+                            t("noData")
+                        )}
+                    </div>
+                )}
                 {props.countries.map((country) => {
                     const percent = country.count / props.total;
                     return (
