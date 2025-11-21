@@ -34,7 +34,7 @@ import {
 } from "./InfoSection";
 import { WorldMap } from "./WorldMap";
 import { countryCodeToFlagEmoji } from "@app/lib/countryCodeToFlagEmoji";
-import { useTheme } from "next-themes";
+
 import {
     Tooltip,
     TooltipContent,
@@ -49,7 +49,7 @@ import {
     ChartTooltipContent,
     type ChartConfig
 } from "./ui/chart";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 export type AnalyticsContentProps = {
     orgId: string;
@@ -365,7 +365,7 @@ function RequestChart(props: RequestChartProps) {
             config={chartConfig}
             className="min-h-[200px] w-full h-80"
         >
-            <AreaChart accessibilityLayer data={props.data}>
+            <LineChart accessibilityLayer data={props.data}>
                 <ChartLegend content={<ChartLegendContent />} />
                 <ChartTooltip
                     content={
@@ -412,23 +412,25 @@ function RequestChart(props: RequestChartProps) {
                     }}
                 />
 
-                <Area
+                <Line
                     dataKey="allowedCount"
                     stroke="var(--color-allowedCount)"
                     strokeWidth={2}
                     fill="transparent"
                     radius={4}
                     isAnimationActive={false}
+                    dot={false}
                 />
-                <Area
+                <Line
                     dataKey="blockedCount"
                     stroke="var(--color-blockedCount)"
                     strokeWidth={2}
                     fill="transparent"
                     radius={4}
                     isAnimationActive={false}
+                    dot={false}
                 />
-            </AreaChart>
+            </LineChart>
         </ChartContainer>
     );
 }
