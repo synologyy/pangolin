@@ -13,7 +13,7 @@ COPY . .
 
 RUN echo "export * from \"./$DATABASE\";\nexport const driver: \"pg\" | \"sqlite\" = \"$DATABASE\";" > server/db/index.ts
 
-RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
+RUN echo "export const build = \"$BUILD\" as \"saas\" | \"enterprise\" | \"oss\";" > server/build.ts
 
 # Copy the appropriate TypeScript configuration based on build type
 RUN if [ "$BUILD" = "oss" ]; then cp tsconfig.oss.json tsconfig.json; \
