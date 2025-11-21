@@ -347,6 +347,9 @@ function RequestChart(props: RequestChartProps) {
     });
 
     const chartConfig = {
+        day: {
+            label: t("requestsByDay")
+        },
         blockedCount: {
             label: t("blocked"),
             color: "var(--chart-5)"
@@ -367,49 +370,14 @@ function RequestChart(props: RequestChartProps) {
                 <ChartTooltip
                     content={
                         <ChartTooltipContent
-                            hideLabel
-                            formatter={(value, name, item, index) => {
+                            indicator="dot"
+                            labelFormatter={(value, payload) => {
                                 const formattedDate = new Date(
-                                    item.payload.day
+                                    payload[0].payload.day
                                 ).toLocaleDateString(navigator.language, {
                                     dateStyle: "medium"
                                 });
-
-                                const value_str = numberFormatter.format(
-                                    value as number
-                                );
-
-                                const config =
-                                    chartConfig[
-                                        name as keyof typeof chartConfig
-                                    ];
-
-                                return (
-                                    <div className="flex gap-2 items-start text-sm flex-col w-full">
-                                        {index === 0 && (
-                                            <span>{formattedDate}</span>
-                                        )}
-
-                                        <div className="ml-auto flex items-baseline justify-between gap-4 self-stretch w-full font-mono font-medium tabular-nums text-card-foreground text-xs">
-                                            <div className="flex gap-1 items-center">
-                                                <div
-                                                    className="size-2.5 flex-none rounded-[2px] bg-(--color-bg)"
-                                                    style={
-                                                        {
-                                                            "--color-bg": `var(--color-${name})`
-                                                        } as React.CSSProperties
-                                                    }
-                                                />
-                                                <span className="text-muted-foreground">
-                                                    {config.label}
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-0.5">
-                                                <span>{value_str}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
+                                return formattedDate;
                             }}
                         />
                     }
@@ -486,13 +454,15 @@ function RequestChart(props: RequestChartProps) {
                 <Area
                     dataKey="allowedCount"
                     stroke="var(--color-allowedCount)"
-                    fill="url(#fillAllowed)"
+                    strokeWidth={2}
+                    fill="transparent"
                     radius={4}
                 />
                 <Area
                     dataKey="blockedCount"
                     stroke="var(--color-blockedCount)"
-                    fill="url(#fillBlocked)"
+                    strokeWidth={2}
+                    fill="transparent"
                     radius={4}
                 />
             </AreaChart>

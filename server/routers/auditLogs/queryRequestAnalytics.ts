@@ -121,6 +121,7 @@ async function query(query: Q) {
             totalCount: sql<number>`COUNT(*)`.as("total_count")
         })
         .from(requestAuditLog)
+        .where(and(baseConditions))
         .groupBy(groupByDayFunction)
         .orderBy(groupByDayFunction);
 

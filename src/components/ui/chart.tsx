@@ -180,7 +180,7 @@ const ChartTooltipContent = React.forwardRef<
             <div
                 ref={ref}
                 className={cn(
-                    "grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
+                    "grid min-w-32 items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl",
                     className
                 )}
             >
@@ -190,6 +190,7 @@ const ChartTooltipContent = React.forwardRef<
                         .filter((item) => item.type !== "none")
                         .map((item, index) => {
                             const key = `${nameKey || item.name || item.dataKey || "value"}`;
+
                             const itemConfig = getPayloadConfigFromPayload(
                                 config,
                                 item,
@@ -224,7 +225,7 @@ const ChartTooltipContent = React.forwardRef<
                                                 !hideIndicator && (
                                                     <div
                                                         className={cn(
-                                                            "shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
+                                                            "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
                                                             {
                                                                 "h-2.5 w-2.5":
                                                                     indicator ===
@@ -254,7 +255,7 @@ const ChartTooltipContent = React.forwardRef<
                                             )}
                                             <div
                                                 className={cn(
-                                                    "flex flex-1 justify-between leading-none",
+                                                    "flex flex-1 justify-between leading-none gap-2",
                                                     nestLabel
                                                         ? "items-end"
                                                         : "items-center"
@@ -271,7 +272,18 @@ const ChartTooltipContent = React.forwardRef<
                                                 </div>
                                                 {item.value && (
                                                     <span className="font-mono font-medium tabular-nums text-foreground">
-                                                        {item.value.toLocaleString()}
+                                                        {!isNaN(
+                                                            item.value as number
+                                                        )
+                                                            ? new Intl.NumberFormat(
+                                                                  navigator.language,
+                                                                  {
+                                                                      maximumFractionDigits: 0
+                                                                  }
+                                                              ).format(
+                                                                  item.value as number
+                                                              )
+                                                            : item.value.toLocaleString()}
                                                     </span>
                                                 )}
                                             </div>
