@@ -41,6 +41,15 @@ import {
     TooltipProvider,
     TooltipTrigger
 } from "./ui/tooltip";
+import {
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+    type ChartConfig
+} from "./ui/chart";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 export type AnalyticsContentProps = {
     orgId: string;
@@ -271,14 +280,26 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 </CardHeader>
             </Card>
 
+            <Card className="w-full h-full flex flex-col gap-8">
+                <CardHeader>
+                    <h3 className="font-medium">{t("requestsByDay")}</h3>
+                </CardHeader>
+                <CardContent>
+                    <RequestChart
+                        data={stats?.requestsPerDay ?? []}
+                        isLoading={isLoadingAnalytics}
+                    />
+                </CardContent>
+            </Card>
+
             <div className="grid lg:grid-cols-2 gap-5">
                 <Card className="w-full h-full">
-                    <CardHeader className="flex flex-col gap-4">
+                    <CardHeader>
                         <h3 className="font-medium">
                             {t("requestsByCountry")}
                         </h3>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-4">
+                    <CardContent>
                         <WorldMap
                             data={stats?.requestsPerCountry ?? []}
                             label={{
@@ -290,7 +311,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 </Card>
 
                 <Card className="w-full h-full">
-                    <CardHeader className="flex flex-col gap-4">
+                    <CardHeader>
                         <h3 className="font-medium">{t("topCountries")}</h3>
                     </CardHeader>
                     <CardContent className="flex h-full flex-col gap-4">
@@ -303,6 +324,179 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 </Card>
             </div>
         </div>
+    );
+}
+
+type RequestChartProps = {
+    data: {
+        day: string;
+        allowedCount: number;
+        blockedCount: number;
+        totalCount: number;
+    }[];
+    isLoading: boolean;
+};
+
+function RequestChart(props: RequestChartProps) {
+    const t = useTranslations();
+
+    const numberFormatter = new Intl.NumberFormat(navigator.language, {
+        maximumFractionDigits: 1,
+        notation: "compact",
+        compactDisplay: "short"
+    });
+
+    const chartConfig = {
+        blockedCount: {
+            label: t("blocked"),
+            color: "var(--chart-5)"
+        },
+        allowedCount: {
+            label: t("allowed"),
+            color: "var(--chart-2)"
+        }
+    } satisfies ChartConfig;
+
+    return (
+        <ChartContainer
+            config={chartConfig}
+            className="min-h-[200px] w-full h-80"
+        >
+            <AreaChart accessibilityLayer data={props.data}>
+                <ChartLegend content={<ChartLegendContent />} />
+                <ChartTooltip
+                    content={
+                        <ChartTooltipContent
+                            hideLabel
+                            formatter={(value, name, item, index) => {
+                                const formattedDate = new Date(
+                                    item.payload.day
+                                ).toLocaleDateString(navigator.language, {
+                                    dateStyle: "medium"
+                                });
+
+                                const value_str = numberFormatter.format(
+                                    value as number
+                                );
+
+                                const config =
+                                    chartConfig[
+                                        name as keyof typeof chartConfig
+                                    ];
+
+                                return (
+                                    <div className="flex gap-2 items-start text-sm flex-col w-full">
+                                        {index === 0 && (
+                                            <span>{formattedDate}</span>
+                                        )}
+
+                                        <div className="ml-auto flex items-baseline justify-between gap-4 self-stretch w-full font-mono font-medium tabular-nums text-card-foreground text-xs">
+                                            <div className="flex gap-1 items-center">
+                                                <div
+                                                    className="size-2.5 flex-none rounded-[2px] bg-(--color-bg)"
+                                                    style={
+                                                        {
+                                                            "--color-bg": `var(--color-${name})`
+                                                        } as React.CSSProperties
+                                                    }
+                                                />
+                                                <span className="text-muted-foreground">
+                                                    {config.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex gap-0.5">
+                                                <span>{value_str}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }}
+                        />
+                    }
+                />
+
+                <CartesianGrid vertical={false} />
+                <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[
+                        0,
+                        Math.max(...props.data.map((datum) => datum.totalCount))
+                    ]}
+                    allowDataOverflow
+                    type="number"
+                    tickFormatter={(value) => {
+                        return numberFormatter.format(value);
+                    }}
+                />
+                <XAxis
+                    dataKey="day"
+                    tickLine={false}
+                    tickMargin={10}
+                    axisLine={false}
+                    tickFormatter={(value) => {
+                        return new Date(value).toLocaleDateString(
+                            navigator.language,
+                            {
+                                dateStyle: "medium"
+                            }
+                        );
+                    }}
+                />
+
+                <defs>
+                    <linearGradient
+                        id="fillAllowed"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop
+                            offset="5%"
+                            stopColor="var(--color-allowedCount)"
+                            stopOpacity={0.8}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor="var(--color-allowedCount)"
+                            stopOpacity={0.1}
+                        />
+                    </linearGradient>
+                    <linearGradient
+                        id="fillBlocked"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop
+                            offset="5%"
+                            stopColor="var(--color-blockedCount)"
+                            stopOpacity={0.8}
+                        />
+                        <stop
+                            offset="95%"
+                            stopColor="var(--color-blockedCount)"
+                            stopOpacity={0.1}
+                        />
+                    </linearGradient>
+                </defs>
+
+                <Area
+                    dataKey="allowedCount"
+                    stroke="var(--color-allowedCount)"
+                    fill="url(#fillAllowed)"
+                    radius={4}
+                />
+                <Area
+                    dataKey="blockedCount"
+                    stroke="var(--color-blockedCount)"
+                    fill="url(#fillBlocked)"
+                    radius={4}
+                />
+            </AreaChart>
+        </ChartContainer>
     );
 }
 
@@ -322,7 +516,7 @@ function TopCountriesList(props: TopCountriesListProps) {
         fallback: "code"
     });
 
-    const formatter = new Intl.NumberFormat(navigator.language, {
+    const numberFormatter = new Intl.NumberFormat(navigator.language, {
         maximumFractionDigits: 1,
         notation: "compact",
         compactDisplay: "short"
@@ -381,7 +575,7 @@ function TopCountriesList(props: TopCountriesListProps) {
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <button className="inline">
-                                                {formatter.format(
+                                                {numberFormatter.format(
                                                     country.count
                                                 )}
                                             </button>
