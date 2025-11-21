@@ -170,13 +170,21 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                                         const newSearch = new URLSearchParams(
                                             searchParams
                                         );
-                                        newSearch.set("resourceId", newValue);
+                                        newSearch.delete("resourceId");
+                                        if (newValue !== "all") {
+                                            newSearch.set(
+                                                "resourceId",
+                                                newValue
+                                            );
+                                        }
 
                                         router.replace(
                                             `${path}?${newSearch.toString()}`
                                         );
                                     }}
-                                    value={filters.resourceId?.toString()}
+                                    value={
+                                        filters.resourceId?.toString() ?? "all"
+                                    }
                                 >
                                     <SelectTrigger
                                         id="resourceId"
@@ -195,6 +203,9 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                                                 {resource.name}
                                             </SelectItem>
                                         ))}
+                                        <SelectItem value="all">
+                                            All resources
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
