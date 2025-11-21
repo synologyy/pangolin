@@ -97,19 +97,15 @@ async function query(query: Q) {
 
     const groupByDayFunction =
         driver === "pg"
-            ? sql<string>`DATE_TRUNC('day', TO_TIMESTAMP(${requestAuditLog.timestamp}))`.as(
-                  "day"
-              )
-            : sql<string>`DATE(${requestAuditLog.timestamp}, 'unixepoch')`.as(
-                  "day"
-              );
+            ? sql<string>`DATE_TRUNC('day', TO_TIMESTAMP(${requestAuditLog.timestamp}))`
+            : sql<string>`DATE(${requestAuditLog.timestamp}, 'unixepoch')`;
 
     const booleanTrue = driver === "pg" ? sql`true` : sql`1`;
     const booleanFalse = driver === "pg" ? sql`false` : sql`0`;
 
     const requestsPerDay = await db
         .select({
-            day: groupByDayFunction,
+            day: groupByDayFunction.as("day"),
             allowedCount:
                 sql<number>`SUM(CASE WHEN ${requestAuditLog.action} = ${booleanTrue} THEN 1 ELSE 0 END)`.as(
                     "allowed_count"
