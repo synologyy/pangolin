@@ -11,7 +11,8 @@ RUN npm ci
 
 COPY . .
 
-RUN echo "export * from \"./$DATABASE\";\nexport const driver: \"pg\" | \"sqlite\" = \"$DATABASE\";" > server/db/index.ts
+RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
+RUN echo "export const driver: \"pg\" | \"sqlite\" = \"$DATABASE\";" >> server/db/index.ts
 
 RUN echo "export const build = \"$BUILD\" as \"saas\" | \"enterprise\" | \"oss\";" > server/build.ts
 
