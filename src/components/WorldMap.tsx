@@ -82,13 +82,7 @@ export function WorldMap({ data, label }: WorldMapProps) {
                 svgRef.current,
                 getColorForValue,
                 dataByCountryCode
-            ).on("click", (_event, countryPath) => {
-                console.log({
-                    _event,
-                    countryPath
-                });
-                // onCountryClick(countryPath as unknown as WorldJsonCountryData);
-            });
+            );
         }
     }, [theme, systemTheme, maxValue, dataByCountryCode]);
 
