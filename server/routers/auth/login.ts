@@ -1,7 +1,9 @@
 import {
     createSession,
     generateSessionToken,
-    serializeSessionCookie
+    invalidateSession,
+    serializeSessionCookie,
+    SESSION_COOKIE_NAME
 } from "@server/auth/sessions/app";
 import { db, resources } from "@server/db";
 import { users, securityKeys } from "@server/db";
@@ -21,11 +23,11 @@ import { UserType } from "@server/types/UserTypes";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 export const loginBodySchema = z.strictObject({
-        email: z.email().toLowerCase(),
-        password: z.string(),
-        code: z.string().optional(),
-        resourceGuid: z.string().optional()
-    });
+    email: z.email().toLowerCase(),
+    password: z.string(),
+    code: z.string().optional(),
+    resourceGuid: z.string().optional()
+});
 
 export type LoginBody = z.infer<typeof loginBodySchema>;
 
@@ -41,6 +43,21 @@ export async function login(
     res: Response,
     next: NextFunction
 ): Promise<any> {
+    const { forceLogin } = req.query;
+    const { session: existingSession } = await verifySession(
+        req,
+        forceLogin === "true"
+    );
+    if (existingSession) {
+        return response<null>(res, {
+            data: null,
+            success: true,
+            error: false,
+            message: "Already logged in",
+            status: HttpCode.OK
+        });
+    }
+
     const parsedBody = loginBodySchema.safeParse(req.body);
 
     if (!parsedBody.success) {
@@ -55,17 +72,6 @@ export async function login(
     const { email, password, code, resourceGuid } = parsedBody.data;
 
     try {
-        const { session: existingSession } = await verifySession(req);
-        if (existingSession) {
-            return response<null>(res, {
-                data: null,
-                success: true,
-                error: false,
-                message: "Already logged in",
-                status: HttpCode.OK
-            });
-        }
-
         let resourceId: number | null = null;
         let orgId: string | null = null;
         if (resourceGuid) {
@@ -223,6 +229,12 @@ export async function login(
                     )
                 );
             }
+        }
+
+        // check for previous cookie value and expire it
+        const previousCookie = req.cookies[SESSION_COOKIE_NAME];
+        if (previousCookie) {
+            await invalidateSession(previousCookie);
         }
 
         const token = generateSessionToken();

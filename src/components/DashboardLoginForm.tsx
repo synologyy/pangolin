@@ -21,11 +21,13 @@ import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 type DashboardLoginFormProps = {
     redirect?: string;
     idps?: LoginFormIDP[];
+    forceLogin?: boolean;
 };
 
 export default function DashboardLoginForm({
     redirect,
-    idps
+    idps,
+    forceLogin
 }: DashboardLoginFormProps) {
     const router = useRouter();
     const { env } = useEnvContext();
@@ -57,6 +59,7 @@ export default function DashboardLoginForm({
                 <LoginForm
                     redirect={redirect}
                     idps={idps}
+                    forceLogin={forceLogin}
                     onLogin={(redirectUrl) => {
                         if (redirectUrl) {
                             const safe = cleanRedirect(redirectUrl);

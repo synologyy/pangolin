@@ -61,13 +61,15 @@ type LoginFormProps = {
     onLogin?: (redirectUrl?: string) => void | Promise<void>;
     idps?: LoginFormIDP[];
     orgId?: string;
+    forceLogin?: boolean;
 };
 
 export default function LoginForm({
     redirect,
     onLogin,
     idps,
-    orgId
+    orgId,
+    forceLogin
 }: LoginFormProps) {
     const router = useRouter();
 
@@ -141,7 +143,7 @@ export default function LoginForm({
 
         try {
             // Start WebAuthn authentication without email
-            const startResponse = await securityKeyStartProxy({});
+            const startResponse = await securityKeyStartProxy({}, forceLogin);
 
             if (startResponse.error) {
                 setError(startResponse.message);
@@ -165,7 +167,8 @@ export default function LoginForm({
                 // Verify authentication
                 const verifyResponse = await securityKeyVerifyProxy(
                     { credential },
-                    tempSessionId
+                    tempSessionId,
+                    forceLogin
                 );
 
                 if (verifyResponse.error) {
@@ -234,12 +237,15 @@ export default function LoginForm({
         setShowSecurityKeyPrompt(false);
 
         try {
-            const response = await loginProxy({
+            const response = await loginProxy(
+                {
                 email,
                 password,
                 code,
                 resourceGuid: resourceGuid as string
-            });
+                },
+                forceLogin
+            );
 
             try {
                 const identity = {
@@ -333,7 +339,8 @@ export default function LoginForm({
             const data = await generateOidcUrlProxy(
                 idpId,
                 redirect || "/",
-                orgId
+                orgId,
+                forceLogin
             );
             const url = data.data?.redirectUrl;
             if (data.error) {

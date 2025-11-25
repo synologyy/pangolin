@@ -14,3 +14,4 @@ export * from "./createOrgUser";
 export * from "./adminUpdateUser2FA";
 export * from "./adminGetUser";
 export * from "./updateOrgUser";
+export * from "./myDevice";

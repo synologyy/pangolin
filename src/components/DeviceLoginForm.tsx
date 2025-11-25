@@ -30,10 +30,12 @@ import { DeviceAuthConfirmation } from "@/components/DeviceAuthConfirmation";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import BrandingLogo from "./BrandingLogo";
 import { useTranslations } from "next-intl";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const createFormSchema = (t: (key: string) => string) => z.object({
-    code: z.string().length(8, t("deviceCodeInvalidFormat"))
-});
+const createFormSchema = (t: (key: string) => string) =>
+    z.object({
+        code: z.string().length(8, t("deviceCodeInvalidFormat"))
+    });
 
 type DeviceAuthMetadata = {
     ip: string | null;
@@ -45,9 +47,15 @@ type DeviceAuthMetadata = {
 
 type DeviceLoginFormProps = {
     userEmail: string;
+    userName?: string;
+    initialCode?: string;
 };
 
-export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
+export default function DeviceLoginForm({
+    userEmail,
+    userName,
+    initialCode = ""
+}: DeviceLoginFormProps) {
     const router = useRouter();
     const { env } = useEnvContext();
     const api = createApiClient({ env });
@@ -63,7 +71,7 @@ export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            code: ""
+            code: initialCode.replace(/-/g, "").toUpperCase()
         }
     });
 
@@ -77,10 +85,15 @@ export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
                 data.code = data.code.slice(0, 4) + "-" + data.code.slice(4);
             }
             // First check - get metadata
-            const res = await api.post("/device-web-auth/verify", {
-                code: data.code.toUpperCase(),
-                verify: false
-            });
+            const res = await api.post(
+                "/device-web-auth/verify?forceLogin=true",
+                {
+                    code: data.code.toUpperCase(),
+                    verify: false
+                }
+            );
+
+            await new Promise((resolve) => setTimeout(resolve, 500)); // artificial delay for better UX
 
             if (res.data.success && res.data.data.metadata) {
                 setMetadata(res.data.data.metadata);
@@ -109,6 +122,8 @@ export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
                 verify: true
             });
 
+            await new Promise((resolve) => setTimeout(resolve, 500)); // artificial delay for better UX
+
             // Redirect to success page
             router.push("/auth/login/device/success");
         } catch (e: any) {
@@ -136,6 +151,30 @@ export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
         setError(null);
     }
 
+    const profileLabel = (userName || userEmail || "").trim();
+    const profileInitial = profileLabel
+        ? profileLabel.charAt(0).toUpperCase()
+        : "?";
+
+    async function handleUseDifferentAccount() {
+        try {
+            await api.post("/auth/logout");
+        } catch (logoutError) {
+            console.error(
+                "Failed to logout before switching account",
+                logoutError
+            );
+        } finally {
+            const currentSearch =
+                typeof window !== "undefined" ? window.location.search : "";
+            const redirectTarget = `/auth/login/device${currentSearch || ""}`;
+            router.push(
+                `/auth/login?forceLogin=true&redirect=${encodeURIComponent(redirectTarget)}`
+            );
+            router.refresh();
+        }
+    }
+
     if (metadata) {
         return (
             <DeviceAuthConfirmation
@@ -154,13 +193,36 @@ export default function DeviceLoginForm({ userEmail }: DeviceLoginFormProps) {
                     <BrandingLogo height={logoHeight} width={logoWidth} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
-                    <p className="text-muted-foreground">{t("deviceActivation")}</p>
+                    <p className="text-muted-foreground">
+                        {t("deviceActivation")}
+                    </p>
                 </div>
             </CardHeader>
             <CardContent className="pt-6">
-                <div className="text-center mb-3">
-                    <span>{t("signedInAs")} </span>
-                    <span className="font-medium">{userEmail}</span>
+                <div className="flex items-center gap-3 p-3 mb-4 border rounded-md">
+                    <Avatar className="h-10 w-10">
+                        <AvatarFallback>{profileInitial}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 space-y-1">
+                        <div>
+                            <p className="text-sm font-medium">
+                                {profileLabel || userEmail}
+                            </p>
+                            <p className="text-xs text-muted-foreground break-all">
+                                {t(
+                                    "deviceLoginDeviceRequestingAccessToAccount"
+                                )}
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto px-0 text-xs"
+                            onClick={handleUseDifferentAccount}
+                        >
+                            {t("deviceLoginUseDifferentAccount")}
+                        </Button>
+                    </div>
                 </div>
 
                 <Form {...form}>

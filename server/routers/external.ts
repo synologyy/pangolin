@@ -712,6 +712,7 @@ unauthenticated.get(
 // );
 
 unauthenticated.get("/user", verifySessionMiddleware, user.getUser);
+unauthenticated.get("/my-device", verifySessionMiddleware, user.myDevice);
 
 authenticated.get("/users", verifyUserIsServerAdmin, user.adminListUsers);
 authenticated.get("/user/:userId", verifyUserIsServerAdmin, user.adminGetUser);
@@ -814,6 +815,13 @@ authenticated.delete(
     verifyIsLoggedInUser,
     verifyOlmAccess,
     olm.deleteUserOlm
+);
+
+authenticated.get(
+    "/user/:userId/olm/:olmId",
+    verifyIsLoggedInUser,
+    verifyOlmAccess,
+    olm.getUserOlm
 );
 
 authenticated.put(

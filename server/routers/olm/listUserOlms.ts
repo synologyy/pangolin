@@ -31,17 +31,17 @@ const paramsSchema = z
     })
     .strict();
 
-registry.registerPath({
-    method: "delete",
-    path: "/user/{userId}/olms",
-    description: "List all olms for a user.",
-    tags: [OpenAPITags.User, OpenAPITags.Client],
-    request: {
-        query: querySchema,
-        params: paramsSchema
-    },
-    responses: {}
-});
+// registry.registerPath({
+//     method: "delete",
+//     path: "/user/{userId}/olms",
+//     description: "List all olms for a user.",
+//     tags: [OpenAPITags.User, OpenAPITags.Client],
+//     request: {
+//         query: querySchema,
+//         params: paramsSchema
+//     },
+//     responses: {}
+// });
 
 export type ListUserOlmsResponse = {
     olms: Array<{
