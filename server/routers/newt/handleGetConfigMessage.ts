@@ -275,6 +275,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             resource,
             resourceClients
         );
+
         targetsToSend.push(...resourceTargets);
     }
 

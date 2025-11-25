@@ -31,14 +31,15 @@ import {
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
 import logger from "@server/logger";
 import {
+    generateAliasConfig,
     generateRemoteSubnets,
     generateSubnetProxyTargets,
     SubnetProxyTarget
 } from "@server/lib/ip";
 import {
-    addRemoteSubnets,
+    addPeerData,
     addTargets as addSubnetProxyTargets,
-    removeRemoteSubnets,
+    removePeerData,
     removeTargets as removeSubnetProxyTargets
 } from "@server/routers/client/targets";
 
@@ -703,10 +704,11 @@ async function handleSubnetProxyTargetUpdates(
 
             for (const client of addedClients) {
                 olmJobs.push(
-                    addRemoteSubnets(
+                    addPeerData(
                         client.clientId,
                         siteResource.siteId,
-                        generateRemoteSubnets([siteResource])
+                        generateRemoteSubnets([siteResource]),
+                        generateAliasConfig([siteResource])
                     )
                 );
             }
@@ -738,10 +740,11 @@ async function handleSubnetProxyTargetUpdates(
 
             for (const client of removedClients) {
                 olmJobs.push(
-                    removeRemoteSubnets(
+                    removePeerData(
                         client.clientId,
                         siteResource.siteId,
-                        generateRemoteSubnets([siteResource])
+                        generateRemoteSubnets([siteResource]),
+                        generateAliasConfig([siteResource])
                     )
                 );
             }

@@ -17,11 +17,9 @@ import { eq, and, ne } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
+import { updatePeerData, updateTargets } from "@server/routers/client/targets";
 import {
-    updateRemoteSubnets,
-    updateTargets
-} from "@server/routers/client/targets";
-import {
+    generateAliasConfig,
     generateRemoteSubnets,
     generateSubnetProxyTargets
 } from "@server/lib/ip";
@@ -266,7 +264,7 @@ export async function updateSiteResource(
                 for (const client of mergedAllClients) {
                     // we also need to update the remote subnets on the olms for each client that has access to this site
                     olmJobs.push(
-                        updateRemoteSubnets(
+                        updatePeerData(
                             client.clientId,
                             updatedSiteResource.siteId,
                             {
@@ -274,6 +272,14 @@ export async function updateSiteResource(
                                     existingSiteResource
                                 ]),
                                 newRemoteSubnets: generateRemoteSubnets([
+                                    updatedSiteResource
+                                ])
+                            },
+                            {
+                                oldAliases: generateAliasConfig([
+                                    existingSiteResource
+                                ]),
+                                newAliases: generateAliasConfig([
                                     updatedSiteResource
                                 ])
                             }

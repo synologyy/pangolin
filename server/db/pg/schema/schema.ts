@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { alias } from "yargs";
 
 export const domains = pgTable("domains", {
     domainId: varchar("domainId").primaryKey(),
@@ -40,6 +41,7 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
+    utilitySubnet: varchar("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
@@ -209,7 +211,8 @@ export const siteResources = pgTable("siteResources", {
     destinationPort: integer("destinationPort"), // only for port mode
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
-    alias: varchar("alias")
+    alias: varchar("alias"),
+    aliasAddress: varchar("aliasAddress")
 });
 
 export const clientSiteResources = pgTable("clientSiteResources", {

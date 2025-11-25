@@ -3,6 +3,7 @@ import {
     clientSiteResourcesAssociationsCache,
     db,
     ExitNode,
+    Org,
     orgs,
     roleClients,
     roles,
@@ -25,7 +26,10 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
-import { getNextAvailableClientSubnet } from "@server/lib/ip";
+import {
+    generateAliasConfig,
+    getNextAvailableClientSubnet
+} from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
@@ -42,18 +46,24 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
     const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient } =
         message.data;
-    let client: Client;
+
+    let client: Client | undefined;
+    let org: Org | undefined;
 
     if (orgId) {
         try {
-            client = await getOrCreateOrgClient(
-                orgId,
-                olm.userId,
-                olm.olmId,
-                olm.name || "User Device",
-                // doNotCreateNewClient ? true : false
-                true // for now never create a new client automatically because we create the users clients when they are added to the org
-            );
+            const { client: clientRes, org: orgRes } =
+                await getOrCreateOrgClient(
+                    orgId,
+                    olm.userId,
+                    olm.olmId,
+                    olm.name || "User Device",
+                    // doNotCreateNewClient ? true : false
+                    true // for now never create a new client automatically because we create the users clients when they are added to the org
+                );
+
+            client = clientRes;
+            org = orgRes;
         } catch (err) {
             logger.error(
                 `Error switching olm client ${olm.olmId} to org ${orgId}: ${err}`
@@ -93,6 +103,11 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
     if (!client) {
         logger.warn("Client ID not found");
+        return;
+    }
+
+    if (!org) {
+        logger.warn("Org not found");
         return;
     }
 
@@ -302,7 +317,12 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: generateRemoteSubnets(allSiteResources.map(({ siteResources }) => siteResources))
+            remoteSubnets: generateRemoteSubnets(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            ),
+            aliases: generateAliasConfig(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            )
         });
     }
 
@@ -318,7 +338,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             type: "olm/wg/connect",
             data: {
                 sites: siteConfigurations,
-                tunnelIP: client.subnet
+                tunnelIP: client.subnet,
+                utilitySubnet: org.utilitySubnet
             }
         },
         broadcast: false,
@@ -333,7 +354,10 @@ async function getOrCreateOrgClient(
     name: string,
     doNotCreateNewClient: boolean,
     trx: Transaction | typeof db = db
-): Promise<Client> {
+): Promise<{
+    client: Client;
+    org: Org;
+}> {
     // get the org
     const [org] = await trx
         .select()
@@ -441,5 +465,8 @@ async function getOrCreateOrgClient(
         client = newClient;
     }
 
-    return client;
+    return {
+        client: client,
+        org: org
+    };
 }

@@ -1,6 +1,6 @@
 import { sendToClient } from "#dynamic/routers/ws";
 import { db, olms } from "@server/db";
-import { SubnetProxyTarget } from "@server/lib/ip";
+import { Alias, SubnetProxyTarget } from "@server/lib/ip";
 import { eq } from "drizzle-orm";
 
 export async function addTargets(newtId: string, targets: SubnetProxyTarget[]) {
@@ -33,10 +33,11 @@ export async function updateTargets(
     });
 }
 
-export async function addRemoteSubnets(
+export async function addPeerData(
     clientId: number,
     siteId: number,
     remoteSubnets: string[],
+    aliases: Alias[],
     olmId?: string
 ) {
     if (!olmId) {
@@ -52,18 +53,20 @@ export async function addRemoteSubnets(
     }
 
     await sendToClient(olmId, {
-        type: `olm/wg/peer/add-remote-subnets`,
+        type: `olm/wg/peer/data/add`,
         data: {
             siteId: siteId,
-            remoteSubnets: remoteSubnets
+            remoteSubnets: remoteSubnets,
+            aliases: aliases
         }
     });
 }
 
-export async function removeRemoteSubnets(
+export async function removePeerData(
     clientId: number,
     siteId: number,
     remoteSubnets: string[],
+    aliases: Alias[],
     olmId?: string
 ) {
     if (!olmId) {
@@ -79,20 +82,25 @@ export async function removeRemoteSubnets(
     }
 
     await sendToClient(olmId, {
-        type: `olm/wg/peer/remove-remote-subnets`,
+        type: `olm/wg/peer/data/remove`,
         data: {
             siteId: siteId,
-            remoteSubnets: remoteSubnets
+            remoteSubnets: remoteSubnets,
+            aliases: aliases
         }
     });
 }
 
-export async function updateRemoteSubnets(
+export async function updatePeerData(
     clientId: number,
     siteId: number,
     remoteSubnets: {
         oldRemoteSubnets: string[],
         newRemoteSubnets: string[]
+    },
+    aliases: {
+        oldAliases: Alias[],
+        newAliases: Alias[]
     },
     olmId?: string
 ) {
@@ -109,10 +117,11 @@ export async function updateRemoteSubnets(
     }
 
     await sendToClient(olmId, {
-        type: `olm/wg/peer/update-remote-subnets`,
+        type: `olm/wg/peer/data/update`,
         data: {
             siteId: siteId,
-            ...remoteSubnets
+            ...remoteSubnets,
+            ...aliases
         }
     });
 }

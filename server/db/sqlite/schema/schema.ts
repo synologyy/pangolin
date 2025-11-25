@@ -32,6 +32,7 @@ export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
     subnet: text("subnet"),
+    utilitySubnet: text("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
     maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
@@ -230,7 +231,8 @@ export const siteResources = sqliteTable("siteResources", {
     destinationPort: integer("destinationPort"), // only for port mode
     destination: text("destination").notNull(), // ip, cidr, hostname
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
-    alias: text("alias")
+    alias: text("alias"),
+    aliasAddress: text("aliasAddress")
 });
 
 export const clientSiteResources = sqliteTable("clientSiteResources", {
