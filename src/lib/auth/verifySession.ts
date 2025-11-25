@@ -5,15 +5,17 @@ import { AxiosResponse } from "axios";
 import { pullEnv } from "../pullEnv";
 
 export async function verifySession({
-    skipCheckVerifyEmail
+    skipCheckVerifyEmail,
+    forceLogin
 }: {
     skipCheckVerifyEmail?: boolean;
+    forceLogin?: boolean;
 } = {}): Promise<GetUserResponse | null> {
     const env = pullEnv();
 
     try {
         const res = await internal.get<AxiosResponse<GetUserResponse>>(
-            "/user",
+            `/user${forceLogin ? "?forceLogin=true" : ""}`,
             await authCookieHeader()
         );
 

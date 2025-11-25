@@ -9,17 +9,18 @@ import { db, deviceWebAuthCodes } from "@server/db";
 import { eq, and, gt } from "drizzle-orm";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
+import { unauthorized } from "@server/auth/unauthorizedResponse";
 
-const bodySchema = z.object({
-    code: z.string().min(1, "Code is required"),
-    verify: z.boolean().optional().default(false) // If false, just check and return metadata
-}).strict();
+const bodySchema = z
+    .object({
+        code: z.string().min(1, "Code is required"),
+        verify: z.boolean().optional().default(false) // If false, just check and return metadata
+    })
+    .strict();
 
 // Helper function to hash device code before querying database
 function hashDeviceCode(code: string): string {
-    return encodeHexLowerCase(
-        sha256(new TextEncoder().encode(code))
-    );
+    return encodeHexLowerCase(sha256(new TextEncoder().encode(code)));
 }
 
 export type VerifyDeviceWebAuthBody = z.infer<typeof bodySchema>;
@@ -41,6 +42,24 @@ export async function verifyDeviceWebAuth(
     res: Response,
     next: NextFunction
 ): Promise<any> {
+    const { user, session } = req;
+    if (!user || !session) {
+        logger.debug("Unauthorized attempt to verify device web auth code");
+        return next(unauthorized());
+    }
+
+    if (!session.issuedAt) {
+        logger.debug("Session missing issuedAt timestamp");
+        return next(unauthorized());
+    }
+
+    // make sure sessions is not older than 5 minutes
+    const now = Date.now();
+    if (now - session.issuedAt > 3 * 60 * 1000) {
+        logger.debug("Session is too old to verify device web auth code");
+        return next(unauthorized());
+    }
+
     const parsedBody = bodySchema.safeParse(req.body);
 
     if (!parsedBody.success) {
@@ -135,4 +154,3 @@ export async function verifyDeviceWebAuth(
         );
     }
 }
-

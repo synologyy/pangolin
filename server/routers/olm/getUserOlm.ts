@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { db } from "@server/db";
-import { olms, clients, clientSitesAssociationsCache } from "@server/db";
-import { eq } from "drizzle-orm";
+import { olms, clients, clientSites } from "@server/db";
+import { eq, and } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import response from "@server/lib/response";
@@ -18,9 +18,9 @@ const paramsSchema = z
     .strict();
 
 // registry.registerPath({
-//     method: "delete",
+//     method: "get",
 //     path: "/user/{userId}/olm/{olmId}",
-//     description: "Delete an olm for a user.",
+//     description: "Get an olm for a user.",
 //     tags: [OpenAPITags.User, OpenAPITags.Client],
 //     request: {
 //         params: paramsSchema
@@ -28,7 +28,7 @@ const paramsSchema = z
 //     responses: {}
 // });
 
-export async function deleteUserOlm(
+export async function getUserOlm(
     req: Request,
     res: Response,
     next: NextFunction
@@ -44,37 +44,18 @@ export async function deleteUserOlm(
             );
         }
 
-        const { olmId } = parsedParams.data;
+        const { olmId, userId } = parsedParams.data;
 
-        // Delete associated clients and the OLM in a transaction
-        await db.transaction(async (trx) => {
-            // Find all clients associated with this OLM
-            const associatedClients = await trx
-                .select({ clientId: clients.clientId })
-                .from(clients)
-                .where(eq(clients.olmId, olmId));
-
-            // Delete client-site associations for each associated client
-            for (const client of associatedClients) {
-                await trx
-                    .delete(clientSitesAssociationsCache)
-                    .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
-            }
-
-            // Delete all associated clients
-            if (associatedClients.length > 0) {
-                await trx.delete(clients).where(eq(clients.olmId, olmId));
-            }
-
-            // Finally, delete the OLM itself
-            await trx.delete(olms).where(eq(olms.olmId, olmId));
-        });
+        const [olm] = await db
+            .select()
+            .from(olms)
+            .where(and(eq(olms.userId, userId), eq(olms.olmId, olmId)));
 
         return response(res, {
-            data: null,
+            data: olm,
             success: true,
             error: false,
-            message: "Device deleted successfully",
+            message: "Successfully retrieved olm",
             status: HttpCode.OK
         });
     } catch (error) {
@@ -82,7 +63,7 @@ export async function deleteUserOlm(
         return next(
             createHttpError(
                 HttpCode.INTERNAL_SERVER_ERROR,
-                "Failed to delete device"
+                "Failed to retrieve olm"
             )
         );
     }

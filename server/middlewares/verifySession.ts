@@ -8,7 +8,9 @@ export const verifySessionMiddleware = async (
     res: Response<ErrorResponse>,
     next: NextFunction
 ) => {
-    const { session, user } = await verifySession(req);
+    const { forceLogin } = req.query;
+
+    const { session, user } = await verifySession(req, forceLogin === "true");
     if (!session || !user) {
         return next(unauthorized());
     }

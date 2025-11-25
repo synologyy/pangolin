@@ -2200,5 +2200,7 @@
     "niceIdUpdateErrorDescription": "An error occurred while updating the Nice ID.",
     "niceIdCannotBeEmpty": "Nice ID cannot be empty",
     "enterIdentifier": "Enter identifier",
-    "identifier": "Identifier"
+    "identifier": "Identifier",
+    "deviceLoginUseDifferentAccount": "Not you? Use a different account.",
+    "deviceLoginDeviceRequestingAccessToAccount": "Your device is requesting access to this account."
 }

@@ -15,7 +15,9 @@ export const verifySessionUserMiddleware = async (
     res: Response<ErrorResponse>,
     next: NextFunction
 ) => {
-    const { session, user } = await verifySession(req);
+    const { forceLogin } = req.query;
+
+    const { session, user } = await verifySession(req, forceLogin === "true");
     if (!session || !user) {
         if (config.getRawConfig().app.log_failed_attempts) {
             logger.info(`User session not found. IP: ${req.ip}.`);

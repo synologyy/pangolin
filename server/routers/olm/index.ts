@@ -6,3 +6,4 @@ export * from "./handleOlmPingMessage";
 export * from "./deleteUserOlm";
 export * from "./listUserOlms";
 export * from "./deleteUserOlm";
+export * from "./getUserOlm";

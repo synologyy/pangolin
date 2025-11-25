@@ -28,23 +28,23 @@ export type CreateOlmResponse = {
     secret: string;
 };
 
-registry.registerPath({
-    method: "put",
-    path: "/user/{userId}/olm",
-    description: "Create a new olm for a user.",
-    tags: [OpenAPITags.User, OpenAPITags.Client],
-    request: {
-        body: {
-            content: {
-                "application/json": {
-                    schema: bodySchema
-                }
-            }
-        },
-        params: paramsSchema
-    },
-    responses: {}
-});
+// registry.registerPath({
+//     method: "put",
+//     path: "/user/{userId}/olm",
+//     description: "Create a new olm for a user.",
+//     tags: [OpenAPITags.User, OpenAPITags.Client],
+//     request: {
+//         body: {
+//             content: {
+//                 "application/json": {
+//                     schema: bodySchema
+//                 }
+//             }
+//         },
+//         params: paramsSchema
+//     },
+//     responses: {}
+// });
 
 export async function createUserOlm(
     req: Request,
