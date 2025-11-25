@@ -1,8 +1,20 @@
-import { clients, clientSitesAssociationsCache, db, olms, orgs, roleClients, roles, userClients, userOrgs, Transaction } from "@server/db";
+import {
+    clients,
+    db,
+    olms,
+    orgs,
+    roleClients,
+    roles,
+    userClients,
+    userOrgs,
+    Transaction
+} from "@server/db";
 import { eq, and, notInArray } from "drizzle-orm";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { getNextAvailableClientSubnet } from "@server/lib/ip";
 import logger from "@server/logger";
+import { rebuildClientAssociationsFromClient } from "./rebuildClientAssociations";
+import { sendTerminateClient } from "@server/routers/client/terminate";
 
 export async function calculateUserClientsForOrgs(
     userId: string,
@@ -88,7 +100,10 @@ export async function calculateUserClientsForOrgs(
                         .where(
                             and(
                                 eq(roleClients.roleId, adminRole.roleId),
-                                eq(roleClients.clientId, existingClient.clientId)
+                                eq(
+                                    roleClients.clientId,
+                                    existingClient.clientId
+                                )
                             )
                         )
                         .limit(1);
@@ -110,7 +125,10 @@ export async function calculateUserClientsForOrgs(
                         .where(
                             and(
                                 eq(userClients.userId, userId),
-                                eq(userClients.clientId, existingClient.clientId)
+                                eq(
+                                    userClients.clientId,
+                                    existingClient.clientId
+                                )
                             )
                         )
                         .limit(1);
@@ -172,6 +190,11 @@ export async function calculateUserClientsForOrgs(
                     })
                     .returning();
 
+                await rebuildClientAssociationsFromClient(
+                    newClient,
+                    transaction
+                );
+
                 // Grant admin role access to the client
                 await transaction.insert(roleClients).values({
                     roleId: adminRole.roleId,
@@ -225,15 +248,8 @@ async function cleanupOrphanedClients(
                 : and(eq(clients.userId, userId))
         );
 
-    // Delete client-site associations first, then delete the clients
-    for (const client of clientsToDelete) {
-        await trx
-            .delete(clientSitesAssociationsCache)
-            .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
-    }
-
     if (clientsToDelete.length > 0) {
-        await trx
+        const deletedClients = await trx
             .delete(clients)
             .where(
                 userOrgIds.length > 0
@@ -242,7 +258,20 @@ async function cleanupOrphanedClients(
                           notInArray(clients.orgId, userOrgIds)
                       )
                     : and(eq(clients.userId, userId))
-            );
+            )
+            .returning();
+
+        // Rebuild associations for each deleted client to clean up related data
+        for (const deletedClient of deletedClients) {
+            await rebuildClientAssociationsFromClient(deletedClient, trx);
+
+            if (deletedClient.olmId) {
+                await sendTerminateClient(
+                    deletedClient.clientId,
+                    deletedClient.olmId
+                );
+            }
+        }
 
         if (userOrgIds.length === 0) {
             logger.debug(
@@ -255,4 +284,3 @@ async function cleanupOrphanedClients(
         }
     }
 }
-

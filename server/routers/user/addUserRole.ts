@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { clients, db, UserOrg } from "@server/db";
 import { userOrgs, roles } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -10,11 +10,12 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import stoi from "@server/lib/stoi";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 
 const addUserRoleParamsSchema = z.strictObject({
-        userId: z.string(),
-        roleId: z.string().transform(stoi).pipe(z.number())
-    });
+    userId: z.string(),
+    roleId: z.string().transform(stoi).pipe(z.number())
+});
 
 export type AddUserRoleResponse = z.infer<typeof addUserRoleParamsSchema>;
 
@@ -72,7 +73,9 @@ export async function addUserRole(
         const existingUser = await db
             .select()
             .from(userOrgs)
-            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, role.orgId)))
+            .where(
+                and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, role.orgId))
+            )
             .limit(1);
 
         if (existingUser.length === 0) {
@@ -108,14 +111,39 @@ export async function addUserRole(
             );
         }
 
-        const newUserRole = await db
-            .update(userOrgs)
-            .set({ roleId })
-            .where(and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, role.orgId)))
-            .returning();
+        let newUserRole: UserOrg | null = null;
+        await db.transaction(async (trx) => {
+            [newUserRole] = await trx
+                .update(userOrgs)
+                .set({ roleId })
+                .where(
+                    and(
+                        eq(userOrgs.userId, userId),
+                        eq(userOrgs.orgId, role.orgId)
+                    )
+                )
+                .returning();
+
+            // get the client associated with this user in this org
+            const [orgClient] = await trx
+                .select()
+                .from(clients)
+                .where(
+                    and(
+                        eq(clients.userId, userId),
+                        eq(clients.orgId, role.orgId)
+                    )
+                )
+                .limit(1);
+
+            if (orgClient) {
+                // we just changed the user's role, so we need to rebuild client associations and what they have access to
+                await rebuildClientAssociationsFromClient(orgClient, trx);
+            }
+        });
 
         return response(res, {
-            data: newUserRole[0],
+            data: newUserRole,
             success: true,
             error: false,
             message: "Role added to user successfully",

@@ -9,7 +9,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
+import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
 
 const deleteSiteResourceParamsSchema = z.strictObject({
     siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
@@ -106,7 +106,7 @@ export async function deleteSiteResource(
                 );
             }
 
-            await rebuildClientAssociations(removedSiteResource, trx);
+            await rebuildClientAssociationsFromSiteResource(removedSiteResource, trx);
         });
 
         logger.info(

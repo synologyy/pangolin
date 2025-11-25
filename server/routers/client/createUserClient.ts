@@ -21,6 +21,7 @@ import { isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 
 const paramsSchema = z
     .object({
@@ -191,6 +192,7 @@ export async function createUserClient(
             );
         }
 
+        let newClient: Client | null = null;
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
             const exitNodesList = await listExitNodes(orgId);
@@ -209,7 +211,7 @@ export async function createUserClient(
                 );
             }
 
-            const [newClient] = await trx
+            [newClient] = await trx
                 .insert(clients)
                 .values({
                     exitNodeId: randomExitNode.exitNodeId,
@@ -232,13 +234,15 @@ export async function createUserClient(
                 clientId: newClient.clientId
             });
 
-            return response<CreateClientAndOlmResponse>(res, {
-                data: newClient,
-                success: true,
-                error: false,
-                message: "Site created successfully",
-                status: HttpCode.CREATED
-            });
+            await rebuildClientAssociationsFromClient(newClient, trx);
+        });
+
+        return response<CreateClientAndOlmResponse>(res, {
+            data: newClient,
+            success: true,
+            error: false,
+            message: "Site created successfully",
+            status: HttpCode.CREATED
         });
     } catch (error) {
         logger.error(error);

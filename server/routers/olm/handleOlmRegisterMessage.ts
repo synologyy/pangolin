@@ -31,6 +31,7 @@ import {
     getNextAvailableClientSubnet
 } from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -60,6 +61,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                     olm.name || "User Device",
                     // doNotCreateNewClient ? true : false
                     true // for now never create a new client automatically because we create the users clients when they are added to the org
+                    // this means that the rebuildClientAssociationsFromClient call below issue is not a problem 
                 );
 
             client = clientRes;
@@ -98,6 +100,12 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             .select()
             .from(clients)
             .where(eq(clients.clientId, olm.clientId))
+            .limit(1);
+
+        [org] = await db
+            .select()
+            .from(orgs)
+            .where(eq(orgs.orgId, client.orgId))
             .limit(1);
     }
 
@@ -204,13 +212,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.debug(
         `Found ${sitesData.length} sites for client ${client.clientId}`
     );
-
-    if (sitesData.length === 0) {
-        sendToClient(olm.olmId, {
-            type: "olm/register/no-sites",
-            data: {}
-        });
-    }
 
     // Process each site
     for (const { sites: site } of sitesData) {
@@ -461,6 +462,8 @@ async function getOrCreateOrgClient(
                 clientId: newClient.clientId
             });
         }
+
+        await rebuildClientAssociationsFromClient(newClient, trx); // TODO: this will try to messages to the olm which has not connected yet - is that a problem?
 
         client = newClient;
     }

@@ -129,7 +129,7 @@ export async function getClientSiteResourceAccess(
     };
 }
 
-export async function rebuildClientAssociations(
+export async function rebuildClientAssociationsFromSiteResource(
     siteResource: SiteResource,
     trx: Transaction | typeof db = db
 ): Promise<{
@@ -752,4 +752,553 @@ async function handleSubnetProxyTargetUpdates(
     }
 
     await Promise.all(proxyJobs);
+}
+
+export async function rebuildClientAssociationsFromClient(
+    client: Client,
+    trx: Transaction | typeof db = db
+): Promise<void> {
+    let newSiteResourceIds: number[] = [];
+
+    // 1. Direct client associations
+    const directSiteResources = await trx
+        .select({ siteResourceId: clientSiteResources.siteResourceId })
+        .from(clientSiteResources)
+        .where(eq(clientSiteResources.clientId, client.clientId));
+
+    newSiteResourceIds.push(
+        ...directSiteResources.map((r) => r.siteResourceId)
+    );
+
+    // 2. User-based and role-based access (if client has a userId)
+    if (client.userId) {
+        // Direct user associations
+        const userSiteResourceIds = await trx
+            .select({ siteResourceId: userSiteResources.siteResourceId })
+            .from(userSiteResources)
+            .where(eq(userSiteResources.userId, client.userId));
+
+        newSiteResourceIds.push(
+            ...userSiteResourceIds.map((r) => r.siteResourceId)
+        );
+
+        // Role-based access
+        const roleIds = await trx
+            .select({ roleId: userOrgs.roleId })
+            .from(userOrgs)
+            .where(eq(userOrgs.userId, client.userId))
+            .then((rows) => rows.map((row) => row.roleId));
+
+        if (roleIds.length > 0) {
+            const roleSiteResourceIds = await trx
+                .select({ siteResourceId: roleSiteResources.siteResourceId })
+                .from(roleSiteResources)
+                .where(inArray(roleSiteResources.roleId, roleIds));
+
+            newSiteResourceIds.push(
+                ...roleSiteResourceIds.map((r) => r.siteResourceId)
+            );
+        }
+    }
+
+    // Remove duplicates
+    newSiteResourceIds = Array.from(new Set(newSiteResourceIds));
+
+    // Get full siteResource details
+    const newSiteResources =
+        newSiteResourceIds.length > 0
+            ? await trx
+                  .select()
+                  .from(siteResources)
+                  .where(
+                      inArray(siteResources.siteResourceId, newSiteResourceIds)
+                  )
+            : [];
+
+    // Group by siteId for site-level associations
+    const newSiteIds = Array.from(
+        new Set(newSiteResources.map((sr) => sr.siteId))
+    );
+
+    /////////// Process client-siteResource associations ///////////
+
+    // Get existing resource associations
+    const existingResourceAssociations = await trx
+        .select({
+            siteResourceId: clientSiteResourcesAssociationsCache.siteResourceId
+        })
+        .from(clientSiteResourcesAssociationsCache)
+        .where(
+            eq(clientSiteResourcesAssociationsCache.clientId, client.clientId)
+        );
+
+    const existingSiteResourceIds = existingResourceAssociations.map(
+        (r) => r.siteResourceId
+    );
+
+    const resourcesToAdd = newSiteResourceIds.filter(
+        (id) => !existingSiteResourceIds.includes(id)
+    );
+
+    const resourcesToRemove = existingSiteResourceIds.filter(
+        (id) => !newSiteResourceIds.includes(id)
+    );
+
+    // Insert new associations
+    if (resourcesToAdd.length > 0) {
+        await trx.insert(clientSiteResourcesAssociationsCache).values(
+            resourcesToAdd.map((siteResourceId) => ({
+                clientId: client.clientId,
+                siteResourceId
+            }))
+        );
+    }
+
+    // Remove old associations
+    if (resourcesToRemove.length > 0) {
+        await trx
+            .delete(clientSiteResourcesAssociationsCache)
+            .where(
+                and(
+                    eq(
+                        clientSiteResourcesAssociationsCache.clientId,
+                        client.clientId
+                    ),
+                    inArray(
+                        clientSiteResourcesAssociationsCache.siteResourceId,
+                        resourcesToRemove
+                    )
+                )
+            );
+    }
+
+    /////////// Process client-site associations ///////////
+
+    // Get existing site associations
+    const existingSiteAssociations = await trx
+        .select({ siteId: clientSitesAssociationsCache.siteId })
+        .from(clientSitesAssociationsCache)
+        .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
+
+    const existingSiteIds = existingSiteAssociations.map((s) => s.siteId);
+
+    const sitesToAdd = newSiteIds.filter((id) => !existingSiteIds.includes(id));
+    const sitesToRemove = existingSiteIds.filter(
+        (id) => !newSiteIds.includes(id)
+    );
+
+    // Insert new site associations
+    if (sitesToAdd.length > 0) {
+        await trx.insert(clientSitesAssociationsCache).values(
+            sitesToAdd.map((siteId) => ({
+                clientId: client.clientId,
+                siteId
+            }))
+        );
+    }
+
+    // Remove old site associations
+    if (sitesToRemove.length > 0) {
+        await trx
+            .delete(clientSitesAssociationsCache)
+            .where(
+                and(
+                    eq(clientSitesAssociationsCache.clientId, client.clientId),
+                    inArray(clientSitesAssociationsCache.siteId, sitesToRemove)
+                )
+            );
+    }
+
+    /////////// Send messages ///////////
+
+    // Get the olm for this client
+    const [olm] = await trx
+        .select({ olmId: olms.olmId })
+        .from(olms)
+        .where(eq(olms.clientId, client.clientId))
+        .limit(1);
+
+    if (!olm) {
+        logger.warn(
+            `Olm not found for client ${client.clientId}, skipping peer updates`
+        );
+        return;
+    }
+
+    // Handle messages for sites being added
+    await handleMessagesForClientSites(
+        client,
+        olm.olmId,
+        sitesToAdd,
+        sitesToRemove,
+        trx
+    );
+
+    // Handle subnet proxy target updates for resources
+    await handleMessagesForClientResources(
+        client,
+        newSiteResources,
+        resourcesToAdd,
+        resourcesToRemove,
+        trx
+    );
+}
+
+async function handleMessagesForClientSites(
+    client: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+        userId: string | null;
+        orgId: string;
+    },
+    olmId: string,
+    sitesToAdd: number[],
+    sitesToRemove: number[],
+    trx: Transaction | typeof db = db
+): Promise<void> {
+    if (!client.subnet || !client.pubKey) {
+        logger.warn(
+            `Client ${client.clientId} missing subnet or pubKey, skipping peer updates`
+        );
+        return;
+    }
+
+    const allSiteIds = [...sitesToAdd, ...sitesToRemove];
+    if (allSiteIds.length === 0) {
+        return;
+    }
+
+    // Get site details for all affected sites
+    const sitesData = await trx
+        .select()
+        .from(sites)
+        .leftJoin(exitNodes, eq(sites.exitNodeId, exitNodes.exitNodeId))
+        .leftJoin(newts, eq(sites.siteId, newts.siteId))
+        .where(inArray(sites.siteId, allSiteIds));
+
+    let newtJobs: Promise<any>[] = [];
+    let olmJobs: Promise<any>[] = [];
+    let exitNodeJobs: Promise<any>[] = [];
+
+    for (const siteData of sitesData) {
+        const site = siteData.sites;
+        const exitNode = siteData.exitNodes;
+        const newt = siteData.newt;
+
+        if (!site.publicKey) {
+            logger.warn(
+                `Site ${site.siteId} missing publicKey, skipping peer updates`
+            );
+            continue;
+        }
+
+        if (!newt) {
+            logger.warn(
+                `Newt not found for site ${site.siteId}, skipping peer updates`
+            );
+            continue;
+        }
+
+        const isAdd = sitesToAdd.includes(site.siteId);
+        const isRemove = sitesToRemove.includes(site.siteId);
+
+        if (isRemove) {
+            // Remove peer from newt
+            newtJobs.push(
+                newtDeletePeer(site.siteId, client.pubKey, newt.newtId)
+            );
+            try {
+                // Remove peer from olm
+                olmJobs.push(
+                    olmDeletePeer(
+                        client.clientId,
+                        site.siteId,
+                        site.publicKey,
+                        olmId
+                    )
+                );
+            } catch (error) {
+                // if the error includes not found then its just because the olm does not exist anymore or yet and its fine if we dont send
+                if (
+                    error instanceof Error &&
+                    error.message.includes("not found")
+                ) {
+                    logger.debug(
+                        `Olm data not found for client ${client.clientId}, skipping removal`
+                    );
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        if (isAdd) {
+            if (!exitNode) {
+                logger.warn(
+                    `Exit node not found for site ${site.siteId}, skipping peer add`
+                );
+                continue;
+            }
+
+            // Add peer to newt
+            const isRelayed = true; // Default to relaying for new connections
+            newtJobs.push(
+                newtAddPeer(
+                    site.siteId,
+                    {
+                        publicKey: client.pubKey,
+                        allowedIps: [`${client.subnet.split("/")[0]}/32`],
+                        endpoint: isRelayed ? "" : ""
+                    },
+                    newt.newtId
+                )
+            );
+
+            // Get all site resources for this site that the client has access to
+            const accessibleResources = await trx
+                .select()
+                .from(siteResources)
+                .innerJoin(
+                    clientSiteResourcesAssociationsCache,
+                    eq(
+                        siteResources.siteResourceId,
+                        clientSiteResourcesAssociationsCache.siteResourceId
+                    )
+                )
+                .where(
+                    and(
+                        eq(siteResources.siteId, site.siteId),
+                        eq(
+                            clientSiteResourcesAssociationsCache.clientId,
+                            client.clientId
+                        )
+                    )
+                );
+            try {
+                // Add peer to olm
+                olmJobs.push(
+                    olmAddPeer(
+                        client.clientId,
+                        {
+                            siteId: site.siteId,
+                            endpoint:
+                                isRelayed || !site.endpoint
+                                    ? `${exitNode.endpoint}:21820`
+                                    : site.endpoint,
+                            publicKey: site.publicKey,
+                            serverIP: site.address || "",
+                            serverPort: site.listenPort || 0,
+                            remoteSubnets: generateRemoteSubnets(
+                                accessibleResources.map(
+                                    ({ siteResources }) => siteResources
+                                )
+                            )
+                        },
+                        olmId
+                    )
+                );
+            } catch (error) {
+                // if the error includes not found then its just because the olm does not exist anymore or yet and its fine if we dont send
+                if (
+                    error instanceof Error &&
+                    error.message.includes("not found")
+                ) {
+                    logger.debug(
+                        `Olm data not found for client ${client.clientId}, skipping removal`
+                    );
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        // Update exit node destinations
+        exitNodeJobs.push(
+            updateClientSiteDestinations(
+                {
+                    clientId: client.clientId,
+                    pubKey: client.pubKey,
+                    subnet: client.subnet
+                },
+                trx
+            )
+        );
+    }
+
+    await Promise.all(exitNodeJobs);
+    await Promise.all(newtJobs);
+    await Promise.all(olmJobs);
+}
+
+async function handleMessagesForClientResources(
+    client: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+        userId: string | null;
+        orgId: string;
+    },
+    allNewResources: SiteResource[],
+    resourcesToAdd: number[],
+    resourcesToRemove: number[],
+    trx: Transaction | typeof db = db
+): Promise<void> {
+    // Group resources by site
+    const resourcesBySite = new Map<number, SiteResource[]>();
+
+    for (const resource of allNewResources) {
+        if (!resourcesBySite.has(resource.siteId)) {
+            resourcesBySite.set(resource.siteId, []);
+        }
+        resourcesBySite.get(resource.siteId)!.push(resource);
+    }
+
+    let proxyJobs: Promise<any>[] = [];
+    let olmJobs: Promise<any>[] = [];
+
+    // Handle additions
+    if (resourcesToAdd.length > 0) {
+        const addedResources = allNewResources.filter((r) =>
+            resourcesToAdd.includes(r.siteResourceId)
+        );
+
+        // Group by site for proxy updates
+        const addedBySite = new Map<number, SiteResource[]>();
+        for (const resource of addedResources) {
+            if (!addedBySite.has(resource.siteId)) {
+                addedBySite.set(resource.siteId, []);
+            }
+            addedBySite.get(resource.siteId)!.push(resource);
+        }
+
+        // Add subnet proxy targets for each site
+        for (const [siteId, resources] of addedBySite.entries()) {
+            const [newt] = await trx
+                .select({ newtId: newts.newtId })
+                .from(newts)
+                .where(eq(newts.siteId, siteId))
+                .limit(1);
+
+            if (!newt) {
+                logger.warn(
+                    `Newt not found for site ${siteId}, skipping proxy updates`
+                );
+                continue;
+            }
+
+            for (const resource of resources) {
+                const targets = generateSubnetProxyTargets(resource, [
+                    {
+                        clientId: client.clientId,
+                        pubKey: client.pubKey,
+                        subnet: client.subnet
+                    }
+                ]);
+
+                if (targets.length > 0) {
+                    proxyJobs.push(addSubnetProxyTargets(newt.newtId, targets));
+                }
+
+                try {
+                    // Add peer data to olm
+                    olmJobs.push(
+                        addPeerData(
+                            client.clientId,
+                            resource.siteId,
+                            generateRemoteSubnets([resource]),
+                            generateAliasConfig([resource])
+                        )
+                    );
+                } catch (error) {
+                    // if the error includes not found then its just because the olm does not exist anymore or yet and its fine if we dont send
+                    if (
+                        error instanceof Error &&
+                        error.message.includes("not found")
+                    ) {
+                        logger.debug(
+                            `Olm data not found for client ${client.clientId} and site ${resource.siteId}, skipping removal`
+                        );
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+    }
+
+    // Handle removals
+    if (resourcesToRemove.length > 0) {
+        const removedResources = await trx
+            .select()
+            .from(siteResources)
+            .where(inArray(siteResources.siteResourceId, resourcesToRemove));
+
+        // Group by site for proxy updates
+        const removedBySite = new Map<number, SiteResource[]>();
+        for (const resource of removedResources) {
+            if (!removedBySite.has(resource.siteId)) {
+                removedBySite.set(resource.siteId, []);
+            }
+            removedBySite.get(resource.siteId)!.push(resource);
+        }
+
+        // Remove subnet proxy targets for each site
+        for (const [siteId, resources] of removedBySite.entries()) {
+            const [newt] = await trx
+                .select({ newtId: newts.newtId })
+                .from(newts)
+                .where(eq(newts.siteId, siteId))
+                .limit(1);
+
+            if (!newt) {
+                logger.warn(
+                    `Newt not found for site ${siteId}, skipping proxy updates`
+                );
+                continue;
+            }
+
+            for (const resource of resources) {
+                const targets = generateSubnetProxyTargets(resource, [
+                    {
+                        clientId: client.clientId,
+                        pubKey: client.pubKey,
+                        subnet: client.subnet
+                    }
+                ]);
+
+                if (targets.length > 0) {
+                    proxyJobs.push(
+                        removeSubnetProxyTargets(newt.newtId, targets)
+                    );
+                }
+
+                try {
+                    // Remove peer data from olm
+                    olmJobs.push(
+                        removePeerData(
+                            client.clientId,
+                            resource.siteId,
+                            generateRemoteSubnets([resource]),
+                            generateAliasConfig([resource])
+                        )
+                    );
+                } catch (error) {
+                    // if the error includes not found then its just because the olm does not exist anymore or yet and its fine if we dont send
+                    if (
+                        error instanceof Error &&
+                        error.message.includes("not found")
+                    ) {
+                        logger.debug(
+                            `Olm data not found for client ${client.clientId} and site ${resource.siteId}, skipping removal`
+                        );
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+    }
+
+    await Promise.all([...proxyJobs, ...olmJobs]);
 }

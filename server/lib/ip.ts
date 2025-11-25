@@ -398,8 +398,9 @@ export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
 }
 
 export type SubnetProxyTarget = {
-    sourcePrefix: string;
-    destPrefix: string;
+    sourcePrefix: string; // must be a cidr
+    destPrefix: string; // must be a cidr
+    rewriteTo?: string; // must be a cidr
     portRange?: {
         min: number;
         max: number;
@@ -447,7 +448,8 @@ export function generateSubnetProxyTargets(
                 // also push a match for the alias address
                 targets.push({
                     sourcePrefix: clientPrefix,
-                    destPrefix: `${siteResource.aliasAddress}/32`
+                    destPrefix: `${siteResource.aliasAddress}/32`,
+                    rewriteTo: `${siteResource.destination}/32`
                 });
             }
         } else if (siteResource.mode == "cidr") {

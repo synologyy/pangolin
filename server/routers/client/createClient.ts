@@ -24,18 +24,19 @@ import { isIpInCidr } from "@server/lib/ip";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { generateId } from "@server/auth/sessions/app";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 
 const createClientParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const createClientSchema = z.strictObject({
-        name: z.string().min(1).max(255),
-        olmId: z.string(),
-        secret: z.string(),
-        subnet: z.string(),
-        type: z.enum(["olm"])
-    });
+    name: z.string().min(1).max(255),
+    olmId: z.string(),
+    secret: z.string(),
+    subnet: z.string(),
+    type: z.enum(["olm"])
+});
 
 export type CreateClientBody = z.infer<typeof createClientSchema>;
 
@@ -186,6 +187,7 @@ export async function createClient(
             );
         }
 
+        let newClient: Client | null = null;
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
             const exitNodesList = await listExitNodes(orgId);
@@ -204,7 +206,7 @@ export async function createClient(
                 );
             }
 
-            const [newClient] = await trx
+            [newClient] = await trx
                 .insert(clients)
                 .values({
                     exitNodeId: randomExitNode.exitNodeId,
@@ -244,13 +246,15 @@ export async function createClient(
                 dateCreated: moment().toISOString()
             });
 
-            return response<CreateClientResponse>(res, {
-                data: newClient,
-                success: true,
-                error: false,
-                message: "Site created successfully",
-                status: HttpCode.CREATED
-            });
+            await rebuildClientAssociationsFromClient(newClient, trx);
+        });
+
+        return response<CreateClientResponse>(res, {
+            data: newClient,
+            success: true,
+            error: false,
+            message: "Site created successfully",
+            status: HttpCode.CREATED
         });
     } catch (error) {
         logger.error(error);

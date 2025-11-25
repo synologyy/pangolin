@@ -17,7 +17,7 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { getUniqueSiteResourceName } from "@server/db/names";
-import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
+import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
 import { getNextAvailableAliasAddress } from "@server/lib/ip";
 
 const createSiteResourceParamsSchema = z.strictObject({
@@ -278,7 +278,7 @@ export async function createSiteResource(
                 );
             }
 
-            await rebuildClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
+            await rebuildClientAssociationsFromSiteResource(newSiteResource, trx); // we need to call this because we added to the admin role
         });
 
         if (!newSiteResource) {

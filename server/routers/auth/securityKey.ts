@@ -52,7 +52,7 @@ setInterval(async () => {
         await db
             .delete(webauthnChallenge)
             .where(lt(webauthnChallenge.expiresAt, now));
-        logger.debug("Cleaned up expired security key challenges");
+        // logger.debug("Cleaned up expired security key challenges");
     } catch (error) {
         logger.error("Failed to clean up expired security key challenges", error);
     }

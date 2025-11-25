@@ -25,7 +25,7 @@ import {
 } from "@server/lib/ip";
 import {
     getClientSiteResourceAccess,
-    rebuildClientAssociations
+    rebuildClientAssociationsFromSiteResource
 } from "@server/lib/rebuildClientAssociations";
 
 const updateSiteResourceParamsSchema = z.strictObject({
@@ -224,7 +224,7 @@ export async function updateSiteResource(
                     );
             }
 
-            const { mergedAllClients } = await rebuildClientAssociations(
+            const { mergedAllClients } = await rebuildClientAssociationsFromSiteResource(
                 existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
                 trx
             );
