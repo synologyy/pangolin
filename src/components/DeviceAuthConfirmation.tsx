@@ -85,7 +85,7 @@ export function DeviceAuthConfirmation({
                 </Alert>
 
                 <div className="space-y-3">
-                    <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+                    <div className="flex items-start gap-3 p-3 border rounded-md">
                         <Monitor className="h-5 w-5 mt-0.5" />
                         <div className="flex-1">
                             <p className="text-sm font-medium">
