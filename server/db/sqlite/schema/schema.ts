@@ -415,7 +415,8 @@ export const sessions = sqliteTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: integer("expiresAt").notNull(),
-    issuedAt: integer("issuedAt")
+    issuedAt: integer("issuedAt"),
+    deviceAuthUsed: integer("deviceAuthUsed", { mode: "boolean" })
 });
 
 export const newtSessions = sqliteTable("newtSession", {

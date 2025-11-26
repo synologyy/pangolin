@@ -287,7 +287,8 @@ export const sessions = pgTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
-    issuedAt: bigint("issuedAt", { mode: "number" })
+    issuedAt: bigint("issuedAt", { mode: "number" }),
+    deviceAuthUsed: boolean("deviceAuthUsed")
 });
 
 export const newtSessions = pgTable("newtSession", {

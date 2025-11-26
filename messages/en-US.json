@@ -2140,7 +2140,7 @@
     "deviceOrganizationsAccess": "Access to all organizations your account has access to",
     "deviceAuthorize": "Authorize {applicationName}",
     "deviceConnected": "Device Connected!",
-    "deviceAuthorizedMessage": "Your device is authorized to access your account.",
+    "deviceAuthorizedMessage": "Device is authorized to access your account.",
     "pangolinCloud": "Pangolin Cloud",
     "viewDevices": "View Devices",
     "viewDevicesDescription": "Manage your connected devices",
@@ -2202,5 +2202,5 @@
     "enterIdentifier": "Enter identifier",
     "identifier": "Identifier",
     "deviceLoginUseDifferentAccount": "Not you? Use a different account.",
-    "deviceLoginDeviceRequestingAccessToAccount": "Your device is requesting access to this account."
+    "deviceLoginDeviceRequestingAccessToAccount": "A device is requesting access to this account."
 }

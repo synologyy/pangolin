@@ -18,13 +18,19 @@ export async function verifySession(req: Request, forceLogin?: boolean) {
             user: null
         };
     }
+    if (res.session.deviceAuthUsed) {
+        return {
+            session: null,
+            user: null
+        };
+    }
     if (!res.session.issuedAt) {
         return {
             session: null,
             user: null
         };
     }
-    const mins = 3 * 60 * 1000;
+    const mins = 5 * 60 * 1000;
     const now = new Date().getTime();
     if (now - res.session.issuedAt > mins) {
         return {
