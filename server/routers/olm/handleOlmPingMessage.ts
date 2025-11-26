@@ -5,6 +5,8 @@ import { clients, Olm } from "@server/db";
 import { eq, lt, isNull, and, or } from "drizzle-orm";
 import logger from "@server/logger";
 import { validateSessionToken } from "@server/auth/sessions/app";
+import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
+import { sendTerminateClient } from "../client/terminate";
 
 // Track if the offline checker interval is running
 let offlineCheckerInterval: NodeJS.Timeout | null = null;
@@ -57,6 +59,9 @@ export const startOlmOfflineChecker = (): void => {
 
                 // Send a disconnect message to the client if connected
                 try {
+                    await sendTerminateClient(offlineClient.clientId); // terminate first
+                    // wait a moment to ensure the message is sent
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     await disconnectClient(offlineClient.olmId);
                 } catch (error) {
                     logger.error(
@@ -108,6 +113,36 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
         }
         if (user.userId !== olm.userId) {
             logger.warn("User ID mismatch for olm ping");
+            return;
+        }
+
+        // get the client
+        const [client] = await db
+            .select()
+            .from(clients)
+            .where(
+                and(
+                    eq(clients.olmId, olm.olmId),
+                    eq(clients.userId, olm.userId)
+                )
+            )
+            .limit(1);
+
+        if (!client) {
+            logger.warn("Client not found for olm ping");
+            return;
+        }
+
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId: client.orgId,
+            userId: olm.userId,
+            session: userToken // this is the user token passed in the message
+        });
+
+        if (!policyCheck.allowed) {
+            logger.warn(
+                `Olm user ${olm.userId} does not pass access policies for org ${client.orgId}: ${policyCheck.error}`
+            );
             return;
         }
     }

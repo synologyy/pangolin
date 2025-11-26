@@ -125,7 +125,7 @@ export async function addUserRole(
                 .returning();
 
             // get the client associated with this user in this org
-            const [orgClient] = await trx
+            const orgClients = await trx
                 .select()
                 .from(clients)
                 .where(
@@ -136,7 +136,7 @@ export async function addUserRole(
                 )
                 .limit(1);
 
-            if (orgClient) {
+            for (const orgClient of orgClients) {
                 // we just changed the user's role, so we need to rebuild client associations and what they have access to
                 await rebuildClientAssociationsFromClient(orgClient, trx);
             }

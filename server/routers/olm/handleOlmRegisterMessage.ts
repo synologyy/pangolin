@@ -32,6 +32,8 @@ import {
 } from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
 import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
+import { validateSessionToken } from "@server/auth/sessions/app";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -45,7 +47,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient } =
+    const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient, token: userToken } =
         message.data;
 
     let client: Client | undefined;
@@ -75,6 +77,35 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         if (!client) {
             logger.warn("Client not found");
+            return;
+        }
+
+        if (!olm.userId) {
+            logger.warn("Olm has no user ID");
+            return;
+        }
+
+        const { session: userSession, user } =
+            await validateSessionToken(userToken);
+        if (!userSession || !user) {
+            logger.warn("Invalid user session for olm ping");
+            return; // by returning here we just ignore the ping and the setInterval will force it to disconnect
+        }
+        if (user.userId !== olm.userId) {
+            logger.warn("User ID mismatch for olm ping");
+            return;
+        }
+
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId: orgId,
+            userId: olm.userId,
+            session: userToken // this is the user token passed in the message
+        });
+
+        if (!policyCheck.allowed) {
+            logger.warn(
+                `Olm user ${olm.userId} does not pass access policies for org ${orgId}: ${policyCheck.error}`
+            );
             return;
         }
 
