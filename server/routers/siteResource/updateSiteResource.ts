@@ -49,7 +49,44 @@ const updateSiteResourceSchema = z
         roleIds: z.array(z.int()),
         clientIds: z.array(z.int())
     })
-    .strict();
+    .strict()
+    .refine(
+        (data) => {
+            if (data.mode === "host" && data.destination) {
+                // Check if it's a valid IP address using zod (v4 or v6)
+                const isValidIP = z
+                    .union([z.ipv4(), z.ipv6()])
+                    .safeParse(data.destination).success;
+
+                // Check if it's a valid domain (hostname pattern, TLD not required)
+                const domainRegex =
+                    /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+                const isValidDomain = domainRegex.test(data.destination);
+
+                return isValidIP || isValidDomain;
+            }
+            return true;
+        },
+        {
+            message:
+                "Destination must be a valid IP address or domain name for host mode"
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "cidr" && data.destination) {
+                // Check if it's a valid CIDR (v4 or v6)
+                const isValidCIDR = z
+                    .union([z.cidrv4(), z.cidrv6()])
+                    .safeParse(data.destination).success;
+                return isValidCIDR;
+            }
+            return true;
+        },
+        {
+            message: "Destination must be a valid CIDR notation for cidr mode"
+        }
+    );
 
 export type UpdateSiteResourceBody = z.infer<typeof updateSiteResourceSchema>;
 export type UpdateSiteResourceResponse = SiteResource;
@@ -224,10 +261,11 @@ export async function updateSiteResource(
                     );
             }
 
-            const { mergedAllClients } = await rebuildClientAssociationsFromSiteResource(
-                existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
-                trx
-            );
+            const { mergedAllClients } =
+                await rebuildClientAssociationsFromSiteResource(
+                    existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
+                    trx
+                );
 
             // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
             if (
@@ -263,28 +301,36 @@ export async function updateSiteResource(
                 let olmJobs: Promise<void>[] = [];
                 for (const client of mergedAllClients) {
                     // we also need to update the remote subnets on the olms for each client that has access to this site
-                    olmJobs.push(
-                        updatePeerData(
-                            client.clientId,
-                            updatedSiteResource.siteId,
-                            {
-                                oldRemoteSubnets: generateRemoteSubnets([
-                                    existingSiteResource
-                                ]),
-                                newRemoteSubnets: generateRemoteSubnets([
-                                    updatedSiteResource
-                                ])
-                            },
-                            {
-                                oldAliases: generateAliasConfig([
-                                    existingSiteResource
-                                ]),
-                                newAliases: generateAliasConfig([
-                                    updatedSiteResource
-                                ])
-                            }
-                        )
-                    );
+                    try {
+                        olmJobs.push(
+                            updatePeerData(
+                                client.clientId,
+                                updatedSiteResource.siteId,
+                                {
+                                    oldRemoteSubnets: generateRemoteSubnets([
+                                        existingSiteResource
+                                    ]),
+                                    newRemoteSubnets: generateRemoteSubnets([
+                                        updatedSiteResource
+                                    ])
+                                },
+                                {
+                                    oldAliases: generateAliasConfig([
+                                        existingSiteResource
+                                    ]),
+                                    newAliases: generateAliasConfig([
+                                        updatedSiteResource
+                                    ])
+                                }
+                            )
+                        );
+                    } catch (error) {
+                        logger.warn(
+                            // this is okay because sometimes the olm is not online to receive the update or associated with the client yet
+                            `Error updating peer data for client ${client.clientId}:`,
+                            error
+                        );
+                    }
                 }
 
                 await Promise.all(olmJobs);
