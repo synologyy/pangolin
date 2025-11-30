@@ -28,10 +28,10 @@ import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 
 const createOrgSchema = z.strictObject({
-        orgId: z.string(),
-        name: z.string().min(1).max(255),
-        subnet: z.string()
-    });
+    orgId: z.string(),
+    name: z.string().min(1).max(255),
+    subnet: z.string()
+});
 
 registry.registerPath({
     method: "put",
@@ -131,12 +131,16 @@ export async function createOrg(
                 .from(domains)
                 .where(eq(domains.configManaged, true));
 
+            const utilitySubnet =
+                config.getRawConfig().orgs.utility_subnet_group;
+
             const newOrg = await trx
                 .insert(orgs)
                 .values({
                     orgId,
                     name,
                     subnet,
+                    utilitySubnet,
                     createdAt: new Date().toISOString()
                 })
                 .returning();
