@@ -19,6 +19,8 @@ import { fromError } from "zod-validation-error";
 import { validateNewtSessionToken } from "@server/auth/sessions/newt";
 import { validateOlmSessionToken } from "@server/auth/sessions/olm";
 import { checkExitNodeOrg } from "#dynamic/lib/exitNodes";
+import { updatePeer as updateOlmPeer } from "../olm/peers";
+import { updatePeer as updateNewtPeer } from "../newt/peers";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({
@@ -362,11 +364,142 @@ export async function updateAndGenerateEndpointDestinations(
     return destinations;
 }
 
-function handleSiteEndpointChange(siteId: number, newEndpoint: string) {
-    // just alert all of the clients connected to this site that the endpoint has changed but only if they are NOT relayed
+async function handleSiteEndpointChange(siteId: number, newEndpoint: string) {
+    // Alert all clients connected to this site that the endpoint has changed (only if NOT relayed)
+    try {
+        // Get site details
+        const [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, siteId))
+            .limit(1);
+
+        if (!site || !site.publicKey) {
+            logger.warn(`Site ${siteId} not found or has no public key`);
+            return;
+        }
+
+        // Get all non-relayed clients connected to this site
+        const connectedClients = await db
+            .select({
+                clientId: clients.clientId,
+                olmId: olms.olmId,
+                isRelayed: clientSitesAssociationsCache.isRelayed
+            })
+            .from(clientSitesAssociationsCache)
+            .innerJoin(
+                clients,
+                eq(clientSitesAssociationsCache.clientId, clients.clientId)
+            )
+            .innerJoin(olms, eq(olms.clientId, clients.clientId))
+            .where(
+                and(
+                    eq(clientSitesAssociationsCache.siteId, siteId),
+                    eq(clientSitesAssociationsCache.isRelayed, false)
+                )
+            );
+
+        // Update each non-relayed client with the new site endpoint
+        for (const client of connectedClients) {
+            try {
+                await updateOlmPeer(
+                    client.clientId,
+                    {
+                        siteId: siteId,
+                        publicKey: site.publicKey,
+                        endpoint: newEndpoint,
+                    },
+                    client.olmId
+                );
+                logger.debug(
+                    `Updated client ${client.clientId} with new site ${siteId} endpoint: ${newEndpoint}`
+                );
+            } catch (error) {
+                logger.error(
+                    `Failed to update client ${client.clientId} with new site endpoint: ${error}`
+                );
+            }
+        }
+    } catch (error) {
+        logger.error(
+            `Error handling site endpoint change for site ${siteId}: ${error}`
+        );
+    }
 }
 
-function handleClientEndpointChange(clientId: number, newEndpoint: string) {
-    // just alert all of the sites connected to this client that the endpoint has changed but only if they are NOT relayed
+async function handleClientEndpointChange(
+    clientId: number,
+    newEndpoint: string
+) {
+    // Alert all sites connected to this client that the endpoint has changed (only if NOT relayed)
+    try {
+        // Get client details
+        const [client] = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.clientId, clientId))
+            .limit(1);
 
+        if (!client || !client.pubKey) {
+            logger.warn(`Client ${clientId} not found or has no public key`);
+            return;
+        }
+
+        // Get all non-relayed sites connected to this client
+        const connectedSites = await db
+            .select({
+                siteId: sites.siteId,
+                newtId: newts.newtId,
+                isRelayed: clientSitesAssociationsCache.isRelayed,
+                subnet: clients.subnet
+            })
+            .from(clientSitesAssociationsCache)
+            .innerJoin(
+                sites,
+                eq(clientSitesAssociationsCache.siteId, sites.siteId)
+            )
+            .innerJoin(newts, eq(newts.siteId, sites.siteId))
+            .innerJoin(
+                clients,
+                eq(clientSitesAssociationsCache.clientId, clients.clientId)
+            )
+            .where(
+                and(
+                    eq(clientSitesAssociationsCache.clientId, clientId),
+                    eq(clientSitesAssociationsCache.isRelayed, false)
+                )
+            );
+
+        // Update each non-relayed site with the new client endpoint
+        for (const siteData of connectedSites) {
+            try {
+                if (!siteData.subnet) {
+                    logger.warn(
+                        `Client ${clientId} has no subnet, skipping update for site ${siteData.siteId}`
+                    );
+                    continue;
+                }
+
+                await updateNewtPeer(
+                    siteData.siteId,
+                    client.pubKey,
+                    {
+                        endpoint: newEndpoint
+                    },
+                    siteData.newtId
+                );
+                logger.debug(
+                    `Updated site ${siteData.siteId} with new client ${clientId} endpoint: ${newEndpoint}`
+                );
+            } catch (error) {
+                logger.error(
+                    `Failed to update site ${siteData.siteId} with new client endpoint: ${error}`
+                );
+            }
+        }
+    } catch (error) {
+        logger.error(
+            `Error handling client endpoint change for client ${clientId}: ${error}`
+        );
+    }
 }

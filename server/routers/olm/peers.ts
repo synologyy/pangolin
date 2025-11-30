@@ -78,8 +78,8 @@ export async function updatePeer(
         siteId: number;
         publicKey: string;
         endpoint: string;
-        serverIP: string | null;
-        serverPort: number | null;
+        serverIP?: string | null;
+        serverPort?: number | null;
         remoteSubnets?: string[] | null; // optional, comma-separated list of subnets that
     },
     olmId?: string
