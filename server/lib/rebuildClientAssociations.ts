@@ -465,7 +465,8 @@ async function handleMessagesForSiteClients(
         }
 
         if (isAdd) {
-            await holepunchSiteAdd( // this will kick off the add peer process for the client
+            await holepunchSiteAdd(
+                // this will kick off the add peer process for the client
                 client.clientId,
                 {
                     siteId,
@@ -728,7 +729,19 @@ export async function rebuildClientAssociationsFromClient(
         const userSiteResourceIds = await trx
             .select({ siteResourceId: userSiteResources.siteResourceId })
             .from(userSiteResources)
-            .where(eq(userSiteResources.userId, client.userId));
+            .innerJoin(
+                siteResources,
+                eq(
+                    siteResources.siteResourceId,
+                    userSiteResources.siteResourceId
+                )
+            )
+            .where(
+                and(
+                    eq(userSiteResources.userId, client.userId),
+                    eq(siteResources.orgId, client.orgId)
+                )
+            ); // this needs to be locked onto this org or else cross-org access could happen
 
         newSiteResourceIds.push(
             ...userSiteResourceIds.map((r) => r.siteResourceId)
@@ -738,7 +751,12 @@ export async function rebuildClientAssociationsFromClient(
         const roleIds = await trx
             .select({ roleId: userOrgs.roleId })
             .from(userOrgs)
-            .where(eq(userOrgs.userId, client.userId))
+            .where(
+                and(
+                    eq(userOrgs.userId, client.userId),
+                    eq(userOrgs.orgId, client.orgId)
+                )
+            ) // this needs to be locked onto this org or else cross-org access could happen
             .then((rows) => rows.map((row) => row.roleId));
 
         if (roleIds.length > 0) {

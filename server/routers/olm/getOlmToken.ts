@@ -1,5 +1,12 @@
 import { generateSessionToken } from "@server/auth/sessions/app";
-import { clients, db, ExitNode, exitNodes, sites, clientSitesAssociationsCache } from "@server/db";
+import {
+    clients,
+    db,
+    ExitNode,
+    exitNodes,
+    sites,
+    clientSitesAssociationsCache
+} from "@server/db";
 import { olms } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
@@ -99,6 +106,7 @@ export async function getOlmToken(
         await createOlmSession(resToken, existingOlm.olmId);
 
         let orgIdToUse = orgId;
+        let clientIdToUse;
         if (!orgIdToUse) {
             if (!existingOlm.clientId) {
                 return next(
@@ -114,7 +122,7 @@ export async function getOlmToken(
                 .from(clients)
                 .where(eq(clients.clientId, existingOlm.clientId))
                 .limit(1);
-            
+
             if (!client) {
                 return next(
                     createHttpError(
@@ -125,6 +133,40 @@ export async function getOlmToken(
             }
 
             orgIdToUse = client.orgId;
+            clientIdToUse = client.clientId;
+        } else {
+            // we did provide the org
+            const [client] = await db
+                .select()
+                .from(clients)
+                .where(eq(clients.orgId, orgIdToUse))
+                .limit(1);
+
+            if (!client) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "No client found for provided orgId"
+                    )
+                );
+            }
+
+            if (existingOlm.clientId !== client.clientId) {
+                // we only need to do this if the client is changing
+
+                logger.debug(
+                    `Switching olm client ${existingOlm.olmId} to org ${orgId} for user ${existingOlm.userId}`
+                );
+
+                await db
+                    .update(olms)
+                    .set({
+                        clientId: client.clientId
+                    })
+                    .where(eq(olms.olmId, existingOlm.olmId));
+            }
+
+            clientIdToUse = client.clientId;
         }
 
         // Get all exit nodes from sites where the client has peers
@@ -135,7 +177,7 @@ export async function getOlmToken(
                 sites,
                 eq(sites.siteId, clientSitesAssociationsCache.siteId)
             )
-            .where(eq(clientSitesAssociationsCache.clientId, existingOlm.clientId!));
+            .where(eq(clientSitesAssociationsCache.clientId, clientIdToUse!));
 
         // Extract unique exit node IDs
         const exitNodeIds = Array.from(
