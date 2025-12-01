@@ -177,7 +177,7 @@ export type InternalResourceRow = {
 
 type Site = ListSitesResponse["sites"][0];
 
-type ResourcesTableProps = {
+type ClientResourcesTableProps = {
     resources: ResourceRow[];
     internalResources: InternalResourceRow[];
     orgId: string;
@@ -270,13 +270,13 @@ const setStoredColumnVisibility = (
     }
 };
 
-export default function ResourcesTable({
+export default function ClientResourcesTable({
     resources,
     internalResources,
     orgId,
     defaultView = "proxy",
     defaultSort
-}: ResourcesTableProps) {
+}: ClientResourcesTableProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const t = useTranslations();

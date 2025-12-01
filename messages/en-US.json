@@ -1151,6 +1151,8 @@
     "sidebarHome": "Home",
     "sidebarSites": "Sites",
     "sidebarResources": "Resources",
+    "sidebarProxyResources": "Proxy Resources",
+    "sidebarClientResources": "Client Resources",
     "sidebarAccessControl": "Access Control",
     "sidebarUsers": "Users",
     "sidebarInvitations": "Invitations",
