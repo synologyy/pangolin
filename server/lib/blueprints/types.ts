@@ -47,7 +47,8 @@ export const AuthSchema = z.object({
     password: z.string().min(1).optional(),
     "basic-auth": z.object({
         user: z.string().min(1),
-        password: z.string().min(1)
+        password: z.string().min(1),
+        extendedCompatibility: z.boolean().default(false)
     }).optional(),
     "sso-enabled": z.boolean().optional().default(false),
     "sso-roles": z

@@ -1,4 +1,6 @@
 {
+    "headerAuthCompatibilityInfo": "Enable this to force a 401 Unauthorized response when an authentication token is missing. This is required for browsers or specific HTTP libraries that do not send credentials without a server challenge.",
+    "headerAuthCompatibility": "Extended compatibility",
     "setupCreate": "Maak uw organisatie, site en bronnen aan",
     "setupNewOrg": "Nieuwe organisatie",
     "setupCreateOrg": "Nieuwe organisatie aanmaken",

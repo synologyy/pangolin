@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, resourceHeaderAuth } from "@server/db";
+import {db, resourceHeaderAuth, resourceHeaderAuthExtendedCompatibility} from "@server/db";
 import {
     resources,
     userResources,
@@ -67,7 +67,7 @@ type JoinedRow = {
     hcEnabled: boolean | null;
 };
 
-// grouped by resource with targets[]) 
+// grouped by resource with targets[])
 export type ResourceWithTargets = {
     resourceId: number;
     name: string;
@@ -111,7 +111,7 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
             domainId: resources.domainId,
             niceId: resources.niceId,
             headerAuthId: resourceHeaderAuth.headerAuthId,
-
+            headerAuthExtendedCompatibilityId: resourceHeaderAuthExtendedCompatibility.headerAuthExtendedCompatibilityId,
             targetId: targets.targetId,
             targetIp: targets.ip,
             targetPort: targets.port,
@@ -132,6 +132,10 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
         .leftJoin(
             resourceHeaderAuth,
             eq(resourceHeaderAuth.resourceId, resources.resourceId)
+        )
+        .leftJoin(
+            resourceHeaderAuthExtendedCompatibility,
+            eq(resourceHeaderAuthExtendedCompatibility.resourceId, resources.resourceId)
         )
         .leftJoin(targets, eq(targets.resourceId, resources.resourceId))
         .leftJoin(

@@ -1,4 +1,6 @@
 {
+    "headerAuthCompatibilityInfo": "Enable this to force a 401 Unauthorized response when an authentication token is missing. This is required for browsers or specific HTTP libraries that do not send credentials without a server challenge.",
+    "headerAuthCompatibility": "Extended compatibility",
     "setupCreate": "创建您的第一个组织、网站和资源",
     "setupNewOrg": "新建组织",
     "setupCreateOrg": "创建组织",

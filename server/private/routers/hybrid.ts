@@ -36,8 +36,10 @@ import {
     LoginPage,
     resourceHeaderAuth,
     ResourceHeaderAuth,
+    resourceHeaderAuthExtendedCompatibility,
+    ResourceHeaderAuthExtendedCompatibility,
     orgs,
-    requestAuditLog
+    requestAuditLog,
 } from "@server/db";
 import {
     resources,
@@ -188,6 +190,7 @@ export type ResourceWithAuth = {
     pincode: ResourcePincode | null;
     password: ResourcePassword | null;
     headerAuth: ResourceHeaderAuth | null;
+    headerAuthExtendedCompatibility: ResourceHeaderAuthExtendedCompatibility | null;
 };
 
 export type UserSessionWithUser = {
@@ -511,6 +514,10 @@ hybridRouter.get(
                     resourceHeaderAuth,
                     eq(resourceHeaderAuth.resourceId, resources.resourceId)
                 )
+                .leftJoin(
+                    resourceHeaderAuthExtendedCompatibility,
+                    eq(resourceHeaderAuthExtendedCompatibility.resourceId, resources.resourceId)
+                )
                 .where(eq(resources.fullDomain, domain))
                 .limit(1);
 
@@ -543,7 +550,8 @@ hybridRouter.get(
                 resource: result.resources,
                 pincode: result.resourcePincode,
                 password: result.resourcePassword,
-                headerAuth: result.resourceHeaderAuth
+                headerAuth: result.resourceHeaderAuth,
+                headerAuthExtendedCompatibility: result.resourceHeaderAuthExtendedCompatibility
             };
 
             return response<ResourceWithAuth>(res, {
