@@ -25,6 +25,7 @@ import {
     deletePeer as newtDeletePeer
 } from "@server/routers/newt/peers";
 import {
+    initPeerAddHandshake as holepunchSiteAdd,
     addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "@server/routers/olm/peers";
@@ -464,65 +465,16 @@ async function handleMessagesForSiteClients(
         }
 
         if (isAdd) {
-            // TODO: WE NEED TO HANDLE THIS BETTER. WE ARE DEFAULTING TO RELAYING FOR NEW SITES
-            // BUT REALLY WE NEED TO TRACK THE USERS PREFERENCE THAT THEY CHOSE IN THE CLIENTS
-            // AND TRIGGER A HOLEPUNCH OR SOMETHING TO GET THE ENDPOINT AND HP TO THE NEW SITES
-            const isRelayed = true;
-
-            newtJobs.push(
-                newtAddPeer(
+            await holepunchSiteAdd( // this will kick off the add peer process for the client
+                client.clientId,
+                {
                     siteId,
-                    {
-                        publicKey: client.pubKey,
-                        allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                        // endpoint: isRelayed ? "" : clientSite.endpoint
-                        endpoint: isRelayed ? "" : "" // we are not HPing yet so no endpoint
-                    },
-                    newt.newtId
-                )
-            );
-
-            // TODO: should we have this here?
-            const allSiteResources = await db // only get the site resources that this client has access to
-                .select()
-                .from(siteResources)
-                .innerJoin(
-                    clientSiteResourcesAssociationsCache,
-                    eq(
-                        siteResources.siteResourceId,
-                        clientSiteResourcesAssociationsCache.siteResourceId
-                    )
-                )
-                .where(
-                    and(
-                        eq(siteResources.siteId, site.siteId),
-                        eq(
-                            clientSiteResourcesAssociationsCache.clientId,
-                            client.clientId
-                        )
-                    )
-                );
-
-            olmJobs.push(
-                olmAddPeer(
-                    client.clientId,
-                    {
-                        siteId: site.siteId,
-                        endpoint:
-                            isRelayed || !site.endpoint
-                                ? `${exitNode.endpoint}:21820`
-                                : site.endpoint,
-                        publicKey: site.publicKey,
-                        serverIP: site.address,
-                        serverPort: site.listenPort,
-                        remoteSubnets: generateRemoteSubnets(
-                            allSiteResources.map(
-                                ({ siteResources }) => siteResources
-                            )
-                        )
-                    },
-                    olm.olmId
-                )
+                    exitNode: {
+                        publicKey: exitNode.publicKey,
+                        endpoint: exitNode.endpoint
+                    }
+                },
+                olm.olmId
             );
         }
 

@@ -59,7 +59,7 @@ export const startOlmOfflineChecker = (): void => {
 
                 // Send a disconnect message to the client if connected
                 try {
-                    await sendTerminateClient(offlineClient.clientId); // terminate first
+                    await sendTerminateClient(offlineClient.clientId, offlineClient.olmId); // terminate first
                     // wait a moment to ensure the message is sent
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     await disconnectClient(offlineClient.olmId);

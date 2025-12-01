@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { no } from "zod/v4/locales";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -372,7 +373,8 @@ export const clientSitesAssociationsCache = sqliteTable(
         isRelayed: integer("isRelayed", { mode: "boolean" })
             .notNull()
             .default(false),
-        endpoint: text("endpoint")
+        endpoint: text("endpoint"),
+        publicKey: text("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
     }
 );
 
@@ -417,6 +419,8 @@ export const sessions = sqliteTable("session", {
     expiresAt: integer("expiresAt").notNull(),
     issuedAt: integer("issuedAt"),
     deviceAuthUsed: integer("deviceAuthUsed", { mode: "boolean" })
+        .notNull()
+        .default(false)
 });
 
 export const newtSessions = sqliteTable("newtSession", {

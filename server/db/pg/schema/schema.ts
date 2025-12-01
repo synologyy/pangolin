@@ -288,7 +288,7 @@ export const sessions = pgTable("session", {
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
     issuedAt: bigint("issuedAt", { mode: "number" }),
-    deviceAuthUsed: boolean("deviceAuthUsed")
+    deviceAuthUsed: boolean("deviceAuthUsed").notNull().default(false)
 });
 
 export const newtSessions = pgTable("newtSession", {
@@ -665,7 +665,8 @@ export const clientSitesAssociationsCache = pgTable(
             .notNull(),
         siteId: integer("siteId").notNull(),
         isRelayed: boolean("isRelayed").notNull().default(false),
-        endpoint: varchar("endpoint")
+        endpoint: varchar("endpoint"),
+        publicKey: varchar("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
     }
 );
 

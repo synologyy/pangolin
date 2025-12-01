@@ -229,6 +229,11 @@ export const configSchema = z
                     .default(51820)
                     .transform(stoi)
                     .pipe(portSchema),
+                clients_start_port: portSchema
+                    .optional()
+                    .default(21820)
+                    .transform(stoi)
+                    .pipe(portSchema),
                 base_endpoint: z
                     .string()
                     .optional()

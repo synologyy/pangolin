@@ -2,7 +2,7 @@ import { db, exitNodes, sites } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
 import { clients, clientSitesAssociationsCache, Olm } from "@server/db";
 import { and, eq } from "drizzle-orm";
-import { updatePeer } from "../newt/peers";
+import { updatePeer as newtUpdatePeer } from "../newt/peers";
 import logger from "@server/logger";
 
 export const handleOlmRelayMessage: MessageHandler = async (context) => {
@@ -79,18 +79,20 @@ export const handleOlmRelayMessage: MessageHandler = async (context) => {
         );
 
     // update the peer on the exit node
-    await updatePeer(siteId, client.pubKey, {
-        endpoint: "" // this removes the endpoint
+    await newtUpdatePeer(siteId, client.pubKey, {
+        endpoint: "" // this removes the endpoint so the exit node knows to relay
     });
 
-    sendToClient(olm.olmId, {
-        type: "olm/wg/peer/relay",
+    return {
+        message: {
+         type: "olm/wg/peer/relay",
         data: {
             siteId: siteId,
             endpoint: exitNode.endpoint,
             publicKey: exitNode.publicKey
         }
-    });
-
-    return;
+        },
+        broadcast: false,
+        excludeSender: false
+    };
 };

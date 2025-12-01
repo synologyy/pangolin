@@ -30,8 +30,9 @@ const updateHolePunchSchema = z.object({
     ip: z.string(),
     port: z.number(),
     timestamp: z.number(),
+    publicKey: z.string(),
     reachableAt: z.string().optional(),
-    publicKey: z.string().optional()
+    exitNodePublicKey: z.string().optional()
 });
 
 // New response type with multi-peer destination support
@@ -65,23 +66,26 @@ export async function updateHolePunch(
             timestamp,
             token,
             reachableAt,
-            publicKey
+            publicKey, // this is the client's current public key for this session
+            exitNodePublicKey
         } = parsedParams.data;
 
         let exitNode: ExitNode | undefined;
-        if (publicKey) {
+        if (exitNodePublicKey) {
             // Get the exit node by public key
             [exitNode] = await db
                 .select()
                 .from(exitNodes)
-                .where(eq(exitNodes.publicKey, publicKey));
+                .where(eq(exitNodes.publicKey, exitNodePublicKey));
         } else {
             // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
             [exitNode] = await db.select().from(exitNodes).limit(1);
         }
 
         if (!exitNode) {
-            logger.warn(`Exit node not found for publicKey: ${publicKey}`);
+            logger.warn(
+                `Exit node not found for publicKey: ${exitNodePublicKey}`
+            );
             return next(
                 createHttpError(HttpCode.NOT_FOUND, "Exit node not found")
             );
@@ -94,12 +98,13 @@ export async function updateHolePunch(
             port,
             timestamp,
             token,
+            publicKey,
             exitNode
         );
 
-        logger.debug(
-            `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
-        );
+        // logger.debug(
+        //     `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
+        // );
 
         // Return the new multi-peer structure
         return res.status(HttpCode.OK).send({
@@ -123,6 +128,7 @@ export async function updateAndGenerateEndpointDestinations(
     port: number,
     timestamp: number,
     token: string,
+    publicKey: string,
     exitNode: ExitNode,
     checkOrg = false
 ) {
@@ -130,9 +136,9 @@ export async function updateAndGenerateEndpointDestinations(
     const destinations: PeerDestination[] = [];
 
     if (olmId) {
-        logger.debug(
-            `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`
-        );
+        // logger.debug(
+        //     `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`
+        // );
 
         const { session, olm: olmSession } =
             await validateOlmSessionToken(token);
@@ -180,6 +186,7 @@ export async function updateAndGenerateEndpointDestinations(
                 siteId: sites.siteId,
                 subnet: sites.subnet,
                 listenPort: sites.listenPort,
+                publicKey: sites.publicKey,
                 endpoint: clientSitesAssociationsCache.endpoint
             })
             .from(sites)
@@ -200,10 +207,19 @@ export async function updateAndGenerateEndpointDestinations(
                 `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
             );
 
+            // if the public key or endpoint has changed, update it otherwise continue
+            if (
+                site.endpoint === `${ip}:${port}` &&
+                site.publicKey === publicKey
+            ) {
+                continue;
+            }
+
             const [updatedClientSitesAssociationsCache] = await db
                 .update(clientSitesAssociationsCache)
                 .set({
-                    endpoint: `${ip}:${port}`
+                    endpoint: `${ip}:${port}`,
+                    publicKey: publicKey
                 })
                 .where(
                     and(
@@ -227,9 +243,9 @@ export async function updateAndGenerateEndpointDestinations(
             }
         }
 
-        logger.debug(
-            `Updated ${sitesOnExitNode.length} sites on exit node ${exitNode.exitNodeId}`
-        );
+        // logger.debug(
+        //     `Updated ${sitesOnExitNode.length} sites on exit node ${exitNode.exitNodeId}`
+        // );
         if (!updatedClient) {
             logger.warn(`Client not found for olm: ${olmId}`);
             throw new Error("Client not found");
@@ -245,9 +261,9 @@ export async function updateAndGenerateEndpointDestinations(
             }
         }
     } else if (newtId) {
-        logger.debug(
-            `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
-        );
+        // logger.debug(
+        //     `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
+        // );
 
         const { session, newt: newtSession } =
             await validateNewtSessionToken(token);
@@ -407,7 +423,7 @@ async function handleSiteEndpointChange(siteId: number, newEndpoint: string) {
                     {
                         siteId: siteId,
                         publicKey: site.publicKey,
-                        endpoint: newEndpoint,
+                        endpoint: newEndpoint
                     },
                     client.olmId
                 );

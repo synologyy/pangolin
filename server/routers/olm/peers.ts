@@ -3,6 +3,7 @@ import { clients, olms, newts, sites } from "@server/db";
 import { eq } from "drizzle-orm";
 import { sendToClient } from "#dynamic/routers/ws";
 import logger from "@server/logger";
+import { exit } from "process";
 
 export async function addPeer(
     clientId: number,
@@ -109,4 +110,41 @@ export async function updatePeer(
     });
 
     logger.info(`Added peer ${peer.publicKey} to olm ${olmId}`);
+}
+
+export async function initPeerAddHandshake(
+    clientId: number,
+    peer: {
+        siteId: number;
+        exitNode: {
+            publicKey: string;
+            endpoint: string;
+        };
+    },
+    olmId?: string
+) {
+    if (!olmId) {
+        const [olm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.clientId, clientId))
+            .limit(1);
+        if (!olm) {
+            throw new Error(`Olm with ID ${clientId} not found`);
+        }
+        olmId = olm.olmId;
+    }
+
+    await sendToClient(olmId, {
+        type: "olm/wg/peer/holepunch/site/add",
+        data: {
+            siteId: peer.siteId,
+            exitNode: {
+                publicKey: peer.exitNode.publicKey,
+                endpoint: peer.exitNode.endpoint
+            }
+        }
+    });
+
+    logger.info(`Initiated peer add handshake for site ${peer.siteId} to olm ${olmId}`);
 }

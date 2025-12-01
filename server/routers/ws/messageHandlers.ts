@@ -11,23 +11,25 @@ import {
     handleOlmRegisterMessage,
     handleOlmRelayMessage,
     handleOlmPingMessage,
-    startOlmOfflineChecker
+    startOlmOfflineChecker,
+    handleOlmServerPeerAddMessage
 } from "../olm";
 import { handleHealthcheckStatusMessage } from "../target";
 import { MessageHandler } from "./types";
 
 export const messageHandlers: Record<string, MessageHandler> = {
-    "newt/wg/register": handleNewtRegisterMessage,
+    "olm/wg/server/peer/add": handleOlmServerPeerAddMessage,
     "olm/wg/register": handleOlmRegisterMessage,
-    "newt/wg/get-config": handleGetConfigMessage,
-    "newt/receive-bandwidth": handleReceiveBandwidthMessage,
     "olm/wg/relay": handleOlmRelayMessage,
     "olm/ping": handleOlmPingMessage,
+    "newt/wg/register": handleNewtRegisterMessage,
+    "newt/wg/get-config": handleGetConfigMessage,
+    "newt/receive-bandwidth": handleReceiveBandwidthMessage,
     "newt/socket/status": handleDockerStatusMessage,
     "newt/socket/containers": handleDockerContainersMessage,
     "newt/ping/request": handleNewtPingRequestMessage,
     "newt/blueprint/apply": handleApplyBlueprintMessage,
-    "newt/healthcheck/status": handleHealthcheckStatusMessage,
+    "newt/healthcheck/status": handleHealthcheckStatusMessage
 };
 
 startOlmOfflineChecker(); // this is to handle the offline check for olms

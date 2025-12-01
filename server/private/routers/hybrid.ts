@@ -1369,7 +1369,7 @@ const updateHolePunchSchema = z.object({
     port: z.number(),
     timestamp: z.number(),
     reachableAt: z.string().optional(),
-    publicKey: z.string().optional()
+    publicKey: z.string() // this is the client public key
 });
 hybridRouter.post(
     "/gerbil/update-hole-punch",
@@ -1408,7 +1408,7 @@ hybridRouter.post(
                 );
             }
 
-            const { olmId, newtId, ip, port, timestamp, token, reachableAt } =
+            const { olmId, newtId, ip, port, timestamp, token, publicKey, reachableAt } =
                 parsedParams.data;
 
             const destinations = await updateAndGenerateEndpointDestinations(
@@ -1418,6 +1418,7 @@ hybridRouter.post(
                 port,
                 timestamp,
                 token,
+                publicKey,
                 exitNode,
                 true
             );

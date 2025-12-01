@@ -34,21 +34,28 @@ import { generateRemoteSubnets } from "@server/lib/ip";
 import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
 import { validateSessionToken } from "@server/auth/sessions/app";
+import config from "@server/lib/config";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
     const { message, client: c, sendToClient } = context;
     const olm = c as Olm;
 
-    const now = new Date().getTime() / 1000;
+    const now = Math.floor(Date.now() / 1000);
 
     if (!olm) {
         logger.warn("Olm not found");
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient, token: userToken } =
-        message.data;
+    const {
+        publicKey,
+        relay,
+        olmVersion,
+        orgId,
+        doNotCreateNewClient,
+        token: userToken
+    } = message.data;
 
     let client: Client | undefined;
     let org: Org | undefined;
@@ -63,7 +70,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                     olm.name || "User Device",
                     // doNotCreateNewClient ? true : false
                     true // for now never create a new client automatically because we create the users clients when they are added to the org
-                    // this means that the rebuildClientAssociationsFromClient call below issue is not a problem 
+                    // this means that the rebuildClientAssociationsFromClient call below issue is not a problem
                 );
 
             client = clientRes;
@@ -113,12 +120,14 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             `Switching olm client ${olm.olmId} to org ${orgId} for user ${olm.userId}`
         );
 
-        await db
-            .update(olms)
-            .set({
-                clientId: client.clientId
-            })
-            .where(eq(olms.olmId, olm.olmId));
+        if (olm.clientId !== client.clientId) { // we only need to do this if the client is changing
+            await db
+                .update(olms)
+                .set({
+                    clientId: client.clientId
+                })
+                .where(eq(olms.olmId, olm.olmId));
+        }
     } else {
         if (!olm.clientId) {
             logger.warn("Olm has no client ID!");
@@ -159,41 +168,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    if (client.exitNodeId) {
-        // TODO: FOR NOW WE ARE JUST HOLEPUNCHING ALL EXIT NODES BUT IN THE FUTURE WE SHOULD HANDLE THIS BETTER
-
-        // Get the exit node
-        const allExitNodes = await listExitNodes(client.orgId, true); // FILTER THE ONLINE ONES
-
-        const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
-            return {
-                publicKey: exitNode.publicKey,
-                endpoint: exitNode.endpoint
-            };
-        });
-
-        // Send holepunch message
-        await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch/all",
-            data: {
-                exitNodes: exitNodesHpData
-            }
-        });
-
-        if (!olmVersion) {
-            // THIS IS FOR BACKWARDS COMPATIBILITY
-            // THE OLDER CLIENTS DID NOT SEND THE VERSION
-            await sendToClient(olm.olmId, {
-                type: "olm/wg/holepunch",
-                data: {
-                    serverPubKey: allExitNodes[0].publicKey,
-                    endpoint: allExitNodes[0].endpoint
-                }
-            });
-        }
-    }
-
-    if (olmVersion) {
+    if (olmVersion && olm.version !== olmVersion) {
         await db
             .update(olms)
             .set({
@@ -202,10 +177,14 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             .where(eq(olms.olmId, olm.olmId));
     }
 
-    // if (now - (client.lastHolePunch || 0) > 6) {
-    //     logger.warn("Client last hole punch is too old, skipping all sites");
-    //     return;
-    // }
+    // this prevents us from accepting a register from an olm that has not hole punched yet.
+    // the olm will pump the register so we can keep checking
+    if (now - (client.lastHolePunch || 0) > 5) {
+        logger.warn(
+            "Client last hole punch is too old; skipping this register"
+        );
+        return;
+    }
 
     if (client.pubKey !== publicKey) {
         logger.info(
@@ -319,7 +298,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 logger.warn(`Exit node not found for site ${site.siteId}`);
                 continue;
             }
-            endpoint = `${exitNode.endpoint}:21820`;
+            endpoint = `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`;
         }
 
         const allSiteResources = await db // only get the site resources that this client has access to

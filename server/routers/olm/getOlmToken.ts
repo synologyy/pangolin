@@ -1,9 +1,9 @@
 import { generateSessionToken } from "@server/auth/sessions/app";
-import { db } from "@server/db";
+import { clients, db, ExitNode, exitNodes, sites, clientSitesAssociationsCache } from "@server/db";
 import { olms } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -15,11 +15,13 @@ import {
 import { verifyPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import config from "@server/lib/config";
+import { listExitNodes } from "#dynamic/lib/exitNodes";
 
 export const olmGetTokenBodySchema = z.object({
     olmId: z.string(),
     secret: z.string(),
-    token: z.string().optional()
+    token: z.string().optional(),
+    orgId: z.string().optional()
 });
 
 export type OlmGetTokenBody = z.infer<typeof olmGetTokenBodySchema>;
@@ -40,7 +42,7 @@ export async function getOlmToken(
         );
     }
 
-    const { olmId, secret, token } = parsedBody.data;
+    const { olmId, secret, token, orgId } = parsedBody.data;
 
     try {
         if (token) {
@@ -61,11 +63,12 @@ export async function getOlmToken(
             }
         }
 
-        const existingOlmRes = await db
+        const [existingOlm] = await db
             .select()
             .from(olms)
             .where(eq(olms.olmId, olmId));
-        if (!existingOlmRes || !existingOlmRes.length) {
+
+        if (!existingOlm) {
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
@@ -74,12 +77,11 @@ export async function getOlmToken(
             );
         }
 
-        const existingOlm = existingOlmRes[0];
-
         const validSecret = await verifyPassword(
             secret,
             existingOlm.secretHash
         );
+
         if (!validSecret) {
             if (config.getRawConfig().app.log_failed_attempts) {
                 logger.info(
@@ -96,11 +98,78 @@ export async function getOlmToken(
         const resToken = generateSessionToken();
         await createOlmSession(resToken, existingOlm.olmId);
 
+        let orgIdToUse = orgId;
+        if (!orgIdToUse) {
+            if (!existingOlm.clientId) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Olm is not associated with a client, orgId is required"
+                    )
+                );
+            }
+
+            const [client] = await db
+                .select()
+                .from(clients)
+                .where(eq(clients.clientId, existingOlm.clientId))
+                .limit(1);
+            
+            if (!client) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Olm's associated client not found, orgId is required"
+                    )
+                );
+            }
+
+            orgIdToUse = client.orgId;
+        }
+
+        // Get all exit nodes from sites where the client has peers
+        const clientSites = await db
+            .select()
+            .from(clientSitesAssociationsCache)
+            .innerJoin(
+                sites,
+                eq(sites.siteId, clientSitesAssociationsCache.siteId)
+            )
+            .where(eq(clientSitesAssociationsCache.clientId, existingOlm.clientId!));
+
+        // Extract unique exit node IDs
+        const exitNodeIds = Array.from(
+            new Set(
+                clientSites
+                    .map(({ sites: site }) => site.exitNodeId)
+                    .filter((id): id is number => id !== null)
+            )
+        );
+
+        let allExitNodes: ExitNode[] = [];
+        if (exitNodeIds.length > 0) {
+            allExitNodes = await db
+                .select()
+                .from(exitNodes)
+                .where(inArray(exitNodes.exitNodeId, exitNodeIds));
+        }
+
+        const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
+            return {
+                publicKey: exitNode.publicKey,
+                endpoint: exitNode.endpoint
+            };
+        });
+
         logger.debug("Token created successfully");
 
-        return response<{ token: string }>(res, {
+        return response<{
+            token: string;
+            exitNodes: { publicKey: string; endpoint: string }[];
+        }>(res, {
             data: {
-                token: resToken
+                token: resToken,
+                exitNodes: exitNodesHpData
             },
             success: true,
             error: false,
