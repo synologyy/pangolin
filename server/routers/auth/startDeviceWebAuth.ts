@@ -22,7 +22,7 @@ export type StartDeviceWebAuthBody = z.infer<typeof bodySchema>;
 
 export type StartDeviceWebAuthResponse = {
     code: string;
-    expiresAt: number;
+    expiresInSeconds: number;
 };
 
 // Helper function to generate device code in format A1AJ-N5JD
@@ -131,10 +131,13 @@ export async function startDeviceWebAuth(
             createdAt: Date.now()
         });
 
+        // calculate relative expiration in seconds
+        const expiresInSeconds = Math.floor((expiresAt - Date.now()) / 1000);
+
         return response<StartDeviceWebAuthResponse>(res, {
             data: {
                 code,
-                expiresAt
+                expiresInSeconds
             },
             success: true,
             error: false,
