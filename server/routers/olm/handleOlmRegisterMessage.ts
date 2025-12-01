@@ -126,15 +126,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             .where(eq(olms.olmId, olm.olmId));
     }
 
-    // this prevents us from accepting a register from an olm that has not hole punched yet.
-    // the olm will pump the register so we can keep checking
-    if (now - (client.lastHolePunch || 0) > 5) {
-        logger.warn(
-            "Client last hole punch is too old; skipping this register"
-        );
-        return;
-    }
-
     if (client.pubKey !== publicKey) {
         logger.info(
             "Public key mismatch. Updating public key and clearing session info..."
@@ -172,8 +163,18 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         `Found ${sitesData.length} sites for client ${client.clientId}`
     );
 
+    // this prevents us from accepting a register from an olm that has not hole punched yet.
+    // the olm will pump the register so we can keep checking
+    // TODO: I still think there is a better way to do this rather than locking it out here but ???
+    if (now - (client.lastHolePunch || 0) > 5 && sitesData.length > 0) {
+        logger.warn(
+            "Client last hole punch is too old and we have sites to send; skipping this register"
+        );
+        return;
+    }
+
     // Process each site
-    for (const { sites: site } of sitesData) {
+    for (const { sites: site, clientSitesAssociationsCache: association } of sitesData) {
         if (!site.exitNodeId) {
             logger.warn(
                 `Site ${site.siteId} does not have exit node, skipping`

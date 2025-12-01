@@ -230,7 +230,9 @@ export async function updateAndGenerateEndpointDestinations(
                 .returning();
 
             if (
-                updatedClientSitesAssociationsCache.endpoint !== site.endpoint // this is the endpoint from the join table not the site
+                updatedClientSitesAssociationsCache.endpoint !==
+                    site.endpoint && // this is the endpoint from the join table not the site
+                updatedClient.pubKey === publicKey // only trigger if the client's public key matches the current public key which means it has registered so we dont prematurely send the update
             ) {
                 logger.info(
                     `ClientSitesAssociationsCache for client ${olm.clientId} and site ${site.siteId} endpoint changed from ${site.endpoint} to ${updatedClientSitesAssociationsCache.endpoint}`
@@ -318,7 +320,11 @@ export async function updateAndGenerateEndpointDestinations(
             .where(eq(sites.siteId, newt.siteId))
             .returning();
 
-        if (updatedSite.endpoint != site.endpoint) {
+        if (
+            updatedSite.endpoint != site.endpoint &&
+            updatedSite.publicKey == publicKey
+        ) {
+            // only trigger if the site's public key matches the current public key which means it has registered so we dont prematurely send the update
             logger.info(
                 `Site ${newt.siteId} endpoint changed from ${site.endpoint} to ${updatedSite.endpoint}`
             );
