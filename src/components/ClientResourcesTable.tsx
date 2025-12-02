@@ -87,59 +87,6 @@ export type ResourceRow = {
     targets?: TargetHealth[];
 };
 
-function getOverallHealthStatus(
-    targets?: TargetHealth[]
-): "online" | "degraded" | "offline" | "unknown" {
-    if (!targets || targets.length === 0) {
-        return "unknown";
-    }
-
-    const monitoredTargets = targets.filter(
-        (t) => t.enabled && t.healthStatus && t.healthStatus !== "unknown"
-    );
-
-    if (monitoredTargets.length === 0) {
-        return "unknown";
-    }
-
-    const healthyCount = monitoredTargets.filter(
-        (t) => t.healthStatus === "healthy"
-    ).length;
-    const unhealthyCount = monitoredTargets.filter(
-        (t) => t.healthStatus === "unhealthy"
-    ).length;
-
-    if (healthyCount === monitoredTargets.length) {
-        return "online";
-    } else if (unhealthyCount === monitoredTargets.length) {
-        return "offline";
-    } else {
-        return "degraded";
-    }
-}
-
-function StatusIcon({
-    status,
-    className = ""
-}: {
-    status: "online" | "degraded" | "offline" | "unknown";
-    className?: string;
-}) {
-    const iconClass = `h-4 w-4 ${className}`;
-
-    switch (status) {
-        case "online":
-            return <CheckCircle2 className={`${iconClass} text-green-500`} />;
-        case "degraded":
-            return <CheckCircle2 className={`${iconClass} text-yellow-500`} />;
-        case "offline":
-            return <XCircle className={`${iconClass} text-destructive`} />;
-        case "unknown":
-            return <Clock className={`${iconClass} text-muted-foreground`} />;
-        default:
-            return null;
-    }
-}
 export type InternalResourceRow = {
     id: number;
     name: string;
@@ -156,8 +103,6 @@ export type InternalResourceRow = {
     // destinationPort: number | null;
     alias: string | null;
 };
-
-type Site = ListSitesResponse["sites"][0];
 
 type ClientResourcesTableProps = {
     internalResources: InternalResourceRow[];
@@ -655,7 +600,7 @@ export default function ClientResourcesTable({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto mt-9">
                             <Table>
                                 <TableHeader>
                                     {internalTable

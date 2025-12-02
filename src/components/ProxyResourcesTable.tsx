@@ -814,7 +814,7 @@ export default function ProxyResourcesTable({
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto mt-9">
                             <Table>
                                 <TableHeader>
                                     {proxyTable

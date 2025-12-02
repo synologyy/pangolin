@@ -4,12 +4,11 @@ import { AxiosResponse } from "axios";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { ListClientsResponse } from "@server/routers/client";
 import { getTranslations } from "next-intl/server";
-import type { ClientRow } from "@app/components/ClientsTable";
-import ClientsTable from "@app/components/ClientsTable";
+import type { ClientRow } from "@app/components/MachineClientsTable";
+import UserDevicesTable from "@app/components/UserDevicesTable";
 
 type ClientsPageProps = {
     params: Promise<{ orgId: string }>;
-    searchParams: Promise<{ view?: string }>;
 };
 
 export const dynamic = "force-dynamic";
@@ -18,28 +17,15 @@ export default async function ClientsPage(props: ClientsPageProps) {
     const t = await getTranslations();
 
     const params = await props.params;
-    const searchParams = await props.searchParams;
-
-    // Default to 'user' view, or use the query param if provided
-    let defaultView: "user" | "machine" = "user";
-    defaultView = searchParams.view === "machine" ? "machine" : "user";
 
     let userClients: ListClientsResponse["clients"] = [];
-    let machineClients: ListClientsResponse["clients"] = [];
 
     try {
-        const [userRes, machineRes] = await Promise.all([
-            internal.get<AxiosResponse<ListClientsResponse>>(
-                `/org/${params.orgId}/clients?filter=user`,
-                await authCookieHeader()
-            ),
-            internal.get<AxiosResponse<ListClientsResponse>>(
-                `/org/${params.orgId}/clients?filter=machine`,
-                await authCookieHeader()
-            )
-        ]);
+        const userRes = await internal.get<AxiosResponse<ListClientsResponse>>(
+            `/org/${params.orgId}/clients?filter=user`,
+            await authCookieHeader()
+        );
         userClients = userRes.data.data.clients;
-        machineClients = machineRes.data.data.clients;
     } catch (e) {}
 
     function formatSize(mb: number): string {
@@ -72,20 +58,17 @@ export default async function ClientsPage(props: ClientsPageProps) {
     };
 
     const userClientRows: ClientRow[] = userClients.map(mapClientToRow);
-    const machineClientRows: ClientRow[] = machineClients.map(mapClientToRow);
 
     return (
         <>
             <SettingsSectionTitle
-                title={t("manageClients")}
-                description={t("manageClientsDescription")}
+                title={t("manageUserDevices")}
+                description={t("manageUserDevicesDescription")}
             />
 
-            <ClientsTable
+            <UserDevicesTable
                 userClients={userClientRows}
-                machineClients={machineClientRows}
                 orgId={params.orgId}
-                defaultView={defaultView}
             />
         </>
     );
