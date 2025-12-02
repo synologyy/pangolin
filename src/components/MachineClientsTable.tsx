@@ -138,8 +138,10 @@ export default function MachineClientsTable({
                 });
             })
             .then(() => {
-                router.refresh();
-                setIsDeleteModalOpen(false);
+                startTransition(() => {
+                    router.refresh();
+                    setIsDeleteModalOpen(false);
+                });
             });
     };
 

@@ -27,7 +27,6 @@ import {
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
-import { ListSitesResponse } from "@server/routers/site";
 import {
     ColumnFiltersState,
     flexRender,
@@ -36,28 +35,26 @@ import {
     getPaginationRowModel,
     getSortedRowModel,
     SortingState,
-    useReactTable,
-    VisibilityState
+    useReactTable
 } from "@tanstack/react-table";
 import {
     ArrowUpDown,
     ArrowUpRight,
-    CheckCircle2,
-    Clock,
     Columns,
     MoreHorizontal,
     Plus,
     RefreshCw,
-    Search,
-    XCircle
+    Search
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import CreateInternalResourceDialog from "@app/components/CreateInternalResourceDialog";
 import EditInternalResourceDialog from "@app/components/EditInternalResourceDialog";
+import { useStoredColumnVisibility } from "@app/hooks/useStoredColumnVisibility";
+import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 import { siteQueries } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
@@ -113,88 +110,6 @@ type ClientResourcesTableProps = {
     };
 };
 
-const STORAGE_KEYS = {
-    PAGE_SIZE: "datatable-page-size",
-    COLUMN_VISIBILITY: "datatable-column-visibility",
-    getTablePageSize: (tableId?: string) =>
-        tableId ? `datatable-${tableId}-page-size` : STORAGE_KEYS.PAGE_SIZE,
-    getTableColumnVisibility: (tableId?: string) =>
-        tableId
-            ? `datatable-${tableId}-column-visibility`
-            : STORAGE_KEYS.COLUMN_VISIBILITY
-};
-
-const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
-    if (typeof window === "undefined") return defaultSize;
-
-    try {
-        const key = STORAGE_KEYS.getTablePageSize(tableId);
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            const parsed = parseInt(stored, 10);
-            if (parsed > 0 && parsed <= 1000) {
-                return parsed;
-            }
-        }
-    } catch (error) {
-        console.warn("Failed to read page size from localStorage:", error);
-    }
-    return defaultSize;
-};
-
-const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === "undefined") return;
-
-    try {
-        const key = STORAGE_KEYS.getTablePageSize(tableId);
-        localStorage.setItem(key, pageSize.toString());
-    } catch (error) {
-        console.warn("Failed to save page size to localStorage:", error);
-    }
-};
-
-const getStoredColumnVisibility = (
-    tableId?: string,
-    defaultVisibility?: Record<string, boolean>
-): Record<string, boolean> => {
-    if (typeof window === "undefined") return defaultVisibility || {};
-
-    try {
-        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            // Validate that it's an object
-            if (typeof parsed === "object" && parsed !== null) {
-                return parsed;
-            }
-        }
-    } catch (error) {
-        console.warn(
-            "Failed to read column visibility from localStorage:",
-            error
-        );
-    }
-    return defaultVisibility || {};
-};
-
-const setStoredColumnVisibility = (
-    visibility: Record<string, boolean>,
-    tableId?: string
-): void => {
-    if (typeof window === "undefined") return;
-
-    try {
-        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
-        localStorage.setItem(key, JSON.stringify(visibility));
-    } catch (error) {
-        console.warn(
-            "Failed to save column visibility to localStorage:",
-            error
-        );
-    }
-};
-
 export default function ClientResourcesTable({
     internalResources,
     orgId,
@@ -207,10 +122,10 @@ export default function ClientResourcesTable({
 
     const api = createApiClient({ env });
 
-    const [internalPageSize, setInternalPageSize] = useState<number>(() =>
-        getStoredPageSize("internal-resources", 20)
+    const [internalPageSize, setInternalPageSize] = useStoredPageSize(
+        "internal-resources",
+        20
     );
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const [selectedInternalResource, setSelectedInternalResource] =
@@ -233,10 +148,7 @@ export default function ClientResourcesTable({
     const [isRefreshing, startTransition] = useTransition();
 
     const [internalColumnVisibility, setInternalColumnVisibility] =
-        useState<VisibilityState>(() =>
-            getStoredColumnVisibility("internal-resources", {})
-        );
-
+        useStoredColumnVisibility("internal-resources", {});
     const refreshData = async () => {
         try {
             router.refresh();
@@ -255,11 +167,14 @@ export default function ClientResourcesTable({
         siteId: number
     ) => {
         try {
-            await api.delete(
-                `/org/${orgId}/site/${siteId}/resource/${resourceId}`
-            );
-            router.refresh();
-            setIsDeleteModalOpen(false);
+            await api
+                .delete(`/org/${orgId}/site/${siteId}/resource/${resourceId}`)
+                .then(() => {
+                    startTransition(() => {
+                        router.refresh();
+                        setIsDeleteModalOpen(false);
+                    });
+                });
         } catch (e) {
             console.error(t("resourceErrorDelete"), e);
             toast({
@@ -515,19 +430,6 @@ export default function ClientResourcesTable({
         }
     });
 
-    const handleInternalPageSizeChange = (newPageSize: number) => {
-        setInternalPageSize(newPageSize);
-        setStoredPageSize(newPageSize, "internal-resources");
-    };
-
-    // Persist column visibility changes to localStorage
-    useEffect(() => {
-        setStoredColumnVisibility(
-            internalColumnVisibility,
-            "internal-resources"
-        );
-    }, [internalColumnVisibility]);
-
     return (
         <>
             {selectedInternalResource && (
@@ -700,7 +602,7 @@ export default function ClientResourcesTable({
                         <div className="mt-4">
                             <DataTablePagination
                                 table={internalTable}
-                                onPageSizeChange={handleInternalPageSizeChange}
+                                onPageSizeChange={setInternalPageSize}
                             />
                         </div>
                     </CardContent>

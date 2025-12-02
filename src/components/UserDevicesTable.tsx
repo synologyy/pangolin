@@ -130,8 +130,10 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                 });
             })
             .then(() => {
-                router.refresh();
-                setIsDeleteModalOpen(false);
+                startTransition(() => {
+                    router.refresh();
+                    setIsDeleteModalOpen(false);
+                });
             });
     };
 
