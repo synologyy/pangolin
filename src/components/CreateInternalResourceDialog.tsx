@@ -89,7 +89,9 @@ export default function CreateInternalResourceDialog({
         // mode: z.enum(["host", "cidr", "port"]),
         mode: z.enum(["host", "cidr"]),
         destination: z.string().min(1),
-        siteId: z.int().positive(t("createInternalResourceDialogPleaseSelectSite")),
+        siteId: z
+            .int()
+            .positive(t("createInternalResourceDialogPleaseSelectSite")),
         // protocol: z.enum(["tcp", "udp"]),
         // proxyPort: z.int()
         //     .positive()
@@ -101,25 +103,31 @@ export default function CreateInternalResourceDialog({
         //     .max(65535, t("createInternalResourceDialogDestinationPortMax"))
         //     .nullish(),
         alias: z.string().nullish(),
-        roles: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional(),
-        users: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional(),
-        clients: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional()
-    })
+        roles: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional(),
+        users: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional(),
+        clients: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional()
+    });
     // .refine(
     //     (data) => {
     //         if (data.mode === "port") {
@@ -159,12 +167,24 @@ export default function CreateInternalResourceDialog({
 
     type FormData = z.infer<typeof formSchema>;
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>([]);
-    const [allClients, setAllClients] = useState<{ id: string; text: string }[]>([]);
-    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<number | null>(null);
-    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<number | null>(null);
-    const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<number | null>(null);
+    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
+        []
+    );
+    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
+        []
+    );
+    const [allClients, setAllClients] = useState<
+        { id: string; text: string }[]
+    >([]);
+    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
+        number | null
+    >(null);
+    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<
+        number | null
+    >(null);
+    const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<
+        number | null
+    >(null);
     const [hasMachineClients, setHasMachineClients] = useState(false);
 
     const availableSites = sites.filter(
@@ -211,11 +231,18 @@ export default function CreateInternalResourceDialog({
     useEffect(() => {
         const fetchRolesUsersAndClients = async () => {
             try {
-                const [rolesResponse, usersResponse, clientsResponse] = await Promise.all([
-                    api.get<AxiosResponse<ListRolesResponse>>(`/org/${orgId}/roles`),
-                    api.get<AxiosResponse<ListUsersResponse>>(`/org/${orgId}/users`),
-                    api.get<AxiosResponse<ListClientsResponse>>(`/org/${orgId}/clients?filter=machine&limit=1000`)
-                ]);
+                const [rolesResponse, usersResponse, clientsResponse] =
+                    await Promise.all([
+                        api.get<AxiosResponse<ListRolesResponse>>(
+                            `/org/${orgId}/roles`
+                        ),
+                        api.get<AxiosResponse<ListUsersResponse>>(
+                            `/org/${orgId}/users`
+                        ),
+                        api.get<AxiosResponse<ListClientsResponse>>(
+                            `/org/${orgId}/clients?filter=machine&limit=1000`
+                        )
+                    ]);
 
                 setAllRoles(
                     rolesResponse.data.data.roles
@@ -243,7 +270,10 @@ export default function CreateInternalResourceDialog({
                 setAllClients(machineClients);
                 setHasMachineClients(machineClients.length > 0);
             } catch (error) {
-                console.error("Error fetching roles, users, and clients:", error);
+                console.error(
+                    "Error fetching roles, users, and clients:",
+                    error
+                );
             }
         };
 
@@ -265,10 +295,19 @@ export default function CreateInternalResourceDialog({
                     // destinationPort: data.mode === "port" ? data.destinationPort : undefined,
                     destination: data.destination,
                     enabled: true,
-                    alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : undefined,
-                    roleIds: data.roles ? data.roles.map((r) => parseInt(r.id)) : [],
+                    alias:
+                        data.alias &&
+                        typeof data.alias === "string" &&
+                        data.alias.trim()
+                            ? data.alias
+                            : undefined,
+                    roleIds: data.roles
+                        ? data.roles.map((r) => parseInt(r.id))
+                        : [],
                     userIds: data.users ? data.users.map((u) => u.id) : [],
-                    clientIds: data.clients ? data.clients.map((c) => parseInt(c.id)) : []
+                    clientIds: data.clients
+                        ? data.clients.map((c) => parseInt(c.id))
+                        : []
                 }
             );
 
@@ -295,7 +334,9 @@ export default function CreateInternalResourceDialog({
 
             toast({
                 title: t("createInternalResourceDialogSuccess"),
-                description: t("createInternalResourceDialogInternalResourceCreatedSuccessfully"),
+                description: t(
+                    "createInternalResourceDialogInternalResourceCreatedSuccessfully"
+                ),
                 variant: "default"
             });
 
@@ -307,7 +348,9 @@ export default function CreateInternalResourceDialog({
                 title: t("createInternalResourceDialogError"),
                 description: formatAxiosError(
                     error,
-                    t("createInternalResourceDialogFailedToCreateInternalResource")
+                    t(
+                        "createInternalResourceDialogFailedToCreateInternalResource"
+                    )
                 ),
                 variant: "destructive"
             });
@@ -321,13 +364,19 @@ export default function CreateInternalResourceDialog({
             <Credenza open={open} onOpenChange={setOpen}>
                 <CredenzaContent className="max-w-md">
                     <CredenzaHeader>
-                        <CredenzaTitle>{t("createInternalResourceDialogNoSitesAvailable")}</CredenzaTitle>
+                        <CredenzaTitle>
+                            {t("createInternalResourceDialogNoSitesAvailable")}
+                        </CredenzaTitle>
                         <CredenzaDescription>
-                            {t("createInternalResourceDialogNoSitesAvailableDescription")}
+                            {t(
+                                "createInternalResourceDialogNoSitesAvailableDescription"
+                            )}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaFooter>
-                        <Button onClick={() => setOpen(false)}>{t("createInternalResourceDialogClose")}</Button>
+                        <Button onClick={() => setOpen(false)}>
+                            {t("createInternalResourceDialogClose")}
+                        </Button>
                     </CredenzaFooter>
                 </CredenzaContent>
             </Credenza>
@@ -338,9 +387,13 @@ export default function CreateInternalResourceDialog({
         <Credenza open={open} onOpenChange={setOpen}>
             <CredenzaContent className="max-w-2xl">
                 <CredenzaHeader>
-                    <CredenzaTitle>{t("createInternalResourceDialogCreateClientResource")}</CredenzaTitle>
+                    <CredenzaTitle>
+                        {t("createInternalResourceDialogCreateClientResource")}
+                    </CredenzaTitle>
                     <CredenzaDescription>
-                        {t("createInternalResourceDialogCreateClientResourceDescription")}
+                        {t(
+                            "createInternalResourceDialogCreateClientResourceDescription"
+                        )}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
@@ -353,7 +406,9 @@ export default function CreateInternalResourceDialog({
                             {/* Resource Properties Form */}
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">
-                                    {t("createInternalResourceDialogResourceProperties")}
+                                    {t(
+                                        "createInternalResourceDialogResourceProperties"
+                                    )}
                                 </h3>
                                 <div className="space-y-4">
                                     <FormField
@@ -361,7 +416,11 @@ export default function CreateInternalResourceDialog({
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("createInternalResourceDialogName")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "createInternalResourceDialogName"
+                                                    )}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
@@ -375,7 +434,11 @@ export default function CreateInternalResourceDialog({
                                         name="siteId"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
-                                                <FormLabel>{t("createInternalResourceDialogSite")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "createInternalResourceDialogSite"
+                                                    )}
+                                                </FormLabel>
                                                 <Popover>
                                                     <PopoverTrigger asChild>
                                                         <FormControl>
@@ -384,43 +447,71 @@ export default function CreateInternalResourceDialog({
                                                                 role="combobox"
                                                                 className={cn(
                                                                     "w-full justify-between",
-                                                                    !field.value && "text-muted-foreground"
+                                                                    !field.value &&
+                                                                        "text-muted-foreground"
                                                                 )}
                                                             >
                                                                 {field.value
                                                                     ? availableSites.find(
-                                                                          (site) => site.siteId === field.value
+                                                                          (
+                                                                              site
+                                                                          ) =>
+                                                                              site.siteId ===
+                                                                              field.value
                                                                       )?.name
-                                                                    : t("createInternalResourceDialogSelectSite")}
+                                                                    : t(
+                                                                          "createInternalResourceDialogSelectSite"
+                                                                      )}
                                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                             </Button>
                                                         </FormControl>
                                                     </PopoverTrigger>
                                                     <PopoverContent className="w-full p-0">
                                                         <Command>
-                                                            <CommandInput placeholder={t("createInternalResourceDialogSearchSites")} />
+                                                            <CommandInput
+                                                                placeholder={t(
+                                                                    "createInternalResourceDialogSearchSites"
+                                                                )}
+                                                            />
                                                             <CommandList>
-                                                                <CommandEmpty>{t("createInternalResourceDialogNoSitesFound")}</CommandEmpty>
+                                                                <CommandEmpty>
+                                                                    {t(
+                                                                        "createInternalResourceDialogNoSitesFound"
+                                                                    )}
+                                                                </CommandEmpty>
                                                                 <CommandGroup>
-                                                                    {availableSites.map((site) => (
-                                                                        <CommandItem
-                                                                            key={site.siteId}
-                                                                            value={site.name}
-                                                                            onSelect={() => {
-                                                                                field.onChange(site.siteId);
-                                                                            }}
-                                                                        >
-                                                                            <Check
-                                                                                className={cn(
-                                                                                    "mr-2 h-4 w-4",
-                                                                                    field.value === site.siteId
-                                                                                        ? "opacity-100"
-                                                                                        : "opacity-0"
-                                                                                )}
-                                                                            />
-                                                                            {site.name}
-                                                                        </CommandItem>
-                                                                    ))}
+                                                                    {availableSites.map(
+                                                                        (
+                                                                            site
+                                                                        ) => (
+                                                                            <CommandItem
+                                                                                key={
+                                                                                    site.siteId
+                                                                                }
+                                                                                value={
+                                                                                    site.name
+                                                                                }
+                                                                                onSelect={() => {
+                                                                                    field.onChange(
+                                                                                        site.siteId
+                                                                                    );
+                                                                                }}
+                                                                            >
+                                                                                <Check
+                                                                                    className={cn(
+                                                                                        "mr-2 h-4 w-4",
+                                                                                        field.value ===
+                                                                                            site.siteId
+                                                                                            ? "opacity-100"
+                                                                                            : "opacity-0"
+                                                                                    )}
+                                                                                />
+                                                                                {
+                                                                                    site.name
+                                                                                }
+                                                                            </CommandItem>
+                                                                        )
+                                                                    )}
                                                                 </CommandGroup>
                                                             </CommandList>
                                                         </Command>
@@ -431,14 +522,20 @@ export default function CreateInternalResourceDialog({
                                         )}
                                     />
 
-<FormField
+                                    <FormField
                                         control={form.control}
                                         name="mode"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("createInternalResourceDialogMode")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "createInternalResourceDialogMode"
+                                                    )}
+                                                </FormLabel>
                                                 <Select
-                                                    onValueChange={field.onChange}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
                                                     value={field.value}
                                                 >
                                                     <FormControl>
@@ -448,15 +545,23 @@ export default function CreateInternalResourceDialog({
                                                     </FormControl>
                                                     <SelectContent>
                                                         {/* <SelectItem value="port">{t("createInternalResourceDialogModePort")}</SelectItem> */}
-                                                        <SelectItem value="host">{t("createInternalResourceDialogModeHost")}</SelectItem>
-                                                        <SelectItem value="cidr">{t("createInternalResourceDialogModeCidr")}</SelectItem>
+                                                        <SelectItem value="host">
+                                                            {t(
+                                                                "createInternalResourceDialogModeHost"
+                                                            )}
+                                                        </SelectItem>
+                                                        <SelectItem value="cidr">
+                                                            {t(
+                                                                "createInternalResourceDialogModeCidr"
+                                                            )}
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
-{/* 
+                                    {/* 
                                     {mode === "port" && (
                                         <>
                                             <div className="grid grid-cols-2 gap-4">
@@ -521,7 +626,9 @@ export default function CreateInternalResourceDialog({
                             {/* Target Configuration Form */}
                             <div>
                                 <h3 className="text-lg font-semibold mb-4">
-                                    {t("createInternalResourceDialogTargetConfiguration")}
+                                    {t(
+                                        "createInternalResourceDialogTargetConfiguration"
+                                    )}
                                 </h3>
                                 <div className="space-y-4">
                                     <FormField
@@ -530,14 +637,22 @@ export default function CreateInternalResourceDialog({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t("createInternalResourceDialogDestination")}
+                                                    {t(
+                                                        "createInternalResourceDialogDestination"
+                                                    )}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {mode === "host" && t("createInternalResourceDialogDestinationHostDescription")}
-                                                    {mode === "cidr" && t("createInternalResourceDialogDestinationCidrDescription")}
+                                                    {mode === "host" &&
+                                                        t(
+                                                            "createInternalResourceDialogDestinationHostDescription"
+                                                        )}
+                                                    {mode === "cidr" &&
+                                                        t(
+                                                            "createInternalResourceDialogDestinationCidrDescription"
+                                                        )}
                                                     {/* {mode === "port" && t("createInternalResourceDialogDestinationIPDescription")} */}
                                                 </FormDescription>
                                                 <FormMessage />
@@ -584,12 +699,23 @@ export default function CreateInternalResourceDialog({
                                         name="alias"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("createInternalResourceDialogAlias")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "createInternalResourceDialogAlias"
+                                                    )}
+                                                </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} value={field.value ?? ""} />
+                                                    <Input
+                                                        {...field}
+                                                        value={
+                                                            field.value ?? ""
+                                                        }
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t("createInternalResourceDialogAliasDescription")}
+                                                    {t(
+                                                        "createInternalResourceDialogAliasDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -609,31 +735,53 @@ export default function CreateInternalResourceDialog({
                                         name="roles"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col items-start">
-                                                <FormLabel>{t("roles")}</FormLabel>
+                                                <FormLabel>
+                                                    {t("roles")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <TagInput
                                                         {...field}
-                                                        activeTagIndex={activeRolesTagIndex}
-                                                        setActiveTagIndex={setActiveRolesTagIndex}
-                                                        placeholder={t("accessRoleSelect2")}
+                                                        activeTagIndex={
+                                                            activeRolesTagIndex
+                                                        }
+                                                        setActiveTagIndex={
+                                                            setActiveRolesTagIndex
+                                                        }
+                                                        placeholder={t(
+                                                            "accessRoleSelect2"
+                                                        )}
                                                         size="sm"
-                                                        tags={form.getValues().roles || []}
+                                                        tags={
+                                                            form.getValues()
+                                                                .roles || []
+                                                        }
                                                         setTags={(newRoles) => {
                                                             form.setValue(
                                                                 "roles",
-                                                                newRoles as [Tag, ...Tag[]]
+                                                                newRoles as [
+                                                                    Tag,
+                                                                    ...Tag[]
+                                                                ]
                                                             );
                                                         }}
-                                                        enableAutocomplete={true}
-                                                        autocompleteOptions={allRoles}
+                                                        enableAutocomplete={
+                                                            true
+                                                        }
+                                                        autocompleteOptions={
+                                                            allRoles
+                                                        }
                                                         allowDuplicates={false}
-                                                        restrictTagsToAutocompleteOptions={true}
+                                                        restrictTagsToAutocompleteOptions={
+                                                            true
+                                                        }
                                                         sortTags={true}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {t("resourceRoleDescription")}
+                                                    {t(
+                                                        "resourceRoleDescription"
+                                                    )}
                                                 </FormDescription>
                                             </FormItem>
                                         )}
@@ -643,25 +791,45 @@ export default function CreateInternalResourceDialog({
                                         name="users"
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col items-start">
-                                                <FormLabel>{t("users")}</FormLabel>
+                                                <FormLabel>
+                                                    {t("users")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <TagInput
                                                         {...field}
-                                                        activeTagIndex={activeUsersTagIndex}
-                                                        setActiveTagIndex={setActiveUsersTagIndex}
-                                                        placeholder={t("accessUserSelect")}
-                                                        tags={form.getValues().users || []}
+                                                        activeTagIndex={
+                                                            activeUsersTagIndex
+                                                        }
+                                                        setActiveTagIndex={
+                                                            setActiveUsersTagIndex
+                                                        }
+                                                        placeholder={t(
+                                                            "accessUserSelect"
+                                                        )}
+                                                        tags={
+                                                            form.getValues()
+                                                                .users || []
+                                                        }
                                                         size="sm"
                                                         setTags={(newUsers) => {
                                                             form.setValue(
                                                                 "users",
-                                                                newUsers as [Tag, ...Tag[]]
+                                                                newUsers as [
+                                                                    Tag,
+                                                                    ...Tag[]
+                                                                ]
                                                             );
                                                         }}
-                                                        enableAutocomplete={true}
-                                                        autocompleteOptions={allUsers}
+                                                        enableAutocomplete={
+                                                            true
+                                                        }
+                                                        autocompleteOptions={
+                                                            allUsers
+                                                        }
                                                         allowDuplicates={false}
-                                                        restrictTagsToAutocompleteOptions={true}
+                                                        restrictTagsToAutocompleteOptions={
+                                                            true
+                                                        }
                                                         sortTags={true}
                                                     />
                                                 </FormControl>
@@ -675,31 +843,62 @@ export default function CreateInternalResourceDialog({
                                             name="clients"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t("clients")}</FormLabel>
+                                                    <FormLabel>
+                                                        {t("clients")}
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <TagInput
                                                             {...field}
-                                                            activeTagIndex={activeClientsTagIndex}
-                                                            setActiveTagIndex={setActiveClientsTagIndex}
-                                                            placeholder={t("accessClientSelect") || "Select machine clients"}
+                                                            activeTagIndex={
+                                                                activeClientsTagIndex
+                                                            }
+                                                            setActiveTagIndex={
+                                                                setActiveClientsTagIndex
+                                                            }
+                                                            placeholder={
+                                                                t(
+                                                                    "accessClientSelect"
+                                                                ) ||
+                                                                "Select machine clients"
+                                                            }
                                                             size="sm"
-                                                            tags={form.getValues().clients || []}
-                                                            setTags={(newClients) => {
+                                                            tags={
+                                                                form.getValues()
+                                                                    .clients ||
+                                                                []
+                                                            }
+                                                            setTags={(
+                                                                newClients
+                                                            ) => {
                                                                 form.setValue(
                                                                     "clients",
-                                                                    newClients as [Tag, ...Tag[]]
+                                                                    newClients as [
+                                                                        Tag,
+                                                                        ...Tag[]
+                                                                    ]
                                                                 );
                                                             }}
-                                                            enableAutocomplete={true}
-                                                            autocompleteOptions={allClients}
-                                                            allowDuplicates={false}
-                                                            restrictTagsToAutocompleteOptions={true}
+                                                            enableAutocomplete={
+                                                                true
+                                                            }
+                                                            autocompleteOptions={
+                                                                allClients
+                                                            }
+                                                            allowDuplicates={
+                                                                false
+                                                            }
+                                                            restrictTagsToAutocompleteOptions={
+                                                                true
+                                                            }
                                                             sortTags={true}
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
                                                     <FormDescription>
-                                                        {t("resourceClientDescription") || "Machine clients that can access this resource"}
+                                                        {t(
+                                                            "resourceClientDescription"
+                                                        ) ||
+                                                            "Machine clients that can access this resource"}
                                                     </FormDescription>
                                                 </FormItem>
                                             )}

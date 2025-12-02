@@ -81,32 +81,41 @@ export default function EditInternalResourceDialog({
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const formSchema = z.object({
-        name: z.string().min(1, t("editInternalResourceDialogNameRequired")).max(255, t("editInternalResourceDialogNameMaxLength")),
+        name: z
+            .string()
+            .min(1, t("editInternalResourceDialogNameRequired"))
+            .max(255, t("editInternalResourceDialogNameMaxLength")),
         mode: z.enum(["host", "cidr", "port"]),
         // protocol: z.enum(["tcp", "udp"]).nullish(),
         // proxyPort: z.int().positive().min(1, t("editInternalResourceDialogProxyPortMin")).max(65535, t("editInternalResourceDialogProxyPortMax")).nullish(),
         destination: z.string().min(1),
         // destinationPort: z.int().positive().min(1, t("editInternalResourceDialogDestinationPortMin")).max(65535, t("editInternalResourceDialogDestinationPortMax")).nullish(),
         alias: z.string().nullish(),
-        roles: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional(),
-        users: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional(),
-        clients: z.array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        ).optional()
-    })
+        roles: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional(),
+        users: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional(),
+        clients: z
+            .array(
+                z.object({
+                    id: z.string(),
+                    text: z.string()
+                })
+            )
+            .optional()
+    });
     // .refine(
     //     (data) => {
     //         if (data.mode === "port") {
@@ -146,12 +155,24 @@ export default function EditInternalResourceDialog({
 
     type FormData = z.infer<typeof formSchema>;
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>([]);
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>([]);
-    const [allClients, setAllClients] = useState<{ id: string; text: string }[]>([]);
-    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<number | null>(null);
-    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<number | null>(null);
-    const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<number | null>(null);
+    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
+        []
+    );
+    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
+        []
+    );
+    const [allClients, setAllClients] = useState<
+        { id: string; text: string }[]
+    >([]);
+    const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
+        number | null
+    >(null);
+    const [activeUsersTagIndex, setActiveUsersTagIndex] = useState<
+        number | null
+    >(null);
+    const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<
+        number | null
+    >(null);
     const [loadingRolesUsers, setLoadingRolesUsers] = useState(false);
     const [hasMachineClients, setHasMachineClients] = useState(false);
 
@@ -183,22 +204,30 @@ export default function EditInternalResourceDialog({
                 resourceUsersResponse,
                 clientsResponse
             ] = await Promise.all([
-                api.get<AxiosResponse<ListRolesResponse>>(`/org/${orgId}/roles`),
+                api.get<AxiosResponse<ListRolesResponse>>(
+                    `/org/${orgId}/roles`
+                ),
                 api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
                     `/site-resource/${resource.id}/roles`
                 ),
-                api.get<AxiosResponse<ListUsersResponse>>(`/org/${orgId}/users`),
+                api.get<AxiosResponse<ListUsersResponse>>(
+                    `/org/${orgId}/users`
+                ),
                 api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
                     `/site-resource/${resource.id}/users`
                 ),
-                api.get<AxiosResponse<ListClientsResponse>>(`/org/${orgId}/clients?filter=machine&limit=1000`)
+                api.get<AxiosResponse<ListClientsResponse>>(
+                    `/org/${orgId}/clients?filter=machine&limit=1000`
+                )
             ]);
 
-            let resourceClientsResponse: AxiosResponse<AxiosResponse<ListSiteResourceClientsResponse>>;
+            let resourceClientsResponse: AxiosResponse<
+                AxiosResponse<ListSiteResourceClientsResponse>
+            >;
             try {
-                resourceClientsResponse = await api.get<AxiosResponse<ListSiteResourceClientsResponse>>(
-                    `/site-resource/${resource.id}/clients`
-                );
+                resourceClientsResponse = await api.get<
+                    AxiosResponse<ListSiteResourceClientsResponse>
+                >(`/site-resource/${resource.id}/clients`);
             } catch {
                 resourceClientsResponse = {
                     data: {
@@ -255,16 +284,21 @@ export default function EditInternalResourceDialog({
                 }));
 
             setAllClients(machineClients);
-            
-            const existingClients = resourceClientsResponse.data.data.clients.map((c: { clientId: number; name: string }) => ({
-                id: c.clientId.toString(),
-                text: c.name
-            }));
+
+            const existingClients =
+                resourceClientsResponse.data.data.clients.map(
+                    (c: { clientId: number; name: string }) => ({
+                        id: c.clientId.toString(),
+                        text: c.name
+                    })
+                );
 
             form.setValue("clients", existingClients);
 
             // Show clients tag input if there are machine clients OR existing client access
-            setHasMachineClients(machineClients.length > 0 || existingClients.length > 0);
+            setHasMachineClients(
+                machineClients.length > 0 || existingClients.length > 0
+            );
         } catch (error) {
             console.error("Error fetching roles, users, and clients:", error);
         } finally {
@@ -295,18 +329,26 @@ export default function EditInternalResourceDialog({
         setIsSubmitting(true);
         try {
             // Update the site resource
-            await api.post(`/org/${orgId}/site/${resource.siteId}/resource/${resource.id}`, {
-                name: data.name,
-                mode: data.mode,
-                // protocol: data.mode === "port" ? data.protocol : null,
-                // proxyPort: data.mode === "port" ? data.proxyPort : null,
-                // destinationPort: data.mode === "port" ? data.destinationPort : null,
-                destination: data.destination,
-                alias: data.alias && typeof data.alias === "string" && data.alias.trim() ? data.alias : null,
-                roleIds: (data.roles || []).map((r) => parseInt(r.id)),
-                userIds: (data.users || []).map((u) => u.id),
-                clientIds: (data.clients || []).map((c) => parseInt(c.id))
-            });
+            await api.post(
+                `/org/${orgId}/site/${resource.siteId}/resource/${resource.id}`,
+                {
+                    name: data.name,
+                    mode: data.mode,
+                    // protocol: data.mode === "port" ? data.protocol : null,
+                    // proxyPort: data.mode === "port" ? data.proxyPort : null,
+                    // destinationPort: data.mode === "port" ? data.destinationPort : null,
+                    destination: data.destination,
+                    alias:
+                        data.alias &&
+                        typeof data.alias === "string" &&
+                        data.alias.trim()
+                            ? data.alias
+                            : null,
+                    roleIds: (data.roles || []).map((r) => parseInt(r.id)),
+                    userIds: (data.users || []).map((u) => u.id),
+                    clientIds: (data.clients || []).map((c) => parseInt(c.id))
+                }
+            );
 
             // Update roles, users, and clients
             // await Promise.all([
@@ -323,7 +365,9 @@ export default function EditInternalResourceDialog({
 
             toast({
                 title: t("editInternalResourceDialogSuccess"),
-                description: t("editInternalResourceDialogInternalResourceUpdatedSuccessfully"),
+                description: t(
+                    "editInternalResourceDialogInternalResourceUpdatedSuccessfully"
+                ),
                 variant: "default"
             });
 
@@ -333,7 +377,12 @@ export default function EditInternalResourceDialog({
             console.error("Error updating internal resource:", error);
             toast({
                 title: t("editInternalResourceDialogError"),
-                description: formatAxiosError(error, t("editInternalResourceDialogFailedToUpdateInternalResource")),
+                description: formatAxiosError(
+                    error,
+                    t(
+                        "editInternalResourceDialogFailedToUpdateInternalResource"
+                    )
+                ),
                 variant: "destructive"
             });
         } finally {
@@ -345,24 +394,41 @@ export default function EditInternalResourceDialog({
         <Credenza open={open} onOpenChange={setOpen}>
             <CredenzaContent className="max-w-2xl">
                 <CredenzaHeader>
-                    <CredenzaTitle>{t("editInternalResourceDialogEditClientResource")}</CredenzaTitle>
+                    <CredenzaTitle>
+                        {t("editInternalResourceDialogEditClientResource")}
+                    </CredenzaTitle>
                     <CredenzaDescription>
-                        {t("editInternalResourceDialogUpdateResourceProperties", { resourceName: resource.name })}
+                        {t(
+                            "editInternalResourceDialogUpdateResourceProperties",
+                            { resourceName: resource.name }
+                        )}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6" id="edit-internal-resource-form">
+                        <form
+                            onSubmit={form.handleSubmit(handleSubmit)}
+                            className="space-y-6"
+                            id="edit-internal-resource-form"
+                        >
                             {/* Resource Properties Form */}
                             <div>
-                                <h3 className="text-lg font-semibold mb-4">{t("editInternalResourceDialogResourceProperties")}</h3>
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {t(
+                                        "editInternalResourceDialogResourceProperties"
+                                    )}
+                                </h3>
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("editInternalResourceDialogName")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "editInternalResourceDialogName"
+                                                    )}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
@@ -376,9 +442,15 @@ export default function EditInternalResourceDialog({
                                         name="mode"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("editInternalResourceDialogMode")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "editInternalResourceDialogMode"
+                                                    )}
+                                                </FormLabel>
                                                 <Select
-                                                    onValueChange={field.onChange}
+                                                    onValueChange={
+                                                        field.onChange
+                                                    }
                                                     value={field.value}
                                                 >
                                                     <FormControl>
@@ -388,8 +460,16 @@ export default function EditInternalResourceDialog({
                                                     </FormControl>
                                                     <SelectContent>
                                                         {/* <SelectItem value="port">{t("editInternalResourceDialogModePort")}</SelectItem> */}
-                                                        <SelectItem value="host">{t("editInternalResourceDialogModeHost")}</SelectItem>
-                                                        <SelectItem value="cidr">{t("editInternalResourceDialogModeCidr")}</SelectItem>
+                                                        <SelectItem value="host">
+                                                            {t(
+                                                                "editInternalResourceDialogModeHost"
+                                                            )}
+                                                        </SelectItem>
+                                                        <SelectItem value="cidr">
+                                                            {t(
+                                                                "editInternalResourceDialogModeCidr"
+                                                            )}
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -448,20 +528,34 @@ export default function EditInternalResourceDialog({
 
                             {/* Target Configuration Form */}
                             <div>
-                                <h3 className="text-lg font-semibold mb-4">{t("editInternalResourceDialogTargetConfiguration")}</h3>
+                                <h3 className="text-lg font-semibold mb-4">
+                                    {t(
+                                        "editInternalResourceDialogTargetConfiguration"
+                                    )}
+                                </h3>
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
                                         name="destination"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("editInternalResourceDialogDestination")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "editInternalResourceDialogDestination"
+                                                    )}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {mode === "host" && t("editInternalResourceDialogDestinationHostDescription")}
-                                                    {mode === "cidr" && t("editInternalResourceDialogDestinationCidrDescription")}
+                                                    {mode === "host" &&
+                                                        t(
+                                                            "editInternalResourceDialogDestinationHostDescription"
+                                                        )}
+                                                    {mode === "cidr" &&
+                                                        t(
+                                                            "editInternalResourceDialogDestinationCidrDescription"
+                                                        )}
                                                     {/* {mode === "port" && t("editInternalResourceDialogDestinationIPDescription")} */}
                                                 </FormDescription>
                                                 <FormMessage />
@@ -499,12 +593,23 @@ export default function EditInternalResourceDialog({
                                         name="alias"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t("editInternalResourceDialogAlias")}</FormLabel>
+                                                <FormLabel>
+                                                    {t(
+                                                        "editInternalResourceDialogAlias"
+                                                    )}
+                                                </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} value={field.value ?? ""} />
+                                                    <Input
+                                                        {...field}
+                                                        value={
+                                                            field.value ?? ""
+                                                        }
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t("editInternalResourceDialogAliasDescription")}
+                                                    {t(
+                                                        "editInternalResourceDialogAliasDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -529,31 +634,57 @@ export default function EditInternalResourceDialog({
                                             name="roles"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t("roles")}</FormLabel>
+                                                    <FormLabel>
+                                                        {t("roles")}
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <TagInput
                                                             {...field}
-                                                            activeTagIndex={activeRolesTagIndex}
-                                                            setActiveTagIndex={setActiveRolesTagIndex}
-                                                            placeholder={t("accessRoleSelect2")}
+                                                            activeTagIndex={
+                                                                activeRolesTagIndex
+                                                            }
+                                                            setActiveTagIndex={
+                                                                setActiveRolesTagIndex
+                                                            }
+                                                            placeholder={t(
+                                                                "accessRoleSelect2"
+                                                            )}
                                                             size="sm"
-                                                            tags={form.getValues().roles || []}
-                                                            setTags={(newRoles) => {
+                                                            tags={
+                                                                form.getValues()
+                                                                    .roles || []
+                                                            }
+                                                            setTags={(
+                                                                newRoles
+                                                            ) => {
                                                                 form.setValue(
                                                                     "roles",
-                                                                    newRoles as [Tag, ...Tag[]]
+                                                                    newRoles as [
+                                                                        Tag,
+                                                                        ...Tag[]
+                                                                    ]
                                                                 );
                                                             }}
-                                                            enableAutocomplete={true}
-                                                            autocompleteOptions={allRoles}
-                                                            allowDuplicates={false}
-                                                            restrictTagsToAutocompleteOptions={true}
+                                                            enableAutocomplete={
+                                                                true
+                                                            }
+                                                            autocompleteOptions={
+                                                                allRoles
+                                                            }
+                                                            allowDuplicates={
+                                                                false
+                                                            }
+                                                            restrictTagsToAutocompleteOptions={
+                                                                true
+                                                            }
                                                             sortTags={true}
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
                                                     <FormDescription>
-                                                        {t("resourceRoleDescription")}
+                                                        {t(
+                                                            "resourceRoleDescription"
+                                                        )}
                                                     </FormDescription>
                                                 </FormItem>
                                             )}
@@ -563,25 +694,49 @@ export default function EditInternalResourceDialog({
                                             name="users"
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t("users")}</FormLabel>
+                                                    <FormLabel>
+                                                        {t("users")}
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <TagInput
                                                             {...field}
-                                                            activeTagIndex={activeUsersTagIndex}
-                                                            setActiveTagIndex={setActiveUsersTagIndex}
-                                                            placeholder={t("accessUserSelect")}
-                                                            tags={form.getValues().users || []}
+                                                            activeTagIndex={
+                                                                activeUsersTagIndex
+                                                            }
+                                                            setActiveTagIndex={
+                                                                setActiveUsersTagIndex
+                                                            }
+                                                            placeholder={t(
+                                                                "accessUserSelect"
+                                                            )}
+                                                            tags={
+                                                                form.getValues()
+                                                                    .users || []
+                                                            }
                                                             size="sm"
-                                                            setTags={(newUsers) => {
+                                                            setTags={(
+                                                                newUsers
+                                                            ) => {
                                                                 form.setValue(
                                                                     "users",
-                                                                    newUsers as [Tag, ...Tag[]]
+                                                                    newUsers as [
+                                                                        Tag,
+                                                                        ...Tag[]
+                                                                    ]
                                                                 );
                                                             }}
-                                                            enableAutocomplete={true}
-                                                            autocompleteOptions={allUsers}
-                                                            allowDuplicates={false}
-                                                            restrictTagsToAutocompleteOptions={true}
+                                                            enableAutocomplete={
+                                                                true
+                                                            }
+                                                            autocompleteOptions={
+                                                                allUsers
+                                                            }
+                                                            allowDuplicates={
+                                                                false
+                                                            }
+                                                            restrictTagsToAutocompleteOptions={
+                                                                true
+                                                            }
                                                             sortTags={true}
                                                         />
                                                     </FormControl>
@@ -589,42 +744,73 @@ export default function EditInternalResourceDialog({
                                                 </FormItem>
                                             )}
                                         />
-                                    {hasMachineClients && (
-                                        <FormField
-                                            control={form.control}
-                                            name="clients"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col items-start">
-                                                    <FormLabel>{t("clients")}</FormLabel>
-                                                    <FormControl>
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={activeClientsTagIndex}
-                                                            setActiveTagIndex={setActiveClientsTagIndex}
-                                                            placeholder={t("accessClientSelect") || "Select machine clients"}
-                                                            size="sm"
-                                                            tags={form.getValues().clients || []}
-                                                            setTags={(newClients) => {
-                                                                form.setValue(
-                                                                    "clients",
-                                                                    newClients as [Tag, ...Tag[]]
-                                                                );
-                                                            }}
-                                                            enableAutocomplete={true}
-                                                            autocompleteOptions={allClients}
-                                                            allowDuplicates={false}
-                                                            restrictTagsToAutocompleteOptions={true}
-                                                            sortTags={true}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        {t("resourceClientDescription") || "Machine clients that can access this resource"}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
+                                        {hasMachineClients && (
+                                            <FormField
+                                                control={form.control}
+                                                name="clients"
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-col items-start">
+                                                        <FormLabel>
+                                                            {t("clients")}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <TagInput
+                                                                {...field}
+                                                                activeTagIndex={
+                                                                    activeClientsTagIndex
+                                                                }
+                                                                setActiveTagIndex={
+                                                                    setActiveClientsTagIndex
+                                                                }
+                                                                placeholder={
+                                                                    t(
+                                                                        "accessClientSelect"
+                                                                    ) ||
+                                                                    "Select machine clients"
+                                                                }
+                                                                size="sm"
+                                                                tags={
+                                                                    form.getValues()
+                                                                        .clients ||
+                                                                    []
+                                                                }
+                                                                setTags={(
+                                                                    newClients
+                                                                ) => {
+                                                                    form.setValue(
+                                                                        "clients",
+                                                                        newClients as [
+                                                                            Tag,
+                                                                            ...Tag[]
+                                                                        ]
+                                                                    );
+                                                                }}
+                                                                enableAutocomplete={
+                                                                    true
+                                                                }
+                                                                autocompleteOptions={
+                                                                    allClients
+                                                                }
+                                                                allowDuplicates={
+                                                                    false
+                                                                }
+                                                                restrictTagsToAutocompleteOptions={
+                                                                    true
+                                                                }
+                                                                sortTags={true}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                        <FormDescription>
+                                                            {t(
+                                                                "resourceClientDescription"
+                                                            ) ||
+                                                                "Machine clients that can access this resource"}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -645,7 +831,7 @@ export default function EditInternalResourceDialog({
                         disabled={isSubmitting}
                         loading={isSubmitting}
                     >
-                         {t("editInternalResourceDialogSaveResource")}
+                        {t("editInternalResourceDialogSaveResource")}
                     </Button>
                 </CredenzaFooter>
             </CredenzaContent>
