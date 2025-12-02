@@ -203,9 +203,9 @@ export async function updateAndGenerateEndpointDestinations(
 
         // Update clientSites for each site on this exit node
         for (const site of sitesOnExitNode) {
-            logger.debug(
-                `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
-            );
+            // logger.debug(
+            //     `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
+            // );
 
             // if the public key or endpoint has changed, update it otherwise continue
             if (

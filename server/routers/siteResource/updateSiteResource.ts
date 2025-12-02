@@ -268,10 +268,13 @@ export async function updateSiteResource(
                 );
 
             // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
-            if (
+            const destinationChanged =
                 existingSiteResource.destination !==
-                updatedSiteResource.destination
-            ) {
+                updatedSiteResource.destination;
+            const aliasChanged =
+                existingSiteResource.alias !== updatedSiteResource.alias;
+
+            if (destinationChanged || aliasChanged) {
                 const [newt] = await trx
                     .select()
                     .from(newts)
@@ -284,53 +287,55 @@ export async function updateSiteResource(
                     );
                 }
 
-                const oldTargets = generateSubnetProxyTargets(
-                    existingSiteResource,
-                    mergedAllClients
-                );
-                const newTargets = generateSubnetProxyTargets(
-                    updatedSiteResource,
-                    mergedAllClients
-                );
+                // Only update targets on newt if destination changed
+                if (destinationChanged) {
+                    const oldTargets = generateSubnetProxyTargets(
+                        existingSiteResource,
+                        mergedAllClients
+                    );
+                    const newTargets = generateSubnetProxyTargets(
+                        updatedSiteResource,
+                        mergedAllClients
+                    );
 
-                await updateTargets(newt.newtId, {
-                    oldTargets: oldTargets,
-                    newTargets: newTargets
-                });
+                    await updateTargets(newt.newtId, {
+                        oldTargets: oldTargets,
+                        newTargets: newTargets
+                    });
+                }
 
+                // Update olms for both destination and alias changes
                 let olmJobs: Promise<void>[] = [];
                 for (const client of mergedAllClients) {
                     // we also need to update the remote subnets on the olms for each client that has access to this site
-                    try {
-                        olmJobs.push(
-                            updatePeerData(
-                                client.clientId,
-                                updatedSiteResource.siteId,
-                                {
-                                    oldRemoteSubnets: generateRemoteSubnets([
-                                        existingSiteResource
-                                    ]),
-                                    newRemoteSubnets: generateRemoteSubnets([
-                                        updatedSiteResource
-                                    ])
-                                },
-                                {
-                                    oldAliases: generateAliasConfig([
-                                        existingSiteResource
-                                    ]),
-                                    newAliases: generateAliasConfig([
-                                        updatedSiteResource
-                                    ])
-                                }
-                            )
-                        );
-                    } catch (error) {
-                        logger.warn(
+                    olmJobs.push(
+                        updatePeerData(
+                            client.clientId,
+                            updatedSiteResource.siteId,
+                            {
+                                oldRemoteSubnets: generateRemoteSubnets([
+                                    existingSiteResource
+                                ]),
+                                newRemoteSubnets: generateRemoteSubnets([
+                                    updatedSiteResource
+                                ])
+                            },
+                            {
+                                oldAliases: generateAliasConfig([
+                                    existingSiteResource
+                                ]),
+                                newAliases: generateAliasConfig([
+                                    updatedSiteResource
+                                ])
+                            }
+                        ).catch((error) => {
                             // this is okay because sometimes the olm is not online to receive the update or associated with the client yet
-                            `Error updating peer data for client ${client.clientId}:`,
-                            error
-                        );
-                    }
+                            logger.warn(
+                                `Error updating peer data for client ${client.clientId}:`,
+                                error
+                            );
+                        })
+                    );
                 }
 
                 await Promise.all(olmJobs);
