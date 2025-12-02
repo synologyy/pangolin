@@ -1166,6 +1166,8 @@
     "sidebarIdentityProviders": "Identity Providers",
     "sidebarLicense": "License",
     "sidebarClients": "Clients",
+    "sidebarUserDevices": "User devices",
+    "sidebarMachineClients": "Machine Clients",
     "sidebarDomains": "Domains",
     "sidebarBluePrints": "Blueprints",
     "blueprints": "Blueprints",

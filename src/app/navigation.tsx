@@ -18,7 +18,8 @@ import {
     Logs,
     SquareMousePointer,
     ScanEye,
-    GlobeLock
+    GlobeLock,
+    Smartphone
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -73,9 +74,22 @@ export const orgNavSections = (
                 ? [
                       {
                           title: "sidebarClients",
-                          href: "/{orgId}/settings/clients",
                           icon: <MonitorUp className="size-4 flex-none" />,
-                          isBeta: true
+                          isBeta: true,
+                          items: [
+                              {
+                                  href: "/{orgId}/settings/clients/user",
+                                  title: "sidebarUserDevices",
+                                  icon: (
+                                      <Smartphone className="size-4 flex-none" />
+                                  )
+                              },
+                              {
+                                  href: "/{orgId}/settings/clients/machine",
+                                  title: "sidebarMachineClients",
+                                  icon: <Server className="size-4 flex-none" />
+                              }
+                          ]
                       }
                   ]
                 : []),
