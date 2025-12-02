@@ -3,7 +3,6 @@ import ProxyResourcesTable from "@app/components/ProxyResourcesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import { pullEnv } from "@app/lib/pullEnv";
 import OrgProvider from "@app/providers/OrgProvider";
 import type { GetOrgResponse } from "@server/routers/org";
 import type { ListResourcesResponse } from "@server/routers/resource";
@@ -23,16 +22,7 @@ export default async function ProxyResourcesPage(
     props: ProxyResourcesPageProps
 ) {
     const params = await props.params;
-    const searchParams = await props.searchParams;
     const t = await getTranslations();
-
-    const env = pullEnv();
-
-    // Default to 'proxy' view, or use the query param if provided
-    let defaultView: "proxy" | "internal" = "proxy";
-    if (env.flags.enableClients) {
-        defaultView = searchParams.view === "internal" ? "internal" : "proxy";
-    }
 
     let resources: ListResourcesResponse["resources"] = [];
     try {
@@ -103,8 +93,8 @@ export default async function ProxyResourcesPage(
     return (
         <>
             <SettingsSectionTitle
-                title={t("resourceTitle")}
-                description={t("resourceDescription")}
+                title={t("proxyResourceTitle")}
+                description={t("proxyResourceDescription")}
             />
 
             <OrgProvider org={org}>

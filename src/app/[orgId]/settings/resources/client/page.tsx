@@ -1,11 +1,10 @@
 import ClientResourcesTable from "@app/components/ClientResourcesTable";
-import type { InternalResourceRow } from "@app/components/ProxyResourcesTable";
+import type { InternalResourceRow } from "@app/components/ClientResourcesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
-import { pullEnv } from "@app/lib/pullEnv";
+import { getCachedOrg } from "@app/lib/api/getCachedOrg";
 import OrgProvider from "@app/providers/OrgProvider";
-import type { GetOrgResponse } from "@server/routers/org";
 import type { ListResourcesResponse } from "@server/routers/resource";
 import type { ListAllSiteResourcesByOrgResponse } from "@server/routers/siteResource";
 import type { AxiosResponse } from "axios";
@@ -22,16 +21,7 @@ export default async function ClientResourcesPage(
     props: ClientResourcesPageProps
 ) {
     const params = await props.params;
-    const searchParams = await props.searchParams;
     const t = await getTranslations();
-
-    const env = pullEnv();
-
-    // Default to 'proxy' view, or use the query param if provided
-    let defaultView: "proxy" | "internal" = "proxy";
-    if (env.flags.enableClients) {
-        defaultView = searchParams.view === "internal" ? "internal" : "proxy";
-    }
 
     let resources: ListResourcesResponse["resources"] = [];
     try {
@@ -52,13 +42,7 @@ export default async function ClientResourcesPage(
 
     let org = null;
     try {
-        const getOrg = cache(async () =>
-            internal.get<AxiosResponse<GetOrgResponse>>(
-                `/org/${params.orgId}`,
-                await authCookieHeader()
-            )
-        );
-        const res = await getOrg();
+        const res = await getCachedOrg(params.orgId);
         org = res.data.data;
     } catch {
         redirect(`/${params.orgId}/settings/resources`);
@@ -90,18 +74,14 @@ export default async function ClientResourcesPage(
     return (
         <>
             <SettingsSectionTitle
-                title={t("resourceTitle")}
-                description={t("resourceDescription")}
+                title={t("clientResourceTitle")}
+                description={t("clientResourceDescription")}
             />
 
             <OrgProvider org={org}>
                 <ClientResourcesTable
-                    resources={[]}
                     internalResources={internalResourceRows}
                     orgId={params.orgId}
-                    defaultView={
-                        env.flags.enableClients ? defaultView : "proxy"
-                    }
                     defaultSort={{
                         id: "name",
                         desc: false

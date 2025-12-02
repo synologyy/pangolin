@@ -3,6 +3,8 @@ import { durationToMs } from "./durationToMs";
 import { build } from "@server/build";
 import { remote } from "./api";
 import type ResponseT from "@server/types/Response";
+import type { ListSitesResponse } from "@server/routers/site";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
 export type ProductUpdate = {
     link: string | null;
@@ -63,5 +65,18 @@ export const productUpdatesQueries = {
             },
             enabled: enabled && (build === "oss" || build === "enterprise") // disabled in cloud version
             // because we don't need to listen for new versions there
+        })
+};
+
+export const siteQueries = {
+    listPerOrg: ({ orgId, api }: { orgId: string; api: AxiosInstance }) =>
+        queryOptions({
+            queryKey: ["SITE_PER_ORG", orgId] as const,
+            queryFn: async ({ signal }) => {
+                const res = await api.get<AxiosResponse<ListSitesResponse>>(
+                    `/org/${orgId}/sites`
+                );
+                return res.data.data.sites;
+            }
         })
 };
