@@ -237,7 +237,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             );
         }
 
-        let endpoint = site.endpoint;
+        let relayEndpoint: string | undefined = undefined;
         if (relay) {
             const [exitNode] = await db
                 .select()
@@ -248,7 +248,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 logger.warn(`Exit node not found for site ${site.siteId}`);
                 continue;
             }
-            endpoint = `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`;
+            relayEndpoint = `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`;
         }
 
         const allSiteResources = await db // only get the site resources that this client has access to
@@ -274,7 +274,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
-            endpoint: endpoint,
+            relayEndpoint: relayEndpoint, // this can be undefined now if not relayed
+            endpoint: site.endpoint,
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,

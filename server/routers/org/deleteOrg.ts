@@ -193,7 +193,7 @@ export async function deleteOrg(
         // Send termination messages outside of transaction to prevent blocking
         for (const newtId of deletedNewtIds) {
             const payload = {
-                type: `newt/terminate`,
+                type: `newt/wg/terminate`,
                 data: {}
             };
             // Don't await this to prevent blocking the response

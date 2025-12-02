@@ -1011,76 +1011,18 @@ async function handleMessagesForClientSites(
                 continue;
             }
 
-            // Add peer to newt
-            const isRelayed = true; // Default to relaying for new connections
-            newtJobs.push(
-                newtAddPeer(
-                    site.siteId,
-                    {
-                        publicKey: client.pubKey,
-                        allowedIps: [`${client.subnet.split("/")[0]}/32`],
-                        endpoint: isRelayed ? "" : ""
-                    },
-                    newt.newtId
-                )
+            await holepunchSiteAdd(
+                // this will kick off the add peer process for the client
+                client.clientId,
+                {
+                    siteId: site.siteId,
+                    exitNode: {
+                        publicKey: exitNode.publicKey,
+                        endpoint: exitNode.endpoint
+                    }
+                },
+                olmId
             );
-
-            // Get all site resources for this site that the client has access to
-            const accessibleResources = await trx
-                .select()
-                .from(siteResources)
-                .innerJoin(
-                    clientSiteResourcesAssociationsCache,
-                    eq(
-                        siteResources.siteResourceId,
-                        clientSiteResourcesAssociationsCache.siteResourceId
-                    )
-                )
-                .where(
-                    and(
-                        eq(siteResources.siteId, site.siteId),
-                        eq(
-                            clientSiteResourcesAssociationsCache.clientId,
-                            client.clientId
-                        )
-                    )
-                );
-            try {
-                // Add peer to olm
-                olmJobs.push(
-                    olmAddPeer(
-                        client.clientId,
-                        {
-                            siteId: site.siteId,
-                            endpoint:
-                                isRelayed || !site.endpoint
-                                    ? `${exitNode.endpoint}:21820`
-                                    : site.endpoint,
-                            publicKey: site.publicKey,
-                            serverIP: site.address || "",
-                            serverPort: site.listenPort || 0,
-                            remoteSubnets: generateRemoteSubnets(
-                                accessibleResources.map(
-                                    ({ siteResources }) => siteResources
-                                )
-                            )
-                        },
-                        olmId
-                    )
-                );
-            } catch (error) {
-                // if the error includes not found then its just because the olm does not exist anymore or yet and its fine if we dont send
-                if (
-                    error instanceof Error &&
-                    error.message.includes("not found")
-                ) {
-                    logger.debug(
-                        `Olm data not found for client ${client.clientId}, skipping removal`
-                    );
-                } else {
-                    throw error;
-                }
-            }
         }
 
         // Update exit node destinations

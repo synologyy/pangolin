@@ -12,7 +12,8 @@ import {
     handleOlmRelayMessage,
     handleOlmPingMessage,
     startOlmOfflineChecker,
-    handleOlmServerPeerAddMessage
+    handleOlmServerPeerAddMessage,
+    handleOlmUnRelayMessage
 } from "../olm";
 import { handleHealthcheckStatusMessage } from "../target";
 import { MessageHandler } from "./types";
@@ -21,6 +22,7 @@ export const messageHandlers: Record<string, MessageHandler> = {
     "olm/wg/server/peer/add": handleOlmServerPeerAddMessage,
     "olm/wg/register": handleOlmRegisterMessage,
     "olm/wg/relay": handleOlmRelayMessage,
+    "olm/wg/unrelay": handleOlmUnRelayMessage,
     "olm/ping": handleOlmPingMessage,
     "newt/wg/register": handleNewtRegisterMessage,
     "newt/wg/get-config": handleGetConfigMessage,

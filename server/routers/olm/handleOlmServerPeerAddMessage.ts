@@ -135,6 +135,8 @@ export const handleOlmServerPeerAddMessage: MessageHandler = async (
         return;
     }
 
+    // NOTE: here we are always starting direct to the peer and will relay later
+
     await newtAddPeer(siteId, {
         publicKey: client.pubKey,
         allowedIps: [`${client.subnet.split("/")[0]}/32`], // we want to only allow from that client

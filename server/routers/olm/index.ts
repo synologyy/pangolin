@@ -8,3 +8,4 @@ export * from "./listUserOlms";
 export * from "./deleteUserOlm";
 export * from "./getUserOlm";
 export * from "./handleOlmServerPeerAddMessage";
+export * from "./handleOlmUnRelayMessage";

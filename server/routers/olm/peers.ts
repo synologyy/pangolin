@@ -103,6 +103,7 @@ export async function updatePeer(
             siteId: peer.siteId,
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
+            relayEndpoint: peer.serverIP,
             serverIP: peer.serverIP,
             serverPort: peer.serverPort,
             remoteSubnets: peer.remoteSubnets
