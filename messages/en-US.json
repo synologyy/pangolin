@@ -145,7 +145,7 @@
     "never": "Never",
     "shareErrorSelectResource": "Please select a resource",
     "proxyResourceTitle": "Manage Proxy Resources",
-    "proxyResourceDescription": "Create and manage secure, publicly accessible resources that require authentication through a web browser",
+    "proxyResourceDescription": "Create and manage secure, publicly accessible resources through a web browser",
     "clientResourceTitle": "Manage Client Resources",
     "clientResourceDescription": "Create and manage private resources that are accessible only through a connected client, with no public exposure",
     "resourcesSearch": "Search resources...",
