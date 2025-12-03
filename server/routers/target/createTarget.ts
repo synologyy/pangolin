@@ -48,6 +48,7 @@ const createTargetSchema = z.strictObject({
         hcFollowRedirects: z.boolean().optional().nullable(),
         hcMethod: z.string().min(1).optional().nullable(),
         hcStatus: z.int().optional().nullable(),
+        hcTlsServerName: z.string().optional().nullable(),
         path: z.string().optional().nullable(),
         pathMatchType: z
             .enum(["exact", "prefix", "regex"])
@@ -247,7 +248,8 @@ export async function createTarget(
                 hcFollowRedirects: targetData.hcFollowRedirects ?? null,
                 hcMethod: targetData.hcMethod ?? null,
                 hcStatus: targetData.hcStatus ?? null,
-                hcHealth: "unknown"
+                hcHealth: "unknown",
+                hcTlsServerName: targetData.hcTlsServerName ?? null
             })
             .returning();
 
