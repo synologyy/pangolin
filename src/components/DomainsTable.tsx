@@ -136,8 +136,31 @@ export default function DomainsTable({ domains, orgId }: Props) {
         }
     };
 
-    const statusColumn: ColumnDef<DomainRow> = {
+    const typeColumn: ExtendedColumnDef<DomainRow> = {
+        accessorKey: "type",
+        friendlyName: t("type"),
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() =>
+                        column.toggleSorting(column.getIsSorted() === "asc")
+                    }
+                >
+                    {t("type")}
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                </Button>
+            );
+        },
+        cell: ({ row }) => {
+            const type = row.original.type;
+            return <Badge variant="secondary">{getTypeDisplay(type)}</Badge>;
+        }
+    };
+
+    const statusColumn: ExtendedColumnDef<DomainRow> = {
         accessorKey: "verified",
+        friendlyName: t("status"),
         header: ({ column }) => {
             return (
                 <Button
@@ -190,29 +213,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
                 );
             }
         },
-        {
-            accessorKey: "type",
-            friendlyName: t("type"),
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("type")}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                );
-            },
-            cell: ({ row }) => {
-                const type = row.original.type;
-                return (
-                    <Badge variant="secondary">{getTypeDisplay(type)}</Badge>
-                );
-            }
-        },
+        ...(env.env.flags.usePangolinDns ? [typeColumn] : []),
         ...(env.env.flags.usePangolinDns ? [statusColumn] : []),
         {
             id: "actions",
@@ -226,13 +227,8 @@ export default function DomainsTable({ domains, orgId }: Props) {
                     <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0"
-                                >
-                                    <span className="sr-only">
-                                        Open menu
-                                    </span>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>

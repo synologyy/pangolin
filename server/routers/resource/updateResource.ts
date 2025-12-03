@@ -329,9 +329,11 @@ async function updateHttpResource(
         }
     }
 
-    let headers = null;
+    let headers = undefined;
     if (updateData.headers) {
         headers = JSON.stringify(updateData.headers);
+    } else if (updateData.headers === null) {
+        headers = null;
     }
 
     const updatedResource = await db
