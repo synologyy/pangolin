@@ -359,10 +359,8 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     return subnet;
 }
 
-export function generateRemoteSubnets(
-    allSiteResources: SiteResource[]
-): string[] {
-    let remoteSubnets = allSiteResources
+export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[] {
+    const remoteSubnets = allSiteResources
         .filter((sr) => {
             if (sr.mode === "cidr") return true;
             if (sr.mode === "host") {
@@ -415,7 +413,7 @@ export function generateSubnetProxyTargets(
         subnet: string | null;
     }[]
 ): SubnetProxyTarget[] {
-    let targets: SubnetProxyTarget[] = [];
+    const targets: SubnetProxyTarget[] = [];
 
     if (clients.length === 0) {
         logger.debug(

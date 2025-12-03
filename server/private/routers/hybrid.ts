@@ -1043,7 +1043,7 @@ hybridRouter.get(
                 );
             }
 
-            let rules = await db
+            const rules = await db
                 .select()
                 .from(resourceRules)
                 .where(eq(resourceRules.resourceId, resourceId));

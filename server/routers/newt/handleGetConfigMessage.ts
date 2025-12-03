@@ -246,7 +246,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         .from(siteResources)
         .where(eq(siteResources.siteId, siteId));
 
-    let targetsToSend: SubnetProxyTarget[] = [];
+    const targetsToSend: SubnetProxyTarget[] = [];
 
     for (const resource of allSiteResources) {
         // Get clients associated with this specific resource

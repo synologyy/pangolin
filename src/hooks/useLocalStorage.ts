@@ -2,8 +2,8 @@ import {
     useState,
     useEffect,
     useCallback,
-    Dispatch,
-    SetStateAction
+    type Dispatch,
+    type SetStateAction
 } from "react";
 
 type SetValue<T> = Dispatch<SetStateAction<T>>;

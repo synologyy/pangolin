@@ -394,9 +394,9 @@ async function handleMessagesForSiteClients(
         return;
     }
 
-    let newtJobs: Promise<any>[] = [];
-    let olmJobs: Promise<any>[] = [];
-    let exitNodeJobs: Promise<any>[] = [];
+    const newtJobs: Promise<any>[] = [];
+    const olmJobs: Promise<any>[] = [];
+    const exitNodeJobs: Promise<any>[] = [];
 
     // Combine all clients that need processing (those being added or removed)
     const clientsToProcess = new Map<
@@ -632,8 +632,8 @@ async function handleSubnetProxyTargetUpdates(
         return;
     }
 
-    let proxyJobs = [];
-    let olmJobs = [];
+    const proxyJobs = [];
+    const olmJobs = [];
     // Generate targets for added associations
     if (clientSiteResourcesToAdd.length > 0) {
         const addedClients = allClients.filter((client) =>

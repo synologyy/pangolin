@@ -304,8 +304,7 @@ export async function updateSiteResource(
                     });
                 }
 
-                // Update olms for both destination and alias changes
-                let olmJobs: Promise<void>[] = [];
+                const olmJobs: Promise<void>[] = [];
                 for (const client of mergedAllClients) {
                     // we also need to update the remote subnets on the olms for each client that has access to this site
                     olmJobs.push(
