@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import {
@@ -170,48 +170,79 @@ export default function EditInternalResourceDialog({
             resourceQueries.resourceUsers({ resourceId: resource.id }),
             resourceQueries.resourceRoles({ resourceId: resource.id }),
             resourceQueries.resourceClients({ resourceId: resource.id })
-        ]
+        ],
+        combine: (results) => {
+            const [
+                rolesQuery,
+                usersQuery,
+                clientsQuery,
+                resourceUsersQuery,
+                resourceRolesQuery,
+                resourceClientsQuery
+            ] = results;
+
+            const allRoles = (rolesQuery.data ?? [])
+                .map((role) => ({
+                    id: role.roleId.toString(),
+                    text: role.name
+                }))
+                .filter((role) => role.text !== "Admin");
+
+            const allUsers = (usersQuery.data ?? []).map((user) => ({
+                id: user.id.toString(),
+                text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+            }));
+
+            const machineClients = (clientsQuery.data ?? [])
+                .filter((client) => !client.userId)
+                .map((client) => ({
+                    id: client.clientId.toString(),
+                    text: client.name
+                }));
+
+            const existingClients = (resourceClientsQuery.data ?? []).map(
+                (c: { clientId: number; name: string }) => ({
+                    id: c.clientId.toString(),
+                    text: c.name
+                })
+            );
+
+            const formRoles = (resourceRolesQuery.data ?? [])
+                .map((i) => ({
+                    id: i.roleId.toString(),
+                    text: i.name
+                }))
+                .filter((role) => role.text !== "Admin");
+
+            const formUsers = (resourceUsersQuery.data ?? []).map((i) => ({
+                id: i.userId.toString(),
+                text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+            }));
+
+            return {
+                allRoles,
+                allUsers,
+                machineClients,
+                existingClients,
+                formRoles,
+                formUsers,
+                hasMachineClients:
+                    machineClients.length > 0 || existingClients.length > 0,
+                isLoading: results.some((query) => query.isLoading)
+            };
+        }
     });
 
-    const [
-        rolesQuery,
-        usersQuery,
-        clientsQuery,
-        resourceUsersQuery,
-        resourceRolesQuery,
-        resourceClientsQuery
-    ] = queries;
-
-    const allRoles = (rolesQuery.data ?? [])
-        .map((role) => ({
-            id: role.roleId.toString(),
-            text: role.name
-        }))
-        .filter((role) => role.text !== "Admin");
-
-    const allUsers = (usersQuery.data ?? []).map((user) => ({
-        id: user.id.toString(),
-        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-    }));
-
-    const machineClients = (clientsQuery.data ?? [])
-        .filter((client) => !client.userId)
-        .map((client) => ({
-            id: client.clientId.toString(),
-            text: client.name
-        }));
-
-    const existingClients = (resourceClientsQuery.data ?? []).map(
-        (c: { clientId: number; name: string }) => ({
-            id: c.clientId.toString(),
-            text: c.name
-        })
-    );
-
-    const hasMachineClients =
-        machineClients.length > 0 || existingClients.length > 0;
-
-    const loadingRolesUsers = queries.some((query) => query.isLoading);
+    const {
+        allRoles,
+        allUsers,
+        machineClients,
+        existingClients,
+        formRoles,
+        formUsers,
+        hasMachineClients,
+        isLoading: loadingRolesUsers
+    } = queries;
 
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
@@ -306,38 +337,17 @@ export default function EditInternalResourceDialog({
         }
     };
 
-    // Set form values when data is loaded
-    useEffect(() => {
-        if (resourceRolesQuery.data) {
-            form.setValue(
-                "roles",
-                resourceRolesQuery.data
-                    .map((i) => ({
-                        id: i.roleId.toString(),
-                        text: i.name
-                    }))
-                    .filter((role) => role.text !== "Admin")
-            );
-        }
-    }, [resourceRolesQuery.data, form]);
+    // Set form values only once after initial load
+    const hasInitialized = useRef(false);
 
     useEffect(() => {
-        if (resourceUsersQuery.data) {
-            form.setValue(
-                "users",
-                resourceUsersQuery.data.map((i) => ({
-                    id: i.userId.toString(),
-                    text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
-                }))
-            );
-        }
-    }, [resourceUsersQuery.data, form]);
-
-    useEffect(() => {
-        if (clientsQuery.data) {
+        if (!loadingRolesUsers && !hasInitialized.current) {
+            hasInitialized.current = true;
+            form.setValue("roles", formRoles);
+            form.setValue("users", formUsers);
             form.setValue("clients", existingClients);
         }
-    }, [clientsQuery.data, existingClients, form]);
+    }, [loadingRolesUsers, formRoles, formUsers, existingClients, form]);
 
     return (
         <Credenza
