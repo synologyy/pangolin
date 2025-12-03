@@ -554,7 +554,7 @@ export default function ProxyResourcesTable({
                 searchPlaceholder={t("resourcesSearch")}
                 searchColumn="name"
                 onAdd={() =>
-                    router.push(`/${orgId}/settings/resources/create`)
+                    router.push(`/${orgId}/settings/resources/proxy/create`)
                 }
                 addButtonText={t("resourceAdd")}
                 onRefresh={refreshData}

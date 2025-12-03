@@ -414,7 +414,7 @@ export default function MachineClientsTable({
                 searchPlaceholder={t("resourcesSearch")}
                 searchColumn="name"
                 onAdd={() =>
-                    router.push(`/${orgId}/settings/clients/create`)
+                    router.push(`/${orgId}/settings/clients/machine/create`)
                 }
                 addButtonText={t("createClient")}
                 onRefresh={refreshData}
