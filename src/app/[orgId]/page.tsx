@@ -1,17 +1,15 @@
-import { verifySession } from "@app/lib/auth/verifySession";
-import UserProvider from "@app/providers/UserProvider";
-import { cache } from "react";
-import MemberResourcesPortal from "../../components/MemberResourcesPortal";
-import { GetOrgOverviewResponse } from "@server/routers/org/getOrgOverview";
-import { internal } from "@app/lib/api";
-import { AxiosResponse } from "axios";
-import { authCookieHeader } from "@app/lib/api/cookies";
-import { redirect } from "next/navigation";
 import { Layout } from "@app/components/Layout";
-import { ListUserOrgsResponse } from "@server/routers/org";
+import MemberResourcesPortal from "@app/components/MemberResourcesPortal";
+import { internal } from "@app/lib/api";
+import { authCookieHeader } from "@app/lib/api/cookies";
+import { verifySession } from "@app/lib/auth/verifySession";
 import { pullEnv } from "@app/lib/pullEnv";
-import EnvProvider from "@app/providers/EnvProvider";
-import { orgLangingNavItems } from "@app/app/navigation";
+import UserProvider from "@app/providers/UserProvider";
+import { ListUserOrgsResponse } from "@server/routers/org";
+import { GetOrgOverviewResponse } from "@server/routers/org/getOrgOverview";
+import { AxiosResponse } from "axios";
+import { redirect } from "next/navigation";
+import { cache } from "react";
 
 type OrgPageProps = {
     params: Promise<{ orgId: string }>;

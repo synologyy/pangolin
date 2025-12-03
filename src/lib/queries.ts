@@ -1,10 +1,18 @@
-import { keepPreviousData, queryOptions } from "@tanstack/react-query";
-import { durationToMs } from "./durationToMs";
 import { build } from "@server/build";
-import { remote } from "./api";
-import type ResponseT from "@server/types/Response";
+import type { ListClientsResponse } from "@server/routers/client";
+import type { ListRolesResponse } from "@server/routers/role";
 import type { ListSitesResponse } from "@server/routers/site";
-import type { AxiosInstance, AxiosResponse } from "axios";
+import type {
+    ListSiteResourceRolesResponse,
+    ListSiteResourceUsersResponse
+} from "@server/routers/siteResource";
+import type { ListUsersResponse } from "@server/routers/user";
+import type ResponseT from "@server/types/Response";
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
+import z from "zod";
+import { remote } from "./api";
+import { durationToMs } from "./durationToMs";
 
 export type ProductUpdate = {
     link: string | null;
@@ -68,15 +76,89 @@ export const productUpdatesQueries = {
         })
 };
 
-export const siteQueries = {
-    listPerOrg: ({ orgId, api }: { orgId: string; api: AxiosInstance }) =>
+export const clientFilterSchema = z.object({
+    filter: z.enum(["machine", "user"]),
+    limit: z.int().prefault(1000).optional()
+});
+
+export const orgQueries = {
+    clients: ({
+        orgId,
+        filters
+    }: {
+        orgId: string;
+        filters: z.infer<typeof clientFilterSchema>;
+    }) =>
         queryOptions({
-            queryKey: ["SITE_PER_ORG", orgId] as const,
-            queryFn: async ({ signal }) => {
-                const res = await api.get<AxiosResponse<ListSitesResponse>>(
-                    `/org/${orgId}/sites`
-                );
+            queryKey: ["ORG", orgId, "CLIENTS", filters] as const,
+            queryFn: async ({ signal, meta }) => {
+                const sp = new URLSearchParams({
+                    ...filters,
+                    limit: (filters.limit ?? 1000).toString()
+                });
+
+                const res = await meta!.api.get<
+                    AxiosResponse<ListClientsResponse>
+                >(`/org/${orgId}/clients?${sp.toString()}`, { signal });
+
+                return res.data.data.clients;
+            }
+        }),
+    users: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "USERS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListUsersResponse>
+                >(`/org/${orgId}/users`, { signal });
+
+                return res.data.data.users;
+            }
+        }),
+    roles: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "ROLES"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListRolesResponse>
+                >(`/org/${orgId}/roles`, { signal });
+
+                return res.data.data.roles;
+            }
+        }),
+
+    sites: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "SITES"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSitesResponse>
+                >(`/org/${orgId}/sites`, { signal });
                 return res.data.data.sites;
+            }
+        })
+};
+
+export const resourceQueries = {
+    resourceUsers: ({ resourceId }: { resourceId: number }) =>
+        queryOptions({
+            queryKey: ["RESOURCES", resourceId, "USERS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSiteResourceUsersResponse>
+                >(`/site-resource/${resourceId}/users`, { signal });
+                return res.data.data.users;
+            }
+        }),
+    resourceRoles: ({ resourceId }: { resourceId: number }) =>
+        queryOptions({
+            queryKey: ["RESOURCES", resourceId, "ROLES"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSiteResourceRolesResponse>
+                >(`/site-resource/${resourceId}/roles`, { signal });
+
+                return res.data.data.roles;
             }
         })
 };

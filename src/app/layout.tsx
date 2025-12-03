@@ -95,16 +95,16 @@ export default async function RootLayout({
                         strategy="afterInteractive"
                     />
                 )}
-                <TanstackQueryProvider>
-                    <NextIntlClientProvider>
-                        <ThemeProvider
-                            attribute="class"
-                            defaultTheme="system"
-                            enableSystem
-                            disableTransitionOnChange
-                        >
-                            <ThemeDataProvider colors={loadBrandingColors()}>
-                                <EnvProvider env={pullEnv()}>
+                <NextIntlClientProvider>
+                    <ThemeProvider
+                        attribute="class"
+                        defaultTheme="system"
+                        enableSystem
+                        disableTransitionOnChange
+                    >
+                        <ThemeDataProvider colors={loadBrandingColors()}>
+                            <EnvProvider env={env}>
+                                <TanstackQueryProvider>
                                     <LicenseStatusProvider
                                         licenseStatus={licenseStatus}
                                     >
@@ -124,11 +124,11 @@ export default async function RootLayout({
                                         </SupportStatusProvider>
                                     </LicenseStatusProvider>
                                     <Toaster />
-                                </EnvProvider>
-                            </ThemeDataProvider>
-                        </ThemeProvider>
-                    </NextIntlClientProvider>
-                </TanstackQueryProvider>
+                                </TanstackQueryProvider>
+                            </EnvProvider>
+                        </ThemeDataProvider>
+                    </ThemeProvider>
+                </NextIntlClientProvider>
             </body>
         </html>
     );

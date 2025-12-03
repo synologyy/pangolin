@@ -45,6 +45,8 @@ import { ListClientsResponse } from "@server/routers/client/listClients";
 import { Tag, TagInput } from "@app/components/tags/tag-input";
 import { AxiosResponse } from "axios";
 import { UserType } from "@server/types/UserTypes";
+import { useQuery } from "@tanstack/react-query";
+import { orgQueries, resourceQueries } from "@app/lib/queries";
 
 type InternalResourceData = {
     id: number;
@@ -155,15 +157,43 @@ export default function EditInternalResourceDialog({
 
     type FormData = z.infer<typeof formSchema>;
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
-        []
+    const { data: rolesResponse = [] } = useQuery(orgQueries.roles({ orgId }));
+
+    const allRoles = rolesResponse
+        .map((role) => ({
+            id: role.roleId.toString(),
+            text: role.name
+        }))
+        .filter((role) => role.text !== "Admin");
+
+    const { data: usersResponse = [] } = useQuery(orgQueries.users({ orgId }));
+    const { data: existingClients = [] } = useQuery(
+        resourceQueries.resourceUsers({ resourceId: resource.id })
     );
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
-        []
+    const { data: clientsResponse = [] } = useQuery(
+        orgQueries.clients({
+            orgId,
+            filters: {
+                filter: "machine"
+            }
+        })
     );
-    const [allClients, setAllClients] = useState<
-        { id: string; text: string }[]
-    >([]);
+
+    const allUsers = usersResponse.map((user) => ({
+        id: user.id.toString(),
+        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+    }));
+
+    const allClients = clientsResponse
+        .filter((client) => !client.userId)
+        .map((client) => ({
+            id: client.clientId.toString(),
+            text: client.name
+        }));
+
+    const hasMachineClients =
+        allClients.length > 0 || existingClients.length > 0;
+
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
     >(null);
@@ -174,7 +204,6 @@ export default function EditInternalResourceDialog({
         number | null
     >(null);
     const [loadingRolesUsers, setLoadingRolesUsers] = useState(false);
-    const [hasMachineClients, setHasMachineClients] = useState(false);
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -194,136 +223,116 @@ export default function EditInternalResourceDialog({
 
     const mode = form.watch("mode");
 
-    const fetchRolesAndUsers = async () => {
-        setLoadingRolesUsers(true);
-        try {
-            const [
-                rolesResponse,
-                resourceRolesResponse,
-                usersResponse,
-                resourceUsersResponse,
-                clientsResponse
-            ] = await Promise.all([
-                api.get<AxiosResponse<ListRolesResponse>>(
-                    `/org/${orgId}/roles`
-                ),
-                api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
-                    `/site-resource/${resource.id}/roles`
-                ),
-                api.get<AxiosResponse<ListUsersResponse>>(
-                    `/org/${orgId}/users`
-                ),
-                api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
-                    `/site-resource/${resource.id}/users`
-                ),
-                api.get<AxiosResponse<ListClientsResponse>>(
-                    `/org/${orgId}/clients?filter=machine&limit=1000`
-                )
-            ]);
+    // const fetchRolesAndUsers = async () => {
+    //     setLoadingRolesUsers(true);
+    //     try {
+    //         const [
+    //             // rolesResponse,
+    //             resourceRolesResponse,
+    //             usersResponse,
+    //             resourceUsersResponse,
+    //             clientsResponse
+    //         ] = await Promise.all([
+    //             // api.get<AxiosResponse<ListRolesResponse>>(
+    //             //     `/org/${orgId}/roles`
+    //             // ),
+    //             api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
+    //                 `/site-resource/${resource.id}/roles`
+    //             ),
+    //             api.get<AxiosResponse<ListUsersResponse>>(
+    //                 `/org/${orgId}/users`
+    //             ),
+    //             api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
+    //                 `/site-resource/${resource.id}/users`
+    //             ),
+    //             api.get<AxiosResponse<ListClientsResponse>>(
+    //                 `/org/${orgId}/clients?filter=machine&limit=1000`
+    //             )
+    //         ]);
 
-            let resourceClientsResponse: AxiosResponse<
-                AxiosResponse<ListSiteResourceClientsResponse>
-            >;
-            try {
-                resourceClientsResponse = await api.get<
-                    AxiosResponse<ListSiteResourceClientsResponse>
-                >(`/site-resource/${resource.id}/clients`);
-            } catch {
-                resourceClientsResponse = {
-                    data: {
-                        data: {
-                            clients: []
-                        }
-                    },
-                    status: 200,
-                    statusText: "OK",
-                    headers: {} as any,
-                    config: {} as any
-                } as any;
-            }
+    //         let resourceClientsResponse: AxiosResponse<
+    //             AxiosResponse<ListSiteResourceClientsResponse>
+    //         >;
+    //         try {
+    //             resourceClientsResponse = await api.get<
+    //                 AxiosResponse<ListSiteResourceClientsResponse>
+    //             >(`/site-resource/${resource.id}/clients`);
+    //         } catch {
+    //             resourceClientsResponse = {
+    //                 data: {
+    //                     data: {
+    //                         clients: []
+    //                     }
+    //                 },
+    //                 status: 200,
+    //                 statusText: "OK",
+    //                 headers: {} as any,
+    //                 config: {} as any
+    //             } as any;
+    //         }
 
-            setAllRoles(
-                rolesResponse.data.data.roles
-                    .map((role) => ({
-                        id: role.roleId.toString(),
-                        text: role.name
-                    }))
-                    .filter((role) => role.text !== "Admin")
-            );
+    //         // setAllRoles(
+    //         //     rolesResponse.data.data.roles
+    //         //         .map((role) => ({
+    //         //             id: role.roleId.toString(),
+    //         //             text: role.name
+    //         //         }))
+    //         //         .filter((role) => role.text !== "Admin")
+    //         // );
 
-            form.setValue(
-                "roles",
-                resourceRolesResponse.data.data.roles
-                    .map((i) => ({
-                        id: i.roleId.toString(),
-                        text: i.name
-                    }))
-                    .filter((role) => role.text !== "Admin")
-            );
+    //         form.setValue(
+    //             "roles",
+    //             resourceRolesResponse.data.data.roles
+    //                 .map((i) => ({
+    //                     id: i.roleId.toString(),
+    //                     text: i.name
+    //                 }))
+    //                 .filter((role) => role.text !== "Admin")
+    //         );
 
-            setAllUsers(
-                usersResponse.data.data.users.map((user) => ({
-                    id: user.id.toString(),
-                    text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-                }))
-            );
+    //         form.setValue(
+    //             "users",
+    //             resourceUsersResponse.data.data.users.map((i) => ({
+    //                 id: i.userId.toString(),
+    //                 text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+    //             }))
+    //         );
 
-            form.setValue(
-                "users",
-                resourceUsersResponse.data.data.users.map((i) => ({
-                    id: i.userId.toString(),
-                    text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
-                }))
-            );
+    //         const machineClients = clientsResponse.data.data.clients
+    //             .filter((client) => !client.userId)
+    //             .map((client) => ({
+    //                 id: client.clientId.toString(),
+    //                 text: client.name
+    //             }));
 
-            const machineClients = clientsResponse.data.data.clients
-                .filter((client) => !client.userId)
-                .map((client) => ({
-                    id: client.clientId.toString(),
-                    text: client.name
-                }));
+    //         setAllClients(machineClients);
 
-            setAllClients(machineClients);
+    //         const existingClients =
+    //             resourceClientsResponse.data.data.clients.map(
+    //                 (c: { clientId: number; name: string }) => ({
+    //                     id: c.clientId.toString(),
+    //                     text: c.name
+    //                 })
+    //             );
 
-            const existingClients =
-                resourceClientsResponse.data.data.clients.map(
-                    (c: { clientId: number; name: string }) => ({
-                        id: c.clientId.toString(),
-                        text: c.name
-                    })
-                );
+    //         form.setValue("clients", existingClients);
 
-            form.setValue("clients", existingClients);
+    //         // Show clients tag input if there are machine clients OR existing client access
+    //         setHasMachineClients(
+    //             machineClients.length > 0 || existingClients.length > 0
+    //         );
+    //     } catch (error) {
+    //         console.error("Error fetching roles, users, and clients:", error);
+    //     } finally {
+    //         setLoadingRolesUsers(false);
+    //     }
+    // };
 
-            // Show clients tag input if there are machine clients OR existing client access
-            setHasMachineClients(
-                machineClients.length > 0 || existingClients.length > 0
-            );
-        } catch (error) {
-            console.error("Error fetching roles, users, and clients:", error);
-        } finally {
-            setLoadingRolesUsers(false);
-        }
-    };
-
-    useEffect(() => {
-        if (open) {
-            form.reset({
-                name: resource.name,
-                mode: resource.mode || "host",
-                // protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
-                // proxyPort: resource.proxyPort ?? undefined,
-                destination: resource.destination || "",
-                // destinationPort: resource.destinationPort ?? undefined,
-                alias: resource.alias ?? null,
-                roles: [],
-                users: [],
-                clients: []
-            });
-            fetchRolesAndUsers();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, resource]);
+    // useEffect(() => {
+    //     if (open) {
+    //         fetchRolesAndUsers();
+    //     }
+    // }, [open, resource]);
 
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
@@ -391,7 +400,27 @@ export default function EditInternalResourceDialog({
     };
 
     return (
-        <Credenza open={open} onOpenChange={setOpen}>
+        <Credenza
+            open={open}
+            onOpenChange={(open) => {
+                if (!open) {
+                    // reset only on close
+                    form.reset({
+                        name: resource.name,
+                        mode: resource.mode || "host",
+                        // protocol: (resource.protocol as "tcp" | "udp" | null | undefined) ?? undefined,
+                        // proxyPort: resource.proxyPort ?? undefined,
+                        destination: resource.destination || "",
+                        // destinationPort: resource.destinationPort ?? undefined,
+                        alias: resource.alias ?? null,
+                        roles: [],
+                        users: [],
+                        clients: []
+                    });
+                }
+                setOpen(open);
+            }}
+        >
             <CredenzaContent className="max-w-2xl">
                 <CredenzaHeader>
                     <CredenzaTitle>

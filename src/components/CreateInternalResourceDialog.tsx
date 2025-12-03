@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Button } from "@app/components/ui/button";
-import { Input } from "@app/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from "@app/components/ui/select";
+    Credenza,
+    CredenzaBody,
+    CredenzaContent,
+    CredenzaDescription,
+    CredenzaFooter,
+    CredenzaHeader,
+    CredenzaTitle
+} from "@app/components/Credenza";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
+import { Button } from "@app/components/ui/button";
 import {
     Command,
     CommandEmpty,
@@ -19,15 +20,6 @@ import {
     CommandList
 } from "@app/components/ui/command";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-} from "@app/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
     Form,
     FormControl,
     FormDescription,
@@ -36,29 +28,36 @@ import {
     FormLabel,
     FormMessage
 } from "@app/components/ui/form";
+import { Input } from "@app/components/ui/input";
 import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaDescription,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle
-} from "@app/components/Credenza";
-import { toast } from "@app/hooks/useToast";
-import { useTranslations } from "next-intl";
-import { createApiClient, formatAxiosError } from "@app/lib/api";
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from "@app/components/ui/popover";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "@app/components/ui/select";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { ListSitesResponse } from "@server/routers/site";
-import { ListRolesResponse } from "@server/routers/role";
-import { ListUsersResponse } from "@server/routers/user";
-import { ListClientsResponse } from "@server/routers/client/listClients";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { cn } from "@app/lib/cn";
-import { Tag, TagInput } from "@app/components/tags/tag-input";
-import { Separator } from "@app/components/ui/separator";
-import { AxiosResponse } from "axios";
+import { orgQueries } from "@app/lib/queries";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ListClientsResponse } from "@server/routers/client/listClients";
+import { ListSitesResponse } from "@server/routers/site";
+import { ListUsersResponse } from "@server/routers/user";
 import { UserType } from "@server/types/UserTypes";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 type Site = ListSitesResponse["sites"][0];
 
@@ -167,15 +166,38 @@ export default function CreateInternalResourceDialog({
 
     type FormData = z.infer<typeof formSchema>;
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
-        []
+    const { data: rolesResponse = [] } = useQuery(orgQueries.roles({ orgId }));
+    const { data: usersResponse = [] } = useQuery(orgQueries.users({ orgId }));
+    const { data: clientsResponse = [] } = useQuery(
+        orgQueries.clients({
+            orgId,
+            filters: {
+                filter: "machine"
+            }
+        })
     );
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
-        []
-    );
-    const [allClients, setAllClients] = useState<
-        { id: string; text: string }[]
-    >([]);
+
+    const allRoles = rolesResponse
+        .map((role) => ({
+            id: role.roleId.toString(),
+            text: role.name
+        }))
+        .filter((role) => role.text !== "Admin");
+
+    const allUsers = usersResponse.map((user) => ({
+        id: user.id.toString(),
+        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+    }));
+
+    const allClients = clientsResponse
+        .filter((client) => !client.userId)
+        .map((client) => ({
+            id: client.clientId.toString(),
+            text: client.name
+        }));
+
+    const hasMachineClients = allClients.length > 0;
+
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
     >(null);
@@ -185,7 +207,6 @@ export default function CreateInternalResourceDialog({
     const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<
         number | null
     >(null);
-    const [hasMachineClients, setHasMachineClients] = useState(false);
 
     const availableSites = sites.filter(
         (site) => site.type === "newt" && site.subnet
@@ -227,60 +248,6 @@ export default function CreateInternalResourceDialog({
             });
         }
     }, [open]);
-
-    useEffect(() => {
-        const fetchRolesUsersAndClients = async () => {
-            try {
-                const [rolesResponse, usersResponse, clientsResponse] =
-                    await Promise.all([
-                        api.get<AxiosResponse<ListRolesResponse>>(
-                            `/org/${orgId}/roles`
-                        ),
-                        api.get<AxiosResponse<ListUsersResponse>>(
-                            `/org/${orgId}/users`
-                        ),
-                        api.get<AxiosResponse<ListClientsResponse>>(
-                            `/org/${orgId}/clients?filter=machine&limit=1000`
-                        )
-                    ]);
-
-                setAllRoles(
-                    rolesResponse.data.data.roles
-                        .map((role) => ({
-                            id: role.roleId.toString(),
-                            text: role.name
-                        }))
-                        .filter((role) => role.text !== "Admin")
-                );
-
-                setAllUsers(
-                    usersResponse.data.data.users.map((user) => ({
-                        id: user.id.toString(),
-                        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-                    }))
-                );
-
-                const machineClients = clientsResponse.data.data.clients
-                    .filter((client) => !client.userId)
-                    .map((client) => ({
-                        id: client.clientId.toString(),
-                        text: client.name
-                    }));
-
-                setAllClients(machineClients);
-                setHasMachineClients(machineClients.length > 0);
-            } catch (error) {
-                console.error(
-                    "Error fetching roles, users, and clients:",
-                    error
-                );
-            }
-        };
-
-        if (open) {
-            fetchRolesUsersAndClients();
-        }
-    }, [open, orgId]);
 
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);

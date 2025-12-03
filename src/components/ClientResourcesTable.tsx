@@ -55,7 +55,7 @@ import CreateInternalResourceDialog from "@app/components/CreateInternalResource
 import EditInternalResourceDialog from "@app/components/EditInternalResourceDialog";
 import { useStoredColumnVisibility } from "@app/hooks/useStoredColumnVisibility";
 import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
-import { siteQueries } from "@app/lib/queries";
+import { orgQueries, siteQueries } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
 export type TargetHealth = {
@@ -135,9 +135,7 @@ export default function ClientResourcesTable({
         useState<InternalResourceRow | null>();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-    const { data: sites = [] } = useQuery(
-        siteQueries.listPerOrg({ orgId, api })
-    );
+    const { data: sites = [] } = useQuery(orgQueries.sites({ orgId, api }));
 
     const [internalSorting, setInternalSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
