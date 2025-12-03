@@ -25,7 +25,6 @@ export * from "./integration";
 export * from "./verifyUserHasAction";
 export * from "./verifyApiKeyAccess";
 export * from "./verifyDomainAccess";
-export * from "./verifyClientsEnabled";
 export * from "./verifyUserIsOrgOwner";
 export * from "./verifySiteResourceAccess";
 export * from "./logActionAudit";

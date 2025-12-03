@@ -38,9 +38,7 @@ export const orgLangingNavItems: SidebarNavItem[] = [
     }
 ];
 
-export const orgNavSections = (
-    enableClients: boolean = true
-): SidebarNavSection[] => [
+export const orgNavSections = (): SidebarNavSection[] => [
     {
         heading: "General",
         items: [
@@ -58,42 +56,30 @@ export const orgNavSections = (
                         href: "/{orgId}/settings/resources/proxy",
                         icon: <Globe className="size-4 flex-none" />
                     },
-                    ...(enableClients
-                        ? [
-                              {
-                                  title: "sidebarClientResources",
-                                  href: "/{orgId}/settings/resources/client",
-                                  icon: (
-                                      <GlobeLock className="size-4 flex-none" />
-                                  )
-                              }
-                          ]
-                        : [])
+                    {
+                        title: "sidebarClientResources",
+                        href: "/{orgId}/settings/resources/client",
+                        icon: <GlobeLock className="size-4 flex-none" />
+                    }
                 ]
             },
-            ...(enableClients
-                ? [
-                      {
-                          title: "sidebarClients",
-                          icon: <MonitorUp className="size-4 flex-none" />,
-                          isBeta: true,
-                          items: [
-                              {
-                                  href: "/{orgId}/settings/clients/user",
-                                  title: "sidebarUserDevices",
-                                  icon: (
-                                      <Laptop className="size-4 flex-none" />
-                                  )
-                              },
-                              {
-                                  href: "/{orgId}/settings/clients/machine",
-                                  title: "sidebarMachineClients",
-                                  icon: <Server className="size-4 flex-none" />
-                              }
-                          ]
-                      }
-                  ]
-                : []),
+            {
+                title: "sidebarClients",
+                icon: <MonitorUp className="size-4 flex-none" />,
+                isBeta: true,
+                items: [
+                    {
+                        href: "/{orgId}/settings/clients/user",
+                        title: "sidebarUserDevices",
+                        icon: <Laptop className="size-4 flex-none" />
+                    },
+                    {
+                        href: "/{orgId}/settings/clients/machine",
+                        title: "sidebarMachineClients",
+                        icon: <Server className="size-4 flex-none" />
+                    }
+                ]
+            },
             ...(build == "saas"
                 ? [
                       {

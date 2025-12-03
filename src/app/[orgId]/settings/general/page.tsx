@@ -342,29 +342,25 @@ export default function GeneralPage() {
                                         </FormItem>
                                     )}
                                 />
-                                {env.flags.enableClients && (
-                                    <FormField
-                                        control={form.control}
-                                        name="subnet"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("subnet")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        disabled={true}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                                <FormDescription>
-                                                    {t("subnetDescription")}
-                                                </FormDescription>
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
+                                <FormField
+                                    control={form.control}
+                                    name="subnet"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t("subnet")}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    disabled={true}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                            <FormDescription>
+                                                {t("subnetDescription")}
+                                            </FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
                             </SettingsSectionForm>
                         </SettingsSectionBody>
                     </SettingsSection>
@@ -600,7 +596,7 @@ export default function GeneralPage() {
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
                                 <SettingsSectionForm>
-                                <SecurityFeaturesAlert />
+                                    <SecurityFeaturesAlert />
                                     <FormField
                                         control={form.control}
                                         name="requireTwoFactor"

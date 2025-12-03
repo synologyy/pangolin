@@ -296,31 +296,27 @@ export default function StepperForm() {
                                         )}
                                     />
 
-                                    {env.flags.enableClients && (
-                                        <FormField
-                                            control={orgForm.control}
-                                            name="subnet"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Subnet
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            type="text"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        The subnet for this
-                                                        organization's internal
-                                                        network.
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
+                                    <FormField
+                                        control={orgForm.control}
+                                        name="subnet"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Subnet</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    The subnet for this
+                                                    organization's internal
+                                                    network.
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     {orgIdTaken && !orgCreated ? (
                                         <Alert variant="destructive">

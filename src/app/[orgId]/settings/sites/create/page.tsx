@@ -708,51 +708,50 @@ WantedBy=default.target`
                                                     </FormItem>
                                                 )}
                                             />
-                                            {env.flags.enableClients &&
-                                                form.watch("method") ===
-                                                    "newt" && (
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="clientAddress"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "siteAddress"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        autoComplete="off"
-                                                                        value={
-                                                                            clientAddress
-                                                                        }
-                                                                        onChange={(
+                                            {form.watch("method") ===
+                                                "newt" && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="clientAddress"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "siteAddress"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    autoComplete="off"
+                                                                    value={
+                                                                        clientAddress
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) => {
+                                                                        setClientAddress(
                                                                             e
-                                                                        ) => {
-                                                                            setClientAddress(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            );
-                                                                            field.onChange(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            );
-                                                                        }}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                                <FormDescription>
-                                                                    {t(
-                                                                        "siteAddressDescription"
-                                                                    )}
-                                                                </FormDescription>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                )}
+                                                                                .target
+                                                                                .value
+                                                                        );
+                                                                        field.onChange(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                        );
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                            <FormDescription>
+                                                                {t(
+                                                                    "siteAddressDescription"
+                                                                )}
+                                                            </FormDescription>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>

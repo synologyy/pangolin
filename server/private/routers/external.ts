@@ -31,7 +31,6 @@ import {
     verifyUserIsServerAdmin,
     verifySiteAccess,
     verifyClientAccess,
-    verifyClientsEnabled,
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 import {
@@ -410,7 +409,6 @@ authenticated.get(
 
 authenticated.post(
     "/re-key/:clientId/regenerate-client-secret",
-    verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.reGenerateSecret),
     reKey.reGenerateClientSecret

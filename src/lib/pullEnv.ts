@@ -55,8 +55,6 @@ export function pullEnv(): Env {
                 process.env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES === "true"
                     ? true
                     : false,
-            enableClients:
-                process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
             hideSupporterKey:
                 process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
             usePangolinDns:

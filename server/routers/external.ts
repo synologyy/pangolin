@@ -37,7 +37,6 @@ import {
     verifyClientAccess,
     verifyApiKeyAccess,
     verifyDomainAccess,
-    verifyClientsEnabled,
     verifyUserHasAction,
     verifyUserIsOrgOwner,
     verifySiteResourceAccess,
@@ -131,7 +130,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
     client.pickClientDefaults
@@ -139,7 +137,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/clients",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listClients),
     client.listClients
@@ -147,7 +144,6 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
@@ -155,7 +151,6 @@ authenticated.get(
 
 authenticated.put(
     "/org/:orgId/client",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
@@ -165,7 +160,6 @@ authenticated.put(
 // TODO: Separate into a deleteUserClient (for user clients) and deleteClient (for machine clients)
 authenticated.delete(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
@@ -174,7 +168,6 @@ authenticated.delete(
 
 authenticated.post(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess, // this will check if the user has access to the client
     verifyUserHasAction(ActionsEnum.updateClient), // this will check if the user has permission to update the client
     logActionAudit(ActionsEnum.updateClient),

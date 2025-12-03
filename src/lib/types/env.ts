@@ -30,7 +30,6 @@ export type Env = {
         allowRawResources: boolean;
         disableLocalSites: boolean;
         disableBasicWireguardSites: boolean;
-        enableClients: boolean;
         hideSupporterKey: boolean;
         usePangolinDns: boolean;
     };

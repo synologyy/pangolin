@@ -306,42 +306,32 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 );
             }
         },
-        ...(env.flags.enableClients
-            ? [
-                  {
-                      accessorKey: "address",
-                      header: ({
-                          column
-                      }: {
-                          column: Column<SiteRow, unknown>;
-                      }) => {
-                          return (
-                              <Button
-                                  variant="ghost"
-                                  onClick={() =>
-                                      column.toggleSorting(
-                                          column.getIsSorted() === "asc"
-                                      )
-                                  }
-                              >
-                                  Address
-                                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                              </Button>
-                          );
-                      },
-                      cell: ({ row }: { row: any }) => {
-                          const originalRow = row.original;
-                          return originalRow.address ? (
-                              <div className="flex items-center space-x-2">
-                                  <span>{originalRow.address}</span>
-                              </div>
-                          ) : (
-                              "-"
-                          );
-                      }
-                  }
-              ]
-            : []),
+        {
+            accessorKey: "address",
+            header: ({ column }: { column: Column<SiteRow, unknown> }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        Address
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }: { row: any }) => {
+                const originalRow = row.original;
+                return originalRow.address ? (
+                    <div className="flex items-center space-x-2">
+                        <span>{originalRow.address}</span>
+                    </div>
+                ) : (
+                    "-"
+                );
+            }
+        },
         {
             id: "actions",
             enableHiding: false,
@@ -403,9 +393,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                     }}
                     dialog={
                         <div className="">
-                            <p>
-                                {t("siteQuestionRemove")}
-                            </p>
+                            <p>{t("siteQuestionRemove")}</p>
                             <p>{t("siteMessageRemove")}</p>
                         </div>
                     }

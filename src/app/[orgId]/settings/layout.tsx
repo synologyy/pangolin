@@ -82,7 +82,7 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
             <Layout
                 orgId={params.orgId}
                 orgs={orgs}
-                navItems={orgNavSections(env.flags.enableClients)}
+                navItems={orgNavSections()}
             >
                 {children}
             </Layout>

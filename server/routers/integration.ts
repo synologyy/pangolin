@@ -24,7 +24,6 @@ import {
     verifyApiKeyAccessTokenAccess,
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
-    verifyClientsEnabled,
     verifyApiKeySiteResourceAccess,
     verifyApiKeySetResourceClients
 } from "@server/middlewares";
@@ -796,7 +795,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createClient),
     client.pickClientDefaults
@@ -804,7 +802,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/clients",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.listClients),
     client.listClients
@@ -812,7 +809,6 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.getClient),
     client.getClient
@@ -820,7 +816,6 @@ authenticated.get(
 
 authenticated.put(
     "/org/:orgId/client",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
@@ -839,7 +834,6 @@ authenticated.put(
 
 authenticated.delete(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
@@ -848,7 +842,6 @@ authenticated.delete(
 
 authenticated.post(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.updateClient),
     logActionAudit(ActionsEnum.updateClient),
