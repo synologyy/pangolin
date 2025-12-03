@@ -28,7 +28,7 @@ import {
     TableRow
 } from "@app/components/ui/table";
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import { RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import moment from "moment";
 import { useUserContext } from "@app/hooks/useUserContext";
 
@@ -145,7 +145,7 @@ export default function ViewDevicesDialog({
                     <CredenzaBody>
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
-                                <RefreshCw className="h-6 w-6 animate-spin" />
+                                <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
                         ) : devices.length === 0 ? (
                             <div className="text-center py-8 text-muted-foreground">
