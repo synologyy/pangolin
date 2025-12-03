@@ -123,7 +123,7 @@ function CollapsibleNavItem({
                             )}
                         <ChevronDown
                             className={cn(
-                                "h-4 w-4 transition-transform duration-200",
+                                "h-4 w-4 transition-transform duration-300 ease-in-out",
                                 "group-data-[state=open]/collapsible:rotate-180"
                             )}
                         />
