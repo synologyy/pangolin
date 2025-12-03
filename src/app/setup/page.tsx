@@ -313,9 +313,9 @@ export default function StepperForm() {
                                                     </FormControl>
                                                     <FormMessage />
                                                     <FormDescription>
-                                                        Network subnet for this
-                                                        organization. A default
-                                                        value has been provided.
+                                                        The subnet for this
+                                                        organization's internal
+                                                        network.
                                                     </FormDescription>
                                                 </FormItem>
                                             )}
