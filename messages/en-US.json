@@ -1445,7 +1445,7 @@
     "errorCreatingClient": "Error creating client",
     "clientDefaultsNotFound": "Client defaults not found",
     "createClient": "Create Client",
-    "createClientDescription": "Create a new client for connecting to your sites",
+    "createClientDescription": "Create a new client to access private resources",
     "seeAllClients": "See All Clients",
     "clientInformation": "Client Information",
     "clientNamePlaceholder": "Client name",
