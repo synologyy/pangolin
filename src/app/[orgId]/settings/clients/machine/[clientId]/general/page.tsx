@@ -1,40 +1,37 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useClientContext } from "@app/hooks/useClientContext";
-import { useForm } from "react-hook-form";
-import { toast } from "@app/hooks/useToast";
-import { useRouter } from "next/navigation";
 import {
     SettingsContainer,
     SettingsSection,
-    SettingsSectionHeader,
-    SettingsSectionTitle,
-    SettingsSectionDescription,
     SettingsSectionBody,
+    SettingsSectionDescription,
+    SettingsSectionFooter,
     SettingsSectionForm,
-    SettingsSectionFooter
+    SettingsSectionHeader,
+    SettingsSectionTitle
 } from "@app/components/Settings";
-import { formatAxiosError } from "@app/lib/api";
-import { createApiClient } from "@app/lib/api";
+import { useClientContext } from "@app/hooks/useClientContext";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useEffect, useState } from "react";
-import { Tag, TagInput } from "@app/components/tags/tag-input";
-import { AxiosResponse } from "axios";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ListSitesResponse } from "@server/routers/site";
+import { AxiosResponse } from "axios";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required")

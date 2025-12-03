@@ -369,10 +369,10 @@ export default function MachineClientsTable({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             <Link
-                                href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
+                                href={`/${clientRow.orgId}/settings/clients/machine/${clientRow.id}`}
                             >
                                 <Button variant={"outline"}>
-                                    Edit
+                                    {t("edit")}
                                     <ArrowRight className="ml-2 w-4 h-4" />
                                 </Button>
                             </Link>
