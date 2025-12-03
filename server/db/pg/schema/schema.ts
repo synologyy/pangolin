@@ -175,7 +175,8 @@ export const targetHealthCheck = pgTable("targetHealthCheck", {
     hcFollowRedirects: boolean("hcFollowRedirects").default(true),
     hcMethod: varchar("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
-    hcHealth: text("hcHealth").default("unknown") // "unknown", "healthy", "unhealthy"
+    hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
+    hcTlsServerName: text("hcTlsServerName"),
 });
 
 export const exitNodes = pgTable("exitNodes", {
