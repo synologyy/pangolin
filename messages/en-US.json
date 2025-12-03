@@ -516,6 +516,8 @@
     "targetCreatedDescription": "Target has been created successfully",
     "targetErrorCreate": "Failed to create target",
     "targetErrorCreateDescription": "An error occurred while creating the target",
+    "tlsServerName": "TLS Server Name",
+    "tlsServerNameDescription": "The TLS server name to use for SNI",
     "save": "Save",
     "proxyAdditional": "Additional Proxy Settings",
     "proxyAdditionalDescription": "Configure how your resource handles proxy settings",
