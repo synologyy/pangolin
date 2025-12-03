@@ -199,7 +199,7 @@ export default function Page() {
     const [wgConfig, setWgConfig] = useState("");
 
     const [createLoading, setCreateLoading] = useState(false);
-    const [acceptClients, setAcceptClients] = useState(false);
+    const [acceptClients, setAcceptClients] = useState(true);
     const [newtVersion, setNewtVersion] = useState("latest");
 
     const [siteDefaults, setSiteDefaults] =
@@ -238,11 +238,11 @@ PersistentKeepalive = 5`;
         secret: string,
         endpoint: string,
         version: string,
-        acceptClients: boolean = false
+        acceptClients: boolean = true
     ) => {
-        const acceptClientsFlag = acceptClients ? " --accept-clients" : "";
-        const acceptClientsEnv = acceptClients
-            ? "\n      - ACCEPT_CLIENTS=true"
+        const acceptClientsFlag = !acceptClients ? " --disable-clients" : "";
+        const acceptClientsEnv = !acceptClients
+            ? "\n      - DISABLE_CLIENTS=true"
             : "";
 
         const commands = {
@@ -296,7 +296,7 @@ ContainerName=newt
 Image=docker.io/fosrl/newt
 Environment=PANGOLIN_ENDPOINT=${endpoint}
 Environment=NEWT_ID=${id}
-Environment=NEWT_SECRET=${secret}${acceptClients ? "\nEnvironment=ACCEPT_CLIENTS=true" : ""}
+Environment=NEWT_SECRET=${secret}${!acceptClients ? "\nEnvironment=DISABLE_CLIENTS=true" : ""}
 # Secret=newt-secret,type=env,target=NEWT_SECRET
 
 [Service]
@@ -409,7 +409,7 @@ WantedBy=default.target`
             copied: false,
             method: "newt",
             clientAddress: "",
-            acceptClients: false,
+            acceptClients: true,
             exitNodeId: undefined
         }
     });
@@ -996,7 +996,7 @@ WantedBy=default.target`
                                                 </div>
                                                 <p
                                                     id="acceptClients-desc"
-                                                    className="text-sm text-muted-foreground mb-4"
+                                                    className="text-sm text-muted-foreground"
                                                 >
                                                     {t(
                                                         "siteAcceptClientConnectionsDescription"
