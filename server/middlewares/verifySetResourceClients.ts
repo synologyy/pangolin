@@ -4,6 +4,7 @@ import { clients } from "@server/db";
 import { and, eq, inArray } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 export async function verifySetResourceClients(
     req: Request,
@@ -11,9 +12,12 @@ export async function verifySetResourceClients(
     next: NextFunction
 ) {
     const userId = req.user!.userId;
-    const singleClientId = req.params.clientId || req.body.clientId || req.query.clientId;
+    const singleClientId =
+        req.params.clientId || req.body.clientId || req.query.clientId;
     const { clientIds } = req.body;
-    const allClientIds = clientIds || (singleClientId ? [parseInt(singleClientId as string)] : []);
+    const allClientIds =
+        clientIds ||
+        (singleClientId ? [parseInt(singleClientId as string)] : []);
 
     if (!userId) {
         return next(
@@ -28,6 +32,24 @@ export async function verifySetResourceClients(
                 "User does not have access to this organization"
             )
         );
+    }
+
+    if (req.orgPolicyAllowed === undefined && req.userOrg.orgId) {
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId: req.userOrg.orgId,
+            userId,
+            session: req.session
+        });
+        req.orgPolicyAllowed = policyCheck.allowed;
+        if (!policyCheck.allowed || policyCheck.error) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "Failed organization access policy check: " +
+                        (policyCheck.error || "Unknown error")
+                )
+            );
+        }
     }
 
     if (allClientIds.length === 0) {
@@ -66,4 +88,3 @@ export async function verifySetResourceClients(
         );
     }
 }
-

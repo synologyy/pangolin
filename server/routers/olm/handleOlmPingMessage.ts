@@ -5,7 +5,7 @@ import { clients, Olm } from "@server/db";
 import { eq, lt, isNull, and, or } from "drizzle-orm";
 import logger from "@server/logger";
 import { validateSessionToken } from "@server/auth/sessions/app";
-import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { sendTerminateClient } from "../client/terminate";
 
 // Track if the offline checker interval is running

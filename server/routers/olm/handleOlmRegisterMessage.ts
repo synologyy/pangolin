@@ -32,7 +32,7 @@ import {
 } from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
 import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
-import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { validateSessionToken } from "@server/auth/sessions/app";
 import config from "@server/lib/config";
 

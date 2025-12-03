@@ -79,6 +79,7 @@ declare global {
             userOrgIds?: string[];
             remoteExitNode?: RemoteExitNode;
             siteResource?: SiteResource;
+            orgPolicyAllowed?: boolean;
         }
     }
 }

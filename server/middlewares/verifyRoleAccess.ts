@@ -5,6 +5,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import logger from "@server/logger";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 export async function verifyRoleAccess(
     req: Request,
@@ -105,6 +106,33 @@ export async function verifyRoleAccess(
             req.userOrgRoleId = userOrg[0].roleId;
         }
 
+        if (!req.userOrg) {
+            return next(
+                createHttpError(
+                    HttpCode.FORBIDDEN,
+                    "User does not have access to this organization"
+                )
+            );
+        }
+
+        if (req.orgPolicyAllowed === undefined && req.userOrg.orgId) {
+            const policyCheck = await checkOrgAccessPolicy({
+                orgId: req.userOrg.orgId,
+                userId,
+                session: req.session
+            });
+            req.orgPolicyAllowed = policyCheck.allowed;
+            if (!policyCheck.allowed || policyCheck.error) {
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Failed organization access policy check: " +
+                            (policyCheck.error || "Unknown error")
+                    )
+                );
+            }
+        }
+
         return next();
     } catch (error) {
         logger.error("Error verifying role access:", error);
@@ -116,4 +144,3 @@ export async function verifyRoleAccess(
         );
     }
 }
-
