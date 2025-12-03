@@ -1093,6 +1093,8 @@
     "actionListSiteResources": "List Site Resources",
     "actionUpdateSiteResource": "Update Site Resource",
     "actionListInvitations": "List Invitations",
+    "actionExportLogs": "Export Logs",
+    "actionViewLogs": "View Logs",
     "noneSelected": "None selected",
     "orgNotFound2": "No organizations found.",
     "searchProgress": "Search...",

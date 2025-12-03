@@ -17,3 +17,4 @@ export * from "./verifyIdpAccess";
 export * from "./verifyLoginPageAccess";
 export * from "./logActionAudit";
 export * from "./verifySubscription";
+export * from "./verifyValidLicense";

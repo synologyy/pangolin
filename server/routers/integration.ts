@@ -10,6 +10,7 @@ import * as client from "./client";
 import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
+import * as logs from "./auditLogs";
 import * as siteResource from "./siteResource";
 import {
     verifyApiKey,
@@ -854,4 +855,19 @@ authenticated.put(
     verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
     logActionAudit(ActionsEnum.applyBlueprint),
     blueprints.applyJSONBlueprint
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request/export",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportRequestAuditLogs
 );

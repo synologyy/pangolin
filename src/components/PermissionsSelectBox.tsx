@@ -103,6 +103,11 @@ function getActionsCategories(root: boolean) {
             [t('actionUpdateClient')]: "updateClient",
             [t('actionListClients')]: "listClients",
             [t('actionGetClient')]: "getClient"
+        },
+
+        "Logs": {
+            [t('actionExportLogs')]: "exportLogs",
+            [t('actionViewLogs')]: "viewLogs",
         }
     };
 
