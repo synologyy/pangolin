@@ -36,13 +36,15 @@ export async function createSession(
     const sessionId = encodeHexLowerCase(
         sha256(new TextEncoder().encode(token))
     );
-    const session: Session = {
-        sessionId: sessionId,
-        userId,
-        expiresAt: new Date(Date.now() + SESSION_COOKIE_EXPIRES).getTime(),
-        issuedAt: new Date().getTime()
-    };
-    await db.insert(sessions).values(session);
+    const [session] = await db
+        .insert(sessions)
+        .values({
+            sessionId: sessionId,
+            userId,
+            expiresAt: new Date(Date.now() + SESSION_COOKIE_EXPIRES).getTime(),
+            issuedAt: new Date().getTime()
+        })
+        .returning();
     return session;
 }
 

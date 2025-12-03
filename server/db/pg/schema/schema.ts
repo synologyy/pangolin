@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { alias } from "yargs";
 
 export const domains = pgTable("domains", {
     domainId: varchar("domainId").primaryKey(),
@@ -40,6 +41,7 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
+    utilitySubnet: varchar("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
@@ -209,7 +211,8 @@ export const siteResources = pgTable("siteResources", {
     destinationPort: integer("destinationPort"), // only for port mode
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
-    alias: varchar("alias")
+    alias: varchar("alias"),
+    aliasAddress: varchar("aliasAddress")
 });
 
 export const clientSiteResources = pgTable("clientSiteResources", {
@@ -284,7 +287,8 @@ export const sessions = pgTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
-    issuedAt: bigint("issuedAt", { mode: "number" })
+    issuedAt: bigint("issuedAt", { mode: "number" }),
+    deviceAuthUsed: boolean("deviceAuthUsed").notNull().default(false)
 });
 
 export const newtSessions = pgTable("newtSession", {
@@ -661,7 +665,8 @@ export const clientSitesAssociationsCache = pgTable(
             .notNull(),
         siteId: integer("siteId").notNull(),
         isRelayed: boolean("isRelayed").notNull().default(false),
-        endpoint: varchar("endpoint")
+        endpoint: varchar("endpoint"),
+        publicKey: varchar("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
     }
 );
 

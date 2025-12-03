@@ -1,4 +1,10 @@
-import { clientSitesAssociationsCache, db, SiteResource, Transaction } from "@server/db";
+import {
+    clientSitesAssociationsCache,
+    db,
+    SiteResource,
+    siteResources,
+    Transaction
+} from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
@@ -281,6 +287,56 @@ export async function getNextAvailableClientSubnet(
     return subnet;
 }
 
+export async function getNextAvailableAliasAddress(
+    orgId: string
+): Promise<string> {
+    const [org] = await db.select().from(orgs).where(eq(orgs.orgId, orgId));
+
+    if (!org) {
+        throw new Error(`Organization with ID ${orgId} not found`);
+    }
+
+    if (!org.subnet) {
+        throw new Error(`Organization with ID ${orgId} has no subnet defined`);
+    }
+
+    if (!org.utilitySubnet) {
+        throw new Error(
+            `Organization with ID ${orgId} has no utility subnet defined`
+        );
+    }
+
+    const existingAddresses = await db
+        .select({
+            aliasAddress: siteResources.aliasAddress
+        })
+        .from(siteResources)
+        .where(
+            and(
+                isNotNull(siteResources.aliasAddress),
+                eq(siteResources.orgId, orgId)
+            )
+        );
+
+    const addresses = [
+        ...existingAddresses.map(
+            (site) => `${site.aliasAddress?.split("/")[0]}/32`
+        ),
+        // reserve a /29 for the dns server and other stuff
+        `${org.utilitySubnet.split("/")[0]}/29`
+    ].filter((address) => address !== null) as string[];
+
+    let subnet = findNextAvailableCidr(addresses, 32, org.utilitySubnet);
+    if (!subnet) {
+        throw new Error("No available subnets remaining in space");
+    }
+
+    // remove the cidr
+    subnet = subnet.split("/")[0];
+
+    return subnet;
+}
+
 export async function getNextAvailableOrgSubnet(): Promise<string> {
     const existingAddresses = await db
         .select({
@@ -327,9 +383,22 @@ export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[
     return Array.from(new Set(remoteSubnets));
 }
 
+export type Alias = { alias: string | null; aliasAddress: string | null };
+
+export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
+    let aliasConfigs = allSiteResources
+        .filter((sr) => sr.alias && sr.aliasAddress && sr.mode == "host")
+        .map((sr) => ({
+            alias: sr.alias,
+            aliasAddress: sr.aliasAddress
+        }));
+    return aliasConfigs;
+}
+
 export type SubnetProxyTarget = {
-    sourcePrefix: string;
-    destPrefix: string;
+    sourcePrefix: string; // must be a cidr
+    destPrefix: string; // must be a cidr
+    rewriteTo?: string; // must be a cidr
     portRange?: {
         min: number;
         max: number;
@@ -370,6 +439,15 @@ export function generateSubnetProxyTargets(
                 targets.push({
                     sourcePrefix: clientPrefix,
                     destPrefix: `${siteResource.destination}/32`
+                });
+            }
+
+            if (siteResource.alias && siteResource.aliasAddress) {
+                // also push a match for the alias address
+                targets.push({
+                    sourcePrefix: clientPrefix,
+                    destPrefix: `${siteResource.aliasAddress}/32`,
+                    rewriteTo: `${siteResource.destination}/32`
                 });
             }
         } else if (siteResource.mode == "cidr") {

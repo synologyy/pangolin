@@ -1,6 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, domains, orgDomains, resources } from "@server/db";
+import {
+    clients,
+    clientSiteResourcesAssociationsCache,
+    clientSitesAssociationsCache,
+    db,
+    domains,
+    olms,
+    orgDomains,
+    resources
+} from "@server/db";
 import { newts, newtSessions, orgs, sites, userActions } from "@server/db";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -14,8 +23,8 @@ import { deletePeer } from "../gerbil/peers";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const deleteOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export type DeleteOrgResponse = {};
 
@@ -69,41 +78,75 @@ export async function deleteOrg(
             .where(eq(sites.orgId, orgId))
             .limit(1);
 
+        const orgClients = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.orgId, orgId));
+
         const deletedNewtIds: string[] = [];
+        const olmsToTerminate: string[] = [];
 
         await db.transaction(async (trx) => {
-            if (sites) {
-                for (const site of orgSites) {
-                    if (site.pubKey) {
-                        if (site.type == "wireguard") {
-                            await deletePeer(site.exitNodeId!, site.pubKey);
-                        } else if (site.type == "newt") {
-                            // get the newt on the site by querying the newt table for siteId
-                            const [deletedNewt] = await trx
-                                .delete(newts)
-                                .where(eq(newts.siteId, site.siteId))
-                                .returning();
-                            if (deletedNewt) {
-                                deletedNewtIds.push(deletedNewt.newtId);
+            for (const site of orgSites) {
+                if (site.pubKey) {
+                    if (site.type == "wireguard") {
+                        await deletePeer(site.exitNodeId!, site.pubKey);
+                    } else if (site.type == "newt") {
+                        // get the newt on the site by querying the newt table for siteId
+                        const [deletedNewt] = await trx
+                            .delete(newts)
+                            .where(eq(newts.siteId, site.siteId))
+                            .returning();
+                        if (deletedNewt) {
+                            deletedNewtIds.push(deletedNewt.newtId);
 
-                                // delete all of the sessions for the newt
-                                await trx
-                                    .delete(newtSessions)
-                                    .where(
-                                        eq(
-                                            newtSessions.newtId,
-                                            deletedNewt.newtId
-                                        )
-                                    );
-                            }
+                            // delete all of the sessions for the newt
+                            await trx
+                                .delete(newtSessions)
+                                .where(
+                                    eq(newtSessions.newtId, deletedNewt.newtId)
+                                );
                         }
                     }
-
-                    logger.info(`Deleting site ${site.siteId}`);
-                    await trx
-                        .delete(sites)
-                        .where(eq(sites.siteId, site.siteId));
                 }
+
+                logger.info(`Deleting site ${site.siteId}`);
+                await trx.delete(sites).where(eq(sites.siteId, site.siteId));
+            }
+            for (const client of orgClients) {
+                const [olm] = await trx
+                    .select()
+                    .from(olms)
+                    .where(eq(olms.clientId, client.clientId))
+                    .limit(1);
+
+                if (olm) {
+                    olmsToTerminate.push(olm.olmId);
+                }
+
+                logger.info(`Deleting client ${client.clientId}`);
+                await trx
+                    .delete(clients)
+                    .where(eq(clients.clientId, client.clientId));
+
+                // also delete the associations
+                await trx
+                    .delete(clientSiteResourcesAssociationsCache)
+                    .where(
+                        eq(
+                            clientSiteResourcesAssociationsCache.clientId,
+                            client.clientId
+                        )
+                    );
+
+                await trx
+                    .delete(clientSitesAssociationsCache)
+                    .where(
+                        eq(
+                            clientSitesAssociationsCache.clientId,
+                            client.clientId
+                        )
+                    );
             }
 
             const allOrgDomains = await trx
@@ -150,13 +193,25 @@ export async function deleteOrg(
         // Send termination messages outside of transaction to prevent blocking
         for (const newtId of deletedNewtIds) {
             const payload = {
-                type: `newt/terminate`,
+                type: `newt/wg/terminate`,
                 data: {}
             };
             // Don't await this to prevent blocking the response
             sendToClient(newtId, payload).catch((error) => {
                 logger.error(
                     "Failed to send termination message to newt:",
+                    error
+                );
+            });
+        }
+
+        for (const olmId of olmsToTerminate) {
+            sendToClient(olmId, {
+                type: "olm/terminate",
+                data: {}
+            }).catch((error) => {
+                logger.error(
+                    "Failed to send termination message to olm:",
                     error
                 );
             });

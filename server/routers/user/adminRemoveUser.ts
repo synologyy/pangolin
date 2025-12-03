@@ -8,10 +8,11 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const removeUserSchema = z.strictObject({
-        userId: z.string()
-    });
+    userId: z.string()
+});
 
 export async function adminRemoveUser(
     req: Request,
@@ -50,7 +51,11 @@ export async function adminRemoveUser(
             );
         }
 
-        await db.delete(users).where(eq(users.userId, userId));
+        await db.transaction(async (trx) => {
+            await trx.delete(users).where(eq(users.userId, userId));
+
+            await calculateUserClientsForOrgs(userId, trx);
+        });
 
         return response(res, {
             data: null,

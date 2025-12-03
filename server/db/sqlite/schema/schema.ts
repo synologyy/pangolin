@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { no } from "zod/v4/locales";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -32,6 +33,7 @@ export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
     subnet: text("subnet"),
+    utilitySubnet: text("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
     maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
@@ -230,7 +232,8 @@ export const siteResources = sqliteTable("siteResources", {
     destinationPort: integer("destinationPort"), // only for port mode
     destination: text("destination").notNull(), // ip, cidr, hostname
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
-    alias: text("alias")
+    alias: text("alias"),
+    aliasAddress: text("aliasAddress")
 });
 
 export const clientSiteResources = sqliteTable("clientSiteResources", {
@@ -370,7 +373,8 @@ export const clientSitesAssociationsCache = sqliteTable(
         isRelayed: integer("isRelayed", { mode: "boolean" })
             .notNull()
             .default(false),
-        endpoint: text("endpoint")
+        endpoint: text("endpoint"),
+        publicKey: text("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
     }
 );
 
@@ -413,7 +417,10 @@ export const sessions = sqliteTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: integer("expiresAt").notNull(),
-    issuedAt: integer("issuedAt")
+    issuedAt: integer("issuedAt"),
+    deviceAuthUsed: integer("deviceAuthUsed", { mode: "boolean" })
+        .notNull()
+        .default(false)
 });
 
 export const newtSessions = sqliteTable("newtSession", {

@@ -17,7 +17,8 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 import { getUniqueSiteResourceName } from "@server/db/names";
-import { rebuildClientAssociations } from "@server/lib/rebuildClientAssociations";
+import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
+import { getNextAvailableAliasAddress } from "@server/lib/ip";
 
 const createSiteResourceParamsSchema = z.strictObject({
     siteId: z.string().transform(Number).pipe(z.int().positive()),
@@ -193,6 +194,10 @@ export async function createSiteResource(
         // }
 
         const niceId = await getUniqueSiteResourceName(orgId);
+        let aliasAddress: string | null = null;
+        if (mode == "host") { // we can only have an alias on a host
+            aliasAddress = await getNextAvailableAliasAddress(orgId);
+        }
 
         let newSiteResource: SiteResource | undefined;
         await db.transaction(async (trx) => {
@@ -210,7 +215,8 @@ export async function createSiteResource(
                     // destinationPort: mode === "port" ? destinationPort : null,
                     destination,
                     enabled,
-                    alias: alias || null
+                    alias,
+                    aliasAddress
                 })
                 .returning();
 
@@ -272,7 +278,7 @@ export async function createSiteResource(
                 );
             }
 
-            await rebuildClientAssociations(newSiteResource, trx); // we need to call this because we added to the admin role
+            await rebuildClientAssociationsFromSiteResource(newSiteResource, trx); // we need to call this because we added to the admin role
         });
 
         if (!newSiteResource) {

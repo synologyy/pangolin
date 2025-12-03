@@ -79,12 +79,12 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         // TODO: somehow we should make sure a recent hole punch has happened if this occurs (hole punch could be from the last restart if done quickly)
     }
 
-    // if (existingSite.lastHolePunch && now - existingSite.lastHolePunch > 6) {
-    //     logger.warn(
-    //         `Site ${existingSite.siteId} last hole punch is too old, skipping`
-    //     );
-    //     return;
-    // }
+    if (existingSite.lastHolePunch && now - existingSite.lastHolePunch > 5) {
+        logger.warn(
+            `Site ${existingSite.siteId} last hole punch is too old, skipping`
+        );
+        return;
+    }
 
     // update the endpoint and the public key
     const [site] = await db
@@ -275,6 +275,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
             resource,
             resourceClients
         );
+
         targetsToSend.push(...resourceTargets);
     }
 

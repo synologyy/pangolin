@@ -5,7 +5,7 @@ import { fromError } from "zod-validation-error";
 import HttpCode from "@server/types/HttpCode";
 import logger from "@server/logger";
 import { response } from "@server/lib/response";
-import { db, deviceWebAuthCodes } from "@server/db";
+import { db, deviceWebAuthCodes, sessions } from "@server/db";
 import { eq, and, gt } from "drizzle-orm";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
@@ -44,20 +44,36 @@ export async function verifyDeviceWebAuth(
 ): Promise<any> {
     const { user, session } = req;
     if (!user || !session) {
-        logger.debug("Unauthorized attempt to verify device web auth code");
-        return next(unauthorized());
+        return next(createHttpError(HttpCode.UNAUTHORIZED, "Unauthorized"));
+    }
+
+    if (session.deviceAuthUsed) {
+        return next(
+            createHttpError(
+                HttpCode.UNAUTHORIZED,
+                "Device web auth code already used for this session"
+            )
+        );
     }
 
     if (!session.issuedAt) {
-        logger.debug("Session missing issuedAt timestamp");
-        return next(unauthorized());
+        return next(
+            createHttpError(
+                HttpCode.UNAUTHORIZED,
+                "Session issuedAt timestamp missing"
+            )
+        );
     }
 
     // make sure sessions is not older than 5 minutes
     const now = Date.now();
-    if (now - session.issuedAt > 3 * 60 * 1000) {
-        logger.debug("Session is too old to verify device web auth code");
-        return next(unauthorized());
+    if (now - session.issuedAt > 5 * 60 * 1000) {
+        return next(
+            createHttpError(
+                HttpCode.UNAUTHORIZED,
+                "Session is too old to verify device web auth code"
+            )
+        );
     }
 
     const parsedBody = bodySchema.safeParse(req.body);
@@ -133,6 +149,14 @@ export async function verifyDeviceWebAuth(
                 userId: req.user!.userId
             })
             .where(eq(deviceWebAuthCodes.codeId, deviceCode.codeId));
+
+        // Also update the session to mark that device auth was used
+        await db
+            .update(sessions)
+            .set({
+                deviceAuthUsed: true
+            })
+            .where(eq(sessions.sessionId, session.sessionId));
 
         return response<VerifyDeviceWebAuthResponse>(res, {
             data: {

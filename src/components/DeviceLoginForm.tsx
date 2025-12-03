@@ -84,6 +84,9 @@ export default function DeviceLoginForm({
             if (!data.code.includes("-") && data.code.length === 8) {
                 data.code = data.code.slice(0, 4) + "-" + data.code.slice(4);
             }
+
+            await new Promise((resolve) => setTimeout(resolve, 300));
+
             // First check - get metadata
             const res = await api.post(
                 "/device-web-auth/verify?forceLogin=true",
@@ -92,8 +95,6 @@ export default function DeviceLoginForm({
                     verify: false
                 }
             );
-
-            await new Promise((resolve) => setTimeout(resolve, 500)); // artificial delay for better UX
 
             if (res.data.success && res.data.data.metadata) {
                 setMetadata(res.data.data.metadata);
@@ -116,13 +117,13 @@ export default function DeviceLoginForm({
         setLoading(true);
 
         try {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+
             // Final verify
             await api.post("/device-web-auth/verify", {
                 code: code,
                 verify: true
             });
-
-            await new Promise((resolve) => setTimeout(resolve, 500)); // artificial delay for better UX
 
             // Redirect to success page
             router.push("/auth/login/device/success");

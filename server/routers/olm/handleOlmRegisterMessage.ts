@@ -3,6 +3,7 @@ import {
     clientSiteResourcesAssociationsCache,
     db,
     ExitNode,
+    Org,
     orgs,
     roleClients,
     roles,
@@ -25,75 +26,86 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
-import { getNextAvailableClientSubnet } from "@server/lib/ip";
+import {
+    generateAliasConfig,
+    getNextAvailableClientSubnet
+} from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { checkOrgAccessPolicy } from "@server/lib/checkOrgAccessPolicy";
+import { validateSessionToken } from "@server/auth/sessions/app";
+import config from "@server/lib/config";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
     const { message, client: c, sendToClient } = context;
     const olm = c as Olm;
 
-    const now = new Date().getTime() / 1000;
+    const now = Math.floor(Date.now() / 1000);
 
     if (!olm) {
         logger.warn("Olm not found");
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId, doNotCreateNewClient } =
-        message.data;
-    let client: Client;
+    const { publicKey, relay, olmVersion, orgId, userToken } = message.data;
 
-    if (orgId) {
-        try {
-            client = await getOrCreateOrgClient(
-                orgId,
-                olm.userId,
-                olm.olmId,
-                olm.name || "User Device",
-                // doNotCreateNewClient ? true : false
-                true // for now never create a new client automatically because we create the users clients when they are added to the org
-            );
-        } catch (err) {
-            logger.error(
-                `Error switching olm client ${olm.olmId} to org ${orgId}: ${err}`
-            );
-            return;
-        }
-
-        if (!client) {
-            logger.warn("Client not found");
-            return;
-        }
-
-        logger.debug(
-            `Switching olm client ${olm.olmId} to org ${orgId} for user ${olm.userId}`
-        );
-
-        await db
-            .update(olms)
-            .set({
-                clientId: client.clientId
-            })
-            .where(eq(olms.olmId, olm.olmId));
-    } else {
-        if (!olm.clientId) {
-            logger.warn("Olm has no client ID!");
-            return;
-        }
-
-        logger.debug(`Using last connected org for client ${olm.clientId}`);
-
-        [client] = await db
-            .select()
-            .from(clients)
-            .where(eq(clients.clientId, olm.clientId))
-            .limit(1);
+    if (!olm.clientId) {
+        logger.warn("Olm client ID not found");
+        return;
     }
+
+    const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.clientId, olm.clientId))
+        .limit(1);
 
     if (!client) {
         logger.warn("Client ID not found");
         return;
+    }
+
+    const [org] = await db
+        .select()
+        .from(orgs)
+        .where(eq(orgs.orgId, client.orgId))
+        .limit(1);
+
+    if (!org) {
+        logger.warn("Org not found");
+        return;
+    }
+
+    if (orgId) {
+        if (!olm.userId) {
+            logger.warn("Olm has no user ID");
+            return;
+        }
+
+        const { session: userSession, user } =
+            await validateSessionToken(userToken);
+        if (!userSession || !user) {
+            logger.warn("Invalid user session for olm register");
+            return; // by returning here we just ignore the ping and the setInterval will force it to disconnect
+        }
+        if (user.userId !== olm.userId) {
+            logger.warn("User ID mismatch for olm register");
+            return;
+        }
+
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId: orgId,
+            userId: olm.userId,
+            session: userToken // this is the user token passed in the message
+        });
+
+        if (!policyCheck.allowed) {
+            logger.warn(
+                `Olm user ${olm.userId} does not pass access policies for org ${orgId}: ${policyCheck.error}`
+            );
+            return;
+        }
     }
 
     logger.debug(
@@ -105,41 +117,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    if (client.exitNodeId) {
-        // TODO: FOR NOW WE ARE JUST HOLEPUNCHING ALL EXIT NODES BUT IN THE FUTURE WE SHOULD HANDLE THIS BETTER
-
-        // Get the exit node
-        const allExitNodes = await listExitNodes(client.orgId, true); // FILTER THE ONLINE ONES
-
-        const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
-            return {
-                publicKey: exitNode.publicKey,
-                endpoint: exitNode.endpoint
-            };
-        });
-
-        // Send holepunch message
-        await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch/all",
-            data: {
-                exitNodes: exitNodesHpData
-            }
-        });
-
-        if (!olmVersion) {
-            // THIS IS FOR BACKWARDS COMPATIBILITY
-            // THE OLDER CLIENTS DID NOT SEND THE VERSION
-            await sendToClient(olm.olmId, {
-                type: "olm/wg/holepunch",
-                data: {
-                    serverPubKey: allExitNodes[0].publicKey,
-                    endpoint: allExitNodes[0].endpoint
-                }
-            });
-        }
-    }
-
-    if (olmVersion) {
+    if (olmVersion && olm.version !== olmVersion) {
         await db
             .update(olms)
             .set({
@@ -147,11 +125,6 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             })
             .where(eq(olms.olmId, olm.olmId));
     }
-
-    // if (now - (client.lastHolePunch || 0) > 6) {
-    //     logger.warn("Client last hole punch is too old, skipping all sites");
-    //     return;
-    // }
 
     if (client.pubKey !== publicKey) {
         logger.info(
@@ -190,15 +163,18 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         `Found ${sitesData.length} sites for client ${client.clientId}`
     );
 
-    if (sitesData.length === 0) {
-        sendToClient(olm.olmId, {
-            type: "olm/register/no-sites",
-            data: {}
-        });
+    // this prevents us from accepting a register from an olm that has not hole punched yet.
+    // the olm will pump the register so we can keep checking
+    // TODO: I still think there is a better way to do this rather than locking it out here but ???
+    if (now - (client.lastHolePunch || 0) > 5 && sitesData.length > 0) {
+        logger.warn(
+            "Client last hole punch is too old and we have sites to send; skipping this register"
+        );
+        return;
     }
 
     // Process each site
-    for (const { sites: site } of sitesData) {
+    for (const { sites: site, clientSitesAssociationsCache: association } of sitesData) {
         if (!site.exitNodeId) {
             logger.warn(
                 `Site ${site.siteId} does not have exit node, skipping`
@@ -261,7 +237,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             );
         }
 
-        let endpoint = site.endpoint;
+        let relayEndpoint: string | undefined = undefined;
         if (relay) {
             const [exitNode] = await db
                 .select()
@@ -272,7 +248,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 logger.warn(`Exit node not found for site ${site.siteId}`);
                 continue;
             }
-            endpoint = `${exitNode.endpoint}:21820`;
+            relayEndpoint = `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`;
         }
 
         const allSiteResources = await db // only get the site resources that this client has access to
@@ -298,11 +274,17 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
-            endpoint: endpoint,
+            relayEndpoint: relayEndpoint, // this can be undefined now if not relayed
+            endpoint: site.endpoint,
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: generateRemoteSubnets(allSiteResources.map(({ siteResources }) => siteResources))
+            remoteSubnets: generateRemoteSubnets(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            ),
+            aliases: generateAliasConfig(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            )
         });
     }
 
@@ -318,128 +300,11 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             type: "olm/wg/connect",
             data: {
                 sites: siteConfigurations,
-                tunnelIP: client.subnet
+                tunnelIP: client.subnet,
+                utilitySubnet: org.utilitySubnet
             }
         },
         broadcast: false,
         excludeSender: false
     };
 };
-
-async function getOrCreateOrgClient(
-    orgId: string,
-    userId: string | null,
-    olmId: string,
-    name: string,
-    doNotCreateNewClient: boolean,
-    trx: Transaction | typeof db = db
-): Promise<Client> {
-    // get the org
-    const [org] = await trx
-        .select()
-        .from(orgs)
-        .where(eq(orgs.orgId, orgId))
-        .limit(1);
-
-    if (!org) {
-        throw new Error("Org not found");
-    }
-
-    if (!org.subnet) {
-        throw new Error("Org has no subnet defined");
-    }
-
-    // check if the user has a client in the org and if not then create a client for them
-    const [existingClient] = await trx
-        .select()
-        .from(clients)
-        .where(
-            and(
-                eq(clients.orgId, orgId),
-                userId ? eq(clients.userId, userId) : isNull(clients.userId), // we dont check the user id if it is null because the olm is not tied to a user?
-                eq(clients.olmId, olmId)
-            )
-        ) // checking the olmid here because we want to create a new client PER OLM PER ORG
-        .limit(1);
-
-    let client = existingClient;
-    if (!client && !doNotCreateNewClient) {
-        logger.debug(
-            `Client does not exist in org ${orgId}, creating new client for user ${userId}`
-        );
-
-        if (!userId) {
-            throw new Error("User ID is required to create client in org");
-        }
-
-        // Verify that the user belongs to the org
-        const [userOrg] = await trx
-            .select()
-            .from(userOrgs)
-            .where(and(eq(userOrgs.orgId, orgId), eq(userOrgs.userId, userId)))
-            .limit(1);
-
-        if (!userOrg) {
-            throw new Error("User does not belong to org");
-        }
-
-        // TODO: more intelligent way to pick the exit node
-        const exitNodesList = await listExitNodes(orgId);
-        const randomExitNode =
-            exitNodesList[Math.floor(Math.random() * exitNodesList.length)];
-
-        const [adminRole] = await trx
-            .select()
-            .from(roles)
-            .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
-            .limit(1);
-
-        if (!adminRole) {
-            throw new Error("Admin role not found");
-        }
-
-        const newSubnet = await getNextAvailableClientSubnet(orgId);
-        if (!newSubnet) {
-            throw new Error("No available subnet found");
-        }
-
-        const subnet = newSubnet.split("/")[0];
-        const updatedSubnet = `${subnet}/${org.subnet.split("/")[1]}`; // we want the block size of the whole org
-
-        const [newClient] = await trx
-            .insert(clients)
-            .values({
-                exitNodeId: randomExitNode.exitNodeId,
-                orgId,
-                name,
-                subnet: updatedSubnet,
-                type: "olm",
-                userId: userId,
-                olmId: olmId // to lock this client to the olm even as the olm moves between clients in different orgs
-            })
-            .returning();
-
-        await trx.insert(roleClients).values({
-            roleId: adminRole.roleId,
-            clientId: newClient.clientId
-        });
-
-        await trx.insert(userClients).values({
-            // we also want to make sure that the user can see their own client if they are not an admin
-            userId,
-            clientId: newClient.clientId
-        });
-
-        if (userOrg.roleId != adminRole.roleId) {
-            // make sure the user can access the client
-            trx.insert(userClients).values({
-                userId,
-                clientId: newClient.clientId
-            });
-        }
-
-        client = newClient;
-    }
-
-    return client;
-}

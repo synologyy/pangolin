@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { db } from "@server/db";
+import { Client, db } from "@server/db";
 import { olms, clients, clientSitesAssociationsCache } from "@server/db";
 import { eq } from "drizzle-orm";
 import HttpCode from "@server/types/HttpCode";
@@ -9,6 +9,8 @@ import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { sendTerminateClient } from "../client/terminate";
 
 const paramsSchema = z
     .object({
@@ -54,20 +56,30 @@ export async function deleteUserOlm(
                 .from(clients)
                 .where(eq(clients.olmId, olmId));
 
-            // Delete client-site associations for each associated client
-            for (const client of associatedClients) {
-                await trx
-                    .delete(clientSitesAssociationsCache)
-                    .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
-            }
-
+            let deletedClient: Client | null = null;
             // Delete all associated clients
             if (associatedClients.length > 0) {
-                await trx.delete(clients).where(eq(clients.olmId, olmId));
+                [deletedClient] = await trx
+                    .delete(clients)
+                    .where(eq(clients.olmId, olmId))
+                    .returning();
             }
 
             // Finally, delete the OLM itself
-            await trx.delete(olms).where(eq(olms.olmId, olmId));
+            const [olm] = await trx
+                .delete(olms)
+                .where(eq(olms.olmId, olmId))
+                .returning();
+
+            if (deletedClient) {
+                await rebuildClientAssociationsFromClient(deletedClient, trx);
+                if (olm) {
+                    await sendTerminateClient(
+                        deletedClient.clientId,
+                        olm.olmId
+                    ); //  the olmId needs to be provided because it cant look it up after deletion
+                }
+            }
         });
 
         return response(res, {

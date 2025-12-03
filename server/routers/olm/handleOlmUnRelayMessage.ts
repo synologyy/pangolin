@@ -5,11 +5,11 @@ import { and, eq } from "drizzle-orm";
 import { updatePeer as newtUpdatePeer } from "../newt/peers";
 import logger from "@server/logger";
 
-export const handleOlmRelayMessage: MessageHandler = async (context) => {
+export const handleOlmUnRelayMessage: MessageHandler = async (context) => {
     const { message, client: c, sendToClient } = context;
     const olm = c as Olm;
 
-    logger.info("Handling relay olm message!");
+    logger.info("Handling unrelay olm message!");
 
     if (!olm) {
         logger.warn("Olm not found");
@@ -49,46 +49,45 @@ export const handleOlmRelayMessage: MessageHandler = async (context) => {
         .where(eq(sites.siteId, siteId))
         .limit(1);
 
-    if (!site || !site.exitNodeId) {
+    if (!site) {
         logger.warn("Site not found or has no exit node");
         return;
     }
 
-    // get the site's exit node
-    const [exitNode] = await db
-        .select()
-        .from(exitNodes)
-        .where(eq(exitNodes.exitNodeId, site.exitNodeId))
-        .limit(1);
-
-    if (!exitNode) {
-        logger.warn("Exit node not found for site");
-        return;
-    }
-
-    await db
+    const [clientSiteAssociation] = await db
         .update(clientSitesAssociationsCache)
         .set({
-            isRelayed: true
+            isRelayed: false
         })
         .where(
             and(
                 eq(clientSitesAssociationsCache.clientId, olm.clientId),
                 eq(clientSitesAssociationsCache.siteId, siteId)
             )
-        );
+        )
+        .returning();
+
+    if (!clientSiteAssociation) {
+        logger.warn("Client-Site association not found");
+        return;
+    }
+
+    if (!clientSiteAssociation.endpoint) {
+        logger.warn("Client-Site association has no endpoint, cannot unrelay");
+        return;
+    }
 
     // update the peer on the exit node
     await newtUpdatePeer(siteId, client.pubKey, {
-        endpoint: "" // this removes the endpoint so the exit node knows to relay
+        endpoint: clientSiteAssociation.endpoint // this is the endpoint of the client to connect directly to the exit node
     });
 
     return {
         message: {
-            type: "olm/wg/peer/relay",
+            type: "olm/wg/peer/unrelay",
             data: {
                 siteId: siteId,
-                relayEndpoint: exitNode.endpoint
+                endpoint: site.endpoint
             }
         },
         broadcast: false,

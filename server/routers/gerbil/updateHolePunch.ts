@@ -19,6 +19,8 @@ import { fromError } from "zod-validation-error";
 import { validateNewtSessionToken } from "@server/auth/sessions/newt";
 import { validateOlmSessionToken } from "@server/auth/sessions/olm";
 import { checkExitNodeOrg } from "#dynamic/lib/exitNodes";
+import { updatePeer as updateOlmPeer } from "../olm/peers";
+import { updatePeer as updateNewtPeer } from "../newt/peers";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({
@@ -28,8 +30,9 @@ const updateHolePunchSchema = z.object({
     ip: z.string(),
     port: z.number(),
     timestamp: z.number(),
+    publicKey: z.string(),
     reachableAt: z.string().optional(),
-    publicKey: z.string().optional()
+    exitNodePublicKey: z.string().optional()
 });
 
 // New response type with multi-peer destination support
@@ -63,23 +66,26 @@ export async function updateHolePunch(
             timestamp,
             token,
             reachableAt,
-            publicKey
+            publicKey, // this is the client's current public key for this session
+            exitNodePublicKey
         } = parsedParams.data;
 
         let exitNode: ExitNode | undefined;
-        if (publicKey) {
+        if (exitNodePublicKey) {
             // Get the exit node by public key
             [exitNode] = await db
                 .select()
                 .from(exitNodes)
-                .where(eq(exitNodes.publicKey, publicKey));
+                .where(eq(exitNodes.publicKey, exitNodePublicKey));
         } else {
             // FOR BACKWARDS COMPATIBILITY IF GERBIL IS STILL =<1.1.0
             [exitNode] = await db.select().from(exitNodes).limit(1);
         }
 
         if (!exitNode) {
-            logger.warn(`Exit node not found for publicKey: ${publicKey}`);
+            logger.warn(
+                `Exit node not found for publicKey: ${exitNodePublicKey}`
+            );
             return next(
                 createHttpError(HttpCode.NOT_FOUND, "Exit node not found")
             );
@@ -92,12 +98,13 @@ export async function updateHolePunch(
             port,
             timestamp,
             token,
+            publicKey,
             exitNode
         );
 
-        logger.debug(
-            `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
-        );
+        // logger.debug(
+        //     `Returning ${destinations.length} peer destinations for olmId: ${olmId} or newtId: ${newtId}: ${JSON.stringify(destinations, null, 2)}`
+        // );
 
         // Return the new multi-peer structure
         return res.status(HttpCode.OK).send({
@@ -121,6 +128,7 @@ export async function updateAndGenerateEndpointDestinations(
     port: number,
     timestamp: number,
     token: string,
+    publicKey: string,
     exitNode: ExitNode,
     checkOrg = false
 ) {
@@ -128,9 +136,9 @@ export async function updateAndGenerateEndpointDestinations(
     const destinations: PeerDestination[] = [];
 
     if (olmId) {
-        logger.debug(
-            `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`
-        );
+        // logger.debug(
+        //     `Got hole punch with ip: ${ip}, port: ${port} for olmId: ${olmId}`
+        // );
 
         const { session, olm: olmSession } =
             await validateOlmSessionToken(token);
@@ -150,7 +158,7 @@ export async function updateAndGenerateEndpointDestinations(
             throw new Error("Olm not found");
         }
 
-        const [client] = await db
+        const [updatedClient] = await db
             .update(clients)
             .set({
                 lastHolePunch: timestamp
@@ -158,10 +166,16 @@ export async function updateAndGenerateEndpointDestinations(
             .where(eq(clients.clientId, olm.clientId))
             .returning();
 
-        if (await checkExitNodeOrg(exitNode.exitNodeId, client.orgId) && checkOrg) {
+        if (
+            (await checkExitNodeOrg(
+                exitNode.exitNodeId,
+                updatedClient.orgId
+            )) &&
+            checkOrg
+        ) {
             // not allowed
             logger.warn(
-                `Exit node ${exitNode.exitNodeId} is not allowed for org ${client.orgId}`
+                `Exit node ${exitNode.exitNodeId} is not allowed for org ${updatedClient.orgId}`
             );
             throw new Error("Exit node not allowed");
         }
@@ -171,10 +185,15 @@ export async function updateAndGenerateEndpointDestinations(
             .select({
                 siteId: sites.siteId,
                 subnet: sites.subnet,
-                listenPort: sites.listenPort
+                listenPort: sites.listenPort,
+                publicKey: sites.publicKey,
+                endpoint: clientSitesAssociationsCache.endpoint
             })
             .from(sites)
-            .innerJoin(clientSitesAssociationsCache, eq(sites.siteId, clientSitesAssociationsCache.siteId))
+            .innerJoin(
+                clientSitesAssociationsCache,
+                eq(sites.siteId, clientSitesAssociationsCache.siteId)
+            )
             .where(
                 and(
                     eq(sites.exitNodeId, exitNode.exitNodeId),
@@ -184,27 +203,52 @@ export async function updateAndGenerateEndpointDestinations(
 
         // Update clientSites for each site on this exit node
         for (const site of sitesOnExitNode) {
-            logger.debug(
-                `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
-            );
+            // logger.debug(
+            //     `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
+            // );
 
-            await db
+            // if the public key or endpoint has changed, update it otherwise continue
+            if (
+                site.endpoint === `${ip}:${port}` &&
+                site.publicKey === publicKey
+            ) {
+                continue;
+            }
+
+            const [updatedClientSitesAssociationsCache] = await db
                 .update(clientSitesAssociationsCache)
                 .set({
-                    endpoint: `${ip}:${port}`
+                    endpoint: `${ip}:${port}`,
+                    publicKey: publicKey
                 })
                 .where(
                     and(
                         eq(clientSitesAssociationsCache.clientId, olm.clientId),
                         eq(clientSitesAssociationsCache.siteId, site.siteId)
                     )
+                )
+                .returning();
+
+            if (
+                updatedClientSitesAssociationsCache.endpoint !==
+                    site.endpoint && // this is the endpoint from the join table not the site
+                updatedClient.pubKey === publicKey // only trigger if the client's public key matches the current public key which means it has registered so we dont prematurely send the update
+            ) {
+                logger.info(
+                    `ClientSitesAssociationsCache for client ${olm.clientId} and site ${site.siteId} endpoint changed from ${site.endpoint} to ${updatedClientSitesAssociationsCache.endpoint}`
                 );
+                // Handle any additional logic for endpoint change
+                handleClientEndpointChange(
+                    olm.clientId,
+                    updatedClientSitesAssociationsCache.endpoint!
+                );
+            }
         }
 
-        logger.debug(
-            `Updated ${sitesOnExitNode.length} sites on exit node ${exitNode.exitNodeId}`
-        );
-        if (!client) {
+        // logger.debug(
+        //     `Updated ${sitesOnExitNode.length} sites on exit node ${exitNode.exitNodeId}`
+        // );
+        if (!updatedClient) {
             logger.warn(`Client not found for olm: ${olmId}`);
             throw new Error("Client not found");
         }
@@ -219,9 +263,9 @@ export async function updateAndGenerateEndpointDestinations(
             }
         }
     } else if (newtId) {
-        logger.debug(
-            `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
-        );
+        // logger.debug(
+        //     `Got hole punch with ip: ${ip}, port: ${port} for newtId: ${newtId}`
+        // );
 
         const { session, newt: newtSession } =
             await validateNewtSessionToken(token);
@@ -253,7 +297,10 @@ export async function updateAndGenerateEndpointDestinations(
             .where(eq(sites.siteId, newt.siteId))
             .limit(1);
 
-        if (await checkExitNodeOrg(exitNode.exitNodeId, site.orgId) && checkOrg) {
+        if (
+            (await checkExitNodeOrg(exitNode.exitNodeId, site.orgId)) &&
+            checkOrg
+        ) {
             // not allowed
             logger.warn(
                 `Exit node ${exitNode.exitNodeId} is not allowed for org ${site.orgId}`
@@ -272,6 +319,18 @@ export async function updateAndGenerateEndpointDestinations(
             })
             .where(eq(sites.siteId, newt.siteId))
             .returning();
+
+        if (
+            updatedSite.endpoint != site.endpoint &&
+            updatedSite.publicKey == publicKey
+        ) {
+            // only trigger if the site's public key matches the current public key which means it has registered so we dont prematurely send the update
+            logger.info(
+                `Site ${newt.siteId} endpoint changed from ${site.endpoint} to ${updatedSite.endpoint}`
+            );
+            // Handle any additional logic for endpoint change
+            handleSiteEndpointChange(newt.siteId, updatedSite.endpoint!);
+        }
 
         if (!updatedSite || !updatedSite.subnet) {
             logger.warn(`Site not found: ${newt.siteId}`);
@@ -325,4 +384,144 @@ export async function updateAndGenerateEndpointDestinations(
         //     }
     }
     return destinations;
+}
+
+async function handleSiteEndpointChange(siteId: number, newEndpoint: string) {
+    // Alert all clients connected to this site that the endpoint has changed (only if NOT relayed)
+    try {
+        // Get site details
+        const [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, siteId))
+            .limit(1);
+
+        if (!site || !site.publicKey) {
+            logger.warn(`Site ${siteId} not found or has no public key`);
+            return;
+        }
+
+        // Get all non-relayed clients connected to this site
+        const connectedClients = await db
+            .select({
+                clientId: clients.clientId,
+                olmId: olms.olmId,
+                isRelayed: clientSitesAssociationsCache.isRelayed
+            })
+            .from(clientSitesAssociationsCache)
+            .innerJoin(
+                clients,
+                eq(clientSitesAssociationsCache.clientId, clients.clientId)
+            )
+            .innerJoin(olms, eq(olms.clientId, clients.clientId))
+            .where(
+                and(
+                    eq(clientSitesAssociationsCache.siteId, siteId),
+                    eq(clientSitesAssociationsCache.isRelayed, false)
+                )
+            );
+
+        // Update each non-relayed client with the new site endpoint
+        for (const client of connectedClients) {
+            try {
+                await updateOlmPeer(
+                    client.clientId,
+                    {
+                        siteId: siteId,
+                        publicKey: site.publicKey,
+                        endpoint: newEndpoint
+                    },
+                    client.olmId
+                );
+                logger.debug(
+                    `Updated client ${client.clientId} with new site ${siteId} endpoint: ${newEndpoint}`
+                );
+            } catch (error) {
+                logger.error(
+                    `Failed to update client ${client.clientId} with new site endpoint: ${error}`
+                );
+            }
+        }
+    } catch (error) {
+        logger.error(
+            `Error handling site endpoint change for site ${siteId}: ${error}`
+        );
+    }
+}
+
+async function handleClientEndpointChange(
+    clientId: number,
+    newEndpoint: string
+) {
+    // Alert all sites connected to this client that the endpoint has changed (only if NOT relayed)
+    try {
+        // Get client details
+        const [client] = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.clientId, clientId))
+            .limit(1);
+
+        if (!client || !client.pubKey) {
+            logger.warn(`Client ${clientId} not found or has no public key`);
+            return;
+        }
+
+        // Get all non-relayed sites connected to this client
+        const connectedSites = await db
+            .select({
+                siteId: sites.siteId,
+                newtId: newts.newtId,
+                isRelayed: clientSitesAssociationsCache.isRelayed,
+                subnet: clients.subnet
+            })
+            .from(clientSitesAssociationsCache)
+            .innerJoin(
+                sites,
+                eq(clientSitesAssociationsCache.siteId, sites.siteId)
+            )
+            .innerJoin(newts, eq(newts.siteId, sites.siteId))
+            .innerJoin(
+                clients,
+                eq(clientSitesAssociationsCache.clientId, clients.clientId)
+            )
+            .where(
+                and(
+                    eq(clientSitesAssociationsCache.clientId, clientId),
+                    eq(clientSitesAssociationsCache.isRelayed, false)
+                )
+            );
+
+        // Update each non-relayed site with the new client endpoint
+        for (const siteData of connectedSites) {
+            try {
+                if (!siteData.subnet) {
+                    logger.warn(
+                        `Client ${clientId} has no subnet, skipping update for site ${siteData.siteId}`
+                    );
+                    continue;
+                }
+
+                await updateNewtPeer(
+                    siteData.siteId,
+                    client.pubKey,
+                    {
+                        endpoint: newEndpoint
+                    },
+                    siteData.newtId
+                );
+                logger.debug(
+                    `Updated site ${siteData.siteId} with new client ${clientId} endpoint: ${newEndpoint}`
+                );
+            } catch (error) {
+                logger.error(
+                    `Failed to update site ${siteData.siteId} with new client endpoint: ${error}`
+                );
+            }
+        }
+    } catch (error) {
+        logger.error(
+            `Error handling client endpoint change for client ${clientId}: ${error}`
+        );
+    }
 }

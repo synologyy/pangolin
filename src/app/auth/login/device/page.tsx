@@ -15,8 +15,6 @@ export default async function DeviceLoginPage({ searchParams }: Props) {
     const params = await searchParams;
     const code = params.code || "";
 
-    console.log("user", user);
-
     if (!user) {
         const redirectDestination = code
             ? `/auth/login/device?code=${encodeURIComponent(code)}`
