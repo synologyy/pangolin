@@ -126,6 +126,28 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             }
         },
         {
+            id: "niceId",
+            accessorKey: "nice",
+            friendlyName: t("niceId"),
+            enableHiding: true,
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("niceId")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return <span>{row.original.nice || "-"}</span>;
+            }
+        },
+        {
             accessorKey: "online",
             friendlyName: t("online"),
             header: ({ column }) => {
@@ -413,6 +435,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
                 columnVisibility={{
+                    niceId: false,
                     nice: false,
                     exitNode: false,
                     address: false

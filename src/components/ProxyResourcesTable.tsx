@@ -335,6 +335,28 @@ export default function ProxyResourcesTable({
             }
         },
         {
+            id: "niceId",
+            accessorKey: "nice",
+            friendlyName: t("niceId"),
+            enableHiding: true,
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("niceId")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return <span>{row.original.nice || "-"}</span>;
+            }
+        },
+        {
             accessorKey: "protocol",
             friendlyName: t("protocol"),
             header: () => <span className="p-3">{t("protocol")}</span>,
@@ -558,6 +580,7 @@ export default function ProxyResourcesTable({
                 defaultSort={defaultSort}
                 enableColumnVisibility={true}
                 persistColumnVisibility="proxy-resources"
+                columnVisibility={{ niceId: false }}
                 stickyLeftColumn="name"
                 stickyRightColumn="actions"
             />
