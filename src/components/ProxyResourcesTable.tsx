@@ -2,46 +2,21 @@
 
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import CopyToClipboard from "@app/components/CopyToClipboard";
-import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Button } from "@app/components/ui/button";
-import { Card, CardContent, CardHeader } from "@app/components/ui/card";
+import { DataTable } from "@app/components/ui/data-table";
 import { ExtendedColumnDef } from "@app/components/ui/data-table";
+import { Button } from "@app/components/ui/button";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
 import { InfoPopup } from "@app/components/ui/info-popup";
-import { Input } from "@app/components/ui/input";
 import { Switch } from "@app/components/ui/switch";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from "@app/components/ui/table";
 import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useStoredColumnVisibility } from "@app/hooks/useStoredColumnVisibility";
-import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { UpdateResourceResponse } from "@server/routers/resource";
-import {
-    ColumnFiltersState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable
-} from "@tanstack/react-table";
 import { AxiosResponse } from "axios";
 import {
     ArrowRight,
@@ -49,11 +24,7 @@ import {
     CheckCircle2,
     ChevronDown,
     Clock,
-    Columns,
     MoreHorizontal,
-    Plus,
-    RefreshCw,
-    Search,
     ShieldCheck,
     ShieldOff,
     XCircle
@@ -164,35 +135,24 @@ export default function ProxyResourcesTable({
 
     const api = createApiClient({ env });
 
-    const [proxyPageSize, setProxyPageSize] = useStoredPageSize(
-        "proxy-resources",
-        20
-    );
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedResource, setSelectedResource] =
         useState<ResourceRow | null>();
 
-    const [proxySorting, setProxySorting] = useState<SortingState>(
-        defaultSort ? [defaultSort] : []
-    );
-
-    const [proxyColumnFilters, setProxyColumnFilters] =
-        useState<ColumnFiltersState>([]);
-    const [proxyGlobalFilter, setProxyGlobalFilter] = useState<any>([]);
-
     const [isRefreshing, startTransition] = useTransition();
-    const [proxyColumnVisibility, setProxyColumnVisibility] =
-        useStoredColumnVisibility("proxy-resources", {});
+
     const refreshData = () => {
-        try {
-            router.refresh();
-        } catch (error) {
-            toast({
-                title: t("error"),
-                description: t("refreshError"),
-                variant: "destructive"
-            });
-        }
+        startTransition(() => {
+            try {
+                router.refresh();
+            } catch (error) {
+                toast({
+                    title: t("error"),
+                    description: t("refreshError"),
+                    variant: "destructive"
+                });
+            }
+        });
     };
 
     const deleteResource = (resourceId: number) => {
@@ -512,70 +472,7 @@ export default function ProxyResourcesTable({
         {
             id: "actions",
             enableHiding: false,
-            header: ({ table }) => {
-                const hasHideableColumns = table
-                    .getAllColumns()
-                    .some((column) => column.getCanHide());
-                if (!hasHideableColumns) {
-                    return <span className="p-3"></span>;
-                }
-                return (
-                    <div className="flex flex-col items-end gap-1 p-3">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
-                                >
-                                    <Columns className="h-4 w-4" />
-                                    <span className="sr-only">
-                                        {t("columns") || "Columns"}
-                                    </span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>
-                                    {t("toggleColumns") || "Toggle columns"}
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {table
-                                    .getAllColumns()
-                                    .filter((column) => column.getCanHide())
-                                    .map((column) => {
-                                        const columnDef =
-                                            column.columnDef as any;
-                                        const friendlyName =
-                                            columnDef.friendlyName;
-                                        const displayName =
-                                            friendlyName ||
-                                            (typeof columnDef.header ===
-                                            "string"
-                                                ? columnDef.header
-                                                : column.id);
-                                        return (
-                                            <DropdownMenuCheckboxItem
-                                                key={column.id}
-                                                className="capitalize"
-                                                checked={column.getIsVisible()}
-                                                onCheckedChange={(value) =>
-                                                    column.toggleVisibility(
-                                                        !!value
-                                                    )
-                                                }
-                                                onSelect={(e) =>
-                                                    e.preventDefault()
-                                                }
-                                            >
-                                                {displayName}
-                                            </DropdownMenuCheckboxItem>
-                                        );
-                                    })}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                );
-            },
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -624,32 +521,6 @@ export default function ProxyResourcesTable({
         }
     ];
 
-    const proxyTable = useReactTable({
-        data: resources,
-        columns: proxyColumns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onSortingChange: setProxySorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setProxyColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        onGlobalFilterChange: setProxyGlobalFilter,
-        onColumnVisibilityChange: setProxyColumnVisibility,
-        initialState: {
-            pagination: {
-                pageSize: proxyPageSize,
-                pageIndex: 0
-            },
-            columnVisibility: proxyColumnVisibility
-        },
-        state: {
-            sorting: proxySorting,
-            columnFilters: proxyColumnFilters,
-            globalFilter: proxyGlobalFilter,
-            columnVisibility: proxyColumnVisibility
-        }
-    });
-
     return (
         <>
             {selectedResource && (
@@ -672,159 +543,24 @@ export default function ProxyResourcesTable({
                 />
             )}
 
-            <div className="container mx-auto max-w-12xl">
-                <Card>
-                    <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-0">
-                        <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
-                            <div className="relative w-full sm:max-w-sm">
-                                <Input
-                                    placeholder={t("resourcesSearch")}
-                                    value={proxyGlobalFilter ?? ""}
-                                    onChange={(e) =>
-                                        proxyTable.setGlobalFilter(
-                                            String(e.target.value)
-                                        )
-                                    }
-                                    className="w-full pl-8"
-                                />
-                                <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 sm:justify-end">
-                            <div>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => startTransition(refreshData)}
-                                    disabled={isRefreshing}
-                                >
-                                    <RefreshCw
-                                        className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                                    />
-                                    <span className="hidden sm:inline">
-                                        {t("refresh")}
-                                    </span>
-                                </Button>
-                            </div>
-                            <div>
-                                <Button
-                                    onClick={() =>
-                                        router.push(
-                                            `/${orgId}/settings/resources/create`
-                                        )
-                                    }
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    {t("resourceAdd")}
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto mt-9">
-                            <Table>
-                                <TableHeader>
-                                    {proxyTable
-                                        .getHeaderGroups()
-                                        .map((headerGroup) => (
-                                            <TableRow key={headerGroup.id}>
-                                                {headerGroup.headers
-                                                    .filter((header) =>
-                                                        header.column.getIsVisible()
-                                                    )
-                                                    .map((header) => (
-                                                        <TableHead
-                                                            key={header.id}
-                                                            className={`whitespace-nowrap ${
-                                                                header.column
-                                                                    .id ===
-                                                                "actions"
-                                                                    ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                    : header
-                                                                            .column
-                                                                            .id ===
-                                                                        "name"
-                                                                      ? "md:sticky md:left-0 z-10 bg-card"
-                                                                      : ""
-                                                            }`}
-                                                        >
-                                                            {header.isPlaceholder
-                                                                ? null
-                                                                : flexRender(
-                                                                      header
-                                                                          .column
-                                                                          .columnDef
-                                                                          .header,
-                                                                      header.getContext()
-                                                                  )}
-                                                        </TableHead>
-                                                    ))}
-                                            </TableRow>
-                                        ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {proxyTable.getRowModel().rows?.length ? (
-                                        proxyTable
-                                            .getRowModel()
-                                            .rows.map((row) => (
-                                                <TableRow
-                                                    key={row.id}
-                                                    data-state={
-                                                        row.getIsSelected() &&
-                                                        "selected"
-                                                    }
-                                                >
-                                                    {row
-                                                        .getVisibleCells()
-                                                        .map((cell) => (
-                                                            <TableCell
-                                                                key={cell.id}
-                                                                className={`whitespace-nowrap ${
-                                                                    cell.column
-                                                                        .id ===
-                                                                    "actions"
-                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                        : cell
-                                                                                .column
-                                                                                .id ===
-                                                                            "name"
-                                                                          ? "md:sticky md:left-0 z-10 bg-card"
-                                                                          : ""
-                                                                }`}
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </TableCell>
-                                                        ))}
-                                                </TableRow>
-                                            ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={proxyColumns.length}
-                                                className="h-24 text-center"
-                                            >
-                                                {t(
-                                                    "resourcesTableNoProxyResourcesFound"
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        <div className="mt-4">
-                            <DataTablePagination
-                                table={proxyTable}
-                                onPageSizeChange={setProxyPageSize}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <DataTable
+                columns={proxyColumns}
+                data={resources}
+                persistPageSize="proxy-resources"
+                searchPlaceholder={t("resourcesSearch")}
+                searchColumn="name"
+                onAdd={() =>
+                    router.push(`/${orgId}/settings/resources/create`)
+                }
+                addButtonText={t("resourceAdd")}
+                onRefresh={refreshData}
+                isRefreshing={isRefreshing}
+                defaultSort={defaultSort}
+                enableColumnVisibility={true}
+                persistColumnVisibility="proxy-resources"
+                stickyLeftColumn="name"
+                stickyRightColumn="actions"
+            />
         </>
     );
 }

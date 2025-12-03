@@ -102,8 +102,8 @@ function CollapsibleNavItem({
                     {item.icon && (
                         <span className="flex-shrink-0 mr-2">{item.icon}</span>
                     )}
-                    <span className="flex-1 text-left">{t(item.title)}</span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-1">
+                        <span className="text-left">{t(item.title)}</span>
                         {item.isBeta && (
                             <Badge
                                 variant="outline"
@@ -112,6 +112,8 @@ function CollapsibleNavItem({
                                 {t("beta")}
                             </Badge>
                         )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
                         {build === "enterprise" &&
                             item.showEE &&
                             !isUnlocked() && (
@@ -251,8 +253,8 @@ export function SidebarNav({
                 )}
                 {!isCollapsed && (
                     <>
-                        <span className="flex-1">{t(item.title)}</span>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-1">
+                            <span>{t(item.title)}</span>
                             {item.isBeta && (
                                 <Badge
                                     variant="outline"
@@ -261,14 +263,14 @@ export function SidebarNav({
                                     {t("beta")}
                                 </Badge>
                             )}
-                            {build === "enterprise" &&
-                                item.showEE &&
-                                !isUnlocked() && (
-                                    <Badge variant="outlinePrimary">
-                                        {t("licenseBadge")}
-                                    </Badge>
-                                )}
                         </div>
+                        {build === "enterprise" &&
+                            item.showEE &&
+                            !isUnlocked() && (
+                                <Badge variant="outlinePrimary">
+                                    {t("licenseBadge")}
+                                </Badge>
+                            )}
                     </>
                 )}
             </Link>
@@ -283,8 +285,8 @@ export function SidebarNav({
                 {item.icon && (
                     <span className="flex-shrink-0 mr-2">{item.icon}</span>
                 )}
-                <span className="flex-1">{t(item.title)}</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-1">
+                    <span>{t(item.title)}</span>
                     {item.isBeta && (
                         <Badge
                             variant="outline"
@@ -293,14 +295,14 @@ export function SidebarNav({
                             {t("beta")}
                         </Badge>
                     )}
-                    {build === "enterprise" &&
-                        item.showEE &&
-                        !isUnlocked() && (
-                            <Badge variant="outlinePrimary">
-                                {t("licenseBadge")}
-                            </Badge>
-                        )}
                 </div>
+                {build === "enterprise" &&
+                    item.showEE &&
+                    !isUnlocked() && (
+                        <Badge variant="outlinePrimary">
+                            {t("licenseBadge")}
+                        </Badge>
+                    )}
             </div>
         );
 
@@ -382,23 +384,22 @@ export function SidebarNav({
                                                     {childItem.icon}
                                                 </span>
                                             )}
-                                            <span className="flex-1">
-                                                {t(childItem.title)}
-                                            </span>
-                                            {childItem.isBeta && (
-                                                <Badge
-                                                    variant="outline"
-                                                    className="ml-2 text-muted-foreground"
-                                                >
-                                                    {t("beta")}
-                                                </Badge>
-                                            )}
+                                            <div className="flex items-center gap-1.5 flex-1">
+                                                <span>{t(childItem.title)}</span>
+                                                {childItem.isBeta && (
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-muted-foreground"
+                                                    >
+                                                        {t("beta")}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                             {build === "enterprise" &&
                                                 childItem.showEE &&
                                                 !isUnlocked() && (
                                                     <Badge
                                                         variant="outlinePrimary"
-                                                        className="ml-2"
                                                     >
                                                         {t("licenseBadge")}
                                                     </Badge>

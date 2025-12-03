@@ -2,49 +2,22 @@
 
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import CopyToClipboard from "@app/components/CopyToClipboard";
-import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Button } from "@app/components/ui/button";
-import { Card, CardContent, CardHeader } from "@app/components/ui/card";
+import { DataTable } from "@app/components/ui/data-table";
 import { ExtendedColumnDef } from "@app/components/ui/data-table";
+import { Button } from "@app/components/ui/button";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
-import { Input } from "@app/components/ui/input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from "@app/components/ui/table";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import {
-    ColumnFiltersState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable
-} from "@tanstack/react-table";
-import {
     ArrowUpDown,
     ArrowUpRight,
-    Columns,
-    MoreHorizontal,
-    Plus,
-    RefreshCw,
-    Search
+    MoreHorizontal
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -53,9 +26,7 @@ import { useState, useTransition } from "react";
 
 import CreateInternalResourceDialog from "@app/components/CreateInternalResourceDialog";
 import EditInternalResourceDialog from "@app/components/EditInternalResourceDialog";
-import { useStoredColumnVisibility } from "@app/hooks/useStoredColumnVisibility";
-import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
-import { orgQueries, siteQueries } from "@app/lib/queries";
+import { orgQueries } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
 export type TargetHealth = {
@@ -122,10 +93,6 @@ export default function ClientResourcesTable({
 
     const api = createApiClient({ env });
 
-    const [internalPageSize, setInternalPageSize] = useStoredPageSize(
-        "internal-resources",
-        20
-    );
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     const [selectedInternalResource, setSelectedInternalResource] =
@@ -135,29 +102,22 @@ export default function ClientResourcesTable({
         useState<InternalResourceRow | null>();
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-    const { data: sites = [] } = useQuery(orgQueries.sites({ orgId, api }));
+    const { data: sites = [] } = useQuery(orgQueries.sites({ orgId }));
 
-    const [internalSorting, setInternalSorting] = useState<SortingState>(
-        defaultSort ? [defaultSort] : []
-    );
-    const [internalColumnFilters, setInternalColumnFilters] =
-        useState<ColumnFiltersState>([]);
-    const [internalGlobalFilter, setInternalGlobalFilter] = useState<any>([]);
     const [isRefreshing, startTransition] = useTransition();
 
-    const [internalColumnVisibility, setInternalColumnVisibility] =
-        useStoredColumnVisibility("internal-resources", {});
-    const refreshData = async () => {
-        try {
-            router.refresh();
-            console.log("Data refreshed");
-        } catch (error) {
-            toast({
-                title: t("error"),
-                description: t("refreshError"),
-                variant: "destructive"
-            });
-        }
+    const refreshData = () => {
+        startTransition(() => {
+            try {
+                router.refresh();
+            } catch (error) {
+                toast({
+                    title: t("error"),
+                    description: t("refreshError"),
+                    variant: "destructive"
+                });
+            }
+        });
     };
 
     const deleteInternalResource = async (
@@ -295,70 +255,7 @@ export default function ClientResourcesTable({
         {
             id: "actions",
             enableHiding: false,
-            header: ({ table }) => {
-                const hasHideableColumns = table
-                    .getAllColumns()
-                    .some((column) => column.getCanHide());
-                if (!hasHideableColumns) {
-                    return <span className="p-3"></span>;
-                }
-                return (
-                    <div className="flex flex-col items-end gap-1 p-3">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
-                                >
-                                    <Columns className="h-4 w-4" />
-                                    <span className="sr-only">
-                                        {t("columns") || "Columns"}
-                                    </span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuLabel>
-                                    {t("toggleColumns") || "Toggle columns"}
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {table
-                                    .getAllColumns()
-                                    .filter((column) => column.getCanHide())
-                                    .map((column) => {
-                                        const columnDef =
-                                            column.columnDef as any;
-                                        const friendlyName =
-                                            columnDef.friendlyName;
-                                        const displayName =
-                                            friendlyName ||
-                                            (typeof columnDef.header ===
-                                            "string"
-                                                ? columnDef.header
-                                                : column.id);
-                                        return (
-                                            <DropdownMenuCheckboxItem
-                                                key={column.id}
-                                                className="capitalize"
-                                                checked={column.getIsVisible()}
-                                                onCheckedChange={(value) =>
-                                                    column.toggleVisibility(
-                                                        !!value
-                                                    )
-                                                }
-                                                onSelect={(e) =>
-                                                    e.preventDefault()
-                                                }
-                                            >
-                                                {displayName}
-                                            </DropdownMenuCheckboxItem>
-                                        );
-                                    })}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                );
-            },
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -402,32 +299,6 @@ export default function ClientResourcesTable({
         }
     ];
 
-    const internalTable = useReactTable({
-        data: internalResources,
-        columns: internalColumns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onSortingChange: setInternalSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setInternalColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        onGlobalFilterChange: setInternalGlobalFilter,
-        onColumnVisibilityChange: setInternalColumnVisibility,
-        initialState: {
-            pagination: {
-                pageSize: internalPageSize,
-                pageIndex: 0
-            },
-            columnVisibility: internalColumnVisibility
-        },
-        state: {
-            sorting: internalSorting,
-            columnFilters: internalColumnFilters,
-            globalFilter: internalGlobalFilter,
-            columnVisibility: internalColumnVisibility
-        }
-    });
-
     return (
         <>
             {selectedInternalResource && (
@@ -455,157 +326,22 @@ export default function ClientResourcesTable({
                 />
             )}
 
-            <div className="container mx-auto max-w-12xl">
-                <Card>
-                    <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-0">
-                        <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
-                            <div className="relative w-full sm:max-w-sm">
-                                <Input
-                                    placeholder={t("resourcesSearch")}
-                                    value={internalGlobalFilter ?? ""}
-                                    onChange={(e) =>
-                                        internalTable.setGlobalFilter(
-                                            String(e.target.value)
-                                        )
-                                    }
-                                    className="w-full pl-8"
-                                />
-                                <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 sm:justify-end">
-                            <div>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => startTransition(refreshData)}
-                                    disabled={isRefreshing}
-                                >
-                                    <RefreshCw
-                                        className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                                    />
-                                    <span className="hidden sm:inline">
-                                        {t("refresh")}
-                                    </span>
-                                </Button>
-                            </div>
-                            <div>
-                                {" "}
-                                <Button
-                                    onClick={() => setIsCreateDialogOpen(true)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    {t("resourceAdd")}
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto mt-9">
-                            <Table>
-                                <TableHeader>
-                                    {internalTable
-                                        .getHeaderGroups()
-                                        .map((headerGroup) => (
-                                            <TableRow key={headerGroup.id}>
-                                                {headerGroup.headers
-                                                    .filter((header) =>
-                                                        header.column.getIsVisible()
-                                                    )
-                                                    .map((header) => (
-                                                        <TableHead
-                                                            key={header.id}
-                                                            className={`whitespace-nowrap ${
-                                                                header.column
-                                                                    .id ===
-                                                                "actions"
-                                                                    ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                    : header
-                                                                            .column
-                                                                            .id ===
-                                                                        "name"
-                                                                      ? "md:sticky md:left-0 z-10 bg-card"
-                                                                      : ""
-                                                            }`}
-                                                        >
-                                                            {header.isPlaceholder
-                                                                ? null
-                                                                : flexRender(
-                                                                      header
-                                                                          .column
-                                                                          .columnDef
-                                                                          .header,
-                                                                      header.getContext()
-                                                                  )}
-                                                        </TableHead>
-                                                    ))}
-                                            </TableRow>
-                                        ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {internalTable.getRowModel().rows
-                                        ?.length ? (
-                                        internalTable
-                                            .getRowModel()
-                                            .rows.map((row) => (
-                                                <TableRow
-                                                    key={row.id}
-                                                    data-state={
-                                                        row.getIsSelected() &&
-                                                        "selected"
-                                                    }
-                                                >
-                                                    {row
-                                                        .getVisibleCells()
-                                                        .map((cell) => (
-                                                            <TableCell
-                                                                key={cell.id}
-                                                                className={`whitespace-nowrap ${
-                                                                    cell.column
-                                                                        .id ===
-                                                                    "actions"
-                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                        : cell
-                                                                                .column
-                                                                                .id ===
-                                                                            "name"
-                                                                          ? "md:sticky md:left-0 z-10 bg-card"
-                                                                          : ""
-                                                                }`}
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </TableCell>
-                                                        ))}
-                                                </TableRow>
-                                            ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={internalColumns.length}
-                                                className="h-24 text-center"
-                                            >
-                                                {t(
-                                                    "resourcesTableNoInternalResourcesFound"
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        <div className="mt-4">
-                            <DataTablePagination
-                                table={internalTable}
-                                onPageSizeChange={setInternalPageSize}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <DataTable
+                columns={internalColumns}
+                data={internalResources}
+                persistPageSize="internal-resources"
+                searchPlaceholder={t("resourcesSearch")}
+                searchColumn="name"
+                onAdd={() => setIsCreateDialogOpen(true)}
+                addButtonText={t("resourceAdd")}
+                onRefresh={refreshData}
+                isRefreshing={isRefreshing}
+                defaultSort={defaultSort}
+                enableColumnVisibility={true}
+                persistColumnVisibility="internal-resources"
+                stickyLeftColumn="name"
+                stickyRightColumn="actions"
+            />
 
             {editingResource && (
                 <EditInternalResourceDialog

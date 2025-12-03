@@ -1,49 +1,23 @@
 "use client";
 
 import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
-import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Button } from "@app/components/ui/button";
-import { Card, CardContent, CardHeader } from "@app/components/ui/card";
+import { DataTable } from "@app/components/ui/data-table";
 import { ExtendedColumnDef } from "@app/components/ui/data-table";
+import { Button } from "@app/components/ui/button";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
-import { Input } from "@app/components/ui/input";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from "@app/components/ui/table";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import {
-    ColumnFiltersState,
-    flexRender,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable
-} from "@tanstack/react-table";
-import {
     ArrowRight,
     ArrowUpDown,
     ArrowUpRight,
-    Columns,
-    MoreHorizontal,
-    RefreshCw,
-    Search
+    MoreHorizontal
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -51,9 +25,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Badge } from "./ui/badge";
 import { InfoPopup } from "./ui/info-popup";
-
-import { useStoredColumnVisibility } from "@app/hooks/useStoredColumnVisibility";
-import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 
 export type ClientRow = {
     id: number;
@@ -80,11 +51,6 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
     const router = useRouter();
     const t = useTranslations();
 
-    const [userPageSize, setUserPageSize] = useStoredPageSize(
-        "user-clients",
-        20
-    );
-
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState<ClientRow | null>(
         null
@@ -93,30 +59,23 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
     const api = createApiClient(useEnvContext());
     const [isRefreshing, startTransition] = useTransition();
 
-    const [userSorting, setUserSorting] = useState<SortingState>([]);
-    const [userColumnFilters, setUserColumnFilters] =
-        useState<ColumnFiltersState>([]);
-    const [userGlobalFilter, setUserGlobalFilter] = useState<any>([]);
-
     const defaultUserColumnVisibility = {
         client: false,
         subnet: false
     };
 
-    const [userColumnVisibility, setUserColumnVisibility] =
-        useStoredColumnVisibility("user-clients", defaultUserColumnVisibility);
-
-    const refreshData = async () => {
-        try {
-            router.refresh();
-            console.log("Data refreshed");
-        } catch (error) {
-            toast({
-                title: t("error"),
-                description: t("refreshError"),
-                variant: "destructive"
-            });
-        }
+    const refreshData = () => {
+        startTransition(() => {
+            try {
+                router.refresh();
+            } catch (error) {
+                toast({
+                    title: t("error"),
+                    description: t("refreshError"),
+                    variant: "destructive"
+                });
+            }
+        });
     };
 
     const deleteClient = (clientId: number) => {
@@ -366,73 +325,7 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
             baseColumns.push({
                 id: "actions",
                 enableHiding: false,
-                header: ({ table }) => {
-                    const hasHideableColumns = table
-                        .getAllColumns()
-                        .some((column) => column.getCanHide());
-                    if (!hasHideableColumns) {
-                        return <span className="p-3"></span>;
-                    }
-                    return (
-                        <div className="flex flex-col items-end gap-1 p-3">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0"
-                                    >
-                                        <Columns className="h-4 w-4" />
-                                        <span className="sr-only">
-                                            {t("columns") || "Columns"}
-                                        </span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                    align="end"
-                                    className="w-48"
-                                >
-                                    <DropdownMenuLabel>
-                                        {t("toggleColumns") || "Toggle columns"}
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator />
-                                    {table
-                                        .getAllColumns()
-                                        .filter((column) => column.getCanHide())
-                                        .map((column) => {
-                                            const columnDef =
-                                                column.columnDef as any;
-                                            const friendlyName =
-                                                columnDef.friendlyName;
-                                            const displayName =
-                                                friendlyName ||
-                                                (typeof columnDef.header ===
-                                                "string"
-                                                    ? columnDef.header
-                                                    : column.id);
-                                            return (
-                                                <DropdownMenuCheckboxItem
-                                                    key={column.id}
-                                                    className="capitalize"
-                                                    checked={column.getIsVisible()}
-                                                    onCheckedChange={(value) =>
-                                                        column.toggleVisibility(
-                                                            !!value
-                                                        )
-                                                    }
-                                                    onSelect={(e) =>
-                                                        e.preventDefault()
-                                                    }
-                                                >
-                                                    {displayName}
-                                                </DropdownMenuCheckboxItem>
-                                            );
-                                        })}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    );
-                },
+                header: () => <span className="p-3"></span>,
                 cell: ({ row }) => {
                     const clientRow = row.original;
                     return !clientRow.userId ? (
@@ -487,32 +380,6 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
         return baseColumns;
     }, [hasRowsWithoutUserId, t]);
 
-    const userTable = useReactTable({
-        data: userClients || [],
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onSortingChange: setUserSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setUserColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        onGlobalFilterChange: setUserGlobalFilter,
-        onColumnVisibilityChange: setUserColumnVisibility,
-        initialState: {
-            pagination: {
-                pageSize: userPageSize,
-                pageIndex: 0
-            },
-            columnVisibility: userColumnVisibility
-        },
-        state: {
-            sorting: userSorting,
-            columnFilters: userColumnFilters,
-            globalFilter: userGlobalFilter,
-            columnVisibility: userColumnVisibility
-        }
-    });
-
     return (
         <>
             {selectedClient && (
@@ -535,145 +402,20 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                 />
             )}
 
-            <div className="container mx-auto max-w-12xl">
-                <Card>
-                    <CardHeader className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 pb-0">
-                        <div className="flex flex-row space-y-3 w-full sm:mr-2 gap-2">
-                            <div className="relative w-full sm:max-w-sm">
-                                <Input
-                                    placeholder={t("resourcesSearch")}
-                                    value={userGlobalFilter ?? ""}
-                                    onChange={(e) =>
-                                        userTable.setGlobalFilter(
-                                            String(e.target.value)
-                                        )
-                                    }
-                                    className="w-full pl-8"
-                                />
-                                <Search className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 sm:justify-end">
-                            <div>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => startTransition(refreshData)}
-                                    disabled={isRefreshing}
-                                >
-                                    <RefreshCw
-                                        className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                                    />
-                                    <span className="hidden sm:inline">
-                                        {t("refresh")}
-                                    </span>
-                                </Button>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto mt-9">
-                            <Table>
-                                <TableHeader>
-                                    {userTable
-                                        .getHeaderGroups()
-                                        .map((headerGroup) => (
-                                            <TableRow key={headerGroup.id}>
-                                                {headerGroup.headers
-                                                    .filter((header) =>
-                                                        header.column.getIsVisible()
-                                                    )
-                                                    .map((header) => (
-                                                        <TableHead
-                                                            key={header.id}
-                                                            className={`whitespace-nowrap ${
-                                                                header.column
-                                                                    .id ===
-                                                                "actions"
-                                                                    ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                    : header
-                                                                            .column
-                                                                            .id ===
-                                                                        "name"
-                                                                      ? "md:sticky md:left-0 z-10 bg-card"
-                                                                      : ""
-                                                            }`}
-                                                        >
-                                                            {header.isPlaceholder
-                                                                ? null
-                                                                : flexRender(
-                                                                      header
-                                                                          .column
-                                                                          .columnDef
-                                                                          .header,
-                                                                      header.getContext()
-                                                                  )}
-                                                        </TableHead>
-                                                    ))}
-                                            </TableRow>
-                                        ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {userTable.getRowModel().rows?.length ? (
-                                        userTable
-                                            .getRowModel()
-                                            .rows.map((row) => (
-                                                <TableRow
-                                                    key={row.id}
-                                                    data-state={
-                                                        row.getIsSelected() &&
-                                                        "selected"
-                                                    }
-                                                >
-                                                    {row
-                                                        .getVisibleCells()
-                                                        .map((cell) => (
-                                                            <TableCell
-                                                                key={cell.id}
-                                                                className={`whitespace-nowrap ${
-                                                                    cell.column
-                                                                        .id ===
-                                                                    "actions"
-                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
-                                                                        : cell
-                                                                                .column
-                                                                                .id ===
-                                                                            "name"
-                                                                          ? "md:sticky md:left-0 z-10 bg-card"
-                                                                          : ""
-                                                                }`}
-                                                            >
-                                                                {flexRender(
-                                                                    cell.column
-                                                                        .columnDef
-                                                                        .cell,
-                                                                    cell.getContext()
-                                                                )}
-                                                            </TableCell>
-                                                        ))}
-                                                </TableRow>
-                                            ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={columns.length}
-                                                className="h-24 text-center"
-                                            >
-                                                {t("noResults")}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        <div className="mt-4">
-                            <DataTablePagination
-                                table={userTable}
-                                onPageSizeChange={setUserPageSize}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+            <DataTable
+                columns={columns}
+                data={userClients || []}
+                persistPageSize="user-clients"
+                searchPlaceholder={t("resourcesSearch")}
+                searchColumn="name"
+                onRefresh={refreshData}
+                isRefreshing={isRefreshing}
+                enableColumnVisibility={true}
+                persistColumnVisibility="user-clients"
+                columnVisibility={defaultUserColumnVisibility}
+                stickyLeftColumn="name"
+                stickyRightColumn="actions"
+            />
         </>
     );
 }
