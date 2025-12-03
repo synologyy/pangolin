@@ -8,7 +8,7 @@ export type ReactQueryProviderProps = {
     children: React.ReactNode;
 };
 
-export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
+export function TanstackQueryProvider({ children }: ReactQueryProviderProps) {
     const [queryClient] = React.useState(
         () =>
             new QueryClient({

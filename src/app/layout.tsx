@@ -20,7 +20,7 @@ import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
-import { ReactQueryProvider } from "@app/components/react-query-provider";
+import { TanstackQueryProvider } from "@app/components/TanstackQueryProvider";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -95,7 +95,7 @@ export default async function RootLayout({
                         strategy="afterInteractive"
                     />
                 )}
-                <ReactQueryProvider>
+                <TanstackQueryProvider>
                     <NextIntlClientProvider>
                         <ThemeProvider
                             attribute="class"
@@ -128,7 +128,7 @@ export default async function RootLayout({
                             </ThemeDataProvider>
                         </ThemeProvider>
                     </NextIntlClientProvider>
-                </ReactQueryProvider>
+                </TanstackQueryProvider>
             </body>
         </html>
     );
