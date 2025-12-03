@@ -257,7 +257,10 @@ export function LogDataTable<TData, TValue>({
             ? {}
             : { getPaginationRowModel: getPaginationRowModel() }),
         onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
+        // Disable client-side sorting for server-side pagination since data is already sorted on server
+        ...(isServerPagination
+            ? {}
+            : { getSortedRowModel: getSortedRowModel() }),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
@@ -269,6 +272,7 @@ export function LogDataTable<TData, TValue>({
               }
             : {}),
         initialState: {
+            sorting: defaultSort ? [defaultSort] : [],
             pagination: {
                 pageSize: pageSize,
                 pageIndex: currentPage

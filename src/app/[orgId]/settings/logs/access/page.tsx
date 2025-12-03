@@ -640,7 +640,7 @@ export default function GeneralPage() {
                 }}
                 defaultSort={{
                     id: "timestamp",
-                    desc: false
+                    desc: true
                 }}
                 // Server-side pagination props
                 totalCount={totalCount}
