@@ -1,5 +1,5 @@
-import ClientResourcesTable from "@app/components/ClientResourcesTable";
 import type { InternalResourceRow } from "@app/components/ClientResourcesTable";
+import ClientResourcesTable from "@app/components/ClientResourcesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
@@ -10,7 +10,6 @@ import type { ListAllSiteResourcesByOrgResponse } from "@server/routers/siteReso
 import type { AxiosResponse } from "axios";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { cache } from "react";
 
 export interface ClientResourcesPageProps {
     params: Promise<{ orgId: string }>;
