@@ -48,7 +48,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    const { publicKey, relay, olmVersion, orgId, userToken } = message.data;
+    const { publicKey, relay, olmVersion, olmAgent, orgId, userToken } = message.data;
 
     if (!olm.clientId) {
         logger.warn("Olm client ID not found");
@@ -117,11 +117,12 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    if (olmVersion && olm.version !== olmVersion) {
+    if ((olmVersion && olm.version !== olmVersion) || (olmAgent && olm.agent !== olmAgent)) {
         await db
             .update(olms)
             .set({
-                version: olmVersion
+                version: olmVersion,
+                agent: olmAgent
             })
             .where(eq(olms.olmId, olm.olmId));
     }
@@ -274,7 +275,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
-            relayEndpoint: relayEndpoint, // this can be undefined now if not relayed
+            // relayEndpoint: relayEndpoint, // this can be undefined now if not relayed // lets not do this for now because it would conflict with the hole punch testing
             endpoint: site.endpoint,
             publicKey: site.publicKey,
             serverIP: site.address,

@@ -10,14 +10,11 @@ import {
     clientSiteResourcesAssociationsCache
 } from "@server/db";
 import { clients, clientSitesAssociationsCache, Newt, sites } from "@server/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
-import {
-    generateRemoteSubnets,
-    generateSubnetProxyTargets,
-    SubnetProxyTarget
-} from "@server/lib/ip";
+import { generateSubnetProxyTargets, SubnetProxyTarget } from "@server/lib/ip";
+import config from "@server/lib/config";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -81,7 +78,7 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
 
     if (existingSite.lastHolePunch && now - existingSite.lastHolePunch > 5) {
         logger.warn(
-            `Site ${existingSite.siteId} last hole punch is too old, skipping`
+            `handleGetConfigMessage: Site ${existingSite.siteId} last hole punch is too old, skipping`
         );
         return;
     }
@@ -148,84 +145,77 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         clientsRes
             .filter((client) => {
                 if (!client.clients.pubKey) {
+                    logger.warn(
+                        `Client ${client.clients.clientId} has no public key, skipping`
+                    );
                     return false;
                 }
                 if (!client.clients.subnet) {
+                    logger.warn(
+                        `Client ${client.clients.clientId} has no subnet, skipping`
+                    );
                     return false;
                 }
                 return true;
             })
             .map(async (client) => {
                 // Add or update this peer on the olm if it is connected
-                try {
-                    if (!site.publicKey) {
-                        logger.warn(
-                            `Site ${site.siteId} has no public key, skipping`
-                        );
-                        return null;
-                    }
-                    let endpoint = site.endpoint;
-                    if (client.clientSitesAssociationsCache.isRelayed) {
-                        if (!site.exitNodeId) {
-                            logger.warn(
-                                `Site ${site.siteId} has no exit node, skipping`
-                            );
-                            return null;
-                        }
-
-                        if (!exitNode) {
-                            logger.warn(
-                                `Exit node not found for site ${site.siteId}`
-                            );
-                            return null;
-                        }
-                        endpoint = `${exitNode.endpoint}:21820`;
-                    }
-
-                    if (!endpoint) {
-                        logger.warn(
-                            `In Newt get config: Peer site ${site.siteId} has no endpoint, skipping`
-                        );
-                        return null;
-                    }
-
-                    const allSiteResources = await db // only get the site resources that this client has access to
-                        .select()
-                        .from(siteResources)
-                        .innerJoin(
-                            clientSiteResourcesAssociationsCache,
-                            eq(
-                                siteResources.siteResourceId,
-                                clientSiteResourcesAssociationsCache.siteResourceId
-                            )
-                        )
-                        .where(
-                            and(
-                                eq(siteResources.siteId, site.siteId),
-                                eq(
-                                    clientSiteResourcesAssociationsCache.clientId,
-                                    client.clients.clientId
-                                )
-                            )
-                        );
-
-                    await updatePeer(client.clients.clientId, {
-                        siteId: site.siteId,
-                        endpoint: endpoint,
-                        publicKey: site.publicKey,
-                        serverIP: site.address,
-                        serverPort: site.listenPort,
-                        remoteSubnets: generateRemoteSubnets(
-                            allSiteResources.map(
-                                ({ siteResources }) => siteResources
-                            )
-                        )
-                    });
-                } catch (error) {
-                    logger.error(
-                        `Failed to add/update peer ${client.clients.pubKey} to olm ${newt.newtId}: ${error}`
+                if (!site.publicKey) {
+                    logger.warn(
+                        `Site ${site.siteId} has no public key, skipping`
                     );
+                    return null;
                 }
+
+                if (!exitNode) {
+                    logger.warn(`Exit node not found for site ${site.siteId}`);
+                    return null;
+                }
+
+                if (!site.endpoint) {
+                    logger.warn(
+                        `Site ${site.siteId} has no endpoint, skipping`
+                    );
+                    return null;
+                }
+
+                // const allSiteResources = await db // only get the site resources that this client has access to
+                //     .select()
+                //     .from(siteResources)
+                //     .innerJoin(
+                //         clientSiteResourcesAssociationsCache,
+                //         eq(
+                //             siteResources.siteResourceId,
+                //             clientSiteResourcesAssociationsCache.siteResourceId
+                //         )
+                //     )
+                //     .where(
+                //         and(
+                //             eq(siteResources.siteId, site.siteId),
+                //             eq(
+                //                 clientSiteResourcesAssociationsCache.clientId,
+                //                 client.clients.clientId
+                //             )
+                //         )
+                //     );
+                await updatePeer(client.clients.clientId, {
+                    siteId: site.siteId,
+                    endpoint: site.endpoint,
+                    relayEndpoint: `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`,
+                    publicKey: site.publicKey,
+                    serverIP: site.address,
+                    serverPort: site.listenPort
+                    // remoteSubnets: generateRemoteSubnets(
+                    //     allSiteResources.map(
+                    //         ({ siteResources }) => siteResources
+                    //     )
+                    // ),
+                    // aliases: generateAliasConfig(
+                    //     allSiteResources.map(
+                    //         ({ siteResources }) => siteResources
+                    //     )
+                    // )
+                });
 
                 return {
                     publicKey: client.clients.pubKey!,

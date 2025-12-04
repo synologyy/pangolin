@@ -10,7 +10,7 @@ import {
 import { olms } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -22,7 +22,6 @@ import {
 import { verifyPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import config from "@server/lib/config";
-import { listExitNodes } from "#dynamic/lib/exitNodes";
 
 export const olmGetTokenBodySchema = z.object({
     olmId: z.string(),
@@ -139,7 +138,9 @@ export async function getOlmToken(
             const [client] = await db
                 .select()
                 .from(clients)
-                .where(eq(clients.orgId, orgIdToUse))
+                .where(
+                    and(eq(clients.orgId, orgIdToUse), eq(clients.olmId, olmId))
+                ) // we want to lock on to the client with this olmId otherwise it can get assigned to a random one
                 .limit(1);
 
             if (!client) {

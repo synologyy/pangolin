@@ -108,19 +108,19 @@ export const handleOlmServerPeerAddMessage: MessageHandler = async (
 
     let endpoint: string | null = null;
 
-
+    // TODO: should we pick only the one from the site its talking to instead of any good current session?
     const currentSessionSiteAssociationCaches = await db
         .select()
         .from(clientSitesAssociationsCache)
         .where(
-            and(
+            and( 
                 eq(clientSitesAssociationsCache.clientId, client.clientId),
                 isNotNull(clientSitesAssociationsCache.endpoint),
                 eq(clientSitesAssociationsCache.publicKey, client.pubKey) // limit it to the current session its connected with otherwise the endpoint could be stale
             )
         );
 
-    // pick an endpoint
+    // pick an endpoint 
     for (const assoc of currentSessionSiteAssociationCaches) {
         if (assoc.endpoint) {
             endpoint = assoc.endpoint;

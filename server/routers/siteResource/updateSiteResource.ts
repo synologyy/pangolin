@@ -178,6 +178,30 @@ export async function updateSiteResource(
             );
         }
 
+        // make sure the alias is unique within the org if provided
+        if (alias) {
+            const [conflict] = await db
+                .select()
+                .from(siteResources)
+                .where(
+                    and(
+                        eq(siteResources.orgId, orgId),
+                        eq(siteResources.alias, alias.trim()),
+                        ne(siteResources.siteResourceId, siteResourceId) // exclude self
+                    )
+                )
+                .limit(1);
+
+            if (conflict) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        "Alias already in use by another site resource"
+                    )
+                );
+            }
+        }
+
         let updatedSiteResource: SiteResource | undefined;
         await db.transaction(async (trx) => {
             // Update the site resource
@@ -311,29 +335,23 @@ export async function updateSiteResource(
                         updatePeerData(
                             client.clientId,
                             updatedSiteResource.siteId,
-                            {
+                            destinationChanged ? {
                                 oldRemoteSubnets: generateRemoteSubnets([
                                     existingSiteResource
                                 ]),
                                 newRemoteSubnets: generateRemoteSubnets([
                                     updatedSiteResource
                                 ])
-                            },
-                            {
+                            } : undefined,
+                            aliasChanged ? {
                                 oldAliases: generateAliasConfig([
                                     existingSiteResource
                                 ]),
                                 newAliases: generateAliasConfig([
                                     updatedSiteResource
                                 ])
-                            }
-                        ).catch((error) => {
-                            // this is okay because sometimes the olm is not online to receive the update or associated with the client yet
-                            logger.warn(
-                                `Error updating peer data for client ${client.clientId}:`,
-                                error
-                            );
-                        })
+                            } : undefined
+                        )
                     );
                 }
 

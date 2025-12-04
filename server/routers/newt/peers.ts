@@ -21,7 +21,7 @@ export async function addPeer(
             .where(eq(sites.siteId, siteId))
             .limit(1);
         if (!site) {
-            throw new Error(`Exit node with ID ${siteId} not found`);
+            throw new Error(`Site with ID ${siteId} not found`);
         }
 
         // get the newt on the site
@@ -39,6 +39,8 @@ export async function addPeer(
     await sendToClient(newtId, {
         type: "newt/wg/peer/add",
         data: peer
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Added peer ${peer.publicKey} to newt ${newtId}`);
@@ -75,6 +77,8 @@ export async function deletePeer(siteId: number, publicKey: string, newtId?: str
         data: {
             publicKey
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Deleted peer ${publicKey} from newt ${newtId}`);
@@ -120,6 +124,8 @@ export async function updatePeer(
             publicKey,
             ...peer
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Updated peer ${publicKey} on newt ${newtId}`);

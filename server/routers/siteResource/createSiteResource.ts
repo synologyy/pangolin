@@ -12,7 +12,7 @@ import { siteResources, sites, SiteResource } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { eq, and } from "drizzle-orm";
+import { eq, and, is } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
@@ -64,12 +64,17 @@ const createSiteResourceSchema = z
                     .union([z.ipv4(), z.ipv6()])
                     .safeParse(data.destination).success;
 
+                if (isValidIP) {
+                    return true
+                }
+
                 // Check if it's a valid domain (hostname pattern, TLD not required)
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
+                const isValidAlias = data.alias && domainRegex.test(data.alias);
 
-                return isValidIP || isValidDomain;
+                return isValidDomain && isValidAlias;  // require the alias to be set in the case of domain
             }
             return true;
         },
@@ -193,9 +198,33 @@ export async function createSiteResource(
         //     }
         // }
 
+        // make sure the alias is unique within the org if provided
+        if (alias) {
+            const [conflict] = await db
+                .select()
+                .from(siteResources)
+                .where(
+                    and(
+                        eq(siteResources.orgId, orgId),
+                        eq(siteResources.alias, alias.trim())
+                    )
+                )
+                .limit(1);
+
+            if (conflict) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        "Alias already in use by another site resource"
+                    )
+                );
+            }
+        }
+
         const niceId = await getUniqueSiteResourceName(orgId);
         let aliasAddress: string | null = null;
-        if (mode == "host") { // we can only have an alias on a host
+        if (mode == "host") {
+            // we can only have an alias on a host
             aliasAddress = await getNextAvailableAliasAddress(orgId);
         }
 
@@ -278,7 +307,10 @@ export async function createSiteResource(
                 );
             }
 
-            await rebuildClientAssociationsFromSiteResource(newSiteResource, trx); // we need to call this because we added to the admin role
+            await rebuildClientAssociationsFromSiteResource(
+                newSiteResource,
+                trx
+            ); // we need to call this because we added to the admin role
         });
 
         if (!newSiteResource) {

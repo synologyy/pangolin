@@ -3,7 +3,7 @@ import { clients, olms, newts, sites } from "@server/db";
 import { eq } from "drizzle-orm";
 import { sendToClient } from "#dynamic/routers/ws";
 import logger from "@server/logger";
-import { exit } from "process";
+import { Alias } from "yaml";
 
 export async function addPeer(
     clientId: number,
@@ -11,9 +11,11 @@ export async function addPeer(
         siteId: number;
         publicKey: string;
         endpoint: string;
+        relayEndpoint: string;
         serverIP: string | null;
         serverPort: number | null;
         remoteSubnets: string[] | null; // optional, comma-separated list of subnets that this site can access
+        aliases: Alias[];
     },
     olmId?: string
 ) {
@@ -24,7 +26,7 @@ export async function addPeer(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return; // ignore this because an olm might not be associated with the client anymore
         }
         olmId = olm.olmId;
     }
@@ -35,10 +37,14 @@ export async function addPeer(
             siteId: peer.siteId,
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
+            relayEndpoint: peer.relayEndpoint,
             serverIP: peer.serverIP,
             serverPort: peer.serverPort,
-            remoteSubnets: peer.remoteSubnets // optional, comma-separated list of subnets that this site can access
+            remoteSubnets: peer.remoteSubnets, // optional, comma-separated list of subnets that this site can access
+            aliases: peer.aliases
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Added peer ${peer.publicKey} to olm ${olmId}`);
@@ -57,7 +63,7 @@ export async function deletePeer(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return;
         }
         olmId = olm.olmId;
     }
@@ -68,6 +74,8 @@ export async function deletePeer(
             publicKey,
             siteId: siteId
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Deleted peer ${publicKey} from olm ${olmId}`);
@@ -79,9 +87,11 @@ export async function updatePeer(
         siteId: number;
         publicKey: string;
         endpoint: string;
+        relayEndpoint?: string;
         serverIP?: string | null;
         serverPort?: number | null;
         remoteSubnets?: string[] | null; // optional, comma-separated list of subnets that
+        aliases?: Alias[] | null;
     },
     olmId?: string
 ) {
@@ -92,7 +102,7 @@ export async function updatePeer(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return
         }
         olmId = olm.olmId;
     }
@@ -103,14 +113,17 @@ export async function updatePeer(
             siteId: peer.siteId,
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
-            relayEndpoint: peer.serverIP,
+            relayEndpoint: peer.relayEndpoint,
             serverIP: peer.serverIP,
             serverPort: peer.serverPort,
-            remoteSubnets: peer.remoteSubnets
+            remoteSubnets: peer.remoteSubnets,
+            aliases: peer.aliases
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
-    logger.info(`Added peer ${peer.publicKey} to olm ${olmId}`);
+    logger.info(`Updated peer ${peer.publicKey} on olm ${olmId}`);
 }
 
 export async function initPeerAddHandshake(
@@ -131,7 +144,7 @@ export async function initPeerAddHandshake(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return;
         }
         olmId = olm.olmId;
     }
@@ -145,6 +158,8 @@ export async function initPeerAddHandshake(
                 endpoint: peer.exitNode.endpoint
             }
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
     logger.info(`Initiated peer add handshake for site ${peer.siteId} to olm ${olmId}`);

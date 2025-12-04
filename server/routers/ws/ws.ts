@@ -95,6 +95,8 @@ const sendToClient = async (clientId: string, message: WSMessage): Promise<boole
     // Try to send locally first
     const localSent = await sendToClientLocal(clientId, message);
 
+    logger.debug(`sendToClient: Message type ${message.type} sent to clientId ${clientId}`);
+
     return localSent;
 };
 

@@ -371,6 +371,9 @@ const sendToClientLocal = async (
             client.send(messageString);
         }
     });
+
+    logger.debug(`sendToClient: Message type ${message.type} sent to clientId ${clientId}`);
+
     return true;
 };
 

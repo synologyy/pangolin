@@ -630,7 +630,7 @@ export const idpOrg = pgTable("idpOrg", {
 });
 
 export const clients = pgTable("clients", {
-    clientId: serial("id").primaryKey(),
+    clientId: serial("clientId").primaryKey(),
     orgId: varchar("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -684,6 +684,7 @@ export const olms = pgTable("olms", {
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
     version: text("version"),
+    agent: text("agent"),
     name: varchar("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
         // we will switch this depending on the current org it wants to connect to

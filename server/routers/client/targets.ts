@@ -1,6 +1,7 @@
 import { sendToClient } from "#dynamic/routers/ws";
 import { db, olms } from "@server/db";
 import { Alias, SubnetProxyTarget } from "@server/lib/ip";
+import logger from "@server/logger";
 import { eq } from "drizzle-orm";
 
 export async function addTargets(newtId: string, targets: SubnetProxyTarget[]) {
@@ -30,6 +31,8 @@ export async function updateTargets(
     await sendToClient(newtId, {
         type: `newt/wg/targets/update`,
         data: targets
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 }
 
@@ -47,7 +50,7 @@ export async function addPeerData(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return; // ignore this because an olm might not be associated with the client anymore
         }
         olmId = olm.olmId;
     }
@@ -59,6 +62,8 @@ export async function addPeerData(
             remoteSubnets: remoteSubnets,
             aliases: aliases
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 }
 
@@ -76,7 +81,7 @@ export async function removePeerData(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return;
         }
         olmId = olm.olmId;
     }
@@ -88,6 +93,8 @@ export async function removePeerData(
             remoteSubnets: remoteSubnets,
             aliases: aliases
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 }
 
@@ -95,13 +102,13 @@ export async function updatePeerData(
     clientId: number,
     siteId: number,
     remoteSubnets: {
-        oldRemoteSubnets: string[],
-        newRemoteSubnets: string[]
-    },
+        oldRemoteSubnets: string[];
+        newRemoteSubnets: string[];
+    } | undefined,
     aliases: {
-        oldAliases: Alias[],
-        newAliases: Alias[]
-    },
+        oldAliases: Alias[];
+        newAliases: Alias[];
+    } | undefined,
     olmId?: string
 ) {
     if (!olmId) {
@@ -111,7 +118,7 @@ export async function updatePeerData(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            throw new Error(`Olm with ID ${clientId} not found`);
+            return;
         }
         olmId = olm.olmId;
     }
@@ -123,5 +130,7 @@ export async function updatePeerData(
             ...remoteSubnets,
             ...aliases
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 }

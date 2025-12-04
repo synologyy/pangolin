@@ -336,7 +336,7 @@ export const newts = sqliteTable("newt", {
 });
 
 export const clients = sqliteTable("clients", {
-    clientId: integer("id").primaryKey({ autoIncrement: true }),
+    clientId: integer("clientId").primaryKey({ autoIncrement: true }),
     orgId: text("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -392,6 +392,7 @@ export const olms = sqliteTable("olms", {
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
     version: text("version"),
+    agent: text("agent"),
     name: text("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
         // we will switch this depending on the current org it wants to connect to

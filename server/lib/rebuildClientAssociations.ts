@@ -15,7 +15,6 @@ import {
     sites,
     Transaction,
     userOrgs,
-    users,
     userSiteResources
 } from "@server/db";
 import { and, eq, inArray, ne } from "drizzle-orm";
@@ -26,7 +25,6 @@ import {
 } from "@server/routers/newt/peers";
 import {
     initPeerAddHandshake as holepunchSiteAdd,
-    addPeer as olmAddPeer,
     deletePeer as olmDeletePeer
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
@@ -35,7 +33,6 @@ import {
     generateAliasConfig,
     generateRemoteSubnets,
     generateSubnetProxyTargets,
-    SubnetProxyTarget
 } from "@server/lib/ip";
 import {
     addPeerData,
@@ -95,7 +92,12 @@ export async function getClientSiteResourceAccess(
             subnet: clients.subnet
         })
         .from(clients)
-        .where(inArray(clients.userId, newAllUserIds));
+        .where(
+            and(
+                inArray(clients.userId, newAllUserIds),
+                eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+            )
+        );
 
     const allClientSiteResources = await trx // this is for if a client is directly associated with a resource instead of implicitly via a user
         .select()
@@ -107,14 +109,21 @@ export async function getClientSiteResourceAccess(
     const directClientIds = allClientSiteResources.map((row) => row.clientId);
 
     // Get full client details for directly associated clients
-    const directClients = await trx
-        .select({
-            clientId: clients.clientId,
-            pubKey: clients.pubKey,
-            subnet: clients.subnet
-        })
-        .from(clients)
-        .where(inArray(clients.clientId, directClientIds));
+    const directClients = directClientIds.length > 0
+        ? await trx
+              .select({
+                  clientId: clients.clientId,
+                  pubKey: clients.pubKey,
+                  subnet: clients.subnet
+              })
+              .from(clients)
+              .where(
+                  and(
+                      inArray(clients.clientId, directClientIds),
+                      eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+                  )
+              )
+        : [];
 
     // Merge user-based clients with directly associated clients
     const allClientsMap = new Map(
@@ -717,7 +726,16 @@ export async function rebuildClientAssociationsFromClient(
     const directSiteResources = await trx
         .select({ siteResourceId: clientSiteResources.siteResourceId })
         .from(clientSiteResources)
-        .where(eq(clientSiteResources.clientId, client.clientId));
+        .innerJoin(
+            siteResources,
+            eq(siteResources.siteResourceId, clientSiteResources.siteResourceId)
+        )
+        .where(
+            and(
+                eq(clientSiteResources.clientId, client.clientId),
+                eq(siteResources.orgId, client.orgId) // filter by org to prevent cross-org associations
+            )
+        );
 
     newSiteResourceIds.push(
         ...directSiteResources.map((r) => r.siteResourceId)
@@ -763,7 +781,16 @@ export async function rebuildClientAssociationsFromClient(
             const roleSiteResourceIds = await trx
                 .select({ siteResourceId: roleSiteResources.siteResourceId })
                 .from(roleSiteResources)
-                .where(inArray(roleSiteResources.roleId, roleIds));
+                .innerJoin(
+                    siteResources,
+                    eq(siteResources.siteResourceId, roleSiteResources.siteResourceId)
+                )
+                .where(
+                    and(
+                        inArray(roleSiteResources.roleId, roleIds),
+                        eq(siteResources.orgId, client.orgId) // filter by org to prevent cross-org associations
+                    )
+                );
 
             newSiteResourceIds.push(
                 ...roleSiteResourceIds.map((r) => r.siteResourceId)

@@ -433,12 +433,15 @@ export function generateSubnetProxyTargets(
         const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
 
         if (siteResource.mode == "host") {
+            let destination = siteResource.destination;
             // check if this is a valid ip
             const ipSchema = z.union([z.ipv4(), z.ipv6()]);
-            if (ipSchema.safeParse(siteResource.destination).success) {
+            if (ipSchema.safeParse(destination).success) {
+                destination = `${destination}/32`;
+
                 targets.push({
                     sourcePrefix: clientPrefix,
-                    destPrefix: `${siteResource.destination}/32`
+                    destPrefix: destination
                 });
             }
 
@@ -447,7 +450,7 @@ export function generateSubnetProxyTargets(
                 targets.push({
                     sourcePrefix: clientPrefix,
                     destPrefix: `${siteResource.aliasAddress}/32`,
-                    rewriteTo: `${siteResource.destination}/32`
+                    rewriteTo: destination
                 });
             }
         } else if (siteResource.mode == "cidr") {
@@ -459,9 +462,9 @@ export function generateSubnetProxyTargets(
     }
 
     // print a nice representation of the targets
-    logger.debug(
-        `Generated subnet proxy targets for: ${JSON.stringify(targets, null, 2)}`
-    );
+    // logger.debug(
+    //     `Generated subnet proxy targets for: ${JSON.stringify(targets, null, 2)}`
+    // );
 
     return targets;
 }
