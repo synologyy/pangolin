@@ -307,109 +307,118 @@ export function SidebarNav({
         );
 
         if (isCollapsed) {
-            // If item has nested items, show popover instead of tooltip
+            // If item has nested items, show both tooltip and popover
             if (hasNestedItems) {
                 return (
-                    <Popover key={item.title}>
-                        <PopoverTrigger asChild>
-                            <button
-                                className={cn(
-                                    "flex items-center rounded transition-colors hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md px-2 py-2 justify-center w-full",
-                                    isChildActive
-                                        ? "text-primary font-medium"
-                                        : "text-muted-foreground hover:text-foreground",
-                                    isDisabled && "cursor-not-allowed opacity-60"
-                                )}
-                                disabled={isDisabled}
-                            >
-                                {item.icon && (
-                                    <span className="flex-shrink-0">
-                                        {item.icon}
-                                    </span>
-                                )}
-                            </button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                            side="right"
-                            align="start"
-                            className="w-56 p-1"
-                        >
-                            <div className="space-y-1">
-                                {item.items!.map((childItem) => {
-                                    const childHydratedHref = hydrateHref(
-                                        childItem.href
-                                    );
-                                    const childIsActive = childHydratedHref
-                                        ? pathname.startsWith(
-                                              childHydratedHref
-                                          )
-                                        : false;
-                                    const childIsEE =
-                                        build === "enterprise" &&
-                                        childItem.showEE &&
-                                        !isUnlocked();
-                                    const childIsDisabled =
-                                        disabled || childIsEE;
-
-                                    if (!childHydratedHref) {
-                                        return null;
-                                    }
-
-                                    return (
-                                        <Link
-                                            key={childItem.title}
-                                            href={
-                                                childIsDisabled
-                                                    ? "#"
-                                                    : childHydratedHref
-                                            }
+                    <TooltipProvider key={item.title}>
+                        <Tooltip>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <TooltipTrigger asChild>
+                                        <button
                                             className={cn(
-                                                "flex items-center rounded transition-colors px-3 py-1.5 text-sm",
-                                                childIsActive
-                                                    ? "bg-secondary text-primary font-medium"
-                                                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
-                                                childIsDisabled &&
-                                                    "cursor-not-allowed opacity-60"
+                                                "flex items-center rounded transition-colors hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md px-2 py-2 justify-center w-full",
+                                                isChildActive
+                                                    ? "text-primary font-medium"
+                                                    : "text-muted-foreground hover:text-foreground",
+                                                isDisabled && "cursor-not-allowed opacity-60"
                                             )}
-                                            onClick={(e) => {
-                                                if (childIsDisabled) {
-                                                    e.preventDefault();
-                                                } else if (onItemClick) {
-                                                    onItemClick();
-                                                }
-                                            }}
+                                            disabled={isDisabled}
                                         >
-                                            {childItem.icon && (
-                                                <span className="flex-shrink-0 mr-2">
-                                                    {childItem.icon}
+                                            {item.icon && (
+                                                <span className="flex-shrink-0">
+                                                    {item.icon}
                                                 </span>
                                             )}
-                                            <div className="flex items-center gap-1.5 flex-1">
-                                                <span>{t(childItem.title)}</span>
-                                                {childItem.isBeta && (
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="text-muted-foreground"
-                                                    >
-                                                        {t("beta")}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            {build === "enterprise" &&
+                                        </button>
+                                    </TooltipTrigger>
+                                </PopoverTrigger>
+                                <TooltipContent side="right" sideOffset={8}>
+                                    <p>{tooltipText}</p>
+                                </TooltipContent>
+                                <PopoverContent
+                                    side="right"
+                                    align="start"
+                                    className="w-56 p-1"
+                                >
+                                    <div className="space-y-1">
+                                        {item.items!.map((childItem) => {
+                                            const childHydratedHref = hydrateHref(
+                                                childItem.href
+                                            );
+                                            const childIsActive = childHydratedHref
+                                                ? pathname.startsWith(
+                                                      childHydratedHref
+                                                  )
+                                                : false;
+                                            const childIsEE =
+                                                build === "enterprise" &&
                                                 childItem.showEE &&
-                                                !isUnlocked() && (
-                                                    <Badge
-                                                        variant="outlinePrimary"
-                                                    >
-                                                        {t("licenseBadge")}
-                                                    </Badge>
-                                                )}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                                                !isUnlocked();
+                                            const childIsDisabled =
+                                                disabled || childIsEE;
+
+                                            if (!childHydratedHref) {
+                                                return null;
+                                            }
+
+                                            return (
+                                                <Link
+                                                    key={childItem.title}
+                                                    href={
+                                                        childIsDisabled
+                                                            ? "#"
+                                                            : childHydratedHref
+                                                    }
+                                                    className={cn(
+                                                        "flex items-center rounded transition-colors px-3 py-1.5 text-sm",
+                                                        childIsActive
+                                                            ? "bg-secondary text-primary font-medium"
+                                                            : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                                                        childIsDisabled &&
+                                                            "cursor-not-allowed opacity-60"
+                                                    )}
+                                                    onClick={(e) => {
+                                                        if (childIsDisabled) {
+                                                            e.preventDefault();
+                                                        } else if (onItemClick) {
+                                                            onItemClick();
+                                                        }
+                                                    }}
+                                                >
+                                                    {childItem.icon && (
+                                                        <span className="flex-shrink-0 mr-2">
+                                                            {childItem.icon}
+                                                        </span>
+                                                    )}
+                                                    <div className="flex items-center gap-1.5 flex-1">
+                                                        <span>{t(childItem.title)}</span>
+                                                        {childItem.isBeta && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="text-muted-foreground"
+                                                            >
+                                                                {t("beta")}
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                    {build === "enterprise" &&
+                                                        childItem.showEE &&
+                                                        !isUnlocked() && (
+                                                            <Badge
+                                                                variant="outlinePrimary"
+                                                            >
+                                                                {t("licenseBadge")}
+                                                            </Badge>
+                                                        )}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        </Tooltip>
+                    </TooltipProvider>
                 );
             }
 
