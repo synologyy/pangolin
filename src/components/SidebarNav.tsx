@@ -194,10 +194,13 @@ export function SidebarNav({
     ): React.ReactNode => {
         const hydratedHref = hydrateHref(item.href);
         const hasNestedItems = item.items && item.items.length > 0;
-        const isActive = hydratedHref ? pathname.startsWith(hydratedHref) : false;
-        const isChildActive = hasNestedItems ? isItemOrChildActive(item) : false;
-        const isEE =
-            build === "enterprise" && item.showEE && !isUnlocked();
+        const isActive = hydratedHref
+            ? pathname.startsWith(hydratedHref)
+            : false;
+        const isChildActive = hasNestedItems
+            ? isItemOrChildActive(item)
+            : false;
+        const isEE = build === "enterprise" && item.showEE && !isUnlocked();
         const isDisabled = disabled || isEE;
         const tooltipText =
             item.showEE && !isUnlocked()
@@ -296,13 +299,9 @@ export function SidebarNav({
                         </Badge>
                     )}
                 </div>
-                {build === "enterprise" &&
-                    item.showEE &&
-                    !isUnlocked() && (
-                        <Badge variant="outlinePrimary">
-                            {t("licenseBadge")}
-                        </Badge>
-                    )}
+                {build === "enterprise" && item.showEE && !isUnlocked() && (
+                    <Badge variant="outlinePrimary">{t("licenseBadge")}</Badge>
+                )}
             </div>
         );
 
@@ -321,7 +320,8 @@ export function SidebarNav({
                                                 isChildActive
                                                     ? "text-primary font-medium"
                                                     : "text-muted-foreground hover:text-foreground",
-                                                isDisabled && "cursor-not-allowed opacity-60"
+                                                isDisabled &&
+                                                    "cursor-not-allowed opacity-60"
                                             )}
                                             disabled={isDisabled}
                                         >
@@ -343,14 +343,14 @@ export function SidebarNav({
                                 >
                                     <div className="space-y-1">
                                         {item.items!.map((childItem) => {
-                                            const childHydratedHref = hydrateHref(
-                                                childItem.href
-                                            );
-                                            const childIsActive = childHydratedHref
-                                                ? pathname.startsWith(
-                                                      childHydratedHref
-                                                  )
-                                                : false;
+                                            const childHydratedHref =
+                                                hydrateHref(childItem.href);
+                                            const childIsActive =
+                                                childHydratedHref
+                                                    ? pathname.startsWith(
+                                                          childHydratedHref
+                                                      )
+                                                    : false;
                                             const childIsEE =
                                                 build === "enterprise" &&
                                                 childItem.showEE &&
@@ -381,7 +381,9 @@ export function SidebarNav({
                                                     onClick={(e) => {
                                                         if (childIsDisabled) {
                                                             e.preventDefault();
-                                                        } else if (onItemClick) {
+                                                        } else if (
+                                                            onItemClick
+                                                        ) {
                                                             onItemClick();
                                                         }
                                                     }}
@@ -392,7 +394,9 @@ export function SidebarNav({
                                                         </span>
                                                     )}
                                                     <div className="flex items-center gap-1.5 flex-1">
-                                                        <span>{t(childItem.title)}</span>
+                                                        <span>
+                                                            {t(childItem.title)}
+                                                        </span>
                                                         {childItem.isBeta && (
                                                             <Badge
                                                                 variant="outline"
@@ -405,10 +409,10 @@ export function SidebarNav({
                                                     {build === "enterprise" &&
                                                         childItem.showEE &&
                                                         !isUnlocked() && (
-                                                            <Badge
-                                                                variant="outlinePrimary"
-                                                            >
-                                                                {t("licenseBadge")}
+                                                            <Badge variant="outlinePrimary">
+                                                                {t(
+                                                                    "licenseBadge"
+                                                                )}
                                                             </Badge>
                                                         )}
                                                 </Link>
@@ -435,9 +439,7 @@ export function SidebarNav({
             );
         }
 
-        return (
-            <React.Fragment key={item.title}>{itemContent}</React.Fragment>
-        );
+        return <React.Fragment key={item.title}>{itemContent}</React.Fragment>;
     };
 
     return (
@@ -453,7 +455,7 @@ export function SidebarNav({
                 <div key={section.heading} className="mb-2">
                     {!isCollapsed && (
                         <div className="px-3 py-1 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wide">
-                            {section.heading}
+                            {t(`${section.heading}`)}
                         </div>
                     )}
                     <div className="flex flex-col gap-1">

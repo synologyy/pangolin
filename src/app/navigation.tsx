@@ -20,7 +20,8 @@ import {
     ScanEye,
     GlobeLock,
     Smartphone,
-    Laptop
+    Laptop,
+    ChartLine
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -40,7 +41,7 @@ export const orgLangingNavItems: SidebarNavItem[] = [
 
 export const orgNavSections = (): SidebarNavSection[] => [
     {
-        heading: "General",
+        heading: "sidebarGeneral",
         items: [
             {
                 title: "sidebarSites",
@@ -103,7 +104,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
         ]
     },
     {
-        heading: "Access Control",
+        heading: "accessControls",
         items: [
             {
                 title: "sidebarUsers",
@@ -144,7 +145,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
         ]
     },
     {
-        heading: "Analytics",
+        heading: "sidebarLogsAndAnalytics",
         items: (() => {
             const logItems: SidebarNavItem[] = [
                 {
@@ -168,13 +169,20 @@ export const orgNavSections = (): SidebarNavSection[] => [
                     : [])
             ];
 
+            const analytics = {
+                title: "sidebarLogsAnalytics",
+                href: "/{orgId}/settings/logs/analytics",
+                icon: <ChartLine className="h-4 w-4" />
+            };
+
             // If only one log item, return it directly without grouping
             if (logItems.length === 1) {
-                return logItems;
+                return [analytics, ...logItems];
             }
 
             // If multiple log items, create a group
             return [
+                analytics,
                 {
                     title: "sidebarLogs",
                     icon: <Logs className="size-4 flex-none" />,
@@ -184,7 +192,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
         })()
     },
     {
-        heading: "Organization",
+        heading: "sidebarOrganization",
         items: [
             {
                 title: "sidebarApiKeys",
@@ -220,7 +228,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
 
 export const adminNavSections: SidebarNavSection[] = [
     {
-        heading: "Admin",
+        heading: "sidebarAdmin",
         items: [
             {
                 title: "sidebarAllUsers",

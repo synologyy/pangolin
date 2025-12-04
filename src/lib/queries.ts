@@ -10,10 +10,12 @@ import type {
 import type { ListUsersResponse } from "@server/routers/user";
 import type ResponseT from "@server/types/Response";
 import { keepPreviousData, queryOptions } from "@tanstack/react-query";
-import type { AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 import z from "zod";
 import { remote } from "./api";
 import { durationToMs } from "./durationToMs";
+import type { QueryRequestAnalyticsResponse } from "@server/routers/auditLogs";
+import type { ListResourceNamesResponse } from "@server/routers/resource";
 
 export type ProductUpdate = {
     link: string | null;
@@ -140,6 +142,59 @@ export const orgQueries = {
         })
 };
 
+export const logAnalyticsFiltersSchema = z.object({
+    timeStart: z
+        .string()
+        .refine((val) => !isNaN(Date.parse(val)), {
+            error: "timeStart must be a valid ISO date string"
+        })
+        .optional(),
+    timeEnd: z
+        .string()
+        .refine((val) => !isNaN(Date.parse(val)), {
+            error: "timeEnd must be a valid ISO date string"
+        })
+        .optional(),
+    resourceId: z
+        .string()
+        .optional()
+        .transform(Number)
+        .pipe(z.int().positive())
+        .optional()
+});
+
+export type LogAnalyticsFilters = z.TypeOf<typeof logAnalyticsFiltersSchema>;
+
+export const logQueries = {
+    requestAnalytics: ({
+        orgId,
+        filters,
+        api
+    }: {
+        orgId: string;
+        filters: LogAnalyticsFilters;
+        api: AxiosInstance;
+    }) =>
+        queryOptions({
+            queryKey: ["REQUEST_LOG_ANALYTICS", orgId, filters] as const,
+            queryFn: async ({ signal }) => {
+                const res = await api.get<
+                    AxiosResponse<QueryRequestAnalyticsResponse>
+                >(`/org/${orgId}/logs/analytics`, {
+                    params: filters,
+                    signal
+                });
+                return res.data.data;
+            },
+            refetchInterval: (query) => {
+                if (query.state.data) {
+                    return durationToMs(30, "seconds");
+                }
+                return false;
+            }
+        })
+};
+
 export const resourceQueries = {
     resourceUsers: ({ resourceId }: { resourceId: number }) =>
         queryOptions({
@@ -171,6 +226,18 @@ export const resourceQueries = {
                 >(`/site-resource/${resourceId}/clients`, { signal });
 
                 return res.data.data.clients;
+            }
+        }),
+    listNamesPerOrg: (orgId: string, api: AxiosInstance) =>
+        queryOptions({
+            queryKey: ["RESOURCES_NAMES", orgId] as const,
+            queryFn: async ({ signal }) => {
+                const res = await api.get<
+                    AxiosResponse<ListResourceNamesResponse>
+                >(`/org/${orgId}/resource-names`, {
+                    signal
+                });
+                return res.data.data;
             }
         })
 };

@@ -29,3 +29,4 @@ export * from "./addRoleToResource";
 export * from "./removeRoleFromResource";
 export * from "./addUserToResource";
 export * from "./removeUserFromResource";
+export * from "./listAllResourceNames";

@@ -71,10 +71,6 @@ export function LayoutSidebar({
         }
     };
 
-    useEffect(() => {
-        setSidebarStateCookie(isSidebarCollapsed);
-    }, [isSidebarCollapsed]);
-
     // Auto-collapse sidebar at 1650px or less, but only if no cookie preference exists
     useEffect(() => {
         if (hasManualToggle) {
@@ -255,8 +251,10 @@ export function LayoutSidebar({
                     <TooltipTrigger asChild>
                         <button
                             onClick={() => {
-                                setIsSidebarCollapsed(!isSidebarCollapsed);
+                                const newCollapsedState = !isSidebarCollapsed;
+                                setIsSidebarCollapsed(newCollapsedState);
                                 setHasManualToggle(true);
+                                setSidebarStateCookie(newCollapsedState);
                             }}
                             className="cursor-pointer absolute -right-2.5 top-1/2 transform -translate-y-1/2 w-2 h-8 rounded-full flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-110 group z-1"
                             aria-label={

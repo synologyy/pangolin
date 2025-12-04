@@ -98,7 +98,7 @@ import { ListTargetsResponse } from "@server/routers/target";
 import { DockerManager, DockerState } from "@app/lib/docker";
 import { parseHostTarget } from "@app/lib/parseHostTarget";
 import { toASCII, toUnicode } from "punycode";
-import { DomainRow } from "../../../../../components/DomainsTable";
+import { DomainRow } from "@app/components/DomainsTable";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 import {
     Tooltip,
