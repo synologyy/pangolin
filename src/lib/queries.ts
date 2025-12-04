@@ -219,7 +219,7 @@ export const resourceQueries = {
         }),
     resourceClients: ({ resourceId }: { resourceId: number }) =>
         queryOptions({
-            queryKey: ["RESOURCES", resourceId, "ROLES"] as const,
+            queryKey: ["RESOURCES", resourceId, "CLIENTS"] as const,
             queryFn: async ({ signal, meta }) => {
                 const res = await meta!.api.get<
                     AxiosResponse<ListSiteResourceClientsResponse>
