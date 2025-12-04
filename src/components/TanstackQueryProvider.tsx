@@ -19,7 +19,7 @@ export function TanstackQueryProvider({ children }: ReactQueryProviderProps) {
                 defaultOptions: {
                     queries: {
                         retry: 2, // retry twice by default
-                        staleTime: durationToMs(5, "minutes"),
+                        staleTime: 0,
                         meta: {
                             api
                         }
