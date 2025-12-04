@@ -871,3 +871,17 @@ authenticated.get(
     logActionAudit(ActionsEnum.exportLogs),
     logs.exportRequestAuditLogs
 );
+
+authenticated.get(
+    "/org/:orgId/logs/analytics",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAnalytics
+);
+
+authenticated.get(
+    "/org/:orgId/resource-names",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResources),
+    resource.listAllResourceNames
+);

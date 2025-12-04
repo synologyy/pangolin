@@ -139,9 +139,6 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 }
             }
 
-            console.log({
-                endDate
-            });
             newSearch.set("timeEnd", endDate.toISOString());
         }
         router.replace(`${path}?${newSearch.toString()}`);

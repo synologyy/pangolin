@@ -1,26 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, resourceHeaderAuth } from "@server/db";
-import {
-    resources,
-    userResources,
-    roleResources,
-    resourcePassword,
-    resourcePincode,
-    targets,
-    targetHealthCheck
-} from "@server/db";
+import { db } from "@server/db";
+import { resources } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { sql, eq, or, inArray, and, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
-import type {
-    ResourceWithTargets,
-    ListResourcesResponse
-} from "./listResources";
 
 const listResourcesParamsSchema = z.strictObject({
     orgId: z.string()
