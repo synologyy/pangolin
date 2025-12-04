@@ -1825,7 +1825,9 @@ export default function ReverseProxyTargets(props: {
                         hcMode: selectedTargetForHealthCheck.hcMode || "http",
                         hcUnhealthyInterval:
                             selectedTargetForHealthCheck.hcUnhealthyInterval ||
-                            30
+                            30,
+                        hcTlsServerName: selectedTargetForHealthCheck.hcTlsServerName ||
+                            undefined,
                     }}
                     onChanges={async (config) => {
                         console.log("here");
