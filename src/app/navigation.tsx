@@ -17,7 +17,8 @@ import {
     CreditCard,
     Logs,
     SquareMousePointer,
-    ScanEye
+    ScanEye,
+    ChartLine
 } from "lucide-react";
 
 export type SidebarNavSection = {
@@ -39,7 +40,7 @@ export const orgNavSections = (
     enableClients: boolean = true
 ): SidebarNavSection[] => [
     {
-        heading: "General",
+        heading: "sidebarGeneral",
         items: [
             {
                 title: "sidebarSites",
@@ -61,7 +62,7 @@ export const orgNavSections = (
                       }
                   ]
                 : []),
-            ...(build == "saas"
+            ...(build === "saas"
                 ? [
                       {
                           title: "sidebarRemoteExitNodes",
@@ -84,7 +85,7 @@ export const orgNavSections = (
         ]
     },
     {
-        heading: "Access Control",
+        heading: "sidebarAccessControl",
         items: [
             {
                 title: "sidebarUsers",
@@ -119,12 +120,17 @@ export const orgNavSections = (
         ]
     },
     {
-        heading: "Analytics",
+        heading: "sidebarLogAndAnalytics",
         items: [
             {
                 title: "sidebarLogsRequest",
                 href: "/{orgId}/settings/logs/request",
                 icon: <SquareMousePointer className="h-4 w-4" />
+            },
+            {
+                title: "sidebarLogsAnalytics",
+                href: "/{orgId}/settings/logs/analytics",
+                icon: <ChartLine className="h-4 w-4" />
             },
             ...(build != "oss"
                 ? [
@@ -143,7 +149,7 @@ export const orgNavSections = (
         ]
     },
     {
-        heading: "Organization",
+        heading: "sidebarOrganization",
         items: [
             {
                 title: "sidebarApiKeys",

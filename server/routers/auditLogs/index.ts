@@ -1,2 +1,3 @@
-export * from "./queryRequstAuditLog";
-export * from "./exportRequstAuditLog";
+export * from "./queryRequestAuditLog";
+export * from "./queryRequestAnalytics";
+export * from "./exportRequestAuditLog";

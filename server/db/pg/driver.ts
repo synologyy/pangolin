@@ -13,9 +13,12 @@ function createDb() {
                 connection_string: process.env.POSTGRES_CONNECTION_STRING
             };
             if (process.env.POSTGRES_REPLICA_CONNECTION_STRINGS) {
-                const replicas = process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(",").map((conn) => ({
-                    connection_string: conn.trim()
-                }));
+                const replicas =
+                    process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(
+                        ","
+                    ).map((conn) => ({
+                        connection_string: conn.trim()
+                    }));
                 config.postgres.replicas = replicas;
             }
         } else {
@@ -40,28 +43,44 @@ function createDb() {
         connectionString,
         max: poolConfig?.max_connections || 20,
         idleTimeoutMillis: poolConfig?.idle_timeout_ms || 30000,
-        connectionTimeoutMillis: poolConfig?.connection_timeout_ms || 5000,
+        connectionTimeoutMillis: poolConfig?.connection_timeout_ms || 5000
     });
 
     const replicas = [];
 
     if (!replicaConnections.length) {
-        replicas.push(DrizzlePostgres(primaryPool));
+        replicas.push(
+            DrizzlePostgres(primaryPool, {
+                logger: process.env.NODE_ENV === "development"
+            })
+        );
     } else {
         for (const conn of replicaConnections) {
             const replicaPool = new Pool({
                 connectionString: conn.connection_string,
                 max: poolConfig?.max_replica_connections || 20,
                 idleTimeoutMillis: poolConfig?.idle_timeout_ms || 30000,
-                connectionTimeoutMillis: poolConfig?.connection_timeout_ms || 5000,
+                connectionTimeoutMillis:
+                    poolConfig?.connection_timeout_ms || 5000
             });
-            replicas.push(DrizzlePostgres(replicaPool));
+            replicas.push(
+                DrizzlePostgres(replicaPool, {
+                    logger: process.env.NODE_ENV === "development"
+                })
+            );
         }
     }
 
-    return withReplicas(DrizzlePostgres(primaryPool), replicas as any);
+    return withReplicas(
+        DrizzlePostgres(primaryPool, {
+            logger: process.env.NODE_ENV === "development"
+        }),
+        replicas as any
+    );
 }
 
 export const db = createDb();
 export default db;
-export type Transaction = Parameters<Parameters<typeof db["transaction"]>[0]>[0];
+export type Transaction = Parameters<
+    Parameters<(typeof db)["transaction"]>[0]
+>[0];
