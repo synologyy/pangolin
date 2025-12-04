@@ -66,7 +66,8 @@ export async function addTargets(
             hcUnhealthyInterval: hc.hcUnhealthyInterval, // in seconds
             hcTimeout: hc.hcTimeout, // in seconds
             hcHeaders: hcHeadersSend,
-            hcMethod: hc.hcMethod
+            hcMethod: hc.hcMethod,
+            hcTlsServerName: hc.hcTlsServerName,
         };
     });
 

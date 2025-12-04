@@ -57,6 +57,7 @@ function queryTargets(resourceId: number) {
             hcMethod: targetHealthCheck.hcMethod,
             hcStatus: targetHealthCheck.hcStatus,
             hcHealth: targetHealthCheck.hcHealth,
+            hcTlsServerName: targetHealthCheck.hcTlsServerName,
             path: targets.path,
             pathMatchType: targets.pathMatchType,
             rewritePath: targets.rewritePath,
