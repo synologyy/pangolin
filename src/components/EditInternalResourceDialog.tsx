@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@app/components/ui/button";
 import { Input } from "@app/components/ui/input";
 import {
@@ -45,7 +45,7 @@ import { ListClientsResponse } from "@server/routers/client/listClients";
 import { Tag, TagInput } from "@app/components/tags/tag-input";
 import { AxiosResponse } from "axios";
 import { UserType } from "@server/types/UserTypes";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { orgQueries, resourceQueries } from "@app/lib/queries";
 
 type InternalResourceData = {
@@ -157,42 +157,92 @@ export default function EditInternalResourceDialog({
 
     type FormData = z.infer<typeof formSchema>;
 
-    const { data: rolesResponse = [] } = useQuery(orgQueries.roles({ orgId }));
+    const queries = useQueries({
+        queries: [
+            orgQueries.roles({ orgId }),
+            orgQueries.users({ orgId }),
+            orgQueries.clients({
+                orgId,
+                filters: {
+                    filter: "machine"
+                }
+            }),
+            resourceQueries.resourceUsers({ resourceId: resource.id }),
+            resourceQueries.resourceRoles({ resourceId: resource.id }),
+            resourceQueries.resourceClients({ resourceId: resource.id })
+        ],
+        combine: (results) => {
+            const [
+                rolesQuery,
+                usersQuery,
+                clientsQuery,
+                resourceUsersQuery,
+                resourceRolesQuery,
+                resourceClientsQuery
+            ] = results;
 
-    const allRoles = rolesResponse
-        .map((role) => ({
-            id: role.roleId.toString(),
-            text: role.name
-        }))
-        .filter((role) => role.text !== "Admin");
+            const allRoles = (rolesQuery.data ?? [])
+                .map((role) => ({
+                    id: role.roleId.toString(),
+                    text: role.name
+                }))
+                .filter((role) => role.text !== "Admin");
 
-    const { data: usersResponse = [] } = useQuery(orgQueries.users({ orgId }));
-    const { data: existingClients = [] } = useQuery(
-        resourceQueries.resourceUsers({ resourceId: resource.id })
-    );
-    const { data: clientsResponse = [] } = useQuery(
-        orgQueries.clients({
-            orgId,
-            filters: {
-                filter: "machine"
-            }
-        })
-    );
+            const allUsers = (usersQuery.data ?? []).map((user) => ({
+                id: user.id.toString(),
+                text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+            }));
 
-    const allUsers = usersResponse.map((user) => ({
-        id: user.id.toString(),
-        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-    }));
+            const machineClients = (clientsQuery.data ?? [])
+                .filter((client) => !client.userId)
+                .map((client) => ({
+                    id: client.clientId.toString(),
+                    text: client.name
+                }));
 
-    const allClients = clientsResponse
-        .filter((client) => !client.userId)
-        .map((client) => ({
-            id: client.clientId.toString(),
-            text: client.name
-        }));
+            const existingClients = (resourceClientsQuery.data ?? []).map(
+                (c: { clientId: number; name: string }) => ({
+                    id: c.clientId.toString(),
+                    text: c.name
+                })
+            );
 
-    const hasMachineClients =
-        allClients.length > 0 || existingClients.length > 0;
+            const formRoles = (resourceRolesQuery.data ?? [])
+                .map((i) => ({
+                    id: i.roleId.toString(),
+                    text: i.name
+                }))
+                .filter((role) => role.text !== "Admin");
+
+            const formUsers = (resourceUsersQuery.data ?? []).map((i) => ({
+                id: i.userId.toString(),
+                text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+            }));
+
+            return {
+                allRoles,
+                allUsers,
+                machineClients,
+                existingClients,
+                formRoles,
+                formUsers,
+                hasMachineClients:
+                    machineClients.length > 0 || existingClients.length > 0,
+                isLoading: results.some((query) => query.isLoading)
+            };
+        }
+    });
+
+    const {
+        allRoles,
+        allUsers,
+        machineClients,
+        existingClients,
+        formRoles,
+        formUsers,
+        hasMachineClients,
+        isLoading: loadingRolesUsers
+    } = queries;
 
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
@@ -203,7 +253,6 @@ export default function EditInternalResourceDialog({
     const [activeClientsTagIndex, setActiveClientsTagIndex] = useState<
         number | null
     >(null);
-    const [loadingRolesUsers, setLoadingRolesUsers] = useState(false);
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -222,117 +271,6 @@ export default function EditInternalResourceDialog({
     });
 
     const mode = form.watch("mode");
-
-    // const fetchRolesAndUsers = async () => {
-    //     setLoadingRolesUsers(true);
-    //     try {
-    //         const [
-    //             // rolesResponse,
-    //             resourceRolesResponse,
-    //             usersResponse,
-    //             resourceUsersResponse,
-    //             clientsResponse
-    //         ] = await Promise.all([
-    //             // api.get<AxiosResponse<ListRolesResponse>>(
-    //             //     `/org/${orgId}/roles`
-    //             // ),
-    //             api.get<AxiosResponse<ListSiteResourceRolesResponse>>(
-    //                 `/site-resource/${resource.id}/roles`
-    //             ),
-    //             api.get<AxiosResponse<ListUsersResponse>>(
-    //                 `/org/${orgId}/users`
-    //             ),
-    //             api.get<AxiosResponse<ListSiteResourceUsersResponse>>(
-    //                 `/site-resource/${resource.id}/users`
-    //             ),
-    //             api.get<AxiosResponse<ListClientsResponse>>(
-    //                 `/org/${orgId}/clients?filter=machine&limit=1000`
-    //             )
-    //         ]);
-
-    //         let resourceClientsResponse: AxiosResponse<
-    //             AxiosResponse<ListSiteResourceClientsResponse>
-    //         >;
-    //         try {
-    //             resourceClientsResponse = await api.get<
-    //                 AxiosResponse<ListSiteResourceClientsResponse>
-    //             >(`/site-resource/${resource.id}/clients`);
-    //         } catch {
-    //             resourceClientsResponse = {
-    //                 data: {
-    //                     data: {
-    //                         clients: []
-    //                     }
-    //                 },
-    //                 status: 200,
-    //                 statusText: "OK",
-    //                 headers: {} as any,
-    //                 config: {} as any
-    //             } as any;
-    //         }
-
-    //         // setAllRoles(
-    //         //     rolesResponse.data.data.roles
-    //         //         .map((role) => ({
-    //         //             id: role.roleId.toString(),
-    //         //             text: role.name
-    //         //         }))
-    //         //         .filter((role) => role.text !== "Admin")
-    //         // );
-
-    //         form.setValue(
-    //             "roles",
-    //             resourceRolesResponse.data.data.roles
-    //                 .map((i) => ({
-    //                     id: i.roleId.toString(),
-    //                     text: i.name
-    //                 }))
-    //                 .filter((role) => role.text !== "Admin")
-    //         );
-
-    //         form.setValue(
-    //             "users",
-    //             resourceUsersResponse.data.data.users.map((i) => ({
-    //                 id: i.userId.toString(),
-    //                 text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
-    //             }))
-    //         );
-
-    //         const machineClients = clientsResponse.data.data.clients
-    //             .filter((client) => !client.userId)
-    //             .map((client) => ({
-    //                 id: client.clientId.toString(),
-    //                 text: client.name
-    //             }));
-
-    //         setAllClients(machineClients);
-
-    //         const existingClients =
-    //             resourceClientsResponse.data.data.clients.map(
-    //                 (c: { clientId: number; name: string }) => ({
-    //                     id: c.clientId.toString(),
-    //                     text: c.name
-    //                 })
-    //             );
-
-    //         form.setValue("clients", existingClients);
-
-    //         // Show clients tag input if there are machine clients OR existing client access
-    //         setHasMachineClients(
-    //             machineClients.length > 0 || existingClients.length > 0
-    //         );
-    //     } catch (error) {
-    //         console.error("Error fetching roles, users, and clients:", error);
-    //     } finally {
-    //         setLoadingRolesUsers(false);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     if (open) {
-    //         fetchRolesAndUsers();
-    //     }
-    // }, [open, resource]);
 
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
@@ -398,6 +336,18 @@ export default function EditInternalResourceDialog({
             setIsSubmitting(false);
         }
     };
+
+    // Set form values only once after initial load
+    const hasInitialized = useRef(false);
+
+    useEffect(() => {
+        if (!loadingRolesUsers && !hasInitialized.current) {
+            hasInitialized.current = true;
+            form.setValue("roles", formRoles);
+            form.setValue("users", formUsers);
+            form.setValue("clients", existingClients);
+        }
+    }, [loadingRolesUsers, formRoles, formUsers, existingClients, form]);
 
     return (
         <Credenza
@@ -818,7 +768,7 @@ export default function EditInternalResourceDialog({
                                                                     true
                                                                 }
                                                                 autocompleteOptions={
-                                                                    allClients
+                                                                    machineClients
                                                                 }
                                                                 allowDuplicates={
                                                                     false

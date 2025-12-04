@@ -3,6 +3,7 @@ import type { ListClientsResponse } from "@server/routers/client";
 import type { ListRolesResponse } from "@server/routers/role";
 import type { ListSitesResponse } from "@server/routers/site";
 import type {
+    ListSiteResourceClientsResponse,
     ListSiteResourceRolesResponse,
     ListSiteResourceUsersResponse
 } from "@server/routers/siteResource";
@@ -159,6 +160,17 @@ export const resourceQueries = {
                 >(`/site-resource/${resourceId}/roles`, { signal });
 
                 return res.data.data.roles;
+            }
+        }),
+    resourceClients: ({ resourceId }: { resourceId: number }) =>
+        queryOptions({
+            queryKey: ["RESOURCES", resourceId, "ROLES"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSiteResourceClientsResponse>
+                >(`/site-resource/${resourceId}/clients`, { signal });
+
+                return res.data.data.clients;
             }
         })
 };

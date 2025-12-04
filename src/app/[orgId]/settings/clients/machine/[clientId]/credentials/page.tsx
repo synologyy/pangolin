@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
 import {
     SettingsContainer,
     SettingsSection,
@@ -10,18 +10,23 @@ import {
     SettingsSectionTitle
 } from "@app/components/Settings";
 import { Button } from "@app/components/ui/button";
-import { createApiClient, formatAxiosError } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { toast } from "@app/hooks/useToast";
-import { useParams, useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { PickClientDefaultsResponse } from "@server/routers/client";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@app/components/ui/tooltip";
 import { useClientContext } from "@app/hooks/useClientContext";
-import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
-import { build } from "@server/build";
+import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient } from "@app/lib/api";
+import { build } from "@server/build";
+import { PickClientDefaultsResponse } from "@server/routers/client";
+import { useTranslations } from "next-intl";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -32,7 +37,8 @@ export default function CredentialsPage() {
     const { client } = useClientContext();
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [clientDefaults, setClientDefaults] = useState<PickClientDefaultsResponse | null>(null);
+    const [clientDefaults, setClientDefaults] =
+        useState<PickClientDefaultsResponse | null>(null);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -44,18 +50,19 @@ export default function CredentialsPage() {
         return isEnterpriseNotLicensed || isSaasNotSubscribed;
     };
 
-
     const handleConfirmRegenerate = async () => {
-
         const res = await api.get(`/org/${orgId}/pick-client-defaults`);
         if (res && res.status === 200) {
             const data = res.data.data;
             setClientDefaults(data);
 
-            await api.post(`/re-key/${client?.clientId}/regenerate-client-secret`, {
-                olmId: data.olmId,
-                secret: data.olmSecret,
-            });
+            await api.post(
+                `/re-key/${client?.clientId}/regenerate-client-secret`,
+                {
+                    olmId: data.olmId,
+                    secret: data.olmSecret
+                }
+            );
 
             toast({
                 title: t("credentialsSaved"),
@@ -95,7 +102,8 @@ export default function CredentialsPage() {
                                 <div className="inline-block">
                                     <Button
                                         onClick={() => setModalOpen(true)}
-                                        disabled={isSecurityFeatureDisabled()}>
+                                        disabled={isSecurityFeatureDisabled()}
+                                    >
                                         {t("regeneratecredentials")}
                                     </Button>
                                 </div>
