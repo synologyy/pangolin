@@ -178,7 +178,6 @@ authenticated.post(
     client.updateClient
 );
 
-
 // authenticated.get(
 //     "/site/:siteId/roles",
 //     verifySiteAccess,
@@ -306,6 +305,13 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listResources),
     resource.listResources
+);
+
+authenticated.get(
+    "/org/:orgId/resource-names",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.listResources),
+    resource.listAllResourceNames
 );
 
 authenticated.get(
@@ -888,6 +894,13 @@ authenticated.get(
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.viewLogs),
     logs.queryRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/analytics",
+    verifyOrgAccess,
+    verifyUserHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAnalytics
 );
 
 authenticated.get(

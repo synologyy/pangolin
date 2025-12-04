@@ -297,6 +297,7 @@ export default function Page() {
             hcStatus: null,
             hcMode: null,
             hcUnhealthyInterval: null,
+            hcTlsServerName: null,
             siteType: sites.length > 0 ? sites[0].type : null,
             new: true,
             updated: false
@@ -454,7 +455,8 @@ export default function Page() {
             hcHealth: "unknown",
             hcStatus: null,
             hcMode: null,
-            hcUnhealthyInterval: null
+            hcUnhealthyInterval: null,
+            hcTlsServerName: null
         };
 
         setTargets([...targets, newTarget]);
@@ -576,7 +578,8 @@ export default function Page() {
                                     target.hcFollowRedirects || null,
                                 hcStatus: target.hcStatus || null,
                                 hcUnhealthyInterval: target.hcUnhealthyInterval || null,
-                                hcMode: target.hcMode || null
+                                hcMode: target.hcMode || null,
+                                hcTlsServerName: target.hcTlsServerName
                             };
 
                             // Only include path-related fields for HTTP resources
@@ -1800,7 +1803,10 @@ export default function Page() {
                                             "http",
                                         hcUnhealthyInterval:
                                             selectedTargetForHealthCheck.hcUnhealthyInterval ||
-                                            30
+                                            30,
+                                        hcTlsServerName:
+                                            selectedTargetForHealthCheck.hcTlsServerName ||
+                                            undefined
                                     }}
                                     onChanges={async (config) => {
                                         if (selectedTargetForHealthCheck) {

@@ -272,7 +272,8 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             hcUnhealthyInterval: targetHealthCheck.hcUnhealthyInterval,
             hcTimeout: targetHealthCheck.hcTimeout,
             hcHeaders: targetHealthCheck.hcHeaders,
-            hcMethod: targetHealthCheck.hcMethod
+            hcMethod: targetHealthCheck.hcMethod,
+            hcTlsServerName: targetHealthCheck.hcTlsServerName,
         })
         .from(targets)
         .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
@@ -344,7 +345,8 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             hcUnhealthyInterval: target.hcUnhealthyInterval, // in seconds
             hcTimeout: target.hcTimeout, // in seconds
             hcHeaders: hcHeadersSend,
-            hcMethod: target.hcMethod
+            hcMethod: target.hcMethod,
+            hcTlsServerName: target.hcTlsServerName,
         };
     });
 

@@ -6,7 +6,11 @@ import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
-import { queryAccessAuditLogsQuery, queryRequestAuditLogsParams, queryRequest } from "./queryRequstAuditLog";
+import {
+    queryAccessAuditLogsQuery,
+    queryRequestAuditLogsParams,
+    queryRequest
+} from "./queryRequestAuditLog";
 import { generateCSV } from "./generateCSV";
 
 registry.registerPath({
@@ -54,10 +58,13 @@ export async function exportRequestAuditLogs(
         const log = await baseQuery.limit(data.limit).offset(data.offset);
 
         const csvData = generateCSV(log);
-        
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="request-audit-logs-${data.orgId}-${Date.now()}.csv"`);
-        
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="request-audit-logs-${data.orgId}-${Date.now()}.csv"`
+        );
+
         return res.send(csvData);
     } catch (error) {
         logger.error(error);

@@ -162,7 +162,7 @@ export function SidebarNav({
                 <div key={section.heading} className="mb-2">
                     {!isCollapsed && (
                         <div className="px-3 py-1 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            {section.heading}
+                            {t(section.heading)}
                         </div>
                     )}
                     <div className="flex flex-col gap-1">

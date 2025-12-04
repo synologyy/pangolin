@@ -42,6 +42,7 @@ const updateTargetBodySchema = z.strictObject({
         hcFollowRedirects: z.boolean().optional().nullable(),
         hcMethod: z.string().min(1).optional().nullable(),
         hcStatus: z.int().optional().nullable(),
+        hcTlsServerName: z.string().optional().nullable(),
         path: z.string().optional().nullable(),
         pathMatchType: z.enum(["exact", "prefix", "regex"]).optional().nullable(),
         rewritePath: z.string().optional().nullable(),
@@ -217,7 +218,8 @@ export async function updateTarget(
                 hcHeaders: hcHeaders,
                 hcFollowRedirects: parsedBody.data.hcFollowRedirects,
                 hcMethod: parsedBody.data.hcMethod,
-                hcStatus: parsedBody.data.hcStatus
+                hcStatus: parsedBody.data.hcStatus,
+                hcTlsServerName: parsedBody.data.hcTlsServerName,
             })
             .where(eq(targetHealthCheck.targetId, targetId))
             .returning();

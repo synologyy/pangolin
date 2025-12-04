@@ -12,8 +12,9 @@ RUN npm ci
 COPY . .
 
 RUN echo "export * from \"./$DATABASE\";" > server/db/index.ts
+RUN echo "export const driver: \"pg\" | \"sqlite\" = \"$DATABASE\";" >> server/db/index.ts
 
-RUN echo "export const build = \"$BUILD\" as any;" > server/build.ts
+RUN echo "export const build = \"$BUILD\" as \"saas\" | \"enterprise\" | \"oss\";" > server/build.ts
 
 # Copy the appropriate TypeScript configuration based on build type
 RUN if [ "$BUILD" = "oss" ]; then cp tsconfig.oss.json tsconfig.json; \
@@ -30,9 +31,9 @@ RUN mkdir -p dist
 RUN npm run next:build
 RUN node esbuild.mjs -e server/index.ts -o dist/server.mjs -b $BUILD
 RUN if [ "$DATABASE" = "pg" ]; then \
-        node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs; \
+    node esbuild.mjs -e server/setup/migrationsPg.ts -o dist/migrations.mjs; \
     else \
-        node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs; \
+    node esbuild.mjs -e server/setup/migrationsSqlite.ts -o dist/migrations.mjs; \
     fi
 
 # test to make sure the build output is there and error if not
