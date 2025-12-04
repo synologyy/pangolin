@@ -2233,5 +2233,6 @@
     "identifier": "Identifier",
     "deviceLoginUseDifferentAccount": "Not you? Use a different account.",
     "deviceLoginDeviceRequestingAccessToAccount": "A device is requesting access to this account.",
-    "noData": "No Data"
+    "noData": "No Data",
+    "machineClients": "Machine Clients"
 }

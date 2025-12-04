@@ -528,7 +528,7 @@ export default function CreateInternalResourceDialog({
                                             </FormItem>
                                         )}
                                     />
-                                    {/* 
+                                    {/*
                                     {mode === "port" && (
                                         <>
                                             <div className="grid grid-cols-2 gap-4">
@@ -811,7 +811,7 @@ export default function CreateInternalResourceDialog({
                                             render={({ field }) => (
                                                 <FormItem className="flex flex-col items-start">
                                                     <FormLabel>
-                                                        {t("clients")}
+                                                        {t("machineClients")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <TagInput
@@ -861,12 +861,6 @@ export default function CreateInternalResourceDialog({
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
-                                                    <FormDescription>
-                                                        {t(
-                                                            "resourceClientDescription"
-                                                        ) ||
-                                                            "Machine clients that can access this resource"}
-                                                    </FormDescription>
                                                 </FormItem>
                                             )}
                                         />

@@ -45,7 +45,7 @@ import { ListClientsResponse } from "@server/routers/client/listClients";
 import { Tag, TagInput } from "@app/components/tags/tag-input";
 import { AxiosResponse } from "axios";
 import { UserType } from "@server/types/UserTypes";
-import { useQueries, useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { orgQueries, resourceQueries } from "@app/lib/queries";
 
 type InternalResourceData = {
@@ -80,6 +80,7 @@ export default function EditInternalResourceDialog({
 }: EditInternalResourceDialogProps) {
     const t = useTranslations();
     const api = createApiClient(useEnvContext());
+    const queryClient = useQueryClient();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const formSchema = z.object({
@@ -310,6 +311,16 @@ export default function EditInternalResourceDialog({
             //     })
             // ]);
 
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceRoles({ resourceId: resource.id })
+            );
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceUsers({ resourceId: resource.id })
+            );
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceClients({ resourceId: resource.id })
+            );
+
             toast({
                 title: t("editInternalResourceDialogSuccess"),
                 description: t(
@@ -367,6 +378,8 @@ export default function EditInternalResourceDialog({
                         users: [],
                         clients: []
                     });
+                    // Reset initialization flag so form can re-initialize with fresh data when reopened
+                    hasInitialized.current = false;
                 }
                 setOpen(open);
             }}
@@ -730,7 +743,7 @@ export default function EditInternalResourceDialog({
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col items-start">
                                                         <FormLabel>
-                                                            {t("clients")}
+                                                            {t("machineClients")}
                                                         </FormLabel>
                                                         <FormControl>
                                                             <TagInput
@@ -780,12 +793,6 @@ export default function EditInternalResourceDialog({
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
-                                                        <FormDescription>
-                                                            {t(
-                                                                "resourceClientDescription"
-                                                            ) ||
-                                                                "Machine clients that can access this resource"}
-                                                        </FormDescription>
                                                     </FormItem>
                                                 )}
                                             />
