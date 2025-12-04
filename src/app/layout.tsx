@@ -21,6 +21,7 @@ import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
 import { ReactQueryProvider } from "@app/components/react-query-provider";
+import { TailwindIndicator } from "@app/components/TailwindIndicator";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
@@ -129,6 +130,10 @@ export default async function RootLayout({
                         </ThemeProvider>
                     </NextIntlClientProvider>
                 </ReactQueryProvider>
+
+                {process.env.NODE_ENV === "development" && (
+                    <TailwindIndicator />
+                )}
             </body>
         </html>
     );
