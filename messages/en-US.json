@@ -89,7 +89,7 @@
     "siteGeneralDescription": "Configure the general settings for this site",
     "siteSettingDescription": "Configure the settings on the site",
     "siteSetting": "{siteName} Settings",
-    "siteNewtTunnel": "Newt Tunnel (Recommended)",
+    "siteNewtTunnel": "Newt Site (Recommended)",
     "siteNewtTunnelDescription": "Easiest way to create an entrypoint into any network. No extra setup.",
     "siteWg": "Basic WireGuard",
     "siteWgDescription": "Use any WireGuard client to establish a tunnel. Manual NAT setup required.",
