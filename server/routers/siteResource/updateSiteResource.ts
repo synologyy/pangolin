@@ -59,23 +59,27 @@ const updateSiteResourceSchema = z
     .refine(
         (data) => {
             if (data.mode === "host" && data.destination) {
-                // Check if it's a valid IP address using zod (v4 or v6)
                 const isValidIP = z
                     .union([z.ipv4(), z.ipv6()])
                     .safeParse(data.destination).success;
+
+                if (isValidIP) {
+                    return true;
+                }
 
                 // Check if it's a valid domain (hostname pattern, TLD not required)
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
+                const isValidAlias = data.alias && domainRegex.test(data.alias);
 
-                return isValidIP || isValidDomain;
+                return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
             return true;
         },
         {
             message:
-                "Destination must be a valid IP address or domain name for host mode"
+                "Destination must be a valid IP address or valid domain AND alias is required"
         }
     )
     .refine(
@@ -317,6 +321,7 @@ export async function updateSiteResource(
                     );
                 }
 
+                let oldDestinationStillInUseByASite = false;
                 // Only update targets on newt if destination changed
                 if (destinationChanged) {
                     const oldTargets = generateSubnetProxyTargets(
@@ -332,6 +337,26 @@ export async function updateSiteResource(
                         oldTargets: oldTargets,
                         newTargets: newTargets
                     });
+
+                    const oldDestinationStillInUseSites = await trx
+                        .select()
+                        .from(siteResources)
+                        .where(
+                            and(
+                                eq(siteResources.siteId, site.siteId),
+                                eq(
+                                    siteResources.destination,
+                                    existingSiteResource.destination
+                                ),
+                                ne(
+                                    siteResources.siteResourceId,
+                                    existingSiteResource.siteResourceId
+                                )
+                            )
+                        );
+
+                    oldDestinationStillInUseByASite =
+                        oldDestinationStillInUseSites.length > 0;
                 }
 
                 const olmJobs: Promise<void>[] = [];
@@ -341,22 +366,29 @@ export async function updateSiteResource(
                         updatePeerData(
                             client.clientId,
                             updatedSiteResource.siteId,
-                            destinationChanged ? {
-                                oldRemoteSubnets: generateRemoteSubnets([
-                                    existingSiteResource
-                                ]),
-                                newRemoteSubnets: generateRemoteSubnets([
-                                    updatedSiteResource
-                                ])
-                            } : undefined,
-                            aliasChanged ? {
-                                oldAliases: generateAliasConfig([
-                                    existingSiteResource
-                                ]),
-                                newAliases: generateAliasConfig([
-                                    updatedSiteResource
-                                ])
-                            } : undefined
+                            destinationChanged
+                                ? {
+                                      oldRemoteSubnets:
+                                          !oldDestinationStillInUseByASite
+                                              ? generateRemoteSubnets([
+                                                    existingSiteResource
+                                                ])
+                                              : [],
+                                      newRemoteSubnets: generateRemoteSubnets([
+                                          updatedSiteResource
+                                      ])
+                                  }
+                                : undefined,
+                            aliasChanged
+                                ? {
+                                      oldAliases: generateAliasConfig([
+                                          existingSiteResource
+                                      ]),
+                                      newAliases: generateAliasConfig([
+                                          updatedSiteResource
+                                      ])
+                                  }
+                                : undefined
                         )
                     );
                 }
