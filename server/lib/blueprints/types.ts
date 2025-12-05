@@ -59,6 +59,7 @@ export const AuthSchema = z.object({
         }),
     "sso-users": z.array(z.email()).optional().default([]),
     "whitelist-users": z.array(z.email()).optional().default([]),
+    "auto-login-idp": z.int().positive().optional(),
 });
 
 export const RuleSchema = z.object({

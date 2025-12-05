@@ -329,7 +329,7 @@ async function updateHttpResource(
         }
     }
 
-    let headers = null;
+    let headers = resource.headers;
     if (updateData.headers) {
         headers = JSON.stringify(updateData.headers);
     }
