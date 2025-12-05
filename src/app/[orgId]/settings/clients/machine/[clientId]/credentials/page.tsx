@@ -1,6 +1,7 @@
 "use client";
 
 import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 import {
     SettingsContainer,
     SettingsSection,
@@ -84,40 +85,29 @@ export default function CredentialsPage() {
     };
 
     return (
-        <SettingsContainer>
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("generatedcredentials")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("regenerateCredentials")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
+        <>
+            <SettingsContainer>
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("generatedcredentials")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("regenerateCredentials")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
 
-                <SettingsSectionBody>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="inline-block">
-                                    <Button
-                                        onClick={() => setModalOpen(true)}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("regeneratecredentials")}
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
-
-                            {isSecurityFeatureDisabled() && (
-                                <TooltipContent side="top">
-                                    {t("featureDisabledTooltip")}
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    </TooltipProvider>
-                </SettingsSectionBody>
-            </SettingsSection>
+                    <SettingsSectionBody>
+                        <SecurityFeaturesAlert />
+                        <Button
+                            onClick={() => setModalOpen(true)}
+                            disabled={isSecurityFeatureDisabled()}
+                        >
+                            {t("regeneratecredentials")}
+                        </Button>
+                    </SettingsSectionBody>
+                </SettingsSection>
+            </SettingsContainer>
 
             <RegenerateCredentialsModal
                 open={modalOpen}
@@ -127,6 +117,6 @@ export default function CredentialsPage() {
                 dashboardUrl={env.app.dashboardUrl}
                 credentials={getCredentials()}
             />
-        </SettingsContainer>
+        </>
     );
 }

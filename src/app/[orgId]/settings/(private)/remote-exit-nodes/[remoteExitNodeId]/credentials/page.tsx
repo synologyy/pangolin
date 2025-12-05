@@ -25,7 +25,13 @@ import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsMod
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { build } from "@server/build";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@app/components/ui/tooltip";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -36,7 +42,8 @@ export default function CredentialsPage() {
     const { remoteExitNode } = useRemoteExitNodeContext();
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [credentials, setCredentials] = useState<PickRemoteExitNodeDefaultsResponse | null>(null);
+    const [credentials, setCredentials] =
+        useState<PickRemoteExitNodeDefaultsResponse | null>(null);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -48,12 +55,10 @@ export default function CredentialsPage() {
         return isEnterpriseNotLicensed || isSaasNotSubscribed;
     };
 
-
     const handleConfirmRegenerate = async () => {
-
-        const response = await api.get<AxiosResponse<PickRemoteExitNodeDefaultsResponse>>(
-            `/org/${orgId}/pick-remote-exit-node-defaults`
-        );
+        const response = await api.get<
+            AxiosResponse<PickRemoteExitNodeDefaultsResponse>
+        >(`/org/${orgId}/pick-remote-exit-node-defaults`);
 
         const data = response.data.data;
         setCredentials(data);
@@ -62,7 +67,7 @@ export default function CredentialsPage() {
             `/re-key/${orgId}/reGenerate-remote-exit-node-secret`,
             {
                 remoteExitNodeId: remoteExitNode.remoteExitNodeId,
-                secret: data.secret,
+                secret: data.secret
             }
         );
 
@@ -85,40 +90,29 @@ export default function CredentialsPage() {
     };
 
     return (
-        <SettingsContainer>
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("generatedcredentials")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("regenerateCredentials")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
+        <>
+            <SettingsContainer>
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("generatedcredentials")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("regenerateCredentials")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
 
-                <SettingsSectionBody>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="inline-block">
-                                    <Button
-                                        onClick={() => setModalOpen(true)}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("regeneratecredentials")}
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
-
-                            {isSecurityFeatureDisabled() && (
-                                <TooltipContent side="top">
-                                    {t("featureDisabledTooltip")}
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    </TooltipProvider>
-                </SettingsSectionBody>
-            </SettingsSection>
+                    <SettingsSectionBody>
+                        <SecurityFeaturesAlert />
+                        <Button
+                            onClick={() => setModalOpen(true)}
+                            disabled={isSecurityFeatureDisabled()}
+                        >
+                            {t("regeneratecredentials")}
+                        </Button>
+                    </SettingsSectionBody>
+                </SettingsSection>
+            </SettingsContainer>
 
             <RegenerateCredentialsModal
                 open={modalOpen}
@@ -128,6 +122,6 @@ export default function CredentialsPage() {
                 dashboardUrl={env.app.dashboardUrl}
                 credentials={getCredentials()}
             />
-        </SettingsContainer>
+        </>
     );
 }

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import {
     clientSiteResources,
+    clientSiteResourcesAssociationsCache,
     db,
     newts,
     roles,
@@ -321,7 +322,6 @@ export async function updateSiteResource(
                     );
                 }
 
-                let oldDestinationStillInUseByASite = false;
                 // Only update targets on newt if destination changed
                 if (destinationChanged) {
                     const oldTargets = generateSubnetProxyTargets(
@@ -337,12 +337,28 @@ export async function updateSiteResource(
                         oldTargets: oldTargets,
                         newTargets: newTargets
                     });
+                }
 
+                const olmJobs: Promise<void>[] = [];
+                for (const client of mergedAllClients) {
+                    // does this client have access to another resource on this site that has the same destination still? if so we dont want to remove it from their olm yet
+                    // todo: optimize this query if needed
                     const oldDestinationStillInUseSites = await trx
                         .select()
                         .from(siteResources)
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                clientSiteResourcesAssociationsCache.siteResourceId,
+                                siteResources.siteResourceId
+                            )
+                        )
                         .where(
                             and(
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clientId
+                                ),
                                 eq(siteResources.siteId, site.siteId),
                                 eq(
                                     siteResources.destination,
@@ -355,12 +371,9 @@ export async function updateSiteResource(
                             )
                         );
 
-                    oldDestinationStillInUseByASite =
+                    const oldDestinationStillInUseByASite =
                         oldDestinationStillInUseSites.length > 0;
-                }
 
-                const olmJobs: Promise<void>[] = [];
-                for (const client of mergedAllClients) {
                     // we also need to update the remote subnets on the olms for each client that has access to this site
                     olmJobs.push(
                         updatePeerData(

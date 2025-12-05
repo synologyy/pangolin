@@ -97,7 +97,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         const policyCheck = await checkOrgAccessPolicy({
             orgId: orgId,
             userId: olm.userId,
-            session: userToken // this is the user token passed in the message
+            sessionId: userToken // this is the user token passed in the message
         });
 
         if (!policyCheck.allowed) {

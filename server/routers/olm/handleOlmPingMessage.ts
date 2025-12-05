@@ -136,7 +136,7 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
         const policyCheck = await checkOrgAccessPolicy({
             orgId: client.orgId,
             userId: olm.userId,
-            session: userToken // this is the user token passed in the message
+            sessionId: userToken // this is the user token passed in the message
         });
 
         if (!policyCheck.allowed) {

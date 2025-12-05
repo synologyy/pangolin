@@ -2235,7 +2235,6 @@
     "endpoint": "Endpoint",
     "Id": "Id",
     "SecretKey": "Secret Key",
-    "featureDisabledTooltip": "This feature is only available in the enterprise plan and require a license to use it.",
     "niceId": "Nice ID",
     "niceIdUpdated": "Nice ID Updated",
     "niceIdUpdatedSuccessfully": "Nice ID Updated Successfully",
