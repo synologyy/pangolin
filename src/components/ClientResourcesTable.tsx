@@ -14,11 +14,7 @@ import {
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
-import {
-    ArrowUpDown,
-    ArrowUpRight,
-    MoreHorizontal
-} from "lucide-react";
+import { ArrowUpDown, ArrowUpRight, MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -206,52 +202,34 @@ export default function ClientResourcesTable({
             ),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                let displayText: string;
-                let copyText: string;
-
-                // if (
-                //     resourceRow.mode === "port" &&
-                //     // resourceRow.protocol &&
-                //     // resourceRow.proxyPort &&
-                //     // resourceRow.destinationPort
-                // ) {
-                //     // const protocol = resourceRow.protocol.toUpperCase();
-                //     // For port mode: site part uses alias or site address, destination part uses destination IP
-                //     // If site address has CIDR notation, extract just the IP address
-                //     let siteAddress = resourceRow.siteAddress;
-                //     if (siteAddress && siteAddress.includes("/")) {
-                //         siteAddress = siteAddress.split("/")[0];
-                //     }
-                //     const siteDisplay = resourceRow.alias || siteAddress;
-                //     // displayText = `${protocol} ${siteDisplay}:${resourceRow.proxyPort} -> ${resourceRow.destination}:${resourceRow.destinationPort}`;
-                //     // copyText = `${siteDisplay}:${resourceRow.proxyPort}`;
-                // } else if (resourceRow.mode === "host") {
-                if (resourceRow.mode === "host") {
-                    // For host mode: use alias if available, otherwise use destination
-                    const destinationDisplay =
-                        resourceRow.alias || resourceRow.destination;
-                    displayText = destinationDisplay;
-                    copyText = destinationDisplay;
-                } else if (resourceRow.mode === "cidr") {
-                    displayText = resourceRow.destination;
-                    copyText = resourceRow.destination;
-                } else {
-                    const destinationDisplay =
-                        resourceRow.alias || resourceRow.destination;
-                    displayText = destinationDisplay;
-                    copyText = destinationDisplay;
-                }
-
                 return (
                     <CopyToClipboard
-                        text={copyText}
+                        text={resourceRow.destination}
                         isLink={false}
-                        displayText={displayText}
+                        displayText={resourceRow.destination}
                     />
                 );
             }
         },
-
+        {
+            accessorKey: "alias",
+            friendlyName: t("resourcesTableAlias"),
+            header: () => (
+                <span className="p-3">{t("resourcesTableAlias")}</span>
+            ),
+            cell: ({ row }) => {
+                const resourceRow = row.original;
+                return resourceRow.alias ? (
+                    <CopyToClipboard
+                        text={resourceRow.alias}
+                        isLink={false}
+                        displayText={resourceRow.alias}
+                    />
+                ) : (
+                    <span>"-"</span>
+                );
+            }
+        },
         {
             id: "actions",
             enableHiding: false,

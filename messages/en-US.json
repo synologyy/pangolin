@@ -1557,6 +1557,7 @@
     "resourcesTableNoProxyResourcesFound": "No proxy resources found.",
     "resourcesTableNoInternalResourcesFound": "No internal resources found.",
     "resourcesTableDestination": "Destination",
+    "resourcesTableAlias": "Alias",
     "resourcesTableClients": "Clients",
     "resourcesTableAndOnlyAccessibleInternally": "and are only accessible internally when connected with a client.",
     "resourcesTableNoTargets": "No targets",
