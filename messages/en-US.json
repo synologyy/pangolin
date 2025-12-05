@@ -1645,8 +1645,9 @@
     "siteConfiguration": "Configuration",
     "siteAcceptClientConnections": "Accept Client Connections",
     "siteAcceptClientConnectionsDescription": "Allow user devices and clients to access resources on this site. This can be changed later.",
-    "siteAddress": "Site Address",
+    "siteAddress": "Site Address (Advanced)",
     "siteAddressDescription": "The internal address of the site. Must fall within the organization's subnet.",
+    "siteNameDescription": "The display name of the site that can be changed later.",
     "autoLoginExternalIdp": "Auto Login with External IDP",
     "autoLoginExternalIdpDescription": "Immediately redirect the user to the external IDP for authentication.",
     "selectIdp": "Select IDP",
@@ -2239,5 +2240,7 @@
     "noData": "No Data",
     "machineClients": "Machine Clients",
     "install": "Install",
-    "run": "Run"
+    "run": "Run",
+    "clientNameDescription": "The display name of the client that can be changed later.",
+    "clientAddress": "Client Address (Advanced)"
 }

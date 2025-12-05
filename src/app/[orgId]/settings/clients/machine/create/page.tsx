@@ -410,120 +410,68 @@ export default function Page() {
                                 </SettingsSectionTitle>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
-                                <SettingsSectionForm>
-                                    <Form {...form}>
-                                        <form
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault(); // block default enter refresh
-                                                }
-                                            }}
-                                            className="space-y-4"
-                                            id="create-client-form"
-                                        >
-                                            <FormField
-                                                control={form.control}
-                                                name="name"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {t("name")}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                autoComplete="off"
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
+                                <Form {...form}>
+                                    <form
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault(); // block default enter refresh
+                                            }
+                                        }}
+                                        className="space-y-4 grid gap-4 grid-cols-1 md:grid-cols-2 items-start"
+                                        id="create-client-form"
+                                    >
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t("name")}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            autoComplete="off"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t(
+                                                            "clientNameDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                            {/* <FormField */}
-                                            {/*     control={form.control} */}
-                                            {/*     name="subnet" */}
-                                            {/*     render={({ field }) => ( */}
-                                            {/*         <FormItem> */}
-                                            {/*             <FormLabel> */}
-                                            {/*                 {t("address")} */}
-                                            {/*             </FormLabel> */}
-                                            {/*             <FormControl> */}
-                                            {/*                 <Input */}
-                                            {/*                     autoComplete="off" */}
-                                            {/*                     placeholder={t( */}
-                                            {/*                         "subnetPlaceholder" */}
-                                            {/*                     )} */}
-                                            {/*                     {...field} */}
-                                            {/*                 /> */}
-                                            {/*             </FormControl> */}
-                                            {/*             <FormMessage /> */}
-                                            {/*             <FormDescription> */}
-                                            {/*                 {t( */}
-                                            {/*                     "addressDescription" */}
-                                            {/*                 )} */}
-                                            {/*             </FormDescription> */}
-                                            {/*         </FormItem> */}
-                                            {/*     )} */}
-                                            {/* /> */}
-
-                                            {/* <FormField */}
-                                            {/*     control={form.control} */}
-                                            {/*     name="siteIds" */}
-                                            {/*     render={(field) => ( */}
-                                            {/*         <FormItem className="flex flex-col"> */}
-                                            {/*             <FormLabel> */}
-                                            {/*                 {t("sites")} */}
-                                            {/*             </FormLabel> */}
-                                            {/*             <TagInput */}
-                                            {/*                 {...field} */}
-                                            {/*                 activeTagIndex={ */}
-                                            {/*                     activeSitesTagIndex */}
-                                            {/*                 } */}
-                                            {/*                 setActiveTagIndex={ */}
-                                            {/*                     setActiveSitesTagIndex */}
-                                            {/*                 } */}
-                                            {/*                 placeholder={t("selectSites")} */}
-                                            {/*                 size="sm" */}
-                                            {/*                 tags={ */}
-                                            {/*                     form.getValues() */}
-                                            {/*                         .siteIds */}
-                                            {/*                 } */}
-                                            {/*                 setTags={( */}
-                                            {/*                     olmags */}
-                                            {/*                 ) => { */}
-                                            {/*                     form.setValue( */}
-                                            {/*                         "siteIds", */}
-                                            {/*                         olmags as [ */}
-                                            {/*                             Tag, */}
-                                            {/*                             ...Tag[] */}
-                                            {/*                         ] */}
-                                            {/*                     ); */}
-                                            {/*                 }} */}
-                                            {/*                 enableAutocomplete={ */}
-                                            {/*                     true */}
-                                            {/*                 } */}
-                                            {/*                 autocompleteOptions={ */}
-                                            {/*                     sites */}
-                                            {/*                 } */}
-                                            {/*                 allowDuplicates={ */}
-                                            {/*                     false */}
-                                            {/*                 } */}
-                                            {/*                 restrictTagsToAutocompleteOptions={ */}
-                                            {/*                     true */}
-                                            {/*                 } */}
-                                            {/*                 sortTags={true} */}
-                                            {/*             /> */}
-                                            {/*             <FormDescription> */}
-                                            {/*                 {t("sitesDescription")} */}
-                                            {/*             </FormDescription> */}
-                                            {/*             <FormMessage /> */}
-                                            {/*         </FormItem> */}
-                                            {/*     )} */}
-                                            {/* /> */}
-                                        </form>
-                                    </Form>
-                                </SettingsSectionForm>
+                                        <FormField
+                                            control={form.control}
+                                            name="subnet"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t("clientAddress")}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            autoComplete="off"
+                                                            placeholder={t(
+                                                                "subnetPlaceholder"
+                                                            )}
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t(
+                                                            "addressDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </form>
+                                </Form>
                             </SettingsSectionBody>
                         </SettingsSection>
 

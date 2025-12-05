@@ -693,87 +693,85 @@ WantedBy=default.target`
                                 </SettingsSectionTitle>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
-                                <SettingsSectionForm>
-                                    <Form {...form}>
-                                        <form
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault(); // block default enter refresh
-                                                }
-                                            }}
-                                            className="space-y-4"
-                                            id="create-site-form"
-                                        >
+                                <Form {...form}>
+                                    <form
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault(); // block default enter refresh
+                                            }
+                                        }}
+                                        className="space-y-4 grid gap-4 grid-cols-1 md:grid-cols-2 items-start"
+                                        id="create-site-form"
+                                    >
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t("name")}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            autoComplete="off"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t(
+                                                            "siteNameDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        {form.watch("method") === "newt" && (
                                             <FormField
                                                 control={form.control}
-                                                name="name"
+                                                name="clientAddress"
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
-                                                            {t("name")}
+                                                            {t("siteAddress")}
                                                         </FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 autoComplete="off"
-                                                                {...field}
+                                                                value={
+                                                                    clientAddress
+                                                                }
+                                                                onChange={(
+                                                                    e
+                                                                ) => {
+                                                                    setClientAddress(
+                                                                        e.target
+                                                                            .value
+                                                                    );
+                                                                    field.onChange(
+                                                                        e.target
+                                                                            .value
+                                                                    );
+                                                                }}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
+                                                        <FormDescription>
+                                                            {t(
+                                                                "siteAddressDescription"
+                                                            )}
+                                                        </FormDescription>
                                                     </FormItem>
                                                 )}
                                             />
-                                            {/*form.watch("method") ===
-                                                "newt" && (
-                                                <FormField
-                                                    control={form.control}
-                                                    name="clientAddress"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                {t(
-                                                                    "siteAddress"
-                                                                )}
-                                                            </FormLabel>
-                                                            <FormControl>
-                                                                <Input
-                                                                    autoComplete="off"
-                                                                    value={
-                                                                        clientAddress
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) => {
-                                                                        setClientAddress(
-                                                                            e
-                                                                                .target
-                                                                                .value
-                                                                        );
-                                                                        field.onChange(
-                                                                            e
-                                                                                .target
-                                                                                .value
-                                                                        );
-                                                                    }}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                            <FormDescription>
-                                                                {t(
-                                                                    "siteAddressDescription"
-                                                                )}
-                                                            </FormDescription>
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            )*/}
-                                        </form>
-                                    </Form>
-                                </SettingsSectionForm>
+                                        )}
+                                    </form>
+                                </Form>
 
                                 {tunnelTypes.length > 1 && (
                                     <>
                                         <div className="mb-2">
-                                            <span>{t("type")}</span>
+                                            <span className="text-sm font-medium">{t("type")}</span>
                                         </div>
                                         <StrategySelect
                                             options={tunnelTypes}
