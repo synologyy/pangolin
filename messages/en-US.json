@@ -2242,5 +2242,8 @@
     "install": "Install",
     "run": "Run",
     "clientNameDescription": "The display name of the client that can be changed later.",
-    "clientAddress": "Client Address (Advanced)"
+    "clientAddress": "Client Address (Advanced)",
+    "setupFailedToFetchSubnet": "Failed to fetch default subnet",
+    "setupSubnetAdvanced": "Subnet (Advanced)",
+    "setupSubnetDescription": "The subnet for this organization's internal network."
 }

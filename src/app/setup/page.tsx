@@ -76,8 +76,8 @@ export default function StepperForm() {
         } catch (e) {
             console.error("Failed to fetch default subnet:", e);
             toast({
-                title: "Error",
-                description: "Failed to fetch default subnet",
+                title: t("error"),
+                description: t("setupFailedToFetchSubnet"),
                 variant: "destructive"
             });
         }
@@ -301,7 +301,9 @@ export default function StepperForm() {
                                         name="subnet"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Subnet</FormLabel>
+                                                <FormLabel>
+                                                    {t("setupSubnetAdvanced")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         type="text"
@@ -310,9 +312,7 @@ export default function StepperForm() {
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    The subnet for this
-                                                    organization's internal
-                                                    network.
+                                                    {t("setupSubnetDescription")}
                                                 </FormDescription>
                                             </FormItem>
                                         )}
