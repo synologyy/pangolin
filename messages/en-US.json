@@ -1112,6 +1112,7 @@
     "create": "Create",
     "orgs": "Organizations",
     "loginError": "An error occurred while logging in",
+    "loginRequiredForDevice": "Login is required to authenticate your device.",
     "passwordForgot": "Forgot your password?",
     "otpAuth": "Two-Factor Authentication",
     "otpAuthDescription": "Enter the code from your authenticator app or one of your single-use backup codes.",
