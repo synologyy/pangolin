@@ -1309,7 +1309,7 @@
     "documentation": "Documentation",
     "saveAllSettings": "Save All Settings",
     "settingsUpdated": "Settings updated",
-    "settingsUpdatedDescription": "All settings have been updated successfully",
+    "settingsUpdatedDescription": "Settings updated successfully",
     "settingsErrorUpdate": "Failed to update settings",
     "settingsErrorUpdateDescription": "An error occurred while updating settings",
     "sidebarCollapse": "Collapse",
