@@ -464,6 +464,7 @@ export default function ReverseProxyTargets(props: {
             hcStatus: null,
             hcMode: null,
             hcUnhealthyInterval: null,
+            hcTlsServerName: null,
             siteType: sites.length > 0 ? sites[0].type : null,
             new: true,
             updated: false
@@ -629,7 +630,8 @@ export default function ReverseProxyTargets(props: {
             hcHealth: "unknown",
             hcStatus: null,
             hcMode: null,
-            hcUnhealthyInterval: null
+            hcUnhealthyInterval: null,
+            hcTlsServerName: null,
         };
 
         setTargets([...targets, newTarget]);
@@ -730,7 +732,8 @@ export default function ReverseProxyTargets(props: {
                     hcMethod: target.hcMethod || null,
                     hcStatus: target.hcStatus || null,
                     hcUnhealthyInterval: target.hcUnhealthyInterval || null,
-                    hcMode: target.hcMode || null
+                    hcMode: target.hcMode || null,
+                    hcTlsServerName: target.hcTlsServerName,
                 };
 
                 // Only include path-related fields for HTTP resources
@@ -1831,7 +1834,9 @@ export default function ReverseProxyTargets(props: {
                         hcMode: selectedTargetForHealthCheck.hcMode || "http",
                         hcUnhealthyInterval:
                             selectedTargetForHealthCheck.hcUnhealthyInterval ||
-                            30
+                            30,
+                        hcTlsServerName: selectedTargetForHealthCheck.hcTlsServerName ||
+                            undefined,
                     }}
                     onChanges={async (config) => {
                         if (selectedTargetForHealthCheck) {

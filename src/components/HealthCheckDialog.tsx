@@ -51,6 +51,7 @@ type HealthCheckConfig = {
     hcFollowRedirects: boolean;
     hcMode: string;
     hcUnhealthyInterval: number;
+    hcTlsServerName: string;
 };
 
 type HealthCheckDialogProps = {
@@ -109,7 +110,8 @@ export default function HealthCheckDialog({
             ),
         hcFollowRedirects: z.boolean(),
         hcMode: z.string(),
-        hcUnhealthyInterval: z.int().positive().min(5)
+        hcUnhealthyInterval: z.int().positive().min(5),
+        hcTlsServerName: z.string()
     });
 
     const form = useForm<z.infer<typeof healthCheckSchema>>({
@@ -147,7 +149,8 @@ export default function HealthCheckDialog({
                 : "",
             hcFollowRedirects: initialConfig?.hcFollowRedirects,
             hcMode: initialConfig?.hcMode,
-            hcUnhealthyInterval: initialConfig?.hcUnhealthyInterval
+            hcUnhealthyInterval: initialConfig?.hcUnhealthyInterval,
+            hcTlsServerName: initialConfig?.hcTlsServerName ?? ""
         });
     }, [open]);
 
@@ -547,6 +550,37 @@ export default function HealthCheckDialog({
                                                 <FormDescription>
                                                     {t(
                                                         "expectedResponseCodesDescription"
+                                                    )}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/*TLS Server Name (SNI)*/}
+                                    <FormField
+                                        control={form.control}
+                                        name="hcTlsServerName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("tlsServerName")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+                                                            handleFieldChange(
+                                                                "hcTlsServerName",
+                                                                e.target.value
+                                                            );
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t(
+                                                        "tlsServerNameDescription"
                                                     )}
                                                 </FormDescription>
                                                 <FormMessage />
