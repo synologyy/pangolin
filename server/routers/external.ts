@@ -715,6 +715,11 @@ unauthenticated.get("/my-device", verifySessionMiddleware, user.myDevice);
 
 authenticated.get("/users", verifyUserIsServerAdmin, user.adminListUsers);
 authenticated.get("/user/:userId", verifyUserIsServerAdmin, user.adminGetUser);
+authenticated.post(
+    "/user/:userId/generate-password-reset-code",
+    verifyUserIsServerAdmin,
+    user.adminGeneratePasswordResetCode
+);
 authenticated.delete(
     "/user/:userId",
     verifyUserIsServerAdmin,

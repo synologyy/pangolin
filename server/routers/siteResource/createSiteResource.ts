@@ -72,7 +72,7 @@ const createSiteResourceSchema = z
         },
         {
             message:
-                "Destination must be a valid IP address or domain name for host mode"
+                "Destination must be a valid IP address or valid domain AND alias is required"
         }
     )
     .refine(

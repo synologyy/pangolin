@@ -8,6 +8,7 @@ export * from "./getOrgUser";
 export * from "./adminListUsers";
 export * from "./adminRemoveUser";
 export * from "./adminGetUser";
+export * from "./adminGeneratePasswordResetCode";
 export * from "./listInvitations";
 export * from "./removeInvitation";
 export * from "./createOrgUser";

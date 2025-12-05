@@ -19,6 +19,18 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
+import {
+    Credenza,
+    CredenzaContent,
+    CredenzaDescription,
+    CredenzaHeader,
+    CredenzaTitle,
+    CredenzaBody,
+    CredenzaFooter,
+    CredenzaClose
+} from "@app/components/Credenza";
+import CopyToClipboard from "@app/components/CopyToClipboard";
+import { AxiosResponse } from "axios";
 
 export type GlobalUserRow = {
     id: string;
@@ -37,6 +49,12 @@ type Props = {
     users: GlobalUserRow[];
 };
 
+type AdminGeneratePasswordResetCodeResponse = {
+    token: string;
+    email: string;
+    url: string;
+};
+
 export default function UsersTable({ users }: Props) {
     const router = useRouter();
     const t = useTranslations();
@@ -48,6 +66,11 @@ export default function UsersTable({ users }: Props) {
     const api = createApiClient(useEnvContext());
 
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [isPasswordResetCodeDialogOpen, setIsPasswordResetCodeDialogOpen] =
+        useState(false);
+    const [passwordResetCodeData, setPasswordResetCodeData] =
+        useState<AdminGeneratePasswordResetCodeResponse | null>(null);
+    const [isGeneratingCode, setIsGeneratingCode] = useState(false);
 
     const refreshData = async () => {
         console.log("Data refreshed");
@@ -84,6 +107,29 @@ export default function UsersTable({ users }: Props) {
 
                 setRows(newRows);
             });
+    };
+
+    const generatePasswordResetCode = async (userId: string) => {
+        setIsGeneratingCode(true);
+        try {
+            const res = await api.post<
+                AxiosResponse<AdminGeneratePasswordResetCodeResponse>
+            >(`/user/${userId}/generate-password-reset-code`);
+
+            if (res.data?.data) {
+                setPasswordResetCodeData(res.data.data);
+                setIsPasswordResetCodeDialogOpen(true);
+            }
+        } catch (e) {
+            console.error("Failed to generate password reset code", e);
+            toast({
+                variant: "destructive",
+                title: t("error"),
+                description: formatAxiosError(e, t("errorOccurred"))
+            });
+        } finally {
+            setIsGeneratingCode(false);
+        }
     };
 
     const columns: ExtendedColumnDef<GlobalUserRow>[] = [
@@ -195,7 +241,7 @@ export default function UsersTable({ users }: Props) {
                     <div className="flex flex-row items-center gap-2">
                         <span>
                             {userRow.twoFactorEnabled ||
-                                userRow.twoFactorSetupRequested ? (
+                            userRow.twoFactorSetupRequested ? (
                                 <span className="text-green-500">
                                     {t("enabled")}
                                 </span>
@@ -217,17 +263,21 @@ export default function UsersTable({ users }: Props) {
                     <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0"
-                                >
-                                    <span className="sr-only">
-                                        Open menu
-                                    </span>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
                                     <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                {r.type !== "internal" && (
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            generatePasswordResetCode(r.id);
+                                        }}
+                                    >
+                                        {t("generatePasswordResetCode")}
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem
                                     onClick={() => {
                                         setSelected(r);
@@ -295,6 +345,58 @@ export default function UsersTable({ users }: Props) {
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
             />
+
+            <Credenza
+                open={isPasswordResetCodeDialogOpen}
+                onOpenChange={setIsPasswordResetCodeDialogOpen}
+            >
+                <CredenzaContent>
+                    <CredenzaHeader>
+                        <CredenzaTitle>
+                            {t("passwordResetCodeGenerated")}
+                        </CredenzaTitle>
+                        <CredenzaDescription>
+                            {t("passwordResetCodeGeneratedDescription")}
+                        </CredenzaDescription>
+                    </CredenzaHeader>
+                    <CredenzaBody>
+                        {passwordResetCodeData && (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">
+                                        {t("email")}
+                                    </label>
+                                    <CopyToClipboard
+                                        text={passwordResetCodeData.email}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">
+                                        {t("passwordResetCode")}
+                                    </label>
+                                    <CopyToClipboard
+                                        text={passwordResetCodeData.token}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">
+                                        {t("passwordResetUrl")}
+                                    </label>
+                                    <CopyToClipboard
+                                        text={passwordResetCodeData.url}
+                                        isLink={true}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </CredenzaBody>
+                    <CredenzaFooter>
+                        <CredenzaClose asChild>
+                            <Button variant="outline">{t("close")}</Button>
+                        </CredenzaClose>
+                    </CredenzaFooter>
+                </CredenzaContent>
+            </Credenza>
         </>
     );
 }

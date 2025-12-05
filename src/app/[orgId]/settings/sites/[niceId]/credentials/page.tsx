@@ -22,7 +22,13 @@ import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsMod
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { build } from "@server/build";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "@app/components/ui/tooltip";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -33,7 +39,8 @@ export default function CredentialsPage() {
     const { site } = useSiteContext();
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [siteDefaults, setSiteDefaults] = useState<PickSiteDefaultsResponse | null>(null);
+    const [siteDefaults, setSiteDefaults] =
+        useState<PickSiteDefaultsResponse | null>(null);
     const [wgConfig, setWgConfig] = useState("");
     const [publicKey, setPublicKey] = useState("");
 
@@ -46,7 +53,6 @@ export default function CredentialsPage() {
             build === "saas" && !subscription?.isSubscribed();
         return isEnterpriseNotLicensed || isSaasNotSubscribed;
     };
-
 
     const hydrateWireGuardConfig = (
         privateKey: string,
@@ -97,8 +103,6 @@ PersistentKeepalive = 5`;
 
             await api.post(`/re-key/${site?.siteId}/regenerate-site-secret`, {
                 type: "wireguard",
-                subnet: res.data.data.subnet,
-                exitNodeId: res.data.data.exitNodeId,
                 pubKey: generatedPublicKey
             });
         }
@@ -109,11 +113,13 @@ PersistentKeepalive = 5`;
                 const data = res.data.data;
                 setSiteDefaults(data);
 
-                await api.post(`/re-key/${site?.siteId}/regenerate-site-secret`, {
-                    type: "newt",
-                    newtId: data.newtId,
-                    newtSecret: data.newtSecret
-                });
+                await api.post(
+                    `/re-key/${site?.siteId}/regenerate-site-secret`,
+                    {
+                        type: "newt",
+                        secret: data.newtSecret
+                    }
+                );
             }
         }
 
@@ -145,40 +151,30 @@ PersistentKeepalive = 5`;
     };
 
     return (
-        <SettingsContainer>
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("generatedcredentials")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("regenerateCredentials")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
+        <>
+            <SettingsContainer>
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("generatedcredentials")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("regenerateCredentials")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
 
-                <SettingsSectionBody>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="inline-block">
-                                    <Button
-                                        onClick={() => setModalOpen(true)}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("regeneratecredentials")}
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
+                    <SecurityFeaturesAlert />
 
-                            {isSecurityFeatureDisabled() && (
-                                <TooltipContent side="top">
-                                    {t("featureDisabledTooltip")}
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    </TooltipProvider>
-                </SettingsSectionBody>
-            </SettingsSection>
+                    <SettingsSectionBody>
+                        <Button
+                            onClick={() => setModalOpen(true)}
+                            disabled={isSecurityFeatureDisabled()}
+                        >
+                            {t("regeneratecredentials")}
+                        </Button>
+                    </SettingsSectionBody>
+                </SettingsSection>
+            </SettingsContainer>
 
             <RegenerateCredentialsModal
                 open={modalOpen}
@@ -188,6 +184,6 @@ PersistentKeepalive = 5`;
                 dashboardUrl={env.app.dashboardUrl}
                 credentials={getCredentials()}
             />
-        </SettingsContainer>
+        </>
     );
 }

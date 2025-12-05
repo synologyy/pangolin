@@ -24,16 +24,16 @@ import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
 import { UpdateRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { OpenAPITags, registry } from "@server/openApi";
+import { disconnectClient } from "@server/routers/ws";
 
 export const paramsSchema = z.object({
     orgId: z.string()
 });
 
 const bodySchema = z.strictObject({
-        remoteExitNodeId: z.string().length(15),
-        secret: z.string().length(48)
-    });
-
+    remoteExitNodeId: z.string().length(15),
+    secret: z.string().length(48)
+});
 
 registry.registerPath({
     method: "post",
@@ -81,12 +81,6 @@ export async function reGenerateExitNodeSecret(
 
         const { remoteExitNodeId, secret } = parsedBody.data;
 
-        if (req.user && !req.userOrgRoleId) {
-            return next(
-                createHttpError(HttpCode.FORBIDDEN, "User does not have a role")
-            );
-        }
-
         const [existingRemoteExitNode] = await db
             .select()
             .from(remoteExitNodes)
@@ -94,7 +88,10 @@ export async function reGenerateExitNodeSecret(
 
         if (!existingRemoteExitNode) {
             return next(
-                createHttpError(HttpCode.NOT_FOUND, "Remote Exit Node does not exist")
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    "Remote Exit Node does not exist"
+                )
             );
         }
 
@@ -105,15 +102,21 @@ export async function reGenerateExitNodeSecret(
             .set({ secretHash })
             .where(eq(remoteExitNodes.remoteExitNodeId, remoteExitNodeId));
 
+        disconnectClient(existingRemoteExitNode.remoteExitNodeId).catch(
+            (error) => {
+                logger.error("Failed to disconnect newt after re-key:", error);
+            }
+        );
+
         return response<UpdateRemoteExitNodeResponse>(res, {
             data: {
                 remoteExitNodeId,
-                secret,
+                secret
             },
             success: true,
             error: false,
             message: "Remote Exit Node secret updated successfully",
-            status: HttpCode.OK,
+            status: HttpCode.OK
         });
     } catch (e) {
         logger.error("Failed to update remoteExitNode", e);

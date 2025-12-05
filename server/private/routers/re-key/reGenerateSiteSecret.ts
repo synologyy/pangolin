@@ -13,7 +13,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, newts, sites } from "@server/db";
+import { db, Newt, newts, sites } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -22,38 +22,37 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
-import { addPeer } from "@server/routers/gerbil/peers";
-
+import { addPeer, deletePeer } from "@server/routers/gerbil/peers";
+import { getAllowedIps } from "@server/routers/target/helpers";
+import { disconnectClient, sendToClient } from "#dynamic/routers/ws";
 
 const updateSiteParamsSchema = z.strictObject({
-        siteId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    siteId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 const updateSiteBodySchema = z.strictObject({
-        type: z.enum(["newt", "wireguard"]),
-        newtId: z.string().min(1).max(255).optional(),
-        newtSecret: z.string().min(1).max(255).optional(),
-        exitNodeId: z.int().positive().optional(),
-        pubKey: z.string().optional(),
-        subnet: z.string().optional(),
-    });
+    type: z.enum(["newt", "wireguard"]),
+    secret: z.string().min(1).max(255).optional(),
+    pubKey: z.string().optional()
+});
 
 registry.registerPath({
     method: "post",
     path: "/re-key/{siteId}/regenerate-site-secret",
-    description: "Regenerate a site's Newt or WireGuard credentials by its site ID.",
+    description:
+        "Regenerate a site's Newt or WireGuard credentials by its site ID.",
     tags: [OpenAPITags.Site],
     request: {
         params: updateSiteParamsSchema,
         body: {
             content: {
                 "application/json": {
-                    schema: updateSiteBodySchema,
-                },
-            },
-        },
+                    schema: updateSiteBodySchema
+                }
+            }
+        }
     },
-    responses: {},
+    responses: {}
 });
 
 export async function reGenerateSiteSecret(
@@ -65,74 +64,141 @@ export async function reGenerateSiteSecret(
         const parsedParams = updateSiteParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
             return next(
-                createHttpError(HttpCode.BAD_REQUEST, fromError(parsedParams.error).toString())
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedParams.error).toString()
+                )
             );
         }
 
         const parsedBody = updateSiteBodySchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
-                createHttpError(HttpCode.BAD_REQUEST, fromError(parsedBody.error).toString())
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    fromError(parsedBody.error).toString()
+                )
             );
         }
 
         const { siteId } = parsedParams.data;
-        const { type, exitNodeId, pubKey, subnet, newtId, newtSecret } = parsedBody.data;
+        const { type, pubKey, secret } = parsedBody.data;
 
-        let updatedSite = undefined;
-
+        let existingNewt: Newt | null = null;
         if (type === "newt") {
-            if (!newtSecret) {
-                return next(
-                    createHttpError(HttpCode.BAD_REQUEST, "newtSecret is required for newt sites")
-                );
-            }
-
-            const secretHash = await hashPassword(newtSecret);
-
-            updatedSite = await db
-                .update(newts)
-                .set({
-                    newtId,
-                    secretHash,
-                })
-                .where(eq(newts.siteId, siteId))
-                .returning();
-
-            logger.info(`Regenerated Newt credentials for site ${siteId}`);
-
-        } else if (type === "wireguard") {
-            if (!pubKey) {
-                return next(
-                    createHttpError(HttpCode.BAD_REQUEST, "Public key is required for wireguard sites")
-                );
-            }
-
-            if (!exitNodeId) {
+            if (!secret) {
                 return next(
                     createHttpError(
                         HttpCode.BAD_REQUEST,
-                        "Exit node ID is required for wireguard sites"
+                        "newtSecret is required for newt sites"
+                    )
+                );
+            }
+
+            const secretHash = await hashPassword(secret);
+
+            // get the newt to verify it exists
+             const existingNewts = await db
+                .select()
+                .from(newts)
+                .where(eq(newts.siteId, siteId));
+
+            if (existingNewts.length === 0) {
+                return next(
+                    createHttpError(
+                        HttpCode.NOT_FOUND,
+                        `No Newt found for site ID ${siteId}`
+                    )
+                );
+            }
+
+            if (existingNewts.length > 1) {
+                return next(
+                    createHttpError(
+                        HttpCode.INTERNAL_SERVER_ERROR,
+                        `Multiple Newts found for site ID ${siteId}`
+                    )
+                );
+            }
+
+            existingNewt = existingNewts[0];
+
+            // update the secret on the existing newt
+            await db
+                .update(newts)
+                .set({
+                    secretHash
+                })
+                .where(eq(newts.newtId, existingNewts[0].newtId));
+
+            const payload = {
+                type: `newt/wg/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(existingNewts[0].newtId, payload).catch((error) => {
+                logger.error(
+                    "Failed to send termination message to newt:",
+                    error
+                );
+            });
+
+            disconnectClient(existingNewts[0].newtId).catch((error) => {
+                logger.error("Failed to disconnect newt after re-key:", error);
+            });
+
+            logger.info(`Regenerated Newt credentials for site ${siteId}`);
+        } else if (type === "wireguard") {
+            if (!pubKey) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Public key is required for wireguard sites"
                     )
                 );
             }
 
             try {
-                updatedSite = await db.transaction(async (tx) => {
-                    await addPeer(exitNodeId, {
+                const [site] = await db
+                    .select()
+                    .from(sites)
+                    .where(eq(sites.siteId, siteId))
+                    .limit(1);
+
+                if (!site) {
+                    return next(
+                        createHttpError(
+                            HttpCode.NOT_FOUND,
+                            `Site with ID ${siteId} not found`
+                        )
+                    );
+                }
+
+                await db
+                    .update(sites)
+                    .set({ pubKey })
+                    .where(eq(sites.siteId, siteId));
+
+                if (!site) {
+                    return next(
+                        createHttpError(
+                            HttpCode.NOT_FOUND,
+                            `Site with ID ${siteId} not found`
+                        )
+                    );
+                }
+
+                if (site.exitNodeId && site.subnet) {
+                    await deletePeer(site.exitNodeId, site.pubKey!); // the old pubkey
+                    await addPeer(site.exitNodeId, {
                         publicKey: pubKey,
-                        allowedIps: subnet ? [subnet] : [],
+                        allowedIps: await getAllowedIps(site.siteId)
                     });
-                    const result = await tx
-                        .update(sites)
-                        .set({ pubKey })
-                        .where(eq(sites.siteId, siteId))
-                        .returning();
+                }
 
-                    return result;
-                });
-
-                logger.info(`Regenerated WireGuard credentials for site ${siteId}`);
+                logger.info(
+                    `Regenerated WireGuard credentials for site ${siteId}`
+                );
             } catch (err) {
                 logger.error(
                     `Transaction failed while regenerating WireGuard secret for site ${siteId}`,
@@ -148,17 +214,19 @@ export async function reGenerateSiteSecret(
         }
 
         return response(res, {
-            data: updatedSite,
+            data: existingNewt,
             success: true,
             error: false,
             message: "Credentials regenerated successfully",
-            status: HttpCode.OK,
+            status: HttpCode.OK
         });
-
     } catch (error) {
         logger.error("Unexpected error in reGenerateSiteSecret", error);
         return next(
-            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "An unexpected error occurred")
+            createHttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred"
+            )
         );
     }
 }

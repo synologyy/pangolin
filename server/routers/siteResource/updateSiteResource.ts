@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import {
     clientSiteResources,
+    clientSiteResourcesAssociationsCache,
     db,
     newts,
     roles,
@@ -59,23 +60,27 @@ const updateSiteResourceSchema = z
     .refine(
         (data) => {
             if (data.mode === "host" && data.destination) {
-                // Check if it's a valid IP address using zod (v4 or v6)
                 const isValidIP = z
                     .union([z.ipv4(), z.ipv6()])
                     .safeParse(data.destination).success;
+
+                if (isValidIP) {
+                    return true;
+                }
 
                 // Check if it's a valid domain (hostname pattern, TLD not required)
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
+                const isValidAlias = data.alias && domainRegex.test(data.alias);
 
-                return isValidIP || isValidDomain;
+                return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
             return true;
         },
         {
             message:
-                "Destination must be a valid IP address or domain name for host mode"
+                "Destination must be a valid IP address or valid domain AND alias is required"
         }
     )
     .refine(
@@ -336,27 +341,67 @@ export async function updateSiteResource(
 
                 const olmJobs: Promise<void>[] = [];
                 for (const client of mergedAllClients) {
+                    // does this client have access to another resource on this site that has the same destination still? if so we dont want to remove it from their olm yet
+                    // todo: optimize this query if needed
+                    const oldDestinationStillInUseSites = await trx
+                        .select()
+                        .from(siteResources)
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                clientSiteResourcesAssociationsCache.siteResourceId,
+                                siteResources.siteResourceId
+                            )
+                        )
+                        .where(
+                            and(
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clientId
+                                ),
+                                eq(siteResources.siteId, site.siteId),
+                                eq(
+                                    siteResources.destination,
+                                    existingSiteResource.destination
+                                ),
+                                ne(
+                                    siteResources.siteResourceId,
+                                    existingSiteResource.siteResourceId
+                                )
+                            )
+                        );
+
+                    const oldDestinationStillInUseByASite =
+                        oldDestinationStillInUseSites.length > 0;
+
                     // we also need to update the remote subnets on the olms for each client that has access to this site
                     olmJobs.push(
                         updatePeerData(
                             client.clientId,
                             updatedSiteResource.siteId,
-                            destinationChanged ? {
-                                oldRemoteSubnets: generateRemoteSubnets([
-                                    existingSiteResource
-                                ]),
-                                newRemoteSubnets: generateRemoteSubnets([
-                                    updatedSiteResource
-                                ])
-                            } : undefined,
-                            aliasChanged ? {
-                                oldAliases: generateAliasConfig([
-                                    existingSiteResource
-                                ]),
-                                newAliases: generateAliasConfig([
-                                    updatedSiteResource
-                                ])
-                            } : undefined
+                            destinationChanged
+                                ? {
+                                      oldRemoteSubnets:
+                                          !oldDestinationStillInUseByASite
+                                              ? generateRemoteSubnets([
+                                                    existingSiteResource
+                                                ])
+                                              : [],
+                                      newRemoteSubnets: generateRemoteSubnets([
+                                          updatedSiteResource
+                                      ])
+                                  }
+                                : undefined,
+                            aliasChanged
+                                ? {
+                                      oldAliases: generateAliasConfig([
+                                          existingSiteResource
+                                      ]),
+                                      newAliases: generateAliasConfig([
+                                          updatedSiteResource
+                                      ])
+                                  }
+                                : undefined
                         )
                     );
                 }
