@@ -26,12 +26,13 @@ import { createCustomer } from "#dynamic/lib/billing";
 import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const createOrgSchema = z.strictObject({
-        orgId: z.string(),
-        name: z.string().min(1).max(255),
-        subnet: z.string()
-    });
+    orgId: z.string(),
+    name: z.string().min(1).max(255),
+    subnet: z.string()
+});
 
 registry.registerPath({
     method: "put",
@@ -131,12 +132,16 @@ export async function createOrg(
                 .from(domains)
                 .where(eq(domains.configManaged, true));
 
+            const utilitySubnet =
+                config.getRawConfig().orgs.utility_subnet_group;
+
             const newOrg = await trx
                 .insert(orgs)
                 .values({
                     orgId,
                     name,
                     subnet,
+                    utilitySubnet,
                     createdAt: new Date().toISOString()
                 })
                 .returning();
@@ -190,6 +195,7 @@ export async function createOrg(
                 );
             }
 
+            let ownerUserId: string | null = null;
             if (req.user) {
                 await trx.insert(userOrgs).values({
                     userId: req.user!.userId,
@@ -197,6 +203,7 @@ export async function createOrg(
                     roleId: roleId,
                     isOwner: true
                 });
+                ownerUserId = req.user!.userId;
             } else {
                 // if org created by root api key, set the server admin as the owner
                 const [serverAdmin] = await trx
@@ -216,6 +223,7 @@ export async function createOrg(
                     roleId: roleId,
                     isOwner: true
                 });
+                ownerUserId = serverAdmin.userId;
             }
 
             const memberRole = await trx
@@ -234,6 +242,8 @@ export async function createOrg(
                     orgId
                 }))
             );
+
+            await calculateUserClientsForOrgs(ownerUserId, trx);
         });
 
         if (!org) {

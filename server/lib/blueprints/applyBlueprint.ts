@@ -122,19 +122,17 @@ export async function applyBlueprint({
                 )
                 .limit(1);
 
-            if (site) {
-                logger.debug(
-                    `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
-                );
+            logger.debug(
+                `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
+            );
 
-                await addClientTargets(
-                    site.newt.newtId,
-                    result.resource.destinationIp,
-                    result.resource.destinationPort,
-                    result.resource.protocol,
-                    result.resource.proxyPort
-                );
-            }
+            // await addClientTargets(
+            //     site.newt.newtId,
+            //     result.resource.destination,
+            //     result.resource.destinationPort,
+            //     result.resource.protocol,
+            //     result.resource.proxyPort
+            // );
         }
 
         blueprintSucceeded = true;

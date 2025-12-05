@@ -80,7 +80,7 @@ export default async function Page(props: {
     const lastOrgCookie = allCookies.get("pangolin-last-org")?.value;
 
     const lastOrgExists = orgs.some((org) => org.orgId === lastOrgCookie);
-    if (lastOrgExists) {
+    if (lastOrgExists && lastOrgCookie) {
         redirect(`/${lastOrgCookie}`);
     } else {
         let ownedOrg = orgs.find((org) => org.isOwner);

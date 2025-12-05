@@ -124,6 +124,7 @@ export const privateConfigSchema = z.object({
                     })
                 )
                 .optional(),
+            hide_auth_layout_footer: z.boolean().optional().default(false),
             login_page: z
                 .object({
                     subtitle_text: z.string().optional(),

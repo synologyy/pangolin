@@ -32,6 +32,9 @@ export function InvitationsDataTable<TData, TValue>({
             searchColumn="email"
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
+            enableColumnVisibility={true}
+            stickyLeftColumn="email"
+            stickyRightColumn="dots"
         />
     );
 }

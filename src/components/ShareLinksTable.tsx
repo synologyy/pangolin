@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { ShareLinksDataTable } from "@app/components/ShareLinksDataTable";
 import {
     DropdownMenu,
@@ -102,9 +103,11 @@ export default function ShareLinksTable({
         });
     }
 
-    const columns: ColumnDef<ShareLinkRow>[] = [
+    const columns: ExtendedColumnDef<ShareLinkRow>[] = [
         {
             accessorKey: "resourceName",
+            enableHiding: false,
+            friendlyName: t("resource"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -121,8 +124,8 @@ export default function ShareLinksTable({
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <Link href={`/${orgId}/settings/resources/${r.resourceNiceId}`}>
-                        <Button variant="outline" size="sm">
+                    <Link href={`/${orgId}/settings/resources/proxy/${r.resourceNiceId}`}>
+                        <Button variant="outline">
                             {r.resourceName}
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -132,6 +135,7 @@ export default function ShareLinksTable({
         },
         {
             accessorKey: "title",
+            friendlyName: t("title"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -211,6 +215,7 @@ export default function ShareLinksTable({
         // },
         {
             accessorKey: "createdAt",
+            friendlyName: t("created"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -231,6 +236,7 @@ export default function ShareLinksTable({
         },
         {
             accessorKey: "expiresAt",
+            friendlyName: t("expires"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -254,10 +260,12 @@ export default function ShareLinksTable({
         },
         {
             id: "delete",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
-                    <div className="flex items-center justify-end space-x-2">
+                    <div className="flex items-center space-x-2 justify-end">
                         {/* <DropdownMenu> */}
                         {/*     <DropdownMenuTrigger asChild> */}
                         {/*         <Button variant="ghost" className="h-8 w-8 p-0"> */}
@@ -281,9 +289,7 @@ export default function ShareLinksTable({
                         {/*         </DropdownMenuItem> */}
                         {/*     </DropdownMenuContent> */}
                         {/* </DropdownMenu> */}
-                        <Button
-                            variant="secondary"
-                            size="sm"
+                        <Button variant={"outline"}
                             onClick={() =>
                                 deleteSharelink(row.original.accessTokenId)
                             }

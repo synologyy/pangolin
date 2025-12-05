@@ -1,16 +1,16 @@
-import { db, olms } from "@server/db";
+import { db, olms, users } from "@server/db";
 import {
     clients,
     orgs,
     roleClients,
     sites,
     userClients,
-    clientSites
+    clientSitesAssociationsCache
 } from "@server/db";
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { and, count, eq, inArray, or, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -19,7 +19,7 @@ import { OpenAPITags, registry } from "@server/openApi";
 import NodeCache from "node-cache";
 import semver from "semver";
 
-const olmVersionCache = new NodeCache({ stdTTL: 3600 }); 
+const olmVersionCache = new NodeCache({ stdTTL: 3600 });
 
 async function getLatestOlmVersion(): Promise<string | null> {
     try {
@@ -29,7 +29,7 @@ async function getLatestOlmVersion(): Promise<string | null> {
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500); 
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
 
         const response = await fetch(
             "https://api.github.com/repos/fosrl/olm/tags",
@@ -94,10 +94,25 @@ const listClientsSchema = z.object({
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.int().nonnegative())
+        .pipe(z.int().nonnegative()),
+    filter: z
+        .enum(["user", "machine"])
+        .optional()
 });
 
-function queryClients(orgId: string, accessibleClientIds: number[]) {
+function queryClients(orgId: string, accessibleClientIds: number[], filter?: "user" | "machine") {
+    const conditions = [
+        inArray(clients.clientId, accessibleClientIds),
+        eq(clients.orgId, orgId)
+    ];
+
+    // Add filter condition based on filter type
+    if (filter === "user") {
+        conditions.push(isNotNull(clients.userId));
+    } else if (filter === "machine") {
+        conditions.push(isNull(clients.userId));
+    }
+
     return db
         .select({
             clientId: clients.clientId,
@@ -110,17 +125,16 @@ function queryClients(orgId: string, accessibleClientIds: number[]) {
             orgName: orgs.name,
             type: clients.type,
             online: clients.online,
-            olmVersion: olms.version
+            olmVersion: olms.version,
+            userId: clients.userId,
+            username: users.username,
+            userEmail: users.email
         })
         .from(clients)
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))
         .leftJoin(olms, eq(clients.clientId, olms.clientId))
-        .where(
-            and(
-                inArray(clients.clientId, accessibleClientIds),
-                eq(clients.orgId, orgId)
-            )
-        );
+        .leftJoin(users, eq(clients.userId, users.userId))
+        .where(and(...conditions));
 }
 
 async function getSiteAssociations(clientIds: number[]) {
@@ -128,14 +142,14 @@ async function getSiteAssociations(clientIds: number[]) {
 
     return db
         .select({
-            clientId: clientSites.clientId,
-            siteId: clientSites.siteId,
+            clientId: clientSitesAssociationsCache.clientId,
+            siteId: clientSitesAssociationsCache.siteId,
             siteName: sites.name,
             siteNiceId: sites.niceId
         })
-        .from(clientSites)
-        .leftJoin(sites, eq(clientSites.siteId, sites.siteId))
-        .where(inArray(clientSites.clientId, clientIds));
+        .from(clientSitesAssociationsCache)
+        .leftJoin(sites, eq(clientSitesAssociationsCache.siteId, sites.siteId))
+        .where(inArray(clientSitesAssociationsCache.clientId, clientIds));
 }
 
 type OlmWithUpdateAvailable = Awaited<ReturnType<typeof queryClients>>[0] & {
@@ -182,7 +196,7 @@ export async function listClients(
                 )
             );
         }
-        const { limit, offset } = parsedQuery.data;
+        const { limit, offset, filter } = parsedQuery.data;
 
         const parsedParams = listClientsParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -231,18 +245,24 @@ export async function listClients(
         const accessibleClientIds = accessibleClients.map(
             (client) => client.clientId
         );
-        const baseQuery = queryClients(orgId, accessibleClientIds);
+        const baseQuery = queryClients(orgId, accessibleClientIds, filter);
 
-        // Get client count
+        // Get client count with filter
+        const countConditions = [
+            inArray(clients.clientId, accessibleClientIds),
+            eq(clients.orgId, orgId)
+        ];
+
+        if (filter === "user") {
+            countConditions.push(isNotNull(clients.userId));
+        } else if (filter === "machine") {
+            countConditions.push(isNull(clients.userId));
+        }
+
         const countQuery = db
             .select({ count: count() })
             .from(clients)
-            .where(
-                and(
-                    inArray(clients.clientId, accessibleClientIds),
-                    eq(clients.orgId, orgId)
-                )
-            );
+            .where(and(...countConditions));
 
         const clientsList = await baseQuery.limit(limit).offset(offset);
         const totalCountResult = await countQuery;

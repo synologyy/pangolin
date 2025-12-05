@@ -8,8 +8,6 @@ import {
     roleClients,
     userClients,
     olms,
-    clientSites,
-    exitNodes,
     orgs,
     sites
 } from "@server/db";
@@ -21,23 +19,24 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import moment from "moment";
 import { hashPassword } from "@server/auth/password";
-import { isValidCIDR, isValidIP } from "@server/lib/validators";
+import { isValidIP } from "@server/lib/validators";
 import { isIpInCidr } from "@server/lib/ip";
-import { OpenAPITags, registry } from "@server/openApi";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
+import { generateId } from "@server/auth/sessions/app";
+import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 
 const createClientParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const createClientSchema = z.strictObject({
-        name: z.string().min(1).max(255),
-        siteIds: z.array(z.int().positive()),
-        olmId: z.string(),
-        secret: z.string(),
-        subnet: z.string(),
-        type: z.enum(["olm"])
-    });
+    name: z.string().min(1).max(255),
+    olmId: z.string(),
+    secret: z.string(),
+    subnet: z.string(),
+    type: z.enum(["olm"])
+});
 
 export type CreateClientBody = z.infer<typeof createClientSchema>;
 
@@ -46,7 +45,7 @@ export type CreateClientResponse = Client;
 registry.registerPath({
     method: "put",
     path: "/org/{orgId}/client",
-    description: "Create a new client.",
+    description: "Create a new client for an organization.",
     tags: [OpenAPITags.Client, OpenAPITags.Org],
     request: {
         params: createClientParamsSchema,
@@ -77,7 +76,7 @@ export async function createClient(
             );
         }
 
-        const { name, type, siteIds, olmId, secret, subnet } = parsedBody.data;
+        const { name, type, olmId, secret, subnet } = parsedBody.data;
 
         const parsedParams = createClientParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -172,75 +171,90 @@ export async function createClient(
             );
         }
 
+        // check if the olmId already exists
+        const [existingOlm] = await db
+            .select()
+            .from(olms)
+            .where(eq(olms.olmId, olmId))
+            .limit(1);
+
+        if (existingOlm) {
+            return next(
+                createHttpError(
+                    HttpCode.CONFLICT,
+                    `OLM with ID ${olmId} already exists`
+                )
+            );
+        }
+
+        let newClient: Client | null = null;
         await db.transaction(async (trx) => {
             // TODO: more intelligent way to pick the exit node
             const exitNodesList = await listExitNodes(orgId);
             const randomExitNode =
                 exitNodesList[Math.floor(Math.random() * exitNodesList.length)];
 
-            const adminRole = await trx
+            const [adminRole] = await trx
                 .select()
                 .from(roles)
                 .where(and(eq(roles.isAdmin, true), eq(roles.orgId, orgId)))
                 .limit(1);
 
-            if (adminRole.length === 0) {
-                trx.rollback();
+            if (!adminRole) {
                 return next(
                     createHttpError(HttpCode.NOT_FOUND, `Admin role not found`)
                 );
             }
 
-            const [newClient] = await trx
+            [newClient] = await trx
                 .insert(clients)
                 .values({
                     exitNodeId: randomExitNode.exitNodeId,
                     orgId,
                     name,
                     subnet: updatedSubnet,
-                    type
+                    type,
+                    olmId // this is to lock it to a specific olm even if the olm moves across clients
                 })
                 .returning();
 
             await trx.insert(roleClients).values({
-                roleId: adminRole[0].roleId,
+                roleId: adminRole.roleId,
                 clientId: newClient.clientId
             });
 
-            if (req.user && req.userOrgRoleId != adminRole[0].roleId) {
-                // make sure the user can access the site
+            if (req.user && req.userOrgRoleId != adminRole.roleId) {
+                // make sure the user can access the client
                 trx.insert(userClients).values({
-                    userId: req.user?.userId!,
+                    userId: req.user.userId,
                     clientId: newClient.clientId
                 });
             }
 
-            // Create site to client associations
-            if (siteIds && siteIds.length > 0) {
-                await trx.insert(clientSites).values(
-                    siteIds.map((siteId) => ({
-                        clientId: newClient.clientId,
-                        siteId
-                    }))
-                );
+            let secretToUse = secret;
+            if (!secretToUse) {
+                secretToUse = generateId(48);
             }
 
-            const secretHash = await hashPassword(secret);
+            const secretHash = await hashPassword(secretToUse);
 
             await trx.insert(olms).values({
                 olmId,
                 secretHash,
+                name,
                 clientId: newClient.clientId,
                 dateCreated: moment().toISOString()
             });
 
-            return response<CreateClientResponse>(res, {
-                data: newClient,
-                success: true,
-                error: false,
-                message: "Site created successfully",
-                status: HttpCode.CREATED
-            });
+            await rebuildClientAssociationsFromClient(newClient, trx);
+        });
+
+        return response<CreateClientResponse>(res, {
+            data: newClient,
+            success: true,
+            error: false,
+            message: "Site created successfully",
+            status: HttpCode.CREATED
         });
     } catch (error) {
         logger.error(error);

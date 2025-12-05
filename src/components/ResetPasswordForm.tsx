@@ -34,8 +34,8 @@ import {
     ResetPasswordBody,
     ResetPasswordResponse
 } from "@server/routers/auth";
-import { Loader2 } from "lucide-react";
-import { Alert, AlertDescription } from "./ui/alert";
+import { Loader2, InfoIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { toast } from "@app/hooks/useToast";
 import { useRouter } from "next/navigation";
 import { formatAxiosError } from "@app/lib/api";
@@ -84,22 +84,23 @@ export default function ResetPasswordForm({
 
     const [state, setState] = useState<"request" | "reset" | "mfa">(getState());
 
-    const api = createApiClient(useEnvContext());
+    const { env } = useEnvContext();
+    const api = createApiClient({ env });
 
     const formSchema = z
         .object({
-            email: z.email({ message: t('emailInvalid') }),
-            token: z.string().min(8, { message: t('tokenInvalid') }),
+            email: z.email({ message: t("emailInvalid") }),
+            token: z.string().min(8, { message: t("tokenInvalid") }),
             password: passwordSchema,
             confirmPassword: passwordSchema
         })
         .refine((data) => data.password === data.confirmPassword, {
             path: ["confirmPassword"],
-            message: t('passwordNotMatch')
+            message: t("passwordNotMatch")
         });
 
     const mfaSchema = z.object({
-        code: z.string().length(6, { message: t('pincodeInvalid') })
+        code: z.string().length(6, { message: t("pincodeInvalid") })
     });
 
     const form = useForm({
@@ -139,8 +140,8 @@ export default function ResetPasswordForm({
                 } as RequestPasswordResetBody
             )
             .catch((e) => {
-                setError(formatAxiosError(e, t('errorOccurred')));
-                console.error(t('passwordErrorRequestReset'), e);
+                setError(formatAxiosError(e, t("errorOccurred")));
+                console.error(t("passwordErrorRequestReset"), e);
                 setIsSubmitting(false);
             });
 
@@ -169,8 +170,8 @@ export default function ResetPasswordForm({
                 } as ResetPasswordBody
             )
             .catch((e) => {
-                setError(formatAxiosError(e, t('errorOccurred')));
-                console.error(t('passwordErrorReset'), e);
+                setError(formatAxiosError(e, t("errorOccurred")));
+                console.error(t("passwordErrorReset"), e);
                 setIsSubmitting(false);
             });
 
@@ -186,7 +187,11 @@ export default function ResetPasswordForm({
                 return;
             }
 
-            setSuccessMessage(quickstart ? t('accountSetupSuccess') : t('passwordResetSuccess'));
+            setSuccessMessage(
+                quickstart
+                    ? t("accountSetupSuccess")
+                    : t("passwordResetSuccess")
+            );
 
             // Auto-login after successful password reset
             try {
@@ -208,7 +213,10 @@ export default function ResetPasswordForm({
                     try {
                         await api.post("/auth/verify-email/request");
                     } catch (verificationError) {
-                        console.error("Failed to send verification code:", verificationError);
+                        console.error(
+                            "Failed to send verification code:",
+                            verificationError
+                        );
                     }
 
                     if (redirect) {
@@ -229,7 +237,6 @@ export default function ResetPasswordForm({
                     }
                     setIsSubmitting(false);
                 }, 1500);
-
             } catch (loginError) {
                 // Auto-login failed, but password reset was successful
                 console.error("Auto-login failed:", loginError);
@@ -251,47 +258,70 @@ export default function ResetPasswordForm({
             <Card className="w-full max-w-md">
                 <CardHeader>
                     <CardTitle>
-                        {quickstart ? t('completeAccountSetup') : t('passwordReset')}
+                        {quickstart
+                            ? t("completeAccountSetup")
+                            : t("passwordReset")}
                     </CardTitle>
                     <CardDescription>
                         {quickstart
-                            ? t('completeAccountSetupDescription')
-                            : t('passwordResetDescription')
-                        }
+                            ? t("completeAccountSetupDescription")
+                            : t("passwordResetDescription")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {state === "request" && (
-                            <Form {...requestForm}>
-                                <form
-                                    onSubmit={requestForm.handleSubmit(
-                                        onRequest
-                                    )}
-                                    className="space-y-4"
-                                    id="form"
-                                >
-                                    <FormField
-                                        control={requestForm.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{t('email')}</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                                <FormDescription>
-                                                    {quickstart
-                                                        ? t('accountSetupSent')
-                                                        : t('passwordResetSent')
-                                                    }
-                                                </FormDescription>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
+                            <>
+                                {!env.email.emailEnabled && (
+                                    <Alert variant="neutral">
+                                        <InfoIcon className="h-4 w-4" />
+                                        <AlertTitle className="font-semibold">
+                                            {t("passwordResetSmtpRequired")}
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            {t(
+                                                "passwordResetSmtpRequiredDescription"
+                                            )}
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                                {env.email.emailEnabled && (
+                                    <Form {...requestForm}>
+                                        <form
+                                            onSubmit={requestForm.handleSubmit(
+                                                onRequest
+                                            )}
+                                            className="space-y-4"
+                                            id="form"
+                                        >
+                                            <FormField
+                                                control={requestForm.control}
+                                                name="email"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>
+                                                            {t("email")}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                        <FormDescription>
+                                                            {quickstart
+                                                                ? t(
+                                                                      "accountSetupSent"
+                                                                  )
+                                                                : t(
+                                                                      "passwordResetSent"
+                                                                  )}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </form>
+                                    </Form>
+                                )}
+                            </>
                         )}
 
                         {state === "reset" && (
@@ -306,11 +336,13 @@ export default function ResetPasswordForm({
                                         name="email"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t('email')}</FormLabel>
+                                                <FormLabel>
+                                                    {t("email")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         {...field}
-                                                        disabled
+                                                        disabled={env.email.emailEnabled}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
@@ -326,9 +358,12 @@ export default function ResetPasswordForm({
                                                 <FormItem>
                                                     <FormLabel>
                                                         {quickstart
-                                                            ? t('accountSetupCode')
-                                                            : t('passwordResetCode')
-                                                        }
+                                                            ? t(
+                                                                  "accountSetupCode"
+                                                              )
+                                                            : t(
+                                                                  "passwordResetCode"
+                                                              )}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input
@@ -337,12 +372,17 @@ export default function ResetPasswordForm({
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
-                                                    <FormDescription>
-                                                        {quickstart
-                                                            ? t('accountSetupCodeDescription')
-                                                            : t('passwordResetCodeDescription')
-                                                        }
-                                                    </FormDescription>
+                                                    {env.email.emailEnabled && (
+                                                        <FormDescription>
+                                                            {quickstart
+                                                                ? t(
+                                                                      "accountSetupCodeDescription"
+                                                                  )
+                                                                : t(
+                                                                      "passwordResetCodeDescription"
+                                                                  )}
+                                                        </FormDescription>
+                                                    )}
                                                 </FormItem>
                                             )}
                                         />
@@ -355,9 +395,8 @@ export default function ResetPasswordForm({
                                             <FormItem>
                                                 <FormLabel>
                                                     {quickstart
-                                                        ? t('passwordCreate')
-                                                        : t('passwordNew')
-                                                    }
+                                                        ? t("passwordCreate")
+                                                        : t("passwordNew")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -376,9 +415,12 @@ export default function ResetPasswordForm({
                                             <FormItem>
                                                 <FormLabel>
                                                     {quickstart
-                                                        ? t('passwordCreateConfirm')
-                                                        : t('passwordNewConfirm')
-                                                    }
+                                                        ? t(
+                                                              "passwordCreateConfirm"
+                                                          )
+                                                        : t(
+                                                              "passwordNewConfirm"
+                                                          )}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -407,7 +449,7 @@ export default function ResetPasswordForm({
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('pincodeAuth')}
+                                                    {t("pincodeAuth")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <div className="flex justify-center">
@@ -475,26 +517,45 @@ export default function ResetPasswordForm({
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     )}
                                     {state === "reset"
-                                        ? (quickstart ? t('completeSetup') : t('passwordReset'))
-                                        : t('pincodeSubmit2')}
+                                        ? quickstart
+                                            ? t("completeSetup")
+                                            : t("passwordReset")
+                                        : t("pincodeSubmit2")}
                                 </Button>
                             )}
 
                             {state === "request" && (
-                                <Button
-                                    type="submit"
-                                    form="form"
-                                    className="w-full"
-                                    disabled={isSubmitting}
-                                >
-                                    {isSubmitting && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <div className="flex flex-col gap-2">
+                                    {env.email.emailEnabled && (
+                                        <Button
+                                            type="submit"
+                                            form="form"
+                                            className="w-full"
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting && (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            )}
+                                            {quickstart
+                                                ? t("accountSetupSubmit")
+                                                : t("passwordResetSubmit")}
+                                        </Button>
                                     )}
-                                    {quickstart
-                                        ? t('accountSetupSubmit')
-                                        : t('passwordResetSubmit')
-                                    }
-                                </Button>
+                                    <Button
+                                        type="button"
+                                        className="w-full"
+                                        onClick={() => {
+                                            const email =
+                                                requestForm.getValues("email");
+                                            if (email) {
+                                                form.setValue("email", email);
+                                            }
+                                            setState("reset");
+                                        }}
+                                    >
+                                        {t("passwordResetAlreadyHaveCode")}
+                                    </Button>
+                                </div>
                             )}
 
                             {state === "mfa" && (
@@ -507,7 +568,7 @@ export default function ResetPasswordForm({
                                         mfaForm.reset();
                                     }}
                                 >
-                                    {t('passwordBack')}
+                                    {t("passwordBack")}
                                 </Button>
                             )}
 
@@ -521,7 +582,7 @@ export default function ResetPasswordForm({
                                         form.reset();
                                     }}
                                 >
-                                    {t('backToEmail')}
+                                    {t("backToEmail")}
                                 </Button>
                             )}
                         </div>

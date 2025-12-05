@@ -131,7 +131,7 @@ export function queryRequest(data: Q) {
             eq(requestAuditLog.resourceId, resources.resourceId)
         ) // TODO: Is this efficient?
         .where(getWhere(data))
-        .orderBy(desc(requestAuditLog.timestamp), desc(requestAuditLog.id));
+        .orderBy(desc(requestAuditLog.timestamp));
 }
 
 export function countRequestQuery(data: Q) {

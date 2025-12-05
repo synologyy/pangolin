@@ -237,10 +237,11 @@ export type SecurityKeyVerifyResponse = {
 };
 
 export async function loginProxy(
-    request: LoginRequest
+    request: LoginRequest,
+    forceLogin?: boolean
 ): Promise<ResponseT<LoginResponse>> {
     const serverPort = process.env.SERVER_EXTERNAL_PORT;
-    const url = `http://localhost:${serverPort}/api/v1/auth/login`;
+    const url = `http://localhost:${serverPort}/api/v1/auth/login${forceLogin ? "?forceLogin=true" : ""}`;
 
     console.log("Making login request to:", url);
 
@@ -248,10 +249,11 @@ export async function loginProxy(
 }
 
 export async function securityKeyStartProxy(
-    request: SecurityKeyStartRequest
+    request: SecurityKeyStartRequest,
+    forceLogin?: boolean
 ): Promise<ResponseT<SecurityKeyStartResponse>> {
     const serverPort = process.env.SERVER_EXTERNAL_PORT;
-    const url = `http://localhost:${serverPort}/api/v1/auth/security-key/authenticate/start`;
+    const url = `http://localhost:${serverPort}/api/v1/auth/security-key/authenticate/start${forceLogin ? "?forceLogin=true" : ""}`;
 
     console.log("Making security key start request to:", url);
 
@@ -260,10 +262,11 @@ export async function securityKeyStartProxy(
 
 export async function securityKeyVerifyProxy(
     request: SecurityKeyVerifyRequest,
-    tempSessionId: string
+    tempSessionId: string,
+    forceLogin?: boolean
 ): Promise<ResponseT<SecurityKeyVerifyResponse>> {
     const serverPort = process.env.SERVER_EXTERNAL_PORT;
-    const url = `http://localhost:${serverPort}/api/v1/auth/security-key/authenticate/verify`;
+    const url = `http://localhost:${serverPort}/api/v1/auth/security-key/authenticate/verify${forceLogin ? "?forceLogin=true" : ""}`;
 
     console.log("Making security key verify request to:", url);
 
@@ -407,10 +410,19 @@ export async function validateOidcUrlCallbackProxy(
 export async function generateOidcUrlProxy(
     idpId: number,
     redirect: string,
-    orgId?: string
+    orgId?: string,
+    forceLogin?: boolean
 ): Promise<ResponseT<GenerateOidcUrlResponse>> {
     const serverPort = process.env.SERVER_EXTERNAL_PORT;
-    const url = `http://localhost:${serverPort}/api/v1/auth/idp/${idpId}/oidc/generate-url${orgId ? `?orgId=${orgId}` : ""}`;
+    const queryParams = new URLSearchParams();
+    if (orgId) {
+        queryParams.append("orgId", orgId);
+    }
+    if (forceLogin) {
+        queryParams.append("forceLogin", "true");
+    }
+    const queryString = queryParams.toString();
+    const url = `http://localhost:${serverPort}/api/v1/auth/idp/${idpId}/oidc/generate-url${queryString ? `?${queryString}` : ""}`;
 
     console.log("Making OIDC URL generation request to:", url);
 

@@ -78,13 +78,15 @@ interface RemoteExitNodeOption {
     disabled?: boolean;
 }
 
+type CommandItem = string | { title: string; command: string };
+
 type Commands = {
-    unix: Record<string, string[]>;
-    windows: Record<string, string[]>;
-    docker: Record<string, string[]>;
-    kubernetes: Record<string, string[]>;
-    podman: Record<string, string[]>;
-    nixos: Record<string, string[]>;
+    unix: Record<string, CommandItem[]>;
+    windows: Record<string, CommandItem[]>;
+    docker: Record<string, CommandItem[]>;
+    kubernetes: Record<string, CommandItem[]>;
+    podman: Record<string, CommandItem[]>;
+    nixos: Record<string, CommandItem[]>;
 };
 
 const platforms = [
@@ -199,7 +201,7 @@ export default function Page() {
     const [wgConfig, setWgConfig] = useState("");
 
     const [createLoading, setCreateLoading] = useState(false);
-    const [acceptClients, setAcceptClients] = useState(false);
+    const [acceptClients, setAcceptClients] = useState(true);
     const [newtVersion, setNewtVersion] = useState("latest");
 
     const [siteDefaults, setSiteDefaults] =
@@ -238,24 +240,36 @@ PersistentKeepalive = 5`;
         secret: string,
         endpoint: string,
         version: string,
-        acceptClients: boolean = false
+        acceptClients: boolean = true
     ) => {
-        const acceptClientsFlag = acceptClients ? " --accept-clients" : "";
-        const acceptClientsEnv = acceptClients
-            ? "\n      - ACCEPT_CLIENTS=true"
+        const acceptClientsFlag = !acceptClients ? " --disable-clients" : "";
+        const acceptClientsEnv = !acceptClients
+            ? "\n      - DISABLE_CLIENTS=true"
             : "";
 
         const commands = {
             unix: {
                 All: [
-                    `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
-                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    {
+                        title: t("install"),
+                        command: `curl -fsSL https://pangolin.net/get-newt.sh | bash`
+                    },
+                    {
+                        title: t("run"),
+                        command: `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    }
                 ]
             },
             windows: {
                 x64: [
-                    `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`,
-                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    {
+                        title: t("install"),
+                        command: `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`
+                    },
+                    {
+                        title: t("run"),
+                        command: `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    }
                 ]
             },
             docker: {
@@ -296,7 +310,7 @@ ContainerName=newt
 Image=docker.io/fosrl/newt
 Environment=PANGOLIN_ENDPOINT=${endpoint}
 Environment=NEWT_ID=${id}
-Environment=NEWT_SECRET=${secret}${acceptClients ? "\nEnvironment=ACCEPT_CLIENTS=true" : ""}
+Environment=NEWT_SECRET=${secret}${!acceptClients ? "\nEnvironment=DISABLE_CLIENTS=true" : ""}
 # Secret=newt-secret,type=env,target=NEWT_SECRET
 
 [Service]
@@ -356,8 +370,8 @@ WantedBy=default.target`
         }
     };
 
-    const getCommand = () => {
-        const placeholder = [t("unknownCommand")];
+    const getCommand = (): CommandItem[] => {
+        const placeholder: CommandItem[] = [t("unknownCommand")];
         if (!commands) {
             return placeholder;
         }
@@ -409,7 +423,7 @@ WantedBy=default.target`
             copied: false,
             method: "newt",
             clientAddress: "",
-            acceptClients: false,
+            acceptClients: true,
             exitNodeId: undefined
         }
     });
@@ -679,108 +693,100 @@ WantedBy=default.target`
                                 </SettingsSectionTitle>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
-                                <SettingsSectionForm>
-                                    <Form {...form}>
-                                        <form
-                                            onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                    e.preventDefault(); // block default enter refresh
-                                                }
-                                            }}
-                                            className="space-y-4"
-                                            id="create-site-form"
-                                        >
+                                <Form {...form}>
+                                    <form
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault(); // block default enter refresh
+                                            }
+                                        }}
+                                        className="space-y-4 grid gap-4 grid-cols-1 md:grid-cols-2 items-start"
+                                        id="create-site-form"
+                                    >
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>
+                                                        {t("name")}
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            autoComplete="off"
+                                                            {...field}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                    <FormDescription>
+                                                        {t(
+                                                            "siteNameDescription"
+                                                        )}
+                                                    </FormDescription>
+                                                </FormItem>
+                                            )}
+                                        />
+                                        {form.watch("method") === "newt" && (
                                             <FormField
                                                 control={form.control}
-                                                name="name"
+                                                name="clientAddress"
                                                 render={({ field }) => (
                                                     <FormItem>
                                                         <FormLabel>
-                                                            {t("name")}
+                                                            {t("siteAddress")}
                                                         </FormLabel>
                                                         <FormControl>
                                                             <Input
                                                                 autoComplete="off"
-                                                                {...field}
+                                                                value={
+                                                                    clientAddress
+                                                                }
+                                                                onChange={(
+                                                                    e
+                                                                ) => {
+                                                                    setClientAddress(
+                                                                        e.target
+                                                                            .value
+                                                                    );
+                                                                    field.onChange(
+                                                                        e.target
+                                                                            .value
+                                                                    );
+                                                                }}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />
+                                                        <FormDescription>
+                                                            {t(
+                                                                "siteAddressDescription"
+                                                            )}
+                                                        </FormDescription>
                                                     </FormItem>
                                                 )}
                                             />
-                                            {env.flags.enableClients &&
-                                                form.watch("method") ===
-                                                    "newt" && (
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="clientAddress"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "siteAddress"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        autoComplete="off"
-                                                                        value={
-                                                                            clientAddress
-                                                                        }
-                                                                        onChange={(
-                                                                            e
-                                                                        ) => {
-                                                                            setClientAddress(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            );
-                                                                            field.onChange(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                            );
-                                                                        }}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                                <FormDescription>
-                                                                    {t(
-                                                                        "siteAddressDescription"
-                                                                    )}
-                                                                </FormDescription>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-                                                )}
-                                        </form>
-                                    </Form>
-                                </SettingsSectionForm>
+                                        )}
+                                    </form>
+                                </Form>
+
+                                {tunnelTypes.length > 1 && (
+                                    <>
+                                        <div className="mb-2">
+                                            <span className="text-sm font-medium">{t("type")}</span>
+                                        </div>
+                                        <StrategySelect
+                                            options={tunnelTypes}
+                                            defaultValue={form.getValues(
+                                                "method"
+                                            )}
+                                            onChange={(value) => {
+                                                form.setValue("method", value);
+                                            }}
+                                            cols={3}
+                                        />
+                                    </>
+                                )}
                             </SettingsSectionBody>
                         </SettingsSection>
-
-                        {tunnelTypes.length > 1 && (
-                            <SettingsSection>
-                                <SettingsSectionHeader>
-                                    <SettingsSectionTitle>
-                                        {t("tunnelType")}
-                                    </SettingsSectionTitle>
-                                    <SettingsSectionDescription>
-                                        {t("siteTunnelDescription")}
-                                    </SettingsSectionDescription>
-                                </SettingsSectionHeader>
-                                <SettingsSectionBody>
-                                    <StrategySelect
-                                        options={tunnelTypes}
-                                        defaultValue={form.getValues("method")}
-                                        onChange={(value) => {
-                                            form.setValue("method", value);
-                                        }}
-                                        cols={3}
-                                    />
-                                </SettingsSectionBody>
-                            </SettingsSection>
-                        )}
 
                         {form.watch("method") === "newt" && (
                             <>
@@ -996,7 +1002,7 @@ WantedBy=default.target`
                                                 </div>
                                                 <p
                                                     id="acceptClients-desc"
-                                                    className="text-sm text-muted-foreground mb-4"
+                                                    className="text-sm text-muted-foreground"
                                                 >
                                                     {t(
                                                         "siteAcceptClientConnectionsDescription"
@@ -1008,13 +1014,43 @@ WantedBy=default.target`
                                                 <p className="font-bold mb-3">
                                                     {t("commands")}
                                                 </p>
-                                                <div className="mt-2">
-                                                    <CopyTextBox
-                                                        text={getCommand().join(
-                                                            "\n"
-                                                        )}
-                                                        outline={true}
-                                                    />
+                                                <div className="mt-2 space-y-3">
+                                                    {getCommand().map(
+                                                        (item, index) => {
+                                                            const commandText =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? item
+                                                                    : item.command;
+                                                            const title =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? undefined
+                                                                    : item.title;
+
+                                                            return (
+                                                                <div
+                                                                    key={index}
+                                                                >
+                                                                    {title && (
+                                                                        <p className="text-sm font-medium mb-1.5">
+                                                                            {
+                                                                                title
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                    <CopyTextBox
+                                                                        text={
+                                                                            commandText
+                                                                        }
+                                                                        outline={
+                                                                            true
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

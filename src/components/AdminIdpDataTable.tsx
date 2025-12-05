@@ -35,6 +35,9 @@ export function IdpDataTable<TData, TValue>({
             }}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

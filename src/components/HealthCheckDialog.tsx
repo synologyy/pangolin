@@ -81,17 +81,33 @@ export default function HealthCheckDialog({
         hcMethod: z
             .string()
             .min(1, { message: t("healthCheckMethodRequired") }),
-        hcInterval: z.int()
+        hcInterval: z
+            .int()
             .positive()
             .min(5, { message: t("healthCheckIntervalMin") }),
-        hcTimeout: z.int()
+        hcTimeout: z
+            .int()
             .positive()
             .min(1, { message: t("healthCheckTimeoutMin") }),
         hcStatus: z.int().positive().min(100).optional().nullable(),
-        hcHeaders: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
+        hcHeaders: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable()
+            .optional(),
         hcScheme: z.string().optional(),
         hcHostname: z.string(),
-        hcPort: z.number().positive().gt(0).lte(65535),
+        hcPort: z
+            .string()
+            .min(1, { message: t("healthCheckPortInvalid") })
+            .refine(
+                (val) => {
+                    const port = parseInt(val);
+                    return port > 0 && port <= 65535;
+                },
+                {
+                    message: t("healthCheckPortInvalid")
+                }
+            ),
         hcFollowRedirects: z.boolean(),
         hcMode: z.string(),
         hcUnhealthyInterval: z.int().positive().min(5),
@@ -128,7 +144,9 @@ export default function HealthCheckDialog({
             hcHeaders: initialConfig?.hcHeaders,
             hcScheme: getDefaultScheme(),
             hcHostname: initialConfig?.hcHostname,
-            hcPort: initialConfig?.hcPort,
+            hcPort: initialConfig?.hcPort
+                ? initialConfig.hcPort.toString()
+                : "",
             hcFollowRedirects: initialConfig?.hcFollowRedirects,
             hcMode: initialConfig?.hcMode,
             hcUnhealthyInterval: initialConfig?.hcUnhealthyInterval,
@@ -142,10 +160,15 @@ export default function HealthCheckDialog({
         try {
             const currentValues = form.getValues();
             const updatedValues = { ...currentValues, [fieldName]: value };
-            await onChanges({
+
+            // Convert hcPort from string to number before passing to parent
+            const configToSend: HealthCheckConfig = {
                 ...updatedValues,
+                hcPort: parseInt(updatedValues.hcPort),
                 hcStatus: updatedValues.hcStatus || null
-            });
+            };
+
+            await onChanges(configToSend);
         } catch (error) {
             toast({
                 title: t("healthCheckError"),
@@ -213,14 +236,20 @@ export default function HealthCheckDialog({
                                                         {t("healthScheme")}
                                                     </FormLabel>
                                                     <Select
-                                                        onValueChange={(value) => {
-                                                            field.onChange(value);
+                                                        onValueChange={(
+                                                            value
+                                                        ) => {
+                                                            field.onChange(
+                                                                value
+                                                            );
                                                             handleFieldChange(
                                                                 "hcScheme",
                                                                 value
                                                             );
                                                         }}
-                                                        defaultValue={field.value}
+                                                        defaultValue={
+                                                            field.value
+                                                        }
                                                     >
                                                         <FormControl>
                                                             <SelectTrigger>
@@ -284,10 +313,8 @@ export default function HealthCheckDialog({
                                                             {...field}
                                                             onChange={(e) => {
                                                                 const value =
-                                                                    parseInt(
-                                                                        e.target
-                                                                            .value
-                                                                    );
+                                                                    e.target
+                                                                        .value;
                                                                 field.onChange(
                                                                     value
                                                                 );
@@ -486,10 +513,6 @@ export default function HealthCheckDialog({
                                                 </FormItem>
                                             )}
                                         />
-
-                                        <FormDescription>
-                                            {t("timeIsInSeconds")}
-                                        </FormDescription>
                                     </div>
 
                                     {/* Expected Response Codes */}
@@ -578,7 +601,9 @@ export default function HealthCheckDialog({
                                                     <HeadersInput
                                                         value={field.value}
                                                         onChange={(value) => {
-                                                            field.onChange(value);
+                                                            field.onChange(
+                                                                value
+                                                            );
                                                             handleFieldChange(
                                                                 "hcHeaders",
                                                                 value

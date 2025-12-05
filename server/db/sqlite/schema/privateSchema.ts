@@ -1,13 +1,12 @@
-import {
-    sqliteTable,
-    integer,
-    text,
-    real,
-    index
-} from "drizzle-orm/sqlite-core";
 import { InferSelectModel } from "drizzle-orm";
-import { domains, orgs, targets, users, exitNodes, sessions } from "./schema";
-import { metadata } from "@app/app/[orgId]/settings/layout";
+import {
+    index,
+    integer,
+    real,
+    sqliteTable,
+    text
+} from "drizzle-orm/sqlite-core";
+import { domains, exitNodes, orgs, sessions, users } from "./schema";
 
 export const certificates = sqliteTable("certificates", {
     certId: integer("certId").primaryKey({ autoIncrement: true }),

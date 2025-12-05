@@ -35,7 +35,7 @@ export default function SiteInfoCard({ }: SiteInfoCardProps) {
     return (
         <Alert>
             <AlertDescription>
-                <InfoSections cols={env.flags.enableClients ? 4 : 3}>
+                <InfoSections cols={4}>
                     <InfoSection>
                         <InfoSectionTitle>
                             {t("identifier")}
@@ -75,7 +75,7 @@ export default function SiteInfoCard({ }: SiteInfoCardProps) {
                         </InfoSectionContent>
                     </InfoSection>
 
-                    {env.flags.enableClients && site.type == "newt" && (
+                    {site.type == "newt" && (
                         <InfoSection>
                             <InfoSectionTitle>Address</InfoSectionTitle>
                             <InfoSectionContent>

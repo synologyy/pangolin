@@ -7,7 +7,7 @@ import {
     index,
     uniqueIndex
 } from "drizzle-orm/sqlite-core";
-import { boolean } from "yargs";
+import { no } from "zod/v4/locales";
 
 export const domains = sqliteTable("domains", {
     domainId: text("domainId").primaryKey(),
@@ -39,6 +39,7 @@ export const orgs = sqliteTable("orgs", {
     orgId: text("orgId").primaryKey(),
     name: text("name").notNull(),
     subnet: text("subnet"),
+    utilitySubnet: text("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
     maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
@@ -100,8 +101,7 @@ export const sites = sqliteTable("sites", {
     listenPort: integer("listenPort"),
     dockerSocketEnabled: integer("dockerSocketEnabled", { mode: "boolean" })
         .notNull()
-        .default(true),
-    remoteSubnets: text("remoteSubnets") // comma-separated list of subnets that this site can access
+        .default(true)
 });
 
 export const resources = sqliteTable("resources", {
@@ -202,7 +202,7 @@ export const targetHealthCheck = sqliteTable("targetHealthCheck", {
     hcMethod: text("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
-    hcTlsServerName: text("hcTlsServerName"),
+    hcTlsServerName: text("hcTlsServerName")
 });
 
 export const exitNodes = sqliteTable("exitNodes", {
@@ -233,11 +233,41 @@ export const siteResources = sqliteTable("siteResources", {
         .references(() => orgs.orgId, { onDelete: "cascade" }),
     niceId: text("niceId").notNull(),
     name: text("name").notNull(),
-    protocol: text("protocol").notNull(),
-    proxyPort: integer("proxyPort").notNull(),
-    destinationPort: integer("destinationPort").notNull(),
-    destinationIp: text("destinationIp").notNull(),
-    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true)
+    mode: text("mode").notNull(), // "host" | "cidr" | "port"
+    protocol: text("protocol"), // only for port mode
+    proxyPort: integer("proxyPort"), // only for port mode
+    destinationPort: integer("destinationPort"), // only for port mode
+    destination: text("destination").notNull(), // ip, cidr, hostname
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+    alias: text("alias"),
+    aliasAddress: text("aliasAddress")
+});
+
+export const clientSiteResources = sqliteTable("clientSiteResources", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const roleSiteResources = sqliteTable("roleSiteResources", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const userSiteResources = sqliteTable("userSiteResources", {
+    userId: text("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
 });
 
 export const users = sqliteTable("user", {
@@ -313,7 +343,7 @@ export const newts = sqliteTable("newt", {
 });
 
 export const clients = sqliteTable("clients", {
-    clientId: integer("id").primaryKey({ autoIncrement: true }),
+    clientId: integer("clientId").primaryKey({ autoIncrement: true }),
     orgId: text("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -322,8 +352,14 @@ export const clients = sqliteTable("clients", {
     exitNodeId: integer("exitNode").references(() => exitNodes.exitNodeId, {
         onDelete: "set null"
     }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
+        onDelete: "cascade"
+    }),
+
     name: text("name").notNull(),
     pubKey: text("pubKey"),
+    olmId: text("olmId"), // to lock it to a specific olm optionally
     subnet: text("subnet").notNull(),
     megabytesIn: integer("bytesIn"),
     megabytesOut: integer("bytesOut"),
@@ -335,25 +371,42 @@ export const clients = sqliteTable("clients", {
     lastHolePunch: integer("lastHolePunch")
 });
 
-export const clientSites = sqliteTable("clientSites", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteId: integer("siteId")
-        .notNull()
-        .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: integer("isRelayed", { mode: "boolean" })
-        .notNull()
-        .default(false),
-    endpoint: text("endpoint")
-});
+export const clientSitesAssociationsCache = sqliteTable(
+    "clientSitesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteId: integer("siteId").notNull(),
+        isRelayed: integer("isRelayed", { mode: "boolean" })
+            .notNull()
+            .default(false),
+        endpoint: text("endpoint"),
+        publicKey: text("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
+    }
+);
+
+export const clientSiteResourcesAssociationsCache = sqliteTable(
+    "clientSiteResourcesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteResourceId: integer("siteResourceId").notNull()
+    }
+);
 
 export const olms = sqliteTable("olms", {
     olmId: text("id").primaryKey(),
     secretHash: text("secretHash").notNull(),
     dateCreated: text("dateCreated").notNull(),
     version: text("version"),
+    agent: text("agent"),
+    name: text("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
+        // we will switch this depending on the current org it wants to connect to
+        onDelete: "set null"
+    }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     })
 });
@@ -372,7 +425,10 @@ export const sessions = sqliteTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: integer("expiresAt").notNull(),
-    issuedAt: integer("issuedAt")
+    issuedAt: integer("issuedAt"),
+    deviceAuthUsed: integer("deviceAuthUsed", { mode: "boolean" })
+        .notNull()
+        .default(false)
 });
 
 export const newtSessions = sqliteTable("newtSession", {
@@ -809,6 +865,21 @@ export const requestAuditLog = sqliteTable(
     ]
 );
 
+export const deviceWebAuthCodes = sqliteTable("deviceWebAuthCodes", {
+    codeId: integer("codeId").primaryKey({ autoIncrement: true }),
+    code: text("code").notNull().unique(),
+    ip: text("ip"),
+    city: text("city"),
+    deviceName: text("deviceName"),
+    applicationName: text("applicationName").notNull(),
+    expiresAt: integer("expiresAt").notNull(),
+    createdAt: integer("createdAt").notNull(),
+    verified: integer("verified", { mode: "boolean" }).notNull().default(false),
+    userId: text("userId").references(() => users.userId, {
+        onDelete: "cascade"
+    })
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -847,7 +918,7 @@ export type ResourceRule = InferSelectModel<typeof resourceRules>;
 export type Domain = InferSelectModel<typeof domains>;
 export type DnsRecord = InferSelectModel<typeof dnsRecords>;
 export type Client = InferSelectModel<typeof clients>;
-export type ClientSite = InferSelectModel<typeof clientSites>;
+export type ClientSite = InferSelectModel<typeof clientSitesAssociationsCache>;
 export type RoleClient = InferSelectModel<typeof roleClients>;
 export type UserClient = InferSelectModel<typeof userClients>;
 export type SupporterKey = InferSelectModel<typeof supporterKey>;
@@ -866,3 +937,4 @@ export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;
+export type DeviceWebAuthCode = InferSelectModel<typeof deviceWebAuthCodes>;

@@ -229,6 +229,11 @@ export const configSchema = z
                     .default(51820)
                     .transform(stoi)
                     .pipe(portSchema),
+                clients_start_port: portSchema
+                    .optional()
+                    .default(21820)
+                    .transform(stoi)
+                    .pipe(portSchema),
                 base_endpoint: z
                     .string()
                     .optional()
@@ -249,12 +254,14 @@ export const configSchema = z
         orgs: z
             .object({
                 block_size: z.number().positive().gt(0).optional().default(24),
-                subnet_group: z.string().optional().default("100.90.128.0/24")
+                subnet_group: z.string().optional().default("100.90.128.0/24"),
+                utility_subnet_group: z.string().optional().default("100.96.128.0/24") //just hardcode this for now as well
             })
             .optional()
             .default({
                 block_size: 24,
-                subnet_group: "100.90.128.0/24"
+                subnet_group: "100.90.128.0/24",
+                utility_subnet_group: "100.96.128.0/24"
             }),
         rate_limits: z
             .object({
@@ -318,8 +325,7 @@ export const configSchema = z
                 enable_integration_api: z.boolean().optional(),
                 disable_local_sites: z.boolean().optional(),
                 disable_basic_wireguard_sites: z.boolean().optional(),
-                disable_config_managed_domains: z.boolean().optional(),
-                enable_clients: z.boolean().optional().default(true)
+                disable_config_managed_domains: z.boolean().optional()
             })
             .optional(),
         dns: z

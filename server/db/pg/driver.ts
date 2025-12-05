@@ -73,7 +73,7 @@ function createDb() {
 
     return withReplicas(
         DrizzlePostgres(primaryPool, {
-            logger: process.env.NODE_ENV === "development"
+            logger: process.env.QUERY_LOGGING === "true"
         }),
         replicas as any
     );

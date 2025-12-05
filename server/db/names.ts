@@ -42,11 +42,17 @@ export async function getUniqueResourceName(orgId: string): Promise<string> {
         }
 
         const name = generateName();
-        const count = await db
-            .select({ niceId: resources.niceId, orgId: resources.orgId })
-            .from(resources)
-            .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId)));
-        if (count.length === 0) {
+        const [resourceCount, siteResourceCount] = await Promise.all([
+            db
+                .select({ niceId: resources.niceId, orgId: resources.orgId })
+                .from(resources)
+                .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId))),
+            db
+                .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
+                .from(siteResources)
+                .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)))
+        ]);
+        if (resourceCount.length === 0 && siteResourceCount.length === 0) {
             return name;
         }
         loops++;
@@ -61,11 +67,17 @@ export async function getUniqueSiteResourceName(orgId: string): Promise<string> 
         }
 
         const name = generateName();
-        const count = await db
-            .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
-            .from(siteResources)
-            .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)));
-        if (count.length === 0) {
+        const [resourceCount, siteResourceCount] = await Promise.all([
+            db
+                .select({ niceId: resources.niceId, orgId: resources.orgId })
+                .from(resources)
+                .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId))),
+            db
+                .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
+                .from(siteResources)
+                .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)))
+        ]);
+        if (resourceCount.length === 0 && siteResourceCount.length === 0) {
             return name;
         }
         loops++;

@@ -154,7 +154,7 @@ export default async function OrgAuthPage(props: {
                     </Link>
                 </span>
             </div>
-            <Card className="shadow-md w-full max-w-md">
+            <Card className="w-full max-w-md">
                 <CardHeader>
                     {branding?.logoUrl && (
                         <div className="flex flex-row items-center justify-center mb-3">

@@ -1043,7 +1043,7 @@ hybridRouter.get(
                 );
             }
 
-            let rules = await db
+            const rules = await db
                 .select()
                 .from(resourceRules)
                 .where(eq(resourceRules.resourceId, resourceId));
@@ -1369,7 +1369,7 @@ const updateHolePunchSchema = z.object({
     port: z.number(),
     timestamp: z.number(),
     reachableAt: z.string().optional(),
-    publicKey: z.string().optional()
+    publicKey: z.string() // this is the client public key
 });
 hybridRouter.post(
     "/gerbil/update-hole-punch",
@@ -1408,7 +1408,7 @@ hybridRouter.post(
                 );
             }
 
-            const { olmId, newtId, ip, port, timestamp, token, reachableAt } =
+            const { olmId, newtId, ip, port, timestamp, token, publicKey, reachableAt } =
                 parsedParams.data;
 
             const destinations = await updateAndGenerateEndpointDestinations(
@@ -1418,6 +1418,7 @@ hybridRouter.post(
                 port,
                 timestamp,
                 token,
+                publicKey,
                 exitNode,
                 true
             );
@@ -1742,7 +1743,12 @@ hybridRouter.post(
                     tls: logEntry.tls
                 }));
 
-            await db.insert(requestAuditLog).values(logEntries);
+            // batch them into inserts of 100 to avoid exceeding parameter limits
+            const batchSize = 100;
+            for (let i = 0; i < logEntries.length; i += batchSize) {
+                const batch = logEntries.slice(i, i + batchSize);
+                await db.insert(requestAuditLog).values(batch);
+            }
 
             return response(res, {
                 data: null,

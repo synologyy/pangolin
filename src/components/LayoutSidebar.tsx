@@ -43,17 +43,20 @@ interface LayoutSidebarProps {
     orgs?: ListUserOrgsResponse["orgs"];
     navItems: SidebarNavSection[];
     defaultSidebarCollapsed: boolean;
+    hasCookiePreference: boolean;
 }
 
 export function LayoutSidebar({
     orgId,
     orgs,
     navItems,
-    defaultSidebarCollapsed
+    defaultSidebarCollapsed,
+    hasCookiePreference
 }: LayoutSidebarProps) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
         defaultSidebarCollapsed
     );
+    const [hasManualToggle, setHasManualToggle] = useState(hasCookiePreference);
     const pathname = usePathname();
     const isAdminPage = pathname?.startsWith("/admin");
     const { user } = useUserContext();
@@ -68,9 +71,26 @@ export function LayoutSidebar({
         }
     };
 
+    // Auto-collapse sidebar at 1650px or less, but only if no cookie preference exists
     useEffect(() => {
-        setSidebarStateCookie(isSidebarCollapsed);
-    }, [isSidebarCollapsed]);
+        if (hasManualToggle) {
+            return; // Don't auto-collapse if user has manually toggled
+        }
+
+        const handleResize = () => {
+            // print inner width
+            if (typeof window !== "undefined") {
+                const shouldCollapse = window.innerWidth <= 1650;
+                setIsSidebarCollapsed(shouldCollapse);
+            }
+        };
+
+        // Set initial state based on window width
+        handleResize();
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [hasManualToggle]);
 
     function loadFooterLinks(): { text: string; href?: string }[] | undefined {
         if (!isUnlocked()) {
@@ -92,14 +112,14 @@ export function LayoutSidebar({
                 isSidebarCollapsed ? "w-16" : "w-64"
             )}
         >
+            <div className="p-4 shrink-0">
+                <OrgSelector
+                    orgId={orgId}
+                    orgs={orgs}
+                    isCollapsed={isSidebarCollapsed}
+                />
+            </div>
             <div className="flex-1 overflow-y-auto">
-                <div className="p-4">
-                    <OrgSelector
-                        orgId={orgId}
-                        orgs={orgs}
-                        isCollapsed={isSidebarCollapsed}
-                    />
-                </div>
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
@@ -138,8 +158,10 @@ export function LayoutSidebar({
                 </div>
             </div>
 
-            <div className="p-4 flex flex-col gap-4 shrink-0">
-                <ProductUpdates isCollapsed={isSidebarCollapsed} />
+            <div className="p-4 flex flex-col shrink-0">
+                <div className="mb-3">
+                    <ProductUpdates isCollapsed={isSidebarCollapsed} />
+                </div>
 
                 {build === "enterprise" && (
                     <div className="mb-3">
@@ -230,9 +252,12 @@ export function LayoutSidebar({
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <button
-                            onClick={() =>
-                                setIsSidebarCollapsed(!isSidebarCollapsed)
-                            }
+                            onClick={() => {
+                                const newCollapsedState = !isSidebarCollapsed;
+                                setIsSidebarCollapsed(newCollapsedState);
+                                setHasManualToggle(true);
+                                setSidebarStateCookie(newCollapsedState);
+                            }}
                             className="cursor-pointer absolute -right-2.5 top-1/2 transform -translate-y-1/2 w-2 h-8 rounded-full flex items-center justify-center transition-all duration-200 ease-in-out hover:scale-110 group z-1"
                             aria-label={
                                 isSidebarCollapsed

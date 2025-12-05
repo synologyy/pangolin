@@ -1,4 +1,4 @@
-import { db } from "@server/db";
+import { db, Site } from "@server/db";
 import { newts, sites } from "@server/db";
 import { eq } from "drizzle-orm";
 import { sendToClient } from "#dynamic/routers/ws";
@@ -10,65 +10,78 @@ export async function addPeer(
         publicKey: string;
         allowedIps: string[];
         endpoint: string;
-    }
+    },
+    newtId?: string
 ) {
-    const [site] = await db
-        .select()
-        .from(sites)
-        .where(eq(sites.siteId, siteId))
-        .limit(1);
-    if (!site) {
-        throw new Error(`Exit node with ID ${siteId} not found`);
+    let site: Site | null = null;
+    if (!newtId) {
+        [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, siteId))
+            .limit(1);
+        if (!site) {
+            throw new Error(`Site with ID ${siteId} not found`);
+        }
+
+        // get the newt on the site
+        const [newt] = await db
+            .select()
+            .from(newts)
+            .where(eq(newts.siteId, siteId))
+            .limit(1);
+        if (!newt) {
+            throw new Error(`Site found for site ${siteId}`);
+        }
+        newtId = newt.newtId;
     }
 
-    // get the newt on the site
-    const [newt] = await db
-        .select()
-        .from(newts)
-        .where(eq(newts.siteId, siteId))
-        .limit(1);
-    if (!newt) {
-        throw new Error(`Site found for site ${siteId}`);
-    }
-
-    sendToClient(newt.newtId, {
+    await sendToClient(newtId, {
         type: "newt/wg/peer/add",
         data: peer
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
-    logger.info(`Added peer ${peer.publicKey} to newt ${newt.newtId}`);
+    logger.info(`Added peer ${peer.publicKey} to newt ${newtId}`);
 
     return site;
 }
 
-export async function deletePeer(siteId: number, publicKey: string) {
-    const [site] = await db
-        .select()
-        .from(sites)
-        .where(eq(sites.siteId, siteId))
-        .limit(1);
-    if (!site) {
-        throw new Error(`Site with ID ${siteId} not found`);
+export async function deletePeer(siteId: number, publicKey: string, newtId?: string) {
+    let site: Site | null = null;
+    if (!newtId) {
+        [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, siteId))
+            .limit(1);
+        if (!site) {
+            throw new Error(`Site with ID ${siteId} not found`);
+        }
+
+        // get the newt on the site
+        const [newt] = await db
+            .select()
+            .from(newts)
+            .where(eq(newts.siteId, siteId))
+            .limit(1);
+        if (!newt) {
+            throw new Error(`Newt not found for site ${siteId}`);
+        }
+        newtId = newt.newtId;
     }
 
-    // get the newt on the site
-    const [newt] = await db
-        .select()
-        .from(newts)
-        .where(eq(newts.siteId, siteId))
-        .limit(1);
-    if (!newt) {
-        throw new Error(`Newt not found for site ${siteId}`);
-    }
-
-    sendToClient(newt.newtId, {
+    await sendToClient(newtId, {
         type: "newt/wg/peer/remove",
         data: {
             publicKey
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
-    logger.info(`Deleted peer ${publicKey} from newt ${newt.newtId}`);
+    logger.info(`Deleted peer ${publicKey} from newt ${newtId}`);
 
     return site;
 }
@@ -79,36 +92,43 @@ export async function updatePeer(
     peer: {
         allowedIps?: string[];
         endpoint?: string;
-    }
+    },
+    newtId?: string
 ) {
-    const [site] = await db
-        .select()
-        .from(sites)
-        .where(eq(sites.siteId, siteId))
-        .limit(1);
-    if (!site) {
-        throw new Error(`Site with ID ${siteId} not found`);
+    let site: Site | null = null;
+    if (!newtId) {
+        [site] = await db
+            .select()
+            .from(sites)
+            .where(eq(sites.siteId, siteId))
+            .limit(1);
+        if (!site) {
+            throw new Error(`Site with ID ${siteId} not found`);
+        }
+
+        // get the newt on the site
+        const [newt] = await db
+            .select()
+            .from(newts)
+            .where(eq(newts.siteId, siteId))
+            .limit(1);
+        if (!newt) {
+            throw new Error(`Newt not found for site ${siteId}`);
+        }
+        newtId = newt.newtId;
     }
 
-    // get the newt on the site
-    const [newt] = await db
-        .select()
-        .from(newts)
-        .where(eq(newts.siteId, siteId))
-        .limit(1);
-    if (!newt) {
-        throw new Error(`Newt not found for site ${siteId}`);
-    }
-
-    sendToClient(newt.newtId, {
+    await sendToClient(newtId, {
         type: "newt/wg/peer/update",
         data: {
             publicKey,
             ...peer
         }
+    }).catch((error) => {
+        logger.warn(`Error sending message:`, error);
     });
 
-    logger.info(`Updated peer ${publicKey} on newt ${newt.newtId}`);
+    logger.info(`Updated peer ${publicKey} on newt ${newtId}`);
 
     return site;
 }

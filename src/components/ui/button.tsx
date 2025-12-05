@@ -11,22 +11,22 @@ const buttonVariants = cva(
         variants: {
             variant: {
                 default:
-                    "bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs",
+                    "bg-primary text-primary-foreground hover:bg-primary/90",
                 destructive:
-                    "bg-destructive text-white dark:text-destructive-foreground hover:bg-destructive/90 shadow-2xs",
+                    "bg-destructive text-white dark:text-destructive-foreground hover:bg-destructive/90 ",
                 outline:
-                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground shadow-2xs",
+                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground ",
                 outlinePrimary:
-                    "border border-primary bg-card hover:bg-primary/10 text-primary shadow-2xs",
+                    "border border-primary bg-card hover:bg-primary/10 text-primary ",
                 secondary:
-                    "bg-secondary border border-input border text-secondary-foreground hover:bg-secondary/80 shadow-2xs",
+                    "bg-secondary border border-input border text-secondary-foreground hover:bg-secondary/80 ",
                 ghost: "hover:bg-accent hover:text-accent-foreground",
                 squareOutlinePrimary:
-                    "border border-primary bg-card hover:bg-primary/10 text-primary rounded-md shadow-2xs",
+                    "border border-primary bg-card hover:bg-primary/10 text-primary rounded-md ",
                 squareOutline:
-                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground rounded-md shadow-2xs",
+                    "border border-input bg-card hover:bg-accent hover:text-accent-foreground rounded-md ",
                 squareDefault:
-                    "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md shadow-2xs",
+                    "bg-primary text-primary-foreground hover:bg-primary/90 rounded-md ",
                 text: "",
                 link: "text-primary underline-offset-4 hover:underline"
             },

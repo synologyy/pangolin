@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { Button } from "@app/components/ui/button";
 import {
     ArrowRight,
@@ -30,9 +31,10 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
     const [isRefreshing, startTransition] = useTransition();
     const router = useRouter();
 
-    const columns: ColumnDef<BlueprintRow>[] = [
+    const columns: ExtendedColumnDef<BlueprintRow>[] = [
         {
             accessorKey: "createdAt",
+            friendlyName: t("appliedAt"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -61,6 +63,8 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             accessorKey: "name",
+            enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -78,6 +82,7 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
 
         {
             accessorKey: "source",
+            friendlyName: t("source"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -160,9 +165,8 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
         },
         {
             id: "actions",
-            header: () => {
-                return null;
-            },
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 return (
                     <div className="flex justify-end">
@@ -188,6 +192,9 @@ export default function BlueprintsTable({ blueprints, orgId }: Props) {
             title={t("blueprints")}
             searchPlaceholder={t("searchBlueprintProgress")}
             searchColumn="name"
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
             onAdd={() => {
                 router.push(`/${orgId}/settings/blueprints/create`);
             }}

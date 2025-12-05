@@ -20,7 +20,7 @@ import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
-import { ReactQueryProvider } from "@app/components/react-query-provider";
+import { TanstackQueryProvider } from "@app/components/TanstackQueryProvider";
 import { TailwindIndicator } from "@app/components/TailwindIndicator";
 
 export const metadata: Metadata = {
@@ -96,16 +96,16 @@ export default async function RootLayout({
                         strategy="afterInteractive"
                     />
                 )}
-                <ReactQueryProvider>
-                    <NextIntlClientProvider>
-                        <ThemeProvider
-                            attribute="class"
-                            defaultTheme="system"
-                            enableSystem
-                            disableTransitionOnChange
-                        >
-                            <ThemeDataProvider colors={loadBrandingColors()}>
-                                <EnvProvider env={pullEnv()}>
+                <NextIntlClientProvider>
+                    <ThemeProvider
+                        attribute="class"
+                        defaultTheme="system"
+                        enableSystem
+                        disableTransitionOnChange
+                    >
+                        <ThemeDataProvider colors={loadBrandingColors()}>
+                            <EnvProvider env={env}>
+                                <TanstackQueryProvider>
                                     <LicenseStatusProvider
                                         licenseStatus={licenseStatus}
                                     >
@@ -125,11 +125,11 @@ export default async function RootLayout({
                                         </SupportStatusProvider>
                                     </LicenseStatusProvider>
                                     <Toaster />
-                                </EnvProvider>
-                            </ThemeDataProvider>
-                        </ThemeProvider>
-                    </NextIntlClientProvider>
-                </ReactQueryProvider>
+                                </TanstackQueryProvider>
+                            </EnvProvider>
+                        </ThemeDataProvider>
+                    </ThemeProvider>
+                </NextIntlClientProvider>
 
                 {process.env.NODE_ENV === "development" && (
                     <TailwindIndicator />

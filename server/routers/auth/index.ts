@@ -14,3 +14,6 @@ export * from "./validateSetupToken";
 export * from "./changePassword";
 export * from "./checkResourceSession";
 export * from "./securityKey";
+export * from "./startDeviceWebAuth";
+export * from "./verifyDeviceWebAuth";
+export * from "./pollDeviceWebAuth";

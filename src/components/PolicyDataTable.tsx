@@ -28,6 +28,9 @@ export function PolicyDataTable<TData, TValue>({
             searchColumn="orgId"
             addButtonText={t('orgPoliciesAdd')}
             onAdd={onAdd}
+            enableColumnVisibility={true}
+            stickyLeftColumn="orgId"
+            stickyRightColumn="actions"
         />
     );
 }

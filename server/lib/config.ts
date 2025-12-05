@@ -85,10 +85,6 @@ export class Config {
             ? "true"
             : "false";
 
-        process.env.FLAGS_ENABLE_CLIENTS = parsedConfig.flags?.enable_clients
-            ? "true"
-            : "false";
-
         process.env.PRODUCT_UPDATES_NOTIFICATION_ENABLED = parsedConfig.app
             .notifications.product_updates
             ? "true"

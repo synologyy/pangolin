@@ -18,6 +18,7 @@ import { defaultRoleAllowedActions } from "@server/routers/role";
 import { FeatureId, limitsService, sandboxLimitSet } from "@server/lib/billing";
 import { createCustomer } from "#dynamic/lib/billing";
 import { usageService } from "@server/lib/billing/usageService";
+import config from "@server/lib/config";
 
 export async function createUserAccountOrg(
     userId: string,
@@ -76,6 +77,8 @@ export async function createUserAccountOrg(
             .from(domains)
             .where(eq(domains.configManaged, true));
 
+        const utilitySubnet = config.getRawConfig().orgs.utility_subnet_group;
+
         const newOrg = await trx
             .insert(orgs)
             .values({
@@ -83,6 +86,7 @@ export async function createUserAccountOrg(
                 name,
                 // subnet
                 subnet: "100.90.128.0/24", // TODO: this should not be hardcoded - or can it be the same in all orgs?
+                utilitySubnet: utilitySubnet,
                 createdAt: new Date().toISOString()
             })
             .returning();

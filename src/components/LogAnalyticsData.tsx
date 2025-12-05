@@ -136,9 +136,6 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 }
             }
 
-            console.log({
-                endDate
-            });
             newSearch.set("timeEnd", endDate.toISOString());
         }
         router.replace(`${path}?${newSearch.toString()}`);
@@ -258,7 +255,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                 <CardHeader className="flex flex-col gap-4">
                     <InfoSections cols={2}>
                         <InfoSection>
-                            <InfoSectionTitle className="text-muted-foreground">
+                            <InfoSectionTitle>
                                 {t("totalRequests")}
                             </InfoSectionTitle>
                             <InfoSectionContent>
@@ -266,7 +263,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
                             </InfoSectionContent>
                         </InfoSection>
                         <InfoSection>
-                            <InfoSectionTitle className="text-muted-foreground">
+                            <InfoSectionTitle>
                                 {t("totalBlocked")}
                             </InfoSectionTitle>
                             <InfoSectionContent>
@@ -283,7 +280,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
 
             <Card className="w-full h-full flex flex-col gap-8">
                 <CardHeader>
-                    <h3 className="font-medium">{t("requestsByDay")}</h3>
+                    <h3 className="font-semibold">{t("requestsByDay")}</h3>
                 </CardHeader>
                 <CardContent>
                     <RequestChart
@@ -296,7 +293,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
             <div className="grid lg:grid-cols-2 gap-5">
                 <Card className="w-full h-full">
                     <CardHeader>
-                        <h3 className="font-medium">
+                        <h3 className="font-semibold">
                             {t("requestsByCountry")}
                         </h3>
                     </CardHeader>
@@ -313,7 +310,7 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
 
                 <Card className="w-full h-full">
                     <CardHeader>
-                        <h3 className="font-medium">{t("topCountries")}</h3>
+                        <h3 className="font-semibold">{t("topCountries")}</h3>
                     </CardHeader>
                     <CardContent className="flex h-full flex-col gap-4">
                         <TopCountriesList
@@ -465,7 +462,7 @@ function TopCountriesList(props: TopCountriesListProps) {
     return (
         <div className="h-full flex flex-col gap-2">
             {props.countries.length > 0 && (
-                <div className="grid grid-cols-7 text-sm text-muted-foreground font-medium h-4">
+                <div className="grid grid-cols-7 text-sm text-muted-foreground font-semibold h-4">
                     <div className="col-span-5">{t("countries")}</div>
                     <div className="text-end">{t("total")}</div>
                     <div className="text-end">%</div>
@@ -474,7 +471,7 @@ function TopCountriesList(props: TopCountriesListProps) {
             {/* `aspect-475/335` is the same aspect ratio as the world map component */}
             <ol className="w-full overflow-auto grid gap-1 aspect-475/335">
                 {props.countries.length === 0 && (
-                    <div className="flex items-center justify-center size-full text-muted-foreground font-mono gap-1">
+                    <div className="flex items-center justify-center size-full text-muted-foreground gap-1">
                         {props.isLoading ? (
                             <>
                                 <LoaderIcon className="size-4 animate-spin" />{" "}

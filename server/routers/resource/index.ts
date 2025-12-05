@@ -25,4 +25,8 @@ export * from "./getUserResources";
 export * from "./setResourceHeaderAuth";
 export * from "./addEmailToResourceWhitelist";
 export * from "./removeEmailFromResourceWhitelist";
+export * from "./addRoleToResource";
+export * from "./removeRoleFromResource";
+export * from "./addUserToResource";
+export * from "./removeUserFromResource";
 export * from "./listAllResourceNames";

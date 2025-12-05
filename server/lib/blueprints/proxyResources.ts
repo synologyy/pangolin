@@ -221,6 +221,7 @@ export async function updateProxyResources(
                         domainId: domain ? domain.domainId : null,
                         enabled: resourceEnabled,
                         sso: resourceData.auth?.["sso-enabled"] || false,
+                        skipToIdpId: resourceData.auth?.["auto-login-idp"] || null,
                         ssl: resourceSsl,
                         setHostHeader: resourceData["host-header"] || null,
                         tlsServerName: resourceData["tls-server-name"] || null,
@@ -610,6 +611,7 @@ export async function updateProxyResources(
                     domainId: domain ? domain.domainId : null,
                     enabled: resourceEnabled,
                     sso: resourceData.auth?.["sso-enabled"] || false,
+                    skipToIdpId: resourceData.auth?.["auto-login-idp"] || null,
                     setHostHeader: resourceData["host-header"] || null,
                     tlsServerName: resourceData["tls-server-name"] || null,
                     ssl: resourceSsl,
@@ -789,10 +791,6 @@ async function syncRoleResources(
         .where(eq(roleResources.resourceId, resourceId));
 
     for (const roleName of ssoRoles) {
-        if (roleName === "Admin") {
-            continue; // never add admin access
-        }
-
         const [role] = await trx
             .select()
             .from(roles)
@@ -801,6 +799,10 @@ async function syncRoleResources(
 
         if (!role) {
             throw new Error(`Role not found: ${roleName} in org ${orgId}`);
+        }
+
+        if (role.isAdmin) {
+            continue; // never add admin access
         }
 
         const existingRoleResource = existingRoleResources.find(

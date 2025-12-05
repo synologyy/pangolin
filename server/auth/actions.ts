@@ -86,6 +86,7 @@ export enum ActionsEnum {
     updateOrgDomain = "updateOrgDomain",
     getDNSRecords = "getDNSRecords",
     createNewt = "createNewt",
+    createOlm = "createOlm",
     createIdp = "createIdp",
     updateIdp = "updateIdp",
     deleteIdp = "deleteIdp",

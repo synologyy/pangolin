@@ -202,7 +202,7 @@ export default function SignupForm({
         : 58;
 
     return (
-        <Card className="w-full max-w-md shadow-md">
+        <Card className="w-full max-w-md">
             <CardHeader className="border-b">
                 <div className="flex flex-row items-center justify-center">
                     <BrandingLogo height={logoHeight} width={logoWidth} />

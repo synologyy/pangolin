@@ -33,20 +33,11 @@ import { useState } from "react";
 import { SwitchInput } from "@app/components/SwitchInput";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Tag, TagInput } from "@app/components/tags/tag-input";
 
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
     niceId: z.string().min(1).max(255).optional(),
     dockerSocketEnabled: z.boolean().optional(),
-    remoteSubnets: z
-        .array(
-            z.object({
-                id: z.string(),
-                text: z.string()
-            })
-        )
-        .optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -69,12 +60,6 @@ export default function GeneralPage() {
             name: site?.name,
             niceId: site?.niceId || "",
             dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
-            remoteSubnets: site?.remoteSubnets
-                ? site.remoteSubnets.split(",").map((subnet, index) => ({
-                      id: subnet.trim(),
-                      text: subnet.trim()
-                  }))
-                : []
         },
         mode: "onChange"
     });
@@ -87,18 +72,12 @@ export default function GeneralPage() {
                 name: data.name,
                 niceId: data.niceId,
                 dockerSocketEnabled: data.dockerSocketEnabled,
-                remoteSubnets:
-                    data.remoteSubnets
-                    ?.map((subnet) => subnet.text)
-                    .join(",") || ""
             });
 
             updateSite({
                 name: data.name,
                 niceId: data.niceId,
                 dockerSocketEnabled: data.dockerSocketEnabled,
-                remoteSubnets:
-                    data.remoteSubnets?.map((subnet) => subnet.text).join(",") || ""
             });
 
             if (data.niceId && data.niceId !== site?.niceId) {
@@ -173,64 +152,6 @@ export default function GeneralPage() {
                                         </FormItem>
                                     )}
                                 />
-
-                                {env.flags.enableClients && site.type === "newt" ? (
-                                    <FormField
-                                        control={form.control}
-                                        name="remoteSubnets"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("remoteSubnets")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <TagInput
-                                                        {...field}
-                                                        activeTagIndex={
-                                                            activeCidrTagIndex
-                                                        }
-                                                        setActiveTagIndex={
-                                                            setActiveCidrTagIndex
-                                                        }
-                                                        placeholder={t(
-                                                            "enterCidrRange"
-                                                        )}
-                                                        size="sm"
-                                                        tags={
-                                                            form.getValues()
-                                                                .remoteSubnets ||
-                                                            []
-                                                        }
-                                                        setTags={(
-                                                            newSubnets
-                                                        ) => {
-                                                            form.setValue(
-                                                                "remoteSubnets",
-                                                                newSubnets as Tag[]
-                                                            );
-                                                        }}
-                                                        validateTag={(tag) => {
-                                                            // Basic CIDR validation regex
-                                                            const cidrRegex =
-                                                                /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
-                                                            return cidrRegex.test(
-                                                                tag
-                                                            );
-                                                        }}
-                                                        allowDuplicates={false}
-                                                        sortTags={true}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "remoteSubnetsDescription"
-                                                    )}
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                ) : null}
 
                                 {site && site.type === "newt" && (
                                     <FormField

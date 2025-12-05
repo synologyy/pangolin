@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -66,14 +67,17 @@ export default function InvitationsTable({
         }
     };
 
-    const columns: ColumnDef<InvitationRow>[] = [
+    const columns: ExtendedColumnDef<InvitationRow>[] = [
         {
             accessorKey: "email",
-            header: t("email")
+            enableHiding: false,
+            friendlyName: t("email"),
+            header: () => (<span className="p-3">{t("email")}</span>)
         },
         {
             accessorKey: "expiresAt",
-            header: t("expiresAt"),
+            friendlyName: t("expiresAt"),
+            header: () => (<span className="p-3">{t("expiresAt")}</span>),
             cell: ({ row }) => {
                 const expiresAt = new Date(row.original.expiresAt);
                 const isExpired = expiresAt < new Date();
@@ -87,10 +91,13 @@ export default function InvitationsTable({
         },
         {
             accessorKey: "role",
-            header: t("role")
+            friendlyName: t("role"),
+            header: () => (<span className="p-3">{t("role")}</span>)
         },
         {
             id: "dots",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const invitation = row.original;
                 return (
@@ -119,13 +126,13 @@ export default function InvitationsTable({
                         </DropdownMenu>
 
                         <Button
-                            variant={"secondary"}
+                            variant={"outline"}
                             onClick={() => {
                                 setIsRegenerateModalOpen(true);
                                 setSelectedInvitation(invitation);
                             }}
                         >
-                            <span>{t("inviteRegenerate")}</span>
+                            {t("regenerate", { fallback: "Regenerate" })}
                         </Button>
                     </div>
                 );

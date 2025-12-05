@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { alias } from "yargs";
 
 export const domains = pgTable("domains", {
     domainId: varchar("domainId").primaryKey(),
@@ -41,6 +42,7 @@ export const orgs = pgTable("orgs", {
     orgId: varchar("orgId").primaryKey(),
     name: varchar("name").notNull(),
     subnet: varchar("subnet"),
+    utilitySubnet: varchar("utilitySubnet"), // this is the subnet for utility addresses
     createdAt: text("createdAt"),
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
@@ -89,8 +91,7 @@ export const sites = pgTable("sites", {
     publicKey: varchar("publicKey"),
     lastHolePunch: bigint("lastHolePunch", { mode: "number" }),
     listenPort: integer("listenPort"),
-    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true),
-    remoteSubnets: text("remoteSubnets") // comma-separated list of subnets that this site can access
+    dockerSocketEnabled: boolean("dockerSocketEnabled").notNull().default(true)
 });
 
 export const resources = pgTable("resources", {
@@ -206,11 +207,41 @@ export const siteResources = pgTable("siteResources", {
         .references(() => orgs.orgId, { onDelete: "cascade" }),
     niceId: varchar("niceId").notNull(),
     name: varchar("name").notNull(),
-    protocol: varchar("protocol").notNull(),
-    proxyPort: integer("proxyPort").notNull(),
-    destinationPort: integer("destinationPort").notNull(),
-    destinationIp: varchar("destinationIp").notNull(),
-    enabled: boolean("enabled").notNull().default(true)
+    mode: varchar("mode").notNull(), // "host" | "cidr" | "port"
+    protocol: varchar("protocol"), // only for port mode
+    proxyPort: integer("proxyPort"), // only for port mode
+    destinationPort: integer("destinationPort"), // only for port mode
+    destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
+    enabled: boolean("enabled").notNull().default(true),
+    alias: varchar("alias"),
+    aliasAddress: varchar("aliasAddress")
+});
+
+export const clientSiteResources = pgTable("clientSiteResources", {
+    clientId: integer("clientId")
+        .notNull()
+        .references(() => clients.clientId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const roleSiteResources = pgTable("roleSiteResources", {
+    roleId: integer("roleId")
+        .notNull()
+        .references(() => roles.roleId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
+});
+
+export const userSiteResources = pgTable("userSiteResources", {
+    userId: varchar("userId")
+        .notNull()
+        .references(() => users.userId, { onDelete: "cascade" }),
+    siteResourceId: integer("siteResourceId")
+        .notNull()
+        .references(() => siteResources.siteResourceId, { onDelete: "cascade" })
 });
 
 export const users = pgTable("user", {
@@ -258,7 +289,8 @@ export const sessions = pgTable("session", {
         .notNull()
         .references(() => users.userId, { onDelete: "cascade" }),
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
-    issuedAt: bigint("issuedAt", { mode: "number" })
+    issuedAt: bigint("issuedAt", { mode: "number" }),
+    deviceAuthUsed: boolean("deviceAuthUsed").notNull().default(false)
 });
 
 export const newtSessions = pgTable("newtSession", {
@@ -600,7 +632,7 @@ export const idpOrg = pgTable("idpOrg", {
 });
 
 export const clients = pgTable("clients", {
-    clientId: serial("id").primaryKey(),
+    clientId: serial("clientId").primaryKey(),
     orgId: varchar("orgId")
         .references(() => orgs.orgId, {
             onDelete: "cascade"
@@ -609,6 +641,11 @@ export const clients = pgTable("clients", {
     exitNodeId: integer("exitNode").references(() => exitNodes.exitNodeId, {
         onDelete: "set null"
     }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
+        onDelete: "cascade"
+    }),
+    olmId: text("olmId"), // to lock it to a specific olm optionally
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
     subnet: varchar("subnet").notNull(),
@@ -623,23 +660,40 @@ export const clients = pgTable("clients", {
     maxConnections: integer("maxConnections")
 });
 
-export const clientSites = pgTable("clientSites", {
-    clientId: integer("clientId")
-        .notNull()
-        .references(() => clients.clientId, { onDelete: "cascade" }),
-    siteId: integer("siteId")
-        .notNull()
-        .references(() => sites.siteId, { onDelete: "cascade" }),
-    isRelayed: boolean("isRelayed").notNull().default(false),
-    endpoint: varchar("endpoint")
-});
+export const clientSitesAssociationsCache = pgTable(
+    "clientSitesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteId: integer("siteId").notNull(),
+        isRelayed: boolean("isRelayed").notNull().default(false),
+        endpoint: varchar("endpoint"),
+        publicKey: varchar("publicKey") // this will act as the session's public key for hole punching so we can track when it changes
+    }
+);
+
+export const clientSiteResourcesAssociationsCache = pgTable(
+    "clientSiteResourcesAssociationsCache",
+    {
+        clientId: integer("clientId") // not a foreign key here so after its deleted the rebuild function can delete it and send the message
+            .notNull(),
+        siteResourceId: integer("siteResourceId").notNull()
+    }
+);
 
 export const olms = pgTable("olms", {
     olmId: varchar("id").primaryKey(),
     secretHash: varchar("secretHash").notNull(),
     dateCreated: varchar("dateCreated").notNull(),
     version: text("version"),
+    agent: text("agent"),
+    name: varchar("name"),
     clientId: integer("clientId").references(() => clients.clientId, {
+        // we will switch this depending on the current org it wants to connect to
+        onDelete: "set null"
+    }),
+    userId: text("userId").references(() => users.userId, {
+        // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     })
 });
@@ -755,6 +809,21 @@ export const requestAuditLog = pgTable(
     ]
 );
 
+export const deviceWebAuthCodes = pgTable("deviceWebAuthCodes", {
+    codeId: serial("codeId").primaryKey(),
+    code: text("code").notNull().unique(),
+    ip: text("ip"),
+    city: text("city"),
+    deviceName: text("deviceName"),
+    applicationName: text("applicationName").notNull(),
+    expiresAt: bigint("expiresAt", { mode: "number" }).notNull(),
+    createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+    verified: boolean("verified").notNull().default(false),
+    userId: varchar("userId").references(() => users.userId, {
+        onDelete: "cascade"
+    })
+});
+
 export type Org = InferSelectModel<typeof orgs>;
 export type User = InferSelectModel<typeof users>;
 export type Site = InferSelectModel<typeof sites>;
@@ -795,7 +864,7 @@ export type ApiKey = InferSelectModel<typeof apiKeys>;
 export type ApiKeyAction = InferSelectModel<typeof apiKeyActions>;
 export type ApiKeyOrg = InferSelectModel<typeof apiKeyOrg>;
 export type Client = InferSelectModel<typeof clients>;
-export type ClientSite = InferSelectModel<typeof clientSites>;
+export type ClientSite = InferSelectModel<typeof clientSitesAssociationsCache>;
 export type Olm = InferSelectModel<typeof olms>;
 export type OlmSession = InferSelectModel<typeof olmSessions>;
 export type UserClient = InferSelectModel<typeof userClients>;
@@ -810,4 +879,5 @@ export type Blueprint = InferSelectModel<typeof blueprints>;
 export type LicenseKey = InferSelectModel<typeof licenseKey>;
 export type SecurityKey = InferSelectModel<typeof securityKeys>;
 export type WebauthnChallenge = InferSelectModel<typeof webauthnChallenge>;
+export type DeviceWebAuthCode = InferSelectModel<typeof deviceWebAuthCodes>;
 export type RequestAuditLog = InferSelectModel<typeof requestAuditLog>;

@@ -32,6 +32,9 @@ export function UsersDataTable<TData, TValue>({
             searchColumn="email"
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
+            enableColumnVisibility={true}
+            stickyLeftColumn="username"
+            stickyRightColumn="actions"
         />
     );
 }

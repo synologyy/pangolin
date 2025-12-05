@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { canUserAccessResource } from "../auth/canUserAccessResource";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 export async function verifyTargetAccess(
     req: Request,
@@ -100,6 +101,26 @@ export async function verifyTargetAccess(
         } else {
             req.userOrgRoleId = req.userOrg.roleId;
             req.userOrgId = resource[0].orgId!;
+        }
+
+        const orgId = req.userOrg.orgId;
+
+        if (req.orgPolicyAllowed === undefined && orgId) {
+            const policyCheck = await checkOrgAccessPolicy({
+                orgId,
+                userId,
+                session: req.session
+            });
+            req.orgPolicyAllowed = policyCheck.allowed;
+            if (!policyCheck.allowed || policyCheck.error) {
+                return next(
+                    createHttpError(
+                        HttpCode.FORBIDDEN,
+                        "Failed organization access policy check: " +
+                            (policyCheck.error || "Unknown error")
+                    )
+                );
+            }
         }
 
         const resourceAllowed = await canUserAccessResource({

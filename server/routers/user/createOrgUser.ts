@@ -15,6 +15,7 @@ import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const paramsSchema = z.strictObject({
         orgId: z.string().nonempty()
@@ -84,14 +85,7 @@ export async function createOrgUser(
         }
 
         const { orgId } = parsedParams.data;
-        const {
-            username,
-            email,
-            name,
-            type,
-            idpId,
-            roleId
-        } = parsedBody.data;
+        const { username, email, name, type, idpId, roleId } = parsedBody.data;
 
         if (build == "saas") {
             const usage = await usageService.getUsage(orgId, FeatureId.USERS);
@@ -197,7 +191,9 @@ export async function createOrgUser(
                         )
                     );
 
+                let userId: string | undefined;
                 if (existingUser) {
+                    userId = existingUser.userId;
                     const [existingOrgUser] = await trx
                         .select()
                         .from(userOrgs)
@@ -227,7 +223,7 @@ export async function createOrgUser(
                         })
                         .returning();
                 } else {
-                    const userId = generateId(15);
+                    userId = generateId(15);
 
                     const [newUser] = await trx
                         .insert(users)
@@ -239,7 +235,7 @@ export async function createOrgUser(
                             type: "oidc",
                             idpId,
                             dateCreated: new Date().toISOString(),
-                            emailVerified: true,
+                            emailVerified: true
                         })
                         .returning();
 
@@ -259,6 +255,8 @@ export async function createOrgUser(
                     .select()
                     .from(userOrgs)
                     .where(eq(userOrgs.orgId, orgId));
+
+                await calculateUserClientsForOrgs(userId, trx);
             });
 
             if (orgUsers) {

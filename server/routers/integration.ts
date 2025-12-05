@@ -10,6 +10,7 @@ import * as client from "./client";
 import * as accessToken from "./accessToken";
 import * as apiKeys from "./apiKeys";
 import * as idp from "./idp";
+import * as logs from "./auditLogs";
 import * as siteResource from "./siteResource";
 import {
     verifyApiKey,
@@ -24,8 +25,8 @@ import {
     verifyApiKeyAccessTokenAccess,
     verifyApiKeyIsRoot,
     verifyApiKeyClientAccess,
-    verifyClientsEnabled,
-    verifyApiKeySiteResourceAccess
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients
 } from "@server/middlewares";
 import HttpCode from "@server/types/HttpCode";
 import { Router } from "express";
@@ -195,6 +196,108 @@ authenticated.delete(
     verifyApiKeyHasAction(ActionsEnum.deleteSiteResource),
     logActionAudit(ActionsEnum.deleteSiteResource),
     siteResource.deleteSiteResource
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/roles",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResourceRoles),
+    siteResource.listSiteResourceRoles
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/users",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceUsers
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/clients",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceClients
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.setSiteResourceRoles
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceUsers
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.addRoleToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.removeRoleFromSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addUserToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeUserFromSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceClients
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/add",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addClientToSiteResource
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/remove",
+    verifyApiKeySiteResourceAccess,
+    verifyApiKeySetResourceClients,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeClientFromSiteResource
 );
 
 authenticated.put(
@@ -410,6 +513,42 @@ authenticated.post(
     verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
     resource.setResourceUsers
+);
+
+authenticated.post(
+    "/resource/:resourceId/roles/add",
+    verifyApiKeyResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    resource.addRoleToResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/roles/remove",
+    verifyApiKeyResourceAccess,
+    verifyApiKeyRoleAccess,
+    verifyApiKeyHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    resource.removeRoleFromResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/users/add",
+    verifyApiKeyResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    resource.addUserToResource
+);
+
+authenticated.post(
+    "/resource/:resourceId/users/remove",
+    verifyApiKeyResourceAccess,
+    verifyApiKeySetResourceUsers,
+    verifyApiKeyHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    resource.removeUserFromResource
 );
 
 authenticated.post(
@@ -657,7 +796,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createClient),
     client.pickClientDefaults
@@ -665,7 +803,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/clients",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.listClients),
     client.listClients
@@ -673,7 +810,6 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.getClient),
     client.getClient
@@ -681,16 +817,24 @@ authenticated.get(
 
 authenticated.put(
     "/org/:orgId/client",
-    verifyClientsEnabled,
     verifyApiKeyOrgAccess,
     verifyApiKeyHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
     client.createClient
 );
 
+// authenticated.put(
+//     "/org/:orgId/user/:userId/client",
+//     verifyClientsEnabled,
+//     verifyApiKeyOrgAccess,
+//     verifyApiKeyUserAccess,
+//     verifyApiKeyHasAction(ActionsEnum.createClient),
+//     logActionAudit(ActionsEnum.createClient),
+//     client.createUserClient
+// );
+
 authenticated.delete(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
@@ -699,7 +843,6 @@ authenticated.delete(
 
 authenticated.post(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyApiKeyClientAccess,
     verifyApiKeyHasAction(ActionsEnum.updateClient),
     logActionAudit(ActionsEnum.updateClient),
@@ -712,4 +855,33 @@ authenticated.put(
     verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
     logActionAudit(ActionsEnum.applyBlueprint),
     blueprints.applyJSONBlueprint
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/request/export",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportRequestAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/analytics",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.viewLogs),
+    logs.queryRequestAnalytics
+);
+
+authenticated.get(
+    "/org/:orgId/resource-names",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listResources),
+    resource.listAllResourceNames
 );

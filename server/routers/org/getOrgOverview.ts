@@ -130,7 +130,7 @@ export async function getOrgOverview(
                 numSites,
                 numUsers,
                 numResources,
-                isAdmin: role.name === "Admin",
+                isAdmin: role.isAdmin || false,
                 isOwner: req.userOrg?.isOwner || false
             },
             success: true,

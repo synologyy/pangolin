@@ -1,8 +1,8 @@
 import { db, exitNodes, sites } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
-import { clients, clientSites, Olm } from "@server/db";
+import { clients, clientSitesAssociationsCache, Olm } from "@server/db";
 import { and, eq } from "drizzle-orm";
-import { updatePeer } from "../newt/peers";
+import { updatePeer as newtUpdatePeer } from "../newt/peers";
 import logger from "@server/logger";
 
 export const handleOlmRelayMessage: MessageHandler = async (context) => {
@@ -67,30 +67,31 @@ export const handleOlmRelayMessage: MessageHandler = async (context) => {
     }
 
     await db
-        .update(clientSites)
+        .update(clientSitesAssociationsCache)
         .set({
             isRelayed: true
         })
         .where(
             and(
-                eq(clientSites.clientId, olm.clientId),
-                eq(clientSites.siteId, siteId)
+                eq(clientSitesAssociationsCache.clientId, olm.clientId),
+                eq(clientSitesAssociationsCache.siteId, siteId)
             )
         );
 
     // update the peer on the exit node
-    await updatePeer(siteId, client.pubKey, {
-        endpoint: "" // this removes the endpoint
+    await newtUpdatePeer(siteId, client.pubKey, {
+        endpoint: "" // this removes the endpoint so the exit node knows to relay
     });
 
-    sendToClient(olm.olmId, {
-        type: "olm/wg/peer/relay",
-        data: {
-            siteId: siteId,
-            endpoint: exitNode.endpoint,
-            publicKey: exitNode.publicKey
-        }
-    });
-
-    return;
+    return {
+        message: {
+            type: "olm/wg/peer/relay",
+            data: {
+                siteId: siteId,
+                relayEndpoint: exitNode.endpoint
+            }
+        },
+        broadcast: false,
+        excludeSender: false
+    };
 };

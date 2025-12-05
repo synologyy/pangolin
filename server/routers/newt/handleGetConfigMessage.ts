@@ -6,15 +6,15 @@ import {
     db,
     ExitNode,
     exitNodes,
-    resources,
     siteResources,
-    Target,
-    targets
+    clientSiteResourcesAssociationsCache
 } from "@server/db";
-import { clients, clientSites, Newt, sites } from "@server/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { clients, clientSitesAssociationsCache, Newt, sites } from "@server/db";
+import { eq } from "drizzle-orm";
 import { updatePeer } from "../olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
+import { generateSubnetProxyTargets, SubnetProxyTarget } from "@server/lib/ip";
+import config from "@server/lib/config";
 
 const inputSchema = z.object({
     publicKey: z.string(),
@@ -66,7 +66,9 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
 
     // we need to wait for hole punch success
     if (!existingSite.endpoint) {
-        logger.debug(`In newt get config: existing site ${existingSite.siteId} has no endpoint, skipping`);
+        logger.debug(
+            `In newt get config: existing site ${existingSite.siteId} has no endpoint, skipping`
+        );
         return;
     }
 
@@ -74,12 +76,12 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
         // TODO: somehow we should make sure a recent hole punch has happened if this occurs (hole punch could be from the last restart if done quickly)
     }
 
-    // if (existingSite.lastHolePunch && now - existingSite.lastHolePunch > 6) {
-    //     logger.warn(
-    //         `Site ${existingSite.siteId} last hole punch is too old, skipping`
-    //     );
-    //     return;
-    // }
+    if (existingSite.lastHolePunch && now - existingSite.lastHolePunch > 5) {
+        logger.warn(
+            `handleGetConfigMessage: Site ${existingSite.siteId} last hole punch is too old, skipping`
+        );
+        return;
+    }
 
     // update the endpoint and the public key
     const [site] = await db
@@ -132,75 +134,95 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     const clientsRes = await db
         .select()
         .from(clients)
-        .innerJoin(clientSites, eq(clients.clientId, clientSites.clientId))
-        .where(eq(clientSites.siteId, siteId));
+        .innerJoin(
+            clientSitesAssociationsCache,
+            eq(clients.clientId, clientSitesAssociationsCache.clientId)
+        )
+        .where(eq(clientSitesAssociationsCache.siteId, siteId));
 
     // Prepare peers data for the response
     const peers = await Promise.all(
         clientsRes
             .filter((client) => {
                 if (!client.clients.pubKey) {
+                    logger.warn(
+                        `Client ${client.clients.clientId} has no public key, skipping`
+                    );
                     return false;
                 }
                 if (!client.clients.subnet) {
+                    logger.warn(
+                        `Client ${client.clients.clientId} has no subnet, skipping`
+                    );
                     return false;
                 }
                 return true;
             })
             .map(async (client) => {
                 // Add or update this peer on the olm if it is connected
-                try {
-                    if (!site.publicKey) {
-                        logger.warn(
-                            `Site ${site.siteId} has no public key, skipping`
-                        );
-                        return null;
-                    }
-                    let endpoint = site.endpoint;
-                    if (client.clientSites.isRelayed) {
-                        if (!site.exitNodeId) {
-                            logger.warn(
-                                `Site ${site.siteId} has no exit node, skipping`
-                            );
-                            return null;
-                        }
-
-                        if (!exitNode) {
-                            logger.warn(
-                                `Exit node not found for site ${site.siteId}`
-                            );
-                            return null;
-                        }
-                        endpoint = `${exitNode.endpoint}:21820`;
-                    }
-
-                    if (!endpoint) {
-                        logger.warn(
-                            `In Newt get config: Peer site ${site.siteId} has no endpoint, skipping`
-                        );
-                        return null;
-                    }
-
-                    await updatePeer(client.clients.clientId, {
-                        siteId: site.siteId,
-                        endpoint: endpoint,
-                        publicKey: site.publicKey,
-                        serverIP: site.address,
-                        serverPort: site.listenPort,
-                        remoteSubnets: site.remoteSubnets
-                    });
-                } catch (error) {
-                    logger.error(
-                        `Failed to add/update peer ${client.clients.pubKey} to olm ${newt.newtId}: ${error}`
+                if (!site.publicKey) {
+                    logger.warn(
+                        `Site ${site.siteId} has no public key, skipping`
                     );
+                    return null;
                 }
+
+                if (!exitNode) {
+                    logger.warn(`Exit node not found for site ${site.siteId}`);
+                    return null;
+                }
+
+                if (!site.endpoint) {
+                    logger.warn(
+                        `Site ${site.siteId} has no endpoint, skipping`
+                    );
+                    return null;
+                }
+
+                // const allSiteResources = await db // only get the site resources that this client has access to
+                //     .select()
+                //     .from(siteResources)
+                //     .innerJoin(
+                //         clientSiteResourcesAssociationsCache,
+                //         eq(
+                //             siteResources.siteResourceId,
+                //             clientSiteResourcesAssociationsCache.siteResourceId
+                //         )
+                //     )
+                //     .where(
+                //         and(
+                //             eq(siteResources.siteId, site.siteId),
+                //             eq(
+                //                 clientSiteResourcesAssociationsCache.clientId,
+                //                 client.clients.clientId
+                //             )
+                //         )
+                //     );
+                await updatePeer(client.clients.clientId, {
+                    siteId: site.siteId,
+                    endpoint: site.endpoint,
+                    relayEndpoint: `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`,
+                    publicKey: site.publicKey,
+                    serverIP: site.address,
+                    serverPort: site.listenPort
+                    // remoteSubnets: generateRemoteSubnets(
+                    //     allSiteResources.map(
+                    //         ({ siteResources }) => siteResources
+                    //     )
+                    // ),
+                    // aliases: generateAliasConfig(
+                    //     allSiteResources.map(
+                    //         ({ siteResources }) => siteResources
+                    //     )
+                    // )
+                });
 
                 return {
                     publicKey: client.clients.pubKey!,
                     allowedIps: [`${client.clients.subnet.split("/")[0]}/32`], // we want to only allow from that client
-                    endpoint: client.clientSites.isRelayed
+                    endpoint: client.clientSitesAssociationsCache.isRelayed
                         ? ""
-                        : client.clientSites.endpoint! // if its relayed it should be localhost
+                        : client.clientSitesAssociationsCache.endpoint! // if its relayed it should be localhost
                 };
             })
     );
@@ -208,42 +230,50 @@ export const handleGetConfigMessage: MessageHandler = async (context) => {
     // Filter out any null values from peers that didn't have an olm
     const validPeers = peers.filter((peer) => peer !== null);
 
-    // Get all enabled targets with their resource protocol information
+    // Get all enabled site resources for this site
     const allSiteResources = await db
         .select()
         .from(siteResources)
         .where(eq(siteResources.siteId, siteId));
 
-    const { tcpTargets, udpTargets } = allSiteResources.reduce(
-        (acc, resource) => {
-            // Filter out invalid targets
-            if (!resource.proxyPort || !resource.destinationIp || !resource.destinationPort) {
-                return acc;
-            }
+    const targetsToSend: SubnetProxyTarget[] = [];
 
-            // Format target into string
-            const formattedTarget = `${resource.proxyPort}:${resource.destinationIp}:${resource.destinationPort}`;
+    for (const resource of allSiteResources) {
+        // Get clients associated with this specific resource
+        const resourceClients = await db
+            .select({
+                clientId: clients.clientId,
+                pubKey: clients.pubKey,
+                subnet: clients.subnet
+            })
+            .from(clients)
+            .innerJoin(
+                clientSiteResourcesAssociationsCache,
+                eq(
+                    clients.clientId,
+                    clientSiteResourcesAssociationsCache.clientId
+                )
+            )
+            .where(
+                eq(
+                    clientSiteResourcesAssociationsCache.siteResourceId,
+                    resource.siteResourceId
+                )
+            );
 
-            // Add to the appropriate protocol array
-            if (resource.protocol === "tcp") {
-                acc.tcpTargets.push(formattedTarget);
-            } else {
-                acc.udpTargets.push(formattedTarget);
-            }
+        const resourceTargets = generateSubnetProxyTargets(
+            resource,
+            resourceClients
+        );
 
-            return acc;
-        },
-        { tcpTargets: [] as string[], udpTargets: [] as string[] }
-    );
+        targetsToSend.push(...resourceTargets);
+    }
 
     // Build the configuration response
     const configResponse = {
         ipAddress: site.address,
         peers: validPeers,
-        targets: {
-            udp: udpTargets,
-            tcp: tcpTargets
-        }
+        targets: targetsToSend
     };
 
     logger.debug("Sending config: ", configResponse);

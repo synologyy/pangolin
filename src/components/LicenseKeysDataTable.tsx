@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { DataTable } from "@app/components/ui/data-table";
 import { Button } from "@app/components/ui/button";
 import { Badge } from "@app/components/ui/badge";
@@ -30,9 +31,11 @@ export function LicenseKeysDataTable({
 }: LicenseKeysDataTableProps) {
     const t = useTranslations();
 
-    const columns: ColumnDef<LicenseKeyCache>[] = [
+    const columns: ExtendedColumnDef<LicenseKeyCache>[] = [
         {
             accessorKey: "licenseKey",
+            enableHiding: false,
+            friendlyName: t("licenseKey"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -58,6 +61,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "valid",
+            friendlyName: t("valid"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -81,6 +85,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "tier",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -103,6 +108,7 @@ export function LicenseKeysDataTable({
         },
         {
             accessorKey: "terminateAt",
+            friendlyName: t("licenseTableValidUntil"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -123,10 +129,11 @@ export function LicenseKeysDataTable({
         },
         {
             id: "delete",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => (
-                <div className="flex items-center justify-end space-x-2">
-                    <Button
-                        variant="secondary"
+                <div className="flex items-center gap-2 justify-end">
+                    <Button variant={"outline"}
                         onClick={() => onDelete(row.original)}
                     >
                         {t("delete")}
@@ -146,6 +153,9 @@ export function LicenseKeysDataTable({
             searchColumn="licenseKey"
             onAdd={onCreate}
             addButtonText={t("licenseKeyAdd")}
+            enableColumnVisibility={true}
+            stickyLeftColumn="licenseKey"
+            stickyRightColumn="delete"
         />
     );
 }

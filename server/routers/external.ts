@@ -16,6 +16,8 @@ import * as idp from "./idp";
 import * as blueprints from "./blueprints";
 import * as apiKeys from "./apiKeys";
 import * as logs from "./auditLogs";
+import * as newt from "./newt";
+import * as olm from "./olm";
 import HttpCode from "@server/types/HttpCode";
 import {
     verifyAccessTokenAccess,
@@ -27,6 +29,7 @@ import {
     verifyTargetAccess,
     verifyRoleAccess,
     verifySetResourceUsers,
+    verifySetResourceClients,
     verifyUserAccess,
     getUserOrgs,
     verifyUserIsServerAdmin,
@@ -34,14 +37,12 @@ import {
     verifyClientAccess,
     verifyApiKeyAccess,
     verifyDomainAccess,
-    verifyClientsEnabled,
     verifyUserHasAction,
     verifyUserIsOrgOwner,
-    verifySiteResourceAccess
+    verifySiteResourceAccess,
+    verifyOlmAccess
 } from "@server/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
-import { createNewt, getNewtToken } from "./newt";
-import { getOlmToken } from "./olm";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import createHttpError from "http-errors";
 import { build } from "@server/build";
@@ -129,7 +130,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/pick-client-defaults",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
     client.pickClientDefaults
@@ -137,7 +137,6 @@ authenticated.get(
 
 authenticated.get(
     "/org/:orgId/clients",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.listClients),
     client.listClients
@@ -145,7 +144,6 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
@@ -153,16 +151,15 @@ authenticated.get(
 
 authenticated.put(
     "/org/:orgId/client",
-    verifyClientsEnabled,
     verifyOrgAccess,
     verifyUserHasAction(ActionsEnum.createClient),
     logActionAudit(ActionsEnum.createClient),
     client.createClient
 );
 
+// TODO: Separate into a deleteUserClient (for user clients) and deleteClient (for machine clients)
 authenticated.delete(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.deleteClient),
     logActionAudit(ActionsEnum.deleteClient),
@@ -171,7 +168,6 @@ authenticated.delete(
 
 authenticated.post(
     "/client/:clientId",
-    verifyClientsEnabled,
     verifyClientAccess, // this will check if the user has access to the client
     verifyUserHasAction(ActionsEnum.updateClient), // this will check if the user has permission to update the client
     logActionAudit(ActionsEnum.updateClient),
@@ -284,6 +280,72 @@ authenticated.delete(
     verifyUserHasAction(ActionsEnum.deleteSiteResource),
     logActionAudit(ActionsEnum.deleteSiteResource),
     siteResource.deleteSiteResource
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/roles",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceRoles),
+    siteResource.listSiteResourceRoles
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/users",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceUsers
+);
+
+authenticated.get(
+    "/site-resource/:siteResourceId/clients",
+    verifySiteResourceAccess,
+    verifyUserHasAction(ActionsEnum.listResourceUsers),
+    siteResource.listSiteResourceClients
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/roles",
+    verifySiteResourceAccess,
+    verifyRoleAccess,
+    verifyUserHasAction(ActionsEnum.setResourceRoles),
+    logActionAudit(ActionsEnum.setResourceRoles),
+    siteResource.setSiteResourceRoles,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/users",
+    verifySiteResourceAccess,
+    verifySetResourceUsers,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceUsers,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.setSiteResourceClients,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/add",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.addClientToSiteResource,
+);
+
+authenticated.post(
+    "/site-resource/:siteResourceId/clients/remove",
+    verifySiteResourceAccess,
+    verifySetResourceClients,
+    verifyUserHasAction(ActionsEnum.setResourceUsers),
+    logActionAudit(ActionsEnum.setResourceUsers),
+    siteResource.removeClientFromSiteResource,
 );
 
 authenticated.put(
@@ -649,9 +711,15 @@ unauthenticated.get(
 // );
 
 unauthenticated.get("/user", verifySessionMiddleware, user.getUser);
+unauthenticated.get("/my-device", verifySessionMiddleware, user.myDevice);
 
 authenticated.get("/users", verifyUserIsServerAdmin, user.adminListUsers);
 authenticated.get("/user/:userId", verifyUserIsServerAdmin, user.adminGetUser);
+authenticated.post(
+    "/user/:userId/generate-password-reset-code",
+    verifyUserIsServerAdmin,
+    user.adminGeneratePasswordResetCode
+);
 authenticated.delete(
     "/user/:userId",
     verifyUserIsServerAdmin,
@@ -733,6 +801,32 @@ authenticated.delete(
 //     verifyUserHasAction(ActionsEnum.createNewt),
 //     createNewt
 // );
+
+authenticated.put(
+    "/user/:userId/olm",
+    verifyIsLoggedInUser,
+    olm.createUserOlm
+);
+
+authenticated.get(
+    "/user/:userId/olms",
+    verifyIsLoggedInUser,
+    olm.listUserOlms
+);
+
+authenticated.delete(
+    "/user/:userId/olm/:olmId",
+    verifyIsLoggedInUser,
+    verifyOlmAccess,
+    olm.deleteUserOlm
+);
+
+authenticated.get(
+    "/user/:userId/olm/:olmId",
+    verifyIsLoggedInUser,
+    verifyOlmAccess,
+    olm.getUserOlm
+);
 
 authenticated.put(
     "/idp/oidc",
@@ -993,7 +1087,7 @@ authRouter.post(
         },
         store: createStore()
     }),
-    getNewtToken
+    newt.getNewtToken
 );
 authRouter.post(
     "/olm/get-token",
@@ -1008,7 +1102,7 @@ authRouter.post(
         },
         store: createStore()
     }),
-    getOlmToken
+    olm.getOlmToken
 );
 
 authRouter.post(
@@ -1252,4 +1346,52 @@ authRouter.delete(
         store: createStore()
     }),
     auth.deleteSecurityKey
+);
+
+authRouter.post(
+    "/device-web-auth/start",
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 30, // Allow 30 device auth code requests per 15 minutes per IP
+        keyGenerator: (req) =>
+            `deviceWebAuthStart:${ipKeyGenerator(req.ip || "")}`,
+        handler: (req, res, next) => {
+            const message = `You can only request a device auth code ${30} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.startDeviceWebAuth
+);
+
+authRouter.get(
+    "/device-web-auth/poll/:code",
+    rateLimit({
+        windowMs: 60 * 1000, // 1 minute
+        max: 60, // Allow 60 polling requests per minute per IP (poll every second)
+        keyGenerator: (req) =>
+            `deviceWebAuthPoll:${ipKeyGenerator(req.ip || "")}:${req.params.code}`,
+        handler: (req, res, next) => {
+            const message = `You can only poll a device auth code ${60} times per minute. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.pollDeviceWebAuth
+);
+
+authenticated.post(
+    "/device-web-auth/verify",
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 50, // Allow 50 verification attempts per 15 minutes per user
+        keyGenerator: (req) =>
+            `deviceWebAuthVerify:${req.user?.userId || ipKeyGenerator(req.ip || "")}`,
+        handler: (req, res, next) => {
+            const message = `You can only verify a device auth code ${50} times every ${15} minutes. Please try again later.`;
+            return next(createHttpError(HttpCode.TOO_MANY_REQUESTS, message));
+        },
+        store: createStore()
+    }),
+    auth.verifyDeviceWebAuth
 );

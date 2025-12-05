@@ -33,6 +33,9 @@ export function DomainsDataTable<TData, TValue>({
             onAdd={onAdd}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
+            enableColumnVisibility={true}
+            stickyLeftColumn="baseDomain"
+            stickyRightColumn="actions"
         />
     );
 }

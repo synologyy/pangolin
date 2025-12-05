@@ -6,15 +6,21 @@ import { pullEnv } from "../pullEnv";
 import { cache } from "react";
 
 export const verifySession = cache(async function ({
-    skipCheckVerifyEmail
+    skipCheckVerifyEmail,
+    forceLogin
 }: {
     skipCheckVerifyEmail?: boolean;
+    forceLogin?: boolean;
 } = {}): Promise<GetUserResponse | null> {
     const env = pullEnv();
 
     try {
+        const search = new URLSearchParams();
+        if (forceLogin) {
+            search.set("forceLogin", "true");
+        }
         const res = await internal.get<AxiosResponse<GetUserResponse>>(
-            "/user",
+            `/user?${search.toString()}`,
             await authCookieHeader()
         );
 

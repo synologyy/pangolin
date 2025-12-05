@@ -1,33 +1,98 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, newts, sites } from "@server/db";
+import {
+    clientSiteResources,
+    db,
+    newts,
+    roles,
+    roleSiteResources,
+    sites,
+    userSiteResources
+} from "@server/db";
 import { siteResources, SiteResource } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
-import { eq, and } from "drizzle-orm";
+import { eq, and, ne } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { addTargets } from "../client/targets";
+import { updatePeerData, updateTargets } from "@server/routers/client/targets";
+import {
+    generateAliasConfig,
+    generateRemoteSubnets,
+    generateSubnetProxyTargets
+} from "@server/lib/ip";
+import {
+    getClientSiteResourceAccess,
+    rebuildClientAssociationsFromSiteResource
+} from "@server/lib/rebuildClientAssociations";
 
 const updateSiteResourceParamsSchema = z.strictObject({
-        siteResourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive()),
-        siteId: z.string().transform(Number).pipe(z.int().positive()),
-        orgId: z.string()
-    });
+    siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
+    siteId: z.string().transform(Number).pipe(z.int().positive()),
+    orgId: z.string()
+});
 
-const updateSiteResourceSchema = z.strictObject({
+const updateSiteResourceSchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
-        protocol: z.enum(["tcp", "udp"]).optional(),
-        proxyPort: z.int().positive().optional(),
-        destinationPort: z.int().positive().optional(),
-        destinationIp: z.string().optional(),
-        enabled: z.boolean().optional()
-    });
+        // mode: z.enum(["host", "cidr", "port"]).optional(),
+        mode: z.enum(["host", "cidr"]).optional(),
+        // protocol: z.enum(["tcp", "udp"]).nullish(),
+        // proxyPort: z.int().positive().nullish(),
+        // destinationPort: z.int().positive().nullish(),
+        destination: z.string().min(1).optional(),
+        enabled: z.boolean().optional(),
+        alias: z
+            .string()
+            .regex(
+                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name (e.g., example.internal)"
+            )
+            .nullish(),
+        userIds: z.array(z.string()),
+        roleIds: z.array(z.int()),
+        clientIds: z.array(z.int())
+    })
+    .strict()
+    .refine(
+        (data) => {
+            if (data.mode === "host" && data.destination) {
+                // Check if it's a valid IP address using zod (v4 or v6)
+                const isValidIP = z
+                    .union([z.ipv4(), z.ipv6()])
+                    .safeParse(data.destination).success;
+
+                // Check if it's a valid domain (hostname pattern, TLD not required)
+                const domainRegex =
+                    /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+                const isValidDomain = domainRegex.test(data.destination);
+
+                return isValidIP || isValidDomain;
+            }
+            return true;
+        },
+        {
+            message:
+                "Destination must be a valid IP address or domain name for host mode"
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "cidr" && data.destination) {
+                // Check if it's a valid CIDR (v4 or v6)
+                const isValidCIDR = z
+                    .union([z.cidrv4(), z.cidrv6()])
+                    .safeParse(data.destination).success;
+                return isValidCIDR;
+            }
+            return true;
+        },
+        {
+            message: "Destination must be a valid CIDR notation for cidr mode"
+        }
+    );
 
 export type UpdateSiteResourceBody = z.infer<typeof updateSiteResourceSchema>;
 export type UpdateSiteResourceResponse = SiteResource;
@@ -79,7 +144,16 @@ export async function updateSiteResource(
         }
 
         const { siteResourceId, siteId, orgId } = parsedParams.data;
-        const updateData = parsedBody.data;
+        const {
+            name,
+            mode,
+            destination,
+            alias,
+            enabled,
+            userIds,
+            roleIds,
+            clientIds
+        } = parsedBody.data;
 
         const [site] = await db
             .select()
@@ -110,69 +184,190 @@ export async function updateSiteResource(
             );
         }
 
-        const protocol = updateData.protocol || existingSiteResource.protocol;
-        const proxyPort =
-            updateData.proxyPort || existingSiteResource.proxyPort;
+        // make sure the alias is unique within the org if provided
+        if (alias) {
+            const [conflict] = await db
+                .select()
+                .from(siteResources)
+                .where(
+                    and(
+                        eq(siteResources.orgId, orgId),
+                        eq(siteResources.alias, alias.trim()),
+                        ne(siteResources.siteResourceId, siteResourceId) // exclude self
+                    )
+                )
+                .limit(1);
 
-        // check if resource with same protocol and proxy port already exists
-        const [existingResource] = await db
-            .select()
-            .from(siteResources)
-            .where(
-                and(
-                    eq(siteResources.siteId, siteId),
-                    eq(siteResources.orgId, orgId),
-                    eq(siteResources.protocol, protocol),
-                    eq(siteResources.proxyPort, proxyPort)
+            if (conflict) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        "Alias already in use by another site resource"
+                    )
+                );
+            }
+        }
+
+        let updatedSiteResource: SiteResource | undefined;
+        await db.transaction(async (trx) => {
+            // Update the site resource
+            [updatedSiteResource] = await trx
+                .update(siteResources)
+                .set({
+                    name: name,
+                    mode: mode,
+                    destination: destination,
+                    enabled: enabled,
+                    alias: alias && alias.trim() ? alias : null
+                })
+                .where(
+                    and(
+                        eq(siteResources.siteResourceId, siteResourceId),
+                        eq(siteResources.siteId, siteId),
+                        eq(siteResources.orgId, orgId)
+                    )
                 )
-            )
-            .limit(1);
-        if (
-            existingResource &&
-            existingResource.siteResourceId !== siteResourceId
-        ) {
-            return next(
-                createHttpError(
-                    HttpCode.CONFLICT,
-                    "A resource with the same protocol and proxy port already exists"
-                )
+                .returning();
+
+            //////////////////// update the associations ////////////////////
+
+            await trx
+                .delete(clientSiteResources)
+                .where(eq(clientSiteResources.siteResourceId, siteResourceId));
+
+            if (clientIds.length > 0) {
+                await trx.insert(clientSiteResources).values(
+                    clientIds.map((clientId) => ({
+                        clientId,
+                        siteResourceId
+                    }))
+                );
+            }
+
+            await trx
+                .delete(userSiteResources)
+                .where(eq(userSiteResources.siteResourceId, siteResourceId));
+
+            if (userIds.length > 0) {
+                await trx
+                    .insert(userSiteResources)
+                    .values(
+                        userIds.map((userId) => ({ userId, siteResourceId }))
+                    );
+            }
+
+            // Get all admin role IDs for this org to exclude from deletion
+            const adminRoles = await trx
+                .select()
+                .from(roles)
+                .where(
+                    and(
+                        eq(roles.isAdmin, true),
+                        eq(roles.orgId, updatedSiteResource.orgId)
+                    )
+                );
+            const adminRoleIds = adminRoles.map((role) => role.roleId);
+
+            if (adminRoleIds.length > 0) {
+                await trx.delete(roleSiteResources).where(
+                    and(
+                        eq(roleSiteResources.siteResourceId, siteResourceId),
+                        ne(roleSiteResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                    )
+                );
+            } else {
+                await trx
+                    .delete(roleSiteResources)
+                    .where(
+                        eq(roleSiteResources.siteResourceId, siteResourceId)
+                    );
+            }
+
+            if (roleIds.length > 0) {
+                await trx
+                    .insert(roleSiteResources)
+                    .values(
+                        roleIds.map((roleId) => ({ roleId, siteResourceId }))
+                    );
+            }
+
+            const { mergedAllClients } =
+                await rebuildClientAssociationsFromSiteResource(
+                    existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
+                    trx
+                );
+
+            // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
+            const destinationChanged =
+                existingSiteResource.destination !==
+                updatedSiteResource.destination;
+            const aliasChanged =
+                existingSiteResource.alias !== updatedSiteResource.alias;
+
+            if (destinationChanged || aliasChanged) {
+                const [newt] = await trx
+                    .select()
+                    .from(newts)
+                    .where(eq(newts.siteId, site.siteId))
+                    .limit(1);
+
+                if (!newt) {
+                    return next(
+                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
+                    );
+                }
+
+                // Only update targets on newt if destination changed
+                if (destinationChanged) {
+                    const oldTargets = generateSubnetProxyTargets(
+                        existingSiteResource,
+                        mergedAllClients
+                    );
+                    const newTargets = generateSubnetProxyTargets(
+                        updatedSiteResource,
+                        mergedAllClients
+                    );
+
+                    await updateTargets(newt.newtId, {
+                        oldTargets: oldTargets,
+                        newTargets: newTargets
+                    });
+                }
+
+                const olmJobs: Promise<void>[] = [];
+                for (const client of mergedAllClients) {
+                    // we also need to update the remote subnets on the olms for each client that has access to this site
+                    olmJobs.push(
+                        updatePeerData(
+                            client.clientId,
+                            updatedSiteResource.siteId,
+                            destinationChanged ? {
+                                oldRemoteSubnets: generateRemoteSubnets([
+                                    existingSiteResource
+                                ]),
+                                newRemoteSubnets: generateRemoteSubnets([
+                                    updatedSiteResource
+                                ])
+                            } : undefined,
+                            aliasChanged ? {
+                                oldAliases: generateAliasConfig([
+                                    existingSiteResource
+                                ]),
+                                newAliases: generateAliasConfig([
+                                    updatedSiteResource
+                                ])
+                            } : undefined
+                        )
+                    );
+                }
+
+                await Promise.all(olmJobs);
+            }
+
+            logger.info(
+                `Updated site resource ${siteResourceId} for site ${siteId}`
             );
-        }
-
-        // Update the site resource
-        const [updatedSiteResource] = await db
-            .update(siteResources)
-            .set(updateData)
-            .where(
-                and(
-                    eq(siteResources.siteResourceId, siteResourceId),
-                    eq(siteResources.siteId, siteId),
-                    eq(siteResources.orgId, orgId)
-                )
-            )
-            .returning();
-
-        const [newt] = await db
-            .select()
-            .from(newts)
-            .where(eq(newts.siteId, site.siteId))
-            .limit(1);
-
-        if (!newt) {
-            return next(createHttpError(HttpCode.NOT_FOUND, "Newt not found"));
-        }
-
-        await addTargets(
-            newt.newtId,
-            updatedSiteResource.destinationIp,
-            updatedSiteResource.destinationPort,
-            updatedSiteResource.protocol,
-            updatedSiteResource.proxyPort
-        );
-
-        logger.info(
-            `Updated site resource ${siteResourceId} for site ${siteId}`
-        );
+        });
 
         return response(res, {
             data: updatedSiteResource,

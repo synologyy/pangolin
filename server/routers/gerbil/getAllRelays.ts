@@ -7,7 +7,7 @@ import {
     olms,
     Site,
     sites,
-    clientSites,
+    clientSitesAssociationsCache,
     ExitNode
 } from "@server/db";
 import { db } from "@server/db";
@@ -109,8 +109,8 @@ export async function generateRelayMappings(exitNode: ExitNode) {
         // Find all clients associated with this site through clientSites
         const clientSitesRes = await db
             .select()
-            .from(clientSites)
-            .where(eq(clientSites.siteId, site.siteId));
+            .from(clientSitesAssociationsCache)
+            .where(eq(clientSitesAssociationsCache.siteId, site.siteId));
 
         for (const clientSite of clientSitesRes) {
             if (!clientSite.endpoint) {
