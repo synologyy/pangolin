@@ -34,28 +34,18 @@ const createSiteResourceSchema = z
         // destinationPort: z.int().positive().optional(),
         destination: z.string().min(1),
         enabled: z.boolean().default(true),
-        alias: z.string().optional(),
+        alias: z
+            .string()
+            .regex(
+                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name (e.g., example.com)"
+            )
+            .optional(),
         userIds: z.array(z.string()),
         roleIds: z.array(z.int()),
         clientIds: z.array(z.int())
     })
     .strict()
-    // .refine(
-    //     (data) => {
-    //         if (data.mode === "port") {
-    //             return (
-    //                 data.protocol !== undefined &&
-    //                 data.proxyPort !== undefined &&
-    //                 data.destinationPort !== undefined
-    //             );
-    //         }
-    //         return true;
-    //     },
-    //     {
-    //         message:
-    //             "Protocol, proxy port, and destination port are required for port mode"
-    //     }
-    // )
     .refine(
         (data) => {
             if (data.mode === "host") {

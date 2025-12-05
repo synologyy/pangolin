@@ -44,7 +44,13 @@ const updateSiteResourceSchema = z
         // destinationPort: z.int().positive().nullish(),
         destination: z.string().min(1).optional(),
         enabled: z.boolean().optional(),
-        alias: z.string().nullish(),
+        alias: z
+            .string()
+            .regex(
+                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name (e.g., example.internal)"
+            )
+            .nullish(),
         userIds: z.array(z.string()),
         roleIds: z.array(z.int()),
         clientIds: z.array(z.int())
