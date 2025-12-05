@@ -3,6 +3,7 @@
 import {
     Credenza,
     CredenzaBody,
+    CredenzaClose,
     CredenzaContent,
     CredenzaDescription,
     CredenzaFooter,
@@ -871,13 +872,15 @@ export default function CreateInternalResourceDialog({
                     </Form>
                 </CredenzaBody>
                 <CredenzaFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                        disabled={isSubmitting}
-                    >
-                        {t("createInternalResourceDialogCancel")}
-                    </Button>
+                    <CredenzaClose asChild>
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={isSubmitting}
+                        >
+                            {t("createInternalResourceDialogCancel")}
+                        </Button>
+                    </CredenzaClose>
                     <Button
                         type="submit"
                         form="create-internal-resource-form"

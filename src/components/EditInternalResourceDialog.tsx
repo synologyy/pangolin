@@ -743,7 +743,9 @@ export default function EditInternalResourceDialog({
                                                 render={({ field }) => (
                                                     <FormItem className="flex flex-col items-start">
                                                         <FormLabel>
-                                                            {t("machineClients")}
+                                                            {t(
+                                                                "machineClients"
+                                                            )}
                                                         </FormLabel>
                                                         <FormControl>
                                                             <TagInput
@@ -804,13 +806,15 @@ export default function EditInternalResourceDialog({
                     </Form>
                 </CredenzaBody>
                 <CredenzaFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                        disabled={isSubmitting}
-                    >
-                        {t("editInternalResourceDialogCancel")}
-                    </Button>
+                    <CredenzaClose asChild>
+                        <Button
+                            variant="outline"
+                            onClick={() => setOpen(false)}
+                            disabled={isSubmitting}
+                        >
+                            {t("editInternalResourceDialogCancel")}
+                        </Button>
+                    </CredenzaClose>
                     <Button
                         type="submit"
                         form="edit-internal-resource-form"
