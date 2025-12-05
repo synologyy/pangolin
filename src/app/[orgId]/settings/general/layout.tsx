@@ -53,7 +53,7 @@ export default async function GeneralSettingsPage({
             exact: true
         }
     ];
-    if (build === "saas") {
+    if (build !== "oss") {
         navItems.push({
             title: t("authPage"),
             href: `/{orgId}/settings/general/auth-page`
