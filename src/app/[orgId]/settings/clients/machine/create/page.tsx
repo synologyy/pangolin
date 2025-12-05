@@ -140,7 +140,7 @@ export default function Page() {
                     },
                     {
                         title: t("run"),
-                        command: `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                        command: `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint} --org ${orgId}`
                     }
                 ]
             },
@@ -152,7 +152,7 @@ export default function Page() {
                     },
                     {
                         title: t("run"),
-                        command: `olm.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                        command: `olm.exe --id ${id} --secret ${secret} --endpoint ${endpoint} --org ${orgId}`
                     }
                 ]
             }

@@ -124,7 +124,7 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                 }
             },
             {
-                accessorKey: "userId",
+                accessorKey: "userEmail",
                 friendlyName: "User",
                 header: ({ column }) => {
                     return (

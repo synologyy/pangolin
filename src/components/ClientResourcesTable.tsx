@@ -160,8 +160,8 @@ export default function ClientResourcesTable({
         },
         {
             accessorKey: "siteName",
-            friendlyName: t("siteName"),
-            header: () => <span className="p-3">{t("siteName")}</span>,
+            friendlyName: t("site"),
+            header: () => <span className="p-3">{t("site")}</span>,
             cell: ({ row }) => {
                 const resourceRow = row.original;
                 return (
@@ -219,7 +219,7 @@ export default function ClientResourcesTable({
             ),
             cell: ({ row }) => {
                 const resourceRow = row.original;
-                return resourceRow.alias ? (
+                return resourceRow.mode === "host" && resourceRow.alias ? (
                     <CopyToClipboard
                         text={resourceRow.alias}
                         isLink={false}
