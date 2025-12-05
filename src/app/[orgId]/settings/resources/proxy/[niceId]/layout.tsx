@@ -12,7 +12,7 @@ import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
 import { cache } from "react";
-import ResourceInfoBox from "../../../../../components/ResourceInfoBox";
+import ResourceInfoBox from "@app/components/ResourceInfoBox";
 import { GetSiteResponse } from "@server/routers/site";
 import { getTranslations } from 'next-intl/server';
 
@@ -77,22 +77,22 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
     const navItems = [
         {
             title: t('general'),
-            href: `/{orgId}/settings/resources/{niceId}/general`
+            href: `/{orgId}/settings/resources/proxy/{niceId}/general`
         },
         {
             title: t('proxy'),
-            href: `/{orgId}/settings/resources/{niceId}/proxy`
+            href: `/{orgId}/settings/resources/proxy/{niceId}/proxy`
         }
     ];
 
     if (resource.http) {
         navItems.push({
             title: t('authentication'),
-            href: `/{orgId}/settings/resources/{niceId}/authentication`
+            href: `/{orgId}/settings/resources/proxy/{niceId}/authentication`
         });
         navItems.push({
             title: t('rules'),
-            href: `/{orgId}/settings/resources/{niceId}/rules`
+            href: `/{orgId}/settings/resources/proxy/{niceId}/rules`
         });
     }
 

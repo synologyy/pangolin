@@ -5,6 +5,6 @@ export default async function ResourcePage(props: {
 }) {
     const params = await props.params;
     redirect(
-        `/${params.orgId}/settings/resources/${params.niceId}/proxy`
+        `/${params.orgId}/settings/resources/proxy/${params.niceId}/proxy`
     );
 }

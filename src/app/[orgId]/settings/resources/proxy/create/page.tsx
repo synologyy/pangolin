@@ -604,7 +604,7 @@ export default function Page() {
                 }
 
                 if (isHttp) {
-                    router.push(`/${orgId}/settings/resources/${niceId}`);
+                    router.push(`/${orgId}/settings/resources/proxy/${niceId}`);
                 } else {
                     const tcpUdpData = tcpUdpForm.getValues();
                     // Only show config snippets if enableProxy is explicitly true
@@ -613,7 +613,7 @@ export default function Page() {
                     router.refresh();
                     // } else {
                     //     // If enableProxy is false or undefined, go directly to resource page
-                    //     router.push(`/${orgId}/settings/resources/${id}`);
+                    //     router.push(`/${orgId}/settings/resources/proxy/${id}`);
                     // }
                 }
             }
@@ -1898,7 +1898,7 @@ export default function Page() {
                                     type="button"
                                     onClick={() =>
                                         router.push(
-                                            `/${orgId}/settings/resources/${niceId}/proxy`
+                                            `/${orgId}/settings/resources/proxy/${niceId}/proxy`
                                         )
                                     }
                                 >

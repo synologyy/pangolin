@@ -54,7 +54,7 @@ import DomainPicker from "@app/components/DomainPicker";
 import { Globe } from "lucide-react";
 import { build } from "@server/build";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
-import { DomainRow } from "../../../../../../components/DomainsTable";
+import { DomainRow } from "@app/components/DomainsTable";
 import { toASCII, toUnicode } from "punycode";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
@@ -235,7 +235,7 @@ export default function GeneralForm() {
             });
 
             if (data.niceId && data.niceId !== resource?.niceId) {
-                router.replace(`/${updated.orgId}/settings/resources/${data.niceId}/general`);
+                router.replace(`/${updated.orgId}/settings/resources/proxy/${data.niceId}/general`);
             } else {
                 router.refresh();
             }

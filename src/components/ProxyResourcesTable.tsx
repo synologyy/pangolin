@@ -493,7 +493,7 @@ export default function ProxyResourcesTable({
                             <DropdownMenuContent align="end">
                                 <Link
                                     className="block w-full"
-                                    href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
+                                    href={`/${resourceRow.orgId}/settings/resources/proxy/${resourceRow.nice}`}
                                 >
                                     <DropdownMenuItem>
                                         {t("viewSettings")}
@@ -512,7 +512,7 @@ export default function ProxyResourcesTable({
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Link
-                            href={`/${resourceRow.orgId}/settings/resources/${resourceRow.nice}`}
+                            href={`/${resourceRow.orgId}/settings/resources/proxy/${resourceRow.nice}`}
                         >
                             <Button variant={"outline"}>
                                 {t("edit")}
