@@ -55,7 +55,7 @@ const createSiteResourceSchema = z
                     .safeParse(data.destination).success;
 
                 if (isValidIP) {
-                    return true
+                    return true;
                 }
 
                 // Check if it's a valid domain (hostname pattern, TLD not required)
@@ -64,13 +64,13 @@ const createSiteResourceSchema = z
                 const isValidDomain = domainRegex.test(data.destination);
                 const isValidAlias = data.alias && domainRegex.test(data.alias);
 
-                return isValidDomain && isValidAlias;  // require the alias to be set in the case of domain
+                return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
             return true;
         },
         {
             message:
-                "Destination must be a valid IP address or domain name for host mode"
+                "Destination must be a valid IP address or valid domain AND alias is required"
         }
     )
     .refine(
