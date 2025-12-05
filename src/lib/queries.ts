@@ -16,6 +16,7 @@ import { remote } from "./api";
 import { durationToMs } from "./durationToMs";
 import type { QueryRequestAnalyticsResponse } from "@server/routers/auditLogs";
 import type { ListResourceNamesResponse } from "@server/routers/resource";
+import type { ListTargetsResponse } from "@server/routers/target";
 
 export type ProductUpdate = {
     link: string | null;
@@ -226,6 +227,17 @@ export const resourceQueries = {
                 >(`/site-resource/${resourceId}/clients`, { signal });
 
                 return res.data.data.clients;
+            }
+        }),
+    resourceTargets: ({ resourceId }: { resourceId: number }) =>
+        queryOptions({
+            queryKey: ["RESOURCES", resourceId, "TARGETS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListTargetsResponse>
+                >(`/resource/${resourceId}/targets`, { signal });
+
+                return res.data.data.targets;
             }
         }),
     listNamesPerOrg: (orgId: string, api: AxiosInstance) =>
