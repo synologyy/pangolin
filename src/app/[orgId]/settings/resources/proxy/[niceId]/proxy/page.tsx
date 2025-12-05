@@ -1137,7 +1137,7 @@ export default function ReverseProxyTargets(props: {
                             )}
 
                             {resource.http && (
-                                <div className="flex items-center justify-center bg-muted px-2 h-9">
+                                <div className="flex items-center justify-center px-2 h-9">
                                     {"://"}
                                 </div>
                             )}
@@ -1185,7 +1185,7 @@ export default function ReverseProxyTargets(props: {
                                     }
                                 }}
                             />
-                            <div className="flex items-center justify-center bg-muted px-2 h-9">
+                            <div className="flex items-center justify-center px-2 h-9">
                                 {":"}
                             </div>
                             <Input
