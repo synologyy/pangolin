@@ -691,6 +691,7 @@ export default function ReverseProxyTargets(props: {
                 target.port <= 0 ||
                 isNaN(target.port)
         );
+        console.log(targetsWithInvalidFields);
         if (targetsWithInvalidFields.length > 0) {
             toast({
                 variant: "destructive",
@@ -1833,9 +1834,7 @@ export default function ReverseProxyTargets(props: {
                             30
                     }}
                     onChanges={async (config) => {
-                        console.log("here");
                         if (selectedTargetForHealthCheck) {
-                            console.log(config);
                             updateTargetHealthCheck(
                                 selectedTargetForHealthCheck.targetId,
                                 config
