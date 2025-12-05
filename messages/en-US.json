@@ -941,6 +941,8 @@
     "pincodeAuth": "Authenticator Code",
     "pincodeSubmit2": "Submit Code",
     "passwordResetSubmit": "Request Reset",
+    "passwordResetSmtpRequired": "Please contact your administrator",
+    "passwordResetSmtpRequiredDescription": "Password reset is not available because no SMTP server is configured. Please contact your administrator for assistance.",
     "passwordBack": "Back to Password",
     "loginBack": "Go back to log in",
     "signup": "Sign up",
