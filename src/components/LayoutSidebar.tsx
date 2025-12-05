@@ -97,8 +97,9 @@ export function LayoutSidebar({
         }
     }
 
+    const currentOrg = orgs.find((org) => org.orgId === orgId);
     const canShowProductUpdates =
-        user.serverAdmin || orgs[0]?.isOwner || orgs[0]?.isAdmin;
+        user.serverAdmin || Boolean(currentOrg?.isOwner || currentOrg?.isAdmin);
 
     return (
         <div
