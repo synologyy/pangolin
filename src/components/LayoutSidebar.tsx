@@ -1,38 +1,30 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { SidebarNav } from "@app/components/SidebarNav";
-import { OrgSelector } from "@app/components/OrgSelector";
-import { cn } from "@app/lib/cn";
-import { ListUserOrgsResponse } from "@server/routers/org";
-import SupporterStatus from "@app/components/SupporterStatus";
-import {
-    ExternalLink,
-    Server,
-    BookOpenText,
-    Zap,
-    CreditCard,
-    FileText,
-    TicketCheck
-} from "lucide-react";
-import { FaDiscord, FaGithub } from "react-icons/fa";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useUserContext } from "@app/hooks/useUserContext";
-import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useTranslations } from "next-intl";
 import type { SidebarNavSection } from "@app/app/navigation";
+import { OrgSelector } from "@app/components/OrgSelector";
+import { SidebarNav } from "@app/components/SidebarNav";
+import SupporterStatus from "@app/components/SupporterStatus";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger
 } from "@app/components/ui/tooltip";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useUserContext } from "@app/hooks/useUserContext";
+import { cn } from "@app/lib/cn";
 import { build } from "@server/build";
+import { ListUserOrgsResponse } from "@server/routers/org";
+import { ExternalLink, Server } from "lucide-react";
+import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FaGithub } from "react-icons/fa";
 import SidebarLicenseButton from "./SidebarLicenseButton";
 import { SidebarSupportButton } from "./SidebarSupportButton";
-import dynamic from "next/dynamic";
 
 const ProductUpdates = dynamic(() => import("./ProductUpdates"), {
     ssr: false
@@ -48,7 +40,7 @@ interface LayoutSidebarProps {
 
 export function LayoutSidebar({
     orgId,
-    orgs,
+    orgs = [],
     navItems,
     defaultSidebarCollapsed,
     hasCookiePreference
@@ -105,6 +97,9 @@ export function LayoutSidebar({
         }
     }
 
+    const canShowProductUpdates =
+        user.serverAdmin || orgs[0]?.isOwner || orgs[0]?.isAdmin;
+
     return (
         <div
             className={cn(
@@ -159,9 +154,11 @@ export function LayoutSidebar({
             </div>
 
             <div className="p-4 flex flex-col shrink-0">
-                <div className="mb-3">
-                    <ProductUpdates isCollapsed={isSidebarCollapsed} />
-                </div>
+                {canShowProductUpdates && (
+                    <div className="mb-3">
+                        <ProductUpdates isCollapsed={isSidebarCollapsed} />
+                    </div>
+                )}
 
                 {build === "enterprise" && (
                     <div className="mb-3">
