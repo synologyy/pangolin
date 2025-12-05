@@ -51,7 +51,7 @@ function createDb() {
     if (!replicaConnections.length) {
         replicas.push(
             DrizzlePostgres(primaryPool, {
-                logger: process.env.NODE_ENV === "development"
+                logger: process.env.QUERY_LOGGING == "true"
             })
         );
     } else {
@@ -65,7 +65,7 @@ function createDb() {
             });
             replicas.push(
                 DrizzlePostgres(replicaPool, {
-                    logger: process.env.NODE_ENV === "development"
+                    logger: process.env.QUERY_LOGGING == "true"
                 })
             );
         }
