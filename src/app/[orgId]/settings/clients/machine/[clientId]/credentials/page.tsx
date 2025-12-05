@@ -60,7 +60,6 @@ export default function CredentialsPage() {
             await api.post(
                 `/re-key/${client?.clientId}/regenerate-client-secret`,
                 {
-                    olmId: data.olmId,
                     secret: data.olmSecret
                 }
             );
