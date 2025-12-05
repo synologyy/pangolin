@@ -135,6 +135,13 @@ jobs:
                     docker://$DOCKERHUB_IMAGE:$TAG \
                     docker://$GHCR_IMAGE:$TAG
               shell: bash
+  
+            - name: Login to GitHub Container Registry (for cosign)
+              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install cosign
               # cosign is used to sign and verify container images (key and keyless)
