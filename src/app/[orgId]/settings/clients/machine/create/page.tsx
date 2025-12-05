@@ -68,9 +68,11 @@ interface TunnelTypeOption {
     disabled?: boolean;
 }
 
+type CommandItem = string | { title: string; command: string };
+
 type Commands = {
-    unix: Record<string, string[]>;
-    windows: Record<string, string[]>;
+    unix: Record<string, CommandItem[]>;
+    windows: Record<string, CommandItem[]>;
 };
 
 const platforms = ["unix", "windows"] as const;
@@ -132,14 +134,26 @@ export default function Page() {
         const commands = {
             unix: {
                 All: [
-                    `curl -fsSL https://pangolin.net/get-olm.sh | bash`,
-                    `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    {
+                        title: t("install"),
+                        command: `curl -fsSL https://pangolin.net/get-olm.sh | bash`
+                    },
+                    {
+                        title: t("run"),
+                        command: `sudo olm --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    }
                 ]
             },
             windows: {
                 x64: [
-                    `curl -o olm.exe -L "https://github.com/fosrl/olm/releases/download/${version}/olm_windows_installer.exe"`,
-                    `olm.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    {
+                        title: t("install"),
+                        command: `curl -o olm.exe -L "https://github.com/fosrl/olm/releases/download/${version}/olm_windows_installer.exe"`
+                    },
+                    {
+                        title: t("run"),
+                        command: `olm.exe --id ${id} --secret ${secret} --endpoint ${endpoint}`
+                    }
                 ]
             }
         };
@@ -170,8 +184,8 @@ export default function Page() {
         }
     };
 
-    const getCommand = () => {
-        const placeholder = [t("unknownCommand")];
+    const getCommand = (): CommandItem[] => {
+        const placeholder: CommandItem[] = [t("unknownCommand")];
         if (!commands) {
             return placeholder;
         }
@@ -645,13 +659,43 @@ export default function Page() {
                                                 <p className="font-bold mb-3">
                                                     {t("commands")}
                                                 </p>
-                                                <div className="mt-2">
-                                                    <CopyTextBox
-                                                        text={getCommand().join(
-                                                            "\n"
-                                                        )}
-                                                        outline={true}
-                                                    />
+                                                <div className="mt-2 space-y-3">
+                                                    {getCommand().map(
+                                                        (item, index) => {
+                                                            const commandText =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? item
+                                                                    : item.command;
+                                                            const title =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? undefined
+                                                                    : item.title;
+
+                                                            return (
+                                                                <div
+                                                                    key={index}
+                                                                >
+                                                                    {title && (
+                                                                        <p className="text-sm font-medium mb-1.5">
+                                                                            {
+                                                                                title
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                    <CopyTextBox
+                                                                        text={
+                                                                            commandText
+                                                                        }
+                                                                        outline={
+                                                                            true
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

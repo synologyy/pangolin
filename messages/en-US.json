@@ -2237,5 +2237,7 @@
     "deviceLoginUseDifferentAccount": "Not you? Use a different account.",
     "deviceLoginDeviceRequestingAccessToAccount": "A device is requesting access to this account.",
     "noData": "No Data",
-    "machineClients": "Machine Clients"
+    "machineClients": "Machine Clients",
+    "install": "Install",
+    "run": "Run"
 }

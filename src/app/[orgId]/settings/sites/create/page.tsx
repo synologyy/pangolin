@@ -78,13 +78,15 @@ interface RemoteExitNodeOption {
     disabled?: boolean;
 }
 
+type CommandItem = string | { title: string; command: string };
+
 type Commands = {
-    unix: Record<string, string[]>;
-    windows: Record<string, string[]>;
-    docker: Record<string, string[]>;
-    kubernetes: Record<string, string[]>;
-    podman: Record<string, string[]>;
-    nixos: Record<string, string[]>;
+    unix: Record<string, CommandItem[]>;
+    windows: Record<string, CommandItem[]>;
+    docker: Record<string, CommandItem[]>;
+    kubernetes: Record<string, CommandItem[]>;
+    podman: Record<string, CommandItem[]>;
+    nixos: Record<string, CommandItem[]>;
 };
 
 const platforms = [
@@ -248,14 +250,26 @@ PersistentKeepalive = 5`;
         const commands = {
             unix: {
                 All: [
-                    `curl -fsSL https://pangolin.net/get-newt.sh | bash`,
-                    `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    {
+                        title: t("install"),
+                        command: `curl -fsSL https://pangolin.net/get-newt.sh | bash`
+                    },
+                    {
+                        title: t("run"),
+                        command: `newt --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    }
                 ]
             },
             windows: {
                 x64: [
-                    `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`,
-                    `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    {
+                        title: t("install"),
+                        command: `curl -o newt.exe -L "https://github.com/fosrl/newt/releases/download/${version}/newt_windows_amd64.exe"`
+                    },
+                    {
+                        title: t("run"),
+                        command: `newt.exe --id ${id} --secret ${secret} --endpoint ${endpoint}${acceptClientsFlag}`
+                    }
                 ]
             },
             docker: {
@@ -356,8 +370,8 @@ WantedBy=default.target`
         }
     };
 
-    const getCommand = () => {
-        const placeholder = [t("unknownCommand")];
+    const getCommand = (): CommandItem[] => {
+        const placeholder: CommandItem[] = [t("unknownCommand")];
         if (!commands) {
             return placeholder;
         }
@@ -1002,13 +1016,43 @@ WantedBy=default.target`
                                                 <p className="font-bold mb-3">
                                                     {t("commands")}
                                                 </p>
-                                                <div className="mt-2">
-                                                    <CopyTextBox
-                                                        text={getCommand().join(
-                                                            "\n"
-                                                        )}
-                                                        outline={true}
-                                                    />
+                                                <div className="mt-2 space-y-3">
+                                                    {getCommand().map(
+                                                        (item, index) => {
+                                                            const commandText =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? item
+                                                                    : item.command;
+                                                            const title =
+                                                                typeof item ===
+                                                                "string"
+                                                                    ? undefined
+                                                                    : item.title;
+
+                                                            return (
+                                                                <div
+                                                                    key={index}
+                                                                >
+                                                                    {title && (
+                                                                        <p className="text-sm font-medium mb-1.5">
+                                                                            {
+                                                                                title
+                                                                            }
+                                                                        </p>
+                                                                    )}
+                                                                    <CopyTextBox
+                                                                        text={
+                                                                            commandText
+                                                                        }
+                                                                        outline={
+                                                                            true
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
