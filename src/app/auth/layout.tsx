@@ -45,7 +45,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                 <ThemeSwitcher />
             </div>
 
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex md:items-center justify-center">
                 <div className="w-full max-w-md p-3">{children}</div>
             </div>
 
