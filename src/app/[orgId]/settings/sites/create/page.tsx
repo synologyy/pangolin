@@ -708,7 +708,7 @@ WantedBy=default.target`
                                                     </FormItem>
                                                 )}
                                             />
-                                            {form.watch("method") ===
+                                            {/*form.watch("method") ===
                                                 "newt" && (
                                                 <FormField
                                                     control={form.control}
@@ -751,35 +751,30 @@ WantedBy=default.target`
                                                         </FormItem>
                                                     )}
                                                 />
-                                            )}
+                                            )*/}
                                         </form>
                                     </Form>
                                 </SettingsSectionForm>
+
+                                {tunnelTypes.length > 1 && (
+                                    <>
+                                        <div className="mb-2">
+                                            <span>{t("type")}</span>
+                                        </div>
+                                        <StrategySelect
+                                            options={tunnelTypes}
+                                            defaultValue={form.getValues(
+                                                "method"
+                                            )}
+                                            onChange={(value) => {
+                                                form.setValue("method", value);
+                                            }}
+                                            cols={3}
+                                        />
+                                    </>
+                                )}
                             </SettingsSectionBody>
                         </SettingsSection>
-
-                        {tunnelTypes.length > 1 && (
-                            <SettingsSection>
-                                <SettingsSectionHeader>
-                                    <SettingsSectionTitle>
-                                        {t("tunnelType")}
-                                    </SettingsSectionTitle>
-                                    <SettingsSectionDescription>
-                                        {t("siteTunnelDescription")}
-                                    </SettingsSectionDescription>
-                                </SettingsSectionHeader>
-                                <SettingsSectionBody>
-                                    <StrategySelect
-                                        options={tunnelTypes}
-                                        defaultValue={form.getValues("method")}
-                                        onChange={(value) => {
-                                            form.setValue("method", value);
-                                        }}
-                                        cols={3}
-                                    />
-                                </SettingsSectionBody>
-                            </SettingsSection>
-                        )}
 
                         {form.watch("method") === "newt" && (
                             <>

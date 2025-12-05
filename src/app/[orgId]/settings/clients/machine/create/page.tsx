@@ -426,32 +426,32 @@ export default function Page() {
                                                 )}
                                             />
 
-                                            <FormField
-                                                control={form.control}
-                                                name="subnet"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {t("address")}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Input
-                                                                autoComplete="off"
-                                                                placeholder={t(
-                                                                    "subnetPlaceholder"
-                                                                )}
-                                                                {...field}
-                                                            />
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                        <FormDescription>
-                                                            {t(
-                                                                "addressDescription"
-                                                            )}
-                                                        </FormDescription>
-                                                    </FormItem>
-                                                )}
-                                            />
+                                            {/* <FormField */}
+                                            {/*     control={form.control} */}
+                                            {/*     name="subnet" */}
+                                            {/*     render={({ field }) => ( */}
+                                            {/*         <FormItem> */}
+                                            {/*             <FormLabel> */}
+                                            {/*                 {t("address")} */}
+                                            {/*             </FormLabel> */}
+                                            {/*             <FormControl> */}
+                                            {/*                 <Input */}
+                                            {/*                     autoComplete="off" */}
+                                            {/*                     placeholder={t( */}
+                                            {/*                         "subnetPlaceholder" */}
+                                            {/*                     )} */}
+                                            {/*                     {...field} */}
+                                            {/*                 /> */}
+                                            {/*             </FormControl> */}
+                                            {/*             <FormMessage /> */}
+                                            {/*             <FormDescription> */}
+                                            {/*                 {t( */}
+                                            {/*                     "addressDescription" */}
+                                            {/*                 )} */}
+                                            {/*             </FormDescription> */}
+                                            {/*         </FormItem> */}
+                                            {/*     )} */}
+                                            {/* /> */}
 
                                             {/* <FormField */}
                                             {/*     control={form.control} */}
