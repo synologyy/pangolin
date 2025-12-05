@@ -226,7 +226,7 @@ export default function ClientResourcesTable({
                         displayText={resourceRow.alias}
                     />
                 ) : (
-                    <span>"-"</span>
+                    <span>-</span>
                 );
             }
         },

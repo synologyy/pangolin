@@ -125,16 +125,6 @@ export async function pollDeviceWebAuth(
             });
         }
 
-        // Check if IP matches
-        if (!requestIp || !deviceCode.ip || requestIp !== deviceCode.ip) {
-            return next(
-                createHttpError(
-                    HttpCode.FORBIDDEN,
-                    "IP address does not match"
-                )
-            );
-        }
-
         // Check if userId is set (should be set when verified)
         if (!deviceCode.userId) {
             logger.error("Device code is verified but userId is missing", { codeId: deviceCode.codeId });

@@ -348,17 +348,38 @@ export default function EditInternalResourceDialog({
         }
     };
 
-    // Set form values only once after initial load
     const hasInitialized = useRef(false);
+    const previousResourceId = useRef<number | null>(null);
 
     useEffect(() => {
-        if (!loadingRolesUsers && !hasInitialized.current) {
+        if (open) {
+            const resourceChanged = previousResourceId.current !== resource.id;
+            
+            if (resourceChanged) {
+                form.reset({
+                    name: resource.name,
+                    mode: resource.mode || "host",
+                    destination: resource.destination || "",
+                    alias: resource.alias ?? null,
+                    roles: [],
+                    users: [],
+                    clients: []
+                });
+                previousResourceId.current = resource.id;
+            }
+            
+            hasInitialized.current = false;
+        }
+    }, [open, resource.id, resource.name, resource.mode, resource.destination, resource.alias, form]);
+
+    useEffect(() => {
+        if (open && !loadingRolesUsers && !hasInitialized.current) {
             hasInitialized.current = true;
             form.setValue("roles", formRoles);
             form.setValue("users", formUsers);
             form.setValue("clients", existingClients);
         }
-    }, [loadingRolesUsers, formRoles, formUsers, existingClients, form]);
+    }, [open, loadingRolesUsers, formRoles, formUsers, existingClients, form]);
 
     return (
         <Credenza
@@ -378,8 +399,8 @@ export default function EditInternalResourceDialog({
                         users: [],
                         clients: []
                     });
-                    // Reset initialization flag so form can re-initialize with fresh data when reopened
-                    hasInitialized.current = false;
+                    // Reset previous resource ID to ensure clean state on next open
+                    previousResourceId.current = null;
                 }
                 setOpen(open);
             }}
