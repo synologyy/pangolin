@@ -138,6 +138,8 @@ export default function CredentialsPage() {
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
+                        <SecurityFeaturesAlert />
+
                         <InfoSections cols={3}>
                             <InfoSection>
                                 <InfoSectionTitle>
@@ -194,29 +196,31 @@ export default function CredentialsPage() {
                             </Alert>
                         )}
                     </SettingsSectionBody>
-                    <SettingsSectionFooter>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setShouldDisconnect(false);
-                                    setModalOpen(true);
-                                }}
-                                disabled={isSecurityFeatureDisabled()}
-                            >
-                                {t("regenerateCredentialsButton")}
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    setShouldDisconnect(true);
-                                    setModalOpen(true);
-                                }}
-                                disabled={isSecurityFeatureDisabled()}
-                            >
-                                {t("remoteExitNodeRegenerateAndDisconnect")}
-                            </Button>
-                        </div>
-                    </SettingsSectionFooter>
+                    {build !== "oss" && (
+                        <SettingsSectionFooter>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShouldDisconnect(false);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("regenerateCredentialsButton")}
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setShouldDisconnect(true);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("remoteExitNodeRegenerateAndDisconnect")}
+                                </Button>
+                            </div>
+                        </SettingsSectionFooter>
+                    )}
                 </SettingsSection>
             </SettingsContainer>
 
@@ -236,19 +240,27 @@ export default function CredentialsPage() {
                         {shouldDisconnect ? (
                             <>
                                 <p>
-                                    {t("remoteExitNodeRegenerateAndDisconnectConfirmation")}
+                                    {t(
+                                        "remoteExitNodeRegenerateAndDisconnectConfirmation"
+                                    )}
                                 </p>
                                 <p>
-                                    {t("remoteExitNodeRegenerateAndDisconnectWarning")}
+                                    {t(
+                                        "remoteExitNodeRegenerateAndDisconnectWarning"
+                                    )}
                                 </p>
                             </>
                         ) : (
                             <>
                                 <p>
-                                    {t("remoteExitNodeRegenerateCredentialsConfirmation")}
+                                    {t(
+                                        "remoteExitNodeRegenerateCredentialsConfirmation"
+                                    )}
                                 </p>
                                 <p>
-                                    {t("remoteExitNodeRegenerateCredentialsWarning")}
+                                    {t(
+                                        "remoteExitNodeRegenerateCredentialsWarning"
+                                    )}
                                 </p>
                             </>
                         )}

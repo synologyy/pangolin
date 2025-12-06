@@ -44,12 +44,13 @@ export default function CredentialsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [clientDefaults, setClientDefaults] =
         useState<PickClientDefaultsResponse | null>(null);
-    const [currentOlmId, setCurrentOlmId] = useState<string | null>(client.olmId);
+    const [currentOlmId, setCurrentOlmId] = useState<string | null>(
+        client.olmId
+    );
     const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
         null
     );
     const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
-    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -70,8 +71,7 @@ export default function CredentialsPage() {
                 const rekeyRes = await api.post(
                     `/re-key/${client?.clientId}/regenerate-client-secret`,
                     {
-                        secret: data.olmSecret,
-                        disconnect: shouldDisconnect
+                        secret: data.olmSecret
                     }
                 );
 
@@ -125,6 +125,8 @@ export default function CredentialsPage() {
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
+                        <SecurityFeaturesAlert />
+
                         <InfoSections cols={3}>
                             <InfoSection>
                                 <InfoSectionTitle>
@@ -156,7 +158,9 @@ export default function CredentialsPage() {
                                     {displaySecret ? (
                                         <CopyToClipboard text={displaySecret} />
                                     ) : (
-                                        <span>{"••••••••••••••••••••••••••••••••"}</span>
+                                        <span>
+                                            {"••••••••••••••••••••••••••••••••"}
+                                        </span>
                                     )}
                                 </InfoSectionContent>
                             </InfoSection>
@@ -174,29 +178,16 @@ export default function CredentialsPage() {
                             </Alert>
                         )}
                     </SettingsSectionBody>
-                    <SettingsSectionFooter>
-                        <div className="flex gap-2">
+                    {build !== "oss" && (
+                        <SettingsSectionFooter>
                             <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setShouldDisconnect(false);
-                                    setModalOpen(true);
-                                }}
+                                onClick={() => setModalOpen(true)}
                                 disabled={isSecurityFeatureDisabled()}
                             >
                                 {t("regenerateCredentialsButton")}
                             </Button>
-                            <Button
-                                onClick={() => {
-                                    setShouldDisconnect(true);
-                                    setModalOpen(true);
-                                }}
-                                disabled={isSecurityFeatureDisabled()}
-                            >
-                                {t("clientRegenerateAndDisconnect")}
-                            </Button>
-                        </div>
-                    </SettingsSectionFooter>
+                        </SettingsSectionFooter>
+                    )}
                 </SettingsSection>
             </SettingsContainer>
 
@@ -213,32 +204,11 @@ export default function CredentialsPage() {
                 }}
                 dialog={
                     <div className="space-y-2">
-                        {shouldDisconnect ? (
-                            <>
-                                <p>
-                                    {t("clientRegenerateAndDisconnectConfirmation")}
-                                </p>
-                                <p>
-                                    {t("clientRegenerateAndDisconnectWarning")}
-                                </p>
-                            </>
-                        ) : (
-                            <>
-                                <p>
-                                    {t("clientRegenerateCredentialsConfirmation")}
-                                </p>
-                                <p>
-                                    {t("clientRegenerateCredentialsWarning")}
-                                </p>
-                            </>
-                        )}
+                        <p>{t("regenerateCredentialsConfirmation")}</p>
+                        <p>{t("regenerateCredentialsWarning")}</p>
                     </div>
                 }
-                buttonText={
-                    shouldDisconnect
-                        ? t("clientRegenerateAndDisconnect")
-                        : t("regenerateCredentialsButton")
-                }
+                buttonText={t("regenerateCredentialsButton")}
                 onConfirm={handleConfirmRegenerate}
                 string={getConfirmationString()}
                 title={t("regenerateCredentials")}

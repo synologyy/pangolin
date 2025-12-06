@@ -39,14 +39,10 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
             title: t("general"),
             href: `/{orgId}/settings/clients/machine/{clientId}/general`
         },
-        ...(build === "enterprise"
-            ? [
-                  {
-                      title: t("credentials"),
-                      href: `/{orgId}/settings/clients/machine/{clientId}/credentials`
-                  }
-              ]
-            : [])
+        {
+            title: t("credentials"),
+            href: `/{orgId}/settings/clients/machine/{clientId}/credentials`
+        }
     ];
 
     return (

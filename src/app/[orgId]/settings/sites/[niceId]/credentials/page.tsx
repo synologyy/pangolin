@@ -202,6 +202,9 @@ export default function CredentialsPage() {
                                 {t("siteNewtCredentialsDescription")}
                             </SettingsSectionDescription>
                         </SettingsSectionHeader>
+
+                        <SecurityFeaturesAlert />
+
                         <SettingsSectionBody>
                             <InfoSections cols={3}>
                                 <InfoSection>
@@ -260,29 +263,31 @@ export default function CredentialsPage() {
                                 </Alert>
                             )}
                         </SettingsSectionBody>
-                        <SettingsSectionFooter>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setShouldDisconnect(false);
-                                        setModalOpen(true);
-                                    }}
-                                    disabled={isSecurityFeatureDisabled()}
-                                >
-                                    {t("regenerateCredentialsButton")}
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShouldDisconnect(true);
-                                        setModalOpen(true);
-                                    }}
-                                    disabled={isSecurityFeatureDisabled()}
-                                >
-                                    {t("siteRegenerateAndDisconnect")}
-                                </Button>
-                            </div>
-                        </SettingsSectionFooter>
+                        {build !== "oss" && (
+                            <SettingsSectionFooter>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setShouldDisconnect(false);
+                                            setModalOpen(true);
+                                        }}
+                                        disabled={isSecurityFeatureDisabled()}
+                                    >
+                                        {t("regenerateCredentialsButton")}
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            setShouldDisconnect(true);
+                                            setModalOpen(true);
+                                        }}
+                                        disabled={isSecurityFeatureDisabled()}
+                                    >
+                                        {t("siteRegenerateAndDisconnect")}
+                                    </Button>
+                                </div>
+                            </SettingsSectionFooter>
+                        )}
                     </SettingsSection>
                 )}
 
@@ -367,14 +372,16 @@ export default function CredentialsPage() {
                                 </>
                             )}
                         </SettingsSectionBody>
-                        <SettingsSectionFooter>
-                            <Button
-                                onClick={() => setModalOpen(true)}
-                                disabled={isSecurityFeatureDisabled()}
-                            >
-                                {t("siteRegenerateAndDisconnect")}
-                            </Button>
-                        </SettingsSectionFooter>
+                        {build === "enterprise" && (
+                            <SettingsSectionFooter>
+                                <Button
+                                    onClick={() => setModalOpen(true)}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("siteRegenerateAndDisconnect")}
+                                </Button>
+                            </SettingsSectionFooter>
+                        )}
                     </SettingsSection>
                 )}
             </SettingsContainer>

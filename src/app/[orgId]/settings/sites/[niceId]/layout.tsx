@@ -35,25 +35,24 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     const navItems = [
         {
-            title: t('general'),
-            href: `/${params.orgId}/settings/sites/${params.niceId}/general`,
+            title: t("general"),
+            href: `/${params.orgId}/settings/sites/${params.niceId}/general`
         },
-        ...(site.type !== 'local' && build === 'enterprise'
+        ...(site.type !== "local"
             ? [
-                {
-                    title: t('credentials'),
-                    href: `/${params.orgId}/settings/sites/${params.niceId}/credentials`,
-                },
-            ]
-            : []),
+                  {
+                      title: t("credentials"),
+                      href: `/${params.orgId}/settings/sites/${params.niceId}/credentials`
+                  }
+              ]
+            : [])
     ];
-
 
     return (
         <>
             <SettingsSectionTitle
-                title={t('siteSetting', { siteName: site?.name })}
-                description={t('siteSettingDescription')}
+                title={t("siteSetting", { siteName: site?.name })}
+                description={t("siteSettingDescription")}
             />
 
             <SiteProvider site={site}>
