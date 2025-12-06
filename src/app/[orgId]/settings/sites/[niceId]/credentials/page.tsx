@@ -53,13 +53,16 @@ export default function CredentialsPage() {
         useState<PickSiteDefaultsResponse | null>(null);
     const [wgConfig, setWgConfig] = useState("");
     const [publicKey, setPublicKey] = useState("");
-    const [currentNewtId, setCurrentNewtId] = useState<string | null>(site.newtId);
+    const [currentNewtId, setCurrentNewtId] = useState<string | null>(
+        site.newtId
+    );
     const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
         null
     );
     const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
     const [showWireGuardAlert, setShowWireGuardAlert] = useState(false);
     const [loadingDefaults, setLoadingDefaults] = useState(false);
+    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -77,7 +80,9 @@ export default function CredentialsPage() {
             if (site?.type === "wireguard" && !siteDefaults && orgId) {
                 setLoadingDefaults(true);
                 try {
-                    const res = await api.get(`/org/${orgId}/pick-site-defaults`);
+                    const res = await api.get(
+                        `/org/${orgId}/pick-site-defaults`
+                    );
                     if (res && res.status === 200) {
                         setSiteDefaults(res.data.data);
                     }
@@ -92,7 +97,6 @@ export default function CredentialsPage() {
         };
         fetchSiteDefaults();
     }, []);
-
 
     const handleConfirmRegenerate = async () => {
         try {
@@ -140,7 +144,8 @@ export default function CredentialsPage() {
                         `/re-key/${site?.siteId}/regenerate-site-secret`,
                         {
                             type: "newt",
-                            secret: data.newtSecret
+                            secret: data.newtSecret,
+                            disconnect: shouldDisconnect
                         }
                     );
 
@@ -233,7 +238,11 @@ export default function CredentialsPage() {
                                                 text={displaySecret}
                                             />
                                         ) : (
-                                            <span>{"••••••••••••••••••••••••••••••••"}</span>
+                                            <span>
+                                                {
+                                                    "••••••••••••••••••••••••••••••••"
+                                                }
+                                            </span>
                                         )}
                                     </InfoSectionContent>
                                 </InfoSection>
@@ -252,12 +261,27 @@ export default function CredentialsPage() {
                             )}
                         </SettingsSectionBody>
                         <SettingsSectionFooter>
-                            <Button
-                                onClick={() => setModalOpen(true)}
-                                disabled={isSecurityFeatureDisabled()}
-                            >
-                                {t("regenerateCredentialsButton")}
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShouldDisconnect(false);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("regenerateCredentialsButton")}
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setShouldDisconnect(true);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("siteRegenerateAndDisconnect")}
+                                </Button>
+                            </div>
                         </SettingsSectionFooter>
                     </SettingsSection>
                 )}
@@ -280,7 +304,10 @@ export default function CredentialsPage() {
                                 <>
                                     {wgConfig ? (
                                         <div className="flex items-center gap-4">
-                                            <CopyTextBox text={wgConfig} outline={true} />
+                                            <CopyTextBox
+                                                text={wgConfig}
+                                                outline={true}
+                                            />
                                             <div className="relative w-fit border rounded-md">
                                                 <div className="bg-white p-6 rounded-md">
                                                     <QRCodeCanvas
@@ -293,24 +320,47 @@ export default function CredentialsPage() {
                                         </div>
                                     ) : (
                                         <CopyTextBox
-                                            text={generateObfuscatedWireGuardConfig({
-                                                subnet: siteDefaults?.subnet || site?.subnet || null,
-                                                address: siteDefaults?.address || site?.address || null,
-                                                endpoint: siteDefaults?.endpoint || site?.endpoint || null,
-                                                listenPort: siteDefaults?.listenPort || site?.listenPort || null,
-                                                publicKey: siteDefaults?.publicKey || site?.publicKey || site?.pubKey || null
-                                            })}
+                                            text={generateObfuscatedWireGuardConfig(
+                                                {
+                                                    subnet:
+                                                        siteDefaults?.subnet ||
+                                                        site?.subnet ||
+                                                        null,
+                                                    address:
+                                                        siteDefaults?.address ||
+                                                        site?.address ||
+                                                        null,
+                                                    endpoint:
+                                                        siteDefaults?.endpoint ||
+                                                        site?.endpoint ||
+                                                        null,
+                                                    listenPort:
+                                                        siteDefaults?.listenPort ||
+                                                        site?.listenPort ||
+                                                        null,
+                                                    publicKey:
+                                                        siteDefaults?.publicKey ||
+                                                        site?.publicKey ||
+                                                        site?.pubKey ||
+                                                        null
+                                                }
+                                            )}
                                             outline={true}
                                         />
                                     )}
                                     {showWireGuardAlert && wgConfig && (
-                                        <Alert variant="neutral" className="mt-4">
+                                        <Alert
+                                            variant="neutral"
+                                            className="mt-4"
+                                        >
                                             <InfoIcon className="h-4 w-4" />
                                             <AlertTitle className="font-semibold">
                                                 {t("siteCredentialsSave")}
                                             </AlertTitle>
                                             <AlertDescription>
-                                                {t("siteCredentialsSaveDescription")}
+                                                {t(
+                                                    "siteCredentialsSaveDescription"
+                                                )}
                                             </AlertDescription>
                                         </Alert>
                                     )}
@@ -322,7 +372,7 @@ export default function CredentialsPage() {
                                 onClick={() => setModalOpen(true)}
                                 disabled={isSecurityFeatureDisabled()}
                             >
-                                {t("regenerateCredentialsButton")}
+                                {t("siteRegenerateAndDisconnect")}
                             </Button>
                         </SettingsSectionFooter>
                     </SettingsSection>
@@ -343,11 +393,38 @@ export default function CredentialsPage() {
                     }}
                     dialog={
                         <div className="space-y-2">
-                            <p>{t("regenerateCredentialsConfirmation")}</p>
-                            <p>{t("regenerateCredentialsWarning")}</p>
+                            {shouldDisconnect ? (
+                                <>
+                                    <p>
+                                        {t(
+                                            "siteRegenerateAndDisconnectConfirmation"
+                                        )}
+                                    </p>
+                                    <p>
+                                        {t(
+                                            "siteRegenerateAndDisconnectWarning"
+                                        )}
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <p>
+                                        {t(
+                                            "siteRegenerateCredentialsConfirmation"
+                                        )}
+                                    </p>
+                                    <p>
+                                        {t("siteRegenerateCredentialsWarning")}
+                                    </p>
+                                </>
+                            )}
                         </div>
                     }
-                    buttonText={t("regenerateCredentialsButton")}
+                    buttonText={
+                        shouldDisconnect
+                            ? t("siteRegenerateAndDisconnect")
+                            : t("regenerateCredentialsButton")
+                    }
                     onConfirm={handleConfirmRegenerate}
                     string={getConfirmationString()}
                     title={t("regenerateCredentials")}

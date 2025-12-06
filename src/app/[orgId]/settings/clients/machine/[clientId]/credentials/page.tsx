@@ -49,6 +49,7 @@ export default function CredentialsPage() {
         null
     );
     const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
+    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -69,7 +70,8 @@ export default function CredentialsPage() {
                 const rekeyRes = await api.post(
                     `/re-key/${client?.clientId}/regenerate-client-secret`,
                     {
-                        secret: data.olmSecret
+                        secret: data.olmSecret,
+                        disconnect: shouldDisconnect
                     }
                 );
 
@@ -173,12 +175,27 @@ export default function CredentialsPage() {
                         )}
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
-                        <Button
-                            onClick={() => setModalOpen(true)}
-                            disabled={isSecurityFeatureDisabled()}
-                        >
-                            {t("regenerateCredentialsButton")}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShouldDisconnect(false);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("regenerateCredentialsButton")}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShouldDisconnect(true);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("clientRegenerateAndDisconnect")}
+                            </Button>
+                        </div>
                     </SettingsSectionFooter>
                 </SettingsSection>
             </SettingsContainer>
@@ -196,11 +213,32 @@ export default function CredentialsPage() {
                 }}
                 dialog={
                     <div className="space-y-2">
-                        <p>{t("regenerateCredentialsConfirmation")}</p>
-                        <p>{t("regenerateCredentialsWarning")}</p>
+                        {shouldDisconnect ? (
+                            <>
+                                <p>
+                                    {t("clientRegenerateAndDisconnectConfirmation")}
+                                </p>
+                                <p>
+                                    {t("clientRegenerateAndDisconnectWarning")}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p>
+                                    {t("clientRegenerateCredentialsConfirmation")}
+                                </p>
+                                <p>
+                                    {t("clientRegenerateCredentialsWarning")}
+                                </p>
+                            </>
+                        )}
                     </div>
                 }
-                buttonText={t("regenerateCredentialsButton")}
+                buttonText={
+                    shouldDisconnect
+                        ? t("clientRegenerateAndDisconnect")
+                        : t("regenerateCredentialsButton")
+                }
                 onConfirm={handleConfirmRegenerate}
                 string={getConfirmationString()}
                 title={t("regenerateCredentials")}

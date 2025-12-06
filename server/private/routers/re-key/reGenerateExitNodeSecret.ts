@@ -23,7 +23,7 @@ import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
-import { disconnectClient } from "#private/routers/ws";
+import { disconnectClient, sendToClient } from "#private/routers/ws";
 
 export const paramsSchema = z.object({
     orgId: z.string()
@@ -31,7 +31,8 @@ export const paramsSchema = z.object({
 
 const bodySchema = z.strictObject({
     remoteExitNodeId: z.string().length(15),
-    secret: z.string().length(48)
+    secret: z.string().length(48),
+    disconnect: z.boolean().optional().default(true)
 });
 
 export async function reGenerateExitNodeSecret(
@@ -60,7 +61,7 @@ export async function reGenerateExitNodeSecret(
             );
         }
 
-        const { remoteExitNodeId, secret } = parsedBody.data;
+        const { remoteExitNodeId, secret, disconnect } = parsedBody.data;
 
         const [existingRemoteExitNode] = await db
             .select()
@@ -83,11 +84,31 @@ export async function reGenerateExitNodeSecret(
             .set({ secretHash })
             .where(eq(remoteExitNodes.remoteExitNodeId, remoteExitNodeId));
 
-        disconnectClient(existingRemoteExitNode.remoteExitNodeId).catch(
-            (error) => {
-                logger.error("Failed to disconnect newt after re-key:", error);
-            }
-        );
+        // Only disconnect if explicitly requested
+        if (disconnect) {
+            const payload = {
+                type: `remoteExitNode/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(existingRemoteExitNode.remoteExitNodeId, payload).catch(
+                (error) => {
+                    logger.error(
+                        "Failed to send termination message to remote exit node:",
+                        error
+                    );
+                }
+            );
+
+            disconnectClient(existingRemoteExitNode.remoteExitNodeId).catch(
+                (error) => {
+                    logger.error(
+                        "Failed to disconnect remote exit node after re-key:",
+                        error
+                    );
+                }
+            );
+        }
 
         return response(res, {
             data: null,

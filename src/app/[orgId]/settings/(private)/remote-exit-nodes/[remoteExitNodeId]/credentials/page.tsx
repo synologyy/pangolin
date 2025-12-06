@@ -55,6 +55,7 @@ export default function CredentialsPage() {
         null
     );
     const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
+    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -79,7 +80,8 @@ export default function CredentialsPage() {
                 AxiosResponse<QuickStartRemoteExitNodeResponse>
             >(`/re-key/${orgId}/regenerate-remote-exit-node-secret`, {
                 remoteExitNodeId: remoteExitNode.remoteExitNodeId,
-                secret: data.secret
+                secret: data.secret,
+                disconnect: shouldDisconnect
             });
 
             if (rekeyRes && rekeyRes.status === 200) {
@@ -193,12 +195,27 @@ export default function CredentialsPage() {
                         )}
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
-                        <Button
-                            onClick={() => setModalOpen(true)}
-                            disabled={isSecurityFeatureDisabled()}
-                        >
-                            {t("regenerateCredentialsButton")}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShouldDisconnect(false);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("regenerateCredentialsButton")}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShouldDisconnect(true);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("remoteExitNodeRegenerateAndDisconnect")}
+                            </Button>
+                        </div>
                     </SettingsSectionFooter>
                 </SettingsSection>
             </SettingsContainer>
@@ -216,11 +233,32 @@ export default function CredentialsPage() {
                 }}
                 dialog={
                     <div className="space-y-2">
-                        <p>{t("regenerateCredentialsConfirmation")}</p>
-                        <p>{t("regenerateCredentialsWarning")}</p>
+                        {shouldDisconnect ? (
+                            <>
+                                <p>
+                                    {t("remoteExitNodeRegenerateAndDisconnectConfirmation")}
+                                </p>
+                                <p>
+                                    {t("remoteExitNodeRegenerateAndDisconnectWarning")}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p>
+                                    {t("remoteExitNodeRegenerateCredentialsConfirmation")}
+                                </p>
+                                <p>
+                                    {t("remoteExitNodeRegenerateCredentialsWarning")}
+                                </p>
+                            </>
+                        )}
                     </div>
                 }
-                buttonText={t("regenerateCredentialsButton")}
+                buttonText={
+                    shouldDisconnect
+                        ? t("remoteExitNodeRegenerateAndDisconnect")
+                        : t("regenerateCredentialsButton")
+                }
                 onConfirm={handleConfirmRegenerate}
                 string={getConfirmationString()}
                 title={t("regenerateCredentials")}

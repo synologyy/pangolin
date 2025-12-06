@@ -31,7 +31,8 @@ const reGenerateSecretParamsSchema = z.strictObject({
 
 const reGenerateSecretBodySchema = z.strictObject({
     // olmId: z.string().min(1).optional(),
-    secret: z.string().min(1)
+    secret: z.string().min(1),
+    disconnect: z.boolean().optional().default(true)
 });
 
 export type ReGenerateSecretBody = z.infer<typeof reGenerateSecretBodySchema>;
@@ -52,7 +53,7 @@ export async function reGenerateClientSecret(
             );
         }
 
-        const { secret } = parsedBody.data;
+        const { secret, disconnect } = parsedBody.data;
 
         const parsedParams = reGenerateSecretParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -114,18 +115,21 @@ export async function reGenerateClientSecret(
             })
             .where(eq(olms.olmId, existingOlms[0].olmId));
 
-        const payload = {
-            type: `olm/terminate`,
-            data: {}
-        };
-        // Don't await this to prevent blocking the response
-        sendToClient(existingOlms[0].olmId, payload).catch((error) => {
-            logger.error("Failed to send termination message to olm:", error);
-        });
+        // Only disconnect if explicitly requested
+        if (disconnect) {
+            const payload = {
+                type: `olm/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(existingOlms[0].olmId, payload).catch((error) => {
+                logger.error("Failed to send termination message to olm:", error);
+            });
 
-        disconnectClient(existingOlms[0].olmId).catch((error) => {
-            logger.error("Failed to disconnect olm after re-key:", error);
-        });
+            disconnectClient(existingOlms[0].olmId).catch((error) => {
+                logger.error("Failed to disconnect olm after re-key:", error);
+            });
+        }
 
         return response(res, {
             data: {

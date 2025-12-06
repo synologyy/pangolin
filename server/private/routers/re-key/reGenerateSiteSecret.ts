@@ -33,7 +33,8 @@ const updateSiteParamsSchema = z.strictObject({
 const updateSiteBodySchema = z.strictObject({
     type: z.enum(["newt", "wireguard"]),
     secret: z.string().min(1).max(255).optional(),
-    pubKey: z.string().optional()
+    pubKey: z.string().optional(),
+    disconnect: z.boolean().optional().default(true)
 });
 
 export async function reGenerateSiteSecret(
@@ -63,7 +64,7 @@ export async function reGenerateSiteSecret(
         }
 
         const { siteId } = parsedParams.data;
-        const { type, pubKey, secret } = parsedBody.data;
+        const { type, pubKey, secret, disconnect } = parsedBody.data;
 
         let existingNewt: Newt | null = null;
         if (type === "newt") {
@@ -112,21 +113,24 @@ export async function reGenerateSiteSecret(
                 })
                 .where(eq(newts.newtId, existingNewts[0].newtId));
 
-            const payload = {
-                type: `newt/wg/terminate`,
-                data: {}
-            };
-            // Don't await this to prevent blocking the response
-            sendToClient(existingNewts[0].newtId, payload).catch((error) => {
-                logger.error(
-                    "Failed to send termination message to newt:",
-                    error
-                );
-            });
+            // Only disconnect if explicitly requested
+            if (disconnect) {
+                const payload = {
+                    type: `newt/wg/terminate`,
+                    data: {}
+                };
+                // Don't await this to prevent blocking the response
+                sendToClient(existingNewts[0].newtId, payload).catch((error) => {
+                    logger.error(
+                        "Failed to send termination message to newt:",
+                        error
+                    );
+                });
 
-            disconnectClient(existingNewts[0].newtId).catch((error) => {
-                logger.error("Failed to disconnect newt after re-key:", error);
-            });
+                disconnectClient(existingNewts[0].newtId).catch((error) => {
+                    logger.error("Failed to disconnect newt after re-key:", error);
+                });
+            }
 
             logger.info(`Regenerated Newt credentials for site ${siteId}`);
         } else if (type === "wireguard") {
