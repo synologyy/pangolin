@@ -537,7 +537,7 @@ export async function updateClientSiteDestinations(
         }
 
         if (!site.clientSitesAssociationsCache.endpoint) {
-            logger.warn(`Site ${site.sites.siteId} has no endpoint, skipping`); // if this is a new association the endpoint is not set yet // TODO: FIX THIS
+            // if this is a new association the endpoint is not set yet
             continue;
         }
 

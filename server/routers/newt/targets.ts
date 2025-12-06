@@ -54,6 +54,15 @@ export async function addTargets(
             });
         }
 
+        // try to parse the hcStatus into a int and if not possible set to undefined
+        let hcStatus: number | undefined = undefined;
+        if (hc.hcStatus) {
+            const parsedStatus = parseInt(hc.hcStatus.toString());
+            if (!isNaN(parsedStatus)) {
+                hcStatus = parsedStatus;
+            }
+        }
+
         return {
             id: target.targetId,
             hcEnabled: hc.hcEnabled,
@@ -67,6 +76,7 @@ export async function addTargets(
             hcTimeout: hc.hcTimeout, // in seconds
             hcHeaders: hcHeadersSend,
             hcMethod: hc.hcMethod,
+            hcStatus: hcStatus,
             hcTlsServerName: hc.hcTlsServerName,
         };
     });
