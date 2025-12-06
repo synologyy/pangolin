@@ -112,7 +112,7 @@ export async function listUserOrgs(
                 userOrgs,
                 and(eq(userOrgs.orgId, orgs.orgId), eq(userOrgs.userId, userId))
             )
-            .leftJoin(roles, eq(userOrgs.orgId, roles.orgId))
+            .leftJoin(roles, eq(userOrgs.roleId, roles.roleId))
             .limit(limit)
             .offset(offset);
 
