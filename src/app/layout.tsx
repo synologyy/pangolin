@@ -25,19 +25,7 @@ import { TailwindIndicator } from "@app/components/TailwindIndicator";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
-    description: "",
-
-    ...(process.env.BRANDING_FAVICON_PATH
-        ? {
-              icons: {
-                  icon: [
-                      {
-                          url: process.env.BRANDING_FAVICON_PATH as string
-                      }
-                  ]
-              }
-          }
-        : {})
+    description: ""
 };
 
 export const dynamic = "force-dynamic";

@@ -83,9 +83,6 @@ export class PrivateConfig {
             ? this.rawPrivateConfig.branding?.logo?.navbar?.height.toString()
             : undefined;
 
-        process.env.BRANDING_FAVICON_PATH =
-            this.rawPrivateConfig.branding?.favicon_path;
-
         process.env.BRANDING_APP_NAME =
             this.rawPrivateConfig.branding?.app_name || "Pangolin";
 
@@ -95,13 +92,9 @@ export class PrivateConfig {
             );
         }
 
-        process.env.LOGIN_PAGE_TITLE_TEXT =
-            this.rawPrivateConfig.branding?.login_page?.title_text || "";
         process.env.LOGIN_PAGE_SUBTITLE_TEXT =
             this.rawPrivateConfig.branding?.login_page?.subtitle_text || "";
 
-        process.env.SIGNUP_PAGE_TITLE_TEXT =
-            this.rawPrivateConfig.branding?.signup_page?.title_text || "";
         process.env.SIGNUP_PAGE_SUBTITLE_TEXT =
             this.rawPrivateConfig.branding?.signup_page?.subtitle_text || "";
 

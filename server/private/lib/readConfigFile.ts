@@ -115,7 +115,6 @@ export const privateConfigSchema = z.object({
                         .optional()
                 })
                 .optional(),
-            favicon_path: z.string().optional(),
             footer: z
                 .array(
                     z.object({
@@ -127,14 +126,12 @@ export const privateConfigSchema = z.object({
             hide_auth_layout_footer: z.boolean().optional().default(false),
             login_page: z
                 .object({
-                    subtitle_text: z.string().optional(),
-                    title_text: z.string().optional()
+                    subtitle_text: z.string().optional()
                 })
                 .optional(),
             signup_page: z
                 .object({
-                    subtitle_text: z.string().optional(),
-                    title_text: z.string().optional()
+                    subtitle_text: z.string().optional()
                 })
                 .optional(),
             resource_auth_page: z
