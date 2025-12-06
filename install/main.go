@@ -242,7 +242,7 @@ func main() {
 		}
 	}
 
-	if !alreadyInstalled {
+	if !alreadyInstalled || config.DoCrowdsecInstall {
 		// Setup Token Section
 		fmt.Println("\n=== Setup Token ===")
 
