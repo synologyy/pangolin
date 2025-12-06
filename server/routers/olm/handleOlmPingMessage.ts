@@ -75,7 +75,7 @@ export const startOlmOfflineChecker = (): void => {
         }
     }, OFFLINE_CHECK_INTERVAL);
 
-    logger.info("Started offline checker interval");
+    logger.debug("Started offline checker interval");
 };
 
 /**
