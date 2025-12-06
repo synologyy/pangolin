@@ -221,7 +221,8 @@ export async function updateProxyResources(
                         domainId: domain ? domain.domainId : null,
                         enabled: resourceEnabled,
                         sso: resourceData.auth?.["sso-enabled"] || false,
-                        skipToIdpId: resourceData.auth?.["auto-login-idp"] || null,
+                        skipToIdpId:
+                            resourceData.auth?.["auto-login-idp"] || null,
                         ssl: resourceSsl,
                         setHostHeader: resourceData["host-header"] || null,
                         tlsServerName: resourceData["tls-server-name"] || null,
@@ -546,7 +547,8 @@ export async function updateProxyResources(
                     if (
                         existingRule.action !== getRuleAction(rule.action) ||
                         existingRule.match !== rule.match.toUpperCase() ||
-                        existingRule.value !== getRuleValue(rule.match.toUpperCase(), rule.value)
+                        existingRule.value !==
+                            getRuleValue(rule.match.toUpperCase(), rule.value)
                     ) {
                         validateRule(rule);
                         await trx
@@ -554,7 +556,10 @@ export async function updateProxyResources(
                             .set({
                                 action: getRuleAction(rule.action),
                                 match: rule.match.toUpperCase(),
-                                value: getRuleValue(rule.match.toUpperCase(), rule.value),
+                                value: getRuleValue(
+                                    rule.match.toUpperCase(),
+                                    rule.value
+                                )
                             })
                             .where(
                                 eq(resourceRules.ruleId, existingRule.ruleId)
@@ -566,7 +571,10 @@ export async function updateProxyResources(
                         resourceId: existingResource.resourceId,
                         action: getRuleAction(rule.action),
                         match: rule.match.toUpperCase(),
-                        value: getRuleValue(rule.match.toUpperCase(), rule.value),
+                        value: getRuleValue(
+                            rule.match.toUpperCase(),
+                            rule.value
+                        ),
                         priority: index + 1 // start priorities at 1
                     });
                 }
@@ -852,16 +860,16 @@ async function syncUserResources(
         .from(userResources)
         .where(eq(userResources.resourceId, resourceId));
 
-    for (const email of ssoUsers) {
+    for (const username of ssoUsers) {
         const [user] = await trx
             .select()
             .from(users)
             .innerJoin(userOrgs, eq(users.userId, userOrgs.userId))
-            .where(and(eq(users.email, email), eq(userOrgs.orgId, orgId)))
+            .where(and(eq(users.username, username), eq(userOrgs.orgId, orgId)))
             .limit(1);
 
         if (!user) {
-            throw new Error(`User not found: ${email} in org ${orgId}`);
+            throw new Error(`User not found: ${username} in org ${orgId}`);
         }
 
         const existingUserResource = existingUserResources.find(
@@ -889,7 +897,11 @@ async function syncUserResources(
             )
             .limit(1);
 
-        if (user && user.user.email && !ssoUsers.includes(user.user.email)) {
+        if (
+            user &&
+            user.user.username &&
+            !ssoUsers.includes(user.user.username)
+        ) {
             await trx
                 .delete(userResources)
                 .where(

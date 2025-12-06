@@ -16,7 +16,11 @@ export const TargetHealthCheckSchema = z.object({
     "unhealthy-interval": z.int().default(30),
     unhealthyInterval: z.int().optional(), // deprecated alias
     timeout: z.int().default(5),
-    headers: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional().default(null),
+    headers: z
+        .array(z.object({ name: z.string(), value: z.string() }))
+        .nullable()
+        .optional()
+        .default(null),
     "follow-redirects": z.boolean().default(true),
     followRedirects: z.boolean().optional(), // deprecated alias
     method: z.string().default("GET"),
@@ -36,7 +40,10 @@ export const TargetSchema = z.object({
     healthcheck: TargetHealthCheckSchema.optional(),
     rewritePath: z.string().optional(), // deprecated alias
     "rewrite-path": z.string().optional(),
-    "rewrite-match": z.enum(["exact", "prefix", "regex", "stripPrefix"]).optional().nullable(),
+    "rewrite-match": z
+        .enum(["exact", "prefix", "regex", "stripPrefix"])
+        .optional()
+        .nullable(),
     priority: z.int().min(1).max(1000).optional().default(100)
 });
 export type TargetData = z.infer<typeof TargetSchema>;
@@ -45,10 +52,12 @@ export const AuthSchema = z.object({
     // pincode has to have 6 digits
     pincode: z.number().min(100000).max(999999).optional(),
     password: z.string().min(1).optional(),
-    "basic-auth": z.object({
-        user: z.string().min(1),
-        password: z.string().min(1)
-    }).optional(),
+    "basic-auth": z
+        .object({
+            user: z.string().min(1),
+            password: z.string().min(1)
+        })
+        .optional(),
     "sso-enabled": z.boolean().optional().default(false),
     "sso-roles": z
         .array(z.string())
@@ -59,7 +68,7 @@ export const AuthSchema = z.object({
         }),
     "sso-users": z.array(z.email()).optional().default([]),
     "whitelist-users": z.array(z.email()).optional().default([]),
-    "auto-login-idp": z.int().positive().optional(),
+    "auto-login-idp": z.int().positive().optional()
 });
 
 export const RuleSchema = z.object({
@@ -122,7 +131,6 @@ export const ResourceSchema = z
         {
             path: ["targets"],
             error: "When protocol is 'http', all targets must have a 'method' field"
-
         }
     )
     .refine(
@@ -204,22 +212,121 @@ export function isTargetsOnlyResource(resource: any): boolean {
     return Object.keys(resource).length === 1 && resource.targets;
 }
 
-export const ClientResourceSchema = z.object({
-    name: z.string().min(2).max(100),
-    site: z.string().min(2).max(100).optional(),
-    protocol: z.enum(["tcp", "udp"]),
-    "proxy-port": z.number().min(1).max(65535),
-    "hostname": z.string().min(1).max(255),
-    "internal-port": z.number().min(1).max(65535),
-    enabled: z.boolean().optional().default(true)
-});
+export const ClientResourceSchema = z
+    .object({
+        name: z.string().min(1).max(255),
+        mode: z.enum(["host", "cidr"]),
+        site: z.string(),
+        // protocol: z.enum(["tcp", "udp"]).optional(),
+        // proxyPort: z.int().positive().optional(),
+        // destinationPort: z.int().positive().optional(),
+        destination: z.string().min(1),
+        // enabled: z.boolean().default(true),
+        alias: z
+            .string()
+            .regex(
+                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name (e.g., example.com)"
+            )
+            .optional(),
+        roles: z
+            .array(z.string())
+            .optional()
+            .default([])
+            .refine((roles) => !roles.includes("Admin"), {
+                error: "Admin role cannot be included in roles"
+            }),
+        users: z.array(z.email()).optional().default([]),
+        machines: z.array(z.string()).optional().default([])
+    })
+    .refine(
+        (data) => {
+            if (data.mode === "host") {
+                // Check if it's a valid IP address using zod (v4 or v6)
+                const isValidIP = z
+                    .union([z.ipv4(), z.ipv6()])
+                    .safeParse(data.destination).success;
+
+                if (isValidIP) {
+                    return true;
+                }
+
+                // Check if it's a valid domain (hostname pattern, TLD not required)
+                const domainRegex =
+                    /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+                const isValidDomain = domainRegex.test(data.destination);
+                const isValidAlias = data.alias && domainRegex.test(data.alias);
+
+                return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
+            }
+            return true;
+        },
+        {
+            message:
+                "Destination must be a valid IP address or valid domain AND alias is required"
+        }
+    )
+    .refine(
+        (data) => {
+            if (data.mode === "cidr") {
+                // Check if it's a valid CIDR (v4 or v6)
+                const isValidCIDR = z
+                    .union([z.cidrv4(), z.cidrv6()])
+                    .safeParse(data.destination).success;
+                return isValidCIDR;
+            }
+            return true;
+        },
+        {
+            message: "Destination must be a valid CIDR notation for cidr mode"
+        }
+    );
 
 // Schema for the entire configuration object
 export const ConfigSchema = z
     .object({
-        "proxy-resources": z.record(z.string(), ResourceSchema).optional().prefault({}),
-        "client-resources": z.record(z.string(), ClientResourceSchema).optional().prefault({}),
+        "proxy-resources": z
+            .record(z.string(), ResourceSchema)
+            .optional()
+            .prefault({}),
+        "public-resources": z
+            .record(z.string(), ResourceSchema)
+            .optional()
+            .prefault({}),
+        "client-resources": z
+            .record(z.string(), ClientResourceSchema)
+            .optional()
+            .prefault({}),
+        "private-resources": z
+            .record(z.string(), ClientResourceSchema)
+            .optional()
+            .prefault({}),
         sites: z.record(z.string(), SiteSchema).optional().prefault({})
+    })
+    .transform((data) => {
+        // Merge public-resources into proxy-resources
+        if (data["public-resources"]) {
+            data["proxy-resources"] = {
+                ...data["proxy-resources"],
+                ...data["public-resources"]
+            };
+            delete (data as any)["public-resources"];
+        }
+        
+        // Merge private-resources into client-resources
+        if (data["private-resources"]) {
+            data["client-resources"] = {
+                ...data["client-resources"],
+                ...data["private-resources"]
+            };
+            delete (data as any)["private-resources"];
+        }
+        
+        return data as {
+            "proxy-resources": Record<string, z.infer<typeof ResourceSchema>>;
+            "client-resources": Record<string, z.infer<typeof ClientResourceSchema>>;
+            sites: Record<string, z.infer<typeof SiteSchema>>;
+        };
     })
     .refine(
         // Enforce the full-domain uniqueness across resources in the same stack
@@ -278,12 +385,10 @@ export const ConfigSchema = z
 
             const duplicates = Array.from(protocolPortMap.entries())
                 .filter(([_, resourceKeys]) => resourceKeys.length > 1)
-                .map(
-                    ([protocolPort, resourceKeys]) => {
-                        const [protocol, port] = protocolPort.split(':');
-                        return `${protocol.toUpperCase()} port ${port} used by proxy-resources: ${resourceKeys.join(", ")}`;
-                    }
-                )
+                .map(([protocolPort, resourceKeys]) => {
+                    const [protocol, port] = protocolPort.split(":");
+                    return `${protocol.toUpperCase()} port ${port} used by proxy-resources: ${resourceKeys.join(", ")}`;
+                })
                 .join("; ");
 
             if (duplicates.length !== 0) {
@@ -295,35 +400,35 @@ export const ConfigSchema = z
         }
     )
     .refine(
-        // Enforce proxy-port uniqueness within client-resources
+        // Enforce alias uniqueness within client-resources
         (config) => {
             // Extract duplicates for error message
-            const proxyPortMap = new Map<number, string[]>();
+            const aliasMap = new Map<string, string[]>();
 
             Object.entries(config["client-resources"]).forEach(
                 ([resourceKey, resource]) => {
-                    const proxyPort = resource["proxy-port"];
-                    if (proxyPort !== undefined) {
-                        if (!proxyPortMap.has(proxyPort)) {
-                            proxyPortMap.set(proxyPort, []);
+                    const alias = resource.alias;
+                    if (alias !== undefined) {
+                        if (!aliasMap.has(alias)) {
+                            aliasMap.set(alias, []);
                         }
-                        proxyPortMap.get(proxyPort)!.push(resourceKey);
+                        aliasMap.get(alias)!.push(resourceKey);
                     }
                 }
             );
 
-            const duplicates = Array.from(proxyPortMap.entries())
+            const duplicates = Array.from(aliasMap.entries())
                 .filter(([_, resourceKeys]) => resourceKeys.length > 1)
                 .map(
-                    ([proxyPort, resourceKeys]) =>
-                        `port ${proxyPort} used by client-resources: ${resourceKeys.join(", ")}`
+                    ([alias, resourceKeys]) =>
+                        `alias '${alias}' used by client-resources: ${resourceKeys.join(", ")}`
                 )
                 .join("; ");
 
             if (duplicates.length !== 0) {
                 return {
                     path: ["client-resources"],
-                    error: `Duplicate 'proxy-port' values found in client-resources: ${duplicates}`
+                    error: `Duplicate 'alias' values found in client-resources: ${duplicates}`
                 };
             }
         }
