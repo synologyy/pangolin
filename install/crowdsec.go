@@ -96,6 +96,10 @@ func installCrowdsec(config Config) error {
 		fmt.Println("	docker exec crowdsec cscli bouncers add traefik-bouncer")
 	}
 
+	// Print the setup token after CrowdSec installation and container restart
+	fmt.Println("\n=== Setup Token ===")
+	printSetupToken(config.InstallationContainerType, config.DashboardDomain)
+
 	return nil
 }
 
