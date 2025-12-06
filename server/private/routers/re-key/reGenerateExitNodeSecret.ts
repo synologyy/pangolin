@@ -12,7 +12,7 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { db, exitNodes, exitNodeOrgs, ExitNode, ExitNodeOrg } from "@server/db";
+import { db, exitNodes, exitNodeOrgs, ExitNode, ExitNodeOrg, RemoteExitNode } from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
 import { remoteExitNodes } from "@server/db";
@@ -22,7 +22,6 @@ import { fromError } from "zod-validation-error";
 import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
-import { UpdateRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { OpenAPITags, registry } from "@server/openApi";
 import { disconnectClient } from "@server/routers/ws";
 
@@ -108,11 +107,8 @@ export async function reGenerateExitNodeSecret(
             }
         );
 
-        return response<UpdateRemoteExitNodeResponse>(res, {
-            data: {
-                remoteExitNodeId,
-                secret
-            },
+        return response(res, {
+            data: null, 
             success: true,
             error: false,
             message: "Remote Exit Node secret updated successfully",

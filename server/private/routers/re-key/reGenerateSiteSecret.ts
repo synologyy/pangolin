@@ -214,7 +214,9 @@ export async function reGenerateSiteSecret(
         }
 
         return response(res, {
-            data: existingNewt,
+            data: {
+                newtId: existingNewt ? existingNewt.newtId : undefined
+            },
             success: true,
             error: false,
             message: "Credentials regenerated successfully",

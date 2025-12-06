@@ -6,11 +6,6 @@ export type CreateRemoteExitNodeResponse = {
     secret: string;
 };
 
-export type UpdateRemoteExitNodeResponse = {
-    remoteExitNodeId: string;
-    secret: string;
-}
-
 export type PickRemoteExitNodeDefaultsResponse = {
     remoteExitNodeId: string;
     secret: string;

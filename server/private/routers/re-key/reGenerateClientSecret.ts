@@ -13,7 +13,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, olms } from "@server/db";
+import { db, Olm, olms } from "@server/db";
 import { clients } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -146,7 +146,9 @@ export async function reGenerateClientSecret(
         });
 
         return response(res, {
-            data: existingOlms,
+            data: {
+                olmId: existingOlms[0].olmId,
+            },
             success: true,
             error: false,
             message: "Credentials regenerated successfully",

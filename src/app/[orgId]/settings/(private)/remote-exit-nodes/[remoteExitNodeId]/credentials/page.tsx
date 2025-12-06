@@ -25,12 +25,6 @@ import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsMod
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { build } from "@server/build";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@app/components/ui/tooltip";
 import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 export default function CredentialsPage() {

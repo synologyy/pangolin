@@ -11,12 +11,6 @@ import {
     SettingsSectionTitle
 } from "@app/components/Settings";
 import { Button } from "@app/components/ui/button";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@app/components/ui/tooltip";
 import { useClientContext } from "@app/hooks/useClientContext";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
@@ -55,14 +49,21 @@ export default function CredentialsPage() {
         const res = await api.get(`/org/${orgId}/pick-client-defaults`);
         if (res && res.status === 200) {
             const data = res.data.data;
-            setClientDefaults(data);
 
-            await api.post(
+            const rekeyRes = await api.post(
                 `/re-key/${client?.clientId}/regenerate-client-secret`,
                 {
                     secret: data.olmSecret
                 }
             );
+
+            if (rekeyRes && rekeyRes.status === 200) {
+                const rekeyData = rekeyRes.data.data;
+                setClientDefaults({
+                    ...data,
+                    olmId: rekeyData.olmId,
+                });
+            }
 
             toast({
                 title: t("credentialsSaved"),

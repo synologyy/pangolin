@@ -22,12 +22,6 @@ import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsMod
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { build } from "@server/build";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@app/components/ui/tooltip";
 import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 
 export default function CredentialsPage() {
@@ -111,15 +105,24 @@ PersistentKeepalive = 5`;
             const res = await api.get(`/org/${orgId}/pick-site-defaults`);
             if (res && res.status === 200) {
                 const data = res.data.data;
-                setSiteDefaults(data);
 
-                await api.post(
+                const rekeyRes = await api.post(
                     `/re-key/${site?.siteId}/regenerate-site-secret`,
                     {
                         type: "newt",
                         secret: data.newtSecret
                     }
                 );
+
+                if (rekeyRes && rekeyRes.status === 200) {
+                    const rekeyData = rekeyRes.data.data;
+                    if (rekeyData && rekeyData.newtId) {
+                        setSiteDefaults({
+                            ...data,
+                            newtId: rekeyData.newtId
+                        });
+                    }
+                }
             }
         }
 
