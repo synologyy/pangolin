@@ -196,7 +196,7 @@ export const targetHealthCheck = sqliteTable("targetHealthCheck", {
     hcMethod: text("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
-    hcTlsServerName: text("hcTlsServerName"),
+    hcTlsServerName: text("hcTlsServerName")
 });
 
 export const exitNodes = sqliteTable("exitNodes", {
@@ -350,7 +350,7 @@ export const clients = sqliteTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
-
+    niceId: text("niceId").notNull(),
     name: text("name").notNull(),
     pubKey: text("pubKey"),
     olmId: text("olmId"), // to lock it to a specific olm optionally

@@ -644,6 +644,7 @@ export const clients = pgTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
+    niceId: varchar("niceId").notNull(),
     olmId: text("olmId"), // to lock it to a specific olm optionally
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),
