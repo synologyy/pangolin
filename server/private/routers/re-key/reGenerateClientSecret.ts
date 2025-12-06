@@ -36,24 +36,6 @@ const reGenerateSecretBodySchema = z.strictObject({
 
 export type ReGenerateSecretBody = z.infer<typeof reGenerateSecretBodySchema>;
 
-registry.registerPath({
-    method: "post",
-    path: "/re-key/{clientId}/regenerate-client-secret",
-    description: "Regenerate a client's OLM credentials by its client ID.",
-    tags: [OpenAPITags.Client],
-    request: {
-        params: reGenerateSecretParamsSchema,
-        body: {
-            content: {
-                "application/json": {
-                    schema: reGenerateSecretBodySchema
-                }
-            }
-        }
-    },
-    responses: {}
-});
-
 export async function reGenerateClientSecret(
     req: Request,
     res: Response,

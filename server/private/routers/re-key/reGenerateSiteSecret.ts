@@ -36,25 +36,6 @@ const updateSiteBodySchema = z.strictObject({
     pubKey: z.string().optional()
 });
 
-registry.registerPath({
-    method: "post",
-    path: "/re-key/{siteId}/regenerate-site-secret",
-    description:
-        "Regenerate a site's Newt or WireGuard credentials by its site ID.",
-    tags: [OpenAPITags.Site],
-    request: {
-        params: updateSiteParamsSchema,
-        body: {
-            content: {
-                "application/json": {
-                    schema: updateSiteBodySchema
-                }
-            }
-        }
-    },
-    responses: {}
-});
-
 export async function reGenerateSiteSecret(
     req: Request,
     res: Response,

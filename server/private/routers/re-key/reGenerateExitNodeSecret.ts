@@ -34,24 +34,6 @@ const bodySchema = z.strictObject({
     secret: z.string().length(48)
 });
 
-registry.registerPath({
-    method: "post",
-    path: "/re-key/{orgId}/regenerate-secret",
-    description: "Regenerate a exit node credentials by its org ID.",
-    tags: [OpenAPITags.Org],
-    request: {
-        params: paramsSchema,
-        body: {
-            content: {
-                "application/json": {
-                    schema: bodySchema
-                }
-            }
-        }
-    },
-    responses: {}
-});
-
 export async function reGenerateExitNodeSecret(
     req: Request,
     res: Response,
@@ -108,7 +90,7 @@ export async function reGenerateExitNodeSecret(
         );
 
         return response(res, {
-            data: null, 
+            data: null,
             success: true,
             error: false,
             message: "Remote Exit Node secret updated successfully",
