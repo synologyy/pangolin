@@ -53,7 +53,7 @@ export default function CredentialsPage() {
         useState<PickSiteDefaultsResponse | null>(null);
     const [wgConfig, setWgConfig] = useState("");
     const [publicKey, setPublicKey] = useState("");
-    const [currentNewtId, setCurrentNewtId] = useState<string | null>(null);
+    const [currentNewtId, setCurrentNewtId] = useState<string | null>(site.newtId);
     const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
         null
     );
@@ -233,7 +233,7 @@ export default function CredentialsPage() {
                                                 text={displaySecret}
                                             />
                                         ) : (
-                                            <span>{"••••••••••••••••"}</span>
+                                            <span>{"••••••••••••••••••••••••••••••••"}</span>
                                         )}
                                     </InfoSectionContent>
                                 </InfoSection>

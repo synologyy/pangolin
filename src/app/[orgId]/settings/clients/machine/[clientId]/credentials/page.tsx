@@ -44,7 +44,7 @@ export default function CredentialsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [clientDefaults, setClientDefaults] =
         useState<PickClientDefaultsResponse | null>(null);
-    const [currentOlmId, setCurrentOlmId] = useState<string | null>(null);
+    const [currentOlmId, setCurrentOlmId] = useState<string | null>(client.olmId);
     const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
         null
     );
@@ -154,7 +154,7 @@ export default function CredentialsPage() {
                                     {displaySecret ? (
                                         <CopyToClipboard text={displaySecret} />
                                     ) : (
-                                        <span>{"••••••••••••••••"}</span>
+                                        <span>{"••••••••••••••••••••••••••••••••"}</span>
                                     )}
                                 </InfoSectionContent>
                             </InfoSection>
