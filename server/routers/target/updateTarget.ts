@@ -203,6 +203,12 @@ export async function updateTarget(
             hcHeaders = JSON.stringify(parsedBody.data.hcHeaders);
         }
 
+        // When health check is disabled, reset hcHealth to "unknown"
+        // to prevent previously unhealthy targets from being excluded
+        const hcHealthValue = (parsedBody.data.hcEnabled === false || parsedBody.data.hcEnabled === null) 
+            ? "unknown" 
+            : undefined;
+
         const [updatedHc] = await db
             .update(targetHealthCheck)
             .set({
@@ -220,6 +226,7 @@ export async function updateTarget(
                 hcMethod: parsedBody.data.hcMethod,
                 hcStatus: parsedBody.data.hcStatus,
                 hcTlsServerName: parsedBody.data.hcTlsServerName,
+                ...(hcHealthValue !== undefined && { hcHealth: hcHealthValue })
             })
             .where(eq(targetHealthCheck.targetId, targetId))
             .returning();

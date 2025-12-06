@@ -1,6 +1,7 @@
 import { join } from "path";
 import { readFileSync } from "fs";
 import { db, resources, siteResources } from "@server/db";
+import { randomInt } from "crypto";
 import { exitNodes, sites } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import { __DIRNAME } from "@server/lib/consts";
@@ -111,10 +112,10 @@ export async function getUniqueExitNodeEndpointName(): Promise<string> {
 export function generateName(): string {
     const name = (
         names.descriptors[
-            Math.floor(Math.random() * names.descriptors.length)
+            randomInt(names.descriptors.length)
         ] +
         "-" +
-        names.animals[Math.floor(Math.random() * names.animals.length)]
+        names.animals[randomInt(names.animals.length)]
     )
         .toLowerCase()
         .replace(/\s/g, "-");
