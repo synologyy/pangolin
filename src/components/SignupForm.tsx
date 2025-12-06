@@ -15,11 +15,7 @@ import {
     FormLabel,
     FormMessage
 } from "@/components/ui/form";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { SignUpResponse } from "@server/routers/auth";
@@ -147,7 +143,8 @@ export default function SignupForm({
                 inviteId,
                 inviteToken,
                 termsAcceptedTimestamp: termsAgreedAt,
-                marketingEmailConsent: build === "saas" ? marketingEmailConsent : undefined
+                marketingEmailConsent:
+                    build === "saas" ? marketingEmailConsent : undefined
             })
             .catch((e) => {
                 console.error(e);
@@ -179,6 +176,9 @@ export default function SignupForm({
     }
 
     function getSubtitle() {
+        if (isUnlocked() && env.branding?.signupPage?.subtitleText) {
+            return env.branding.signupPage.subtitleText;
+        }
         return t("authCreateAccount");
     }
 
@@ -501,7 +501,9 @@ export default function SignupForm({
                                             <FormControl>
                                                 <Checkbox
                                                     checked={field.value}
-                                                    onCheckedChange={(checked) => {
+                                                    onCheckedChange={(
+                                                        checked
+                                                    ) => {
                                                         field.onChange(checked);
                                                         handleTermsChange(
                                                             checked as boolean
@@ -551,12 +553,16 @@ export default function SignupForm({
                                             <FormControl>
                                                 <Checkbox
                                                     checked={field.value}
-                                                    onCheckedChange={field.onChange}
+                                                    onCheckedChange={
+                                                        field.onChange
+                                                    }
                                                 />
                                             </FormControl>
                                             <div className="leading-none">
                                                 <FormLabel className="text-sm font-normal">
-                                                    {t("signUpMarketing.keepMeInTheLoop")}
+                                                    {t(
+                                                        "signUpMarketing.keepMeInTheLoop"
+                                                    )}
                                                 </FormLabel>
                                                 <FormMessage />
                                             </div>

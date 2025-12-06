@@ -50,11 +50,9 @@ export type Env = {
             };
         };
         loginPage: {
-            titleText?: string;
             subtitleText?: string;
         };
         signupPage: {
-            titleText?: string;
             subtitleText?: string;
         };
         resourceAuthPage: {
