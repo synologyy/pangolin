@@ -24,7 +24,7 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
 import { addPeer, deletePeer } from "@server/routers/gerbil/peers";
 import { getAllowedIps } from "@server/routers/target/helpers";
-import { disconnectClient, sendToClient } from "#dynamic/routers/ws";
+import { disconnectClient, sendToClient } from "#private/routers/ws";
 
 const updateSiteParamsSchema = z.strictObject({
     siteId: z.string().transform(Number).pipe(z.int().positive())

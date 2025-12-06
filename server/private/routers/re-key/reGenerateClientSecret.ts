@@ -23,7 +23,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
-import { disconnectClient, sendToClient } from "#dynamic/routers/ws";
+import { disconnectClient, sendToClient } from "#private/routers/ws";
 
 const reGenerateSecretParamsSchema = z.strictObject({
     clientId: z.string().transform(Number).pipe(z.int().positive())

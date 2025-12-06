@@ -23,7 +23,7 @@ import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
-import { disconnectClient } from "@server/routers/ws";
+import { disconnectClient } from "#private/routers/ws";
 
 export const paramsSchema = z.object({
     orgId: z.string()
