@@ -1138,7 +1138,7 @@ function ProxyResourceTargetsForm({
                         loading={isSubmitting}
                         type="submit"
                     >
-                        {t("save")}
+                        {t("saveResourceTargets")}
                     </Button>
                 </form>
             </SettingsSection>
@@ -1486,7 +1486,7 @@ function ProxyResourceHttpForm({
                         loading={isSubmitting}
                         type="submit"
                     >
-                        {t("save")}
+                        {t("saveResourceHttp")}
                     </Button>
                 </form>
             </SettingsSectionBody>
@@ -1687,7 +1687,7 @@ function ProxyResourceProtocolForm({
                         loading={isSubmitting}
                         type="submit"
                     >
-                        {t("save")}
+                        {t("saveProxyProtocol")}
                     </Button>
                 </form>
             </SettingsSectionBody>
