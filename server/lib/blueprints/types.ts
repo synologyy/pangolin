@@ -9,7 +9,7 @@ export const TargetHealthCheckSchema = z.object({
     hostname: z.string(),
     port: z.int().min(1).max(65535),
     enabled: z.boolean().optional().default(true),
-    path: z.string().optional(),
+    path: z.string().optional().default("/"),
     scheme: z.string().optional(),
     mode: z.string().default("http"),
     interval: z.int().default(30),
