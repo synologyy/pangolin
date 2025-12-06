@@ -47,6 +47,7 @@ import { Checkbox, CheckboxWithLabel } from "@app/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { generateKeypair } from "../[niceId]/wireguardConfig";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
+import { generateWireGuardConfig } from "@app/lib/wireguard";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import {
     CreateSiteBody,
@@ -214,26 +215,6 @@ export default function Page() {
         string | undefined
     >();
 
-    const hydrateWireGuardConfig = (
-        privateKey: string,
-        publicKey: string,
-        subnet: string,
-        address: string,
-        endpoint: string,
-        listenPort: string
-    ) => {
-        const wgConfig = `[Interface]
-Address = ${subnet}
-ListenPort = 51820
-PrivateKey = ${privateKey}
-
-[Peer]
-PublicKey = ${publicKey}
-AllowedIPs = ${address.split("/")[0]}/32
-Endpoint = ${endpoint}:${listenPort}
-PersistentKeepalive = 5`;
-        setWgConfig(wgConfig);
-    };
 
     const hydrateCommands = (
         id: string,
@@ -595,7 +576,7 @@ WantedBy=default.target`
                             acceptClients
                         );
 
-                        hydrateWireGuardConfig(
+                        const wgConfig = generateWireGuardConfig(
                             privateKey,
                             data.publicKey,
                             data.subnet,
@@ -603,6 +584,7 @@ WantedBy=default.target`
                             data.endpoint,
                             data.listenPort
                         );
+                        setWgConfig(wgConfig);
 
                         setTunnelTypes((prev: any) => {
                             return prev.map((item: any) => {

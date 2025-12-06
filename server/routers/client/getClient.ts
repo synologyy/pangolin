@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
-import { clients, clientSitesAssociationsCache } from "@server/db";
+import { db, olms } from "@server/db";
+import { clients } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -12,8 +12,8 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getClientSchema = z.strictObject({
-        clientId: z.string().transform(stoi).pipe(z.int().positive())
-    });
+    clientId: z.string().transform(stoi).pipe(z.int().positive())
+});
 
 async function query(clientId: number) {
     // Get the client
@@ -21,26 +21,20 @@ async function query(clientId: number) {
         .select()
         .from(clients)
         .where(and(eq(clients.clientId, clientId)))
+        .leftJoin(olms, eq(clients.olmId, olms.olmId))
         .limit(1);
 
     if (!client) {
         return null;
     }
-
-    // Get the siteIds associated with this client
-    const sites = await db
-        .select({ siteId: clientSitesAssociationsCache.siteId })
-        .from(clientSitesAssociationsCache)
-        .where(eq(clientSitesAssociationsCache.clientId, clientId));
-
-    // Add the siteIds to the client object
-    return {
-        ...client,
-        siteIds: sites.map((site) => site.siteId)
-    };
+    return client;
 }
 
-export type GetClientResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
+export type GetClientResponse = NonNullable<
+    Awaited<ReturnType<typeof query>>
+>["clients"] & {
+    olmId: string | null;
+};
 
 registry.registerPath({
     method: "get",
@@ -82,8 +76,13 @@ export async function getClient(
             );
         }
 
+        const data: GetClientResponse = {
+            ...client.clients,
+            olmId: client.olms ? client.olms.olmId : null
+        };
+
         return response<GetClientResponse>(res, {
-            data: client,
+            data,
             success: true,
             error: false,
             message: "Client retrieved successfully",

@@ -13,7 +13,7 @@
 
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db, olms } from "@server/db";
+import { db, Olm, olms } from "@server/db";
 import { clients } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -23,7 +23,7 @@ import { eq, and } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 import { hashPassword } from "@server/auth/password";
-import { disconnectClient, sendToClient } from "#dynamic/routers/ws";
+import { disconnectClient, sendToClient } from "#private/routers/ws";
 
 const reGenerateSecretParamsSchema = z.strictObject({
     clientId: z.string().transform(Number).pipe(z.int().positive())
@@ -31,28 +31,11 @@ const reGenerateSecretParamsSchema = z.strictObject({
 
 const reGenerateSecretBodySchema = z.strictObject({
     // olmId: z.string().min(1).optional(),
-    secret: z.string().min(1)
+    secret: z.string().min(1),
+    disconnect: z.boolean().optional().default(true)
 });
 
 export type ReGenerateSecretBody = z.infer<typeof reGenerateSecretBodySchema>;
-
-registry.registerPath({
-    method: "post",
-    path: "/re-key/{clientId}/regenerate-client-secret",
-    description: "Regenerate a client's OLM credentials by its client ID.",
-    tags: [OpenAPITags.Client],
-    request: {
-        params: reGenerateSecretParamsSchema,
-        body: {
-            content: {
-                "application/json": {
-                    schema: reGenerateSecretBodySchema
-                }
-            }
-        }
-    },
-    responses: {}
-});
 
 export async function reGenerateClientSecret(
     req: Request,
@@ -70,7 +53,7 @@ export async function reGenerateClientSecret(
             );
         }
 
-        const { secret } = parsedBody.data;
+        const { secret, disconnect } = parsedBody.data;
 
         const parsedParams = reGenerateSecretParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -132,21 +115,26 @@ export async function reGenerateClientSecret(
             })
             .where(eq(olms.olmId, existingOlms[0].olmId));
 
-        const payload = {
-            type: `olm/terminate`,
-            data: {}
-        };
-        // Don't await this to prevent blocking the response
-        sendToClient(existingOlms[0].olmId, payload).catch((error) => {
-            logger.error("Failed to send termination message to olm:", error);
-        });
+        // Only disconnect if explicitly requested
+        if (disconnect) {
+            const payload = {
+                type: `olm/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(existingOlms[0].olmId, payload).catch((error) => {
+                logger.error("Failed to send termination message to olm:", error);
+            });
 
-        disconnectClient(existingOlms[0].olmId).catch((error) => {
-            logger.error("Failed to disconnect olm after re-key:", error);
-        });
+            disconnectClient(existingOlms[0].olmId).catch((error) => {
+                logger.error("Failed to disconnect olm after re-key:", error);
+            });
+        }
 
         return response(res, {
-            data: existingOlms,
+            data: {
+                olmId: existingOlms[0].olmId,
+            },
             success: true,
             error: false,
             message: "Credentials regenerated successfully",

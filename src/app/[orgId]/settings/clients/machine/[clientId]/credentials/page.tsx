@@ -1,33 +1,37 @@
 "use client";
 
-import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
-import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
+import { useState } from "react";
 import {
     SettingsContainer,
     SettingsSection,
     SettingsSectionBody,
     SettingsSectionDescription,
+    SettingsSectionFooter,
     SettingsSectionHeader,
     SettingsSectionTitle
 } from "@app/components/Settings";
 import { Button } from "@app/components/ui/button";
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "@app/components/ui/tooltip";
-import { useClientContext } from "@app/hooks/useClientContext";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
+import { toast } from "@app/hooks/useToast";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { PickClientDefaultsResponse } from "@server/routers/client";
+import { useClientContext } from "@app/hooks/useClientContext";
+import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { toast } from "@app/hooks/useToast";
-import { createApiClient } from "@app/lib/api";
 import { build } from "@server/build";
-import { PickClientDefaultsResponse } from "@server/routers/client";
-import { useTranslations } from "next-intl";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
+import {
+    InfoSection,
+    InfoSectionContent,
+    InfoSections,
+    InfoSectionTitle
+} from "@app/components/InfoSection";
+import CopyToClipboard from "@app/components/CopyToClipboard";
+import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -40,6 +44,12 @@ export default function CredentialsPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [clientDefaults, setClientDefaults] =
         useState<PickClientDefaultsResponse | null>(null);
+    const [currentOlmId, setCurrentOlmId] = useState<string | null>(client.olmId);
+    const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
+        null
+    );
+    const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
+    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -52,36 +62,55 @@ export default function CredentialsPage() {
     };
 
     const handleConfirmRegenerate = async () => {
-        const res = await api.get(`/org/${orgId}/pick-client-defaults`);
-        if (res && res.status === 200) {
-            const data = res.data.data;
-            setClientDefaults(data);
+        try {
+            const res = await api.get(`/org/${orgId}/pick-client-defaults`);
+            if (res && res.status === 200) {
+                const data = res.data.data;
 
-            await api.post(
-                `/re-key/${client?.clientId}/regenerate-client-secret`,
-                {
-                    secret: data.olmSecret
+                const rekeyRes = await api.post(
+                    `/re-key/${client?.clientId}/regenerate-client-secret`,
+                    {
+                        secret: data.olmSecret,
+                        disconnect: shouldDisconnect
+                    }
+                );
+
+                if (rekeyRes && rekeyRes.status === 200) {
+                    const rekeyData = rekeyRes.data.data;
+                    if (rekeyData && rekeyData.olmId) {
+                        setCurrentOlmId(rekeyData.olmId);
+                        setRegeneratedSecret(data.olmSecret);
+                        setClientDefaults({
+                            ...data,
+                            olmId: rekeyData.olmId
+                        });
+                        setShowCredentialsAlert(true);
+                    }
                 }
-            );
 
+                toast({
+                    title: t("credentialsSaved"),
+                    description: t("credentialsSavedDescription")
+                });
+            }
+        } catch (error) {
             toast({
-                title: t("credentialsSaved"),
-                description: t("credentialsSavedDescription")
+                variant: "destructive",
+                title: t("error") || "Error",
+                description:
+                    formatAxiosError(error) ||
+                    t("credentialsRegenerateError") ||
+                    "Failed to regenerate credentials"
             });
-
-            router.refresh();
         }
     };
 
-    const getCredentials = () => {
-        if (clientDefaults) {
-            return {
-                Id: clientDefaults.olmId,
-                Secret: clientDefaults.olmSecret
-            };
-        }
-        return undefined;
+    const getConfirmationString = () => {
+        return client?.name || client?.clientId?.toString() || "My client";
     };
+
+    const displayOlmId = currentOlmId || clientDefaults?.olmId || null;
+    const displaySecret = regeneratedSecret || null;
 
     return (
         <>
@@ -89,32 +118,131 @@ export default function CredentialsPage() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t("generatedcredentials")}
+                            {t("clientOlmCredentials")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t("regenerateCredentials")}
+                            {t("clientOlmCredentialsDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
-
                     <SettingsSectionBody>
-                        <SecurityFeaturesAlert />
-                        <Button
-                            onClick={() => setModalOpen(true)}
-                            disabled={isSecurityFeatureDisabled()}
-                        >
-                            {t("regeneratecredentials")}
-                        </Button>
+                        <InfoSections cols={3}>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("olmEndpoint")}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    <CopyToClipboard
+                                        text={env.app.dashboardUrl}
+                                    />
+                                </InfoSectionContent>
+                            </InfoSection>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("olmId")}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    {displayOlmId ? (
+                                        <CopyToClipboard text={displayOlmId} />
+                                    ) : (
+                                        <span>{"••••••••••••••••"}</span>
+                                    )}
+                                </InfoSectionContent>
+                            </InfoSection>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("olmSecretKey")}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    {displaySecret ? (
+                                        <CopyToClipboard text={displaySecret} />
+                                    ) : (
+                                        <span>{"••••••••••••••••••••••••••••••••"}</span>
+                                    )}
+                                </InfoSectionContent>
+                            </InfoSection>
+                        </InfoSections>
+
+                        {showCredentialsAlert && displaySecret && (
+                            <Alert variant="neutral" className="mt-4">
+                                <InfoIcon className="h-4 w-4" />
+                                <AlertTitle className="font-semibold">
+                                    {t("clientCredentialsSave")}
+                                </AlertTitle>
+                                <AlertDescription>
+                                    {t("clientCredentialsSaveDescription")}
+                                </AlertDescription>
+                            </Alert>
+                        )}
                     </SettingsSectionBody>
+                    <SettingsSectionFooter>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShouldDisconnect(false);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("regenerateCredentialsButton")}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShouldDisconnect(true);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("clientRegenerateAndDisconnect")}
+                            </Button>
+                        </div>
+                    </SettingsSectionFooter>
                 </SettingsSection>
             </SettingsContainer>
 
-            <RegenerateCredentialsModal
+            <ConfirmDeleteDialog
                 open={modalOpen}
-                onOpenChange={setModalOpen}
-                type="client-olm"
-                onConfirmRegenerate={handleConfirmRegenerate}
-                dashboardUrl={env.app.dashboardUrl}
-                credentials={getCredentials()}
+                setOpen={(val) => {
+                    setModalOpen(val);
+                    // Prevent modal from reopening during refresh
+                    if (!val) {
+                        setTimeout(() => {
+                            router.refresh();
+                        }, 150);
+                    }
+                }}
+                dialog={
+                    <div className="space-y-2">
+                        {shouldDisconnect ? (
+                            <>
+                                <p>
+                                    {t("clientRegenerateAndDisconnectConfirmation")}
+                                </p>
+                                <p>
+                                    {t("clientRegenerateAndDisconnectWarning")}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p>
+                                    {t("clientRegenerateCredentialsConfirmation")}
+                                </p>
+                                <p>
+                                    {t("clientRegenerateCredentialsWarning")}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                }
+                buttonText={
+                    shouldDisconnect
+                        ? t("clientRegenerateAndDisconnect")
+                        : t("regenerateCredentialsButton")
+                }
+                onConfirm={handleConfirmRegenerate}
+                string={getConfirmationString()}
+                title={t("regenerateCredentials")}
+                warningText={t("cannotbeUndone")}
             />
         </>
     );
