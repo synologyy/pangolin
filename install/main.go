@@ -54,8 +54,8 @@ type Config struct {
 type SupportedContainer string
 
 const (
-	Docker SupportedContainer = "docker"
-	Podman SupportedContainer = "podman"
+	Docker    SupportedContainer = "docker"
+	Podman    SupportedContainer = "podman"
 	Undefined SupportedContainer = "undefined"
 )
 
@@ -160,7 +160,7 @@ func main() {
 	} else {
 		alreadyInstalled = true
 		fmt.Println("Looks like you already installed Pangolin!")
-		
+
 		// Check if MaxMind database exists and offer to update it
 		fmt.Println("\n=== MaxMind Database Update ===")
 		if _, err := os.Stat("config/GeoLite2-Country.mmdb"); err == nil {
@@ -209,8 +209,8 @@ func main() {
 
 					parsedURL, err := url.Parse(appConfig.DashboardURL)
 					if err != nil {
-                        fmt.Printf("Error parsing URL: %v\n", err)
-                        return
+						fmt.Printf("Error parsing URL: %v\n", err)
+						return
 					}
 
 					config.DashboardDomain = parsedURL.Hostname()
@@ -359,7 +359,7 @@ func collectUserInput(reader *bufio.Reader) Config {
 		config.EmailSMTPPort = readInt(reader, "Enter SMTP port (default 587)", 587)
 		config.EmailSMTPUser = readString(reader, "Enter SMTP username", "")
 		config.EmailSMTPPass = readString(reader, "Enter SMTP password", "") // Should this be readPassword?
-		config.EmailNoReply = readString(reader, "Enter no-reply email address", "")
+		config.EmailNoReply = readString(reader, "Enter no-reply email address (often the same as SMTP username)", "")
 	}
 
 	// Validate required fields
@@ -369,6 +369,10 @@ func collectUserInput(reader *bufio.Reader) Config {
 	}
 	if config.LetsEncryptEmail == "" {
 		fmt.Println("Error: Let's Encrypt email is required")
+		os.Exit(1)
+	}
+	if config.EnableEmail && config.EmailNoReply == "" {
+		fmt.Println("Error: No-reply email address is required when email is enabled")
 		os.Exit(1)
 	}
 
@@ -643,28 +647,28 @@ func checkPortsAvailable(port int) error {
 
 func downloadMaxMindDatabase() error {
 	fmt.Println("Downloading MaxMind GeoLite2 Country database...")
-	
+
 	// Download the GeoLite2 Country database
-	if err := run("curl", "-L", "-o", "GeoLite2-Country.tar.gz", 
+	if err := run("curl", "-L", "-o", "GeoLite2-Country.tar.gz",
 		"https://github.com/GitSquared/node-geolite2-redist/raw/refs/heads/master/redist/GeoLite2-Country.tar.gz"); err != nil {
 		return fmt.Errorf("failed to download GeoLite2 database: %v", err)
 	}
-	
+
 	// Extract the database
 	if err := run("tar", "-xzf", "GeoLite2-Country.tar.gz"); err != nil {
 		return fmt.Errorf("failed to extract GeoLite2 database: %v", err)
 	}
-	
+
 	// Find the .mmdb file and move it to the config directory
 	if err := run("bash", "-c", "mv GeoLite2-Country_*/GeoLite2-Country.mmdb config/"); err != nil {
 		return fmt.Errorf("failed to move GeoLite2 database to config directory: %v", err)
 	}
-	
+
 	// Clean up the downloaded files
 	if err := run("rm", "-rf", "GeoLite2-Country.tar.gz", "GeoLite2-Country_*"); err != nil {
 		fmt.Printf("Warning: failed to clean up temporary files: %v\n", err)
 	}
-	
+
 	fmt.Println("MaxMind GeoLite2 Country database downloaded successfully!")
 	return nil
 }
