@@ -273,7 +273,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 if (originalRow.type === "wireguard") {
                     return (
                         <div className="flex items-center space-x-2">
-                            <span>WireGuard</span>
+                            <Badge variant="secondary">WireGuard</Badge>
                         </div>
                     );
                 }
@@ -281,7 +281,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 if (originalRow.type === "local") {
                     return (
                         <div className="flex items-center space-x-2">
-                            <span>{t("local")}</span>
+                            <Badge variant="secondary">Local</Badge>
                         </div>
                     );
                 }

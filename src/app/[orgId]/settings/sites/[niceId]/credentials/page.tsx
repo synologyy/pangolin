@@ -164,8 +164,7 @@ export default function CredentialsPage() {
                 description: t("credentialsSavedDescription")
             });
 
-            setModalOpen(false);
-            router.refresh();
+            // ConfirmDeleteDialog handles closing the modal and triggering refresh via setOpen callback
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -179,10 +178,7 @@ export default function CredentialsPage() {
     };
 
     const getConfirmationString = () => {
-        if (site?.type === "newt") {
-            return site?.niceId || site?.name || "";
-        }
-        return site?.niceId || site?.name || "";
+        return site?.name || site?.niceId || "My site";
     };
 
     const displayNewtId = currentNewtId || siteDefaults?.newtId || null;
@@ -336,7 +332,15 @@ export default function CredentialsPage() {
             {site?.type === "newt" && (
                 <ConfirmDeleteDialog
                     open={modalOpen}
-                    setOpen={setModalOpen}
+                    setOpen={(val) => {
+                        setModalOpen(val);
+                        // Prevent modal from reopening during refresh
+                        if (!val) {
+                            setTimeout(() => {
+                                router.refresh();
+                            }, 150);
+                        }
+                    }}
                     dialog={
                         <div className="space-y-2">
                             <p>{t("regenerateCredentialsConfirmation")}</p>
@@ -354,7 +358,15 @@ export default function CredentialsPage() {
             {site?.type === "wireguard" && (
                 <ConfirmDeleteDialog
                     open={modalOpen}
-                    setOpen={setModalOpen}
+                    setOpen={(val) => {
+                        setModalOpen(val);
+                        // Prevent modal from reopening during refresh
+                        if (!val) {
+                            setTimeout(() => {
+                                router.refresh();
+                            }, 150);
+                        }
+                    }}
                     dialog={
                         <div className="space-y-2">
                             <p>{t("regenerateCredentialsConfirmation")}</p>
