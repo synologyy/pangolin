@@ -99,7 +99,7 @@ export default function ProductUpdates({
                             : "opacity-0"
                     )}
                 >
-                    {filteredUpdates.length > 0 && (
+                    {filteredUpdates.length > 1 && (
                         <>
                             <BellIcon className="flex-none size-3" />
                             <span>
