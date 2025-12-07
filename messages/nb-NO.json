@@ -181,7 +181,7 @@
     "baseDomain": "Grunndomene",
     "subdomnainDescription": "Underdomenet hvor ressursen vil være tilgjengelig.",
     "resourceRawSettings": "TCP/UDP-innstillinger",
-    "resourceRawSettingsDescription": "Konfigurer hvordan ressursen vil bli tilgjengelig over TCP/UDP. Du kartlegger ressursen til en port på vertsserveren Pangolin slik at du får tilgang til ressursene fra server-ip:mappet port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protokoll",
     "protocolSelect": "Velg en protokoll",
     "resourcePortNumber": "Portnummer",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Proxy innstillinger har blitt oppdatert",
     "proxyErrorUpdate": "En feil oppsto under oppdatering av proxyinnstillinger",
     "proxyErrorUpdateDescription": "En feil oppsto under oppdatering av proxyinnstillinger",
-    "targetAddr": "IP / vertsnavn",
+    "targetAddr": "Host",
     "targetPort": "Port",
     "targetProtocol": "Protokoll",
     "targetTlsSettings": "Sikker tilkoblings-konfigurasjon",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 dager",
     "logRetention90Days": "90 dager",
     "logRetentionForever": "Alltid",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Vis historikk for handlinger som er utført i denne organisasjonen",
     "accessLogsDescription": "Vis autoriseringsforespørsler for ressurser i denne organisasjonen",
     "licenseRequiredToUse": "En Enterprise lisens er påkrevd for å bruke denne funksjonen.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Er du sikker på at du vil regenerere legitimasjon og koble fra denne eksterne avslutnings noden?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Dette vil regenerere innloggingsdetaljene og umiddelbart koble fra den eksterne avkjøringnoden. Ekstern avkjøringsnode må startes på nytt med de nye opplysningene",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Er du sikker på at du vil regenerere innloggingsene for denne eksterne avslutningen?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Dette vil regenerere legitimasjon. Ekstern avgang noden vil forbli tilkoblet inntil du manuelt gjenoppstarter den og bruker de nye legitimasjonene."
+    "remoteExitNodeRegenerateCredentialsWarning": "Dette vil regenerere legitimasjon. Ekstern avgang noden vil forbli tilkoblet inntil du manuelt gjenoppstarter den og bruker de nye legitimasjonene.",
+    "agent": "Agent"
 }
