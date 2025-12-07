@@ -22,6 +22,7 @@ import { isIpInCidr } from "@server/lib/ip";
 import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { OpenAPITags, registry } from "@server/openApi";
 import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { getUniqueClientName } from "@server/db/names";
 
 const paramsSchema = z
     .object({
@@ -211,9 +212,12 @@ export async function createUserClient(
                 );
             }
 
+            const niceId = await getUniqueClientName(orgId);
+
             [newClient] = await trx
                 .insert(clients)
                 .values({
+                    niceId,
                     exitNodeId: randomExitNode.exitNodeId,
                     orgId,
                     name,
