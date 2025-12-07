@@ -271,6 +271,12 @@ export default async function migration() {
             const insertClientSiteResource = db.prepare(
                 `INSERT INTO 'clientSiteResources' ('clientId', 'siteResourceId') VALUES (?, ?)`
             );
+            const insertClientSiteResourceAssocCache = db.prepare(
+                `INSERT INTO 'clientSiteResourcesAssociationsCache' ('clientId', 'siteResourceId') VALUES (?, ?)`
+            );
+            const insertClientSiteAssocCache = db.prepare(
+                `INSERT INTO 'clientSitesAssociationsCache' ('clientId', 'siteId', 'isRelayed', 'endpoint', 'publicKey') VALUES (?, ?, false, NULL, NULL)`
+            );
 
             for (const client of clients) {
                 for (const siteResource of siteResources) {
@@ -278,14 +284,33 @@ export default async function migration() {
                         client.clientId,
                         siteResource.siteResourceId
                     );
+                    insertClientSiteResourceAssocCache.run(
+                        client.clientId,
+                        siteResource.siteResourceId
+                    );
+                    // check if clientSitesAssociationsCache already has an entry for this clientId and siteId
+                    const siteIdRow = db
+                        .prepare(
+                            `SELECT siteId FROM 'siteResources' WHERE siteResourceId = ? LIMIT 1`
+                        )
+                        .get(siteResource.siteResourceId) as { siteId: number };
+                    const existing = db
+                        .prepare(
+                            `SELECT 1 FROM 'clientSitesAssociationsCache' WHERE clientId = ? AND siteId = ? LIMIT 1`
+                        )
+                        .get(client.clientId, siteIdRow.siteId);
+                    if (!existing) {
+                        insertClientSiteAssocCache.run(
+                            client.clientId,
+                            siteIdRow.siteId
+                        );
+                    }
                 }
             }
 
             // Associate existing site resources with their org's admin role
             const siteResourcesWithOrg = db
-                .prepare(
-                    `SELECT siteResourceId, orgId FROM 'siteResources'`
-                )
+                .prepare(`SELECT siteResourceId, orgId FROM 'siteResources'`)
                 .all() as {
                 siteResourceId: number;
                 orgId: string;
