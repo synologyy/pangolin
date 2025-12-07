@@ -190,8 +190,12 @@ const addTargetSchema = z
                 return false;
             }
             // If rewritePathType is provided, rewritePath must be provided
+            // Exception: stripPrefix can have an empty rewritePath (to just strip the prefix)
             if (data.rewritePathType && !data.rewritePath) {
-                return false;
+                // Allow empty rewritePath for stripPrefix type
+                if (data.rewritePathType !== "stripPrefix") {
+                    return false;
+                }
             }
             return true;
         },
