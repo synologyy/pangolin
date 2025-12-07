@@ -181,7 +181,7 @@
     "baseDomain": "Basis-Domain",
     "subdomnainDescription": "Die Subdomäne, auf die die Ressource zugegriffen werden soll.",
     "resourceRawSettings": "TCP/UDP Einstellungen",
-    "resourceRawSettingsDescription": "Legen Sie fest, wie auf die Ressource über TCP/UDP zugegriffen wird. Sie ordnen die Ressource einem Port auf dem Pangolin-Server zu, so dass Sie auf die Ressource von server-public-ip:mapped-port zugreifen können.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protokoll",
     "protocolSelect": "Wählen Sie ein Protokoll",
     "resourcePortNumber": "Portnummer",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Proxy-Einstellungen wurden erfolgreich aktualisiert",
     "proxyErrorUpdate": "Fehler beim Aktualisieren der Proxy-Einstellungen",
     "proxyErrorUpdateDescription": "Beim Aktualisieren der Proxy-Einstellungen ist ein Fehler aufgetreten",
-    "targetAddr": "IP / Hostname",
+    "targetAddr": "Host",
     "targetPort": "Port",
     "targetProtocol": "Protokoll",
     "targetTlsSettings": "Sicherheitskonfiguration",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 Tage",
     "logRetention90Days": "90 Tage",
     "logRetentionForever": "Für immer",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Verlauf der in dieser Organisation durchgeführten Aktionen anzeigen",
     "accessLogsDescription": "Zugriffsauth-Anfragen für Ressourcen in dieser Organisation anzeigen",
     "licenseRequiredToUse": "Um diese Funktion nutzen zu können, ist eine Enterprise-Lizenz erforderlich.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Sind Sie sicher, dass Sie die Zugangsdaten neu generieren und diesen Remote-Exit-Knoten trennen möchten?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Dies wird die Anmeldeinformationen neu generieren und den Remote-Exit-Knoten sofort trennen. Der Remote-Exit-Knoten muss mit den neuen Anmeldeinformationen neu gestartet werden.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Sind Sie sicher, dass Sie die Zugangsdaten für diesen Remote-Exit-Knoten neu generieren möchten?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Dies wird die Anmeldeinformationen neu generieren. Der Remote-Exit-Knoten bleibt verbunden, bis Sie ihn manuell neu starten und die neuen Anmeldeinformationen verwenden."
+    "remoteExitNodeRegenerateCredentialsWarning": "Dies wird die Anmeldeinformationen neu generieren. Der Remote-Exit-Knoten bleibt verbunden, bis Sie ihn manuell neu starten und die neuen Anmeldeinformationen verwenden.",
+    "agent": "Agent"
 }
