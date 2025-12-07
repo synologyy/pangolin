@@ -1086,7 +1086,7 @@ async function getDomainId(
 
     // remove the base domain of the domain
     let subdomain = null;
-    if (domainSelection.type == "ns") {
+    if (domainSelection.type == "ns" || domainSelection.type == "wildcard") {
         if (fullDomain != baseDomain) {
             subdomain = fullDomain.replace(`.${baseDomain}`, "");
         }
