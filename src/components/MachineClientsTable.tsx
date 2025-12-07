@@ -41,6 +41,7 @@ export type ClientRow = {
     username: string | null;
     userEmail: string | null;
     niceId: string;
+    agent: string | null;
 };
 
 type ClientTableProps = {
@@ -65,7 +66,6 @@ export default function MachineClientsTable({
     const [isRefreshing, startTransition] = useTransition();
 
     const defaultMachineColumnVisibility = {
-        client: false,
         subnet: false,
         userId: false,
         niceId: false
@@ -226,7 +226,7 @@ export default function MachineClientsTable({
             },
             {
                 accessorKey: "client",
-                friendlyName: t("client"),
+                friendlyName: t("agent"),
                 header: ({ column }) => {
                     return (
                         <Button
@@ -237,7 +237,7 @@ export default function MachineClientsTable({
                                 )
                             }
                         >
-                            {t("client")}
+                            {t("agent")}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
                     );
@@ -247,19 +247,18 @@ export default function MachineClientsTable({
 
                     return (
                         <div className="flex items-center space-x-1">
-                            <Badge variant="secondary">
-                                <div className="flex items-center space-x-2">
-                                    <span>Olm</span>
-                                    {originalRow.olmVersion && (
-                                        <span className="text-xs text-gray-500">
-                                            v{originalRow.olmVersion}
-                                        </span>
-                                    )}
-                                </div>
-                            </Badge>
-                            {originalRow.olmUpdateAvailable && (
-                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            {originalRow.agent && originalRow.olmVersion ? (
+                                <Badge variant="secondary">
+                                    {originalRow.agent +
+                                        " v" +
+                                        originalRow.olmVersion}
+                                </Badge>
+                            ) : (
+                                "-"
                             )}
+                            {/*originalRow.olmUpdateAvailable && (
+                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            )*/}
                         </div>
                     );
                 }

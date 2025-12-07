@@ -15,6 +15,7 @@ import { getNextAvailableClientSubnet } from "@server/lib/ip";
 import logger from "@server/logger";
 import { rebuildClientAssociationsFromClient } from "./rebuildClientAssociations";
 import { sendTerminateClient } from "@server/routers/client/terminate";
+import { getUniqueClientName } from "@server/db/names";
 
 export async function calculateUserClientsForOrgs(
     userId: string,
@@ -176,6 +177,8 @@ export async function calculateUserClientsForOrgs(
                 const subnet = newSubnet.split("/")[0];
                 const updatedSubnet = `${subnet}/${org.subnet.split("/")[1]}`;
 
+                const niceId = await getUniqueClientName(orgId);
+
                 // Create the client
                 const [newClient] = await transaction
                     .insert(clients)
@@ -186,7 +189,8 @@ export async function calculateUserClientsForOrgs(
                         name: olm.name || "User Client",
                         subnet: updatedSubnet,
                         olmId: olm.olmId,
-                        type: "olm"
+                        type: "olm",
+                        niceId
                     })
                     .returning();
 

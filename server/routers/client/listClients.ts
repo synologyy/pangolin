@@ -129,7 +129,8 @@ function queryClients(orgId: string, accessibleClientIds: number[], filter?: "us
             userId: clients.userId,
             username: users.username,
             userEmail: users.email,
-            niceId: clients.niceId
+            niceId: clients.niceId,
+            agent: olms.agent
         })
         .from(clients)
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))
