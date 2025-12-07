@@ -181,7 +181,7 @@
     "baseDomain": "Базовый домен",
     "subdomnainDescription": "Поддомен, в котором ресурс будет доступен.",
     "resourceRawSettings": "Настройки TCP/UDP",
-    "resourceRawSettingsDescription": "Настройка доступа к ресурсу по TCP/UDP. Вы соотносите ресурс с портом на сервере хоста Pangolin, так что вы можете получить доступ к ресурсу с сервера server-public-ip:mapped-порта.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Протокол",
     "protocolSelect": "Выберите протокол",
     "resourcePortNumber": "Номер порта",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Настройки прокси успешно обновлены",
     "proxyErrorUpdate": "Не удалось обновить настройки прокси",
     "proxyErrorUpdateDescription": "Произошла ошибка при обновлении настроек прокси",
-    "targetAddr": "IP / Имя хоста",
+    "targetAddr": "Host",
     "targetPort": "Порт",
     "targetProtocol": "Протокол",
     "targetTlsSettings": "Конфигурация безопасного соединения",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 дней",
     "logRetention90Days": "90 дней",
     "logRetentionForever": "Всегда",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Просмотр истории действий, выполненных в этой организации",
     "accessLogsDescription": "Просмотр запросов авторизации доступа к ресурсам этой организации",
     "licenseRequiredToUse": "Для использования этой функции требуется лицензия предприятия.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Вы уверены, что хотите сгенерировать учетные данные и отключить этот удаленный узел?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Это позволит восстановить учётные данные и немедленно отключить удаленный узел выхода. Удаленный узел выхода должен быть перезапущен с новыми учетными данными.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Вы уверены, что хотите восстановить учетные данные для этого удаленного выхода узла?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Это позволит восстановить учетные данные. Удалённый узел останется подключенным, пока вы не перезапустите его вручную и воспользуетесь новыми учетными данными."
+    "remoteExitNodeRegenerateCredentialsWarning": "Это позволит восстановить учетные данные. Удалённый узел останется подключенным, пока вы не перезапустите его вручную и воспользуетесь новыми учетными данными.",
+    "agent": "Agent"
 }
