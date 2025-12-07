@@ -181,7 +181,7 @@
     "baseDomain": "Základní doména",
     "subdomnainDescription": "Subdoména, kde bude zdroj přístupný.",
     "resourceRawSettings": "Nastavení TCP/UDP",
-    "resourceRawSettingsDescription": "Nakonfigurujte, jak bude dokument přístupný přes TCP/UDP. Mapováte zdroj na port na serveru Pangolin, takže můžete přistupovat ke zdroji ze serveru-veřejné ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protokol",
     "protocolSelect": "Vybrat protokol",
     "resourcePortNumber": "Číslo portu",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Nastavení proxy bylo úspěšně aktualizováno",
     "proxyErrorUpdate": "Aktualizace nastavení proxy se nezdařila",
     "proxyErrorUpdateDescription": "Došlo k chybě při aktualizaci nastavení proxy",
-    "targetAddr": "IP / Hostname",
+    "targetAddr": "Host",
     "targetPort": "Přístav",
     "targetProtocol": "Protokol",
     "targetTlsSettings": "Nastavení bezpečného připojení",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 dní",
     "logRetention90Days": "90 dní",
     "logRetentionForever": "Navždy",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Zobrazit historii akcí provedených v této organizaci",
     "accessLogsDescription": "Zobrazit žádosti o ověření přístupu pro zdroje v této organizaci",
     "licenseRequiredToUse": "Pro použití této funkce je vyžadována licence pro podnikání.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Jste si jisti, že chcete obnovit přihlašovací údaje a odpojit tento vzdálený výstupní uzel?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Toto obnoví přihlašovací údaje a okamžitě odpojí vzdálený výstupní uzel. Vzdálený výstupní uzel bude muset být restartován s novými přihlašovacími údaji.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Jste si jisti, že chcete obnovit přihlašovací údaje pro tento vzdálený výstupní uzel?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Toto obnoví přihlašovací údaje. Vzdálený výstupní uzel zůstane připojen, dokud jej ručně nerestartujete a nepoužijete nové přihlašovací údaje."
+    "remoteExitNodeRegenerateCredentialsWarning": "Toto obnoví přihlašovací údaje. Vzdálený výstupní uzel zůstane připojen, dokud jej ručně nerestartujete a nepoužijete nové přihlašovací údaje.",
+    "agent": "Agent"
 }
