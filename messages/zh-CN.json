@@ -181,7 +181,7 @@
     "baseDomain": "根域名",
     "subdomnainDescription": "可访问资源的子域。",
     "resourceRawSettings": "TCP/UDP 设置",
-    "resourceRawSettingsDescription": "配置如何通过 TCP/UDP 访问资源。 您映射资源到主机Pangolin服务器上的端口，这样您就可以访问服务器-公共-ip:mapped端口的资源。",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "协议",
     "protocolSelect": "选择协议",
     "resourcePortNumber": "端口号",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "已成功更新代理设置",
     "proxyErrorUpdate": "更新代理设置失败",
     "proxyErrorUpdateDescription": "更新代理设置时出错",
-    "targetAddr": "IP / 域名",
+    "targetAddr": "Host",
     "targetPort": "端口",
     "targetProtocol": "协议",
     "targetTlsSettings": "安全连接配置",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 天",
     "logRetention90Days": "90 天",
     "logRetentionForever": "永远的",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "查看此机构执行的操作历史",
     "accessLogsDescription": "查看此机构资源的访问认证请求",
     "licenseRequiredToUse": "需要企业许可证才能使用此功能。",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "您确定要重新生成凭据并断开此远程退出节点？",
     "remoteExitNodeRegenerateAndDisconnectWarning": "这将重新生成凭据并立即断开远程退出节点。远程退出节点将需要用新的凭据重启。",
     "remoteExitNodeRegenerateCredentialsConfirmation": "您确定要重新生成此远程退出节点的凭据吗？",
-    "remoteExitNodeRegenerateCredentialsWarning": "这将重新生成凭据。远程退出节点将保持连接，直到您手动重启它并使用新凭据。"
+    "remoteExitNodeRegenerateCredentialsWarning": "这将重新生成凭据。远程退出节点将保持连接，直到您手动重启它并使用新凭据。",
+    "agent": "Agent"
 }
