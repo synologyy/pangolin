@@ -12,22 +12,34 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getClientSchema = z.strictObject({
-    clientId: z.string().transform(stoi).pipe(z.int().positive())
+    clientId: z
+        .string()
+        .optional()
+        .transform(stoi)
+        .pipe(z.int().positive().optional())
+        .optional(),
+    niceId: z.string().optional(),
+    orgId: z.string().optional()
 });
 
-async function query(clientId: number) {
-    // Get the client
-    const [client] = await db
-        .select()
-        .from(clients)
-        .where(and(eq(clients.clientId, clientId)))
-        .leftJoin(olms, eq(clients.olmId, olms.olmId))
-        .limit(1);
-
-    if (!client) {
-        return null;
+async function query(clientId?: number, niceId?: string, orgId?: string) {
+    if (clientId) {
+        const [res] = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.clientId, clientId))
+            .leftJoin(olms, eq(clients.clientId, olms.clientId))
+            .limit(1);
+        return res;
+    } else if (niceId && orgId) {
+        const [res] = await db
+            .select()
+            .from(clients)
+            .where(and(eq(clients.niceId, niceId), eq(clients.orgId, orgId)))
+            .leftJoin(olms, eq(olms.clientId, olms.clientId))
+            .limit(1);
+        return res;
     }
-    return client;
 }
 
 export type GetClientResponse = NonNullable<
@@ -38,11 +50,28 @@ export type GetClientResponse = NonNullable<
 
 registry.registerPath({
     method: "get",
+    path: "/org/{orgId}/client/{niceId}",
+    description:
+        "Get a client by orgId and niceId. NiceId is a readable ID for the site and unique on a per org basis.",
+    tags: [OpenAPITags.Org, OpenAPITags.Site],
+    request: {
+        params: z.object({
+            orgId: z.string(),
+            niceId: z.string()
+        })
+    },
+    responses: {}
+});
+
+registry.registerPath({
+    method: "get",
     path: "/client/{clientId}",
     description: "Get a client by its client ID.",
     tags: [OpenAPITags.Client],
     request: {
-        params: getClientSchema
+        params: z.object({
+            clientId: z.number()
+        })
     },
     responses: {}
 });
@@ -66,9 +95,9 @@ export async function getClient(
             );
         }
 
-        const { clientId } = parsedParams.data;
+        const { clientId, niceId, orgId } = parsedParams.data;
 
-        const client = await query(clientId);
+        const client = await query(clientId, niceId, orgId);
 
         if (!client) {
             return next(

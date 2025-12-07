@@ -4,7 +4,6 @@ import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import ClientProvider from "@app/providers/ClientProvider";
-import { build } from "@server/build";
 import { GetClientResponse } from "@server/routers/client";
 import { AxiosResponse } from "axios";
 import { getTranslations } from "next-intl/server";
@@ -12,7 +11,7 @@ import { redirect } from "next/navigation";
 
 type SettingsLayoutProps = {
     children: React.ReactNode;
-    params: Promise<{ clientId: number | string; orgId: string }>;
+    params: Promise<{ niceId: number | string; orgId: string }>;
 };
 
 export default async function SettingsLayout(props: SettingsLayoutProps) {
@@ -22,8 +21,9 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     let client = null;
     try {
+        console.log("making request to ", `/org/${params.orgId}/client/${params.niceId}`);
         const res = await internal.get<AxiosResponse<GetClientResponse>>(
-            `/client/${params.clientId}`,
+            `/org/${params.orgId}/client/${params.niceId}`,
             await authCookieHeader()
         );
         client = res.data.data;
@@ -37,11 +37,11 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     const navItems = [
         {
             title: t("general"),
-            href: `/{orgId}/settings/clients/machine/{clientId}/general`
+            href: `/{orgId}/settings/clients/machine/{niceId}/general`
         },
         {
             title: t("credentials"),
-            href: `/{orgId}/settings/clients/machine/{clientId}/credentials`
+            href: `/{orgId}/settings/clients/machine/{niceId}/credentials`
         }
     ];
 

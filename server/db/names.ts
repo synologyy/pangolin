@@ -1,6 +1,6 @@
 import { join } from "path";
 import { readFileSync } from "fs";
-import { db, resources, siteResources } from "@server/db";
+import { clients, db, resources, siteResources } from "@server/db";
 import { randomInt } from "crypto";
 import { exitNodes, sites } from "@server/db";
 import { eq, and } from "drizzle-orm";
@@ -15,6 +15,25 @@ if (!dev) {
     file = join("server/db/names.json");
 }
 export const names = JSON.parse(readFileSync(file, "utf-8"));
+
+export async function getUniqueClientName(orgId: string): Promise<string> {
+    let loops = 0;
+    while (true) {
+        if (loops > 100) {
+            throw new Error("Could not generate a unique name");
+        }
+
+        const name = generateName();
+        const count = await db
+            .select({ niceId: clients.niceId, orgId: clients.orgId })
+            .from(clients)
+            .where(and(eq(clients.niceId, name), eq(clients.orgId, orgId)));
+        if (count.length === 0) {
+            return name;
+        }
+        loops++;
+    }
+}
 
 export async function getUniqueSiteName(orgId: string): Promise<string> {
     let loops = 0;
@@ -47,11 +66,21 @@ export async function getUniqueResourceName(orgId: string): Promise<string> {
             db
                 .select({ niceId: resources.niceId, orgId: resources.orgId })
                 .from(resources)
-                .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId))),
+                .where(
+                    and(eq(resources.niceId, name), eq(resources.orgId, orgId))
+                ),
             db
-                .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
+                .select({
+                    niceId: siteResources.niceId,
+                    orgId: siteResources.orgId
+                })
                 .from(siteResources)
-                .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)))
+                .where(
+                    and(
+                        eq(siteResources.niceId, name),
+                        eq(siteResources.orgId, orgId)
+                    )
+                )
         ]);
         if (resourceCount.length === 0 && siteResourceCount.length === 0) {
             return name;
@@ -60,7 +89,9 @@ export async function getUniqueResourceName(orgId: string): Promise<string> {
     }
 }
 
-export async function getUniqueSiteResourceName(orgId: string): Promise<string> {
+export async function getUniqueSiteResourceName(
+    orgId: string
+): Promise<string> {
     let loops = 0;
     while (true) {
         if (loops > 100) {
@@ -72,11 +103,21 @@ export async function getUniqueSiteResourceName(orgId: string): Promise<string> 
             db
                 .select({ niceId: resources.niceId, orgId: resources.orgId })
                 .from(resources)
-                .where(and(eq(resources.niceId, name), eq(resources.orgId, orgId))),
+                .where(
+                    and(eq(resources.niceId, name), eq(resources.orgId, orgId))
+                ),
             db
-                .select({ niceId: siteResources.niceId, orgId: siteResources.orgId })
+                .select({
+                    niceId: siteResources.niceId,
+                    orgId: siteResources.orgId
+                })
                 .from(siteResources)
-                .where(and(eq(siteResources.niceId, name), eq(siteResources.orgId, orgId)))
+                .where(
+                    and(
+                        eq(siteResources.niceId, name),
+                        eq(siteResources.orgId, orgId)
+                    )
+                )
         ]);
         if (resourceCount.length === 0 && siteResourceCount.length === 0) {
             return name;
@@ -87,9 +128,7 @@ export async function getUniqueSiteResourceName(orgId: string): Promise<string> 
 
 export async function getUniqueExitNodeEndpointName(): Promise<string> {
     let loops = 0;
-    const count = await db
-        .select()
-        .from(exitNodes);
+    const count = await db.select().from(exitNodes);
     while (true) {
         if (loops > 100) {
             throw new Error("Could not generate a unique name");
@@ -108,12 +147,9 @@ export async function getUniqueExitNodeEndpointName(): Promise<string> {
     }
 }
 
-
 export function generateName(): string {
     const name = (
-        names.descriptors[
-            randomInt(names.descriptors.length)
-        ] +
+        names.descriptors[randomInt(names.descriptors.length)] +
         "-" +
         names.animals[randomInt(names.animals.length)]
     )

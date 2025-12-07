@@ -25,32 +25,6 @@ import EditInternalResourceDialog from "@app/components/EditInternalResourceDial
 import { orgQueries } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 
-export type TargetHealth = {
-    targetId: number;
-    ip: string;
-    port: number;
-    enabled: boolean;
-    healthStatus?: "healthy" | "unhealthy" | "unknown";
-};
-
-export type ResourceRow = {
-    id: number;
-    nice: string | null;
-    name: string;
-    orgId: string;
-    domain: string;
-    authState: string;
-    http: boolean;
-    protocol: string;
-    proxyPort: number | null;
-    enabled: boolean;
-    domainId?: string;
-    ssl: boolean;
-    targetHost?: string;
-    targetPort?: number;
-    targets?: TargetHealth[];
-};
-
 export type InternalResourceRow = {
     id: number;
     name: string;
@@ -66,6 +40,7 @@ export type InternalResourceRow = {
     destination: string;
     // destinationPort: number | null;
     alias: string | null;
+    niceId: string;
 };
 
 type ClientResourcesTableProps = {
@@ -156,6 +131,28 @@ export default function ClientResourcesTable({
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
+            }
+        },
+        {
+            id: "niceId",
+            accessorKey: "niceId",
+            friendlyName: t("identifier"),
+            enableHiding: true,
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("identifier")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return <span>{row.original.niceId || "-"}</span>;
             }
         },
         {

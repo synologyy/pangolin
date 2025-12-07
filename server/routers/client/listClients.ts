@@ -128,7 +128,8 @@ function queryClients(orgId: string, accessibleClientIds: number[], filter?: "us
             olmVersion: olms.version,
             userId: clients.userId,
             username: users.username,
-            userEmail: users.email
+            userEmail: users.email,
+            niceId: clients.niceId
         })
         .from(clients)
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))

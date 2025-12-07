@@ -27,6 +27,8 @@ export async function verifyOrgAccess(
         );
     }
 
+    logger.debug(`Verifying access for user ${userId} to organization ${orgId}`);
+
     try {
         if (!req.userOrg) {
             const userOrgRes = await db
@@ -68,6 +70,10 @@ export async function verifyOrgAccess(
         // User has access, attach the user's role to the request for potential future use
         req.userOrgRoleId = req.userOrg.roleId;
         req.userOrgId = orgId;
+
+        logger.debug(
+            `User ${userId} has access to organization ${orgId} with role ${req.userOrg.roleId}`
+        );
         return next();
     } catch (e) {
         return next(

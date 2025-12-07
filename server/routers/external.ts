@@ -111,6 +111,7 @@ authenticated.get(
 authenticated.get(
     "/org/:orgId/site/:niceId",
     verifyOrgAccess,
+    verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
     site.getSite
 );
@@ -144,6 +145,14 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
+    verifyClientAccess,
+    verifyUserHasAction(ActionsEnum.getClient),
+    client.getClient
+);
+
+authenticated.get(
+    "/org/:orgId/client/:niceId",
+    verifyOrgAccess,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
@@ -458,6 +467,7 @@ authenticated.get(
 authenticated.get(
     "/org/:orgId/resource/:niceId",
     verifyOrgAccess,
+    verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.getResource),
     resource.getResource
 );

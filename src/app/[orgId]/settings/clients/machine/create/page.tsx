@@ -276,7 +276,7 @@ export default function Page() {
 
         if (res && res.status === 201) {
             const data = res.data.data;
-            router.push(`/${orgId}/settings/clients/machine/${data.clientId}`);
+            router.push(`/${orgId}/settings/clients/machine/${data.niceId}`);
         }
 
         setCreateLoading(false);

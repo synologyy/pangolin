@@ -56,7 +56,8 @@ export default async function ClientsPage(props: ClientsPageProps) {
             olmUpdateAvailable: client.olmUpdateAvailable || false,
             userId: client.userId,
             username: client.username,
-            userEmail: client.userEmail
+            userEmail: client.userEmail,
+            niceId: client.niceId
         };
     };
 

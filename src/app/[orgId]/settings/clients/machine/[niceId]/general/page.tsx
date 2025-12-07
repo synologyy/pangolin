@@ -34,7 +34,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const GeneralFormSchema = z.object({
-    name: z.string().nonempty("Name is required")
+    name: z.string().nonempty("Name is required"),
+    niceId: z.string().min(1).max(255).optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -49,7 +50,8 @@ export default function GeneralPage() {
     const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
-            name: client?.name
+            name: client?.name,
+            niceId: client?.niceId || ""
         },
         mode: "onChange"
     });
@@ -84,10 +86,11 @@ export default function GeneralPage() {
 
         try {
             await api.post(`/client/${client?.clientId}`, {
-                name: data.name
+                name: data.name,
+                niceId: data.niceId
             });
 
-            updateClient({ name: data.name });
+            updateClient({ name: data.name, niceId: data.niceId });
 
             toast({
                 title: t("clientUpdated"),
@@ -134,6 +137,28 @@ export default function GeneralPage() {
                                             <FormLabel>{t("name")}</FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="niceId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {t("identifier")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder={t(
+                                                        "enterIdentifier"
+                                                    )}
+                                                    className="flex-1"
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
