@@ -169,6 +169,7 @@ export const handleOlmServerPeerAddMessage: MessageHandler = async (
             type: "olm/wg/peer/add",
             data: {
                 siteId: site.siteId,
+                name: site.name,
                 endpoint: site.endpoint,
                 publicKey: site.publicKey,
                 serverIP: site.address,

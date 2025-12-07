@@ -275,6 +275,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
+            name: site.name,
             // relayEndpoint: relayEndpoint, // this can be undefined now if not relayed // lets not do this for now because it would conflict with the hole punch testing
             endpoint: site.endpoint,
             publicKey: site.publicKey,
