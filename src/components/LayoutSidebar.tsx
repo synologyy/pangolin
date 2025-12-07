@@ -154,7 +154,7 @@ export function LayoutSidebar({
                 </div>
             </div>
 
-            <div className="p-4 flex flex-col shrink-0">
+            <div className="p-4 pt-1 flex flex-col shrink-0">
                 {canShowProductUpdates && (
                     <div className="mb-3">
                         <ProductUpdates isCollapsed={isSidebarCollapsed} />

@@ -123,10 +123,9 @@ const addTargetSchema = z
         ip: z.string().refine(isTargetValid),
         method: z.string().nullable(),
         port: z.coerce.number<number>().int().positive(),
-        siteId: z.int()
-            .positive({
-                error: "You must select a site for a target."
-            }),
+        siteId: z.int().positive({
+            error: "You must select a site for a target."
+        }),
         path: z.string().optional().nullable(),
         pathMatchType: z
             .enum(["exact", "prefix", "regex"])
@@ -550,11 +549,11 @@ export default function ReverseProxyTargets(props: {
                     prev.map((t) =>
                         t.targetId === target.targetId
                             ? {
-                                ...t,
-                                targetId: response.data.data.targetId,
-                                new: false,
-                                updated: false
-                            }
+                                  ...t,
+                                  targetId: response.data.data.targetId,
+                                  new: false,
+                                  updated: false
+                              }
                             : t
                     )
                 );
@@ -611,16 +610,16 @@ export default function ReverseProxyTargets(props: {
 
         const newTarget: LocalTarget = {
             ...data,
-            path: isHttp ? (data.path || null) : null,
-            pathMatchType: isHttp ? (data.pathMatchType || null) : null,
-            rewritePath: isHttp ? (data.rewritePath || null) : null,
-            rewritePathType: isHttp ? (data.rewritePathType || null) : null,
+            path: isHttp ? data.path || null : null,
+            pathMatchType: isHttp ? data.pathMatchType || null : null,
+            rewritePath: isHttp ? data.rewritePath || null : null,
+            rewritePathType: isHttp ? data.rewritePathType || null : null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
             new: true,
             resourceId: resource.resourceId,
-            priority: isHttp ? (data.priority || 100) : 100,
+            priority: isHttp ? data.priority || 100 : 100,
             hcEnabled: false,
             hcPath: null,
             hcMethod: null,
@@ -635,7 +634,7 @@ export default function ReverseProxyTargets(props: {
             hcStatus: null,
             hcMode: null,
             hcUnhealthyInterval: null,
-            hcTlsServerName: null,
+            hcTlsServerName: null
         };
 
         setTargets([...targets, newTarget]);
@@ -657,11 +656,11 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...data,
-                        updated: true,
-                        siteType: site ? site.type : target.siteType
-                    }
+                          ...target,
+                          ...data,
+                          updated: true,
+                          siteType: site ? site.type : target.siteType
+                      }
                     : target
             )
         );
@@ -672,10 +671,10 @@ export default function ReverseProxyTargets(props: {
             targets.map((target) =>
                 target.targetId === targetId
                     ? {
-                        ...target,
-                        ...config,
-                        updated: true
-                    }
+                          ...target,
+                          ...config,
+                          updated: true
+                      }
                     : target
             )
         );
@@ -737,7 +736,7 @@ export default function ReverseProxyTargets(props: {
                     hcStatus: target.hcStatus || null,
                     hcUnhealthyInterval: target.hcUnhealthyInterval || null,
                     hcMode: target.hcMode || null,
-                    hcTlsServerName: target.hcTlsServerName,
+                    hcTlsServerName: target.hcTlsServerName
                 };
 
                 // Only include path-related fields for HTTP resources
@@ -837,7 +836,7 @@ export default function ReverseProxyTargets(props: {
         const priorityColumn: ColumnDef<LocalTarget> = {
             id: "priority",
             header: () => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 p-3">
                     {t("priority")}
                     <TooltipProvider>
                         <Tooltip>
@@ -881,7 +880,7 @@ export default function ReverseProxyTargets(props: {
 
         const healthCheckColumn: ColumnDef<LocalTarget> = {
             accessorKey: "healthCheck",
-            header: () => (<span className="p-3">{t("healthCheck")}</span>),
+            header: () => <span className="p-3">{t("healthCheck")}</span>,
             cell: ({ row }) => {
                 const status = row.original.hcHealth || "unknown";
                 const isEnabled = row.original.hcEnabled;
@@ -927,18 +926,16 @@ export default function ReverseProxyTargets(props: {
                         {row.original.siteType === "newt" ? (
                             <Button
                                 variant="outline"
-                                className="flex items-center justify-between gap-2 p-2 w-full text-left cursor-pointer"
+                                className="flex items-center gap-2 w-full text-left cursor-pointer"
                                 onClick={() =>
                                     openHealthCheckDialog(row.original)
                                 }
                             >
-                                <Badge variant={getStatusColor(status)}>
-                                    <div className="flex items-center gap-1">
-                                        {getStatusIcon(status)}
-                                        {getStatusText(status)}
-                                    </div>
-                                </Badge>
                                 <Settings className="h-4 w-4" />
+                                <div className="flex items-center gap-1">
+                                    {getStatusIcon(status)}
+                                    {getStatusText(status)}
+                                </div>
                             </Button>
                         ) : (
                             <span>-</span>
@@ -953,7 +950,7 @@ export default function ReverseProxyTargets(props: {
 
         const matchPathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "path",
-            header: () => (<span className="p-3">{t("matchPath")}</span>),
+            header: () => <span className="p-3">{t("matchPath")}</span>,
             cell: ({ row }) => {
                 const hasPathMatch = !!(
                     row.original.path || row.original.pathMatchType
@@ -1015,7 +1012,7 @@ export default function ReverseProxyTargets(props: {
 
         const addressColumn: ColumnDef<LocalTarget> = {
             accessorKey: "address",
-            header: () => (<span className="p-3">{t("address")}</span>),
+            header: () => <span className="p-3">{t("address")}</span>,
             cell: ({ row }) => {
                 const selectedSite = sites.find(
                     (site) => site.siteId === row.original.siteId
@@ -1068,7 +1065,7 @@ export default function ReverseProxyTargets(props: {
                                         className={cn(
                                             "w-[180px] justify-between text-sm border-r pr-4 rounded-none h-8 hover:bg-transparent",
                                             !row.original.siteId &&
-                                            "text-muted-foreground"
+                                                "text-muted-foreground"
                                         )}
                                     >
                                         <span className="truncate max-w-[150px]">
@@ -1136,8 +1133,12 @@ export default function ReverseProxyTargets(props: {
                                         {row.original.method || "http"}
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="http">http</SelectItem>
-                                        <SelectItem value="https">https</SelectItem>
+                                        <SelectItem value="http">
+                                            http
+                                        </SelectItem>
+                                        <SelectItem value="https">
+                                            https
+                                        </SelectItem>
                                         <SelectItem value="h2c">h2c</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -1151,7 +1152,7 @@ export default function ReverseProxyTargets(props: {
 
                             <Input
                                 defaultValue={row.original.ip}
-                                placeholder="IP / Hostname"
+                                placeholder="Host"
                                 className="flex-1 min-w-[120px] pl-0 border-none placeholder-gray-400"
                                 onBlur={(e) => {
                                     const input = e.target.value.trim();
@@ -1229,7 +1230,7 @@ export default function ReverseProxyTargets(props: {
 
         const rewritePathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "rewritePath",
-            header: () => (<span className="p-3">{t("rewritePath")}</span>),
+            header: () => <span className="p-3">{t("rewritePath")}</span>,
             cell: ({ row }) => {
                 const hasRewritePath = !!(
                     row.original.rewritePath || row.original.rewritePathType
@@ -1299,7 +1300,7 @@ export default function ReverseProxyTargets(props: {
 
         const enabledColumn: ColumnDef<LocalTarget> = {
             accessorKey: "enabled",
-            header: () => (<span className="p-3">{t("enabled")}</span>),
+            header: () => <span className="p-3">{t("enabled")}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-center w-full">
                     <Switch
@@ -1320,7 +1321,7 @@ export default function ReverseProxyTargets(props: {
 
         const actionsColumn: ColumnDef<LocalTarget> = {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center w-full">
                     <Button
@@ -1403,21 +1404,30 @@ export default function ReverseProxyTargets(props: {
                                                 <TableRow key={headerGroup.id}>
                                                     {headerGroup.headers.map(
                                                         (header) => {
-                                                            const isActionsColumn = header.column.id === "actions";
+                                                            const isActionsColumn =
+                                                                header.column
+                                                                    .id ===
+                                                                "actions";
                                                             return (
                                                                 <TableHead
-                                                                    key={header.id}
-                                                                    className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                    key={
+                                                                        header.id
+                                                                    }
+                                                                    className={
+                                                                        isActionsColumn
+                                                                            ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                            : ""
+                                                                    }
                                                                 >
                                                                     {header.isPlaceholder
                                                                         ? null
                                                                         : flexRender(
-                                                                            header
-                                                                                .column
-                                                                                .columnDef
-                                                                                .header,
-                                                                            header.getContext()
-                                                                        )}
+                                                                              header
+                                                                                  .column
+                                                                                  .columnDef
+                                                                                  .header,
+                                                                              header.getContext()
+                                                                          )}
                                                                 </TableHead>
                                                             );
                                                         }
@@ -1434,13 +1444,20 @@ export default function ReverseProxyTargets(props: {
                                                         {row
                                                             .getVisibleCells()
                                                             .map((cell) => {
-                                                                const isActionsColumn = cell.column.id === "actions";
+                                                                const isActionsColumn =
+                                                                    cell.column
+                                                                        .id ===
+                                                                    "actions";
                                                                 return (
                                                                     <TableCell
                                                                         key={
                                                                             cell.id
                                                                         }
-                                                                        className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                        className={
+                                                                            isActionsColumn
+                                                                                ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                                : ""
+                                                                        }
                                                                     >
                                                                         {flexRender(
                                                                             cell
@@ -1496,7 +1513,7 @@ export default function ReverseProxyTargets(props: {
                             </div>
                         </>
                     ) : (
-                        <div className="text-center py-8 border-2 border-dashed border-muted rounded-lg p-4">
+                        <div className="text-center p-4">
                             <p className="text-muted-foreground mb-4">
                                 {t("targetNoOne")}
                             </p>
@@ -1725,7 +1742,9 @@ export default function ReverseProxyTargets(props: {
                                                         defaultChecked={
                                                             field.value || false
                                                         }
-                                                        onCheckedChange={(val) => {
+                                                        onCheckedChange={(
+                                                            val
+                                                        ) => {
                                                             field.onChange(val);
                                                         }}
                                                     />
@@ -1734,19 +1753,37 @@ export default function ReverseProxyTargets(props: {
                                         )}
                                     />
 
-                                    {proxySettingsForm.watch("proxyProtocol") && (
+                                    {proxySettingsForm.watch(
+                                        "proxyProtocol"
+                                    ) && (
                                         <>
                                             <FormField
-                                                control={proxySettingsForm.control}
+                                                control={
+                                                    proxySettingsForm.control
+                                                }
                                                 name="proxyProtocolVersion"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>{t("proxyProtocolVersion")}</FormLabel>
+                                                        <FormLabel>
+                                                            {t(
+                                                                "proxyProtocolVersion"
+                                                            )}
+                                                        </FormLabel>
                                                         <FormControl>
                                                             <Select
-                                                                value={String(field.value || 1)}
-                                                                onValueChange={(value) =>
-                                                                    field.onChange(parseInt(value, 10))
+                                                                value={String(
+                                                                    field.value ||
+                                                                        1
+                                                                )}
+                                                                onValueChange={(
+                                                                    value
+                                                                ) =>
+                                                                    field.onChange(
+                                                                        parseInt(
+                                                                            value,
+                                                                            10
+                                                                        )
+                                                                    )
                                                                 }
                                                             >
                                                                 <SelectTrigger>
@@ -1754,16 +1791,22 @@ export default function ReverseProxyTargets(props: {
                                                                 </SelectTrigger>
                                                                 <SelectContent>
                                                                     <SelectItem value="1">
-                                                                        {t("version1")}
+                                                                        {t(
+                                                                            "version1"
+                                                                        )}
                                                                     </SelectItem>
                                                                     <SelectItem value="2">
-                                                                        {t("version2")}
+                                                                        {t(
+                                                                            "version2"
+                                                                        )}
                                                                     </SelectItem>
                                                                 </SelectContent>
                                                             </Select>
                                                         </FormControl>
                                                         <FormDescription>
-                                                            {t("versionDescription")}
+                                                            {t(
+                                                                "versionDescription"
+                                                            )}
                                                         </FormDescription>
                                                     </FormItem>
                                                 )}
@@ -1772,7 +1815,10 @@ export default function ReverseProxyTargets(props: {
                                             <Alert>
                                                 <AlertTriangle className="h-4 w-4" />
                                                 <AlertDescription>
-                                                    <strong>{t("warning")}:</strong> {t("proxyProtocolWarning")}
+                                                    <strong>
+                                                        {t("warning")}:
+                                                    </strong>{" "}
+                                                    {t("proxyProtocolWarning")}
                                                 </AlertDescription>
                                             </Alert>
                                         </>
@@ -1839,8 +1885,9 @@ export default function ReverseProxyTargets(props: {
                         hcUnhealthyInterval:
                             selectedTargetForHealthCheck.hcUnhealthyInterval ||
                             30,
-                        hcTlsServerName: selectedTargetForHealthCheck.hcTlsServerName ||
-                            undefined,
+                        hcTlsServerName:
+                            selectedTargetForHealthCheck.hcTlsServerName ||
+                            undefined
                     }}
                     onChanges={async (config) => {
                         if (selectedTargetForHealthCheck) {

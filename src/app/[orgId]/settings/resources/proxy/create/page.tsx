@@ -436,16 +436,16 @@ export default function Page() {
 
         const newTarget: LocalTarget = {
             ...data,
-            path: isHttp ? (data.path || null) : null,
-            pathMatchType: isHttp ? (data.pathMatchType || null) : null,
-            rewritePath: isHttp ? (data.rewritePath || null) : null,
-            rewritePathType: isHttp ? (data.rewritePathType || null) : null,
+            path: isHttp ? data.path || null : null,
+            pathMatchType: isHttp ? data.pathMatchType || null : null,
+            rewritePath: isHttp ? data.rewritePath || null : null,
+            rewritePathType: isHttp ? data.rewritePathType || null : null,
             siteType: site?.type || null,
             enabled: true,
             targetId: new Date().getTime(),
             new: true,
             resourceId: 0, // Will be set when resource is created
-            priority: isHttp ? (data.priority || 100) : 100, // Default priority
+            priority: isHttp ? data.priority || 100 : 100, // Default priority
             hcEnabled: false,
             hcPath: null,
             hcMethod: null,
@@ -511,7 +511,7 @@ export default function Page() {
         try {
             const payload = {
                 name: baseData.name,
-                http: baseData.http,
+                http: baseData.http
             };
 
             let sanitizedSubdomain: string | undefined;
@@ -581,7 +581,8 @@ export default function Page() {
                                 hcFollowRedirects:
                                     target.hcFollowRedirects || null,
                                 hcStatus: target.hcStatus || null,
-                                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                                hcUnhealthyInterval:
+                                    target.hcUnhealthyInterval || null,
                                 hcMode: target.hcMode || null,
                                 hcTlsServerName: target.hcTlsServerName
                             };
@@ -741,7 +742,7 @@ export default function Page() {
         const priorityColumn: ColumnDef<LocalTarget> = {
             id: "priority",
             header: () => (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 p-3">
                     {t("priority")}
                     <TooltipProvider>
                         <Tooltip>
@@ -784,7 +785,7 @@ export default function Page() {
 
         const healthCheckColumn: ColumnDef<LocalTarget> = {
             accessorKey: "healthCheck",
-            header: () => (<span className="p-3">{t("healthCheck")}</span>),
+            header: () => <span className="p-3">{t("healthCheck")}</span>,
             cell: ({ row }) => {
                 const status = row.original.hcHealth || "unknown";
                 const isEnabled = row.original.hcEnabled;
@@ -830,18 +831,16 @@ export default function Page() {
                         {row.original.siteType === "newt" ? (
                             <Button
                                 variant="outline"
-                                className="flex items-center justify-between gap-2 p-2 w-full text-left cursor-pointer"
+                                className="flex items-center gap-2 w-full text-left cursor-pointer"
                                 onClick={() =>
                                     openHealthCheckDialog(row.original)
                                 }
                             >
-                                <Badge variant={getStatusColor(status)}>
-                                    <div className="flex items-center gap-1">
-                                        {getStatusIcon(status)}
-                                        {getStatusText(status)}
-                                    </div>
-                                </Badge>
                                 <Settings className="h-4 w-4" />
+                                <div className="flex items-center gap-1">
+                                    {getStatusIcon(status)}
+                                    {getStatusText(status)}
+                                </div>
                             </Button>
                         ) : (
                             <span>-</span>
@@ -856,7 +855,7 @@ export default function Page() {
 
         const matchPathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "path",
-            header: () => (<span className="p-3">{t("matchPath")}</span>),
+            header: () => <span className="p-3">{t("matchPath")}</span>,
             cell: ({ row }) => {
                 const hasPathMatch = !!(
                     row.original.path || row.original.pathMatchType
@@ -918,7 +917,7 @@ export default function Page() {
 
         const addressColumn: ColumnDef<LocalTarget> = {
             accessorKey: "address",
-            header: () => (<span className="p-3">{t("address")}</span>),
+            header: () => <span className="p-3">{t("address")}</span>,
             cell: ({ row }) => {
                 const selectedSite = sites.find(
                     (site) => site.siteId === row.original.siteId
@@ -1039,8 +1038,12 @@ export default function Page() {
                                         {row.original.method || "http"}
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="http">http</SelectItem>
-                                        <SelectItem value="https">https</SelectItem>
+                                        <SelectItem value="http">
+                                            http
+                                        </SelectItem>
+                                        <SelectItem value="https">
+                                            https
+                                        </SelectItem>
                                         <SelectItem value="h2c">h2c</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -1054,7 +1057,7 @@ export default function Page() {
 
                             <Input
                                 defaultValue={row.original.ip}
-                                placeholder="IP / Hostname"
+                                placeholder="Host"
                                 className="flex-1 min-w-[120px] pl-0 border-none placeholder-gray-400"
                                 onBlur={(e) => {
                                     const input = e.target.value.trim();
@@ -1132,7 +1135,7 @@ export default function Page() {
 
         const rewritePathColumn: ColumnDef<LocalTarget> = {
             accessorKey: "rewritePath",
-            header: () => (<span className="p-3">{t("rewritePath")}</span>),
+            header: () => <span className="p-3">{t("rewritePath")}</span>,
             cell: ({ row }) => {
                 const hasRewritePath = !!(
                     row.original.rewritePath || row.original.rewritePathType
@@ -1202,7 +1205,7 @@ export default function Page() {
 
         const enabledColumn: ColumnDef<LocalTarget> = {
             accessorKey: "enabled",
-            header: () => (<span className="p-3">{t("enabled")}</span>),
+            header: () => <span className="p-3">{t("enabled")}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-center w-full">
                     <Switch
@@ -1223,7 +1226,7 @@ export default function Page() {
 
         const actionsColumn: ColumnDef<LocalTarget> = {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => (
                 <div className="flex items-center justify-end w-full">
                     <Button
@@ -1345,41 +1348,37 @@ export default function Page() {
                                             </form>
                                         </Form>
                                     </SettingsSectionForm>
+
+                                    {resourceTypes.length > 1 && (
+                                        <>
+                                            <div className="mb-2">
+                                                <span className="text-sm font-medium">
+                                                    {t("type")}
+                                                </span>
+                                            </div>
+
+                                            <StrategySelect
+                                                options={resourceTypes}
+                                                defaultValue="http"
+                                                onChange={(value) => {
+                                                    baseForm.setValue(
+                                                        "http",
+                                                        value === "http"
+                                                    );
+                                                    // Update method default when switching resource type
+                                                    addTargetForm.setValue(
+                                                        "method",
+                                                        value === "http"
+                                                            ? "http"
+                                                            : null
+                                                    );
+                                                }}
+                                                cols={2}
+                                            />
+                                        </>
+                                    )}
                                 </SettingsSectionBody>
                             </SettingsSection>
-
-                            {resourceTypes.length > 1 && (
-                                <SettingsSection>
-                                    <SettingsSectionHeader>
-                                        <SettingsSectionTitle>
-                                            {t("resourceType")}
-                                        </SettingsSectionTitle>
-                                        <SettingsSectionDescription>
-                                            {t("resourceTypeDescription")}
-                                        </SettingsSectionDescription>
-                                    </SettingsSectionHeader>
-                                    <SettingsSectionBody>
-                                        <StrategySelect
-                                            options={resourceTypes}
-                                            defaultValue="http"
-                                            onChange={(value) => {
-                                                baseForm.setValue(
-                                                    "http",
-                                                    value === "http"
-                                                );
-                                                // Update method default when switching resource type
-                                                addTargetForm.setValue(
-                                                    "method",
-                                                    value === "http"
-                                                        ? "http"
-                                                        : null
-                                                );
-                                            }}
-                                            cols={2}
-                                        />
-                                    </SettingsSectionBody>
-                                </SettingsSection>
-                            )}
 
                             {baseForm.watch("http") ? (
                                 <SettingsSection>
@@ -1426,146 +1425,98 @@ export default function Page() {
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
-                                        <SettingsSectionForm>
-                                            <Form {...tcpUdpForm}>
-                                                <form
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter") {
-                                                            e.preventDefault(); // block default enter refresh
-                                                        }
-                                                    }}
-                                                    className="space-y-4"
-                                                    id="tcp-udp-settings-form"
-                                                >
-                                                    <Controller
-                                                        control={
-                                                            tcpUdpForm.control
-                                                        }
-                                                        name="protocol"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "protocol"
-                                                                    )}
-                                                                </FormLabel>
-                                                                <Select
-                                                                    onValueChange={
-                                                                        field.onChange
-                                                                    }
-                                                                    {...field}
-                                                                >
-                                                                    <FormControl>
-                                                                        <SelectTrigger>
-                                                                            <SelectValue
-                                                                                placeholder={t(
-                                                                                    "protocolSelect"
-                                                                                )}
-                                                                            />
-                                                                        </SelectTrigger>
-                                                                    </FormControl>
-                                                                    <SelectContent>
-                                                                        <SelectItem value="tcp">
-                                                                            TCP
-                                                                        </SelectItem>
-                                                                        <SelectItem value="udp">
-                                                                            UDP
-                                                                        </SelectItem>
-                                                                    </SelectContent>
-                                                                </Select>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    <FormField
-                                                        control={
-                                                            tcpUdpForm.control
-                                                        }
-                                                        name="proxyPort"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    {t(
-                                                                        "resourcePortNumber"
-                                                                    )}
-                                                                </FormLabel>
+                                        <Form {...tcpUdpForm}>
+                                            <form
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        e.preventDefault(); // block default enter refresh
+                                                    }
+                                                }}
+                                                className="space-y-4 grid gap-4 grid-cols-1 md:grid-cols-2 items-start"
+                                                id="tcp-udp-settings-form"
+                                            >
+                                                <Controller
+                                                    control={tcpUdpForm.control}
+                                                    name="protocol"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t("protocol")}
+                                                            </FormLabel>
+                                                            <Select
+                                                                onValueChange={
+                                                                    field.onChange
+                                                                }
+                                                                {...field}
+                                                            >
                                                                 <FormControl>
-                                                                    <Input
-                                                                        type="number"
-                                                                        value={
-                                                                            field.value ??
-                                                                            ""
-                                                                        }
-                                                                        onChange={(
-                                                                            e
-                                                                        ) =>
-                                                                            field.onChange(
-                                                                                e
-                                                                                    .target
-                                                                                    .value
-                                                                                    ? parseInt(
-                                                                                          e
-                                                                                              .target
-                                                                                              .value
-                                                                                      )
-                                                                                    : undefined
-                                                                            )
-                                                                        }
-                                                                    />
-                                                                </FormControl>
-                                                                <FormMessage />
-                                                                <FormDescription>
-                                                                    {t(
-                                                                        "resourcePortNumberDescription"
-                                                                    )}
-                                                                </FormDescription>
-                                                            </FormItem>
-                                                        )}
-                                                    />
-
-                                                    {/* {build == "oss" && (
-                                                        <FormField
-                                                            control={
-                                                                tcpUdpForm.control
-                                                            }
-                                                            name="enableProxy"
-                                                            render={({
-                                                                field
-                                                            }) => (
-                                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                                                    <FormControl>
-                                                                        <Checkbox
-                                                                            variant={
-                                                                                "outlinePrimarySquare"
-                                                                            }
-                                                                            checked={
-                                                                                field.value
-                                                                            }
-                                                                            onCheckedChange={
-                                                                                field.onChange
-                                                                            }
+                                                                    <SelectTrigger>
+                                                                        <SelectValue
+                                                                            placeholder={t(
+                                                                                "protocolSelect"
+                                                                            )}
                                                                         />
-                                                                    </FormControl>
-                                                                    <div className="space-y-1 leading-none">
-                                                                        <FormLabel>
-                                                                            {t(
-                                                                                "resourceEnableProxy"
-                                                                            )}
-                                                                        </FormLabel>
-                                                                        <FormDescription>
-                                                                            {t(
-                                                                                "resourceEnableProxyDescription"
-                                                                            )}
-                                                                        </FormDescription>
-                                                                    </div>
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    )} */}
-                                                </form>
-                                            </Form>
-                                        </SettingsSectionForm>
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent>
+                                                                    <SelectItem value="tcp">
+                                                                        TCP
+                                                                    </SelectItem>
+                                                                    <SelectItem value="udp">
+                                                                        UDP
+                                                                    </SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+
+                                                <FormField
+                                                    control={tcpUdpForm.control}
+                                                    name="proxyPort"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <FormLabel>
+                                                                {t(
+                                                                    "resourcePortNumber"
+                                                                )}
+                                                            </FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={
+                                                                        field.value ??
+                                                                        ""
+                                                                    }
+                                                                    onChange={(
+                                                                        e
+                                                                    ) =>
+                                                                        field.onChange(
+                                                                            e
+                                                                                .target
+                                                                                .value
+                                                                                ? parseInt(
+                                                                                      e
+                                                                                          .target
+                                                                                          .value
+                                                                                  )
+                                                                                : undefined
+                                                                        )
+                                                                    }
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                            <FormDescription>
+                                                                {t(
+                                                                    "resourcePortNumberDescription"
+                                                                )}
+                                                            </FormDescription>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </form>
+                                        </Form>
                                     </SettingsSectionBody>
                                 </SettingsSection>
                             )}
@@ -1600,13 +1551,21 @@ export default function Page() {
                                                                             (
                                                                                 header
                                                                             ) => {
-                                                                                const isActionsColumn = header.column.id === "actions";
+                                                                                const isActionsColumn =
+                                                                                    header
+                                                                                        .column
+                                                                                        .id ===
+                                                                                    "actions";
                                                                                 return (
                                                                                     <TableHead
                                                                                         key={
                                                                                             header.id
                                                                                         }
-                                                                                        className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                                        className={
+                                                                                            isActionsColumn
+                                                                                                ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                                                : ""
+                                                                                        }
                                                                                     >
                                                                                         {header.isPlaceholder
                                                                                             ? null
@@ -1643,13 +1602,21 @@ export default function Page() {
                                                                                     (
                                                                                         cell
                                                                                     ) => {
-                                                                                        const isActionsColumn = cell.column.id === "actions";
+                                                                                        const isActionsColumn =
+                                                                                            cell
+                                                                                                .column
+                                                                                                .id ===
+                                                                                            "actions";
                                                                                         return (
                                                                                             <TableCell
                                                                                                 key={
                                                                                                     cell.id
                                                                                                 }
-                                                                                                className={isActionsColumn ? "sticky right-0 z-10 w-auto min-w-fit bg-card" : ""}
+                                                                                                className={
+                                                                                                    isActionsColumn
+                                                                                                        ? "sticky right-0 z-10 w-auto min-w-fit bg-card"
+                                                                                                        : ""
+                                                                                                }
                                                                                             >
                                                                                                 {flexRender(
                                                                                                     cell
@@ -1715,7 +1682,7 @@ export default function Page() {
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="text-center py-8 border-2 border-dashed border-muted rounded-lg p-4">
+                                        <div className="text-center p-4">
                                             <p className="text-muted-foreground mb-4">
                                                 {t("targetNoOne")}
                                             </p>

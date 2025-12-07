@@ -40,6 +40,8 @@ export type ClientRow = {
     userId: string | null;
     username: string | null;
     userEmail: string | null;
+    niceId: string;
+    agent: string | null;
 };
 
 type ClientTableProps = {
@@ -60,8 +62,8 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
     const [isRefreshing, startTransition] = useTransition();
 
     const defaultUserColumnVisibility = {
-        client: false,
-        subnet: false
+        subnet: false,
+        niceId: false
     };
 
     const refreshData = () => {
@@ -118,6 +120,25 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                             }
                         >
                             Name
+                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    );
+                }
+            },
+            {
+                accessorKey: "niceId",
+                friendlyName: t("identifier"),
+                header: ({ column }) => {
+                    return (
+                        <Button
+                            variant="ghost"
+                            onClick={() =>
+                                column.toggleSorting(
+                                    column.getIsSorted() === "asc"
+                                )
+                            }
+                        >
+                            {t("identifier")}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
                     );
@@ -261,7 +282,7 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
             },
             {
                 accessorKey: "client",
-                friendlyName: t("client"),
+                friendlyName: t("agent"),
                 header: ({ column }) => {
                     return (
                         <Button
@@ -272,7 +293,7 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                                 )
                             }
                         >
-                            {t("client")}
+                            {t("agent")}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
                     );
@@ -282,19 +303,19 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
 
                     return (
                         <div className="flex items-center space-x-1">
-                            <Badge variant="secondary">
-                                <div className="flex items-center space-x-2">
-                                    <span>Olm</span>
-                                    {originalRow.olmVersion && (
-                                        <span className="text-xs text-gray-500">
-                                            v{originalRow.olmVersion}
-                                        </span>
-                                    )}
-                                </div>
-                            </Badge>
-                            {originalRow.olmUpdateAvailable && (
-                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            {originalRow.agent && originalRow.olmVersion ? (
+                                <Badge variant="secondary">
+                                    {originalRow.agent +
+                                        " v" +
+                                        originalRow.olmVersion}
+                                </Badge>
+                            ) : (
+                                "-"
                             )}
+
+                            {/*originalRow.olmUpdateAvailable && (
+                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            )*/}
                         </div>
                     );
                 }
@@ -320,62 +341,52 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
             }
         ];
 
-        // Only include actions column if there are rows without userIds
-        if (hasRowsWithoutUserId) {
-            baseColumns.push({
-                id: "actions",
-                enableHiding: false,
-                header: () => <span className="p-3"></span>,
-                cell: ({ row }) => {
-                    const clientRow = row.original;
-                    return !clientRow.userId ? (
-                        <div className="flex items-center gap-2 justify-end">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <span className="sr-only">
-                                            Open menu
-                                        </span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    {/* <Link */}
-                                    {/*     className="block w-full" */}
-                                    {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
-                                    {/* > */}
-                                    {/*     <DropdownMenuItem> */}
-                                    {/*         View settings */}
-                                    {/*     </DropdownMenuItem> */}
-                                    {/* </Link> */}
-                                    <DropdownMenuItem
-                                        onClick={() => {
-                                            setSelectedClient(clientRow);
-                                            setIsDeleteModalOpen(true);
-                                        }}
-                                    >
-                                        <span className="text-red-500">
-                                            Delete
-                                        </span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Link
-                                href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
-                            >
-                                <Button variant={"outline"}>
-                                    Edit
-                                    <ArrowRight className="ml-2 w-4 h-4" />
+        baseColumns.push({
+            id: "actions",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
+            cell: ({ row }) => {
+                const clientRow = row.original;
+                return !clientRow.userId ? (
+                    <div className="flex items-center gap-2 justify-end">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
                                 </Button>
-                            </Link>
-                        </div>
-                    ) : null;
-                }
-            });
-        }
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {/* <Link */}
+                                {/*     className="block w-full" */}
+                                {/*     href={`/${clientRow.orgId}/settings/sites/${clientRow.nice}`} */}
+                                {/* > */}
+                                {/*     <DropdownMenuItem> */}
+                                {/*         View settings */}
+                                {/*     </DropdownMenuItem> */}
+                                {/* </Link> */}
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setSelectedClient(clientRow);
+                                        setIsDeleteModalOpen(true);
+                                    }}
+                                >
+                                    <span className="text-red-500">Delete</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Link
+                            href={`/${clientRow.orgId}/settings/clients/${clientRow.id}`}
+                        >
+                            <Button variant={"outline"}>
+                                Edit
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
+                    </div>
+                ) : null;
+            }
+        });
 
         return baseColumns;
     }, [hasRowsWithoutUserId, t]);
