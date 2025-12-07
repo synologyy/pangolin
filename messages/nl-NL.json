@@ -181,7 +181,7 @@
     "baseDomain": "Basis domein",
     "subdomnainDescription": "Het subdomein waar de bron toegankelijk zal zijn.",
     "resourceRawSettings": "TCP/UDP instellingen",
-    "resourceRawSettingsDescription": "Stel in hoe de bron wordt benaderd via TCP/UDP. Je gooit de bron toe aan een poort op de host-Pangolin server, zodat je de bron kan bereiken vanaf server-public-ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protocol",
     "protocolSelect": "Selecteer een protocol",
     "resourcePortNumber": "Nummer van poort",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Proxyinstellingen zijn succesvol bijgewerkt",
     "proxyErrorUpdate": "Bijwerken van proxy-instellingen mislukt",
     "proxyErrorUpdateDescription": "Fout opgetreden tijdens het bijwerken van de proxy-instellingen",
-    "targetAddr": "IP / Hostnaam",
+    "targetAddr": "Host",
     "targetPort": "Poort",
     "targetProtocol": "Protocol",
     "targetTlsSettings": "HTTPS & TLS instellingen",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 dagen",
     "logRetention90Days": "90 dagen",
     "logRetentionForever": "Voor altijd",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Bekijk een geschiedenis van acties die worden uitgevoerd in deze organisatie",
     "accessLogsDescription": "Toegangsverificatieverzoeken voor resources in deze organisatie bekijken",
     "licenseRequiredToUse": "Een Enterprise-licentie is vereist om deze functie te gebruiken.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Weet u zeker dat u de inloggegevens opnieuw wilt genereren en deze afstandsbediening wilt loskoppelen?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Dit zal de referenties regenereren en onmiddellijk de externe exit node ontkoppelen. Het externe exit node zal opnieuw moeten worden gestart met de nieuwe referenties.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Weet u zeker dat u de referenties voor deze externe exit node opnieuw wilt genereren?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Dit zal de referenties opnieuw genereren. De remote exit node zal verbonden blijven totdat u deze handmatig herstart en de nieuwe referenties gebruikt."
+    "remoteExitNodeRegenerateCredentialsWarning": "Dit zal de referenties opnieuw genereren. De remote exit node zal verbonden blijven totdat u deze handmatig herstart en de nieuwe referenties gebruikt.",
+    "agent": "Agent"
 }
