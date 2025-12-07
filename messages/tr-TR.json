@@ -181,7 +181,7 @@
     "baseDomain": "Temel Alan Adı",
     "subdomnainDescription": "Kaynağınızın erişilebileceği alt alan adı.",
     "resourceRawSettings": "TCP/UDP Ayarları",
-    "resourceRawSettingsDescription": "TCP/UDP üzerinden kaynağa erişimin nasıl sağlanacağını yapılandırın. Kaynağı ana bilgisayar Pangolin sunucusundaki bir porta eşlersiniz, böylece kaynağa server-public-ip:mapped-port üzerinden erişebilirsiniz.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protokol",
     "protocolSelect": "Bir protokol seçin",
     "resourcePortNumber": "Port Numarası",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Proxy ayarları başarıyla güncellendi",
     "proxyErrorUpdate": "Proxy ayarları güncellenemedi",
     "proxyErrorUpdateDescription": "Proxy ayarlarını güncellerken bir hata oluştu",
-    "targetAddr": "IP / Hostname",
+    "targetAddr": "Host",
     "targetPort": "Bağlantı Noktası",
     "targetProtocol": "Protokol",
     "targetTlsSettings": "HTTPS & TLS Settings",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 gün",
     "logRetention90Days": "90 gün",
     "logRetentionForever": "Sonsuza kadar",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Bu organizasyondaki eylemler geçmişini görüntüleyin",
     "accessLogsDescription": "Bu organizasyondaki kaynaklar için erişim kimlik doğrulama isteklerini görüntüleyin",
     "licenseRequiredToUse": "Bu özelliği kullanmak için bir kurumsal lisans gereklidir.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Kimlik bilgilerini yeniden oluşturmak ve bu uzak çıkış düğümünün bağlantısını kesmek istediğinizden emin misiniz?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Bu, kimlik bilgilerini yeniden oluşturacak ve hemen uzak çıkış düğümünün bağlantısını kesecek. Uzak çıkış düğümü, yeni kimlik bilgileri ile yeniden başlatılmalıdır.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Bu uzak çıkış düğümü için kimlik bilgilerini yeniden oluşturmak istediğinizden emin misiniz?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Bu, kimlik bilgilerini yeniden oluşturacak. Uzak çıkış düğümü, manuel olarak yeniden başlatılana ve yeni kimlik bilgiler kullanılana kadar bağlı kalacak."
+    "remoteExitNodeRegenerateCredentialsWarning": "Bu, kimlik bilgilerini yeniden oluşturacak. Uzak çıkış düğümü, manuel olarak yeniden başlatılana ve yeni kimlik bilgiler kullanılana kadar bağlı kalacak.",
+    "agent": "Agent"
 }
