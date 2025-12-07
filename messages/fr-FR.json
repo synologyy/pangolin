@@ -181,7 +181,7 @@
     "baseDomain": "Domaine racine",
     "subdomnainDescription": "Le sous-domaine où la ressource sera accessible.",
     "resourceRawSettings": "Paramètres TCP/UDP",
-    "resourceRawSettingsDescription": "Configurer comment la ressource sera accédée via TCP/UDP. Vous mappez la ressource à un port sur le serveur Pangolin, de sorte que vous puissiez accéder à la ressource depuis server-public-ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protocole",
     "protocolSelect": "Choisir un protocole",
     "resourcePortNumber": "Numéro de port",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Les paramètres du proxy ont été mis à jour avec succès",
     "proxyErrorUpdate": "Échec de la mise à jour des paramètres du proxy",
     "proxyErrorUpdateDescription": "Une erreur s'est produite lors de la mise à jour des paramètres du proxy",
-    "targetAddr": "IP / Nom d'hôte",
+    "targetAddr": "Host",
     "targetPort": "Port",
     "targetProtocol": "Protocole",
     "targetTlsSettings": "Configuration sécurisée de connexion",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 jours",
     "logRetention90Days": "90 jours",
     "logRetentionForever": "Pour toujours",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Voir l'historique des actions effectuées dans cette organisation",
     "accessLogsDescription": "Voir les demandes d'authentification d'accès aux ressources de cette organisation",
     "licenseRequiredToUse": "Une licence Entreprise est nécessaire pour utiliser cette fonctionnalité.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Êtes-vous sûr de vouloir régénérer les identifiants et déconnecter ce noeud de sortie distant ?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Cela va régénérer les identifiants et déconnecter immédiatement le noeud de sortie distant. Le noeud de sortie distant devra être redémarré avec les nouveaux identifiants.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Êtes-vous sûr de vouloir régénérer les informations d'identification pour ce noeud de sortie distant ?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Cela va régénérer les identifiants. Le noeud de sortie distant restera connecté jusqu'à ce que vous le redémarriez manuellement et utilisez les nouveaux identifiants."
+    "remoteExitNodeRegenerateCredentialsWarning": "Cela va régénérer les identifiants. Le noeud de sortie distant restera connecté jusqu'à ce que vous le redémarriez manuellement et utilisez les nouveaux identifiants.",
+    "agent": "Agent"
 }
