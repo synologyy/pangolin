@@ -5,7 +5,6 @@ import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
-import logger from "@server/logger";
 
 export async function verifyOrgAccess(
     req: Request,
@@ -26,8 +25,6 @@ export async function verifyOrgAccess(
             createHttpError(HttpCode.BAD_REQUEST, "Invalid organization ID")
         );
     }
-
-    logger.debug(`Verifying access for user ${userId} to organization ${orgId}`);
 
     try {
         if (!req.userOrg) {
@@ -71,9 +68,6 @@ export async function verifyOrgAccess(
         req.userOrgRoleId = req.userOrg.roleId;
         req.userOrgId = orgId;
 
-        logger.debug(
-            `User ${userId} has access to organization ${orgId} with role ${req.userOrg.roleId}`
-        );
         return next();
     } catch (e) {
         return next(
