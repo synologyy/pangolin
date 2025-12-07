@@ -181,7 +181,7 @@
     "baseDomain": "Bazowa domena",
     "subdomnainDescription": "Poddomena, w której zasób będzie dostępny.",
     "resourceRawSettings": "Ustawienia TCP/UDP",
-    "resourceRawSettingsDescription": "Skonfiguruj jak zasób będzie dostępny przez TCP/UDP. Zmapujesz zasób do portu na serwerze hosta Pangolin, dzięki czemu możesz uzyskać dostęp do zasobu z serwera-public ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protokół",
     "protocolSelect": "Wybierz protokół",
     "resourcePortNumber": "Numer portu",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Ustawienia proxy zostały pomyślnie zaktualizowane",
     "proxyErrorUpdate": "Nie udało się zaktualizować ustawień proxy",
     "proxyErrorUpdateDescription": "Wystąpił błąd podczas aktualizacji ustawień proxy",
-    "targetAddr": "IP / Nazwa hosta",
+    "targetAddr": "Host",
     "targetPort": "Port",
     "targetProtocol": "Protokół",
     "targetTlsSettings": "Konfiguracja bezpiecznego połączenia",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 dni",
     "logRetention90Days": "90 dni",
     "logRetentionForever": "Na zawsze",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Zobacz historię działań wykonywanych w tej organizacji",
     "accessLogsDescription": "Wyświetl prośby o autoryzację dostępu do zasobów w tej organizacji",
     "licenseRequiredToUse": "Licencja Enterprise jest wymagana do korzystania z tej funkcji.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Czy na pewno chcesz odzyskać dane logowania i odłączyć ten węzeł zdalnego wyjścia?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Spowoduje to regenerację danych logowania i natychmiastowe odłączenie zdalnego węzła wyjścia. Węzeł zdalnego wyjścia będzie musiał zostać ponownie uruchomiony z nowymi danymi logowania.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Czy na pewno chcesz wygenerować dane logowania dla tego węzła zdalnego wyjścia?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Spowoduje to regenerację poświadczeń. Serwer wyjścia pozostanie podłączony do momentu ręcznego ponownego uruchomienia i użycia nowych poświadczeń."
+    "remoteExitNodeRegenerateCredentialsWarning": "Spowoduje to regenerację poświadczeń. Serwer wyjścia pozostanie podłączony do momentu ręcznego ponownego uruchomienia i użycia nowych poświadczeń.",
+    "agent": "Agent"
 }
