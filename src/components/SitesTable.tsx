@@ -231,7 +231,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "type",
-            friendlyName: t("connectionType"),
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -240,7 +240,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t("connectionType")}
+                        {t("type")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -252,12 +252,10 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                     return (
                         <div className="flex items-center space-x-1">
                             <Badge variant="secondary">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
                                     <span>Newt</span>
                                     {originalRow.newtVersion && (
-                                        <span className="text-xs text-gray-500">
-                                            v{originalRow.newtVersion}
-                                        </span>
+                                        <span>v{originalRow.newtVersion}</span>
                                     )}
                                 </div>
                             </Badge>
