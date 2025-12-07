@@ -181,7 +181,7 @@
     "baseDomain": "Dominio base",
     "subdomnainDescription": "El subdominio al que el recurso será accesible.",
     "resourceRawSettings": "Configuración TCP/UDP",
-    "resourceRawSettingsDescription": "Configurar cómo se accederá al recurso a través de TCP/UDP. Mapeas el recurso a un puerto en el servidor Pangolin host, así puedes acceder al recurso desde el servidor-public-ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protocolo",
     "protocolSelect": "Seleccionar un protocolo",
     "resourcePortNumber": "Número de puerto",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "La configuración del proxy se ha actualizado correctamente",
     "proxyErrorUpdate": "Error al actualizar la configuración del proxy",
     "proxyErrorUpdateDescription": "Se ha producido un error al actualizar la configuración del proxy",
-    "targetAddr": "IP / Nombre del host",
+    "targetAddr": "Host",
     "targetPort": "Puerto",
     "targetProtocol": "Protocolo",
     "targetTlsSettings": "Configuración de conexión segura",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 días",
     "logRetention90Days": "90 días",
     "logRetentionForever": "Para siempre",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Ver un historial de acciones realizadas en esta organización",
     "accessLogsDescription": "Ver solicitudes de acceso a los recursos de esta organización",
     "licenseRequiredToUse": "Se requiere una licencia Enterprise para utilizar esta función.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "¿Estás seguro de que quieres regenerar las credenciales y desconectar este nodo de salida remoto?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Esto regenerará las credenciales y desconectará inmediatamente el nodo de salida remoto. El nodo de salida remoto tendrá que reiniciarse con las nuevas credenciales.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "¿Estás seguro de que quieres regenerar las credenciales para este nodo de salida remoto?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Esto regenerará las credenciales. El nodo de salida remoto permanecerá conectado hasta que lo reinicie manualmente y utilice las nuevas credenciales."
+    "remoteExitNodeRegenerateCredentialsWarning": "Esto regenerará las credenciales. El nodo de salida remoto permanecerá conectado hasta que lo reinicie manualmente y utilice las nuevas credenciales.",
+    "agent": "Agent"
 }
