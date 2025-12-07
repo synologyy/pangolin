@@ -271,6 +271,11 @@ export default async function migration() {
             const insertClientSiteResource = db.prepare(
                 `INSERT INTO 'clientSiteResources' ('clientId', 'siteResourceId') VALUES (?, ?)`
             );
+
+            // clear the clientSiteResourcesAssociationsCache and clientSitesAssociationsCache tables to prepare for repopulation
+            db.prepare(`DELETE FROM 'clientSiteResourcesAssociationsCache';`).run();
+            db.prepare(`DELETE FROM 'clientSitesAssociationsCache';`).run();
+
             const insertClientSiteResourceAssocCache = db.prepare(
                 `INSERT INTO 'clientSiteResourcesAssociationsCache' ('clientId', 'siteResourceId') VALUES (?, ?)`
             );
