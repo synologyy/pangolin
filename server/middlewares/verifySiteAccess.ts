@@ -76,7 +76,7 @@ export async function verifySiteAccess(
                 .select()
                 .from(userOrgs)
                 .where(
-                    and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, orgId))
+                    and(eq(userOrgs.userId, userId), eq(userOrgs.orgId, site.orgId))
                 )
                 .limit(1);
             req.userOrg = userOrgRole[0];
