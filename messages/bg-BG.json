@@ -181,7 +181,7 @@
     "baseDomain": "Базов домейн",
     "subdomnainDescription": "Поддомейнът, където ресурсът ще бъде достъпен.",
     "resourceRawSettings": "TCP/UDP настройки",
-    "resourceRawSettingsDescription": "Конфигурирайте как ресурсът ще бъде достъпен по TCP/UDP. Вие картографирате ресурса към порт на хоста на Pangolin сървъра, така че да можете да достъпите ресурса от ip-сървър:пост.модер.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Протокол",
     "protocolSelect": "Изберете протокол",
     "resourcePortNumber": "Номер на порт",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Настройките за прокси бяха успешно актуализирани",
     "proxyErrorUpdate": "Неуспешно актуализиране на настройки на прокси",
     "proxyErrorUpdateDescription": "Възникна грешка при актуализиране на настройки на прокси",
-    "targetAddr": "IP / Хост име",
+    "targetAddr": "Host",
     "targetPort": "Порт",
     "targetProtocol": "Протокол",
     "targetTlsSettings": "Конфигурация на защитена връзка",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 дни",
     "logRetention90Days": "90 дни",
     "logRetentionForever": "Завинаги",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Прегледайте историята на действията, извършени в тази организация",
     "accessLogsDescription": "Прегледайте заявките за удостоверяване на достъпа до ресурсите в тази организация",
     "licenseRequiredToUse": "Необходим е лиценз Enterprise, за да се използва тази функция.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Сигурни ли сте, че искате да генерирате нови удостоверителни данни и да прекъснете връзката на този отдалечен възел?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Това ще генерира нови удостоверителни данни и незабавно ще прекъсне връзката на отдалечения възел. Отдалеченият възел ще трябва да се рестартира с новите удостоверителни данни.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Сигурни ли сте, че искате да генерирате новите удостоверителни данни за този отдалечен възел?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Това ще генерира нови удостоверителни данни. Отдалеченият възел ще остане свързан, докато не го рестартирате ръчно и използвате новите удостоверителни данни."
+    "remoteExitNodeRegenerateCredentialsWarning": "Това ще генерира нови удостоверителни данни. Отдалеченият възел ще остане свързан, докато не го рестартирате ръчно и използвате новите удостоверителни данни.",
+    "agent": "Agent"
 }
