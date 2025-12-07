@@ -181,7 +181,7 @@
     "baseDomain": "Domínio Base",
     "subdomnainDescription": "O subdomínio onde o recurso será acessível.",
     "resourceRawSettings": "Configurações TCP/UDP",
-    "resourceRawSettingsDescription": "Configure como o recurso será acessado sobre TCP/UDP. Você mapeia o recurso para uma porta no servidor Pangolin do hospedeiro, para que você possa acessar o recurso do server-public-ip:mapped-port.",
+    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
     "protocol": "Protocolo",
     "protocolSelect": "Selecione um protocolo",
     "resourcePortNumber": "Número da Porta",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "Configurações de proxy atualizadas com sucesso",
     "proxyErrorUpdate": "Falha ao atualizar configurações de proxy",
     "proxyErrorUpdateDescription": "Ocorreu um erro ao atualizar as configurações de proxy",
-    "targetAddr": "IP / Nome do Host",
+    "targetAddr": "Host",
     "targetPort": "Porta",
     "targetProtocol": "Protocolo",
     "targetTlsSettings": "Configuração de conexão segura",
@@ -2108,6 +2108,7 @@
     "logRetention30Days": "30 dias",
     "logRetention90Days": "90 dias",
     "logRetentionForever": "Permanentemente",
+    "logRetentionEndOfFollowingYear": "End of following year",
     "actionLogsDescription": "Visualizar histórico de ações realizadas nesta organização",
     "accessLogsDescription": "Ver solicitações de autenticação de recursos nesta organização",
     "licenseRequiredToUse": "É necessária uma licença empresarial para usar esse recurso.",
@@ -2268,5 +2269,6 @@
     "remoteExitNodeRegenerateAndDisconnectConfirmation": "Tem certeza que deseja regenerar as credenciais e desconectar este nó de saída remota?",
     "remoteExitNodeRegenerateAndDisconnectWarning": "Isto irá regenerar as credenciais e desconectar imediatamente o nó de saída remota. O nó de saída remota precisará ser reiniciado com as novas credenciais.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Você tem certeza que deseja regenerar as credenciais para este nó de saída remota?",
-    "remoteExitNodeRegenerateCredentialsWarning": "Isto irá regenerar as credenciais. O nó de saída remota permanecerá conectado até que você o reinicie manualmente e use as novas credenciais."
+    "remoteExitNodeRegenerateCredentialsWarning": "Isto irá regenerar as credenciais. O nó de saída remota permanecerá conectado até que você o reinicie manualmente e use as novas credenciais.",
+    "agent": "Agent"
 }
