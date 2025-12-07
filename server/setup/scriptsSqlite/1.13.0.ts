@@ -256,66 +256,45 @@ export default async function migration() {
                 `ALTER TABLE 'sites' DROP COLUMN 'remoteSubnets';`
             ).run();
 
-            // Associate all clients with each site resource
-            const clients = db
-                .prepare(`SELECT clientId FROM 'clients'`)
+            // Associate clients with site resources based on their previous site access
+            // Get all client-site associations from the renamed clientSitesAssociationsCache table
+            const clientSiteAssociations = db
+                .prepare(`SELECT clientId, siteId FROM 'clientSitesAssociationsCache'`)
                 .all() as {
                 clientId: number;
+                siteId: number;
             }[];
-            const siteResources = db
-                .prepare(`SELECT siteResourceId FROM 'siteResources'`)
-                .all() as {
-                siteResourceId: number;
-            }[];
+
+            const getSiteResources = db.prepare(
+                `SELECT siteResourceId FROM 'siteResources' WHERE siteId = ?`
+            );
 
             const insertClientSiteResource = db.prepare(
                 `INSERT INTO 'clientSiteResources' ('clientId', 'siteResourceId') VALUES (?, ?)`
             );
 
-            // clear the clientSiteResourcesAssociationsCache and clientSitesAssociationsCache tables to prepare for repopulation
-            db.prepare(`DELETE FROM 'clientSiteResourcesAssociationsCache';`).run();
-            db.prepare(`DELETE FROM 'clientSitesAssociationsCache';`).run();
+            // For each client-site association, find all site resources for that site
+            for (const association of clientSiteAssociations) {
+                const siteResources = getSiteResources.all(
+                    association.siteId
+                ) as {
+                    siteResourceId: number;
+                }[];
 
-            const insertClientSiteResourceAssocCache = db.prepare(
-                `INSERT INTO 'clientSiteResourcesAssociationsCache' ('clientId', 'siteResourceId') VALUES (?, ?)`
-            );
-            const insertClientSiteAssocCache = db.prepare(
-                `INSERT INTO 'clientSitesAssociationsCache' ('clientId', 'siteId', 'isRelayed', 'endpoint', 'publicKey') VALUES (?, ?, false, NULL, NULL)`
-            );
-
-            for (const client of clients) {
+                // Associate the client with all site resources from this site
                 for (const siteResource of siteResources) {
                     insertClientSiteResource.run(
-                        client.clientId,
+                        association.clientId,
                         siteResource.siteResourceId
                     );
-                    insertClientSiteResourceAssocCache.run(
-                        client.clientId,
-                        siteResource.siteResourceId
-                    );
-                    // check if clientSitesAssociationsCache already has an entry for this clientId and siteId
-                    const siteIdRow = db
-                        .prepare(
-                            `SELECT siteId FROM 'siteResources' WHERE siteResourceId = ? LIMIT 1`
-                        )
-                        .get(siteResource.siteResourceId) as { siteId: number };
-                    const existing = db
-                        .prepare(
-                            `SELECT 1 FROM 'clientSitesAssociationsCache' WHERE clientId = ? AND siteId = ? LIMIT 1`
-                        )
-                        .get(client.clientId, siteIdRow.siteId);
-                    if (!existing) {
-                        insertClientSiteAssocCache.run(
-                            client.clientId,
-                            siteIdRow.siteId
-                        );
-                    }
                 }
             }
 
             // Associate existing site resources with their org's admin role
             const siteResourcesWithOrg = db
-                .prepare(`SELECT siteResourceId, orgId FROM 'siteResources'`)
+                .prepare(
+                    `SELECT siteResourceId, orgId FROM 'siteResources'`
+                )
                 .all() as {
                 siteResourceId: number;
                 orgId: string;
@@ -354,6 +333,12 @@ export default async function migration() {
             }
 
             // Populate niceId for clients
+            const clients = db
+                .prepare(`SELECT clientId FROM 'clients'`)
+                .all() as {
+                clientId: number;
+            }[];
+
             const usedNiceIds: string[] = [];
 
             for (const clientId of clients) {
