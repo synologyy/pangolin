@@ -38,13 +38,13 @@ export const orgs = sqliteTable("orgs", {
     requireTwoFactor: integer("requireTwoFactor", { mode: "boolean" }),
     maxSessionLengthHours: integer("maxSessionLengthHours"), // hours
     passwordExpiryDays: integer("passwordExpiryDays"), // days
-    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(7),
-    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0),
-    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0)
 });

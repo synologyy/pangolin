@@ -46,13 +46,13 @@ export const orgs = pgTable("orgs", {
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
     passwordExpiryDays: integer("passwordExpiryDays"),
-    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever, and 9001 = end of the following year
         .notNull()
         .default(7),
-    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0),
-    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0)
 });

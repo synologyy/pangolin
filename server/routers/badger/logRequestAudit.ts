@@ -2,6 +2,7 @@ import { db, orgs, requestAuditLog } from "@server/db";
 import logger from "@server/logger";
 import { and, eq, lt } from "drizzle-orm";
 import cache from "@server/lib/cache";
+import { calculateCutoffTimestamp } from "@server/lib/cleanupLogs";
 
 /**
 
@@ -127,9 +128,7 @@ async function getRetentionDays(orgId: string): Promise<number> {
 }
 
 export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
-    const now = Math.floor(Date.now() / 1000);
-
-    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+    const cutoffTimestamp = calculateCutoffTimestamp(retentionDays);
 
     try {
         await db
@@ -264,7 +263,10 @@ export function logRequestAudit(
         }
 
         // Async retention check in background (don't await)
-        if (data.orgId && cache.get<number>(`org_${data.orgId}_retentionDays`) === undefined) {
+        if (
+            data.orgId &&
+            cache.get<number>(`org_${data.orgId}_retentionDays`) === undefined
+        ) {
             getRetentionDays(data.orgId).catch((err) =>
                 logger.error("Error checking retention days:", err)
             );
