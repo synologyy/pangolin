@@ -931,9 +931,10 @@ export default function ReverseProxyTargets(props: {
                                     openHealthCheckDialog(row.original)
                                 }
                             >
-                                <Settings className="h-4 w-4" />
-                                <div className="flex items-center gap-1">
-                                    {getStatusIcon(status)}
+                                <div
+                                    className={`flex items-center gap-1 ${status === "healthy" ? "text-green-500" : status === "unhealthy" ? "text-destructive" : ""}`}
+                                >
+                                    <Settings className="h-4 w-4" />
                                     {getStatusText(status)}
                                 </div>
                             </Button>
