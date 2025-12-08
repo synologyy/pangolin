@@ -15,6 +15,7 @@ import {
 import { verifyPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import config from "@server/lib/config";
+import { APP_VERSION } from "@server/lib/consts";
 
 export const newtGetTokenBodySchema = z.object({
     newtId: z.string(),
@@ -94,9 +95,10 @@ export async function getNewtToken(
         const resToken = generateSessionToken();
         await createNewtSession(resToken, existingNewt.newtId);
 
-        return response<{ token: string }>(res, {
+        return response<{ token: string; serverVersion: string }>(res, {
             data: {
-                token: resToken
+                token: resToken,
+                serverVersion: APP_VERSION
             },
             success: true,
             error: false,
