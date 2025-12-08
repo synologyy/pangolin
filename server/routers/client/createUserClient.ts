@@ -217,7 +217,6 @@ export async function createUserClient(
             [newClient] = await trx
                 .insert(clients)
                 .values({
-                    niceId,
                     exitNodeId: randomExitNode.exitNodeId,
                     orgId,
                     niceId,
