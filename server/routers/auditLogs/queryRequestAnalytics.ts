@@ -10,14 +10,7 @@ import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import response from "@server/lib/response";
 import logger from "@server/logger";
-
-function getSevenDaysAgo() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to midnight
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 7);
-    return sevenDaysAgo.toISOString();
-}
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 const queryAccessAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
@@ -28,7 +21,7 @@ const queryAccessAuditLogsQuery = z.object({
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .prefault(getSevenDaysAgo),
+        .prefault(() => getSevenDaysAgo().toISOString()),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {

@@ -1,32 +1,30 @@
 "use client";
-import { Button } from "@app/components/ui/button";
-import { toast } from "@app/hooks/useToast";
-import { useState, useRef, useEffect } from "react";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { ColumnFilter } from "@app/components/ColumnFilter";
+import { DateTimeValue } from "@app/components/DateTimePicker";
 import {
     getStoredPageSize,
     LogDataTable,
     setStoredPageSize
 } from "@app/components/LogDataTable";
-import { ColumnDef } from "@tanstack/react-table";
-import { DateTimeValue } from "@app/components/DateTimePicker";
-import { Key, User } from "lucide-react";
-import { ColumnFilter } from "@app/components/ColumnFilter";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
-import { build } from "@server/build";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient } from "@app/lib/api";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
+import { build } from "@server/build";
+import { ColumnDef } from "@tanstack/react-table";
+import { Key, User } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function GeneralPage() {
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const router = useRouter();
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
-    const { env } = useEnvContext();
     const { orgId } = useParams();
     const searchParams = useSearchParams();
     const subscription = useSubscriptionStatusContext();
@@ -79,11 +77,11 @@ export default function GeneralPage() {
         }
 
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastWeek = getSevenDaysAgo();
 
         return {
             startDate: {
-                date: yesterday
+                date: lastWeek
             },
             endDate: {
                 date: now

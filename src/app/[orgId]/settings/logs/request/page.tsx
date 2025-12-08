@@ -1,24 +1,28 @@
 "use client";
-import { Button } from "@app/components/ui/button";
-import { toast } from "@app/hooks/useToast";
-import { useState, useRef, useEffect } from "react";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { getStoredPageSize, LogDataTable, setStoredPageSize } from "@app/components/LogDataTable";
-import { ColumnDef } from "@tanstack/react-table";
-import { DateTimeValue } from "@app/components/DateTimePicker";
-import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
 import { ColumnFilter } from "@app/components/ColumnFilter";
+import { DateTimeValue } from "@app/components/DateTimePicker";
+import {
+    getStoredPageSize,
+    LogDataTable,
+    setStoredPageSize
+} from "@app/components/LogDataTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
+import { Button } from "@app/components/ui/button";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient } from "@app/lib/api";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
+import { ColumnDef } from "@tanstack/react-table";
+import { ArrowUpRight, Key, Lock, Unlock, User } from "lucide-react";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function GeneralPage() {
     const router = useRouter();
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
-    const { env } = useEnvContext();
     const { orgId } = useParams();
     const searchParams = useSearchParams();
 
@@ -91,11 +95,11 @@ export default function GeneralPage() {
         }
 
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastWeek = getSevenDaysAgo();
 
         return {
             startDate: {
-                date: yesterday
+                date: lastWeek
             },
             endDate: {
                 date: now
@@ -757,8 +761,8 @@ export default function GeneralPage() {
     return (
         <>
             <SettingsSectionTitle
-                title={t('requestLogs')}
-                description={t('requestLogsDescription')}
+                title={t("requestLogs")}
+                description={t("requestLogsDescription")}
             />
 
             <LogDataTable

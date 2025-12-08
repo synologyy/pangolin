@@ -47,18 +47,11 @@ import {
     TooltipProvider,
     TooltipTrigger
 } from "./ui/tooltip";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 export type AnalyticsContentProps = {
     orgId: string;
 };
-
-function getSevenDaysAgo() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to midnight
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 7);
-    return sevenDaysAgo;
-}
 
 export function LogAnalyticsData(props: AnalyticsContentProps) {
     const searchParams = useSearchParams();

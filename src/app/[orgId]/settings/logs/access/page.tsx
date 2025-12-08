@@ -21,14 +21,13 @@ import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusCo
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { build } from "@server/build";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 export default function GeneralPage() {
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
-    const { env } = useEnvContext();
     const { orgId } = useParams();
     const subscription = useSubscriptionStatusContext();
     const { isUnlocked } = useLicenseStatusContext();
@@ -91,11 +90,11 @@ export default function GeneralPage() {
         }
 
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastWeek = getSevenDaysAgo();
 
         return {
             startDate: {
-                date: yesterday
+                date: lastWeek
             },
             endDate: {
                 date: now
