@@ -181,7 +181,7 @@
     "baseDomain": "Temel Alan Adı",
     "subdomnainDescription": "Kaynağınızın erişilebileceği alt alan adı.",
     "resourceRawSettings": "TCP/UDP Ayarları",
-    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
+    "resourceRawSettingsDescription": "Kaynaklara TCP/UDP üzerinden nasıl erişileceğini yapılandırın",
     "protocol": "Protokol",
     "protocolSelect": "Bir protokol seçin",
     "resourcePortNumber": "Port Numarası",
@@ -1320,9 +1320,9 @@
     "productUpdateTitle": "Ürün Güncellemeleri",
     "productUpdateEmpty": "Güncelleme yok",
     "dismissAll": "Hepsini Kapat",
-    "pangolinUpdateAvailable": "Yeni sürüm mevcut",
+    "pangolinUpdateAvailable": "Güncelleme Mevcut",
     "pangolinUpdateAvailableInfo": "Sürüm {version} yüklenmeye hazır",
-    "pangolinUpdateAvailableReleaseNotes": "Sürüm notlarını görüntüleyin",
+    "pangolinUpdateAvailableReleaseNotes": "Yayın Notlarını Görüntüle",
     "newtUpdateAvailable": "Güncelleme Mevcut",
     "newtUpdateAvailableInfo": "Newt'in yeni bir versiyonu mevcut. En iyi deneyim için lütfen en son sürüme güncelleyin.",
     "domainPickerEnterDomain": "Alan Adı",
@@ -2108,7 +2108,7 @@
     "logRetention30Days": "30 gün",
     "logRetention90Days": "90 gün",
     "logRetentionForever": "Sonsuza kadar",
-    "logRetentionEndOfFollowingYear": "End of following year",
+    "logRetentionEndOfFollowingYear": "Bir sonraki yılın sonu",
     "actionLogsDescription": "Bu organizasyondaki eylemler geçmişini görüntüleyin",
     "accessLogsDescription": "Bu organizasyondaki kaynaklar için erişim kimlik doğrulama isteklerini görüntüleyin",
     "licenseRequiredToUse": "Bu özelliği kullanmak için bir kurumsal lisans gereklidir.",
@@ -2270,5 +2270,5 @@
     "remoteExitNodeRegenerateAndDisconnectWarning": "Bu, kimlik bilgilerini yeniden oluşturacak ve hemen uzak çıkış düğümünün bağlantısını kesecek. Uzak çıkış düğümü, yeni kimlik bilgileri ile yeniden başlatılmalıdır.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Bu uzak çıkış düğümü için kimlik bilgilerini yeniden oluşturmak istediğinizden emin misiniz?",
     "remoteExitNodeRegenerateCredentialsWarning": "Bu, kimlik bilgilerini yeniden oluşturacak. Uzak çıkış düğümü, manuel olarak yeniden başlatılana ve yeni kimlik bilgiler kullanılana kadar bağlı kalacak.",
-    "agent": "Agent"
+    "agent": "Aracı"
 }
