@@ -327,6 +327,11 @@ export default async function migration() {
                 `INSERT INTO 'clientSiteResources' ('clientId', 'siteResourceId') VALUES (?, ?)`
             );
 
+            // create a clientSiteResourcesAssociationsCache entry for each existing association as well
+            const insertClientSiteResourceCache = db.prepare(
+                `INSERT INTO 'clientSiteResourcesAssociationsCache' ('clientId', 'siteResourceId') VALUES (?, ?)`
+            );
+
             // For each client-site association, find all site resources for that site
             for (const association of clientSiteAssociations) {
                 const siteResources = getSiteResources.all(
@@ -338,6 +343,10 @@ export default async function migration() {
                 // Associate the client with all site resources from this site
                 for (const siteResource of siteResources) {
                     insertClientSiteResource.run(
+                        association.clientId,
+                        siteResource.siteResourceId
+                    );
+                    insertClientSiteResourceCache.run(
                         association.clientId,
                         siteResource.siteResourceId
                     );
