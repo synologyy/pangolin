@@ -133,15 +133,12 @@ export async function applyBlueprint({
                     `Updating client resource ${result.newSiteResource.siteResourceId} on site ${site.sites.siteId}`
                 );
 
-                if (result.oldSiteResource) {
-                    // this was an update
-                    await handleMessagingForUpdatedSiteResource(
-                        result.oldSiteResource,
-                        result.newSiteResource,
-                        { siteId: site.sites.siteId, orgId: site.sites.orgId },
-                        trx
-                    );
-                }
+                await handleMessagingForUpdatedSiteResource(
+                    result.oldSiteResource,
+                    result.newSiteResource,
+                    { siteId: site.sites.siteId, orgId: site.sites.orgId },
+                    trx
+                );
 
                 // await addClientTargets(
                 //     site.newt.newtId,
