@@ -328,111 +328,103 @@ export const ConfigSchema = z
             sites: Record<string, z.infer<typeof SiteSchema>>;
         };
     })
-    .refine(
+    .superRefine((config, ctx) => {
         // Enforce the full-domain uniqueness across resources in the same stack
-        (config) => {
-            // Extract duplicates for error message
-            const fullDomainMap = new Map<string, string[]>();
+        const fullDomainMap = new Map<string, string[]>();
 
-            Object.entries(config["proxy-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const fullDomain = resource["full-domain"];
-                    if (fullDomain) {
-                        // Only process if full-domain is defined
-                        if (!fullDomainMap.has(fullDomain)) {
-                            fullDomainMap.set(fullDomain, []);
-                        }
-                        fullDomainMap.get(fullDomain)!.push(resourceKey);
+        Object.entries(config["proxy-resources"]).forEach(
+            ([resourceKey, resource]) => {
+                const fullDomain = resource["full-domain"];
+                if (fullDomain) {
+                    // Only process if full-domain is defined
+                    if (!fullDomainMap.has(fullDomain)) {
+                        fullDomainMap.set(fullDomain, []);
                     }
+                    fullDomainMap.get(fullDomain)!.push(resourceKey);
                 }
-            );
-
-            const duplicates = Array.from(fullDomainMap.entries())
-                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
-                .map(
-                    ([fullDomain, resourceKeys]) =>
-                        `'${fullDomain}' used by resources: ${resourceKeys.join(", ")}`
-                )
-                .join("; ");
-
-            if (duplicates.length !== 0) {
-                return {
-                    path: ["resources"],
-                    error: `Duplicate 'full-domain' values found: ${duplicates}`
-                };
             }
+        );
+
+        const fullDomainDuplicates = Array.from(fullDomainMap.entries())
+            .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+            .map(
+                ([fullDomain, resourceKeys]) =>
+                    `'${fullDomain}' used by resources: ${resourceKeys.join(", ")}`
+            )
+            .join("; ");
+
+        if (fullDomainDuplicates.length !== 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["proxy-resources"],
+                message: `Duplicate 'full-domain' values found: ${fullDomainDuplicates}`
+            });
         }
-    )
-    .refine(
+
         // Enforce proxy-port uniqueness within proxy-resources per protocol
-        (config) => {
-            // Extract duplicates for error message
-            const protocolPortMap = new Map<string, string[]>();
+        const protocolPortMap = new Map<string, string[]>();
 
-            Object.entries(config["proxy-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const proxyPort = resource["proxy-port"];
-                    const protocol = resource.protocol;
-                    if (proxyPort !== undefined && protocol !== undefined) {
-                        const key = `${protocol}:${proxyPort}`;
-                        if (!protocolPortMap.has(key)) {
-                            protocolPortMap.set(key, []);
-                        }
-                        protocolPortMap.get(key)!.push(resourceKey);
+        Object.entries(config["proxy-resources"]).forEach(
+            ([resourceKey, resource]) => {
+                const proxyPort = resource["proxy-port"];
+                const protocol = resource.protocol;
+                if (proxyPort !== undefined && protocol !== undefined) {
+                    const key = `${protocol}:${proxyPort}`;
+                    if (!protocolPortMap.has(key)) {
+                        protocolPortMap.set(key, []);
                     }
+                    protocolPortMap.get(key)!.push(resourceKey);
                 }
-            );
-
-            const duplicates = Array.from(protocolPortMap.entries())
-                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
-                .map(([protocolPort, resourceKeys]) => {
-                    const [protocol, port] = protocolPort.split(":");
-                    return `${protocol.toUpperCase()} port ${port} used by proxy-resources: ${resourceKeys.join(", ")}`;
-                })
-                .join("; ");
-
-            if (duplicates.length !== 0) {
-                return {
-                    path: ["proxy-resources"],
-                    error: `Duplicate 'proxy-port' values found in proxy-resources: ${duplicates}`
-                };
             }
+        );
+
+        const portDuplicates = Array.from(protocolPortMap.entries())
+            .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+            .map(([protocolPort, resourceKeys]) => {
+                const [protocol, port] = protocolPort.split(":");
+                return `${protocol.toUpperCase()} port ${port} used by proxy-resources: ${resourceKeys.join(", ")}`;
+            })
+            .join("; ");
+
+        if (portDuplicates.length !== 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["proxy-resources"],
+                message: `Duplicate 'proxy-port' values found in proxy-resources: ${portDuplicates}`
+            });
         }
-    )
-    .refine(
+
         // Enforce alias uniqueness within client-resources
-        (config) => {
-            // Extract duplicates for error message
-            const aliasMap = new Map<string, string[]>();
+        const aliasMap = new Map<string, string[]>();
 
-            Object.entries(config["client-resources"]).forEach(
-                ([resourceKey, resource]) => {
-                    const alias = resource.alias;
-                    if (alias !== undefined) {
-                        if (!aliasMap.has(alias)) {
-                            aliasMap.set(alias, []);
-                        }
-                        aliasMap.get(alias)!.push(resourceKey);
+        Object.entries(config["client-resources"]).forEach(
+            ([resourceKey, resource]) => {
+                const alias = resource.alias;
+                if (alias !== undefined) {
+                    if (!aliasMap.has(alias)) {
+                        aliasMap.set(alias, []);
                     }
+                    aliasMap.get(alias)!.push(resourceKey);
                 }
-            );
-
-            const duplicates = Array.from(aliasMap.entries())
-                .filter(([_, resourceKeys]) => resourceKeys.length > 1)
-                .map(
-                    ([alias, resourceKeys]) =>
-                        `alias '${alias}' used by client-resources: ${resourceKeys.join(", ")}`
-                )
-                .join("; ");
-
-            if (duplicates.length !== 0) {
-                return {
-                    path: ["client-resources"],
-                    error: `Duplicate 'alias' values found in client-resources: ${duplicates}`
-                };
             }
+        );
+
+        const aliasDuplicates = Array.from(aliasMap.entries())
+            .filter(([_, resourceKeys]) => resourceKeys.length > 1)
+            .map(
+                ([alias, resourceKeys]) =>
+                    `alias '${alias}' used by client-resources: ${resourceKeys.join(", ")}`
+            )
+            .join("; ");
+
+        if (aliasDuplicates.length !== 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["client-resources"],
+                message: `Duplicate 'alias' values found in client-resources: ${aliasDuplicates}`
+            });
         }
-    );
+    });
 
 // Type inference from the schema
 export type Site = z.infer<typeof SiteSchema>;
