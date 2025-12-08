@@ -252,14 +252,68 @@ export default async function migration() {
                 `ALTER TABLE 'targetHealthCheck' ADD 'hcTlsServerName' text;`
             ).run();
 
+            // set 100.96.128.0/24 as the utility subnet on all of the orgs
+            db.prepare(
+                `UPDATE 'orgs' SET 'utilitySubnet' = '100.96.128.0/24'`
+            ).run();
+
+            // Query all of the sites to get their remoteSubnets before dropping the column
+            const sitesRemoteSubnets = db
+                .prepare(
+                    `SELECT siteId, remoteSubnets FROM 'sites' WHERE remoteSubnets IS NOT NULL`
+                )
+                .all() as {
+                siteId: number;
+                remoteSubnets: string | null;
+            }[];
+
             db.prepare(
                 `ALTER TABLE 'sites' DROP COLUMN 'remoteSubnets';`
             ).run();
 
+            // get all of the siteResources and set the aliasAddress to 100.96.128.x starting at .8
+            const siteResourcesForAlias = db
+                .prepare(
+                    `SELECT siteResourceId FROM 'siteResources' ORDER BY siteResourceId ASC`
+                )
+                .all() as {
+                siteResourceId: number;
+            }[];
+
+            const updateAliasAddress = db.prepare(
+                `UPDATE 'siteResources' SET aliasAddress = ? WHERE siteResourceId = ?`
+            );
+
+            let aliasIpOctet = 8;
+            for (const siteResource of siteResourcesForAlias) {
+                const aliasAddress = `100.96.128.${aliasIpOctet}`;
+                updateAliasAddress.run(aliasAddress, siteResource.siteResourceId);
+                aliasIpOctet++;
+            }
+
+            // For each site with remote subnets we need to create a site resource of type cidr for each remote subnet
+            const insertCidrResource = db.prepare(
+                `INSERT INTO 'siteResources' ('siteId', 'destination', 'mode', 'name', 'orgId', 'niceId') 
+                 SELECT ?, ?, 'cidr', 'Remote Subnet', orgId, ? FROM 'sites' WHERE siteId = ?`
+            );
+
+            for (const site of sitesRemoteSubnets) {
+                if (site.remoteSubnets) {
+                    const subnets = site.remoteSubnets.split(",");
+                    for (const subnet of subnets) {
+                        // Generate a unique niceId for each new site resource
+                        let niceId = generateName();
+                        insertCidrResource.run(site.siteId, subnet.trim(), niceId, site.siteId);
+                    }
+                }
+            }
+
             // Associate clients with site resources based on their previous site access
             // Get all client-site associations from the renamed clientSitesAssociationsCache table
             const clientSiteAssociations = db
-                .prepare(`SELECT clientId, siteId FROM 'clientSitesAssociationsCache'`)
+                .prepare(
+                    `SELECT clientId, siteId FROM 'clientSitesAssociationsCache'`
+                )
                 .all() as {
                 clientId: number;
                 siteId: number;
@@ -292,9 +346,7 @@ export default async function migration() {
 
             // Associate existing site resources with their org's admin role
             const siteResourcesWithOrg = db
-                .prepare(
-                    `SELECT siteResourceId, orgId FROM 'siteResources'`
-                )
+                .prepare(`SELECT siteResourceId, orgId FROM 'siteResources'`)
                 .all() as {
                 siteResourceId: number;
                 orgId: string;

@@ -152,7 +152,48 @@ export default async function migration() {
 
         await db.execute(sql`ALTER TABLE "userClients" ADD CONSTRAINT "userClients_clientId_clients_clientId_fk" FOREIGN KEY ("clientId") REFERENCES "public"."clients"("clientId") ON DELETE cascade ON UPDATE no action;`);
 
+        // set 100.96.128.0/24 as the utility subnet on all of the orgs
+        await db.execute(sql`UPDATE "orgs" SET "utilitySubnet" = '100.96.128.0/24'`);
+
+        // Query all of the sites to get their remoteSubnets
+        
+        const sitesRemoteSubnetsData = await db.execute(sql`SELECT "siteId", "remoteSubnets" FROM "sites" WHERE "remoteSubnets" IS NOT NULL
+        `);
+        const sitesRemoteSubnets = sitesRemoteSubnetsData.rows as {
+            siteId: number;
+            remoteSubnets: string | null;
+        }[];
+            
         await db.execute(sql`ALTER TABLE "sites" DROP COLUMN "remoteSubnets";`);
+
+
+        // get all of the siteResources and set the the aliasAddress to 100.96.128.x starting at .8
+        const siteResourcesData = await db.execute(sql`SELECT "siteResourceId" FROM "siteResources" ORDER BY "siteResourceId" ASC`);
+        const siteResources = siteResourcesData.rows as {
+            siteResourceId: number;
+        }[];
+
+        let aliasIpOctet = 8;
+        for (const siteResource of siteResources) {
+            const aliasAddress = `100.96.128.${aliasIpOctet}`;
+            await db.execute(sql`
+                UPDATE "siteResources" SET "aliasAddress" = ${aliasAddress} WHERE "siteResourceId" = ${siteResource.siteResourceId}
+            `);
+            aliasIpOctet++;
+        }
+
+        // For each site with remote subnets we need to create a site resource of type cidr for each remote subnet
+        for (const site of sitesRemoteSubnets) {
+            if (site.remoteSubnets) {
+                const subnets = site.remoteSubnets.split(",");
+                for (const subnet of subnets) {
+                    await db.execute(sql`
+                        INSERT INTO "siteResources" ("siteId", "destination", "mode", "name")
+                        VALUES (${site.siteId}, ${subnet.trim()}, 'cidr', 'Remote Subnet');
+                    `);
+                }
+            }
+        }
 
         // Associate clients with site resources based on their previous site access
         // Get all client-site associations from the renamed clientSitesAssociationsCache table
