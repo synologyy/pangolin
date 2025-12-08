@@ -181,7 +181,7 @@
     "baseDomain": "Dominio Base",
     "subdomnainDescription": "Il sottodominio in cui la risorsa sarà accessibile.",
     "resourceRawSettings": "Impostazioni TCP/UDP",
-    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
+    "resourceRawSettingsDescription": "Configura come accedere alla risorsa tramite TCP/UDP",
     "protocol": "Protocollo",
     "protocolSelect": "Seleziona un protocollo",
     "resourcePortNumber": "Numero Porta",
@@ -1320,9 +1320,9 @@
     "productUpdateTitle": "Aggiornamenti Prodotto",
     "productUpdateEmpty": "Nessun aggiornamento",
     "dismissAll": "Ignora tutto",
-    "pangolinUpdateAvailable": "Nuova versione disponibile",
+    "pangolinUpdateAvailable": "Aggiornamento Disponibile",
     "pangolinUpdateAvailableInfo": "La versione {version} è pronta per l'installazione",
-    "pangolinUpdateAvailableReleaseNotes": "Visualizza note di rilascio",
+    "pangolinUpdateAvailableReleaseNotes": "Visualizza Note Di Rilascio",
     "newtUpdateAvailable": "Aggiornamento Disponibile",
     "newtUpdateAvailableInfo": "È disponibile una nuova versione di Newt. Si prega di aggiornare all'ultima versione per la migliore esperienza.",
     "domainPickerEnterDomain": "Dominio",
@@ -2108,7 +2108,7 @@
     "logRetention30Days": "30 giorni",
     "logRetention90Days": "90 giorni",
     "logRetentionForever": "Per Sempre",
-    "logRetentionEndOfFollowingYear": "End of following year",
+    "logRetentionEndOfFollowingYear": "Fine dell'anno successivo",
     "actionLogsDescription": "Visualizza una cronologia delle azioni eseguite in questa organizzazione",
     "accessLogsDescription": "Visualizza le richieste di autenticazione di accesso per le risorse in questa organizzazione",
     "licenseRequiredToUse": "Per utilizzare questa funzione è necessaria una licenza Enterprise.",
@@ -2270,5 +2270,5 @@
     "remoteExitNodeRegenerateAndDisconnectWarning": "Questo rigenererà le credenziali e disconnetterà immediatamente il nodo di uscita remoto. Il nodo di uscita remoto dovrà essere riavviato con le nuove credenziali.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "Sei sicuro di voler rigenerare le credenziali per questo nodo di uscita remoto?",
     "remoteExitNodeRegenerateCredentialsWarning": "Questo rigenererà le credenziali. Il nodo di uscita remoto rimarrà connesso finché non lo riavvierai manualmente e userai le nuove credenziali.",
-    "agent": "Agent"
+    "agent": "Agente"
 }
