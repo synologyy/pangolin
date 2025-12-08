@@ -22,6 +22,7 @@ import {
 import { verifyPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import config from "@server/lib/config";
+import { APP_VERSION } from "@server/lib/consts";
 
 export const olmGetTokenBodySchema = z.object({
     olmId: z.string(),
@@ -205,10 +206,12 @@ export async function getOlmToken(
         return response<{
             token: string;
             exitNodes: { publicKey: string; endpoint: string }[];
+            serverVersion: string;
         }>(res, {
             data: {
                 token: resToken,
-                exitNodes: exitNodesHpData
+                exitNodes: exitNodesHpData,
+                serverVersion: APP_VERSION
             },
             success: true,
             error: false,
