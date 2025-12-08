@@ -8,6 +8,7 @@ export async function addPeer(
     clientId: number,
     peer: {
         siteId: number;
+        name: string;
         publicKey: string;
         endpoint: string;
         relayEndpoint: string;
@@ -34,6 +35,7 @@ export async function addPeer(
         type: "olm/wg/peer/add",
         data: {
             siteId: peer.siteId,
+            name: peer.name,
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
             relayEndpoint: peer.relayEndpoint,

@@ -328,22 +328,26 @@ export async function updateSiteResource(
 }
 
 export async function handleMessagingForUpdatedSiteResource(
-    existingSiteResource: SiteResource,
+    existingSiteResource: SiteResource | undefined,
     updatedSiteResource: SiteResource,
     site: { siteId: number; orgId: string },
     trx: Transaction
 ) {
     const { mergedAllClients } =
         await rebuildClientAssociationsFromSiteResource(
-            existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
+            existingSiteResource || updatedSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
             trx
         );
 
     // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
     const destinationChanged =
+        existingSiteResource &&
         existingSiteResource.destination !== updatedSiteResource.destination;
     const aliasChanged =
+        existingSiteResource &&
         existingSiteResource.alias !== updatedSiteResource.alias;
+
+    // if the existingSiteResource is undefined (new resource) we don't need to do anything here, the rebuild above handled it all
 
     if (destinationChanged || aliasChanged) {
         const [newt] = await trx

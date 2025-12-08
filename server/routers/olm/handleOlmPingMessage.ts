@@ -7,6 +7,8 @@ import logger from "@server/logger";
 import { validateSessionToken } from "@server/auth/sessions/app";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { sendTerminateClient } from "../client/terminate";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 // Track if the offline checker interval is running
 let offlineCheckerInterval: NodeJS.Timeout | null = null;
@@ -133,10 +135,14 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
             return;
         }
 
+        const sessionId = encodeHexLowerCase(
+            sha256(new TextEncoder().encode(userToken))
+        );
+
         const policyCheck = await checkOrgAccessPolicy({
             orgId: client.orgId,
             userId: olm.userId,
-            sessionId: userToken // this is the user token passed in the message
+            sessionId // this is the user token passed in the message
         });
 
         if (!policyCheck.allowed) {

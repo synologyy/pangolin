@@ -220,6 +220,7 @@ export async function createUserClient(
                     niceId,
                     exitNodeId: randomExitNode.exitNodeId,
                     orgId,
+                    niceId,
                     name,
                     subnet: updatedSubnet,
                     type,

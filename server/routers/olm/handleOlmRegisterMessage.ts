@@ -1,17 +1,8 @@
 import {
-    Client,
     clientSiteResourcesAssociationsCache,
     db,
-    ExitNode,
-    Org,
     orgs,
-    roleClients,
-    roles,
-    siteResources,
-    Transaction,
-    userClients,
-    userOrgs,
-    users
+    siteResources
 } from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
 import {
@@ -25,16 +16,13 @@ import {
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
-import { listExitNodes } from "#dynamic/lib/exitNodes";
-import {
-    generateAliasConfig,
-    getNextAvailableClientSubnet
-} from "@server/lib/ip";
+import { generateAliasConfig } from "@server/lib/ip";
 import { generateRemoteSubnets } from "@server/lib/ip";
-import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { validateSessionToken } from "@server/auth/sessions/app";
 import config from "@server/lib/config";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
@@ -48,7 +36,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    const { publicKey, relay, olmVersion, olmAgent, orgId, userToken } = message.data;
+    const { publicKey, relay, olmVersion, olmAgent, orgId, userToken } =
+        message.data;
 
     if (!olm.clientId) {
         logger.warn("Olm client ID not found");
@@ -94,10 +83,14 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             return;
         }
 
+        const sessionId = encodeHexLowerCase(
+            sha256(new TextEncoder().encode(userToken))
+        );
+
         const policyCheck = await checkOrgAccessPolicy({
             orgId: orgId,
             userId: olm.userId,
-            sessionId: userToken // this is the user token passed in the message
+            sessionId // this is the user token passed in the message
         });
 
         if (!policyCheck.allowed) {
@@ -117,7 +110,10 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    if ((olmVersion && olm.version !== olmVersion) || (olmAgent && olm.agent !== olmAgent)) {
+    if (
+        (olmVersion && olm.version !== olmVersion) ||
+        (olmAgent && olm.agent !== olmAgent)
+    ) {
         await db
             .update(olms)
             .set({
@@ -175,7 +171,10 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     }
 
     // Process each site
-    for (const { sites: site, clientSitesAssociationsCache: association } of sitesData) {
+    for (const {
+        sites: site,
+        clientSitesAssociationsCache: association
+    } of sitesData) {
         if (!site.exitNodeId) {
             logger.warn(
                 `Site ${site.siteId} does not have exit node, skipping`
@@ -275,6 +274,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
+            name: site.name,
             // relayEndpoint: relayEndpoint, // this can be undefined now if not relayed // lets not do this for now because it would conflict with the hole punch testing
             endpoint: site.endpoint,
             publicKey: site.publicKey,

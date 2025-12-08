@@ -99,7 +99,7 @@ export default function ProductUpdates({
                             : "opacity-0"
                     )}
                 >
-                    {filteredUpdates.length > 0 && (
+                    {filteredUpdates.length > 1 && (
                         <>
                             <BellIcon className="flex-none size-3" />
                             <span>
@@ -356,7 +356,7 @@ function NewVersionAvailable({
                                 <XIcon className="size-4 flex-none" />
                             </button>
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-0.5">
                             <small className="text-muted-foreground">
                                 {t("pangolinUpdateAvailableInfo", {
                                     version: version.pangolin.latestVersion
@@ -365,7 +365,7 @@ function NewVersionAvailable({
                             <a
                                 href={version.pangolin.releaseNotes}
                                 target="_blank"
-                                className="inline-flex items-center gap-0.5 text-xs font-medium"
+                                className="inline-flex items-center gap-1 text-xs font-medium"
                             >
                                 <span>
                                     {t("pangolinUpdateAvailableReleaseNotes")}
