@@ -181,7 +181,7 @@
     "baseDomain": "기본 도메인",
     "subdomnainDescription": "리소스에 접근할 수 있는 하위 도메인입니다.",
     "resourceRawSettings": "TCP/UDP 설정",
-    "resourceRawSettingsDescription": "Configure how the resource will be accessed over TCP/UDP",
+    "resourceRawSettingsDescription": "TCP/UDP를 통해 리소스에 접근하는 방법을 구성하세요.",
     "protocol": "프로토콜",
     "protocolSelect": "프로토콜 선택",
     "resourcePortNumber": "포트 번호",
@@ -499,7 +499,7 @@
     "proxyUpdatedDescription": "프록시 설정이 성공적으로 업데이트되었습니다",
     "proxyErrorUpdate": "프록시 설정 업데이트에 실패했습니다.",
     "proxyErrorUpdateDescription": "프록시 설정을 업데이트하는 동안 오류가 발생했습니다",
-    "targetAddr": "Host",
+    "targetAddr": "호스트",
     "targetPort": "포트",
     "targetProtocol": "프로토콜",
     "targetTlsSettings": "보안 연결 구성",
@@ -1320,7 +1320,7 @@
     "productUpdateTitle": "제품 업데이트",
     "productUpdateEmpty": "업데이트 없음",
     "dismissAll": "모두 해제",
-    "pangolinUpdateAvailable": "새 버전 사용 가능",
+    "pangolinUpdateAvailable": "업데이트 가능",
     "pangolinUpdateAvailableInfo": "버전 {version}을(를) 설치할 준비가 되었습니다",
     "pangolinUpdateAvailableReleaseNotes": "릴리스 노트 보기",
     "newtUpdateAvailable": "업데이트 가능",
@@ -2108,7 +2108,7 @@
     "logRetention30Days": "30 일",
     "logRetention90Days": "90 일",
     "logRetentionForever": "영구",
-    "logRetentionEndOfFollowingYear": "End of following year",
+    "logRetentionEndOfFollowingYear": "다음 연도 말",
     "actionLogsDescription": "이 조직에서 수행된 작업의 기록을 봅니다",
     "accessLogsDescription": "이 조직의 자원에 대한 접근 인증 요청을 확인합니다",
     "licenseRequiredToUse": "이 기능을 사용하려면 Enterprise 라이선스가 필요합니다.",
@@ -2270,5 +2270,5 @@
     "remoteExitNodeRegenerateAndDisconnectWarning": "이 과정은 자격 증명을 다시 생성하고 원격 종료 노드와의 연결을 즉시 해제합니다. 원격 종료 노드는 새 자격 증명으로 다시 시작되어야 합니다.",
     "remoteExitNodeRegenerateCredentialsConfirmation": "이 원격 종료 노드에 대한 자격 증명을 다시 생성하시겠습니까?",
     "remoteExitNodeRegenerateCredentialsWarning": "이 과정은 자격 증명을 다시 생성합니다. 수동으로 다시 시작하고 새 자격 증명을 사용하기 전까지 원격 종료 노드는 연결된 상태로 유지됩니다.",
-    "agent": "Agent"
+    "agent": "에이전트"
 }
