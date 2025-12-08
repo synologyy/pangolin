@@ -182,27 +182,25 @@ export default function CredentialsPage() {
                     </SettingsSectionBody>
                     {build !== "oss" && (
                         <SettingsSectionFooter>
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setShouldDisconnect(false);
-                                        setModalOpen(true);
-                                    }}
-                                    disabled={isSecurityFeatureDisabled()}
-                                >
-                                    {t("regenerateCredentialsButton")}
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShouldDisconnect(true);
-                                        setModalOpen(true);
-                                    }}
-                                    disabled={isSecurityFeatureDisabled()}
-                                >
-                                    {t("clientRegenerateAndDisconnect")}
-                                </Button>
-                            </div>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShouldDisconnect(false);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("regenerateCredentialsButton")}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShouldDisconnect(true);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("clientRegenerateAndDisconnect")}
+                            </Button>
                         </SettingsSectionFooter>
                     )}
                 </SettingsSection>
@@ -229,9 +227,7 @@ export default function CredentialsPage() {
                                     )}
                                 </p>
                                 <p>
-                                    {t(
-                                        "clientRegenerateAndDisconnectWarning"
-                                    )}
+                                    {t("clientRegenerateAndDisconnectWarning")}
                                 </p>
                             </>
                         ) : (
@@ -241,9 +237,7 @@ export default function CredentialsPage() {
                                         "clientRegenerateCredentialsConfirmation"
                                     )}
                                 </p>
-                                <p>
-                                    {t("clientRegenerateCredentialsWarning")}
-                                </p>
+                                <p>{t("clientRegenerateCredentialsWarning")}</p>
                             </>
                         )}
                     </div>

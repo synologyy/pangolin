@@ -265,27 +265,25 @@ export default function CredentialsPage() {
                         </SettingsSectionBody>
                         {build !== "oss" && (
                             <SettingsSectionFooter>
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => {
-                                            setShouldDisconnect(false);
-                                            setModalOpen(true);
-                                        }}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("regenerateCredentialsButton")}
-                                    </Button>
-                                    <Button
-                                        onClick={() => {
-                                            setShouldDisconnect(true);
-                                            setModalOpen(true);
-                                        }}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("siteRegenerateAndDisconnect")}
-                                    </Button>
-                                </div>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setShouldDisconnect(false);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("regenerateCredentialsButton")}
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setShouldDisconnect(true);
+                                        setModalOpen(true);
+                                    }}
+                                    disabled={isSecurityFeatureDisabled()}
+                                >
+                                    {t("siteRegenerateAndDisconnect")}
+                                </Button>
                             </SettingsSectionFooter>
                         )}
                     </SettingsSection>
