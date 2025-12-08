@@ -4,7 +4,7 @@ import { getHostMeta } from "./hostMeta";
 import logger from "@server/logger";
 import { apiKeys, db, roles } from "@server/db";
 import { sites, users, orgs, resources, clients, idp } from "@server/db";
-import { eq, count, notInArray } from "drizzle-orm";
+import { eq, count, notInArray, and } from "drizzle-orm";
 import { APP_VERSION } from "./consts";
 import crypto from "crypto";
 import { UserType } from "@server/types/UserTypes";
@@ -113,7 +113,12 @@ class TelemetryClient {
             const [customRoles] = await db
                 .select({ count: count() })
                 .from(roles)
-                .where(notInArray(roles.name, ["Admin", "Member"]));
+                .where(
+                    and(
+                        eq(roles.isAdmin, false),
+                        notInArray(roles.name, ["Member"])
+                    )
+                );
 
             const adminUsers = await db
                 .select({ email: users.email })
@@ -188,7 +193,7 @@ class TelemetryClient {
                     license_tier: licenseStatus.tier || "unknown"
                 }
             };
-            logger.debug("Sending enterprise startup telemtry payload:", {
+            logger.debug("Sending enterprise startup telemetry payload:", {
                 payload
             });
             // this.client.capture(payload);

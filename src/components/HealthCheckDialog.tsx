@@ -51,6 +51,7 @@ type HealthCheckConfig = {
     hcFollowRedirects: boolean;
     hcMode: string;
     hcUnhealthyInterval: number;
+    hcTlsServerName: string;
 };
 
 type HealthCheckDialogProps = {
@@ -81,23 +82,36 @@ export default function HealthCheckDialog({
             .string()
             .min(1, { message: t("healthCheckMethodRequired") }),
         hcInterval: z
-            .number()
             .int()
             .positive()
             .min(5, { message: t("healthCheckIntervalMin") }),
         hcTimeout: z
-            .number()
             .int()
             .positive()
             .min(1, { message: t("healthCheckTimeoutMin") }),
-        hcStatus: z.number().int().positive().min(100).optional().nullable(),
-        hcHeaders: z.array(z.object({ name: z.string(), value: z.string() })).nullable().optional(),
+        hcStatus: z.int().positive().min(100).optional().nullable(),
+        hcHeaders: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable()
+            .optional(),
         hcScheme: z.string().optional(),
         hcHostname: z.string(),
-        hcPort: z.number().positive().gt(0).lte(65535),
+        hcPort: z
+            .string()
+            .min(1, { message: t("healthCheckPortInvalid") })
+            .refine(
+                (val) => {
+                    const port = parseInt(val);
+                    return port > 0 && port <= 65535;
+                },
+                {
+                    message: t("healthCheckPortInvalid")
+                }
+            ),
         hcFollowRedirects: z.boolean(),
         hcMode: z.string(),
-        hcUnhealthyInterval: z.number().int().positive().min(5)
+        hcUnhealthyInterval: z.int().positive().min(5),
+        hcTlsServerName: z.string()
     });
 
     const form = useForm<z.infer<typeof healthCheckSchema>>({
@@ -130,10 +144,13 @@ export default function HealthCheckDialog({
             hcHeaders: initialConfig?.hcHeaders,
             hcScheme: getDefaultScheme(),
             hcHostname: initialConfig?.hcHostname,
-            hcPort: initialConfig?.hcPort,
+            hcPort: initialConfig?.hcPort
+                ? initialConfig.hcPort.toString()
+                : "",
             hcFollowRedirects: initialConfig?.hcFollowRedirects,
             hcMode: initialConfig?.hcMode,
-            hcUnhealthyInterval: initialConfig?.hcUnhealthyInterval
+            hcUnhealthyInterval: initialConfig?.hcUnhealthyInterval,
+            hcTlsServerName: initialConfig?.hcTlsServerName ?? ""
         });
     }, [open]);
 
@@ -143,10 +160,15 @@ export default function HealthCheckDialog({
         try {
             const currentValues = form.getValues();
             const updatedValues = { ...currentValues, [fieldName]: value };
-            await onChanges({
+
+            // Convert hcPort from string to number before passing to parent
+            const configToSend: HealthCheckConfig = {
                 ...updatedValues,
+                hcPort: parseInt(updatedValues.hcPort),
                 hcStatus: updatedValues.hcStatus || null
-            });
+            };
+
+            await onChanges(configToSend);
         } catch (error) {
             toast({
                 title: t("healthCheckError"),
@@ -214,14 +236,20 @@ export default function HealthCheckDialog({
                                                         {t("healthScheme")}
                                                     </FormLabel>
                                                     <Select
-                                                        onValueChange={(value) => {
-                                                            field.onChange(value);
+                                                        onValueChange={(
+                                                            value
+                                                        ) => {
+                                                            field.onChange(
+                                                                value
+                                                            );
                                                             handleFieldChange(
                                                                 "hcScheme",
                                                                 value
                                                             );
                                                         }}
-                                                        defaultValue={field.value}
+                                                        defaultValue={
+                                                            field.value
+                                                        }
                                                     >
                                                         <FormControl>
                                                             <SelectTrigger>
@@ -285,10 +313,8 @@ export default function HealthCheckDialog({
                                                             {...field}
                                                             onChange={(e) => {
                                                                 const value =
-                                                                    parseInt(
-                                                                        e.target
-                                                                            .value
-                                                                    );
+                                                                    e.target
+                                                                        .value;
                                                                 field.onChange(
                                                                     value
                                                                 );
@@ -487,10 +513,6 @@ export default function HealthCheckDialog({
                                                 </FormItem>
                                             )}
                                         />
-
-                                        <FormDescription>
-                                            {t("timeIsInSeconds")}
-                                        </FormDescription>
                                     </div>
 
                                     {/* Expected Response Codes */}
@@ -535,6 +557,37 @@ export default function HealthCheckDialog({
                                         )}
                                     />
 
+                                    {/*TLS Server Name (SNI)*/}
+                                    <FormField
+                                        control={form.control}
+                                        name="hcTlsServerName"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("tlsServerName")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            field.onChange(e);
+                                                            handleFieldChange(
+                                                                "hcTlsServerName",
+                                                                e.target.value
+                                                            );
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t(
+                                                        "tlsServerNameDescription"
+                                                    )}
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
                                     {/* Custom Headers */}
                                     <FormField
                                         control={form.control}
@@ -548,7 +601,9 @@ export default function HealthCheckDialog({
                                                     <HeadersInput
                                                         value={field.value}
                                                         onChange={(value) => {
-                                                            field.onChange(value);
+                                                            field.onChange(
+                                                                value
+                                                            );
                                                             handleFieldChange(
                                                                 "hcHeaders",
                                                                 value

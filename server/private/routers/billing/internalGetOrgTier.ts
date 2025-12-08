@@ -21,11 +21,9 @@ import { fromZodError } from "zod-validation-error";
 import { getOrgTierData } from "#private/lib/billing";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 
-const getOrgSchema = z
-    .object({
+const getOrgSchema = z.strictObject({
         orgId: z.string()
-    })
-    .strict();
+    });
 
 export async function getOrgTier(
     req: Request,

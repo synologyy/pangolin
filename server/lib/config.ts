@@ -85,7 +85,13 @@ export class Config {
             ? "true"
             : "false";
 
-        process.env.FLAGS_ENABLE_CLIENTS = parsedConfig.flags?.enable_clients
+        process.env.PRODUCT_UPDATES_NOTIFICATION_ENABLED = parsedConfig.app
+            .notifications.product_updates
+            ? "true"
+            : "false";
+
+        process.env.NEW_RELEASES_NOTIFICATION_ENABLED = parsedConfig.app
+            .notifications.new_releases
             ? "true"
             : "false";
 
@@ -158,7 +164,7 @@ export class Config {
 
         try {
             const response = await fetch(
-                "https://api.fossorial.io/api/v1/license/validate",
+                `https://api.fossorial.io/api/v1/license/validate`,
                 {
                     method: "POST",
                     headers: {

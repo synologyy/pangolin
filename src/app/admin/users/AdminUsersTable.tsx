@@ -1,6 +1,5 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
 import { UsersDataTable } from "@app/components/AdminUsersDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
@@ -18,6 +17,7 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger
 } from "@app/components/ui/dropdown-menu";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 
 export type GlobalUserRow = {
     id: string;
@@ -66,9 +66,10 @@ export default function UsersTable({ users }: Props) {
             });
     };
 
-    const columns: ColumnDef<GlobalUserRow>[] = [
+    const columns: ExtendedColumnDef<GlobalUserRow>[] = [
         {
             accessorKey: "id",
+            friendlyName: "ID",
             header: ({ column }) => {
                 return (
                     <Button
@@ -84,6 +85,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "username",
+            friendlyName: t("username"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -100,6 +102,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "email",
+            friendlyName: t("email"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -116,6 +119,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "name",
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -132,6 +136,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "idpName",
+            friendlyName: t("identityProvider"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -148,6 +153,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             accessorKey: "twoFactorEnabled",
+            friendlyName: t("twoFactor"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -182,11 +188,21 @@ export default function UsersTable({ users }: Props) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return (
                     <>
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={"outline"}
+                                onClick={() => {
+                                    router.push(`/admin/users/${r.id}`);
+                                }}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
@@ -210,16 +226,6 @@ export default function UsersTable({ users }: Props) {
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button
-                                variant={"secondary"}
-                                size="sm"
-                                onClick={() => {
-                                    router.push(`/admin/users/${r.id}`);
-                                }}
-                            >
-                                {t("edit")}
-                                <ArrowRight className="ml-2 w-4 h-4" />
-                            </Button>
                         </div>
                     </>
                 );
@@ -238,13 +244,9 @@ export default function UsersTable({ users }: Props) {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("userQuestionRemove")}
-                            </p>
+                            <p>{t("userQuestionRemove")}</p>
 
-                            <p>
-                                {t("userMessageRemove")}
-                            </p>
+                            <p>{t("userMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("userDeleteConfirm")}

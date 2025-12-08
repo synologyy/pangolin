@@ -23,8 +23,8 @@ import { fromError } from "zod-validation-error";
 import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
 
 const querySchema = z.object({
-    resourceId: z.coerce.number().int().positive().optional(),
-    idpId: z.coerce.number().int().positive().optional(),
+    resourceId: z.coerce.number<number>().int().positive().optional(),
+    idpId: z.coerce.number<number>().int().positive().optional(),
     orgId: z.string().min(1).optional(),
     fullDomain: z.string().min(1)
 });

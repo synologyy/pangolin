@@ -14,21 +14,17 @@ import logger from "@server/logger";
 import config from "@server/lib/config";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
-const authWithWhitelistBodySchema = z
-    .object({
-        email: z.string().toLowerCase().email(),
+const authWithWhitelistBodySchema = z.strictObject({
+        email: z.email().toLowerCase(),
         otp: z.string().optional()
-    })
-    .strict();
+    });
 
-const authWithWhitelistParamsSchema = z
-    .object({
+const authWithWhitelistParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 export type AuthWithWhitelistResponse = {
     otpSent?: boolean;

@@ -9,8 +9,14 @@ import {
     SortingState,
     getSortedRowModel,
     ColumnFiltersState,
-    getFilteredRowModel
+    getFilteredRowModel,
+    VisibilityState
 } from "@tanstack/react-table";
+
+// Extended ColumnDef type that includes optional friendlyName for column visibility dropdown
+export type ExtendedColumnDef<TData, TValue = unknown> = ColumnDef<TData, TValue> & {
+    friendlyName?: string;
+};
 import {
     Table,
     TableBody,
@@ -23,7 +29,7 @@ import { Button } from "@app/components/ui/button";
 import { useEffect, useMemo, useState } from "react";
 import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Plus, Search, RefreshCw, Columns } from "lucide-react";
 import {
     Card,
     CardContent,
@@ -32,16 +38,29 @@ import {
 } from "@app/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@app/components/ui/dropdown-menu";
 
 const STORAGE_KEYS = {
-    PAGE_SIZE: 'datatable-page-size',
-    getTablePageSize: (tableId?: string) => 
-        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
+    PAGE_SIZE: "datatable-page-size",
+    COLUMN_VISIBILITY: "datatable-column-visibility",
+    getTablePageSize: (tableId?: string) =>
+        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE,
+    getTableColumnVisibility: (tableId?: string) =>
+        tableId
+            ? `${tableId}-column-visibility`
+            : STORAGE_KEYS.COLUMN_VISIBILITY
 };
 
 const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
-    if (typeof window === 'undefined') return defaultSize;
-    
+    if (typeof window === "undefined") return defaultSize;
+
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         const stored = localStorage.getItem(key);
@@ -53,19 +72,61 @@ const getStoredPageSize = (tableId?: string, defaultSize = 20): number => {
             }
         }
     } catch (error) {
-        console.warn('Failed to read page size from localStorage:', error);
+        console.warn("Failed to read page size from localStorage:", error);
     }
     return defaultSize;
 };
 
 const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === 'undefined') return;
-    
+    if (typeof window === "undefined") return;
+
     try {
         const key = STORAGE_KEYS.getTablePageSize(tableId);
         localStorage.setItem(key, pageSize.toString());
     } catch (error) {
-        console.warn('Failed to save page size to localStorage:', error);
+        console.warn("Failed to save page size to localStorage:", error);
+    }
+};
+
+const getStoredColumnVisibility = (
+    tableId?: string,
+    defaultVisibility?: Record<string, boolean>
+): Record<string, boolean> => {
+    if (typeof window === "undefined") return defaultVisibility || {};
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            // Validate that it's an object
+            if (typeof parsed === "object" && parsed !== null) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn(
+            "Failed to read column visibility from localStorage:",
+            error
+        );
+    }
+    return defaultVisibility || {};
+};
+
+const setStoredColumnVisibility = (
+    visibility: Record<string, boolean>,
+    tableId?: string
+): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const key = STORAGE_KEYS.getTableColumnVisibility(tableId);
+        localStorage.setItem(key, JSON.stringify(visibility));
+    } catch (error) {
+        console.warn(
+            "Failed to save column visibility to localStorage:",
+            error
+        );
     }
 };
 
@@ -76,7 +137,7 @@ type TabFilter = {
 };
 
 type DataTableProps<TData, TValue> = {
-    columns: ColumnDef<TData, TValue>[];
+    columns: ExtendedColumnDef<TData, TValue>[];
     data: TData[];
     title?: string;
     addButtonText?: string;
@@ -93,6 +154,11 @@ type DataTableProps<TData, TValue> = {
     defaultTab?: string;
     persistPageSize?: boolean | string;
     defaultPageSize?: number;
+    columnVisibility?: Record<string, boolean>;
+    enableColumnVisibility?: boolean;
+    persistColumnVisibility?: boolean | string;
+    stickyLeftColumn?: string; // Column ID or accessorKey for left sticky column
+    stickyRightColumn?: string; // Column ID or accessorKey for right sticky column (typically "actions")
 };
 
 export function DataTable<TData, TValue>({
@@ -109,13 +175,42 @@ export function DataTable<TData, TValue>({
     tabs,
     defaultTab,
     persistPageSize = false,
-    defaultPageSize = 20
+    defaultPageSize = 20,
+    columnVisibility: defaultColumnVisibility,
+    enableColumnVisibility = false,
+    persistColumnVisibility = false,
+    stickyLeftColumn,
+    stickyRightColumn
 }: DataTableProps<TData, TValue>) {
     const t = useTranslations();
-    
+
     // Determine table identifier for storage
-    const tableId = typeof persistPageSize === 'string' ? persistPageSize : undefined;
-    
+    // Use persistPageSize string if provided, otherwise use persistColumnVisibility string, otherwise undefined
+    const tableId =
+        typeof persistPageSize === "string"
+            ? persistPageSize
+            : typeof persistColumnVisibility === "string"
+              ? persistColumnVisibility
+              : undefined;
+
+    // Auto-enable persistence if column visibility is enabled
+    // Use explicit persistColumnVisibility if provided, otherwise auto-enable when enableColumnVisibility is true and we have a tableId
+    const shouldPersistColumnVisibility =
+        persistColumnVisibility === true ||
+        typeof persistColumnVisibility === "string" ||
+        (enableColumnVisibility && tableId !== undefined);
+
+    // Compute initial column visibility (from localStorage if enabled, otherwise from prop/default)
+    const initialColumnVisibility = (() => {
+        if (shouldPersistColumnVisibility) {
+            return getStoredColumnVisibility(
+                tableId,
+                defaultColumnVisibility
+            );
+        }
+        return defaultColumnVisibility || {};
+    })();
+
     // Initialize page size from storage or default
     const [pageSize, setPageSize] = useState<number>(() => {
         if (persistPageSize) {
@@ -123,12 +218,14 @@ export function DataTable<TData, TValue>({
         }
         return defaultPageSize;
     });
-    
+
     const [sorting, setSorting] = useState<SortingState>(
         defaultSort ? [defaultSort] : []
     );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [globalFilter, setGlobalFilter] = useState<any>([]);
+    const [columnVisibility, setColumnVisibility] =
+        useState<VisibilityState>(initialColumnVisibility);
     const [activeTab, setActiveTab] = useState<string>(
         defaultTab || tabs?.[0]?.id || ""
     );
@@ -157,16 +254,19 @@ export function DataTable<TData, TValue>({
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
+        onColumnVisibilityChange: setColumnVisibility,
         initialState: {
             pagination: {
                 pageSize: pageSize,
                 pageIndex: 0
-            }
+            },
+            columnVisibility: initialColumnVisibility
         },
         state: {
             sorting,
             columnFilters,
-            globalFilter
+            globalFilter,
+            columnVisibility
         }
     });
 
@@ -174,13 +274,20 @@ export function DataTable<TData, TValue>({
         const currentPageSize = table.getState().pagination.pageSize;
         if (currentPageSize !== pageSize) {
             table.setPageSize(pageSize);
-            
+
             // Persist to localStorage if enabled
             if (persistPageSize) {
                 setStoredPageSize(pageSize, tableId);
             }
         }
     }, [pageSize, table, persistPageSize, tableId]);
+
+    useEffect(() => {
+        // Persist column visibility to localStorage when it changes
+        if (shouldPersistColumnVisibility) {
+            setStoredColumnVisibility(columnVisibility, tableId);
+        }
+    }, [columnVisibility, shouldPersistColumnVisibility, tableId]);
 
     const handleTabChange = (value: string) => {
         setActiveTab(value);
@@ -192,11 +299,33 @@ export function DataTable<TData, TValue>({
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
         table.setPageSize(newPageSize);
-        
+
         // Persist immediately when changed
         if (persistPageSize) {
             setStoredPageSize(newPageSize, tableId);
         }
+    };
+
+    // Helper function to check if a column should be sticky
+    const isStickyColumn = (columnId: string | undefined, accessorKey: string | undefined, position: "left" | "right"): boolean => {
+        if (position === "left" && stickyLeftColumn) {
+            return columnId === stickyLeftColumn || accessorKey === stickyLeftColumn;
+        }
+        if (position === "right" && stickyRightColumn) {
+            return columnId === stickyRightColumn || accessorKey === stickyRightColumn;
+        }
+        return false;
+    };
+
+    // Get sticky column classes
+    const getStickyClasses = (columnId: string | undefined, accessorKey: string | undefined): string => {
+        if (isStickyColumn(columnId, accessorKey, "left")) {
+            return "md:sticky md:left-0 z-10 bg-card [mask-image:linear-gradient(to_left,transparent_0%,black_20px)]";
+        }
+        if (isStickyColumn(columnId, accessorKey, "right")) {
+            return "sticky right-0 z-10 w-auto min-w-fit bg-card [mask-image:linear-gradient(to_right,transparent_0%,black_20px)]";
+        }
+        return "";
     };
 
     return (
@@ -239,78 +368,157 @@ export function DataTable<TData, TValue>({
                     </div>
                     <div className="flex items-center gap-2 sm:justify-end">
                         {onRefresh && (
-                            <Button
-                                variant="outline"
-                                onClick={onRefresh}
-                                disabled={isRefreshing}
-                            >
-                                <RefreshCw
-                                    className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                                />
-                                {t("refresh")}
-                            </Button>
+                            <div>
+                                <Button
+                                    variant="outline"
+                                    onClick={onRefresh}
+                                    disabled={isRefreshing}
+                                >
+                                    <RefreshCw
+                                        className={`mr-0 sm:mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                                    />
+                                    <span className="hidden sm:inline">
+                                        {t("refresh")}
+                                    </span>
+                                </Button>
+                            </div>
                         )}
                         {onAdd && addButtonText && (
-                            <Button onClick={onAdd}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                {addButtonText}
-                            </Button>
+                            <div>
+                                <Button onClick={onAdd}>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    {addButtonText}
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                      header.column.columnDef
-                                                          .header,
-                                                      header.getContext()
-                                                  )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows?.length ? (
-                                table.getRowModel().rows.map((row) => (
-                                    <TableRow
-                                        key={row.id}
-                                        data-state={
-                                            row.getIsSelected() && "selected"
-                                        }
-                                    >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext()
-                                                )}
-                                            </TableCell>
-                                        ))}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                {table.getHeaderGroups().map((headerGroup) => (
+                                    <TableRow key={headerGroup.id}>
+                                        {headerGroup.headers.map((header) => {
+                                            const columnId = header.column.id;
+                                            const accessorKey = (header.column.columnDef as any).accessorKey as string | undefined;
+                                            const stickyClasses = getStickyClasses(columnId, accessorKey);
+                                            const isRightSticky = isStickyColumn(columnId, accessorKey, "right");
+                                            const hasHideableColumns = enableColumnVisibility &&
+                                                table.getAllColumns().some((col) => col.getCanHide());
+
+                                            return (
+                                                <TableHead
+                                                    key={header.id}
+                                                    className={`whitespace-nowrap ${stickyClasses}`}
+                                                >
+                                                    {header.isPlaceholder ? null : (
+                                                        isRightSticky && hasHideableColumns ? (
+                                                            <div className="flex flex-col items-end pr-3">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 mb-1">
+                                                                            <Columns className="h-4 w-4" />
+                                                                            <span className="sr-only">
+                                                                                {t("columns") || "Columns"}
+                                                                            </span>
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="w-48">
+                                                                        <DropdownMenuLabel>
+                                                                            {t("toggleColumns") || "Toggle columns"}
+                                                                        </DropdownMenuLabel>
+                                                                        <DropdownMenuSeparator />
+                                                                        {table
+                                                                            .getAllColumns()
+                                                                            .filter((column) => column.getCanHide())
+                                                                            .map((column) => {
+                                                                                const columnDef = column.columnDef as any;
+                                                                                const friendlyName = columnDef.friendlyName;
+                                                                                const displayName = friendlyName ||
+                                                                                    (typeof columnDef.header === "string"
+                                                                                        ? columnDef.header
+                                                                                        : column.id);
+                                                                                return (
+                                                                                    <DropdownMenuCheckboxItem
+                                                                                        key={column.id}
+                                                                                        className="capitalize"
+                                                                                        checked={column.getIsVisible()}
+                                                                                        onCheckedChange={(value) =>
+                                                                                            column.toggleVisibility(!!value)
+                                                                                        }
+                                                                                        onSelect={(e) => e.preventDefault()}
+                                                                                    >
+                                                                                        {displayName}
+                                                                                    </DropdownMenuCheckboxItem>
+                                                                                );
+                                                                            })}
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                                <div className="h-0 opacity-0 pointer-events-none overflow-hidden">
+                                                                    {flexRender(
+                                                                        header.column.columnDef.header,
+                                                                        header.getContext()
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            flexRender(
+                                                                header.column.columnDef.header,
+                                                                header.getContext()
+                                                            )
+                                                        )
+                                                    )}
+                                                </TableHead>
+                                            );
+                                        })}
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={columns.length}
-                                        className="h-24 text-center"
-                                    >
-                                        No results found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
+                                ))}
+                            </TableHeader>
+                            <TableBody>
+                                {table.getRowModel().rows?.length ? (
+                                    table.getRowModel().rows.map((row) => (
+                                        <TableRow
+                                            key={row.id}
+                                            data-state={
+                                                row.getIsSelected() && "selected"
+                                            }
+                                        >
+                                            {row.getVisibleCells().map((cell) => {
+                                                const columnId = cell.column.id;
+                                                const accessorKey = (cell.column.columnDef as any).accessorKey as string | undefined;
+                                                const stickyClasses = getStickyClasses(columnId, accessorKey);
+                                                const isRightSticky = isStickyColumn(columnId, accessorKey, "right");
+                                                return (
+                                                    <TableCell
+                                                        key={cell.id}
+                                                        className={`whitespace-nowrap ${stickyClasses} ${isRightSticky ? "text-right" : ""}`}
+                                                    >
+                                                        {flexRender(
+                                                            cell.column.columnDef.cell,
+                                                            cell.getContext()
+                                                        )}
+                                                    </TableCell>
+                                                );
+                                            })}
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell
+                                            colSpan={columns.length}
+                                            className="h-24 text-center"
+                                        >
+                                            No results found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                     <div className="mt-4">
-                        <DataTablePagination 
-                            table={table} 
+                        <DataTablePagination
+                            table={table}
                             onPageSizeChange={handlePageSizeChange}
                         />
                     </div>

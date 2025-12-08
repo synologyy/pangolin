@@ -102,7 +102,12 @@ const LOG_RETENTION_OPTIONS = [
     { label: "logRetention14Days", value: 14 },
     { label: "logRetention30Days", value: 30 },
     { label: "logRetention90Days", value: 90 },
-    ...(build != "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
+    ...(build != "saas"
+        ? [
+              { label: "logRetentionForever", value: -1 },
+              { label: "logRetentionEndOfFollowingYear", value: 9001 }
+          ]
+        : [])
 ];
 
 export default function GeneralPage() {
@@ -342,29 +347,25 @@ export default function GeneralPage() {
                                         </FormItem>
                                     )}
                                 />
-                                {env.flags.enableClients && (
-                                    <FormField
-                                        control={form.control}
-                                        name="subnet"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("subnet")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        {...field}
-                                                        disabled={true}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                                <FormDescription>
-                                                    {t("subnetDescription")}
-                                                </FormDescription>
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
+                                <FormField
+                                    control={form.control}
+                                    name="subnet"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t("subnet")}</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    disabled={true}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                            <FormDescription>
+                                                {t("subnetDescription")}
+                                            </FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
                             </SettingsSectionForm>
                         </SettingsSectionBody>
                     </SettingsSection>
@@ -600,7 +601,7 @@ export default function GeneralPage() {
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
                                 <SettingsSectionForm>
-                                <SecurityFeaturesAlert />
+                                    <SecurityFeaturesAlert />
                                     <FormField
                                         control={form.control}
                                         name="requireTwoFactor"

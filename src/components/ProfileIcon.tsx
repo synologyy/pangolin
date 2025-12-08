@@ -14,7 +14,7 @@ import {
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
-import { Laptop, LogOut, Moon, Sun } from "lucide-react";
+import { Laptop, LogOut, Moon, Sun, Smartphone } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,6 +23,7 @@ import Disable2FaForm from "./Disable2FaForm";
 import SecurityKeyForm from "./SecurityKeyForm";
 import Enable2FaDialog from "./Enable2FaDialog";
 import ChangePasswordDialog from "./ChangePasswordDialog";
+import ViewDevicesDialog from "./ViewDevicesDialog";
 import SupporterStatus from "./SupporterStatus";
 import { UserType } from "@server/types/UserTypes";
 import LocaleSwitcher from "@app/components/LocaleSwitcher";
@@ -43,6 +44,7 @@ export default function ProfileIcon() {
     const [openDisable2fa, setOpenDisable2fa] = useState(false);
     const [openSecurityKey, setOpenSecurityKey] = useState(false);
     const [openChangePassword, setOpenChangePassword] = useState(false);
+    const [openViewDevices, setOpenViewDevices] = useState(false);
 
     const t = useTranslations();
 
@@ -83,6 +85,10 @@ export default function ProfileIcon() {
             <ChangePasswordDialog 
                 open={openChangePassword} 
                 setOpen={setOpenChangePassword} 
+            />
+            <ViewDevicesDialog 
+                open={openViewDevices} 
+                setOpen={setOpenViewDevices} 
             />
 
             <DropdownMenu>
@@ -146,6 +152,13 @@ export default function ProfileIcon() {
                             <DropdownMenuSeparator />
                         </>
                     )}
+                    <DropdownMenuItem
+                        onClick={() => setOpenViewDevices(true)}
+                    >
+                        <Smartphone className="mr-2 h-4 w-4" />
+                        <span>{t("viewDevices") || "View Devices"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuLabel>{t("theme")}</DropdownMenuLabel>
                     {(["light", "dark", "system"] as const).map(
                         (themeOption) => (

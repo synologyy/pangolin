@@ -26,24 +26,21 @@ const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) =>
     const t = useTranslations();
 
     return (
-        <div className="flex items-center space-x-2 max-w-full">
+        <div className="flex items-center space-x-2 min-w-0 max-w-full">
             {isLink ? (
                 <Link
                     href={text}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate hover:underline text-sm"
-                    style={{ maxWidth: "100%" }} // Ensures truncation works within parent
+                    className="truncate hover:underline text-sm min-w-0 max-w-full"
                     title={text} // Shows full text on hover
                 >
                     {displayValue}
                 </Link>
             ) : (
                 <span
-                    className="truncate text-sm"
+                    className="truncate text-sm min-w-0 max-w-full"
                     style={{
-                        maxWidth: "100%",
-                        display: "block",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis"
@@ -55,7 +52,7 @@ const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) =>
             )}
             <button
                 type="button"
-                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer"
+                className="h-6 w-6 p-0 flex items-center justify-center cursor-pointer flex-shrink-0"
                 onClick={handleCopy}
             >
                 {!copied ? (

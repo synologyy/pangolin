@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { IdpDataTable } from "@app/components/private/OrgIdpDataTable";
 import { Button } from "@app/components/ui/button";
 import { ArrowRight, ArrowUpDown, MoreHorizontal } from "lucide-react";
@@ -59,9 +60,10 @@ export default function IdpTable({ idps, orgId }: Props) {
     };
 
 
-    const columns: ColumnDef<IdpRow>[] = [
+    const columns: ExtendedColumnDef<IdpRow>[] = [
         {
             accessorKey: "idpId",
+            friendlyName: "ID",
             header: ({ column }) => {
                 return (
                     <Button
@@ -78,6 +80,7 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             accessorKey: "name",
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -94,6 +97,7 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             accessorKey: "type",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -117,10 +121,11 @@ export default function IdpTable({ idps, orgId }: Props) {
         },
         {
             id: "actions",
+            header: () => (<span className="p-3">{t("actions")}</span>),
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -153,9 +158,7 @@ export default function IdpTable({ idps, orgId }: Props) {
                         </DropdownMenu>
                         <Link href={`/${orgId}/settings/idp/${siteRow.idpId}/general`}>
                             <Button
-                                variant={"secondary"}
-                                className="ml-2"
-                                size="sm"
+                                variant={"outline"}
                             >
                                 {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />

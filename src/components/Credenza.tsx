@@ -155,7 +155,7 @@ const CredenzaBody = ({ className, children, ...props }: CredenzaProps) => {
     // );
 
     return (
-        <div className={cn("px-0 mb-4 space-y-4", className)} {...props}>
+        <div className={cn("px-0 mb-4 space-y-4 overflow-x-hidden min-w-0", className)} {...props}>
             {children}
         </div>
     );

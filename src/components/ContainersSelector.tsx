@@ -7,6 +7,7 @@ import {
     getFilteredRowModel,
     VisibilityState
 } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import {
     Credenza,
@@ -181,17 +182,19 @@ const DockerContainersTable: FC<{
         [getExposedPorts]
     );
 
-    const columns: ColumnDef<Container>[] = [
+    const columns: ExtendedColumnDef<Container>[] = [
         {
             accessorKey: "name",
-            header: t("containerName"),
+            friendlyName: t("containerName"),
+            header: () => (<span className="p-3">{t("containerName")}</span>),
             cell: ({ row }) => (
                 <div className="font-medium">{row.original.name}</div>
             )
         },
         {
             accessorKey: "image",
-            header: t("containerImage"),
+            friendlyName: t("containerImage"),
+            header: () => (<span className="p-3">{t("containerImage")}</span>),
             cell: ({ row }) => (
                 <div className="text-sm text-muted-foreground">
                     {row.original.image}
@@ -200,7 +203,8 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "state",
-            header: t("containerState"),
+            friendlyName: t("containerState"),
+            header: () => (<span className="p-3">{t("containerState")}</span>),
             cell: ({ row }) => (
                 <Badge
                     variant={
@@ -215,7 +219,8 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "networks",
-            header: t("containerNetworks"),
+            friendlyName: t("containerNetworks"),
+            header: () => (<span className="p-3">{t("containerNetworks")}</span>),
             cell: ({ row }) => {
                 const networks = Object.keys(row.original.networks);
                 return (
@@ -233,7 +238,8 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "hostname",
-            header: t("containerHostnameIp"),
+            friendlyName: t("containerHostnameIp"),
+            header: () => (<span className="p-3">{t("containerHostnameIp")}</span>),
             enableHiding: false,
             cell: ({ row }) => (
                 <div className="text-sm font-mono">
@@ -243,7 +249,8 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "labels",
-            header: t("containerLabels"),
+            friendlyName: t("containerLabels"),
+            header: () => (<span className="p-3">{t("containerLabels")}</span>),
             cell: ({ row }) => {
                 const labels = row.original.labels || {};
                 const labelEntries = Object.entries(labels);
@@ -295,7 +302,7 @@ const DockerContainersTable: FC<{
         },
         {
             accessorKey: "ports",
-            header: t("containerPorts"),
+            header: () => (<span className="p-3">{t("containerPorts")}</span>),
             enableHiding: false,
             cell: ({ row }) => {
                 const ports = getExposedPorts(row.original);
@@ -353,7 +360,7 @@ const DockerContainersTable: FC<{
         },
         {
             id: "actions",
-            header: t("containerActions"),
+            header: () => (<span className="p-3">{t("containerActions")}</span>),
             cell: ({ row }) => {
                 const ports = getExposedPorts(row.original);
                 return (

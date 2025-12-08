@@ -36,6 +36,9 @@ export function UsersDataTable<TData, TValue>({
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             addButtonText={t('accessUserCreate')}
+            enableColumnVisibility={true}
+            stickyLeftColumn="displayUsername"
+            stickyRightColumn="actions"
         />
     );
 }

@@ -13,13 +13,17 @@
 
 import * as orgIdp from "#private/routers/orgIdp";
 import * as org from "#private/routers/org";
+import * as logs from "#private/routers/auditLogs";
 
-import { Router } from "express";
 import {
-    verifyApiKey,
     verifyApiKeyHasAction,
     verifyApiKeyIsRoot,
+    verifyApiKeyOrgAccess,
 } from "@server/middlewares";
+import {
+    verifyValidSubscription,
+    verifyValidLicense
+} from "#private/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 
 import { unauthenticated as ua, authenticated as a } from "@server/routers/integration";
@@ -42,4 +46,42 @@ authenticated.delete(
     verifyApiKeyHasAction(ActionsEnum.deleteIdp),
     logActionAudit(ActionsEnum.deleteIdp),
     orgIdp.deleteOrgIdp,
+);
+
+authenticated.get(
+    "/org/:orgId/logs/action",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logs.queryActionAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/action/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportActionAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/access",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logs.queryAccessAuditLogs
+);
+
+authenticated.get(
+    "/org/:orgId/logs/access/export",
+    verifyValidLicense,
+    verifyValidSubscription,
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.exportLogs),
+    logActionAudit(ActionsEnum.exportLogs),
+    logs.exportAccessAuditLogs
 );

@@ -76,8 +76,8 @@ export default function StepperForm() {
         } catch (e) {
             console.error("Failed to fetch default subnet:", e);
             toast({
-                title: "Error",
-                description: "Failed to fetch default subnet",
+                title: t("error"),
+                description: t("setupFailedToFetchSubnet"),
                 variant: "destructive"
             });
         }
@@ -296,31 +296,27 @@ export default function StepperForm() {
                                         )}
                                     />
 
-                                    {env.flags.enableClients && (
-                                        <FormField
-                                            control={orgForm.control}
-                                            name="subnet"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Subnet
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            type="text"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        Network subnet for this
-                                                        organization. A default
-                                                        value has been provided.
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
+                                    <FormField
+                                        control={orgForm.control}
+                                        name="subnet"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("setupSubnetAdvanced")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    {t("setupSubnetDescription")}
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     {orgIdTaken && !orgCreated ? (
                                         <Alert variant="destructive">

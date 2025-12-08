@@ -21,7 +21,17 @@ export function pullEnv(): Env {
             environment: process.env.ENVIRONMENT as string,
             sandbox_mode: process.env.SANDBOX_MODE === "true" ? true : false,
             version: process.env.APP_VERSION as string,
-            dashboardUrl: process.env.DASHBOARD_URL as string
+            dashboardUrl: process.env.DASHBOARD_URL as string,
+            notifications: {
+                product_updates:
+                    process.env.PRODUCT_UPDATES_NOTIFICATION_ENABLED === "true"
+                        ? true
+                        : false,
+                new_releases:
+                    process.env.NEW_RELEASES_NOTIFICATION_ENABLED === "true"
+                        ? true
+                        : false
+            }
         },
         email: {
             emailEnabled: process.env.EMAIL_ENABLED === "true" ? true : false
@@ -45,19 +55,19 @@ export function pullEnv(): Env {
                 process.env.FLAGS_DISABLE_BASIC_WIREGUARD_SITES === "true"
                     ? true
                     : false,
-            enableClients:
-                process.env.FLAGS_ENABLE_CLIENTS === "true" ? true : false,
             hideSupporterKey:
                 process.env.HIDE_SUPPORTER_KEY === "true" ? true : false,
             usePangolinDns:
-                process.env.USE_PANGOLIN_DNS === "true"
-                    ? true
-                    : false
+                process.env.USE_PANGOLIN_DNS === "true" ? true : false
         },
 
         branding: {
             appName: process.env.BRANDING_APP_NAME as string,
             background_image_path: process.env.BACKGROUND_IMAGE_PATH as string,
+            hideAuthLayoutFooter:
+                process.env.BRANDING_HIDE_AUTH_LAYOUT_FOOTER === "true"
+                    ? true
+                    : false,
             logo: {
                 lightPath: process.env.BRANDING_LOGO_LIGHT_PATH as string,
                 darkPath: process.env.BRANDING_LOGO_DARK_PATH as string,
@@ -79,11 +89,9 @@ export function pullEnv(): Env {
                 }
             },
             loginPage: {
-                titleText: process.env.LOGIN_PAGE_TITLE_TEXT as string,
                 subtitleText: process.env.LOGIN_PAGE_SUBTITLE_TEXT as string
             },
             signupPage: {
-                titleText: process.env.SIGNUP_PAGE_TITLE_TEXT as string,
                 subtitleText: process.env.SIGNUP_PAGE_SUBTITLE_TEXT as string
             },
             resourceAuthPage: {

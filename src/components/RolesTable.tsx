@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -61,9 +62,11 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         }
     };
 
-    const columns: ColumnDef<RoleRow>[] = [
+    const columns: ExtendedColumnDef<RoleRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -80,18 +83,20 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         },
         {
             accessorKey: "description",
-            header: t("description")
+            friendlyName: t("description"),
+            header: () => (<span className="p-3">{t("description")}</span>)
         },
         {
             id: "actions",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const roleRow = row.original;
 
                 return (
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center gap-2 justify-end">
                         <Button
-                            variant={"secondary"}
-                            size="sm"
+                            variant={"outline"}
                             disabled={roleRow.isAdmin || false}
                             onClick={() => {
                                 setIsDeleteModalOpen(true);

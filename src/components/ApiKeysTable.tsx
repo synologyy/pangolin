@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -85,9 +86,11 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
             });
     };
 
-    const columns: ColumnDef<ApiKeyRow>[] = [
+    const columns: ExtendedColumnDef<ApiKeyRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -104,7 +107,8 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             accessorKey: "key",
-            header: t("key"),
+            friendlyName: t("key"),
+            header: () => (<span className="p-3">{t("key")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return <span className="font-mono">{r.key}</span>;
@@ -112,7 +116,8 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             accessorKey: "createdAt",
-            header: t("createdAt"),
+            friendlyName: t("createdAt"),
+            header: () => (<span className="p-3">{t("createdAt")}</span>),
             cell: ({ row }) => {
                 const r = row.original;
                 return <span>{moment(r.createdAt).format("lll")} </span>;
@@ -120,10 +125,12 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         },
         {
             id: "actions",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -153,14 +160,14 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <div className="flex items-center justify-end">
-                            <Link href={`/admin/api-keys/${r.id}`}>
-                                <Button variant={"secondary"} className="ml-2" size="sm">
-                                    {t("edit")}
-                                    <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            </Link>
-                        </div>
+                        <Link href={`/admin/api-keys/${r.id}`}>
+                            <Button
+                                variant={"outline"}
+                            >
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }
@@ -178,13 +185,9 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("apiKeysQuestionRemove")}
-                            </p>
+                            <p>{t("apiKeysQuestionRemove")}</p>
 
-                            <p>
-                                {t("apiKeysMessageRemove")}
-                            </p>
+                            <p>{t("apiKeysMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("apiKeysDeleteConfirm")}

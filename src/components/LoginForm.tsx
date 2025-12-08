@@ -58,16 +58,18 @@ export type LoginFormIDP = {
 
 type LoginFormProps = {
     redirect?: string;
-    onLogin?: () => void | Promise<void>;
+    onLogin?: (redirectUrl?: string) => void | Promise<void>;
     idps?: LoginFormIDP[];
     orgId?: string;
+    forceLogin?: boolean;
 };
 
 export default function LoginForm({
     redirect,
     onLogin,
     idps,
-    orgId
+    orgId,
+    forceLogin
 }: LoginFormProps) {
     const router = useRouter();
 
@@ -141,7 +143,7 @@ export default function LoginForm({
 
         try {
             // Start WebAuthn authentication without email
-            const startResponse = await securityKeyStartProxy({});
+            const startResponse = await securityKeyStartProxy({}, forceLogin);
 
             if (startResponse.error) {
                 setError(startResponse.message);
@@ -165,7 +167,8 @@ export default function LoginForm({
                 // Verify authentication
                 const verifyResponse = await securityKeyVerifyProxy(
                     { credential },
-                    tempSessionId
+                    tempSessionId,
+                    forceLogin
                 );
 
                 if (verifyResponse.error) {
@@ -175,7 +178,7 @@ export default function LoginForm({
 
                 if (verifyResponse.success) {
                     if (onLogin) {
-                        await onLogin();
+                        await onLogin(redirect);
                     }
                 }
             } catch (error: any) {
@@ -234,12 +237,15 @@ export default function LoginForm({
         setShowSecurityKeyPrompt(false);
 
         try {
-            const response = await loginProxy({
+            const response = await loginProxy(
+                {
                 email,
                 password,
                 code,
                 resourceGuid: resourceGuid as string
-            });
+                },
+                forceLogin
+            );
 
             try {
                 const identity = {
@@ -263,7 +269,7 @@ export default function LoginForm({
             // Handle case where data is null (e.g., already logged in)
             if (!data) {
                 if (onLogin) {
-                    await onLogin();
+                    await onLogin(redirect);
                 }
                 return;
             }
@@ -312,7 +318,7 @@ export default function LoginForm({
             }
 
             if (onLogin) {
-                await onLogin();
+                await onLogin(redirect);
             }
         } catch (e: any) {
             console.error(e);
@@ -333,7 +339,8 @@ export default function LoginForm({
             const data = await generateOidcUrlProxy(
                 idpId,
                 redirect || "/",
-                orgId
+                orgId,
+                forceLogin
             );
             const url = data.data?.redirectUrl;
             if (data.error) {
@@ -354,6 +361,15 @@ export default function LoginForm({
 
     return (
         <div className="space-y-4">
+            {forceLogin && (
+                <Alert variant="neutral">
+                    <AlertDescription className="flex items-center gap-2">
+                    <LockIcon className="w-4 h-4" />
+                        {t("loginRequiredForDevice")}
+                    </AlertDescription>
+                </Alert>
+            )}
+
             {showSecurityKeyPrompt && (
                 <Alert>
                     <FingerprintIcon className="w-5 h-5 mr-2" />

@@ -16,12 +16,10 @@ import { UserType } from "@server/types/UserTypes";
 import { verifySession } from "@server/auth/sessions/verifySession";
 import config from "@server/lib/config";
 
-export const requestTotpSecretBody = z
-    .object({
+export const requestTotpSecretBody = z.strictObject({
         password: z.string(),
-        email: z.string().email().optional()
-    })
-    .strict();
+        email: z.email().optional()
+    });
 
 export type RequestTotpSecretBody = z.infer<typeof requestTotpSecretBody>;
 

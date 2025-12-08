@@ -809,15 +809,6 @@ export default function DomainPicker2({
                     )}
                 </div>
             )}
-
-            {loadingDomains && (
-                <div className="flex items-center justify-center p-4">
-                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                        <span>{t("domainPickerLoadingDomains")}</span>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

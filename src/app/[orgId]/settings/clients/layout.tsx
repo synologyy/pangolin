@@ -13,9 +13,5 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     const { children } = props;
     const env = pullEnv();
 
-    if (!env.flags.enableClients) {
-        redirect(`/${params.orgId}/settings`);
-    }
-
     return children;
 }

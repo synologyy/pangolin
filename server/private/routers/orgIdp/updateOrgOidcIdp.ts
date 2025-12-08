@@ -31,12 +31,11 @@ import { TierId } from "@server/lib/billing/tiers";
 const paramsSchema = z
     .object({
         orgId: z.string().nonempty(),
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         name: z.string().optional(),
         clientId: z.string().optional(),
         clientSecret: z.string().optional(),
@@ -48,8 +47,7 @@ const bodySchema = z
         scopes: z.string().optional(),
         autoProvision: z.boolean().optional(),
         roleMapping: z.string().optional()
-    })
-    .strict();
+    });
 
 export type UpdateOrgIdpResponse = {
     idpId: number;

@@ -25,12 +25,14 @@ export default async function Page(props: {
     const user = await getUser({ skipCheckVerifyEmail: true });
 
     const isInvite = searchParams?.redirect?.includes("/invite");
+    const forceLoginParam = searchParams?.forceLogin;
+    const forceLogin = forceLoginParam === "true";
 
     const env = pullEnv();
 
     const signUpDisabled = env.flags.disableSignupWithoutInvite;
 
-    if (user) {
+    if (user && !forceLogin) {
         redirect("/");
     }
 
@@ -53,7 +55,7 @@ export default async function Page(props: {
 
     if (loginPageDomain) {
         const redirectUrl = searchParams.redirect as string | undefined;
-        
+
         let url = `https://${loginPageDomain}/auth/org`;
         if (redirectUrl) {
             url += `?redirect=${redirectUrl}`;
@@ -96,7 +98,7 @@ export default async function Page(props: {
                 </div>
             )}
 
-            <DashboardLoginForm redirect={redirectUrl} idps={loginIdps} />
+            <DashboardLoginForm redirect={redirectUrl} idps={loginIdps} forceLogin={forceLogin} />
 
             {(!signUpDisabled || isInvite) && (
                 <p className="text-center text-muted-foreground mt-4">

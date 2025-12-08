@@ -11,6 +11,7 @@ import {
     ApiKeyOrg,
     RemoteExitNode,
     Session,
+    SiteResource,
     User,
     UserOrg
 } from "@server/db";
@@ -77,6 +78,8 @@ declare global {
             userOrgId?: string;
             userOrgIds?: string[];
             remoteExitNode?: RemoteExitNode;
+            siteResource?: SiteResource;
+            orgPolicyAllowed?: boolean;
         }
     }
 }

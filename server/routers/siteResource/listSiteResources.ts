@@ -10,12 +10,10 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listSiteResourcesParamsSchema = z
-    .object({
-        siteId: z.string().transform(Number).pipe(z.number().int().positive()),
+const listSiteResourcesParamsSchema = z.strictObject({
+        siteId: z.string().transform(Number).pipe(z.int().positive()),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 const listSiteResourcesQuerySchema = z.object({
     limit: z
@@ -23,13 +21,13 @@ const listSiteResourcesQuerySchema = z.object({
         .optional()
         .default("100")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 export type ListSiteResourcesResponse = {

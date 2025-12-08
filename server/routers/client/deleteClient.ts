@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
-import { clients, clientSites } from "@server/db";
+import { db, olms } from "@server/db";
+import { clients, clientSitesAssociationsCache } from "@server/db";
 import { eq } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -9,12 +9,12 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
+import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { sendTerminateClient } from "./terminate";
 
-const deleteClientSchema = z
-    .object({
-        clientId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const deleteClientSchema = z.strictObject({
+    clientId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "delete",
@@ -60,16 +60,38 @@ export async function deleteClient(
             );
         }
 
-        await db.transaction(async (trx) => {
-            // Delete the client-site associations first
-            await trx
-                .delete(clientSites)
-                .where(eq(clientSites.clientId, clientId));
+        if (client.userId) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Cannot delete a user client with this endpoint`
+                )
+            );
+        }
 
+        await db.transaction(async (trx) => {
             // Then delete the client itself
-            await trx
+            const [deletedClient] = await trx
                 .delete(clients)
-                .where(eq(clients.clientId, clientId));
+                .where(eq(clients.clientId, clientId))
+                .returning();
+
+            const [olm] = await trx
+                .select()
+                .from(olms)
+                .where(eq(olms.clientId, clientId))
+                .limit(1);
+
+            // this is a machine client so we also delete the olm
+            if (!client.userId && client.olmId) {
+                await trx.delete(olms).where(eq(olms.olmId, client.olmId));
+            }
+
+            await rebuildClientAssociationsFromClient(deletedClient, trx);
+
+            if (olm) {
+                await sendTerminateClient(deletedClient.clientId, olm.olmId); //  the olmId needs to be provided because it cant look it up after deletion
+            }
         });
 
         return response(res, {

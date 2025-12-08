@@ -103,18 +103,13 @@ function getActionsCategories(root: boolean) {
             [t('actionUpdateClient')]: "updateClient",
             [t('actionListClients')]: "listClients",
             [t('actionGetClient')]: "getClient"
+        },
+
+        "Logs": {
+            [t('actionExportLogs')]: "exportLogs",
+            [t('actionViewLogs')]: "viewLogs",
         }
     };
-
-    if (env.flags.enableClients) {
-        actionsByCategory["Clients"] = {
-            "Create Client": "createClient",
-            "Delete Client": "deleteClient",
-            "Update Client": "updateClient",
-            "List Clients": "listClients",
-            "Get Client": "getClient"
-        };
-    }
 
     if (root) {
         actionsByCategory["Organization"] = {

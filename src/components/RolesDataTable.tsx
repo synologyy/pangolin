@@ -36,6 +36,9 @@ export function RolesDataTable<TData, TValue>({
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             addButtonText={t('accessRolesAdd')}
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

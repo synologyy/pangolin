@@ -1,31 +1,108 @@
-import { db, ExitNode } from "@server/db";
+import {
+    clientSiteResourcesAssociationsCache,
+    db,
+    orgs,
+    siteResources
+} from "@server/db";
 import { MessageHandler } from "@server/routers/ws";
-import { clients, clientSites, exitNodes, Olm, olms, sites } from "@server/db";
-import { and, eq, inArray } from "drizzle-orm";
+import {
+    clients,
+    clientSitesAssociationsCache,
+    exitNodes,
+    Olm,
+    olms,
+    sites
+} from "@server/db";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { addPeer, deletePeer } from "../newt/peers";
 import logger from "@server/logger";
-import { listExitNodes } from "#dynamic/lib/exitNodes";
+import { generateAliasConfig } from "@server/lib/ip";
+import { generateRemoteSubnets } from "@server/lib/ip";
+import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
+import { validateSessionToken } from "@server/auth/sessions/app";
+import config from "@server/lib/config";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 export const handleOlmRegisterMessage: MessageHandler = async (context) => {
     logger.info("Handling register olm message!");
     const { message, client: c, sendToClient } = context;
     const olm = c as Olm;
 
-    const now = new Date().getTime() / 1000;
+    const now = Math.floor(Date.now() / 1000);
 
     if (!olm) {
         logger.warn("Olm not found");
         return;
     }
+
+    const { publicKey, relay, olmVersion, olmAgent, orgId, userToken } =
+        message.data;
+
     if (!olm.clientId) {
-        logger.warn("Olm has no client ID!");
+        logger.warn("Olm client ID not found");
         return;
     }
-    const clientId = olm.clientId;
-    const { publicKey, relay, olmVersion } = message.data;
+
+    const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.clientId, olm.clientId))
+        .limit(1);
+
+    if (!client) {
+        logger.warn("Client ID not found");
+        return;
+    }
+
+    const [org] = await db
+        .select()
+        .from(orgs)
+        .where(eq(orgs.orgId, client.orgId))
+        .limit(1);
+
+    if (!org) {
+        logger.warn("Org not found");
+        return;
+    }
+
+    if (orgId) {
+        if (!olm.userId) {
+            logger.warn("Olm has no user ID");
+            return;
+        }
+
+        const { session: userSession, user } =
+            await validateSessionToken(userToken);
+        if (!userSession || !user) {
+            logger.warn("Invalid user session for olm register");
+            return; // by returning here we just ignore the ping and the setInterval will force it to disconnect
+        }
+        if (user.userId !== olm.userId) {
+            logger.warn("User ID mismatch for olm register");
+            return;
+        }
+
+        const sessionId = encodeHexLowerCase(
+            sha256(new TextEncoder().encode(userToken))
+        );
+
+        const policyCheck = await checkOrgAccessPolicy({
+            orgId: orgId,
+            userId: olm.userId,
+            sessionId // this is the user token passed in the message
+        });
+
+        if (!policyCheck.allowed) {
+            logger.warn(
+                `Olm user ${olm.userId} does not pass access policies for org ${orgId}: ${policyCheck.error}`
+            );
+            return;
+        }
+    }
 
     logger.debug(
-        `Olm client ID: ${clientId}, Public Key: ${publicKey}, Relay: ${relay}`
+        `Olm client ID: ${client.clientId}, Public Key: ${publicKey}, Relay: ${relay}`
     );
 
     if (!publicKey) {
@@ -33,65 +110,18 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         return;
     }
 
-    // Get the client
-    const [client] = await db
-        .select()
-        .from(clients)
-        .where(eq(clients.clientId, clientId))
-        .limit(1);
-
-    if (!client) {
-        logger.warn("Client not found");
-        return;
-    }
-
-    if (client.exitNodeId) {
-        // TODO: FOR NOW WE ARE JUST HOLEPUNCHING ALL EXIT NODES BUT IN THE FUTURE WE SHOULD HANDLE THIS BETTER
-
-        // Get the exit node
-        const allExitNodes = await listExitNodes(client.orgId, true); // FILTER THE ONLINE ONES
-
-        const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
-            return {
-                publicKey: exitNode.publicKey,
-                endpoint: exitNode.endpoint
-            };
-        });
-
-        // Send holepunch message
-        await sendToClient(olm.olmId, {
-            type: "olm/wg/holepunch/all",
-            data: {
-                exitNodes: exitNodesHpData
-            }
-        });
-
-        if (!olmVersion) {
-            // THIS IS FOR BACKWARDS COMPATIBILITY
-            // THE OLDER CLIENTS DID NOT SEND THE VERSION
-            await sendToClient(olm.olmId, {
-                type: "olm/wg/holepunch",
-                data: {
-                    serverPubKey: allExitNodes[0].publicKey,
-                    endpoint: allExitNodes[0].endpoint
-                }
-            });
-        }
-    }
-
-    if (olmVersion) {
+    if (
+        (olmVersion && olm.version !== olmVersion) ||
+        (olmAgent && olm.agent !== olmAgent)
+    ) {
         await db
             .update(olms)
             .set({
-                version: olmVersion
+                version: olmVersion,
+                agent: olmAgent
             })
             .where(eq(olms.olmId, olm.olmId));
     }
-
-    // if (now - (client.lastHolePunch || 0) > 6) {
-    //     logger.warn("Client last hole punch is too old, skipping all sites");
-    //     return;
-    // }
 
     if (client.pubKey !== publicKey) {
         logger.info(
@@ -103,23 +133,26 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             .set({
                 pubKey: publicKey
             })
-            .where(eq(clients.clientId, olm.clientId));
+            .where(eq(clients.clientId, client.clientId));
 
         // set isRelay to false for all of the client's sites to reset the connection metadata
         await db
-            .update(clientSites)
+            .update(clientSitesAssociationsCache)
             .set({
                 isRelayed: relay == true
             })
-            .where(eq(clientSites.clientId, olm.clientId));
+            .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
     }
 
     // Get all sites data
     const sitesData = await db
         .select()
         .from(sites)
-        .innerJoin(clientSites, eq(sites.siteId, clientSites.siteId))
-        .where(eq(clientSites.clientId, client.clientId));
+        .innerJoin(
+            clientSitesAssociationsCache,
+            eq(sites.siteId, clientSitesAssociationsCache.siteId)
+        )
+        .where(eq(clientSitesAssociationsCache.clientId, client.clientId));
 
     // Prepare an array to store site configurations
     const siteConfigurations = [];
@@ -127,15 +160,21 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
         `Found ${sitesData.length} sites for client ${client.clientId}`
     );
 
-    if (sitesData.length === 0) {
-        sendToClient(olm.olmId, {
-            type: "olm/register/no-sites",
-            data: {}
-        });
+    // this prevents us from accepting a register from an olm that has not hole punched yet.
+    // the olm will pump the register so we can keep checking
+    // TODO: I still think there is a better way to do this rather than locking it out here but ???
+    if (now - (client.lastHolePunch || 0) > 5 && sitesData.length > 0) {
+        logger.warn(
+            "Client last hole punch is too old and we have sites to send; skipping this register"
+        );
+        return;
     }
 
     // Process each site
-    for (const { sites: site } of sitesData) {
+    for (const {
+        sites: site,
+        clientSitesAssociationsCache: association
+    } of sitesData) {
         if (!site.exitNodeId) {
             logger.warn(
                 `Site ${site.siteId} does not have exit node, skipping`
@@ -145,7 +184,9 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         // Validate endpoint and hole punch status
         if (!site.endpoint) {
-            logger.warn(`In olm register: site ${site.siteId} has no endpoint, skipping`);
+            logger.warn(
+                `In olm register: site ${site.siteId} has no endpoint, skipping`
+            );
             continue;
         }
 
@@ -171,11 +212,11 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
 
         const [clientSite] = await db
             .select()
-            .from(clientSites)
+            .from(clientSitesAssociationsCache)
             .where(
                 and(
-                    eq(clientSites.clientId, client.clientId),
-                    eq(clientSites.siteId, site.siteId)
+                    eq(clientSitesAssociationsCache.clientId, client.clientId),
+                    eq(clientSitesAssociationsCache.siteId, site.siteId)
                 )
             )
             .limit(1);
@@ -196,7 +237,7 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             );
         }
 
-        let endpoint = site.endpoint;
+        let relayEndpoint: string | undefined = undefined;
         if (relay) {
             const [exitNode] = await db
                 .select()
@@ -207,17 +248,44 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
                 logger.warn(`Exit node not found for site ${site.siteId}`);
                 continue;
             }
-            endpoint = `${exitNode.endpoint}:21820`;
+            relayEndpoint = `${exitNode.endpoint}:${config.getRawConfig().gerbil.clients_start_port}`;
         }
+
+        const allSiteResources = await db // only get the site resources that this client has access to
+            .select()
+            .from(siteResources)
+            .innerJoin(
+                clientSiteResourcesAssociationsCache,
+                eq(
+                    siteResources.siteResourceId,
+                    clientSiteResourcesAssociationsCache.siteResourceId
+                )
+            )
+            .where(
+                and(
+                    eq(siteResources.siteId, site.siteId),
+                    eq(
+                        clientSiteResourcesAssociationsCache.clientId,
+                        client.clientId
+                    )
+                )
+            );
 
         // Add site configuration to the array
         siteConfigurations.push({
             siteId: site.siteId,
-            endpoint: endpoint,
+            name: site.name,
+            // relayEndpoint: relayEndpoint, // this can be undefined now if not relayed // lets not do this for now because it would conflict with the hole punch testing
+            endpoint: site.endpoint,
             publicKey: site.publicKey,
             serverIP: site.address,
             serverPort: site.listenPort,
-            remoteSubnets: site.remoteSubnets
+            remoteSubnets: generateRemoteSubnets(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            ),
+            aliases: generateAliasConfig(
+                allSiteResources.map(({ siteResources }) => siteResources)
+            )
         });
     }
 
@@ -233,7 +301,8 @@ export const handleOlmRegisterMessage: MessageHandler = async (context) => {
             type: "olm/wg/connect",
             data: {
                 sites: siteConfigurations,
-                tunnelIP: client.subnet
+                tunnelIP: client.subnet,
+                utilitySubnet: org.utilitySubnet
             }
         },
         broadcast: false,

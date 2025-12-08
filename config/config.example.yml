@@ -25,4 +25,3 @@ flags:
   disable_user_create_org: true
   allow_raw_resources: true
   enable_integration_api: true
-  enable_clients: true

@@ -10,14 +10,12 @@ import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listTargetsParamsSchema = z
-    .object({
+const listTargetsParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 const listTargetsSchema = z.object({
     limit: z
@@ -25,13 +23,13 @@ const listTargetsSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 function queryTargets(resourceId: number) {
@@ -59,6 +57,7 @@ function queryTargets(resourceId: number) {
             hcMethod: targetHealthCheck.hcMethod,
             hcStatus: targetHealthCheck.hcStatus,
             hcHealth: targetHealthCheck.hcHealth,
+            hcTlsServerName: targetHealthCheck.hcTlsServerName,
             path: targets.path,
             pathMatchType: targets.pathMatchType,
             rewritePath: targets.rewritePath,

@@ -6,15 +6,17 @@ import { pullEnv } from "../pullEnv";
 
 export async function verifySession({
     skipCheckVerifyEmail,
+    forceLogin
 }: {
     skipCheckVerifyEmail?: boolean;
+    forceLogin?: boolean;
 } = {}): Promise<GetUserResponse | null> {
     const env = pullEnv();
 
     try {
         const res = await internal.get<AxiosResponse<GetUserResponse>>(
-            "/user",
-            await authCookieHeader(),
+            `/user${forceLogin ? "?forceLogin=true" : ""}`,
+            await authCookieHeader()
         );
 
         const user = res.data.data;

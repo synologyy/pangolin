@@ -1,6 +1,7 @@
 "use client";
 
 import { Column, ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { SitesDataTable } from "@app/components/SitesDataTable";
 import {
     DropdownMenu,
@@ -106,9 +107,10 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             });
     };
 
-    const columns: ColumnDef<SiteRow>[] = [
+    const columns: ExtendedColumnDef<SiteRow>[] = [
         {
             accessorKey: "name",
+            enableHiding: false,
             header: ({ column }) => {
                 return (
                     <Button
@@ -124,7 +126,30 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             }
         },
         {
+            id: "niceId",
+            accessorKey: "nice",
+            friendlyName: t("identifier"),
+            enableHiding: true,
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("identifier")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }) => {
+                return <span>{row.original.nice || "-"}</span>;
+            }
+        },
+        {
             accessorKey: "online",
+            friendlyName: t("online"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -165,31 +190,8 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
             }
         },
         {
-            accessorKey: "nice",
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                        className="hidden md:flex whitespace-nowrap"
-                    >
-                        {t("site")}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                );
-            },
-            cell: ({ row }) => {
-                return (
-                    <div className="hidden md:block whitespace-nowrap">
-                        {row.original.nice}
-                    </div>
-                );
-            }
-        },
-        {
             accessorKey: "mbIn",
+            friendlyName: t("dataIn"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -209,6 +211,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "mbOut",
+            friendlyName: t("dataOut"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -228,6 +231,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "type",
+            friendlyName: t("type"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -236,7 +240,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t("connectionType")}
+                        {t("type")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );
@@ -248,12 +252,10 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                     return (
                         <div className="flex items-center space-x-1">
                             <Badge variant="secondary">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-1">
                                     <span>Newt</span>
                                     {originalRow.newtVersion && (
-                                        <span className="text-xs text-gray-500">
-                                            v{originalRow.newtVersion}
-                                        </span>
+                                        <span>v{originalRow.newtVersion}</span>
                                     )}
                                 </div>
                             </Badge>
@@ -269,7 +271,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 if (originalRow.type === "wireguard") {
                     return (
                         <div className="flex items-center space-x-2">
-                            <span>WireGuard</span>
+                            <Badge variant="secondary">WireGuard</Badge>
                         </div>
                     );
                 }
@@ -277,7 +279,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 if (originalRow.type === "local") {
                     return (
                         <div className="flex items-center space-x-2">
-                            <span>{t("local")}</span>
+                            <Badge variant="secondary">Local</Badge>
                         </div>
                     );
                 }
@@ -285,6 +287,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
         },
         {
             accessorKey: "exitNode",
+            friendlyName: t("exitNode"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -323,48 +326,40 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 );
             }
         },
-        ...(env.flags.enableClients
-            ? [
-                  {
-                      accessorKey: "address",
-                      header: ({
-                          column
-                      }: {
-                          column: Column<SiteRow, unknown>;
-                      }) => {
-                          return (
-                              <Button
-                                  variant="ghost"
-                                  onClick={() =>
-                                      column.toggleSorting(
-                                          column.getIsSorted() === "asc"
-                                      )
-                                  }
-                              >
-                                  Address
-                                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                              </Button>
-                          );
-                      },
-                      cell: ({ row }: { row: any }) => {
-                          const originalRow = row.original;
-                          return originalRow.address ? (
-                              <div className="flex items-center space-x-2">
-                                  <span>{originalRow.address}</span>
-                              </div>
-                          ) : (
-                              "-"
-                          );
-                      }
-                  }
-              ]
-            : []),
+        {
+            accessorKey: "address",
+            header: ({ column }: { column: Column<SiteRow, unknown> }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        Address
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            },
+            cell: ({ row }: { row: any }) => {
+                const originalRow = row.original;
+                return originalRow.address ? (
+                    <div className="flex items-center space-x-2">
+                        <span>{originalRow.address}</span>
+                    </div>
+                ) : (
+                    "-"
+                );
+            }
+        },
         {
             id: "actions",
+            enableHiding: false,
+            header: () => <span className="p-3"></span>,
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2 justify-end">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -393,11 +388,10 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-
                         <Link
                             href={`/${siteRow.orgId}/settings/sites/${siteRow.nice}`}
                         >
-                            <Button variant={"secondary"} size="sm">
+                            <Button variant={"outline"}>
                                 {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
@@ -419,9 +413,7 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                     }}
                     dialog={
                         <div className="">
-                            <p>
-                                {t("siteQuestionRemove")}
-                            </p>
+                            <p>{t("siteQuestionRemove")}</p>
                             <p>{t("siteMessageRemove")}</p>
                         </div>
                     }
@@ -440,6 +432,13 @@ export default function SitesTable({ sites, orgId }: SitesTableProps) {
                 }
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
+                columnVisibility={{
+                    niceId: false,
+                    nice: false,
+                    exitNode: false,
+                    address: false
+                }}
+                enableColumnVisibility={true}
             />
         </>
     );

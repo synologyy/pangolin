@@ -15,44 +15,40 @@ import { pickPort } from "./helpers";
 import { isTargetValid } from "@server/lib/validators";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const createTargetParamsSchema = z
-    .object({
+const createTargetParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
-const createTargetSchema = z
-    .object({
-        siteId: z.number().int().positive(),
+const createTargetSchema = z.strictObject({
+        siteId: z.int().positive(),
         ip: z.string().refine(isTargetValid),
         method: z.string().optional().nullable(),
-        port: z.number().int().min(1).max(65535),
+        port: z.int().min(1).max(65535),
         enabled: z.boolean().default(true),
         hcEnabled: z.boolean().optional(),
         hcPath: z.string().min(1).optional().nullable(),
         hcScheme: z.string().optional().nullable(),
         hcMode: z.string().optional().nullable(),
         hcHostname: z.string().optional().nullable(),
-        hcPort: z.number().int().positive().optional().nullable(),
-        hcInterval: z.number().int().positive().min(5).optional().nullable(),
-        hcUnhealthyInterval: z
-            .number()
-            .int()
+        hcPort: z.int().positive().optional().nullable(),
+        hcInterval: z.int().positive().min(5).optional().nullable(),
+        hcUnhealthyInterval: z.int()
             .positive()
             .min(5)
             .optional()
             .nullable(),
-        hcTimeout: z.number().int().positive().min(1).optional().nullable(),
+        hcTimeout: z.int().positive().min(1).optional().nullable(),
         hcHeaders: z
-            .array(z.object({ name: z.string(), value: z.string() }))
+            .array(z.strictObject({ name: z.string(), value: z.string() }))
             .nullable()
             .optional(),
         hcFollowRedirects: z.boolean().optional().nullable(),
         hcMethod: z.string().min(1).optional().nullable(),
-        hcStatus: z.number().int().optional().nullable(),
+        hcStatus: z.int().optional().nullable(),
+        hcTlsServerName: z.string().optional().nullable(),
         path: z.string().optional().nullable(),
         pathMatchType: z
             .enum(["exact", "prefix", "regex"])
@@ -63,9 +59,8 @@ const createTargetSchema = z
             .enum(["exact", "prefix", "regex", "stripPrefix"])
             .optional()
             .nullable(),
-        priority: z.number().int().min(1).max(1000).optional().nullable()
-    })
-    .strict();
+        priority: z.int().min(1).max(1000).optional().nullable()
+    });
 
 export type CreateTargetResponse = Target & TargetHealthCheck;
 
@@ -253,7 +248,8 @@ export async function createTarget(
                 hcFollowRedirects: targetData.hcFollowRedirects ?? null,
                 hcMethod: targetData.hcMethod ?? null,
                 hcStatus: targetData.hcStatus ?? null,
-                hcHealth: "unknown"
+                hcHealth: "unknown",
+                hcTlsServerName: targetData.hcTlsServerName ?? null
             })
             .returning();
 

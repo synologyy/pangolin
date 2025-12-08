@@ -11,19 +11,15 @@ import config from "@server/lib/config";
 import { eq, and } from "drizzle-orm";
 import { idp, idpOrg } from "@server/db";
 
-const paramsSchema = z
-    .object({
-        idpId: z.coerce.number(),
+const paramsSchema = z.strictObject({
+        idpId: z.coerce.number<number>(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
-const bodySchema = z
-    .object({
+const bodySchema = z.strictObject({
         roleMapping: z.string().optional(),
         orgMapping: z.string().optional()
-    })
-    .strict();
+    });
 
 export type CreateIdpOrgPolicyResponse = {};
 

@@ -19,6 +19,7 @@ import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
 import { and, eq, lt } from "drizzle-orm";
 import cache from "@server/lib/cache";
+import { calculateCutoffTimestamp } from "@server/lib/cleanupLogs";
 
 async function getActionDays(orgId: string): Promise<number> {
     // check cache first
@@ -46,9 +47,7 @@ async function getActionDays(orgId: string): Promise<number> {
 }
 
 export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
-    const now = Math.floor(Date.now() / 1000);
-
-    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+    const cutoffTimestamp = calculateCutoffTimestamp(retentionDays);
 
     try {
         await db

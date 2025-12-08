@@ -14,20 +14,16 @@ import { verifyPassword } from "@server/auth/password";
 import config from "@server/lib/config";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
-export const authWithPincodeBodySchema = z
-    .object({
+export const authWithPincodeBodySchema = z.strictObject({
         pincode: z.string()
-    })
-    .strict();
+    });
 
-export const authWithPincodeParamsSchema = z
-    .object({
+export const authWithPincodeParamsSchema = z.strictObject({
         resourceId: z
             .string()
             .transform(Number)
-            .pipe(z.number().int().positive())
-    })
-    .strict();
+            .pipe(z.int().positive())
+    });
 
 export type AuthWithPincodeResponse = {
     session?: string;

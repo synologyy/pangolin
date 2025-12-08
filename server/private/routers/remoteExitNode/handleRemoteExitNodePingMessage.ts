@@ -63,10 +63,10 @@ export const startRemoteExitNodeOfflineChecker = (): void => {
                         inArray(sites.exitNodeId, exitNodeIds)
                     )
                 );
-        
+
             // loop through the sites and process their lastBandwidthUpdate as an iso string and if its more than 1 minute old then mark the site offline
             for (const site of sitesOnNode) {
-                if (!site.lastBandwidthUpdate) { 
+                if (!site.lastBandwidthUpdate) {
                     continue;
                 }
                 const lastBandwidthUpdate = new Date(site.lastBandwidthUpdate);
@@ -83,7 +83,7 @@ export const startRemoteExitNodeOfflineChecker = (): void => {
         }
     }, OFFLINE_CHECK_INTERVAL);
 
-    logger.info("Started offline checker interval");
+    logger.debug("Started offline checker interval");
 };
 
 /**

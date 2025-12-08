@@ -11,7 +11,7 @@ export function InfoSections({
 }) {
     return (
         <div
-            className={`grid md:grid-cols-[var(--columns)] md:gap-4 gap-2 md:items-start grid-cols-1`}
+            className={`grid md:grid-cols-(--columns) md:gap-4 gap-2 md:items-start grid-cols-1`}
             style={{
                 // @ts-expect-error dynamic props don't work with tailwind, but we can set the
                 // value of a CSS variable at runtime and tailwind will just reuse that value
@@ -50,5 +50,11 @@ export function InfoSectionContent({
     children: React.ReactNode;
     className?: string;
 }) {
-    return <div className={cn("break-words", className)}>{children}</div>;
+    return (
+        <div className={cn("min-w-0 overflow-hidden", className)}>
+            <div className="w-full truncate [&>div.flex]:min-w-0 [&>div.flex]:!whitespace-normal [&>div.flex>span]:truncate [&>div.flex>a]:truncate">
+                {children}
+            </div>
+        </div>
+    );
 }

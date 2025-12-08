@@ -9,20 +9,16 @@ import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
-const updateRoleParamsSchema = z
-    .object({
-        roleId: z.string().transform(Number).pipe(z.number().int().positive())
-    })
-    .strict();
+const updateRoleParamsSchema = z.strictObject({
+        roleId: z.string().transform(Number).pipe(z.int().positive())
+    });
 
-const updateRoleBodySchema = z
-    .object({
+const updateRoleBodySchema = z.strictObject({
         name: z.string().min(1).max(255).optional(),
         description: z.string().optional()
     })
-    .strict()
     .refine((data) => Object.keys(data).length > 0, {
-        message: "At least one field must be provided for update"
+        error: "At least one field must be provided for update"
     });
 
 export async function updateRole(

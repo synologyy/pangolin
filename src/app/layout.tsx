@@ -20,22 +20,12 @@ import { Toaster } from "@app/components/ui/toaster";
 import { build } from "@server/build";
 import { TopLoader } from "@app/components/Toploader";
 import Script from "next/script";
+import { TanstackQueryProvider } from "@app/components/TanstackQueryProvider";
+import { TailwindIndicator } from "@app/components/TailwindIndicator";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
-    description: "",
-
-    ...(process.env.BRANDING_FAVICON_PATH
-        ? {
-              icons: {
-                  icon: [
-                      {
-                          url: process.env.BRANDING_FAVICON_PATH as string
-                      }
-                  ]
-              }
-          }
-        : {})
+    description: ""
 };
 
 export const dynamic = "force-dynamic";
@@ -102,30 +92,36 @@ export default async function RootLayout({
                         disableTransitionOnChange
                     >
                         <ThemeDataProvider colors={loadBrandingColors()}>
-                            <EnvProvider env={pullEnv()}>
-                                <LicenseStatusProvider
-                                    licenseStatus={licenseStatus}
-                                >
-                                    <SupportStatusProvider
-                                        supporterStatus={supporterData}
+                            <EnvProvider env={env}>
+                                <TanstackQueryProvider>
+                                    <LicenseStatusProvider
+                                        licenseStatus={licenseStatus}
                                     >
-                                        {/* Main content */}
-                                        <div className="h-full flex flex-col">
-                                            <div className="flex-1 overflow-auto">
-                                                <SplashImage>
+                                        <SupportStatusProvider
+                                            supporterStatus={supporterData}
+                                        >
+                                            {/* Main content */}
+                                            <div className="h-full flex flex-col">
+                                                <div className="flex-1 overflow-auto">
+                                                    <SplashImage>
+                                                        <LicenseViolation />
+                                                        {children}
+                                                    </SplashImage>
                                                     <LicenseViolation />
-                                                    {children}
-                                                </SplashImage>
-                                                <LicenseViolation />
+                                                </div>
                                             </div>
-                                        </div>
-                                    </SupportStatusProvider>
-                                </LicenseStatusProvider>
-                                <Toaster />
+                                        </SupportStatusProvider>
+                                    </LicenseStatusProvider>
+                                    <Toaster />
+                                </TanstackQueryProvider>
                             </EnvProvider>
                         </ThemeDataProvider>
                     </ThemeProvider>
                 </NextIntlClientProvider>
+
+                {process.env.NODE_ENV === "development" && (
+                    <TailwindIndicator />
+                )}
             </body>
         </html>
     );

@@ -33,6 +33,7 @@ import { UserType } from "@server/types/UserTypes";
 import { FeatureId } from "@server/lib/billing";
 import { usageService } from "@server/lib/billing/usageService";
 import { build } from "@server/build";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const ensureTrailingSlash = (url: string): string => {
     return url;
@@ -40,7 +41,7 @@ const ensureTrailingSlash = (url: string): string => {
 
 const paramsSchema = z
     .object({
-        idpId: z.coerce.number()
+        idpId: z.coerce.number<number>()
     })
     .strict();
 
@@ -51,7 +52,7 @@ const bodySchema = z.object({
 });
 
 const querySchema = z.object({
-    loginPageId: z.coerce.number().optional()
+    loginPageId: z.coerce.number<number>().optional()
 });
 
 export type ValidateOidcUrlCallbackResponse = {
@@ -364,10 +365,18 @@ export async function validateOidcCallback(
                         );
 
                     if (!existingUserOrgs.length) {
-                        // delete the user
-                        // await db
-                        //     .delete(users)
-                        //     .where(eq(users.userId, existingUser.userId));
+                        // delete all auto -provisioned user orgs
+                        await db
+                            .delete(userOrgs)
+                            .where(
+                                and(
+                                    eq(userOrgs.userId, existingUser.userId),
+                                    eq(userOrgs.autoProvisioned, true)
+                                )
+                            );
+
+                        await calculateUserClientsForOrgs(existingUser.userId);
+
                         return next(
                             createHttpError(
                                 HttpCode.UNAUTHORIZED,
@@ -513,6 +522,8 @@ export async function validateOidcCallback(
                         userCount: userCount.length
                     });
                 }
+
+                await calculateUserClientsForOrgs(userId!, trx);
             });
 
             for (const orgCount of orgUserCounts) {
@@ -545,6 +556,24 @@ export async function validateOidcCallback(
             });
         } else {
             if (!existingUser) {
+                return next(
+                    createHttpError(
+                        HttpCode.UNAUTHORIZED,
+                        `User with username ${userIdentifier} is unprovisioned. This user must be added to an organization before logging in.`
+                    )
+                );
+            }
+
+            // check for existing user orgs
+            const existingUserOrgs = await db
+                .select()
+                .from(userOrgs)
+                .where(and(eq(userOrgs.userId, existingUser.userId)));
+
+            if (!existingUserOrgs.length) {
+                logger.debug(
+                    "No existing user orgs found for non-auto-provisioned IdP"
+                );
                 return next(
                     createHttpError(
                         HttpCode.UNAUTHORIZED,

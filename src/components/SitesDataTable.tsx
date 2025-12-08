@@ -10,6 +10,8 @@ interface DataTableProps<TData, TValue> {
     createSite?: () => void;
     onRefresh?: () => void;
     isRefreshing?: boolean;
+    columnVisibility?: Record<string, boolean>;
+    enableColumnVisibility?: boolean;
 }
 
 export function SitesDataTable<TData, TValue>({
@@ -17,7 +19,9 @@ export function SitesDataTable<TData, TValue>({
     data,
     createSite,
     onRefresh,
-    isRefreshing
+    isRefreshing,
+    columnVisibility,
+    enableColumnVisibility
 }: DataTableProps<TData, TValue>) {
 
     const t = useTranslations();
@@ -38,6 +42,10 @@ export function SitesDataTable<TData, TValue>({
                 id: "name",
                 desc: false
             }}
+            columnVisibility={columnVisibility}
+            enableColumnVisibility={enableColumnVisibility}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

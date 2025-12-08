@@ -8,23 +8,19 @@ import {
     resourcePassword,
     resourcePincode,
     targets,
-    targetHealthCheck,
+    targetHealthCheck
 } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import { sql, eq, or, inArray, and, count } from "drizzle-orm";
 import logger from "@server/logger";
-import stoi from "@server/lib/stoi";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
-import { warn } from "console";
 
-const listResourcesParamsSchema = z
-    .object({
-        orgId: z.string()
-    })
-    .strict();
+const listResourcesParamsSchema = z.strictObject({
+    orgId: z.string()
+});
 
 const listResourcesSchema = z.object({
     limit: z
@@ -32,14 +28,14 @@ const listResourcesSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().nonnegative()),
+        .pipe(z.int().nonnegative()),
 
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 // (resource fields + a single joined target)
@@ -69,7 +65,7 @@ type JoinedRow = {
     hcEnabled: boolean | null;
 };
 
-// grouped by resource with targets[]) 
+// grouped by resource with targets[])
 export type ResourceWithTargets = {
     resourceId: number;
     name: string;
@@ -91,7 +87,7 @@ export type ResourceWithTargets = {
         ip: string;
         port: number;
         enabled: boolean;
-        healthStatus?: 'healthy' | 'unhealthy' | 'unknown';
+        healthStatus?: "healthy" | "unhealthy" | "unknown";
     }>;
 };
 
@@ -120,7 +116,7 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
             targetEnabled: targets.enabled,
 
             hcHealth: targetHealthCheck.hcHealth,
-            hcEnabled: targetHealthCheck.hcEnabled,
+            hcEnabled: targetHealthCheck.hcEnabled
         })
         .from(resources)
         .leftJoin(
@@ -275,16 +271,25 @@ export async function listResources(
                     enabled: row.enabled,
                     domainId: row.domainId,
                     headerAuthId: row.headerAuthId,
-                    targets: [],
+                    targets: []
                 };
                 map.set(row.resourceId, entry);
             }
 
-            if (row.targetId != null && row.targetIp && row.targetPort != null && row.targetEnabled != null) {
-                let healthStatus: 'healthy' | 'unhealthy' | 'unknown' = 'unknown';
+            if (
+                row.targetId != null &&
+                row.targetIp &&
+                row.targetPort != null &&
+                row.targetEnabled != null
+            ) {
+                let healthStatus: "healthy" | "unhealthy" | "unknown" =
+                    "unknown";
 
                 if (row.hcEnabled && row.hcHealth) {
-                    healthStatus = row.hcHealth as 'healthy' | 'unhealthy' | 'unknown';
+                    healthStatus = row.hcHealth as
+                        | "healthy"
+                        | "unhealthy"
+                        | "unknown";
                 }
 
                 entry.targets.push({
@@ -292,7 +297,7 @@ export async function listResources(
                     ip: row.targetIp,
                     port: row.targetPort,
                     enabled: row.targetEnabled,
-                    healthStatus: healthStatus,
+                    healthStatus: healthStatus
                 });
             }
         }

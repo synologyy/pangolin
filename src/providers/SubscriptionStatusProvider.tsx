@@ -55,7 +55,6 @@ export function SubscriptionStatusProvider({
             }
         }
 
-        console.log("No matching tier found");
         return null;
     };
 

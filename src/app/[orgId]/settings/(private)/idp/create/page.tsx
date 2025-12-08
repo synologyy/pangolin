@@ -64,13 +64,9 @@ export default function Page() {
         clientSecret: z
             .string()
             .min(1, { message: t("idpClientSecretRequired") }),
-        authUrl: z
-            .string()
-            .url({ message: t("idpErrorAuthUrlInvalid") })
+        authUrl: z.url({ message: t("idpErrorAuthUrlInvalid") })
             .optional(),
-        tokenUrl: z
-            .string()
-            .url({ message: t("idpErrorTokenUrlInvalid") })
+        tokenUrl: z.url({ message: t("idpErrorTokenUrlInvalid") })
             .optional(),
         identifierPath: z
             .string()

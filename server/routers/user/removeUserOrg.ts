@@ -13,13 +13,12 @@ import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 import { build } from "@server/build";
 import { UserType } from "@server/types/UserTypes";
+import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
-const removeUserSchema = z
-    .object({
+const removeUserSchema = z.strictObject({
         userId: z.string(),
         orgId: z.string()
-    })
-    .strict();
+    });
 
 registry.registerPath({
     method: "delete",
@@ -120,22 +119,24 @@ export async function removeUserOrg(
                 .from(userOrgs)
                 .where(eq(userOrgs.orgId, orgId));
 
-            if (build === "saas") {
-                const [rootUser] = await trx
-                    .select()
-                    .from(users)
-                    .where(eq(users.userId, userId));
+            // if (build === "saas") {
+            //     const [rootUser] = await trx
+            //         .select()
+            //         .from(users)
+            //         .where(eq(users.userId, userId));
+            //
+            //     const [leftInOrgs] = await trx
+            //         .select({ count: count() })
+            //         .from(userOrgs)
+            //         .where(eq(userOrgs.userId, userId));
+            //
+            //     // if the user is not an internal user and does not belong to any org, delete the entire user
+            //     if (rootUser?.type !== UserType.Internal && !leftInOrgs.count) {
+            //         await trx.delete(users).where(eq(users.userId, userId));
+            //     }
+            // }
 
-                const [leftInOrgs] = await trx
-                    .select({ count: count() })
-                    .from(userOrgs)
-                    .where(eq(userOrgs.userId, userId));
-
-                // if the user is not an internal user and does not belong to any org, delete the entire user
-                if (rootUser?.type !== UserType.Internal && !leftInOrgs.count) {
-                    await trx.delete(users).where(eq(users.userId, userId));
-                }
-            }
+            await calculateUserClientsForOrgs(userId, trx);
         });
 
         if (userCount) {

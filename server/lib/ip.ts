@@ -1,7 +1,15 @@
-import { db } from "@server/db";
+import {
+    clientSitesAssociationsCache,
+    db,
+    SiteResource,
+    siteResources,
+    Transaction
+} from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
+import z from "zod";
+import logger from "@server/logger";
 
 interface IPRange {
     start: bigint;
@@ -279,6 +287,56 @@ export async function getNextAvailableClientSubnet(
     return subnet;
 }
 
+export async function getNextAvailableAliasAddress(
+    orgId: string
+): Promise<string> {
+    const [org] = await db.select().from(orgs).where(eq(orgs.orgId, orgId));
+
+    if (!org) {
+        throw new Error(`Organization with ID ${orgId} not found`);
+    }
+
+    if (!org.subnet) {
+        throw new Error(`Organization with ID ${orgId} has no subnet defined`);
+    }
+
+    if (!org.utilitySubnet) {
+        throw new Error(
+            `Organization with ID ${orgId} has no utility subnet defined`
+        );
+    }
+
+    const existingAddresses = await db
+        .select({
+            aliasAddress: siteResources.aliasAddress
+        })
+        .from(siteResources)
+        .where(
+            and(
+                isNotNull(siteResources.aliasAddress),
+                eq(siteResources.orgId, orgId)
+            )
+        );
+
+    const addresses = [
+        ...existingAddresses.map(
+            (site) => `${site.aliasAddress?.split("/")[0]}/32`
+        ),
+        // reserve a /29 for the dns server and other stuff
+        `${org.utilitySubnet.split("/")[0]}/29`
+    ].filter((address) => address !== null) as string[];
+
+    let subnet = findNextAvailableCidr(addresses, 32, org.utilitySubnet);
+    if (!subnet) {
+        throw new Error("No available subnets remaining in space");
+    }
+
+    // remove the cidr
+    subnet = subnet.split("/")[0];
+
+    return subnet;
+}
+
 export async function getNextAvailableOrgSubnet(): Promise<string> {
     const existingAddresses = await db
         .select({
@@ -299,4 +357,114 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     }
 
     return subnet;
+}
+
+export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[] {
+    const remoteSubnets = allSiteResources
+        .filter((sr) => {
+            if (sr.mode === "cidr") return true;
+            if (sr.mode === "host") {
+                // check if its a valid IP using zod
+                const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+                const parseResult = ipSchema.safeParse(sr.destination);
+                return parseResult.success;
+            }
+            return false;
+        })
+        .map((sr) => {
+            if (sr.mode === "cidr") return sr.destination;
+            if (sr.mode === "host") {
+                return `${sr.destination}/32`;
+            }
+            return ""; // This should never be reached due to filtering, but satisfies TypeScript
+        })
+        .filter((subnet) => subnet !== ""); // Remove empty strings just to be safe
+    // remove duplicates
+    return Array.from(new Set(remoteSubnets));
+}
+
+export type Alias = { alias: string | null; aliasAddress: string | null };
+
+export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
+    let aliasConfigs = allSiteResources
+        .filter((sr) => sr.alias && sr.aliasAddress && sr.mode == "host")
+        .map((sr) => ({
+            alias: sr.alias,
+            aliasAddress: sr.aliasAddress
+        }));
+    return aliasConfigs;
+}
+
+export type SubnetProxyTarget = {
+    sourcePrefix: string; // must be a cidr
+    destPrefix: string; // must be a cidr
+    rewriteTo?: string; // must be a cidr
+    portRange?: {
+        min: number;
+        max: number;
+    }[];
+};
+
+export function generateSubnetProxyTargets(
+    siteResource: SiteResource,
+    clients: {
+        clientId: number;
+        pubKey: string | null;
+        subnet: string | null;
+    }[]
+): SubnetProxyTarget[] {
+    const targets: SubnetProxyTarget[] = [];
+
+    if (clients.length === 0) {
+        logger.debug(
+            `No clients have access to site resource ${siteResource.siteResourceId}, skipping target generation.`
+        );
+        return [];
+    }
+
+    for (const clientSite of clients) {
+        if (!clientSite.subnet) {
+            logger.debug(
+                `Client ${clientSite.clientId} has no subnet, skipping for site resource ${siteResource.siteResourceId}.`
+            );
+            continue;
+        }
+
+        const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
+
+        if (siteResource.mode == "host") {
+            let destination = siteResource.destination;
+            // check if this is a valid ip
+            const ipSchema = z.union([z.ipv4(), z.ipv6()]);
+            if (ipSchema.safeParse(destination).success) {
+                destination = `${destination}/32`;
+
+                targets.push({
+                    sourcePrefix: clientPrefix,
+                    destPrefix: destination
+                });
+            }
+
+            if (siteResource.alias && siteResource.aliasAddress) {
+                // also push a match for the alias address
+                targets.push({
+                    sourcePrefix: clientPrefix,
+                    destPrefix: `${siteResource.aliasAddress}/32`,
+                    rewriteTo: destination
+                });
+            }
+        } else if (siteResource.mode == "cidr") {
+            targets.push({
+                sourcePrefix: clientPrefix,
+                destPrefix: siteResource.destination
+            });
+        }
+    }
+
+    // print a nice representation of the targets
+    // logger.debug(
+    //     `Generated subnet proxy targets for: ${JSON.stringify(targets, null, 2)}`
+    // );
+
+    return targets;
 }

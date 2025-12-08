@@ -1,22 +1,32 @@
-import { cookies, headers } from "next/headers";
-import { pullEnv } from "../pullEnv";
+import { headers } from "next/headers";
 
 export async function authCookieHeader() {
-    const env = pullEnv();
-
-    const allCookies = await cookies();
-    const cookieName = env.server.sessionCookieName;
-    const sessionId = allCookies.get(cookieName)?.value ?? null;
-
-    // all other headers
-    // this is needed to pass through x-forwarded-for, x-forwarded-proto, etc.
     const otherHeaders = await headers();
     const otherHeadersObject = Object.fromEntries(otherHeaders.entries());
 
     return {
         headers: {
-            Cookie: `${cookieName}=${sessionId}`,
-            ...otherHeadersObject
-        },
+            cookie:
+                otherHeadersObject["cookie"] || otherHeadersObject["Cookie"],
+            host: otherHeadersObject["host"] || otherHeadersObject["Host"],
+            "user-agent":
+                otherHeadersObject["user-agent"] ||
+                otherHeadersObject["User-Agent"],
+            "x-forwarded-for":
+                otherHeadersObject["x-forwarded-for"] ||
+                otherHeadersObject["X-Forwarded-For"],
+            "x-forwarded-host":
+                otherHeadersObject["fx-forwarded-host"] ||
+                otherHeadersObject["Fx-Forwarded-Host"],
+            "x-forwarded-port":
+                otherHeadersObject["x-forwarded-port"] ||
+                otherHeadersObject["X-Forwarded-Port"],
+            "x-forwarded-proto":
+                otherHeadersObject["x-forwarded-proto"] ||
+                otherHeadersObject["X-Forwarded-Proto"],
+            "x-real-ip":
+                otherHeadersObject["x-real-ip"] ||
+                otherHeadersObject["X-Real-IP"]
+        }
     };
 }

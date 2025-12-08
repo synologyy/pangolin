@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, roles } from "@server/db";
 import { Org, orgs, userOrgs } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -20,13 +20,13 @@ const listOrgsSchema = z.object({
         .optional()
         .default("1000")
         .transform(Number)
-        .pipe(z.number().int().positive()),
+        .pipe(z.int().positive()),
     offset: z
         .string()
         .optional()
         .default("0")
         .transform(Number)
-        .pipe(z.number().int().nonnegative())
+        .pipe(z.int().nonnegative())
 });
 
 // registry.registerPath({
@@ -40,7 +40,7 @@ const listOrgsSchema = z.object({
 //     responses: {}
 // });
 
-type ResponseOrg = Org & { isOwner?: boolean };
+type ResponseOrg = Org & { isOwner?: boolean; isAdmin?: boolean };
 
 export type ListUserOrgsResponse = {
     orgs: ResponseOrg[];
@@ -112,6 +112,7 @@ export async function listUserOrgs(
                 userOrgs,
                 and(eq(userOrgs.orgId, orgs.orgId), eq(userOrgs.userId, userId))
             )
+            .leftJoin(roles, eq(userOrgs.roleId, roles.roleId))
             .limit(limit)
             .offset(offset);
 
@@ -127,6 +128,9 @@ export async function listUserOrgs(
             } as ResponseOrg;
             if (val.userOrgs && val.userOrgs.isOwner) {
                 res.isOwner = val.userOrgs.isOwner;
+            }
+            if (val.roles && val.roles.isAdmin) {
+                res.isAdmin = val.roles.isAdmin;
             }
             return res;
         });

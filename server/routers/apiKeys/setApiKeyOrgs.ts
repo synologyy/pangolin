@@ -9,13 +9,10 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 import { eq, and, inArray } from "drizzle-orm";
 
-const bodySchema = z
-    .object({
-        orgIds: z
-            .array(z.string().nonempty())
+const bodySchema = z.strictObject({
+        orgIds: z.tuple([z.string()], z.string())
             .transform((v) => Array.from(new Set(v)))
-    })
-    .strict();
+    });
 
 const paramsSchema = z.object({
     apiKeyId: z.string().nonempty()

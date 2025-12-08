@@ -34,6 +34,9 @@ export function OrgApiKeysDataTable<TData, TValue>({
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             addButtonText={t('apiKeysAdd')}
+            enableColumnVisibility={true}
+            stickyLeftColumn="name"
+            stickyRightColumn="actions"
         />
     );
 }

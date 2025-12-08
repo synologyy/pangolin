@@ -1,6 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { ExtendedColumnDef } from "@app/components/ui/data-table";
 import { ExitNodesDataTable } from "./ExitNodesDataTable";
 import {
     DropdownMenu,
@@ -99,9 +100,10 @@ export default function ExitNodesTable({
             });
     };
 
-    const columns: ColumnDef<RemoteExitNodeRow>[] = [
+    const columns: ExtendedColumnDef<RemoteExitNodeRow>[] = [
         {
             accessorKey: "name",
+            friendlyName: t("name"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -118,6 +120,7 @@ export default function ExitNodesTable({
         },
         {
             accessorKey: "online",
+            friendlyName: t("online"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -152,6 +155,7 @@ export default function ExitNodesTable({
         },
         {
             accessorKey: "type",
+            friendlyName: t("connectionType"),
             header: ({ column }) => {
                 return (
                     <Button
@@ -178,6 +182,7 @@ export default function ExitNodesTable({
         },
         {
             accessorKey: "address",
+            friendlyName: "Address",
             header: ({ column }) => {
                 return (
                     <Button
@@ -194,6 +199,7 @@ export default function ExitNodesTable({
         },
         {
             accessorKey: "endpoint",
+            friendlyName: "Endpoint",
             header: ({ column }) => {
                 return (
                     <Button
@@ -225,15 +231,27 @@ export default function ExitNodesTable({
             },
             cell: ({ row }) => {
                 const originalRow = row.original;
-                return originalRow.version || "-";
+                return (
+                    <div className="flex items-center space-x-1">
+                        {originalRow.version && originalRow.version ? (
+                            <Badge variant="secondary">
+                                {"v" + originalRow.version}
+                            </Badge>
+                        ) : (
+                            "-"
+                        )}
+                    </div>
+                );
             }
         },
         {
             id: "actions",
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const nodeRow = row.original;
+                const remoteExitNodeId = nodeRow.id;
                 return (
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center gap-2">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -242,6 +260,14 @@ export default function ExitNodesTable({
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <Link
+                                    className="block w-full"
+                                    href={`/${nodeRow.orgId}/settings/remote-exit-nodes/${remoteExitNodeId}`}
+                                >
+                                    <DropdownMenuItem>
+                                        {t("viewSettings")}
+                                    </DropdownMenuItem>
+                                </Link>
                                 <DropdownMenuItem
                                     onClick={() => {
                                         setSelectedNode(nodeRow);
@@ -254,6 +280,14 @@ export default function ExitNodesTable({
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
+                        <Link
+                            href={`/${nodeRow.orgId}/settings/remote-exit-nodes/${remoteExitNodeId}`}
+                        >
+                            <Button variant={"secondary"} size="sm">
+                                {t("edit")}
+                                <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 );
             }
@@ -271,9 +305,7 @@ export default function ExitNodesTable({
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("remoteExitNodeQuestionRemove")}
-                            </p>
+                            <p>{t("remoteExitNodeQuestionRemove")}</p>
 
                             <p>{t("remoteExitNodeMessageRemove")}</p>
                         </div>

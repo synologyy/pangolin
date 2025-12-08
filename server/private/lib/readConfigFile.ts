@@ -50,14 +50,14 @@ export const privateConfigSchema = z.object({
             host: z.string(),
             port: portSchema,
             password: z.string().optional(),
-            db: z.number().int().nonnegative().optional().default(0),
+            db: z.int().nonnegative().optional().default(0),
             replicas: z
                 .array(
                     z.object({
                         host: z.string(),
                         port: portSchema,
                         password: z.string().optional(),
-                        db: z.number().int().nonnegative().optional().default(0)
+                        db: z.int().nonnegative().optional().default(0)
                     })
                 )
                 .optional()
@@ -79,14 +79,14 @@ export const privateConfigSchema = z.object({
                 .default("http://gerbil:3004")
         })
         .optional()
-        .default({}),
+        .prefault({}),
     flags: z
         .object({
             enable_redis: z.boolean().optional().default(false),
             use_pangolin_dns: z.boolean().optional().default(false)
         })
         .optional()
-        .default({}),
+        .prefault({}),
     branding: z
         .object({
             app_name: z.string().optional(),
@@ -115,7 +115,6 @@ export const privateConfigSchema = z.object({
                         .optional()
                 })
                 .optional(),
-            favicon_path: z.string().optional(),
             footer: z
                 .array(
                     z.object({
@@ -124,16 +123,15 @@ export const privateConfigSchema = z.object({
                     })
                 )
                 .optional(),
+            hide_auth_layout_footer: z.boolean().optional().default(false),
             login_page: z
                 .object({
-                    subtitle_text: z.string().optional(),
-                    title_text: z.string().optional()
+                    subtitle_text: z.string().optional()
                 })
                 .optional(),
             signup_page: z
                 .object({
-                    subtitle_text: z.string().optional(),
-                    title_text: z.string().optional()
+                    subtitle_text: z.string().optional()
                 })
                 .optional(),
             resource_auth_page: z

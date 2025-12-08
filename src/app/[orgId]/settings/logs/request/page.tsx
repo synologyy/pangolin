@@ -499,7 +499,7 @@ export default function GeneralPage() {
             cell: ({ row }) => {
                 return (
                     <Link
-                        href={`/${row.original.orgId}/settings/resources/${row.original.resourceNiceId}`}
+                        href={`/${row.original.orgId}/settings/resources/proxy/${row.original.resourceNiceId}`}
                         onClick={(e) => e.stopPropagation()}
                     >
                         <Button
@@ -778,7 +778,7 @@ export default function GeneralPage() {
                 }}
                 defaultSort={{
                     id: "timestamp",
-                    desc: false
+                    desc: true
                 }}
                 // Server-side pagination props
                 totalCount={totalCount}
