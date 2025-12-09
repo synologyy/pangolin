@@ -35,7 +35,7 @@
         "@asteasolutions/zod-to-openapi": "8.2.0",
         "@faker-js/faker": "10.1.0",
         "@headlessui/react": "2.2.9",
-        "@aws-sdk/client-s3": "3.946.0",
+        "@aws-sdk/client-s3": "3.947.0",
         "@hookform/resolvers": "5.2.2",
         "@monaco-editor/react": "4.7.0",
         "@node-rs/argon2": "2.0.2",
@@ -83,7 +83,7 @@
         "date-fns": "4.1.0",
         "drizzle-orm": "0.45.0",
         "eslint": "9.39.1",
-        "eslint-config-next": "16.0.7",
+        "eslint-config-next": "16.0.8",
         "express": "5.2.1",
         "express-rate-limit": "8.2.1",
         "glob": "13.0.0",
@@ -154,7 +154,7 @@
         "@types/jmespath": "0.15.2",
         "@types/js-yaml": "4.0.9",
         "@types/jsonwebtoken": "9.0.10",
-        "@types/node": "24.10.1",
+        "@types/node": "24.10.2",
         "@types/nprogress": "0.2.3",
         "@types/nodemailer": "7.0.4",
         "@types/pg": "8.15.6",
@@ -175,6 +175,6 @@
         "tsc-alias": "1.8.16",
         "tsx": "4.21.0",
         "typescript": "5.9.3",
-        "typescript-eslint": "8.48.1"
+        "typescript-eslint": "8.49.0"
     }
 }
