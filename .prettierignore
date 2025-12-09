@@ -1,0 +1,12 @@
+.github/
+bruno/
+cli/
+config/
+messages/
+next.config.mjs/
+public/
+tailwind.config.js/
+test/
+**/*.yml
+**/*.yaml
+**/*.md
