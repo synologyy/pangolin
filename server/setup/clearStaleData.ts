@@ -1,5 +1,5 @@
 import { build } from "@server/build";
-import { db, sessionTransferToken } from "@server/db";
+import { db, deviceWebAuthCodes, sessionTransferToken } from "@server/db";
 import {
     emailVerificationCodes,
     newtSessions,
@@ -88,5 +88,13 @@ export async function clearStaleData() {
         } catch (e) {
             logger.warn("Error clearing expired sessionTransferToken:", e);
         }
+    }
+
+    try {
+        await db
+            .delete(deviceWebAuthCodes)
+            .where(lt(deviceWebAuthCodes.expiresAt, new Date().getTime()));
+    } catch (e) {
+        logger.warn("Error clearing expired deviceWebAuthCodes:", e);
     }
 }

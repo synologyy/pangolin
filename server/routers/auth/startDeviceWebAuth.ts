@@ -13,10 +13,12 @@ import { maxmindLookup } from "@server/db/maxmind";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 
-const bodySchema = z.object({
-    deviceName: z.string().optional(),
-    applicationName: z.string().min(1, "Application name is required")
-}).strict();
+const bodySchema = z
+    .object({
+        deviceName: z.string().optional(),
+        applicationName: z.string().min(1, "Application name is required")
+    })
+    .strict();
 
 export type StartDeviceWebAuthBody = z.infer<typeof bodySchema>;
 
@@ -34,14 +36,12 @@ function generateDeviceCode(): string {
 
 // Helper function to hash device code before storing in database
 function hashDeviceCode(code: string): string {
-    return encodeHexLowerCase(
-        sha256(new TextEncoder().encode(code))
-    );
+    return encodeHexLowerCase(sha256(new TextEncoder().encode(code)));
 }
 
 // Helper function to extract IP from request
 function extractIpFromRequest(req: Request): string | undefined {
-    const ip = req.ip || req.socket.remoteAddress;
+    const ip = req.ip;
     if (!ip) {
         return undefined;
     }
@@ -75,10 +75,10 @@ async function getCityFromIp(ip: string): Promise<string | undefined> {
             return undefined;
         }
 
-        // MaxMind CountryResponse doesn't include city by default
-        // If city data is available, it would be in result.city?.names?.en
-        // But since we're using CountryResponse type, we'll just return undefined
-        // The user said "don't do this if not easy", so we'll skip city for now
+        if (result.country) {
+            return result.country.names?.en || result.country.iso_code;
+        }
+
         return undefined;
     } catch (error) {
         logger.debug("Failed to get city from IP", error);
