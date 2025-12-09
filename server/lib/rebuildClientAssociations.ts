@@ -32,7 +32,9 @@ import logger from "@server/logger";
 import {
     generateAliasConfig,
     generateRemoteSubnets,
-    generateSubnetProxyTargets
+    generateSubnetProxyTargets,
+    parseEndpoint,
+    formatEndpoint
 } from "@server/lib/ip";
 import {
     addPeerData,
@@ -542,6 +544,13 @@ export async function updateClientSiteDestinations(
             continue;
         }
 
+        // Parse the endpoint properly for both IPv4 and IPv6
+        const parsedEndpoint = parseEndpoint(site.clientSitesAssociationsCache.endpoint);
+        if (!parsedEndpoint) {
+            logger.warn(`Failed to parse endpoint ${site.clientSitesAssociationsCache.endpoint}, skipping`);
+            continue;
+        }
+
         // find the destinations in the array
         let destinations = exitNodeDestinations.find(
             (d) => d.reachableAt === site.exitNodes?.reachableAt
@@ -553,13 +562,8 @@ export async function updateClientSiteDestinations(
                 exitNodeId: site.exitNodes?.exitNodeId || 0,
                 type: site.exitNodes?.type || "",
                 name: site.exitNodes?.name || "",
-                sourceIp:
-                    site.clientSitesAssociationsCache.endpoint.split(":")[0] ||
-                    "",
-                sourcePort:
-                    parseInt(
-                        site.clientSitesAssociationsCache.endpoint.split(":")[1]
-                    ) || 0,
+                sourceIp: parsedEndpoint.ip,
+                sourcePort: parsedEndpoint.port,
                 destinations: [
                     {
                         destinationIP: site.sites.subnet.split("/")[0],
