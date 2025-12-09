@@ -21,6 +21,7 @@ import { validateOlmSessionToken } from "@server/auth/sessions/olm";
 import { checkExitNodeOrg } from "#dynamic/lib/exitNodes";
 import { updatePeer as updateOlmPeer } from "../olm/peers";
 import { updatePeer as updateNewtPeer } from "../newt/peers";
+import { formatEndpoint } from "@server/lib/ip";
 
 // Define Zod schema for request validation
 const updateHolePunchSchema = z.object({
@@ -207,9 +208,12 @@ export async function updateAndGenerateEndpointDestinations(
             //     `Updating site ${site.siteId} on exit node ${exitNode.exitNodeId}`
             // );
 
+            // Format the endpoint properly for both IPv4 and IPv6
+            const formattedEndpoint = formatEndpoint(ip, port);
+
             // if the public key or endpoint has changed, update it otherwise continue
             if (
-                site.endpoint === `${ip}:${port}` &&
+                site.endpoint === formattedEndpoint &&
                 site.publicKey === publicKey
             ) {
                 continue;
@@ -218,7 +222,7 @@ export async function updateAndGenerateEndpointDestinations(
             const [updatedClientSitesAssociationsCache] = await db
                 .update(clientSitesAssociationsCache)
                 .set({
-                    endpoint: `${ip}:${port}`,
+                    endpoint: formattedEndpoint,
                     publicKey: publicKey
                 })
                 .where(
@@ -310,11 +314,14 @@ export async function updateAndGenerateEndpointDestinations(
 
         currentSiteId = newt.siteId;
 
+        // Format the endpoint properly for both IPv4 and IPv6
+        const formattedSiteEndpoint = formatEndpoint(ip, port);
+
         // Update the current site with the new endpoint
         const [updatedSite] = await db
             .update(sites)
             .set({
-                endpoint: `${ip}:${port}`,
+                endpoint: formattedSiteEndpoint,
                 lastHolePunch: timestamp
             })
             .where(eq(sites.siteId, newt.siteId))
