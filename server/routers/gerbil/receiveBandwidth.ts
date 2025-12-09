@@ -160,12 +160,20 @@ export async function updateSiteBandwidth(
 
                     // Aggregate bandwidth usage for the org
                     const totalBandwidth = peer.bytesIn + peer.bytesOut;
-                    const currentOrgUsage = orgUsageMap.get(updatedSite.orgId) || 0;
-                    orgUsageMap.set(updatedSite.orgId, currentOrgUsage + totalBandwidth);
+                    const currentOrgUsage =
+                        orgUsageMap.get(updatedSite.orgId) || 0;
+                    orgUsageMap.set(
+                        updatedSite.orgId,
+                        currentOrgUsage + totalBandwidth
+                    );
 
                     // Add 10 seconds of uptime for each active site
-                    const currentOrgUptime = orgUptimeMap.get(updatedSite.orgId) || 0;
-                    orgUptimeMap.set(updatedSite.orgId, currentOrgUptime + 10 / 60);
+                    const currentOrgUptime =
+                        orgUptimeMap.get(updatedSite.orgId) || 0;
+                    orgUptimeMap.set(
+                        updatedSite.orgId,
+                        currentOrgUptime + 10 / 60
+                    );
                 }
             } catch (error) {
                 logger.error(
@@ -181,7 +189,9 @@ export async function updateSiteBandwidth(
     // This separates the concerns and reduces lock contention
     if (calcUsageAndLimits && (orgUsageMap.size > 0 || orgUptimeMap.size > 0)) {
         // Sort org IDs to ensure consistent lock ordering
-        const allOrgIds = [...new Set([...orgUsageMap.keys(), ...orgUptimeMap.keys()])].sort();
+        const allOrgIds = [
+            ...new Set([...orgUsageMap.keys(), ...orgUptimeMap.keys()])
+        ].sort();
 
         for (const orgId of allOrgIds) {
             try {
@@ -237,10 +247,7 @@ export async function updateSiteBandwidth(
                     }
                 }
             } catch (error) {
-                logger.error(
-                    `Error processing usage for org ${orgId}:`,
-                    error
-                );
+                logger.error(`Error processing usage for org ${orgId}:`, error);
                 // Continue with other orgs
             }
         }

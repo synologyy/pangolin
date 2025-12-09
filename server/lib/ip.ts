@@ -247,7 +247,7 @@ export async function getNextAvailableClientSubnet(
     orgId: string,
     transaction: Transaction | typeof db = db
 ): Promise<string> {
-    const [org] = await db.select().from(orgs).where(eq(orgs.orgId, orgId));
+    const [org] = await transaction.select().from(orgs).where(eq(orgs.orgId, orgId));
 
     if (!org) {
         throw new Error(`Organization with ID ${orgId} not found`);
@@ -257,14 +257,14 @@ export async function getNextAvailableClientSubnet(
         throw new Error(`Organization with ID ${orgId} has no subnet defined`);
     }
 
-    const existingAddressesSites = await db
+    const existingAddressesSites = await transaction
         .select({
             address: sites.address
         })
         .from(sites)
         .where(and(isNotNull(sites.address), eq(sites.orgId, orgId)));
 
-    const existingAddressesClients = await db
+    const existingAddressesClients = await transaction
         .select({
             address: clients.subnet
         })
