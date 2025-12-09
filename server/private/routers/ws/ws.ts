@@ -55,9 +55,9 @@ const processMessage = async (
     try {
         const message: WSMessage = JSON.parse(data.toString());
 
-        logger.debug(
-            `Processing message from ${clientType.toUpperCase()} ID: ${clientId}, type: ${message.type}`
-        );
+        // logger.debug(
+        //     `Processing message from ${clientType.toUpperCase()} ID: ${clientId}, type: ${message.type}`
+        // );
 
         if (!message.type || typeof message.type !== "string") {
             throw new Error("Invalid message format: missing or invalid type");
