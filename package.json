@@ -154,7 +154,7 @@
         "@types/jmespath": "^0.15.2",
         "@types/js-yaml": "4.0.9",
         "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "24.10.1",
+        "@types/node": "24.10.2",
         "@types/nprogress": "^0.2.3",
         "@types/nodemailer": "7.0.4",
         "@types/pg": "8.15.6",
