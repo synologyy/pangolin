@@ -19,7 +19,13 @@ interface Props {
     billingLink: string; // Link to billing page
 }
 
-export const NotifyUsageLimitApproaching = ({ email, limitName, currentUsage, usageLimit, billingLink }: Props) => {
+export const NotifyUsageLimitApproaching = ({
+    email,
+    limitName,
+    currentUsage,
+    usageLimit,
+    billingLink
+}: Props) => {
     const previewText = `Your usage for ${limitName} is approaching the limit.`;
     const usagePercentage = Math.round((currentUsage / usageLimit) * 100);
 
@@ -37,23 +43,32 @@ export const NotifyUsageLimitApproaching = ({ email, limitName, currentUsage, us
                         <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            We wanted to let you know that your usage for <strong>{limitName}</strong> is approaching your plan limit.
+                            We wanted to let you know that your usage for{" "}
+                            <strong>{limitName}</strong> is approaching your
+                            plan limit.
                         </EmailText>
 
                         <EmailText>
-                            <strong>Current Usage:</strong> {currentUsage} of {usageLimit} ({usagePercentage}%)
+                            <strong>Current Usage:</strong> {currentUsage} of{" "}
+                            {usageLimit} ({usagePercentage}%)
                         </EmailText>
 
                         <EmailText>
-                            Once you reach your limit, some functionality may be restricted or your sites may disconnect until you upgrade your plan or your usage resets.
+                            Once you reach your limit, some functionality may be
+                            restricted or your sites may disconnect until you
+                            upgrade your plan or your usage resets.
                         </EmailText>
 
                         <EmailText>
-                            To avoid any interruption to your service, we recommend upgrading your plan or monitoring your usage closely. You can <a href={billingLink}>upgrade your plan here</a>.
+                            To avoid any interruption to your service, we
+                            recommend upgrading your plan or monitoring your
+                            usage closely. You can{" "}
+                            <a href={billingLink}>upgrade your plan here</a>.
                         </EmailText>
 
                         <EmailText>
-                            If you have any questions or need assistance, please don't hesitate to reach out to our support team.
+                            If you have any questions or need assistance, please
+                            don't hesitate to reach out to our support team.
                         </EmailText>
 
                         <EmailFooter>

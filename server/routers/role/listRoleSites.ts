@@ -10,8 +10,8 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const listRoleSitesSchema = z.strictObject({
-        roleId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    roleId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export async function listRoleSites(
     req: Request,

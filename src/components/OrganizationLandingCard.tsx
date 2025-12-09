@@ -10,7 +10,15 @@ import {
     CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Globe, Database, Cog, Settings, Waypoints, Combine } from "lucide-react";
+import {
+    Users,
+    Globe,
+    Database,
+    Cog,
+    Settings,
+    Waypoints,
+    Combine
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface OrgStat {
@@ -43,17 +51,17 @@ export default function OrganizationLandingCard(
 
     const orgStats: OrgStat[] = [
         {
-            label: t('sites'),
+            label: t("sites"),
             value: orgData.overview.stats.sites,
             icon: <Combine className="h-6 w-6" />
         },
         {
-            label: t('resources'),
+            label: t("resources"),
             value: orgData.overview.stats.resources,
             icon: <Waypoints className="h-6 w-6" />
         },
         {
-            label: t('users'),
+            label: t("users"),
             value: orgData.overview.stats.users,
             icon: <Users className="h-6 w-6" />
         }
@@ -84,9 +92,11 @@ export default function OrganizationLandingCard(
                     ))}
                 </div>
                 <div className="text-center text-lg">
-                    {t('accessRoleYour')}{" "}
+                    {t("accessRoleYour")}{" "}
                     <span className="font-semibold">
-                        {orgData.overview.isOwner ? t('accessRoleOwner') : orgData.overview.userRole}
+                        {orgData.overview.isOwner
+                            ? t("accessRoleOwner")
+                            : orgData.overview.userRole}
                     </span>
                 </div>
             </CardContent>
@@ -95,7 +105,7 @@ export default function OrganizationLandingCard(
                     <Link href={`/${orgData.overview.orgId}/settings`}>
                         <Button size="lg" className="w-full md:w-auto">
                             <Settings className="mr-2 h-4 w-4" />
-                            {t('orgGeneralSettings')}
+                            {t("orgGeneralSettings")}
                         </Button>
                     </Link>
                 </CardFooter>

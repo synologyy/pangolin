@@ -98,7 +98,11 @@ export default async function Page(props: {
                 </div>
             )}
 
-            <DashboardLoginForm redirect={redirectUrl} idps={loginIdps} forceLogin={forceLogin} />
+            <DashboardLoginForm
+                redirect={redirectUrl}
+                idps={loginIdps}
+                forceLogin={forceLogin}
+            />
 
             {(!signUpDisabled || isInvite) && (
                 <p className="text-center text-muted-foreground mt-4">

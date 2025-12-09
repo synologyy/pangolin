@@ -12,8 +12,8 @@ import stoi from "@server/lib/stoi";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const listRolesParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listRolesSchema = z.object({
     limit: z

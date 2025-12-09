@@ -17,7 +17,8 @@ import stoi from "@server/lib/stoi";
 import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
-const listAccessTokensParamsSchema = z.strictObject({
+const listAccessTokensParamsSchema = z
+    .strictObject({
         resourceId: z
             .string()
             .optional()

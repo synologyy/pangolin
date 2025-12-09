@@ -19,10 +19,10 @@ import { verifySession } from "@server/auth/sessions/verifySession";
 import { unauthorized } from "@server/auth/unauthorizedResponse";
 
 export const verifyTotpBody = z.strictObject({
-        email: z.email().optional(),
-        password: z.string().optional(),
-        code: z.string()
-    });
+    email: z.email().optional(),
+    password: z.string().optional(),
+    code: z.string()
+});
 
 export type VerifyTotpBody = z.infer<typeof verifyTotpBody>;
 

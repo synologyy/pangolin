@@ -28,7 +28,10 @@ export function generateObfuscatedWireGuardConfig(options?: {
     listenPort?: number | string | null;
     publicKey?: string | null;
 }): string {
-    const obfuscate = (value: string | null | undefined, length: number = 20): string => {
+    const obfuscate = (
+        value: string | null | undefined,
+        length: number = 20
+    ): string => {
         return value || "•".repeat(length);
     };
 
@@ -37,13 +40,19 @@ export function generateObfuscatedWireGuardConfig(options?: {
     };
 
     const subnet = options?.subnet || obfuscate(null, 20);
-    const subnetWithCidr = subnet.includes("•") 
-        ? `${subnet}/32` 
-        : (subnet.includes("/") ? subnet : `${subnet}/32`);
-    const address = options?.address ? options.address.split("/")[0] : obfuscate(null, 20);
+    const subnetWithCidr = subnet.includes("•")
+        ? `${subnet}/32`
+        : subnet.includes("/")
+          ? subnet
+          : `${subnet}/32`;
+    const address = options?.address
+        ? options.address.split("/")[0]
+        : obfuscate(null, 20);
     const endpoint = obfuscate(options?.endpoint, 20);
-    const listenPort = options?.listenPort 
-        ? (typeof options.listenPort === "number" ? options.listenPort : options.listenPort)
+    const listenPort = options?.listenPort
+        ? typeof options.listenPort === "number"
+            ? options.listenPort
+            : options.listenPort
         : 51820;
     const publicKey = obfuscateKey(options?.publicKey);
 
@@ -58,4 +67,3 @@ AllowedIPs = ${address}/32
 Endpoint = ${endpoint}:${listenPort}
 PersistentKeepalive = 5`;
 }
-

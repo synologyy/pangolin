@@ -86,7 +86,7 @@ export default function CreateRemoteExitNodePage() {
     useEffect(() => {
         const remoteExitNodeId = searchParams.get("remoteExitNodeId");
         const remoteExitNodeSecret = searchParams.get("remoteExitNodeSecret");
-        
+
         if (remoteExitNodeId && remoteExitNodeSecret) {
             setStrategy("adopt");
             form.setValue("remoteExitNodeId", remoteExitNodeId);

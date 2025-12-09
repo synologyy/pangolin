@@ -101,14 +101,18 @@ export async function removePeerData(
 export async function updatePeerData(
     clientId: number,
     siteId: number,
-    remoteSubnets: {
-        oldRemoteSubnets: string[];
-        newRemoteSubnets: string[];
-    } | undefined,
-    aliases: {
-        oldAliases: Alias[];
-        newAliases: Alias[];
-    } | undefined,
+    remoteSubnets:
+        | {
+              oldRemoteSubnets: string[];
+              newRemoteSubnets: string[];
+          }
+        | undefined,
+    aliases:
+        | {
+              oldAliases: Alias[];
+              newAliases: Alias[];
+          }
+        | undefined,
     olmId?: string
 ) {
     if (!olmId) {

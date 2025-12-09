@@ -10,9 +10,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const removeInvitationParamsSchema = z.strictObject({
-        orgId: z.string(),
-        inviteId: z.string()
-    });
+    orgId: z.string(),
+    inviteId: z.string()
+});
 
 export async function removeInvitation(
     req: Request,

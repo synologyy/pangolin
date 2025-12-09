@@ -11,15 +11,12 @@ import { eq, and, ne, inArray } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const setResourceRolesBodySchema = z.strictObject({
-        roleIds: z.array(z.int().positive())
-    });
+    roleIds: z.array(z.int().positive())
+});
 
 const setResourceRolesParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "post",
@@ -113,10 +110,7 @@ export async function setResourceRoles(
             .select()
             .from(roles)
             .where(
-                and(
-                    eq(roles.isAdmin, true),
-                    eq(roles.orgId, resource.orgId)
-                )
+                and(eq(roles.isAdmin, true), eq(roles.orgId, resource.orgId))
             );
         const adminRoleIds = adminRoles.map((role) => role.roleId);
 
@@ -129,9 +123,9 @@ export async function setResourceRoles(
                     )
                 );
             } else {
-                await trx.delete(roleResources).where(
-                    eq(roleResources.resourceId, resourceId)
-                );
+                await trx
+                    .delete(roleResources)
+                    .where(eq(roleResources.resourceId, resourceId));
             }
 
             const newRoleResources = await Promise.all(
@@ -158,4 +152,3 @@ export async function setResourceRoles(
         );
     }
 }
-

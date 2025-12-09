@@ -151,7 +151,7 @@ export async function removeRoleFromSiteResource(
                     )
                 );
 
-             await rebuildClientAssociationsFromSiteResource(siteResource, trx);
+            await rebuildClientAssociationsFromSiteResource(siteResource, trx);
         });
 
         return response(res, {
@@ -168,4 +168,3 @@ export async function removeRoleFromSiteResource(
         );
     }
 }
-

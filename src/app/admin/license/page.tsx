@@ -316,9 +316,7 @@ export default function LicensePage() {
                     }}
                     dialog={
                         <div>
-                            <p>
-                                {t("licenseQuestionRemove")}
-                            </p>
+                            <p>{t("licenseQuestionRemove")}</p>
                             <p>
                                 <b>{t("licenseMessageRemove")}</b>
                             </p>

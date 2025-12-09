@@ -10,9 +10,9 @@ import { db } from "@server/db";
 import config from "@server/lib/config";
 
 const validateSupporterKeySchema = z.strictObject({
-        githubUsername: z.string().nonempty(),
-        key: z.string().nonempty()
-    });
+    githubUsername: z.string().nonempty(),
+    key: z.string().nonempty()
+});
 
 export type ValidateSupporterKeyResponse = {
     valid: boolean;

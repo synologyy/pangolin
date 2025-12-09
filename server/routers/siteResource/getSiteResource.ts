@@ -11,44 +11,55 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getSiteResourceParamsSchema = z.strictObject({
-        siteResourceId: z
-            .string()
-            .optional()
-            .transform((val) => val ? Number(val) : undefined)
-            .pipe(z.int().positive().optional())
-            .optional(),
-        siteId: z.string().transform(Number).pipe(z.int().positive()),
-        niceId: z.string().optional(),
-        orgId: z.string()
-    });
+    siteResourceId: z
+        .string()
+        .optional()
+        .transform((val) => (val ? Number(val) : undefined))
+        .pipe(z.int().positive().optional())
+        .optional(),
+    siteId: z.string().transform(Number).pipe(z.int().positive()),
+    niceId: z.string().optional(),
+    orgId: z.string()
+});
 
-async function query(siteResourceId?: number, siteId?: number, niceId?: string, orgId?: string) {
+async function query(
+    siteResourceId?: number,
+    siteId?: number,
+    niceId?: string,
+    orgId?: string
+) {
     if (siteResourceId && siteId && orgId) {
         const [siteResource] = await db
             .select()
             .from(siteResources)
-            .where(and(
-                eq(siteResources.siteResourceId, siteResourceId),
-                eq(siteResources.siteId, siteId),
-                eq(siteResources.orgId, orgId)
-            ))
+            .where(
+                and(
+                    eq(siteResources.siteResourceId, siteResourceId),
+                    eq(siteResources.siteId, siteId),
+                    eq(siteResources.orgId, orgId)
+                )
+            )
             .limit(1);
         return siteResource;
     } else if (niceId && siteId && orgId) {
         const [siteResource] = await db
             .select()
             .from(siteResources)
-            .where(and(
-                eq(siteResources.niceId, niceId),
-                eq(siteResources.siteId, siteId),
-                eq(siteResources.orgId, orgId)
-            ))
+            .where(
+                and(
+                    eq(siteResources.niceId, niceId),
+                    eq(siteResources.siteId, siteId),
+                    eq(siteResources.orgId, orgId)
+                )
+            )
             .limit(1);
         return siteResource;
     }
 }
 
-export type GetSiteResourceResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
+export type GetSiteResourceResponse = NonNullable<
+    Awaited<ReturnType<typeof query>>
+>;
 
 registry.registerPath({
     method: "get",
@@ -103,10 +114,7 @@ export async function getSiteResource(
 
         if (!siteResource) {
             return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    "Site resource not found"
-                )
+                createHttpError(HttpCode.NOT_FOUND, "Site resource not found")
             );
         }
 
@@ -119,6 +127,11 @@ export async function getSiteResource(
         });
     } catch (error) {
         logger.error("Error getting site resource:", error);
-        return next(createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "Failed to get site resource"));
+        return next(
+            createHttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "Failed to get site resource"
+            )
+        );
     }
 }

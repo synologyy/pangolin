@@ -13,15 +13,11 @@ export default async function migration() {
 
     try {
         const resources = db
-            .prepare(
-                "SELECT resourceId FROM resources"
-            )
+            .prepare("SELECT resourceId FROM resources")
             .all() as Array<{ resourceId: number }>;
 
         const siteResources = db
-            .prepare(
-                "SELECT siteResourceId FROM siteResources"
-            )
+            .prepare("SELECT siteResourceId FROM siteResources")
             .all() as Array<{ siteResourceId: number }>;
 
         db.transaction(() => {
@@ -82,17 +78,13 @@ export default async function migration() {
 
             // Handle auto-provisioned users for identity providers
             const autoProvisionIdps = db
-                .prepare(
-                    "SELECT idpId FROM idp WHERE autoProvision = 1"
-                )
+                .prepare("SELECT idpId FROM idp WHERE autoProvision = 1")
                 .all() as Array<{ idpId: number }>;
 
             for (const idp of autoProvisionIdps) {
                 // Get all users with this identity provider
                 const usersWithIdp = db
-                    .prepare(
-                        "SELECT id FROM user WHERE idpId = ?"
-                    )
+                    .prepare("SELECT id FROM user WHERE idpId = ?")
                     .all(idp.idpId) as Array<{ id: string }>;
 
                 // Update userOrgs to set autoProvisioned to true for these users

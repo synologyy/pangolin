@@ -22,8 +22,8 @@ export default async function IdpPage() {
     return (
         <>
             <SettingsSectionTitle
-                title={t('idpManage')}
-                description={t('idpManageDescription')}
+                title={t("idpManage")}
+                description={t("idpManageDescription")}
             />
             <IdpTable idps={idps} />
         </>

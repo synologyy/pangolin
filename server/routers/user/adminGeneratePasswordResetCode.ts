@@ -19,7 +19,9 @@ const adminGeneratePasswordResetCodeSchema = z.strictObject({
     userId: z.string().min(1)
 });
 
-export type AdminGeneratePasswordResetCodeBody = z.infer<typeof adminGeneratePasswordResetCodeSchema>;
+export type AdminGeneratePasswordResetCodeBody = z.infer<
+    typeof adminGeneratePasswordResetCodeSchema
+>;
 
 export type AdminGeneratePasswordResetCodeResponse = {
     token: string;
@@ -32,7 +34,9 @@ export async function adminGeneratePasswordResetCode(
     res: Response,
     next: NextFunction
 ): Promise<any> {
-    const parsedParams = adminGeneratePasswordResetCodeSchema.safeParse(req.params);
+    const parsedParams = adminGeneratePasswordResetCodeSchema.safeParse(
+        req.params
+    );
 
     if (!parsedParams.success) {
         return next(
@@ -52,12 +56,7 @@ export async function adminGeneratePasswordResetCode(
             .where(eq(users.userId, userId));
 
         if (!existingUser || !existingUser.length) {
-            return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    "User not found"
-                )
-            );
+            return next(createHttpError(HttpCode.NOT_FOUND, "User not found"));
         }
 
         if (existingUser[0].type !== UserType.Internal) {
@@ -122,4 +121,3 @@ export async function adminGeneratePasswordResetCode(
         );
     }
 }
-

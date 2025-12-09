@@ -19,10 +19,7 @@ import * as crypto from "crypto";
  * @param publicKey - The public key used for verification (PEM format)
  * @returns The decoded payload if validation succeeds, throws an error otherwise
  */
-function validateJWT<Payload>(
-    token: string,
-    publicKey: string
-): Payload {
+function validateJWT<Payload>(token: string, publicKey: string): Payload {
     // Split the JWT into its three parts
     const parts = token.split(".");
     if (parts.length !== 3) {

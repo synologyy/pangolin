@@ -24,8 +24,8 @@ import { licenseKey } from "@server/db";
 import license from "#private/license/license";
 
 const paramsSchema = z.strictObject({
-        licenseKey: z.string().min(1).max(255)
-    });
+    licenseKey: z.string().min(1).max(255)
+});
 
 export async function deleteLicenseKey(
     req: Request,

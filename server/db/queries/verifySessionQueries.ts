@@ -52,10 +52,7 @@ export async function getResourceByDomain(
             resourceHeaderAuth,
             eq(resourceHeaderAuth.resourceId, resources.resourceId)
         )
-        .innerJoin(
-            orgs,
-            eq(orgs.orgId, resources.orgId)
-        )
+        .innerJoin(orgs, eq(orgs.orgId, resources.orgId))
         .where(eq(resources.fullDomain, domain))
         .limit(1);
 

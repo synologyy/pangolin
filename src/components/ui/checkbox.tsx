@@ -30,7 +30,8 @@ const checkboxVariants = cva(
 );
 
 interface CheckboxProps
-    extends React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
+    extends
+        React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>,
         VariantProps<typeof checkboxVariants> {}
 
 const Checkbox = React.forwardRef<
@@ -49,8 +50,9 @@ const Checkbox = React.forwardRef<
 ));
 Checkbox.displayName = CheckboxPrimitive.Root.displayName;
 
-interface CheckboxWithLabelProps
-    extends React.ComponentPropsWithoutRef<typeof Checkbox> {
+interface CheckboxWithLabelProps extends React.ComponentPropsWithoutRef<
+    typeof Checkbox
+> {
     label: string;
 }
 

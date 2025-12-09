@@ -177,7 +177,9 @@ export class LockManager {
             const exists = value !== null;
             const ownedByMe =
                 exists &&
-                value!.startsWith(`${config.getRawConfig().gerbil.exit_node_name}:`);
+                value!.startsWith(
+                    `${config.getRawConfig().gerbil.exit_node_name}:`
+                );
             const owner = exists ? value!.split(":")[0] : undefined;
 
             return {

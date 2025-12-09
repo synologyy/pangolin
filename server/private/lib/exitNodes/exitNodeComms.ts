@@ -66,7 +66,9 @@ export async function sendToExitNode(
         // logger.debug(`Configured local exit node name: ${config.getRawConfig().gerbil.exit_node_name}`);
 
         if (exitNode.name == config.getRawConfig().gerbil.exit_node_name) {
-            hostname = privateConfig.getRawPrivateConfig().gerbil.local_exit_node_reachable_at;
+            hostname =
+                privateConfig.getRawPrivateConfig().gerbil
+                    .local_exit_node_reachable_at;
         }
 
         if (!hostname) {

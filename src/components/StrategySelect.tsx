@@ -61,14 +61,14 @@ export function StrategySelect<TValue extends string>({
                     />
                     <div className="flex gap-3 pl-7">
                         {option.icon && (
-                            <div className="mt-1">
-                                {option.icon}
-                            </div>
+                            <div className="mt-1">{option.icon}</div>
                         )}
                         <div className="flex-1">
                             <div className="font-medium">{option.title}</div>
                             <div className="text-sm text-muted-foreground">
-                                {typeof option.description === 'string' ? option.description : option.description}
+                                {typeof option.description === "string"
+                                    ? option.description
+                                    : option.description}
                             </div>
                         </div>
                     </div>

@@ -24,8 +24,7 @@ export async function verifyIdpAccess(
 ) {
     try {
         const userId = req.user!.userId;
-        const idpId =
-            req.params.idpId || req.body.idpId || req.query.idpId;
+        const idpId = req.params.idpId || req.body.idpId || req.query.idpId;
         const orgId = req.params.orgId;
 
         if (!userId) {
@@ -50,9 +49,7 @@ export async function verifyIdpAccess(
             .select()
             .from(idp)
             .innerJoin(idpOrg, eq(idp.idpId, idpOrg.idpId))
-            .where(
-                and(eq(idp.idpId, idpId), eq(idpOrg.orgId, orgId))
-            )
+            .where(and(eq(idp.idpId, idpId), eq(idpOrg.orgId, orgId)))
             .limit(1);
 
         if (!idpRes || !idpRes.idp || !idpRes.idpOrg) {

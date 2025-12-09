@@ -5,7 +5,7 @@ import HttpCode from "@server/types/HttpCode";
 export function notFoundMiddleware(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) {
     if (req.path.startsWith("/api")) {
         const message = `The requests url is not found - ${req.originalUrl}`;

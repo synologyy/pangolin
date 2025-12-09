@@ -106,7 +106,8 @@ export default function Page() {
 
     const genericOidcFormSchema = z.object({
         username: z.string().min(1, { message: t("usernameRequired") }),
-        email: z.email({ message: t("emailInvalid") })
+        email: z
+            .email({ message: t("emailInvalid") })
             .optional()
             .or(z.literal("")),
         name: z.string().optional(),

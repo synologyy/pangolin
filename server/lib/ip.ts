@@ -247,7 +247,10 @@ export async function getNextAvailableClientSubnet(
     orgId: string,
     transaction: Transaction | typeof db = db
 ): Promise<string> {
-    const [org] = await transaction.select().from(orgs).where(eq(orgs.orgId, orgId));
+    const [org] = await transaction
+        .select()
+        .from(orgs)
+        .where(eq(orgs.orgId, orgId));
 
     if (!org) {
         throw new Error(`Organization with ID ${orgId} not found`);
@@ -360,7 +363,9 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     return subnet;
 }
 
-export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[] {
+export function generateRemoteSubnets(
+    allSiteResources: SiteResource[]
+): string[] {
     const remoteSubnets = allSiteResources
         .filter((sr) => {
             if (sr.mode === "cidr") return true;

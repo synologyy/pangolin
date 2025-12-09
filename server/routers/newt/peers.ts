@@ -48,7 +48,11 @@ export async function addPeer(
     return site;
 }
 
-export async function deletePeer(siteId: number, publicKey: string, newtId?: string) {
+export async function deletePeer(
+    siteId: number,
+    publicKey: string,
+    newtId?: string
+) {
     let site: Site | null = null;
     if (!newtId) {
         [site] = await db

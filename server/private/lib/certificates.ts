@@ -55,7 +55,6 @@ export async function getValidCertificatesForDomains(
     domains: Set<string>,
     useCache: boolean = true
 ): Promise<Array<CertificateResult>> {
-
     loadEncryptData(); // Ensure encryption key is loaded
 
     const finalResults: CertificateResult[] = [];

@@ -10,11 +10,12 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const paramsSchema = z.strictObject({
-        userId: z.string(),
-        orgId: z.string()
-    });
+    userId: z.string(),
+    orgId: z.string()
+});
 
-const bodySchema = z.strictObject({
+const bodySchema = z
+    .strictObject({
         autoProvisioned: z.boolean().optional()
     })
     .refine((data) => Object.keys(data).length > 0, {

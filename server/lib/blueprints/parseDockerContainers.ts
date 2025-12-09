@@ -84,12 +84,20 @@ export function processContainerLabels(containers: Container[]): {
 
         // Process proxy resources
         if (Object.keys(proxyResourceLabels).length > 0) {
-            processResourceLabels(proxyResourceLabels, container, result["proxy-resources"]);
+            processResourceLabels(
+                proxyResourceLabels,
+                container,
+                result["proxy-resources"]
+            );
         }
 
         // Process client resources
         if (Object.keys(clientResourceLabels).length > 0) {
-            processResourceLabels(clientResourceLabels, container, result["client-resources"]);
+            processResourceLabels(
+                clientResourceLabels,
+                container,
+                result["client-resources"]
+            );
         }
     });
 
@@ -161,8 +169,7 @@ function processResourceLabels(
                                 const finalTarget = { ...target };
                                 if (!finalTarget.hostname) {
                                     finalTarget.hostname =
-                                        container.name ||
-                                        container.hostname;
+                                        container.name || container.hostname;
                                 }
                                 if (!finalTarget.port) {
                                     const containerPort =

@@ -32,7 +32,7 @@ import logger from "@server/logger";
 import {
     generateAliasConfig,
     generateRemoteSubnets,
-    generateSubnetProxyTargets,
+    generateSubnetProxyTargets
 } from "@server/lib/ip";
 import {
     addPeerData,
@@ -109,21 +109,22 @@ export async function getClientSiteResourceAccess(
     const directClientIds = allClientSiteResources.map((row) => row.clientId);
 
     // Get full client details for directly associated clients
-    const directClients = directClientIds.length > 0
-        ? await trx
-              .select({
-                  clientId: clients.clientId,
-                  pubKey: clients.pubKey,
-                  subnet: clients.subnet
-              })
-              .from(clients)
-              .where(
-                  and(
-                      inArray(clients.clientId, directClientIds),
-                      eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+    const directClients =
+        directClientIds.length > 0
+            ? await trx
+                  .select({
+                      clientId: clients.clientId,
+                      pubKey: clients.pubKey,
+                      subnet: clients.subnet
+                  })
+                  .from(clients)
+                  .where(
+                      and(
+                          inArray(clients.clientId, directClientIds),
+                          eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+                      )
                   )
-              )
-        : [];
+            : [];
 
     // Merge user-based clients with directly associated clients
     const allClientsMap = new Map(
@@ -731,9 +732,10 @@ async function handleSubnetProxyTargetUpdates(
                     );
 
                 // Only remove remote subnet if no other resource uses the same destination
-                const remoteSubnetsToRemove = destinationStillInUse.length > 0
-                    ? []
-                    : generateRemoteSubnets([siteResource]);
+                const remoteSubnetsToRemove =
+                    destinationStillInUse.length > 0
+                        ? []
+                        : generateRemoteSubnets([siteResource]);
 
                 olmJobs.push(
                     removePeerData(
@@ -817,7 +819,10 @@ export async function rebuildClientAssociationsFromClient(
                 .from(roleSiteResources)
                 .innerJoin(
                     siteResources,
-                    eq(siteResources.siteResourceId, roleSiteResources.siteResourceId)
+                    eq(
+                        siteResources.siteResourceId,
+                        roleSiteResources.siteResourceId
+                    )
                 )
                 .where(
                     and(
@@ -1277,9 +1282,10 @@ async function handleMessagesForClientResources(
                         );
 
                     // Only remove remote subnet if no other resource uses the same destination
-                    const remoteSubnetsToRemove = destinationStillInUse.length > 0
-                        ? []
-                        : generateRemoteSubnets([resource]);
+                    const remoteSubnetsToRemove =
+                        destinationStillInUse.length > 0
+                            ? []
+                            : generateRemoteSubnets([resource]);
 
                     // Remove peer data from olm
                     olmJobs.push(

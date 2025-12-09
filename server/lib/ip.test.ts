@@ -4,7 +4,7 @@ import { assertEquals } from "@test/assert";
 // Test cases
 function testFindNextAvailableCidr() {
     console.log("Running findNextAvailableCidr tests...");
-  
+
     // Test 0: Basic IPv4 allocation with a subnet in the wrong range
     {
         const existing = ["100.90.130.1/30", "100.90.128.4/30"];
@@ -23,7 +23,11 @@ function testFindNextAvailableCidr() {
     {
         const existing = ["10.0.0.0/16", "10.2.0.0/16"];
         const result = findNextAvailableCidr(existing, 16, "10.0.0.0/8");
-        assertEquals(result, "10.1.0.0/16", "Finding gap between allocations failed");
+        assertEquals(
+            result,
+            "10.1.0.0/16",
+            "Finding gap between allocations failed"
+        );
     }
 
     // Test 3: No available space
@@ -33,7 +37,7 @@ function testFindNextAvailableCidr() {
         assertEquals(result, null, "No available space test failed");
     }
 
-    // Test 4: Empty existing 
+    // Test 4: Empty existing
     {
         const existing: string[] = [];
         const result = findNextAvailableCidr(existing, 30, "10.0.0.0/8");

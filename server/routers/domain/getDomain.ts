@@ -11,11 +11,9 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { domain } from "zod/v4/core/regexes";
 
 const getDomainSchema = z.strictObject({
-        domainId: z
-            .string()
-            .optional(),
-        orgId: z.string().optional()
-    });
+    domainId: z.string().optional(),
+    orgId: z.string().optional()
+});
 
 async function query(domainId?: string, orgId?: string) {
     if (domainId) {
@@ -65,7 +63,9 @@ export async function getDomain(
         const domain = await query(domainId, orgId);
 
         if (!domain) {
-            return next(createHttpError(HttpCode.NOT_FOUND, "Domain not found"));
+            return next(
+                createHttpError(HttpCode.NOT_FOUND, "Domain not found")
+            );
         }
 
         return response<GetDomainResponse>(res, {

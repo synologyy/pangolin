@@ -12,7 +12,10 @@ import {
     serializeResourceSessionCookie,
     validateResourceSessionToken
 } from "@server/auth/sessions/resource";
-import { generateSessionToken, SESSION_COOKIE_EXPIRES } from "@server/auth/sessions/app";
+import {
+    generateSessionToken,
+    SESSION_COOKIE_EXPIRES
+} from "@server/auth/sessions/app";
 import { SESSION_COOKIE_EXPIRES as RESOURCE_SESSION_COOKIE_EXPIRES } from "@server/auth/sessions/resource";
 import config from "@server/lib/config";
 import { response } from "@server/lib/response";
@@ -55,8 +58,8 @@ export async function exchangeSession(
         let cleanHost = host;
         // if the host ends with :port
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
-            const matched = ''+cleanHost.match(/:[0-9]{1,5}$/);
-            cleanHost = cleanHost.slice(0, -1*matched.length);
+            const matched = "" + cleanHost.match(/:[0-9]{1,5}$/);
+            cleanHost = cleanHost.slice(0, -1 * matched.length);
         }
 
         const clientIp = requestIp?.split(":")[0];
@@ -153,8 +156,8 @@ export async function exchangeSession(
             }
         } else {
             const expires = new Date(
-                    Date.now() + SESSION_COOKIE_EXPIRES
-                ).getTime();
+                Date.now() + SESSION_COOKIE_EXPIRES
+            ).getTime();
             await createResourceSession({
                 token,
                 resourceId: resource.resourceId,

@@ -1,10 +1,8 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -19,7 +17,6 @@ export function InvitationsDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -27,8 +24,8 @@ export function InvitationsDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="invitations-table"
-            title={t('invite')}
-            searchPlaceholder={t('inviteSearch')}
+            title={t("invite")}
+            searchPlaceholder={t("inviteSearch")}
             searchColumn="email"
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}

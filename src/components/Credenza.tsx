@@ -78,7 +78,10 @@ const CredenzaClose = ({ className, children, ...props }: CredenzaProps) => {
     const CredenzaClose = isDesktop ? DialogClose : DrawerClose;
 
     return (
-        <CredenzaClose className={cn("mb-3 mt-3 md:mt-0 md:mb-0", className)} {...props}>
+        <CredenzaClose
+            className={cn("mb-3 mt-3 md:mt-0 md:mb-0", className)}
+            {...props}
+        >
             {children}
         </CredenzaClose>
     );
@@ -155,7 +158,13 @@ const CredenzaBody = ({ className, children, ...props }: CredenzaProps) => {
     // );
 
     return (
-        <div className={cn("px-0 mb-4 space-y-4 overflow-x-hidden min-w-0", className)} {...props}>
+        <div
+            className={cn(
+                "px-0 mb-4 space-y-4 overflow-x-hidden min-w-0",
+                className
+            )}
+            {...props}
+        >
             {children}
         </div>
     );

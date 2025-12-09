@@ -78,15 +78,11 @@ export async function deleteLoginPage(
         // if (!leftoverLinks.length) {
         await db
             .delete(loginPage)
-            .where(
-                eq(loginPage.loginPageId, parsedParams.data.loginPageId)
-            );
+            .where(eq(loginPage.loginPageId, parsedParams.data.loginPageId));
 
         await db
             .delete(loginPageOrg)
-            .where(
-                eq(loginPageOrg.loginPageId, parsedParams.data.loginPageId)
-            );
+            .where(eq(loginPageOrg.loginPageId, parsedParams.data.loginPageId));
         // }
 
         return response<LoginPage>(res, {

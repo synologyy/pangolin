@@ -14,4 +14,3 @@ export default async function AdminLicenseLayout(props: LayoutProps) {
 
     return props.children;
 }
-

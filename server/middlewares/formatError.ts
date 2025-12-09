@@ -20,6 +20,6 @@ export const errorHandlerMiddleware: ErrorRequestHandler = (
         error: true,
         message: error.message || "Internal Server Error",
         status: statusCode,
-        stack: process.env.ENVIRONMENT === "prod" ? null : error.stack,
+        stack: process.env.ENVIRONMENT === "prod" ? null : error.stack
     });
 };

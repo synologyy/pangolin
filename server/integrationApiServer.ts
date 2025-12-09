@@ -5,7 +5,7 @@ import config from "@server/lib/config";
 import logger from "@server/logger";
 import {
     errorHandlerMiddleware,
-    notFoundMiddleware,
+    notFoundMiddleware
 } from "@server/middlewares";
 import { authenticated, unauthenticated } from "#dynamic/routers/integration";
 import { logIncomingMiddleware } from "./middlewares/logIncoming";

@@ -44,7 +44,8 @@ export const queryActionAuditLogsQuery = z.object({
         .openapi({
             type: "string",
             format: "date-time",
-            description: "End time as ISO date string (defaults to current time)"
+            description:
+                "End time as ISO date string (defaults to current time)"
         }),
     action: z.string().optional(),
     actorType: z.string().optional(),
@@ -68,8 +69,9 @@ export const queryActionAuditLogsParams = z.object({
     orgId: z.string()
 });
 
-export const queryActionAuditLogsCombined =
-    queryActionAuditLogsQuery.merge(queryActionAuditLogsParams);
+export const queryActionAuditLogsCombined = queryActionAuditLogsQuery.merge(
+    queryActionAuditLogsParams
+);
 type Q = z.infer<typeof queryActionAuditLogsCombined>;
 
 function getWhere(data: Q) {
@@ -78,7 +80,9 @@ function getWhere(data: Q) {
         lt(actionAuditLog.timestamp, data.timeEnd),
         eq(actionAuditLog.orgId, data.orgId),
         data.actor ? eq(actionAuditLog.actor, data.actor) : undefined,
-        data.actorType ? eq(actionAuditLog.actorType, data.actorType) : undefined,
+        data.actorType
+            ? eq(actionAuditLog.actorType, data.actorType)
+            : undefined,
         data.actorId ? eq(actionAuditLog.actorId, data.actorId) : undefined,
         data.action ? eq(actionAuditLog.action, data.action) : undefined
     );
@@ -135,8 +139,12 @@ async function queryUniqueFilterAttributes(
         .where(baseConditions);
 
     return {
-        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
-        actions: uniqueActions.map(row => row.action).filter((action): action is string => action !== null),
+        actors: uniqueActors
+            .map((row) => row.actor)
+            .filter((actor): actor is string => actor !== null),
+        actions: uniqueActions
+            .map((row) => row.action)
+            .filter((action): action is string => action !== null)
     };
 }
 

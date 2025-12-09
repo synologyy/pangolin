@@ -1,10 +1,8 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -21,7 +19,6 @@ export function RolesDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -29,13 +26,13 @@ export function RolesDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="roles-table"
-            title={t('roles')}
-            searchPlaceholder={t('accessRolesSearch')}
+            title={t("roles")}
+            searchPlaceholder={t("accessRolesSearch")}
             searchColumn="name"
             onAdd={createRole}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
-            addButtonText={t('accessRolesAdd')}
+            addButtonText={t("accessRolesAdd")}
             enableColumnVisibility={true}
             stickyLeftColumn="name"
             stickyRightColumn="actions"

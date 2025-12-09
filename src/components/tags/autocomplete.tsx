@@ -344,7 +344,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
                             </div>
                         ) : (
                             <div className="py-6 text-center text-sm">
-                                {t('noResults')}
+                                {t("noResults")}
                             </div>
                         )}
                     </div>

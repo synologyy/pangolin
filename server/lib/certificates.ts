@@ -1,4 +1,6 @@
-export async function getValidCertificatesForDomains(domains: Set<string>): Promise<
+export async function getValidCertificatesForDomains(
+    domains: Set<string>
+): Promise<
     Array<{
         id: number;
         domain: string;

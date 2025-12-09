@@ -31,7 +31,9 @@ export async function ensureSetupToken() {
 
         // If admin exists, no need for setup token
         if (existingAdmin) {
-            logger.debug("Server admin exists. Setup token generation skipped.");
+            logger.debug(
+                "Server admin exists. Setup token generation skipped."
+            );
             return;
         }
 

@@ -82,13 +82,13 @@ export default function ProfileIcon() {
                 open={openSecurityKey}
                 setOpen={setOpenSecurityKey}
             />
-            <ChangePasswordDialog 
-                open={openChangePassword} 
-                setOpen={setOpenChangePassword} 
+            <ChangePasswordDialog
+                open={openChangePassword}
+                setOpen={setOpenChangePassword}
             />
-            <ViewDevicesDialog 
-                open={openViewDevices} 
-                setOpen={setOpenViewDevices} 
+            <ViewDevicesDialog
+                open={openViewDevices}
+                setOpen={setOpenViewDevices}
             />
 
             <DropdownMenu>
@@ -152,9 +152,7 @@ export default function ProfileIcon() {
                             <DropdownMenuSeparator />
                         </>
                     )}
-                    <DropdownMenuItem
-                        onClick={() => setOpenViewDevices(true)}
-                    >
+                    <DropdownMenuItem onClick={() => setOpenViewDevices(true)}>
                         <Smartphone className="mr-2 h-4 w-4" />
                         <span>{t("viewDevices") || "View Devices"}</span>
                     </DropdownMenuItem>

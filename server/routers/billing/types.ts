@@ -14,4 +14,3 @@ export type GetOrgTierResponse = {
     tier: string | null;
     active: boolean;
 };
-

@@ -26,13 +26,11 @@ import { validateHeaders } from "@server/lib/validators";
 import { build } from "@server/build";
 
 const updateResourceParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
-const updateHttpResourceBodySchema = z.strictObject({
+const updateHttpResourceBodySchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
         niceId: z.string().min(1).max(255).optional(),
         subdomain: subdomainSchema.nullable().optional(),
@@ -91,7 +89,8 @@ const updateHttpResourceBodySchema = z.strictObject({
 
 export type UpdateResourceResponse = Resource;
 
-const updateRawResourceBodySchema = z.strictObject({
+const updateRawResourceBodySchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
         niceId: z.string().min(1).max(255).optional(),
         proxyPort: z.int().min(1).max(65535).optional(),
@@ -239,11 +238,11 @@ async function updateHttpResource(
             .select()
             .from(resources)
             .where(
-            and(
-                eq(resources.niceId, updateData.niceId),
-                eq(resources.orgId, resource.orgId)
-            )
-        );
+                and(
+                    eq(resources.niceId, updateData.niceId),
+                    eq(resources.orgId, resource.orgId)
+                )
+            );
 
         if (
             existingResource &&
@@ -391,11 +390,11 @@ async function updateRawResource(
             .select()
             .from(resources)
             .where(
-            and(
-                eq(resources.niceId, updateData.niceId),
-                eq(resources.orgId, resource.orgId)
-            )
-        );
+                and(
+                    eq(resources.niceId, updateData.niceId),
+                    eq(resources.orgId, resource.orgId)
+                )
+            );
 
         if (
             existingResource &&

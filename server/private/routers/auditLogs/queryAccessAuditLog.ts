@@ -44,7 +44,8 @@ export const queryAccessAuditLogsQuery = z.object({
         .openapi({
             type: "string",
             format: "date-time",
-            description: "End time as ISO date string (defaults to current time)"
+            description:
+                "End time as ISO date string (defaults to current time)"
         }),
     action: z
         .union([z.boolean(), z.string()])
@@ -181,9 +182,15 @@ async function queryUniqueFilterAttributes(
         .where(baseConditions);
 
     return {
-        actors: uniqueActors.map(row => row.actor).filter((actor): actor is string => actor !== null),
-        resources: uniqueResources.filter((row): row is { id: number; name: string | null } => row.id !== null),
-        locations: uniqueLocations.map(row => row.locations).filter((location): location is string => location !== null)
+        actors: uniqueActors
+            .map((row) => row.actor)
+            .filter((actor): actor is string => actor !== null),
+        resources: uniqueResources.filter(
+            (row): row is { id: number; name: string | null } => row.id !== null
+        ),
+        locations: uniqueLocations
+            .map((row) => row.locations)
+            .filter((location): location is string => location !== null)
     };
 }
 

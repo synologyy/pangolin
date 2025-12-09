@@ -16,8 +16,8 @@ export type PickClientDefaultsResponse = {
 };
 
 const pickClientDefaultsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "get",

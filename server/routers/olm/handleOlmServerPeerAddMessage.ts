@@ -113,14 +113,14 @@ export const handleOlmServerPeerAddMessage: MessageHandler = async (
         .select()
         .from(clientSitesAssociationsCache)
         .where(
-            and( 
+            and(
                 eq(clientSitesAssociationsCache.clientId, client.clientId),
                 isNotNull(clientSitesAssociationsCache.endpoint),
                 eq(clientSitesAssociationsCache.publicKey, client.pubKey) // limit it to the current session its connected with otherwise the endpoint could be stale
             )
         );
 
-    // pick an endpoint 
+    // pick an endpoint
     for (const assoc of currentSessionSiteAssociationCaches) {
         if (assoc.endpoint) {
             endpoint = assoc.endpoint;

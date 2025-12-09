@@ -64,10 +64,8 @@ export default function Page() {
         clientSecret: z
             .string()
             .min(1, { message: t("idpClientSecretRequired") }),
-        authUrl: z.url({ message: t("idpErrorAuthUrlInvalid") })
-            .optional(),
-        tokenUrl: z.url({ message: t("idpErrorTokenUrlInvalid") })
-            .optional(),
+        authUrl: z.url({ message: t("idpErrorAuthUrlInvalid") }).optional(),
+        tokenUrl: z.url({ message: t("idpErrorTokenUrlInvalid") }).optional(),
         identifierPath: z
             .string()
             .min(1, { message: t("idpPathRequired") })
@@ -379,9 +377,11 @@ export default function Page() {
                                 >
                                     <AutoProvisionConfigWidget
                                         control={form.control}
-                                        autoProvision={form.watch(
-                                            "autoProvision"
-                                        ) as boolean} // is this right? 
+                                        autoProvision={
+                                            form.watch(
+                                                "autoProvision"
+                                            ) as boolean
+                                        } // is this right?
                                         onAutoProvisionChange={(checked) => {
                                             form.setValue(
                                                 "autoProvision",

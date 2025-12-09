@@ -66,12 +66,7 @@ export async function deleteOrgIdp(
             .where(eq(idp.idpId, idpId));
 
         if (!existingIdp) {
-            return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    "IdP not found"
-                )
-            );
+            return next(createHttpError(HttpCode.NOT_FOUND, "IdP not found"));
         }
 
         // Delete the IDP and its related records in a transaction
@@ -82,14 +77,10 @@ export async function deleteOrgIdp(
                 .where(eq(idpOidcConfig.idpId, idpId));
 
             // Delete IDP-org mappings
-            await trx
-                .delete(idpOrg)
-                .where(eq(idpOrg.idpId, idpId));
+            await trx.delete(idpOrg).where(eq(idpOrg.idpId, idpId));
 
             // Delete the IDP itself
-            await trx
-                .delete(idp)
-                .where(eq(idp.idpId, idpId));
+            await trx.delete(idp).where(eq(idp.idpId, idpId));
         });
 
         return response<null>(res, {

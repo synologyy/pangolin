@@ -7,7 +7,9 @@ import { cache } from "react";
 import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
 import { ListAccessTokensResponse } from "@server/routers/accessToken";
-import ShareLinksTable, { ShareLinkRow } from "../../../../components/ShareLinksTable";
+import ShareLinksTable, {
+    ShareLinkRow
+} from "../../../../components/ShareLinksTable";
 import { getTranslations } from "next-intl/server";
 
 type ShareLinksPageProps = {
@@ -58,8 +60,8 @@ export default async function ShareLinksPage(props: ShareLinksPageProps) {
             {/* <ShareableLinksSplash /> */}
 
             <SettingsSectionTitle
-                title={t('shareTitle')}
-                description={t('shareDescription')}
+                title={t("shareTitle")}
+                description={t("shareDescription")}
             />
 
             <OrgProvider org={org}>

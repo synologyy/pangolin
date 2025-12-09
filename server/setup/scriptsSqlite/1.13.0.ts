@@ -287,7 +287,10 @@ export default async function migration() {
             let aliasIpOctet = 8;
             for (const siteResource of siteResourcesForAlias) {
                 const aliasAddress = `100.96.128.${aliasIpOctet}`;
-                updateAliasAddress.run(aliasAddress, siteResource.siteResourceId);
+                updateAliasAddress.run(
+                    aliasAddress,
+                    siteResource.siteResourceId
+                );
                 aliasIpOctet++;
             }
 
@@ -303,7 +306,12 @@ export default async function migration() {
                     for (const subnet of subnets) {
                         // Generate a unique niceId for each new site resource
                         let niceId = generateName();
-                        insertCidrResource.run(site.siteId, subnet.trim(), niceId, site.siteId);
+                        insertCidrResource.run(
+                            site.siteId,
+                            subnet.trim(),
+                            niceId,
+                            site.siteId
+                        );
                     }
                 }
             }

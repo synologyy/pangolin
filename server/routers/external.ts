@@ -318,7 +318,7 @@ authenticated.post(
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.setResourceRoles),
     logActionAudit(ActionsEnum.setResourceRoles),
-    siteResource.setSiteResourceRoles,
+    siteResource.setSiteResourceRoles
 );
 
 authenticated.post(
@@ -327,7 +327,7 @@ authenticated.post(
     verifySetResourceUsers,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.setSiteResourceUsers,
+    siteResource.setSiteResourceUsers
 );
 
 authenticated.post(
@@ -336,7 +336,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.setSiteResourceClients,
+    siteResource.setSiteResourceClients
 );
 
 authenticated.post(
@@ -345,7 +345,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.addClientToSiteResource,
+    siteResource.addClientToSiteResource
 );
 
 authenticated.post(
@@ -354,7 +354,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.removeClientFromSiteResource,
+    siteResource.removeClientFromSiteResource
 );
 
 authenticated.put(
@@ -812,17 +812,9 @@ authenticated.delete(
 //     createNewt
 // );
 
-authenticated.put(
-    "/user/:userId/olm",
-    verifyIsLoggedInUser,
-    olm.createUserOlm
-);
+authenticated.put("/user/:userId/olm", verifyIsLoggedInUser, olm.createUserOlm);
 
-authenticated.get(
-    "/user/:userId/olms",
-    verifyIsLoggedInUser,
-    olm.listUserOlms
-);
+authenticated.get("/user/:userId/olms", verifyIsLoggedInUser, olm.listUserOlms);
 
 authenticated.delete(
     "/user/:userId/olm/:olmId",

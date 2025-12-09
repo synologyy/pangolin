@@ -12,7 +12,7 @@ export const sandboxLimitSet: LimitSet = {
     [FeatureId.USERS]: { value: 1, description: "Sandbox limit" },
     [FeatureId.EGRESS_DATA_MB]: { value: 1000, description: "Sandbox limit" }, // 1 GB
     [FeatureId.DOMAINS]: { value: 0, description: "Sandbox limit" },
-    [FeatureId.REMOTE_EXIT_NODES]: { value: 0, description: "Sandbox limit" },
+    [FeatureId.REMOTE_EXIT_NODES]: { value: 0, description: "Sandbox limit" }
 };
 
 export const freeLimitSet: LimitSet = {
@@ -29,7 +29,7 @@ export const freeLimitSet: LimitSet = {
 export const subscribedLimitSet: LimitSet = {
     [FeatureId.SITE_UPTIME]: {
         value: 2232000,
-        description: "Contact us to increase soft limit.",
+        description: "Contact us to increase soft limit."
     }, // 50 sites up for 31 days
     [FeatureId.USERS]: {
         value: 150,
@@ -38,7 +38,7 @@ export const subscribedLimitSet: LimitSet = {
     [FeatureId.EGRESS_DATA_MB]: {
         value: 12000000,
         description: "Contact us to increase soft limit."
-    }, // 12000 GB 
+    }, // 12000 GB
     [FeatureId.DOMAINS]: {
         value: 25,
         description: "Contact us to increase soft limit."

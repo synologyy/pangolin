@@ -34,8 +34,8 @@ export default async function ApiKeysPage(props: ApiKeyPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('apiKeysManage')}
-                description={t('apiKeysDescription')}
+                title={t("apiKeysManage")}
+                description={t("apiKeysDescription")}
             />
 
             <ApiKeysTable apiKeys={rows} />

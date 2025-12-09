@@ -11,9 +11,12 @@ export async function verifyApiKeySetResourceClients(
     next: NextFunction
 ) {
     const apiKey = req.apiKey;
-    const singleClientId = req.params.clientId || req.body.clientId || req.query.clientId;
+    const singleClientId =
+        req.params.clientId || req.body.clientId || req.query.clientId;
     const { clientIds } = req.body;
-    const allClientIds = clientIds || (singleClientId ? [parseInt(singleClientId as string)] : []);
+    const allClientIds =
+        clientIds ||
+        (singleClientId ? [parseInt(singleClientId as string)] : []);
 
     if (!apiKey) {
         return next(
@@ -70,4 +73,3 @@ export async function verifyApiKeySetResourceClients(
         );
     }
 }
-

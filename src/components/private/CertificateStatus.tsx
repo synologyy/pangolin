@@ -29,14 +29,15 @@ export default function CertificateStatus({
     pollingInterval = 5000
 }: CertificateStatusProps) {
     const t = useTranslations();
-    const { cert, certLoading, certError, refreshing, refreshCert } = useCertificate({
-        orgId,
-        domainId,
-        fullDomain,
-        autoFetch,
-        polling,
-        pollingInterval
-    });
+    const { cert, certLoading, certError, refreshing, refreshCert } =
+        useCertificate({
+            orgId,
+            domainId,
+            fullDomain,
+            autoFetch,
+            polling,
+            pollingInterval
+        });
 
     const handleRefresh = async () => {
         await refreshCert();
@@ -63,7 +64,8 @@ export default function CertificateStatus({
             status === "failed" ||
             status === "expired" ||
             (status === "requested" &&
-                updatedAt && new Date(updatedAt).getTime() < Date.now() - 5 * 60 * 1000)
+                updatedAt &&
+                new Date(updatedAt).getTime() < Date.now() - 5 * 60 * 1000)
         );
     };
 
@@ -90,9 +92,7 @@ export default function CertificateStatus({
                         {t("certificateStatus")}:
                     </span>
                 )}
-                <span className="text-sm text-red-500">
-                    {certError}
-                </span>
+                <span className="text-sm text-red-500">{certError}</span>
             </div>
         );
     }
@@ -129,7 +129,9 @@ export default function CertificateStatus({
                             className="ml-2 p-0 h-auto align-middle"
                             onClick={handleRefresh}
                             disabled={refreshing}
-                            title={t("restartCertificate", { defaultValue: "Restart Certificate" })}
+                            title={t("restartCertificate", {
+                                defaultValue: "Restart Certificate"
+                            })}
                         >
                             <RotateCw
                                 className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}

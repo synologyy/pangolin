@@ -459,8 +459,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                                 </div>
                                             )}
 
-                                            {env.flags
-                                                .usePangolinDns &&
+                                            {env.flags.usePangolinDns &&
                                                 (build === "enterprise" ||
                                                     (build === "saas" &&
                                                         subscription?.subscribed)) &&

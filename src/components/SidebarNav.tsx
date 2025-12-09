@@ -72,7 +72,7 @@ function CollapsibleNavItem({
     isUnlocked
 }: CollapsibleNavItemProps) {
     const storageKey = `pangolin-sidebar-expanded-${item.title}`;
-    
+
     // Get initial state from localStorage or use isChildActive
     const getInitialState = (): boolean => {
         if (typeof window === "undefined") {

@@ -272,7 +272,7 @@ export default function CreateInternalResourceDialog({
             // an alias is required
             if (data.mode === "host" && isHostname(data.destination)) {
                 const currentAlias = data.alias?.trim() || "";
-                
+
                 if (!currentAlias) {
                     // Prefill alias based on destination
                     let aliasValue = data.destination;
@@ -281,7 +281,7 @@ export default function CreateInternalResourceDialog({
                         const cleanedName = cleanForFQDN(data.name);
                         aliasValue = `${cleanedName}.internal`;
                     }
-                    
+
                     // Update the form with the prefilled alias
                     form.setValue("alias", aliasValue);
                     data.alias = aliasValue;

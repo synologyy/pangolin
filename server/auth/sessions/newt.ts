@@ -1,6 +1,4 @@
-import {
-    encodeHexLowerCase,
-} from "@oslojs/encoding";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { Newt, newts, newtSessions, NewtSession } from "@server/db";
 import { db } from "@server/db";
@@ -10,25 +8,25 @@ export const EXPIRES = 1000 * 60 * 60 * 24 * 30;
 
 export async function createNewtSession(
     token: string,
-    newtId: string,
+    newtId: string
 ): Promise<NewtSession> {
     const sessionId = encodeHexLowerCase(
-        sha256(new TextEncoder().encode(token)),
+        sha256(new TextEncoder().encode(token))
     );
     const session: NewtSession = {
         sessionId: sessionId,
         newtId,
-        expiresAt: new Date(Date.now() + EXPIRES).getTime(),
+        expiresAt: new Date(Date.now() + EXPIRES).getTime()
     };
     await db.insert(newtSessions).values(session);
     return session;
 }
 
 export async function validateNewtSessionToken(
-    token: string,
+    token: string
 ): Promise<SessionValidationResult> {
     const sessionId = encodeHexLowerCase(
-        sha256(new TextEncoder().encode(token)),
+        sha256(new TextEncoder().encode(token))
     );
     const result = await db
         .select({ newt: newts, session: newtSessions })
@@ -45,14 +43,12 @@ export async function validateNewtSessionToken(
             .where(eq(newtSessions.sessionId, session.sessionId));
         return { session: null, newt: null };
     }
-    if (Date.now() >= session.expiresAt - (EXPIRES / 2)) {
-        session.expiresAt = new Date(
-            Date.now() + EXPIRES,
-        ).getTime();
+    if (Date.now() >= session.expiresAt - EXPIRES / 2) {
+        session.expiresAt = new Date(Date.now() + EXPIRES).getTime();
         await db
             .update(newtSessions)
             .set({
-                expiresAt: session.expiresAt,
+                expiresAt: session.expiresAt
             })
             .where(eq(newtSessions.sessionId, session.sessionId));
     }

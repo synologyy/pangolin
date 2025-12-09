@@ -3,9 +3,13 @@ import { createContext } from "react";
 
 type RemoteExitNodeContextType = {
     remoteExitNode: GetRemoteExitNodeResponse;
-    updateRemoteExitNode: (updatedRemoteExitNode: Partial<GetRemoteExitNodeResponse>) => void;
+    updateRemoteExitNode: (
+        updatedRemoteExitNode: Partial<GetRemoteExitNodeResponse>
+    ) => void;
 };
 
-const RemoteExitNodeContext = createContext<RemoteExitNodeContextType | undefined>(undefined);
+const RemoteExitNodeContext = createContext<
+    RemoteExitNodeContextType | undefined
+>(undefined);
 
 export default RemoteExitNodeContext;

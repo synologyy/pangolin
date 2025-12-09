@@ -93,10 +93,7 @@ export async function addRoleToResource(
             .select()
             .from(roles)
             .where(
-                and(
-                    eq(roles.roleId, roleId),
-                    eq(roles.orgId, resource.orgId)
-                )
+                and(eq(roles.roleId, roleId), eq(roles.orgId, resource.orgId))
             )
             .limit(1);
 
@@ -158,4 +155,3 @@ export async function addRoleToResource(
         );
     }
 }
-

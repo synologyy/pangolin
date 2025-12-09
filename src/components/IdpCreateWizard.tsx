@@ -51,22 +51,26 @@ type IdpCreateWizardProps = {
     loading?: boolean;
 };
 
-export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: IdpCreateWizardProps) {
+export function IdpCreateWizard({
+    onSubmit,
+    defaultValues,
+    loading = false
+}: IdpCreateWizardProps) {
     const t = useTranslations();
 
     const createIdpFormSchema = z.object({
-        name: z.string().min(2, { message: t('nameMin', {len: 2}) }),
+        name: z.string().min(2, { message: t("nameMin", { len: 2 }) }),
         type: z.enum(["oidc"]),
-        clientId: z.string().min(1, { message: t('idpClientIdRequired') }),
-        clientSecret: z.string().min(1, { message: t('idpClientSecretRequired') }),
-        authUrl: z.url({ message: t('idpErrorAuthUrlInvalid') }),
-        tokenUrl: z.url({ message: t('idpErrorTokenUrlInvalid') }),
-        identifierPath: z
+        clientId: z.string().min(1, { message: t("idpClientIdRequired") }),
+        clientSecret: z
             .string()
-            .min(1, { message: t('idpPathRequired') }),
+            .min(1, { message: t("idpClientSecretRequired") }),
+        authUrl: z.url({ message: t("idpErrorAuthUrlInvalid") }),
+        tokenUrl: z.url({ message: t("idpErrorTokenUrlInvalid") }),
+        identifierPath: z.string().min(1, { message: t("idpPathRequired") }),
         emailPath: z.string().optional(),
         namePath: z.string().optional(),
-        scopes: z.string().min(1, { message: t('idpScopeRequired') }),
+        scopes: z.string().min(1, { message: t("idpScopeRequired") }),
         autoProvision: z.boolean().default(false)
     });
 
@@ -80,7 +84,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
         {
             id: "oidc",
             title: "OAuth2/OIDC",
-            description: t('idpOidcDescription')
+            description: t("idpOidcDescription")
         }
     ];
 
@@ -110,11 +114,9 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
         <SettingsContainer>
             <SettingsSection>
                 <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t('idpTitle')}
-                    </SettingsSectionTitle>
+                    <SettingsSectionTitle>{t("idpTitle")}</SettingsSectionTitle>
                     <SettingsSectionDescription>
-                        {t('idpCreateSettingsDescription')}
+                        {t("idpCreateSettingsDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
@@ -130,12 +132,15 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('name')}</FormLabel>
+                                            <FormLabel>{t("name")}</FormLabel>
                                             <FormControl>
-                                                <Input {...field} disabled={loading} />
+                                                <Input
+                                                    {...field}
+                                                    disabled={loading}
+                                                />
                                             </FormControl>
                                             <FormDescription>
-                                                {t('idpDisplayName')}
+                                                {t("idpDisplayName")}
                                             </FormDescription>
                                             <FormMessage />
                                         </FormItem>
@@ -145,7 +150,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                 <div className="flex items-start mb-0">
                                     <SwitchInput
                                         id="auto-provision-toggle"
-                                        label={t('idpAutoProvisionUsers')}
+                                        label={t("idpAutoProvisionUsers")}
                                         defaultChecked={form.getValues(
                                             "autoProvision"
                                         )}
@@ -159,7 +164,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                     />
                                 </div>
                                 <span className="text-sm text-muted-foreground">
-                                    {t('idpAutoProvisionUsersDescription')}
+                                    {t("idpAutoProvisionUsersDescription")}
                                 </span>
                             </form>
                         </Form>
@@ -169,11 +174,9 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
 
             <SettingsSection>
                 <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t('idpType')}
-                    </SettingsSectionTitle>
+                    <SettingsSectionTitle>{t("idpType")}</SettingsSectionTitle>
                     <SettingsSectionDescription>
-                        {t('idpTypeDescription')}
+                        {t("idpTypeDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
@@ -193,10 +196,10 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                     <SettingsSection>
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
-                                {t('idpOidcConfigure')}
+                                {t("idpOidcConfigure")}
                             </SettingsSectionTitle>
                             <SettingsSectionDescription>
-                                {t('idpOidcConfigureDescription')}
+                                {t("idpOidcConfigureDescription")}
                             </SettingsSectionDescription>
                         </SettingsSectionHeader>
                         <SettingsSectionBody>
@@ -212,13 +215,18 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpClientId')}
+                                                    {t("idpClientId")}
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} disabled={loading} />
+                                                    <Input
+                                                        {...field}
+                                                        disabled={loading}
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpClientIdDescription')}
+                                                    {t(
+                                                        "idpClientIdDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -231,7 +239,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpClientSecret')}
+                                                    {t("idpClientSecret")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -241,7 +249,9 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                                     />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpClientSecretDescription')}
+                                                    {t(
+                                                        "idpClientSecretDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -254,7 +264,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpAuthUrl')}
+                                                    {t("idpAuthUrl")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -264,7 +274,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                                     />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpAuthUrlDescription')}
+                                                    {t("idpAuthUrlDescription")}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -277,7 +287,7 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpTokenUrl')}
+                                                    {t("idpTokenUrl")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input
@@ -287,7 +297,9 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                                     />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpTokenUrlDescription')}
+                                                    {t(
+                                                        "idpTokenUrlDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -299,10 +311,10 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                             <Alert variant="neutral">
                                 <InfoIcon className="h-4 w-4" />
                                 <AlertTitle className="font-semibold">
-                                    {t('idpOidcConfigureAlert')}
+                                    {t("idpOidcConfigureAlert")}
                                 </AlertTitle>
                                 <AlertDescription>
-                                    {t('idpOidcConfigureAlertDescription')}
+                                    {t("idpOidcConfigureAlertDescription")}
                                 </AlertDescription>
                             </Alert>
                         </SettingsSectionBody>
@@ -311,10 +323,10 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                     <SettingsSection>
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
-                                {t('idpToken')}
+                                {t("idpToken")}
                             </SettingsSectionTitle>
                             <SettingsSectionDescription>
-                                {t('idpTokenDescription')}
+                                {t("idpTokenDescription")}
                             </SettingsSectionDescription>
                         </SettingsSectionHeader>
                         <SettingsSectionBody>
@@ -327,17 +339,19 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                     <Alert variant="neutral">
                                         <InfoIcon className="h-4 w-4" />
                                         <AlertTitle className="font-semibold">
-                                            {t('idpJmespathAbout')}
+                                            {t("idpJmespathAbout")}
                                         </AlertTitle>
                                         <AlertDescription>
-                                            {t('idpJmespathAboutDescription')}{" "}
+                                            {t("idpJmespathAboutDescription")}{" "}
                                             <a
                                                 href="https://jmespath.org"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-primary hover:underline inline-flex items-center"
                                             >
-                                                {t('idpJmespathAboutDescriptionLink')}{" "}
+                                                {t(
+                                                    "idpJmespathAboutDescriptionLink"
+                                                )}{" "}
                                                 <ExternalLink className="ml-1 h-4 w-4" />
                                             </a>
                                         </AlertDescription>
@@ -349,13 +363,18 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpJmespathLabel')}
+                                                    {t("idpJmespathLabel")}
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} disabled={loading} />
+                                                    <Input
+                                                        {...field}
+                                                        disabled={loading}
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpJmespathLabelDescription')}
+                                                    {t(
+                                                        "idpJmespathLabelDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -368,13 +387,20 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpJmespathEmailPathOptional')}
+                                                    {t(
+                                                        "idpJmespathEmailPathOptional"
+                                                    )}
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} disabled={loading} />
+                                                    <Input
+                                                        {...field}
+                                                        disabled={loading}
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpJmespathEmailPathOptionalDescription')}
+                                                    {t(
+                                                        "idpJmespathEmailPathOptionalDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -387,13 +413,20 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpJmespathNamePathOptional')}
+                                                    {t(
+                                                        "idpJmespathNamePathOptional"
+                                                    )}
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} disabled={loading} />
+                                                    <Input
+                                                        {...field}
+                                                        disabled={loading}
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpJmespathNamePathOptionalDescription')}
+                                                    {t(
+                                                        "idpJmespathNamePathOptionalDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -406,13 +439,20 @@ export function IdpCreateWizard({ onSubmit, defaultValues, loading = false }: Id
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('idpOidcConfigureScopes')}
+                                                    {t(
+                                                        "idpOidcConfigureScopes"
+                                                    )}
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} disabled={loading} />
+                                                    <Input
+                                                        {...field}
+                                                        disabled={loading}
+                                                    />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpOidcConfigureScopesDescription')}
+                                                    {t(
+                                                        "idpOidcConfigureScopesDescription"
+                                                    )}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>

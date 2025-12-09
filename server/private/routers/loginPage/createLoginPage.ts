@@ -36,13 +36,13 @@ import { build } from "@server/build";
 import { CreateLoginPageResponse } from "@server/routers/loginPage/types";
 
 const paramsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const bodySchema = z.strictObject({
-        subdomain: z.string().nullable().optional(),
-        domainId: z.string()
-    });
+    subdomain: z.string().nullable().optional(),
+    domainId: z.string()
+});
 
 export type CreateLoginPageBody = z.infer<typeof bodySchema>;
 
@@ -149,12 +149,20 @@ export async function createLoginPage(
 
         let returned: LoginPage | undefined;
         await db.transaction(async (trx) => {
-
             const orgSites = await trx
                 .select()
                 .from(sites)
-                .innerJoin(exitNodes, eq(exitNodes.exitNodeId, sites.exitNodeId))
-                .where(and(eq(sites.orgId, orgId), eq(exitNodes.type, "gerbil"), eq(exitNodes.online, true)))
+                .innerJoin(
+                    exitNodes,
+                    eq(exitNodes.exitNodeId, sites.exitNodeId)
+                )
+                .where(
+                    and(
+                        eq(sites.orgId, orgId),
+                        eq(exitNodes.type, "gerbil"),
+                        eq(exitNodes.online, true)
+                    )
+                )
                 .limit(10);
 
             let exitNodesList = orgSites.map((s) => s.exitNodes);
@@ -163,7 +171,12 @@ export async function createLoginPage(
                 exitNodesList = await trx
                     .select()
                     .from(exitNodes)
-                    .where(and(eq(exitNodes.type, "gerbil"), eq(exitNodes.online, true)))
+                    .where(
+                        and(
+                            eq(exitNodes.type, "gerbil"),
+                            eq(exitNodes.online, true)
+                        )
+                    )
                     .limit(10);
             }
 

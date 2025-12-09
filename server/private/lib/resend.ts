@@ -16,10 +16,10 @@ import privateConfig from "#private/lib/config";
 import logger from "@server/logger";
 
 export enum AudienceIds {
-  SignUps = "6c4e77b2-0851-4bd6-bac8-f51f91360f1a",
-  Subscribed = "870b43fd-387f-44de-8fc1-707335f30b20",
-  Churned = "f3ae92bd-2fdb-4d77-8746-2118afd62549",
-  Newsletter = "5500c431-191c-42f0-a5d4-8b6d445b4ea0"
+    SignUps = "6c4e77b2-0851-4bd6-bac8-f51f91360f1a",
+    Subscribed = "870b43fd-387f-44de-8fc1-707335f30b20",
+    Churned = "f3ae92bd-2fdb-4d77-8746-2118afd62549",
+    Newsletter = "5500c431-191c-42f0-a5d4-8b6d445b4ea0"
 }
 
 const resend = new Resend(
@@ -33,7 +33,9 @@ export async function moveEmailToAudience(
     audienceId: AudienceIds
 ) {
     if (process.env.ENVIRONMENT !== "prod") {
-        logger.debug(`Skipping moving email ${email} to audience ${audienceId} in non-prod environment`);
+        logger.debug(
+            `Skipping moving email ${email} to audience ${audienceId} in non-prod environment`
+        );
         return;
     }
     const { error, data } = await retryWithBackoff(async () => {

@@ -19,7 +19,9 @@ export default async function DeviceLoginPage({ searchParams }: Props) {
         const redirectDestination = code
             ? `/auth/login/device?code=${encodeURIComponent(code)}`
             : "/auth/login/device";
-        redirect(`/auth/login?forceLogin=true&redirect=${encodeURIComponent(redirectDestination)}`);
+        redirect(
+            `/auth/login?forceLogin=true&redirect=${encodeURIComponent(redirectDestination)}`
+        );
     }
 
     const userName = user?.name || user?.username || "";

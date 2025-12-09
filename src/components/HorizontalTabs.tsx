@@ -88,7 +88,7 @@ export function HorizontalTabs({
                                                 variant="outlinePrimary"
                                                 className="ml-2"
                                             >
-                                                {t('licenseBadge')}
+                                                {t("licenseBadge")}
                                             </Badge>
                                         )}
                                     </div>

@@ -47,9 +47,9 @@ export type GetOrgUserResponse = NonNullable<
 >;
 
 const getOrgUserParamsSchema = z.strictObject({
-        userId: z.string(),
-        orgId: z.string()
-    });
+    userId: z.string(),
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "get",

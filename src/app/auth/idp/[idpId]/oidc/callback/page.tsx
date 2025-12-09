@@ -25,15 +25,17 @@ export default async function Page(props: {
     const allCookies = await cookies();
     const stateCookie = allCookies.get("p_oidc_state")?.value;
 
-
     const idpRes = await cache(
-        async () => await priv.get<AxiosResponse<GetIdpResponse>>(`/idp/${params.idpId}`)
+        async () =>
+            await priv.get<AxiosResponse<GetIdpResponse>>(
+                `/idp/${params.idpId}`
+            )
     )();
 
     const foundIdp = idpRes.data?.data?.idp;
 
     if (!foundIdp) {
-        return <div>{t('idpErrorNotFound')}</div>;
+        return <div>{t("idpErrorNotFound")}</div>;
     }
 
     const allHeaders = await headers();

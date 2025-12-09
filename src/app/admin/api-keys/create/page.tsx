@@ -30,7 +30,7 @@ import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { AxiosResponse } from "axios";
-import {  useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
     CreateOrgApiKeyBody,
     CreateOrgApiKeyResponse
@@ -64,10 +64,10 @@ export default function Page() {
         name: z
             .string()
             .min(2, {
-                message: t('nameMin', {len: 2})
+                message: t("nameMin", { len: 2 })
             })
             .max(255, {
-                message: t('nameMax', {len: 255})
+                message: t("nameMax", { len: 255 })
             })
     });
 
@@ -82,7 +82,7 @@ export default function Page() {
                 return data.copied;
             },
             {
-                message: t('apiKeysConfirmCopy2'),
+                message: t("apiKeysConfirmCopy2"),
                 path: ["copied"]
             }
         );
@@ -115,7 +115,7 @@ export default function Page() {
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('apiKeysErrorCreate'),
+                    title: t("apiKeysErrorCreate"),
                     description: formatAxiosError(e)
                 });
             });
@@ -136,10 +136,10 @@ export default function Page() {
                     )
                 })
                 .catch((e) => {
-                    console.error(t('apiKeysErrorSetPermission'), e);
+                    console.error(t("apiKeysErrorSetPermission"), e);
                     toast({
                         variant: "destructive",
-                        title: t('apiKeysErrorSetPermission'),
+                        title: t("apiKeysErrorSetPermission"),
                         description: formatAxiosError(e)
                     });
                 });
@@ -172,8 +172,8 @@ export default function Page() {
         <>
             <div className="flex justify-between">
                 <HeaderTitle
-                    title={t('apiKeysCreate')}
-                    description={t('apiKeysCreateDescription')}
+                    title={t("apiKeysCreate")}
+                    description={t("apiKeysCreateDescription")}
                 />
                 <Button
                     variant="outline"
@@ -181,7 +181,7 @@ export default function Page() {
                         router.push(`/admin/api-keys`);
                     }}
                 >
-                    {t('apiKeysSeeAll')}
+                    {t("apiKeysSeeAll")}
                 </Button>
             </div>
 
@@ -193,7 +193,7 @@ export default function Page() {
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('apiKeysTitle')}
+                                            {t("apiKeysTitle")}
                                         </SettingsSectionTitle>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
@@ -214,7 +214,7 @@ export default function Page() {
                                                         render={({ field }) => (
                                                             <FormItem>
                                                                 <FormLabel>
-                                                                    {t('name')}
+                                                                    {t("name")}
                                                                 </FormLabel>
                                                                 <FormControl>
                                                                     <Input
@@ -235,10 +235,12 @@ export default function Page() {
                                 <SettingsSection>
                                     <SettingsSectionHeader>
                                         <SettingsSectionTitle>
-                                            {t('apiKeysGeneralSettings')}
+                                            {t("apiKeysGeneralSettings")}
                                         </SettingsSectionTitle>
                                         <SettingsSectionDescription>
-                                            {t('apiKeysGeneralSettingsDescription')}
+                                            {t(
+                                                "apiKeysGeneralSettingsDescription"
+                                            )}
                                         </SettingsSectionDescription>
                                     </SettingsSectionHeader>
                                     <SettingsSectionBody>
@@ -258,14 +260,14 @@ export default function Page() {
                             <SettingsSection>
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
-                                        {t('apiKeysList')}
+                                        {t("apiKeysList")}
                                     </SettingsSectionTitle>
                                 </SettingsSectionHeader>
                                 <SettingsSectionBody>
                                     <InfoSections cols={2}>
                                         <InfoSection>
                                             <InfoSectionTitle>
-                                                {t('name')}
+                                                {t("name")}
                                             </InfoSectionTitle>
                                             <InfoSectionContent>
                                                 <CopyToClipboard
@@ -275,7 +277,7 @@ export default function Page() {
                                         </InfoSection>
                                         <InfoSection>
                                             <InfoSectionTitle>
-                                                {t('created')}
+                                                {t("created")}
                                             </InfoSectionTitle>
                                             <InfoSectionContent>
                                                 {moment(
@@ -288,10 +290,10 @@ export default function Page() {
                                     <Alert variant="neutral">
                                         <InfoIcon className="h-4 w-4" />
                                         <AlertTitle className="font-semibold">
-                                            {t('apiKeysSave')}
+                                            {t("apiKeysSave")}
                                         </AlertTitle>
                                         <AlertDescription>
-                                            {t('apiKeysSaveDescription')}
+                                            {t("apiKeysSaveDescription")}
                                         </AlertDescription>
                                     </Alert>
 
@@ -358,7 +360,7 @@ export default function Page() {
                                     router.push(`/admin/api-keys`);
                                 }}
                             >
-                                {t('cancel')}
+                                {t("cancel")}
                             </Button>
                         )}
                         {!apiKey && (
@@ -370,7 +372,7 @@ export default function Page() {
                                     form.handleSubmit(onSubmit)();
                                 }}
                             >
-                                {t('generate')}
+                                {t("generate")}
                             </Button>
                         )}
 
@@ -381,7 +383,7 @@ export default function Page() {
                                     copiedForm.handleSubmit(onCopiedSubmit)();
                                 }}
                             >
-                                {t('done')}
+                                {t("done")}
                             </Button>
                         )}
                     </div>

@@ -12,16 +12,15 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { isValidCIDR } from "@server/lib/validators";
 
 const updateSiteParamsSchema = z.strictObject({
-        siteId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    siteId: z.string().transform(Number).pipe(z.int().positive())
+});
 
-const updateSiteBodySchema = z.strictObject({
+const updateSiteBodySchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
         niceId: z.string().min(1).max(255).optional(),
         dockerSocketEnabled: z.boolean().optional(),
-        remoteSubnets: z
-            .string()
-            .optional()
+        remoteSubnets: z.string().optional()
         // subdomain: z
         //     .string()
         //     .min(1)
@@ -41,8 +40,7 @@ const updateSiteBodySchema = z.strictObject({
 registry.registerPath({
     method: "post",
     path: "/site/{siteId}",
-    description:
-        "Update a site.",
+    description: "Update a site.",
     tags: [OpenAPITags.Site],
     request: {
         params: updateSiteParamsSchema,
@@ -111,7 +109,9 @@ export async function updateSite(
 
         // if remoteSubnets is provided, ensure it's a valid comma-separated list of cidrs
         if (updateData.remoteSubnets) {
-            const subnets = updateData.remoteSubnets.split(",").map((s) => s.trim());
+            const subnets = updateData.remoteSubnets
+                .split(",")
+                .map((s) => s.trim());
             for (const subnet of subnets) {
                 if (!isValidCIDR(subnet)) {
                     return next(

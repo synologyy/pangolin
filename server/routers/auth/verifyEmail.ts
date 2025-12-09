@@ -14,8 +14,8 @@ import { freeLimitSet, limitsService } from "@server/lib/billing";
 import { build } from "@server/build";
 
 export const verifyEmailBody = z.strictObject({
-        code: z.string()
-    });
+    code: z.string()
+});
 
 export type VerifyEmailBody = z.infer<typeof verifyEmailBody>;
 

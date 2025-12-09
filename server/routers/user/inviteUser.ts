@@ -22,16 +22,16 @@ import { build } from "@server/build";
 import cache from "@server/lib/cache";
 
 const inviteUserParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const inviteUserBodySchema = z.strictObject({
-        email: z.email().toLowerCase(),
-        roleId: z.number(),
-        validHours: z.number().gt(0).lte(168),
-        sendEmail: z.boolean().optional(),
-        regenerate: z.boolean().optional()
-    });
+    email: z.email().toLowerCase(),
+    roleId: z.number(),
+    validHours: z.number().gt(0).lte(168),
+    sendEmail: z.boolean().optional(),
+    regenerate: z.boolean().optional()
+});
 
 export type InviteUserBody = z.infer<typeof inviteUserBodySchema>;
 
@@ -109,12 +109,7 @@ export async function inviteUser(
         const [role] = await db
             .select()
             .from(roles)
-            .where(
-                and(
-                    eq(roles.roleId, roleId),
-                    eq(roles.orgId, orgId)
-                )
-            )
+            .where(and(eq(roles.roleId, roleId), eq(roles.orgId, orgId)))
             .limit(1);
 
         if (!role) {
