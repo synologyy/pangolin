@@ -233,7 +233,7 @@ export default function Page() {
                 All: [
                     {
                         title: t("install"),
-                        command: `curl -fsSL https://pangolin.net/get-newt.sh | bash`
+                        command: `curl -fsSL https://static.pangolin.net/get-newt.sh | bash`
                     },
                     {
                         title: t("run"),

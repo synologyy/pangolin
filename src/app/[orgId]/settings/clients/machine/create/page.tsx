@@ -136,7 +136,7 @@ export default function Page() {
                 All: [
                     {
                         title: t("install"),
-                        command: `curl -fsSL https://pangolin.net/get-olm.sh | bash`
+                        command: `curl -fsSL https://static.pangolin.net/get-olm.sh | bash`
                     },
                     {
                         title: t("run"),

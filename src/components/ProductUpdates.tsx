@@ -20,6 +20,7 @@ import {
 import { useTranslations } from "next-intl";
 import { Transition } from "@headlessui/react";
 import * as React from "react";
+import { gt, valid } from "semver";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -72,11 +73,15 @@ export default function ProductUpdates({
 
     if (!data) return null;
 
+    const latestVersion = data?.latestVersion?.data?.pangolin.latestVersion;
+    const currentVersion = env.app.version;
+
     const showNewVersionPopup = Boolean(
-        data?.latestVersion?.data &&
-            ignoredVersionUpdate !==
-                data.latestVersion.data?.pangolin.latestVersion &&
-            env.app.version !== data.latestVersion.data?.pangolin.latestVersion
+        latestVersion &&
+            valid(latestVersion) &&
+            valid(currentVersion) &&
+            ignoredVersionUpdate !== latestVersion &&
+            gt(latestVersion, currentVersion)
     );
 
     const filteredUpdates = data.updates.filter(

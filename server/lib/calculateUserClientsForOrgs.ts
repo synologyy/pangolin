@@ -166,7 +166,7 @@ export async function calculateUserClientsForOrgs(
                     ];
 
                 // Get next available subnet
-                const newSubnet = await getNextAvailableClientSubnet(orgId);
+                const newSubnet = await getNextAvailableClientSubnet(orgId, transaction);
                 if (!newSubnet) {
                     logger.warn(
                         `Skipping org ${orgId} for OLM ${olm.olmId} (user ${userId}): no available subnet found`

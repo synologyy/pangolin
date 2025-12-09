@@ -244,7 +244,8 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
 }
 
 export async function getNextAvailableClientSubnet(
-    orgId: string
+    orgId: string,
+    transaction: Transaction | typeof db = db
 ): Promise<string> {
     const [org] = await db.select().from(orgs).where(eq(orgs.orgId, orgId));
 

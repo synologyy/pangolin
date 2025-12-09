@@ -701,11 +701,45 @@ async function handleSubnetProxyTargetUpdates(
             }
 
             for (const client of removedClients) {
+                // Check if this client still has access to another resource on this site with the same destination
+                const destinationStillInUse = await trx
+                    .select()
+                    .from(siteResources)
+                    .innerJoin(
+                        clientSiteResourcesAssociationsCache,
+                        eq(
+                            clientSiteResourcesAssociationsCache.siteResourceId,
+                            siteResources.siteResourceId
+                        )
+                    )
+                    .where(
+                        and(
+                            eq(
+                                clientSiteResourcesAssociationsCache.clientId,
+                                client.clientId
+                            ),
+                            eq(siteResources.siteId, siteResource.siteId),
+                            eq(
+                                siteResources.destination,
+                                siteResource.destination
+                            ),
+                            ne(
+                                siteResources.siteResourceId,
+                                siteResource.siteResourceId
+                            )
+                        )
+                    );
+
+                // Only remove remote subnet if no other resource uses the same destination
+                const remoteSubnetsToRemove = destinationStillInUse.length > 0
+                    ? []
+                    : generateRemoteSubnets([siteResource]);
+
                 olmJobs.push(
                     removePeerData(
                         client.clientId,
                         siteResource.siteId,
-                        generateRemoteSubnets([siteResource]),
+                        remoteSubnetsToRemove,
                         generateAliasConfig([siteResource])
                     )
                 );
@@ -1213,12 +1247,46 @@ async function handleMessagesForClientResources(
                 }
 
                 try {
+                    // Check if this client still has access to another resource on this site with the same destination
+                    const destinationStillInUse = await trx
+                        .select()
+                        .from(siteResources)
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                clientSiteResourcesAssociationsCache.siteResourceId,
+                                siteResources.siteResourceId
+                            )
+                        )
+                        .where(
+                            and(
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clientId
+                                ),
+                                eq(siteResources.siteId, resource.siteId),
+                                eq(
+                                    siteResources.destination,
+                                    resource.destination
+                                ),
+                                ne(
+                                    siteResources.siteResourceId,
+                                    resource.siteResourceId
+                                )
+                            )
+                        );
+
+                    // Only remove remote subnet if no other resource uses the same destination
+                    const remoteSubnetsToRemove = destinationStillInUse.length > 0
+                        ? []
+                        : generateRemoteSubnets([resource]);
+
                     // Remove peer data from olm
                     olmJobs.push(
                         removePeerData(
                             client.clientId,
                             resource.siteId,
-                            generateRemoteSubnets([resource]),
+                            remoteSubnetsToRemove,
                             generateAliasConfig([resource])
                         )
                     );
