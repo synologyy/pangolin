@@ -1,8 +1,6 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
 
 type TabFilter = {

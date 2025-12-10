@@ -36,7 +36,7 @@ export default async function UsersPage(props: PageProps) {
             username: row.username,
             type: row.type,
             idpId: row.idpId,
-            idpName: row.idpName || t('idpNameInternal'),
+            idpName: row.idpName || t("idpNameInternal"),
             dateCreated: row.dateCreated,
             serverAdmin: row.serverAdmin,
             twoFactorEnabled: row.twoFactorEnabled,
@@ -47,14 +47,16 @@ export default async function UsersPage(props: PageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('userTitle')}
-                description={t('userDescription')}
+                title={t("userTitle")}
+                description={t("userDescription")}
             />
             <Alert variant="neutral" className="mb-6">
                 <InfoIcon className="h-4 w-4" />
-                <AlertTitle className="font-semibold">{t('userAbount')}</AlertTitle>
+                <AlertTitle className="font-semibold">
+                    {t("userAbount")}
+                </AlertTitle>
                 <AlertDescription>
-                    {t('userAbountDescription')}
+                    {t("userAbountDescription")}
                 </AlertDescription>
             </Alert>
             <UsersTable users={userRows} />

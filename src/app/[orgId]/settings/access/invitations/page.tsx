@@ -1,7 +1,9 @@
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
-import InvitationsTable, { InvitationRow } from "../../../../../components/InvitationsTable";
+import InvitationsTable, {
+    InvitationRow
+} from "../../../../../components/InvitationsTable";
 import { GetOrgResponse } from "@server/routers/org";
 import { cache } from "react";
 import OrgProvider from "@app/providers/OrgProvider";
@@ -9,7 +11,7 @@ import UserProvider from "@app/providers/UserProvider";
 import { verifySession } from "@app/lib/auth/verifySession";
 import AccessPageHeaderAndNav from "../../../../../components/AccessPageHeaderAndNav";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type InvitationsPageProps = {
     params: Promise<{ orgId: string }>;
@@ -68,7 +70,7 @@ export default async function InvitationsPage(props: InvitationsPageProps) {
             id: invite.inviteId,
             email: invite.email,
             expiresAt: new Date(Number(invite.expiresAt)).toISOString(),
-            role: invite.roleName || t('accessRoleUnknown'),
+            role: invite.roleName || t("accessRoleUnknown"),
             roleId: invite.roleId
         };
     });
@@ -76,8 +78,8 @@ export default async function InvitationsPage(props: InvitationsPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('inviteTitle')}
-                description={t('inviteDescription')}
+                title={t("inviteTitle")}
+                description={t("inviteDescription")}
             />
             <UserProvider user={user!}>
                 <OrgProvider org={org}>

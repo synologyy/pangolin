@@ -62,7 +62,9 @@ export async function setSiteResourceClients(
 
         const { clientIds } = parsedBody.data;
 
-        const parsedParams = setSiteResourceClientsParamsSchema.safeParse(req.params);
+        const parsedParams = setSiteResourceClientsParamsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -95,9 +97,7 @@ export async function setSiteResourceClients(
             const clientsWithUsers = await db
                 .select()
                 .from(clients)
-                .where(
-                    inArray(clients.clientId, clientIds)
-                );
+                .where(inArray(clients.clientId, clientIds));
 
             const clientsWithUserId = clientsWithUsers.filter(
                 (client) => client.userId !== null
@@ -119,9 +119,12 @@ export async function setSiteResourceClients(
                 .where(eq(clientSiteResources.siteResourceId, siteResourceId));
 
             if (clientIds.length > 0) {
-                await trx
-                    .insert(clientSiteResources)
-                    .values(clientIds.map((clientId) => ({ clientId, siteResourceId })));
+                await trx.insert(clientSiteResources).values(
+                    clientIds.map((clientId) => ({
+                        clientId,
+                        siteResourceId
+                    }))
+                );
             }
 
             await rebuildClientAssociationsFromSiteResource(siteResource, trx);
@@ -141,4 +144,3 @@ export async function setSiteResourceClients(
         );
     }
 }
-

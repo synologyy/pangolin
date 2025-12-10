@@ -24,9 +24,9 @@ import { fromError } from "zod-validation-error";
 import { GetRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 
 const getRemoteExitNodeSchema = z.strictObject({
-        orgId: z.string().min(1),
-        remoteExitNodeId: z.string().min(1)
-    });
+    orgId: z.string().min(1),
+    remoteExitNodeId: z.string().min(1)
+});
 
 async function query(remoteExitNodeId: string) {
     const [remoteExitNode] = await db

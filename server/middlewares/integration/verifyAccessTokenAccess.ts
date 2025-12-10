@@ -97,7 +97,6 @@ export async function verifyApiKeyAccessTokenAccess(
             );
         }
 
-
         return next();
     } catch (e) {
         return next(

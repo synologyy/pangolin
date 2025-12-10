@@ -28,7 +28,8 @@ const removeClientFromSiteResourceParamsSchema = z
 registry.registerPath({
     method: "post",
     path: "/site-resource/{siteResourceId}/clients/remove",
-    description: "Remove a single client from a site resource. Clients with a userId cannot be removed.",
+    description:
+        "Remove a single client from a site resource. Clients with a userId cannot be removed.",
     tags: [OpenAPITags.Resource, OpenAPITags.Client],
     request: {
         params: removeClientFromSiteResourceParamsSchema,
@@ -159,4 +160,3 @@ export async function removeClientFromSiteResource(
         );
     }
 }
-

@@ -9,9 +9,7 @@ import { LoginFormIDP } from "@app/components/LoginForm";
 import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 import { build } from "@server/build";
 import { headers } from "next/headers";
-import {
-    LoadLoginPageResponse
-} from "@server/routers/loginPage/types";
+import { LoadLoginPageResponse } from "@server/routers/loginPage/types";
 import IdpLoginButtons from "@app/components/private/IdpLoginButtons";
 import {
     Card,

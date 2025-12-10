@@ -255,7 +255,9 @@ export default async function migration() {
                 const siteDataQuery = await db.execute(sql`
                     SELECT "orgId" FROM "sites" WHERE "siteId" = ${site.siteId}
                 `);
-                const siteData = siteDataQuery.rows[0] as { orgId: string } | undefined;
+                const siteData = siteDataQuery.rows[0] as
+                    | { orgId: string }
+                    | undefined;
                 if (!siteData) continue;
 
                 const subnets = site.remoteSubnets.split(",");

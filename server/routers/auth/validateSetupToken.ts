@@ -9,8 +9,8 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const validateSetupTokenSchema = z.strictObject({
-        token: z.string().min(1, "Token is required")
-    });
+    token: z.string().min(1, "Token is required")
+});
 
 export type ValidateSetupTokenResponse = {
     valid: boolean;
@@ -41,10 +41,7 @@ export async function validateSetupToken(
             .select()
             .from(setupTokens)
             .where(
-                and(
-                    eq(setupTokens.token, token),
-                    eq(setupTokens.used, false)
-                )
+                and(eq(setupTokens.token, token), eq(setupTokens.used, false))
             );
 
         if (!setupToken) {
@@ -79,4 +76,4 @@ export async function validateSetupToken(
             )
         );
     }
-} 
+}

@@ -38,7 +38,7 @@ export default function BrandingLogo(props: BrandingLogoProps) {
             if (isUnlocked() && env.branding.logo?.darkPath) {
                 return env.branding.logo.darkPath;
             }
-            return  "/logo/word_mark_white.png";
+            return "/logo/word_mark_white.png";
         }
 
         const path = getPath();

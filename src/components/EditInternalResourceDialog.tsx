@@ -295,7 +295,7 @@ export default function EditInternalResourceDialog({
             // an alias is required
             if (data.mode === "host" && isHostname(data.destination)) {
                 const currentAlias = data.alias?.trim() || "";
-                
+
                 if (!currentAlias) {
                     // Prefill alias based on destination
                     let aliasValue = data.destination;
@@ -304,7 +304,7 @@ export default function EditInternalResourceDialog({
                         const cleanedName = cleanForFQDN(data.name);
                         aliasValue = `${cleanedName}.internal`;
                     }
-                    
+
                     // Update the form with the prefilled alias
                     form.setValue("alias", aliasValue);
                     data.alias = aliasValue;
@@ -389,7 +389,7 @@ export default function EditInternalResourceDialog({
     useEffect(() => {
         if (open) {
             const resourceChanged = previousResourceId.current !== resource.id;
-            
+
             if (resourceChanged) {
                 form.reset({
                     name: resource.name,
@@ -402,10 +402,18 @@ export default function EditInternalResourceDialog({
                 });
                 previousResourceId.current = resource.id;
             }
-            
+
             hasInitialized.current = false;
         }
-    }, [open, resource.id, resource.name, resource.mode, resource.destination, resource.alias, form]);
+    }, [
+        open,
+        resource.id,
+        resource.name,
+        resource.mode,
+        resource.destination,
+        resource.alias,
+        form
+    ]);
 
     useEffect(() => {
         if (open && !loadingRolesUsers && !hasInitialized.current) {

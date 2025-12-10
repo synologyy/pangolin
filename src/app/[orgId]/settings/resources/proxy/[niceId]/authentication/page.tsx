@@ -837,7 +837,9 @@ export default function ResourceAuthenticationPage() {
                                     <Bot size="14" />
                                     <span>
                                         {authInfo.headerAuth
-                                            ? t("resourceHeaderAuthProtectionEnabled")
+                                            ? t(
+                                                  "resourceHeaderAuthProtectionEnabled"
+                                              )
                                             : t(
                                                   "resourceHeaderAuthProtectionDisabled"
                                               )}
@@ -921,7 +923,8 @@ export default function ResourceAuthenticationPage() {
                                                             validateTag={(
                                                                 tag
                                                             ) => {
-                                                                return z.email()
+                                                                return z
+                                                                    .email()
                                                                     .or(
                                                                         z
                                                                             .string()

@@ -14,7 +14,7 @@ import OrgProvider from "@app/providers/OrgProvider";
 import { cache } from "react";
 import ResourceInfoBox from "@app/components/ResourceInfoBox";
 import { GetSiteResponse } from "@server/routers/site";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 interface ResourceLayoutProps {
     children: React.ReactNode;
@@ -76,22 +76,22 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
 
     const navItems = [
         {
-            title: t('general'),
+            title: t("general"),
             href: `/{orgId}/settings/resources/proxy/{niceId}/general`
         },
         {
-            title: t('proxy'),
+            title: t("proxy"),
             href: `/{orgId}/settings/resources/proxy/{niceId}/proxy`
         }
     ];
 
     if (resource.http) {
         navItems.push({
-            title: t('authentication'),
+            title: t("authentication"),
             href: `/{orgId}/settings/resources/proxy/{niceId}/authentication`
         });
         navItems.push({
-            title: t('rules'),
+            title: t("rules"),
             href: `/{orgId}/settings/resources/proxy/{niceId}/rules`
         });
     }
@@ -99,15 +99,12 @@ export default async function ResourceLayout(props: ResourceLayoutProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('resourceSetting', {resourceName: resource?.name})}
-                description={t('resourceSettingDescription')}
+                title={t("resourceSetting", { resourceName: resource?.name })}
+                description={t("resourceSettingDescription")}
             />
 
             <OrgProvider org={org}>
-                <ResourceProvider
-                    resource={resource}
-                    authInfo={authInfo}
-                >
+                <ResourceProvider resource={resource} authInfo={authInfo}>
                     <div className="space-y-6">
                         <ResourceInfoBox />
                         <HorizontalTabs items={navItems}>

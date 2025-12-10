@@ -12,7 +12,14 @@
  */
 
 import Stripe from "stripe";
-import { subscriptions, db, subscriptionItems, customers, userOrgs, users } from "@server/db";
+import {
+    subscriptions,
+    db,
+    subscriptionItems,
+    customers,
+    userOrgs,
+    users
+} from "@server/db";
 import { eq, and } from "drizzle-orm";
 import logger from "@server/logger";
 import { handleSubscriptionLifesycle } from "../subscriptionLifecycle";
@@ -43,7 +50,6 @@ export async function handleSubscriptionDeleted(
             .delete(subscriptionItems)
             .where(eq(subscriptionItems.subscriptionId, subscription.id));
 
-
         // Lookup customer to get orgId
         const [customer] = await db
             .select()
@@ -58,10 +64,7 @@ export async function handleSubscriptionDeleted(
             return;
         }
 
-        await handleSubscriptionLifesycle(
-            customer.orgId,
-            subscription.status
-        );
+        await handleSubscriptionLifesycle(customer.orgId, subscription.status);
 
         const [orgUserRes] = await db
             .select()

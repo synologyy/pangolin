@@ -11,15 +11,12 @@ import { eq } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const setUserResourcesBodySchema = z.strictObject({
-        userIds: z.array(z.string())
-    });
+    userIds: z.array(z.string())
+});
 
 const setUserResourcesParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "post",

@@ -108,7 +108,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         {
             accessorKey: "key",
             friendlyName: t("key"),
-            header: () => (<span className="p-3">{t("key")}</span>),
+            header: () => <span className="p-3">{t("key")}</span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return <span className="font-mono">{r.key}</span>;
@@ -117,7 +117,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
         {
             accessorKey: "createdAt",
             friendlyName: t("createdAt"),
-            header: () => (<span className="p-3">{t("createdAt")}</span>),
+            header: () => <span className="p-3">{t("createdAt")}</span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return <span>{moment(r.createdAt).format("lll")} </span>;
@@ -161,9 +161,7 @@ export default function ApiKeysTable({ apiKeys }: ApiKeyTableProps) {
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Link href={`/admin/api-keys/${r.id}`}>
-                            <Button
-                                variant={"outline"}
-                            >
+                            <Button variant={"outline"}>
                                 {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>

@@ -15,11 +15,8 @@ import { OpenAPITags, registry } from "@server/openApi";
 
 // Define Zod schema for request parameters validation
 const deleteResourceSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "delete",

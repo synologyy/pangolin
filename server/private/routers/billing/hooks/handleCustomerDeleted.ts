@@ -31,9 +31,7 @@ export async function handleCustomerDeleted(
             return;
         }
 
-        await db
-            .delete(customers)
-            .where(eq(customers.customerId, customer.id));
+        await db.delete(customers).where(eq(customers.customerId, customer.id));
     } catch (error) {
         logger.error(
             `Error handling customer created event for ID ${customer.id}:`,

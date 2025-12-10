@@ -7,10 +7,7 @@ import logger from "@server/logger";
 import { response } from "@server/lib/response";
 import { db, deviceWebAuthCodes } from "@server/db";
 import { eq, and, gt } from "drizzle-orm";
-import {
-    createSession,
-    generateSessionToken
-} from "@server/auth/sessions/app";
+import { createSession, generateSessionToken } from "@server/auth/sessions/app";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 
@@ -22,9 +19,7 @@ export type PollDeviceWebAuthParams = z.infer<typeof paramsSchema>;
 
 // Helper function to hash device code before querying database
 function hashDeviceCode(code: string): string {
-    return encodeHexLowerCase(
-        sha256(new TextEncoder().encode(code))
-    );
+    return encodeHexLowerCase(sha256(new TextEncoder().encode(code)));
 }
 
 export type PollDeviceWebAuthResponse = {
@@ -127,7 +122,9 @@ export async function pollDeviceWebAuth(
 
         // Check if userId is set (should be set when verified)
         if (!deviceCode.userId) {
-            logger.error("Device code is verified but userId is missing", { codeId: deviceCode.codeId });
+            logger.error("Device code is verified but userId is missing", {
+                codeId: deviceCode.codeId
+            });
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
@@ -165,4 +162,3 @@ export async function pollDeviceWebAuth(
         );
     }
 }
-

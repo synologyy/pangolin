@@ -64,9 +64,5 @@ export const handleDockerContainersMessage: MessageHandler = async (
         return;
     }
 
-    await applyNewtDockerBlueprint(
-        newt.siteId,
-        newt.newtId,
-        containers
-    );
+    await applyNewtDockerBlueprint(newt.siteId, newt.newtId, containers);
 };

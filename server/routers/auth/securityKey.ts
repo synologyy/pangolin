@@ -19,9 +19,7 @@ import type {
     GenerateAuthenticationOptionsOpts,
     AuthenticatorTransportFuture
 } from "@simplewebauthn/server";
-import {
-    isoBase64URL
-} from '@simplewebauthn/server/helpers';
+import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import config from "@server/lib/config";
 import { UserType } from "@server/types/UserTypes";
 import { verifyPassword } from "@server/auth/password";
@@ -30,10 +28,12 @@ import { verifyTotpCode } from "@server/auth/totp";
 
 // The RP ID is the domain name of your application
 const rpID = (() => {
-    const url = config.getRawConfig().app.dashboard_url ? new URL(config.getRawConfig().app.dashboard_url!) : undefined;
+    const url = config.getRawConfig().app.dashboard_url
+        ? new URL(config.getRawConfig().app.dashboard_url!)
+        : undefined;
     // For localhost, we must use 'localhost' without port
-    if (url?.hostname === 'localhost' || !url) {
-        return 'localhost';
+    if (url?.hostname === "localhost" || !url) {
+        return "localhost";
     }
     return url.hostname;
 })();
@@ -46,25 +46,38 @@ const origin = config.getRawConfig().app.dashboard_url || "localhost";
 // This supports clustered deployments and persists across server restarts
 
 // Clean up expired challenges every 5 minutes
-setInterval(async () => {
-    try {
-        const now = Date.now();
-        await db
-            .delete(webauthnChallenge)
-            .where(lt(webauthnChallenge.expiresAt, now));
-        // logger.debug("Cleaned up expired security key challenges");
-    } catch (error) {
-        logger.error("Failed to clean up expired security key challenges", error);
-    }
-}, 5 * 60 * 1000);
+setInterval(
+    async () => {
+        try {
+            const now = Date.now();
+            await db
+                .delete(webauthnChallenge)
+                .where(lt(webauthnChallenge.expiresAt, now));
+            // logger.debug("Cleaned up expired security key challenges");
+        } catch (error) {
+            logger.error(
+                "Failed to clean up expired security key challenges",
+                error
+            );
+        }
+    },
+    5 * 60 * 1000
+);
 
 // Helper functions for challenge management
-async function storeChallenge(sessionId: string, challenge: string, securityKeyName?: string, userId?: string) {
-    const expiresAt = Date.now() + (5 * 60 * 1000); // 5 minutes
-    
+async function storeChallenge(
+    sessionId: string,
+    challenge: string,
+    securityKeyName?: string,
+    userId?: string
+) {
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
     // Delete any existing challenge for this session
-    await db.delete(webauthnChallenge).where(eq(webauthnChallenge.sessionId, sessionId));
-    
+    await db
+        .delete(webauthnChallenge)
+        .where(eq(webauthnChallenge.sessionId, sessionId));
+
     // Insert new challenge
     await db.insert(webauthnChallenge).values({
         sessionId,
@@ -88,7 +101,9 @@ async function getChallenge(sessionId: string) {
 
     // Check if expired
     if (challengeData.expiresAt < Date.now()) {
-        await db.delete(webauthnChallenge).where(eq(webauthnChallenge.sessionId, sessionId));
+        await db
+            .delete(webauthnChallenge)
+            .where(eq(webauthnChallenge.sessionId, sessionId));
         return null;
     }
 
@@ -96,7 +111,9 @@ async function getChallenge(sessionId: string) {
 }
 
 async function clearChallenge(sessionId: string) {
-    await db.delete(webauthnChallenge).where(eq(webauthnChallenge.sessionId, sessionId));
+    await db
+        .delete(webauthnChallenge)
+        .where(eq(webauthnChallenge.sessionId, sessionId));
 }
 
 export const registerSecurityKeyBody = z.strictObject({
@@ -153,7 +170,10 @@ export async function startRegistration(
 
     try {
         // Verify password
-        const validPassword = await verifyPassword(password, user.passwordHash!);
+        const validPassword = await verifyPassword(
+            password,
+            user.passwordHash!
+        );
         if (!validPassword) {
             return next(unauthorized());
         }
@@ -197,9 +217,11 @@ export async function startRegistration(
             .from(securityKeys)
             .where(eq(securityKeys.userId, user.userId));
 
-        const excludeCredentials = existingSecurityKeys.map(key => ({
+        const excludeCredentials = existingSecurityKeys.map((key) => ({
             id: key.credentialId,
-            transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
+            transports: key.transports
+                ? (JSON.parse(key.transports) as AuthenticatorTransportFuture[])
+                : undefined
         }));
 
         const options: GenerateRegistrationOptionsOpts = {
@@ -207,18 +229,23 @@ export async function startRegistration(
             rpID,
             userID: isoBase64URL.toBuffer(user.userId),
             userName: user.email || user.username,
-            attestationType: 'none',
+            attestationType: "none",
             excludeCredentials,
             authenticatorSelection: {
-                residentKey: 'preferred',
-                userVerification: 'preferred',
+                residentKey: "preferred",
+                userVerification: "preferred"
             }
         };
 
         const registrationOptions = await generateRegistrationOptions(options);
 
         // Store challenge in database
-        await storeChallenge(req.session.sessionId, registrationOptions.challenge, name, user.userId);
+        await storeChallenge(
+            req.session.sessionId,
+            registrationOptions.challenge,
+            name,
+            user.userId
+        );
 
         return response<typeof registrationOptions>(res, {
             data: registrationOptions,
@@ -270,7 +297,7 @@ export async function verifyRegistration(
     try {
         // Get challenge from database
         const challengeData = await getChallenge(req.session.sessionId);
-        
+
         if (!challengeData) {
             return next(
                 createHttpError(
@@ -292,10 +319,7 @@ export async function verifyRegistration(
 
         if (!verified || !registrationInfo) {
             return next(
-                createHttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Verification failed"
-                )
+                createHttpError(HttpCode.BAD_REQUEST, "Verification failed")
             );
         }
 
@@ -303,9 +327,13 @@ export async function verifyRegistration(
         await db.insert(securityKeys).values({
             credentialId: registrationInfo.credential.id,
             userId: user.userId,
-            publicKey: isoBase64URL.fromBuffer(registrationInfo.credential.publicKey),
+            publicKey: isoBase64URL.fromBuffer(
+                registrationInfo.credential.publicKey
+            ),
             signCount: registrationInfo.credential.counter || 0,
-            transports: registrationInfo.credential.transports ? JSON.stringify(registrationInfo.credential.transports) : null,
+            transports: registrationInfo.credential.transports
+                ? JSON.stringify(registrationInfo.credential.transports)
+                : null,
             name: challengeData.securityKeyName,
             lastUsed: new Date().toISOString(),
             dateCreated: new Date().toISOString()
@@ -407,7 +435,10 @@ export async function deleteSecurityKey(
 
     try {
         // Verify password
-        const validPassword = await verifyPassword(password, user.passwordHash!);
+        const validPassword = await verifyPassword(
+            password,
+            user.passwordHash!
+        );
         if (!validPassword) {
             return next(unauthorized());
         }
@@ -447,10 +478,12 @@ export async function deleteSecurityKey(
 
         await db
             .delete(securityKeys)
-            .where(and(
-                eq(securityKeys.credentialId, credentialId),
-                eq(securityKeys.userId, user.userId)
-            ));
+            .where(
+                and(
+                    eq(securityKeys.credentialId, credentialId),
+                    eq(securityKeys.userId, user.userId)
+                )
+            );
 
         return response<null>(res, {
             data: null,
@@ -502,10 +535,7 @@ export async function startAuthentication(
 
             if (!user || user.type !== UserType.Internal) {
                 return next(
-                    createHttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Invalid credentials"
-                    )
+                    createHttpError(HttpCode.BAD_REQUEST, "Invalid credentials")
                 );
             }
 
@@ -525,25 +555,37 @@ export async function startAuthentication(
                 );
             }
 
-            allowCredentials = userSecurityKeys.map(key => ({
+            allowCredentials = userSecurityKeys.map((key) => ({
                 id: key.credentialId,
-                transports: key.transports ? JSON.parse(key.transports) as AuthenticatorTransportFuture[] : undefined
+                transports: key.transports
+                    ? (JSON.parse(
+                          key.transports
+                      ) as AuthenticatorTransportFuture[])
+                    : undefined
             }));
         }
 
         const options: GenerateAuthenticationOptionsOpts = {
             rpID,
             allowCredentials,
-            userVerification: 'preferred',
+            userVerification: "preferred"
         };
 
-        const authenticationOptions = await generateAuthenticationOptions(options);
+        const authenticationOptions =
+            await generateAuthenticationOptions(options);
 
         // Generate a temporary session ID for unauthenticated users
-        const tempSessionId = email ? `temp_${email}_${Date.now()}` : `temp_${Date.now()}`;
+        const tempSessionId = email
+            ? `temp_${email}_${Date.now()}`
+            : `temp_${Date.now()}`;
 
         // Store challenge in database
-        await storeChallenge(tempSessionId, authenticationOptions.challenge, undefined, userId);
+        await storeChallenge(
+            tempSessionId,
+            authenticationOptions.challenge,
+            undefined,
+            userId
+        );
 
         return response(res, {
             data: { ...authenticationOptions, tempSessionId },
@@ -580,7 +622,7 @@ export async function verifyAuthentication(
     }
 
     const { credential } = parsedBody.data;
-    const tempSessionId = req.headers['x-temp-session-id'] as string;
+    const tempSessionId = req.headers["x-temp-session-id"] as string;
 
     if (!tempSessionId) {
         return next(
@@ -594,7 +636,7 @@ export async function verifyAuthentication(
     try {
         // Get challenge from database
         const challengeData = await getChallenge(tempSessionId);
-        
+
         if (!challengeData) {
             return next(
                 createHttpError(
@@ -646,7 +688,11 @@ export async function verifyAuthentication(
                 id: securityKey.credentialId,
                 publicKey: isoBase64URL.toBuffer(securityKey.publicKey),
                 counter: securityKey.signCount,
-                transports: securityKey.transports ? JSON.parse(securityKey.transports) as AuthenticatorTransportFuture[] : undefined
+                transports: securityKey.transports
+                    ? (JSON.parse(
+                          securityKey.transports
+                      ) as AuthenticatorTransportFuture[])
+                    : undefined
             },
             requireUserVerification: false
         });
@@ -672,7 +718,8 @@ export async function verifyAuthentication(
             .where(eq(securityKeys.credentialId, credentialId));
 
         // Create session for the user
-        const { createSession, generateSessionToken, serializeSessionCookie } = await import("@server/auth/sessions/app");
+        const { createSession, generateSessionToken, serializeSessionCookie } =
+            await import("@server/auth/sessions/app");
         const token = generateSessionToken();
         const session = await createSession(token, user.userId);
         const isSecure = req.protocol === "https";

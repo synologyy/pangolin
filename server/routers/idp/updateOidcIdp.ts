@@ -19,19 +19,19 @@ const paramsSchema = z
     .strict();
 
 const bodySchema = z.strictObject({
-        name: z.string().optional(),
-        clientId: z.string().optional(),
-        clientSecret: z.string().optional(),
-        authUrl: z.string().optional(),
-        tokenUrl: z.string().optional(),
-        identifierPath: z.string().optional(),
-        emailPath: z.string().optional(),
-        namePath: z.string().optional(),
-        scopes: z.string().optional(),
-        autoProvision: z.boolean().optional(),
-        defaultRoleMapping: z.string().optional(),
-        defaultOrgMapping: z.string().optional()
-    });
+    name: z.string().optional(),
+    clientId: z.string().optional(),
+    clientSecret: z.string().optional(),
+    authUrl: z.string().optional(),
+    tokenUrl: z.string().optional(),
+    identifierPath: z.string().optional(),
+    emailPath: z.string().optional(),
+    namePath: z.string().optional(),
+    scopes: z.string().optional(),
+    autoProvision: z.boolean().optional(),
+    defaultRoleMapping: z.string().optional(),
+    defaultOrgMapping: z.string().optional()
+});
 
 export type UpdateIdpResponse = {
     idpId: number;

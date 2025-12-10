@@ -15,19 +15,19 @@ const paramsSchema = z.object({
 });
 
 const querySchema = z.strictObject({
-        limit: z
-            .string()
-            .optional()
-            .default("1000")
-            .transform(Number)
-            .pipe(z.int().nonnegative()),
-        offset: z
-            .string()
-            .optional()
-            .default("0")
-            .transform(Number)
-            .pipe(z.int().nonnegative())
-    });
+    limit: z
+        .string()
+        .optional()
+        .default("1000")
+        .transform(Number)
+        .pipe(z.int().nonnegative()),
+    offset: z
+        .string()
+        .optional()
+        .default("0")
+        .transform(Number)
+        .pipe(z.int().nonnegative())
+});
 
 async function query(idpId: number, limit: number, offset: number) {
     const res = await db

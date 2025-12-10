@@ -11,9 +11,10 @@ import { eq, and, inArray } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const bodySchema = z.strictObject({
-        actionIds: z.tuple([z.string()], z.string())
-            .transform((v) => Array.from(new Set(v)))
-    });
+    actionIds: z
+        .tuple([z.string()], z.string())
+        .transform((v) => Array.from(new Set(v)))
+});
 
 const paramsSchema = z.object({
     apiKeyId: z.string().nonempty()

@@ -26,7 +26,8 @@ export const verifySessionRemoteExitNodeMiddleware = async (
     // get the token from the auth header
     const token = req.headers["authorization"]?.split(" ")[1] || "";
 
-    const { session, remoteExitNode } = await validateRemoteExitNodeSessionToken(token);
+    const { session, remoteExitNode } =
+        await validateRemoteExitNodeSessionToken(token);
 
     if (!session || !remoteExitNode) {
         if (config.getRawConfig().app.log_failed_attempts) {

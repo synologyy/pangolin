@@ -18,8 +18,8 @@ import { hashPassword } from "@server/auth/password";
 import { UserType } from "@server/types/UserTypes";
 
 export const requestPasswordResetBody = z.strictObject({
-        email: z.email().toLowerCase()
-    });
+    email: z.email().toLowerCase()
+});
 
 export type RequestPasswordResetBody = z.infer<typeof requestPasswordResetBody>;
 

@@ -5,16 +5,16 @@ import path from "path";
 const version = "1.10.1";
 
 export default async function migration() {
-	console.log(`Running setup script ${version}...`);
+    console.log(`Running setup script ${version}...`);
 
-	const location = path.join(APP_PATH, "db", "db.sqlite");
-	const db = new Database(location);
+    const location = path.join(APP_PATH, "db", "db.sqlite");
+    const db = new Database(location);
 
-	try {
-		db.pragma("foreign_keys = OFF");
+    try {
+        db.pragma("foreign_keys = OFF");
 
-		db.transaction(() => {
-			db.exec(`ALTER TABLE "targets" RENAME TO "targets_old";
+        db.transaction(() => {
+            db.exec(`ALTER TABLE "targets" RENAME TO "targets_old";
 --> statement-breakpoint
 CREATE TABLE "targets" (
     "targetId" INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,13 +57,13 @@ SELECT
 FROM "targets_old";
 --> statement-breakpoint
 DROP TABLE "targets_old";`);
-		})();
+        })();
 
-		db.pragma("foreign_keys = ON");
+        db.pragma("foreign_keys = ON");
 
-		console.log(`Migrated database`);
-	} catch (e) {
-		console.log("Failed to migrate db:", e);
-		throw e;
-	}
+        console.log(`Migrated database`);
+    } catch (e) {
+        console.log("Failed to migrate db:", e);
+        throw e;
+    }
 }

@@ -34,14 +34,16 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     const navItems = [
         {
-            title: t('apiKeysPermissionsTitle'),
+            title: t("apiKeysPermissionsTitle"),
             href: "/admin/api-keys/{apiKeyId}/permissions"
         }
     ];
 
     return (
         <>
-            <SettingsSectionTitle title={t('apiKeysSettings', {apiKeyName: apiKey?.name})} />
+            <SettingsSectionTitle
+                title={t("apiKeysSettings", { apiKeyName: apiKey?.name })}
+            />
 
             <ApiKeyProvider apiKey={apiKey}>
                 <HorizontalTabs items={navItems}>{children}</HorizontalTabs>

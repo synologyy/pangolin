@@ -11,7 +11,8 @@ export async function verifyApiKeySetResourceUsers(
     next: NextFunction
 ) {
     const apiKey = req.apiKey;
-    const singleUserId = req.params.userId || req.body.userId || req.query.userId;
+    const singleUserId =
+        req.params.userId || req.body.userId || req.query.userId;
     const { userIds } = req.body;
     const allUserIds = userIds || (singleUserId ? [singleUserId] : []);
 

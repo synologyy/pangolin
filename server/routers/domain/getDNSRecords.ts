@@ -11,16 +11,16 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { getServerIp } from "@server/lib/serverIpService"; // your in-memory IP module
 
 const getDNSRecordsSchema = z.strictObject({
-        domainId: z.string(),
-        orgId: z.string()
-    });
+    domainId: z.string(),
+    orgId: z.string()
+});
 
 async function query(domainId: string) {
     const records = await db
         .select()
         .from(dnsRecords)
         .where(eq(dnsRecords.domainId, domainId));
-    
+
     return records;
 }
 
@@ -72,8 +72,11 @@ export async function getDNSRecords(
         const serverIp = getServerIp();
 
         // Override value for type A or wildcard records
-        const updatedRecords = records.map(record => {
-            if ((record.recordType === "A" || record.baseDomain === "*") && serverIp) {
+        const updatedRecords = records.map((record) => {
+            if (
+                (record.recordType === "A" || record.baseDomain === "*") &&
+                serverIp
+            ) {
                 return { ...record, value: serverIp };
             }
             return record;

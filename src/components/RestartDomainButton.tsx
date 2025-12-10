@@ -14,7 +14,10 @@ interface RestartDomainButtonProps {
     domainId: string;
 }
 
-export default function RestartDomainButton({ orgId, domainId }: RestartDomainButtonProps) {
+export default function RestartDomainButton({
+    orgId,
+    domainId
+}: RestartDomainButtonProps) {
     const router = useRouter();
     const api = createApiClient(useEnvContext());
     const [isRestarting, setIsRestarting] = useState(false);

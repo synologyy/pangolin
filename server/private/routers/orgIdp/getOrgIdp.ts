@@ -93,7 +93,10 @@ export async function getOrgIdp(
             idpRes.idpOidcConfig!.clientId = decrypt(clientId, key);
         }
 
-        const redirectUrl = await generateOidcRedirectUrl(idpRes.idp.idpId, orgId);
+        const redirectUrl = await generateOidcRedirectUrl(
+            idpRes.idp.idpId,
+            orgId
+        );
 
         return response<GetOrgIdpResponse>(res, {
             data: {

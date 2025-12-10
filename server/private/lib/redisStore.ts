@@ -11,9 +11,9 @@
  * This file is not licensed under the AGPLv3.
  */
 
-import { Store, Options, IncrementResponse } from 'express-rate-limit';
-import { rateLimitService } from './rateLimit';
-import logger from '@server/logger';
+import { Store, Options, IncrementResponse } from "express-rate-limit";
+import { rateLimitService } from "./rateLimit";
+import logger from "@server/logger";
 
 /**
  * A Redis-backed rate limiting store for express-rate-limit that optimizes
@@ -57,12 +57,14 @@ export default class RedisStore implements Store {
      *
      * @param options - Configuration options for the store.
      */
-    constructor(options: {
-        prefix?: string;
-        skipFailedRequests?: boolean;
-        skipSuccessfulRequests?: boolean;
-    } = {}) {
-        this.prefix = options.prefix || 'express-rate-limit';
+    constructor(
+        options: {
+            prefix?: string;
+            skipFailedRequests?: boolean;
+            skipSuccessfulRequests?: boolean;
+        } = {}
+    ) {
+        this.prefix = options.prefix || "express-rate-limit";
         this.skipFailedRequests = options.skipFailedRequests || false;
         this.skipSuccessfulRequests = options.skipSuccessfulRequests || false;
     }
@@ -101,7 +103,8 @@ export default class RedisStore implements Store {
 
             return {
                 totalHits: result.totalHits || 1,
-                resetTime: result.resetTime || new Date(Date.now() + this.windowMs)
+                resetTime:
+                    result.resetTime || new Date(Date.now() + this.windowMs)
             };
         } catch (error) {
             logger.error(`RedisStore increment error for key ${key}:`, error);
@@ -158,7 +161,9 @@ export default class RedisStore implements Store {
      */
     async resetAll(): Promise<void> {
         try {
-            logger.warn('RedisStore resetAll called - this operation can be expensive');
+            logger.warn(
+                "RedisStore resetAll called - this operation can be expensive"
+            );
 
             // Force sync all pending data first
             await rateLimitService.forceSyncAllPendingData();
@@ -167,9 +172,9 @@ export default class RedisStore implements Store {
             // scanning all Redis keys with our prefix, which could be expensive.
             // In production, it's better to let entries expire naturally.
 
-            logger.info('RedisStore resetAll completed (pending data synced)');
+            logger.info("RedisStore resetAll completed (pending data synced)");
         } catch (error) {
-            logger.error('RedisStore resetAll error:', error);
+            logger.error("RedisStore resetAll error:", error);
             // Don't throw - this is an optional method
         }
     }
@@ -181,7 +186,9 @@ export default class RedisStore implements Store {
      * @param key - The identifier for a client.
      * @returns Current hit count and reset time, or null if no data exists.
      */
-    async getHits(key: string): Promise<{ totalHits: number; resetTime: Date } | null> {
+    async getHits(
+        key: string
+    ): Promise<{ totalHits: number; resetTime: Date } | null> {
         try {
             const clientId = `${this.prefix}:${key}`;
 
@@ -200,7 +207,8 @@ export default class RedisStore implements Store {
 
             return {
                 totalHits: Math.max(0, (result.totalHits || 0) - 1), // Adjust for the decrement
-                resetTime: result.resetTime || new Date(Date.now() + this.windowMs)
+                resetTime:
+                    result.resetTime || new Date(Date.now() + this.windowMs)
             };
         } catch (error) {
             logger.error(`RedisStore getHits error for key ${key}:`, error);
@@ -215,9 +223,9 @@ export default class RedisStore implements Store {
     async shutdown(): Promise<void> {
         try {
             // The rateLimitService handles its own cleanup
-            logger.info('RedisStore shutdown completed');
+            logger.info("RedisStore shutdown completed");
         } catch (error) {
-            logger.error('RedisStore shutdown error:', error);
+            logger.error("RedisStore shutdown error:", error);
         }
     }
 }

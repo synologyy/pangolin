@@ -19,7 +19,11 @@ import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
-import { queryActionAuditLogsParams, queryActionAuditLogsQuery, queryAction } from "./queryActionAuditLog";
+import {
+    queryActionAuditLogsParams,
+    queryActionAuditLogsQuery,
+    queryAction
+} from "./queryActionAuditLog";
 import { generateCSV } from "@server/routers/auditLogs/generateCSV";
 
 registry.registerPath({
@@ -60,17 +64,20 @@ export async function exportActionAuditLogs(
             );
         }
 
-    const data = { ...parsedQuery.data, ...parsedParams.data };
+        const data = { ...parsedQuery.data, ...parsedParams.data };
 
         const baseQuery = queryAction(data);
 
         const log = await baseQuery.limit(data.limit).offset(data.offset);
 
         const csvData = generateCSV(log);
-        
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="action-audit-logs-${data.orgId}-${Date.now()}.csv"`);
-        
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="action-audit-logs-${data.orgId}-${Date.now()}.csv"`
+        );
+
         return res.send(csvData);
     } catch (error) {
         logger.error(error);

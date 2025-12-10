@@ -36,9 +36,9 @@ export const paramsSchema = z.object({
 });
 
 const bodySchema = z.strictObject({
-        remoteExitNodeId: z.string().length(15),
-        secret: z.string().length(48)
-    });
+    remoteExitNodeId: z.string().length(15),
+    secret: z.string().length(48)
+});
 
 export type CreateRemoteExitNodeBody = z.infer<typeof bodySchema>;
 

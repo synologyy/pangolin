@@ -49,9 +49,7 @@ export async function removeRoleFromResource(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = removeRoleFromResourceBodySchema.safeParse(
-            req.body
-        );
+        const parsedBody = removeRoleFromResourceBodySchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -95,10 +93,7 @@ export async function removeRoleFromResource(
             .select()
             .from(roles)
             .where(
-                and(
-                    eq(roles.roleId, roleId),
-                    eq(roles.orgId, resource.orgId)
-                )
+                and(eq(roles.roleId, roleId), eq(roles.orgId, resource.orgId))
             )
             .limit(1);
 
@@ -163,4 +158,3 @@ export async function removeRoleFromResource(
         );
     }
 }
-

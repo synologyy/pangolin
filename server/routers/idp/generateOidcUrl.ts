@@ -24,8 +24,8 @@ const paramsSchema = z
     .strict();
 
 const bodySchema = z.strictObject({
-        redirectUrl: z.string()
-    });
+    redirectUrl: z.string()
+});
 
 const querySchema = z.object({
     orgId: z.string().optional() // check what actuall calls it

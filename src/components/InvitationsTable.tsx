@@ -72,12 +72,12 @@ export default function InvitationsTable({
             accessorKey: "email",
             enableHiding: false,
             friendlyName: t("email"),
-            header: () => (<span className="p-3">{t("email")}</span>)
+            header: () => <span className="p-3">{t("email")}</span>
         },
         {
             accessorKey: "expiresAt",
             friendlyName: t("expiresAt"),
-            header: () => (<span className="p-3">{t("expiresAt")}</span>),
+            header: () => <span className="p-3">{t("expiresAt")}</span>,
             cell: ({ row }) => {
                 const expiresAt = new Date(row.original.expiresAt);
                 const isExpired = expiresAt < new Date();
@@ -92,7 +92,7 @@ export default function InvitationsTable({
         {
             accessorKey: "role",
             friendlyName: t("role"),
-            header: () => (<span className="p-3">{t("role")}</span>)
+            header: () => <span className="p-3">{t("role")}</span>
         },
         {
             id: "dots",
@@ -183,9 +183,7 @@ export default function InvitationsTable({
                 }}
                 dialog={
                     <div>
-                        <p>
-                            {t("inviteQuestionRemove")}
-                        </p>
+                        <p>{t("inviteQuestionRemove")}</p>
                         <p>{t("inviteMessageRemove")}</p>
                     </div>
                 }

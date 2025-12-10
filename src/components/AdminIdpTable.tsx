@@ -175,9 +175,7 @@ export default function IdpTable({ idps }: Props) {
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Link href={`/admin/idp/${siteRow.idpId}/general`}>
-                            <Button
-                                variant={"outline"}
-                            >
+                            <Button variant={"outline"}>
                                 {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>

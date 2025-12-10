@@ -16,12 +16,12 @@ export function OrgProvider({ children, org: serverOrg }: OrgProviderProps) {
     const t = useTranslations();
 
     if (!org) {
-        throw new Error(t('orgErrorNoProvided'));
+        throw new Error(t("orgErrorNoProvided"));
     }
 
     const updateOrg = (updatedOrg: Partial<GetOrgResponse>) => {
         if (!org) {
-            throw new Error(t('orgErrorNoUpdate'));
+            throw new Error(t("orgErrorNoUpdate"));
         }
 
         setOrg((prev) => {
@@ -31,7 +31,7 @@ export function OrgProvider({ children, org: serverOrg }: OrgProviderProps) {
 
             return {
                 ...prev,
-                ...updatedOrg,
+                ...updatedOrg
             };
         });
     };

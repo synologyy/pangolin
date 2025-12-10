@@ -121,7 +121,7 @@ export default async function migration() {
 
     try {
         await db.execute(sql`BEGIN`);
-        
+
         // Update all existing orgs to have the default subnet
         await db.execute(sql`UPDATE "orgs" SET "subnet" = '100.90.128.0/24'`);
 

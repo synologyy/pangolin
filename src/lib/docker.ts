@@ -27,7 +27,9 @@ export class DockerManager {
 
     async checkDockerSocket(): Promise<void> {
         try {
-            const res = await this.api.post(`/site/${this.siteId}/docker/check`);
+            const res = await this.api.post(
+                `/site/${this.siteId}/docker/check`
+            );
             console.log("Docker socket check response:", res);
         } catch (error) {
             console.error("Failed to check Docker socket:", error);
@@ -91,9 +93,7 @@ export class DockerManager {
         };
 
         try {
-            await this.api.post(
-                `/site/${this.siteId}/docker/trigger`
-            );
+            await this.api.post(`/site/${this.siteId}/docker/trigger`);
             return await fetchContainerList();
         } catch (error) {
             console.error("Failed to trigger Docker containers:", error);
@@ -103,10 +103,10 @@ export class DockerManager {
 
     async initializeDocker(): Promise<DockerState> {
         console.log(`Initializing Docker for site ID: ${this.siteId}`);
-        
+
         // For now, assume Docker is enabled for newt sites
         const isEnabled = true;
-        
+
         if (!isEnabled) {
             return {
                 isEnabled: false,
@@ -118,7 +118,7 @@ export class DockerManager {
         // Check and get Docker socket status
         await this.checkDockerSocket();
         const dockerStatus = await this.getDockerSocketStatus();
-        
+
         const isAvailable = dockerStatus?.isAvailable || false;
         let containers: Container[] = [];
 

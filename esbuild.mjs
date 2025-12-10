@@ -24,20 +24,20 @@ const argv = yargs(hideBin(process.argv))
         alias: "e",
         describe: "Entry point file",
         type: "string",
-        demandOption: true,
+        demandOption: true
     })
     .option("out", {
         alias: "o",
         describe: "Output file path",
         type: "string",
-        demandOption: true,
+        demandOption: true
     })
     .option("build", {
         alias: "b",
         describe: "Build type (oss, saas, enterprise)",
         type: "string",
         choices: ["oss", "saas", "enterprise"],
-        default: "oss",
+        default: "oss"
     })
     .help()
     .alias("help", "h").argv;
@@ -66,7 +66,9 @@ function privateImportGuardPlugin() {
 
                 // Check if the importing file is NOT in server/private
                 const normalizedImporter = path.normalize(importingFile);
-                const isInServerPrivate = normalizedImporter.includes(path.normalize("server/private"));
+                const isInServerPrivate = normalizedImporter.includes(
+                    path.normalize("server/private")
+                );
 
                 if (!isInServerPrivate) {
                     const violation = {
@@ -79,8 +81,8 @@ function privateImportGuardPlugin() {
                     console.log(`PRIVATE IMPORT VIOLATION:`);
                     console.log(`   File: ${importingFile}`);
                     console.log(`   Import: ${args.path}`);
-                    console.log(`   Resolve dir: ${args.resolveDir || 'N/A'}`);
-                    console.log('');
+                    console.log(`   Resolve dir: ${args.resolveDir || "N/A"}`);
+                    console.log("");
                 }
 
                 // Return null to let the default resolver handle it
@@ -89,16 +91,20 @@ function privateImportGuardPlugin() {
 
             build.onEnd((result) => {
                 if (violations.length > 0) {
-                    console.log(`\nSUMMARY: Found ${violations.length} private import violation(s):`);
+                    console.log(
+                        `\nSUMMARY: Found ${violations.length} private import violation(s):`
+                    );
                     violations.forEach((v, i) => {
-                        console.log(`   ${i + 1}. ${path.relative(process.cwd(), v.file)} imports ${v.importPath}`);
+                        console.log(
+                            `   ${i + 1}. ${path.relative(process.cwd(), v.file)} imports ${v.importPath}`
+                        );
                     });
-                    console.log('');
+                    console.log("");
 
                     result.errors.push({
                         text: `Private import violations detected: ${violations.length} violation(s) found`,
                         location: null,
-                        notes: violations.map(v => ({
+                        notes: violations.map((v) => ({
                             text: `${path.relative(process.cwd(), v.file)} imports ${v.importPath}`,
                             location: null
                         }))
@@ -121,7 +127,9 @@ function dynamicImportGuardPlugin() {
 
                 // Check if the importing file is NOT in server/private
                 const normalizedImporter = path.normalize(importingFile);
-                const isInServerPrivate = normalizedImporter.includes(path.normalize("server/private"));
+                const isInServerPrivate = normalizedImporter.includes(
+                    path.normalize("server/private")
+                );
 
                 if (isInServerPrivate) {
                     const violation = {
@@ -134,8 +142,8 @@ function dynamicImportGuardPlugin() {
                     console.log(`DYNAMIC IMPORT VIOLATION:`);
                     console.log(`   File: ${importingFile}`);
                     console.log(`   Import: ${args.path}`);
-                    console.log(`   Resolve dir: ${args.resolveDir || 'N/A'}`);
-                    console.log('');
+                    console.log(`   Resolve dir: ${args.resolveDir || "N/A"}`);
+                    console.log("");
                 }
 
                 // Return null to let the default resolver handle it
@@ -144,16 +152,20 @@ function dynamicImportGuardPlugin() {
 
             build.onEnd((result) => {
                 if (violations.length > 0) {
-                    console.log(`\nSUMMARY: Found ${violations.length} dynamic import violation(s):`);
+                    console.log(
+                        `\nSUMMARY: Found ${violations.length} dynamic import violation(s):`
+                    );
                     violations.forEach((v, i) => {
-                        console.log(`   ${i + 1}. ${path.relative(process.cwd(), v.file)} imports ${v.importPath}`);
+                        console.log(
+                            `   ${i + 1}. ${path.relative(process.cwd(), v.file)} imports ${v.importPath}`
+                        );
                     });
-                    console.log('');
+                    console.log("");
 
                     result.errors.push({
                         text: `Dynamic import violations detected: ${violations.length} violation(s) found`,
                         location: null,
-                        notes: violations.map(v => ({
+                        notes: violations.map((v) => ({
                             text: `${path.relative(process.cwd(), v.file)} imports ${v.importPath}`,
                             location: null
                         }))
@@ -172,21 +184,28 @@ function dynamicImportSwitcherPlugin(buildValue) {
             const switches = [];
 
             build.onStart(() => {
-                console.log(`Dynamic import switcher using build type: ${buildValue}`);
+                console.log(
+                    `Dynamic import switcher using build type: ${buildValue}`
+                );
             });
 
             build.onResolve({ filter: /^#dynamic\// }, (args) => {
                 // Extract the path after #dynamic/
-                const dynamicPath = args.path.replace(/^#dynamic\//, '');
+                const dynamicPath = args.path.replace(/^#dynamic\//, "");
 
                 // Determine the replacement based on build type
                 let replacement;
                 if (buildValue === "oss") {
                     replacement = `#open/${dynamicPath}`;
-                } else if (buildValue === "saas" || buildValue === "enterprise") {
+                } else if (
+                    buildValue === "saas" ||
+                    buildValue === "enterprise"
+                ) {
                     replacement = `#closed/${dynamicPath}`; // We use #closed here so that the route guards dont complain after its been changed but this is the same as #private
                 } else {
-                    console.warn(`Unknown build type '${buildValue}', defaulting to #open/`);
+                    console.warn(
+                        `Unknown build type '${buildValue}', defaulting to #open/`
+                    );
                     replacement = `#open/${dynamicPath}`;
                 }
 
@@ -201,8 +220,10 @@ function dynamicImportSwitcherPlugin(buildValue) {
                 console.log(`DYNAMIC IMPORT SWITCH:`);
                 console.log(`   File: ${args.importer}`);
                 console.log(`   Original: ${args.path}`);
-                console.log(`   Switched to: ${replacement} (build: ${buildValue})`);
-                console.log('');
+                console.log(
+                    `   Switched to: ${replacement} (build: ${buildValue})`
+                );
+                console.log("");
 
                 // Rewrite the import path and let the normal resolution continue
                 return build.resolve(replacement, {
@@ -215,12 +236,18 @@ function dynamicImportSwitcherPlugin(buildValue) {
 
             build.onEnd((result) => {
                 if (switches.length > 0) {
-                    console.log(`\nDYNAMIC IMPORT SUMMARY: Switched ${switches.length} import(s) for build type '${buildValue}':`);
+                    console.log(
+                        `\nDYNAMIC IMPORT SUMMARY: Switched ${switches.length} import(s) for build type '${buildValue}':`
+                    );
                     switches.forEach((s, i) => {
-                        console.log(`   ${i + 1}. ${path.relative(process.cwd(), s.file)}`);
-                        console.log(`      ${s.originalPath} → ${s.replacementPath}`);
+                        console.log(
+                            `   ${i + 1}. ${path.relative(process.cwd(), s.file)}`
+                        );
+                        console.log(
+                            `      ${s.originalPath} → ${s.replacementPath}`
+                        );
                     });
-                    console.log('');
+                    console.log("");
                 }
             });
         }
@@ -235,7 +262,7 @@ esbuild
         format: "esm",
         minify: false,
         banner: {
-            js: banner,
+            js: banner
         },
         platform: "node",
         external: ["body-parser"],
@@ -244,20 +271,22 @@ esbuild
             dynamicImportGuardPlugin(),
             dynamicImportSwitcherPlugin(argv.build),
             nodeExternalsPlugin({
-                packagePath: getPackagePaths(),
-            }),
+                packagePath: getPackagePaths()
+            })
         ],
         sourcemap: "inline",
-        target: "node22",
+        target: "node22"
     })
     .then((result) => {
         // Check if there were any errors in the build result
         if (result.errors && result.errors.length > 0) {
-            console.error(`Build failed with ${result.errors.length} error(s):`);
+            console.error(
+                `Build failed with ${result.errors.length} error(s):`
+            );
             result.errors.forEach((error, i) => {
                 console.error(`${i + 1}. ${error.text}`);
                 if (error.notes) {
-                    error.notes.forEach(note => {
+                    error.notes.forEach((note) => {
                         console.error(`   - ${note.text}`);
                     });
                 }

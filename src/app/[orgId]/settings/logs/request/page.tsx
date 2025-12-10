@@ -11,12 +11,13 @@ import { Button } from "@app/components/ui/button";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient } from "@app/lib/api";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpRight, Key, Lock, Unlock, User } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+
 import { useEffect, useState } from "react";
 
 export default function GeneralPage() {

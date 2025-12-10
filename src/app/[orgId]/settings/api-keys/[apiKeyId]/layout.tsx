@@ -6,7 +6,7 @@ import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { GetApiKeyResponse } from "@server/routers/apiKeys";
 import ApiKeyProvider from "@app/providers/ApiKeyProvider";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 interface SettingsLayoutProps {
     children: React.ReactNode;
@@ -33,14 +33,16 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     const navItems = [
         {
-            title: t('apiKeysPermissionsTitle'),
+            title: t("apiKeysPermissionsTitle"),
             href: "/{orgId}/settings/api-keys/{apiKeyId}/permissions"
         }
     ];
 
     return (
         <>
-            <SettingsSectionTitle title={t('apiKeysSettings', {apiKeyName: apiKey?.name})} />
+            <SettingsSectionTitle
+                title={t("apiKeysSettings", { apiKeyName: apiKey?.name })}
+            />
 
             <ApiKeyProvider apiKey={apiKey}>
                 <HorizontalTabs items={navItems}>{children}</HorizontalTabs>

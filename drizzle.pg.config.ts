@@ -1,9 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
-const schema = [
-    path.join("server", "db", "pg", "schema"),
-];
+const schema = [path.join("server", "db", "pg", "schema")];
 
 export default defineConfig({
     dialect: "postgresql",

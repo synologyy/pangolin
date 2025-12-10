@@ -215,7 +215,6 @@ export default function Page() {
         string | undefined
     >();
 
-
     const hydrateCommands = (
         id: string,
         secret: string,
@@ -753,7 +752,9 @@ WantedBy=default.target`
                                 {tunnelTypes.length > 1 && (
                                     <>
                                         <div className="mb-2">
-                                            <span className="text-sm font-medium">{t("type")}</span>
+                                            <span className="text-sm font-medium">
+                                                {t("type")}
+                                            </span>
                                         </div>
                                         <StrategySelect
                                             options={tunnelTypes}

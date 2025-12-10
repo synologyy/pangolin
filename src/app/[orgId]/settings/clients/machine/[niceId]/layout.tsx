@@ -21,7 +21,10 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     let client = null;
     try {
-        console.log("making request to ", `/org/${params.orgId}/client/${params.niceId}`);
+        console.log(
+            "making request to ",
+            `/org/${params.orgId}/client/${params.niceId}`
+        );
         const res = await internal.get<AxiosResponse<GetClientResponse>>(
             `/org/${params.orgId}/client/${params.niceId}`,
             await authCookieHeader()

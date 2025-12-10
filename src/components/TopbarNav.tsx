@@ -39,7 +39,9 @@ export function TopbarNav({
                     href={item.href.replace("{orgId}", orgId || "")}
                     className={cn(
                         "relative md:px-3 px-1 py-3 text-md",
-                        pathname.startsWith(item.href.replace("{orgId}", orgId || ""))
+                        pathname.startsWith(
+                            item.href.replace("{orgId}", orgId || "")
+                        )
                             ? "border-b-2 border-primary text-primary font-medium"
                             : "hover:text-primary text-muted-foreground font-medium",
                         "whitespace-nowrap",

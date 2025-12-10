@@ -19,7 +19,7 @@ import logger from "@server/logger";
 import { sendToClient } from "#dynamic/routers/ws";
 import { build } from "@server/build";
 import { s3Client } from "@server/lib/s3";
-import cache from "@server/lib/cache"; 
+import cache from "@server/lib/cache";
 
 interface StripeEvent {
     identifier?: string;

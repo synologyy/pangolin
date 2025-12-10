@@ -52,7 +52,9 @@ export async function listSiteResourceClients(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedParams = listSiteResourceClientsSchema.safeParse(req.params);
+        const parsedParams = listSiteResourceClientsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -82,4 +84,3 @@ export async function listSiteResourceClients(
         );
     }
 }
-

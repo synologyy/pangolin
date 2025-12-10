@@ -45,10 +45,15 @@ import {
 } from "@app/components/InfoSection";
 import { useOrgContext } from "@app/hooks/useOrgContext";
 import { build } from "@server/build";
-import { toASCII, toUnicode } from 'punycode';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { toASCII, toUnicode } from "punycode";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from "./ui/select";
 import { useRouter } from "next/navigation";
-
 
 // Helper functions for Unicode domain handling
 function toPunycode(domain: string): string {
@@ -76,9 +81,9 @@ function isValidDomainFormat(domain: string): boolean {
         return false;
     }
 
-    const parts = domain.split('.');
+    const parts = domain.split(".");
     for (const part of parts) {
-        if (part.length === 0 || part.startsWith('-') || part.endsWith('-')) {
+        if (part.length === 0 || part.startsWith("-") || part.endsWith("-")) {
             return false;
         }
         if (part.length > 63) {
@@ -137,7 +142,8 @@ export default function CreateDomainForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
             baseDomain: "",
-            type: build == "oss" || !env.flags.usePangolinDns ? "wildcard" : "ns",
+            type:
+                build == "oss" || !env.flags.usePangolinDns ? "wildcard" : "ns",
             certResolver: null,
             preferWildcardCert: false
         }
@@ -172,7 +178,9 @@ export default function CreateDomainForm({
                 description: t("domainCreatedDescription")
             });
             onCreated?.(domainData);
-            router.push(`/${org.org.orgId}/settings/domains/${domainData.domainId}`);
+            router.push(
+                `/${org.org.orgId}/settings/domains/${domainData.domainId}`
+            );
         } catch (e) {
             toast({
                 title: t("error"),
@@ -182,7 +190,7 @@ export default function CreateDomainForm({
         } finally {
             setLoading(false);
         }
-    };
+    }
 
     // Domain type options
     let domainOptions: any = [];
@@ -225,145 +233,213 @@ export default function CreateDomainForm({
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
-                        <Form {...form}>
-                            <form
-                                onSubmit={form.handleSubmit(onSubmit)}
-                                className="space-y-4"
-                                id="create-domain-form"
-                            >
-                                <FormField
-                                    control={form.control}
-                                    name="type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <StrategySelect
-                                                options={domainOptions}
-                                                defaultValue={field.value}
-                                                onChange={field.onChange}
-                                                cols={1}
-                                            />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="baseDomain"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>{t("domain")}</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="example.com"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            {punycodePreview && (
-                                                <FormDescription className="flex items-center gap-2 text-xs">
-                                                    <Alert>
-                                                        <Globe className="h-4 w-4" />
-                                                        <AlertTitle>{t("internationaldomaindetected")}</AlertTitle>
-                                                        <AlertDescription>
-                                                            <div className="mt-2 space-y-1">
-                                                                <p>{t("willbestoredas")} <code className="font-mono px-1 py-0.5 rounded">{punycodePreview}</code></p>
-                                                            </div>
-                                                        </AlertDescription>
-                                                    </Alert>
-                                                </FormDescription>
-                                            )}
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                {domainType === "wildcard" && (
-                                    <>
-                                        <FormField
-                                            control={form.control}
-                                            name="certResolver"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>{t("certResolver")}</FormLabel>
-                                                    <FormControl>
-                                                        <Select
-                                                            value={
-                                                                field.value === null ? "default" :
-                                                                    (field.value === "" || (field.value && field.value !== "default")) ? "custom" :
-                                                                        "default"
-                                                            }
-                                                            onValueChange={(val) => {
-                                                                if (val === "default") {
-                                                                    field.onChange(null);
-                                                                } else if (val === "custom") {
-                                                                    field.onChange("");
-                                                                } else {
-                                                                    field.onChange(val);
-                                                                }
-                                                            }}
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder={t("selectCertResolver")} />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {certResolverOptions.map((opt) => (
-                                                                    <SelectItem key={opt.id} value={opt.id}>
-                                                                        {opt.title}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-4"
+                            id="create-domain-form"
+                        >
+                            <FormField
+                                control={form.control}
+                                name="type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <StrategySelect
+                                            options={domainOptions}
+                                            defaultValue={field.value}
+                                            onChange={field.onChange}
+                                            cols={1}
                                         />
-                                        {form.watch("certResolver") !== null &&
-                                            form.watch("certResolver") !== "default" && (
-                                                <FormField
-                                                    control={form.control}
-                                                    name="certResolver"
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormControl>
-                                                                <Input
-                                                                    placeholder={t("enterCustomResolver")}
-                                                                    value={field.value || ""}
-                                                                    onChange={(e) => field.onChange(e.target.value)}
-                                                                />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="baseDomain"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>{t("domain")}</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="example.com"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        {punycodePreview && (
+                                            <FormDescription className="flex items-center gap-2 text-xs">
+                                                <Alert>
+                                                    <Globe className="h-4 w-4" />
+                                                    <AlertTitle>
+                                                        {t(
+                                                            "internationaldomaindetected"
+                                                        )}
+                                                    </AlertTitle>
+                                                    <AlertDescription>
+                                                        <div className="mt-2 space-y-1">
+                                                            <p>
+                                                                {t(
+                                                                    "willbestoredas"
+                                                                )}{" "}
+                                                                <code className="font-mono px-1 py-0.5 rounded">
+                                                                    {
+                                                                        punycodePreview
+                                                                    }
+                                                                </code>
+                                                            </p>
+                                                        </div>
+                                                    </AlertDescription>
+                                                </Alert>
+                                            </FormDescription>
+                                        )}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {domainType === "wildcard" && (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="certResolver"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("certResolver")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={
+                                                            field.value === null
+                                                                ? "default"
+                                                                : field.value ===
+                                                                        "" ||
+                                                                    (field.value &&
+                                                                        field.value !==
+                                                                            "default")
+                                                                  ? "custom"
+                                                                  : "default"
+                                                        }
+                                                        onValueChange={(
+                                                            val
+                                                        ) => {
+                                                            if (
+                                                                val ===
+                                                                "default"
+                                                            ) {
+                                                                field.onChange(
+                                                                    null
+                                                                );
+                                                            } else if (
+                                                                val === "custom"
+                                                            ) {
+                                                                field.onChange(
+                                                                    ""
+                                                                );
+                                                            } else {
+                                                                field.onChange(
+                                                                    val
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue
+                                                                placeholder={t(
+                                                                    "selectCertResolver"
+                                                                )}
+                                                            />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {certResolverOptions.map(
+                                                                (opt) => (
+                                                                    <SelectItem
+                                                                        key={
+                                                                            opt.id
+                                                                        }
+                                                                        value={
+                                                                            opt.id
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            opt.title
+                                                                        }
+                                                                    </SelectItem>
+                                                                )
+                                                            )}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    {form.watch("certResolver") !== null &&
+                                        form.watch("certResolver") !==
+                                            "default" && (
+                                            <FormField
+                                                control={form.control}
+                                                name="certResolver"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormControl>
+                                                            <Input
+                                                                placeholder={t(
+                                                                    "enterCustomResolver"
+                                                                )}
+                                                                value={
+                                                                    field.value ||
+                                                                    ""
+                                                                }
+                                                                onChange={(e) =>
+                                                                    field.onChange(
+                                                                        e.target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
 
-                                        {form.watch("certResolver") !== null &&
-                                            form.watch("certResolver") !== "default" && (
-                                                <FormField
-                                                    control={form.control}
-                                                    name="preferWildcardCert"
-                                                    render={({ field: checkboxField }) => (
-                                                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                                            <FormControl>
-                                                                <CheckboxWithLabel
-                                                                    label={t("preferWildcardCert")}
-                                                                    checked={checkboxField.value}
-                                                                    onCheckedChange={checkboxField.onChange}
-                                                                />
-                                                            </FormControl>
-                                                                    {/* <div className="space-y-1 leading-none">
+                                    {form.watch("certResolver") !== null &&
+                                        form.watch("certResolver") !==
+                                            "default" && (
+                                            <FormField
+                                                control={form.control}
+                                                name="preferWildcardCert"
+                                                render={({
+                                                    field: checkboxField
+                                                }) => (
+                                                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                                        <FormControl>
+                                                            <CheckboxWithLabel
+                                                                label={t(
+                                                                    "preferWildcardCert"
+                                                                )}
+                                                                checked={
+                                                                    checkboxField.value
+                                                                }
+                                                                onCheckedChange={
+                                                                    checkboxField.onChange
+                                                                }
+                                                            />
+                                                        </FormControl>
+                                                        {/* <div className="space-y-1 leading-none">
                                                                         <FormLabel>
                                                                             {t("preferWildcardCert")}
                                                                         </FormLabel>
                                                                     </div> */}
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            )}
-                                    </>
-                                )}
-                            </form>
-                        </Form>
-
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        )}
+                                </>
+                            )}
+                        </form>
+                    </Form>
                 </CredenzaBody>
                 <CredenzaFooter>
                     <CredenzaClose asChild>

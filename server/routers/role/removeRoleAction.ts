@@ -10,12 +10,12 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const removeRoleActionParamsSchema = z.strictObject({
-        roleId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    roleId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 const removeRoleActionSchema = z.strictObject({
-        actionId: z.string()
-    });
+    actionId: z.string()
+});
 
 export async function removeRoleAction(
     req: Request,

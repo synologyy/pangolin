@@ -11,12 +11,9 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const deleteResourceRuleSchema = z.strictObject({
-        ruleId: z.string().transform(Number).pipe(z.int().positive()),
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    ruleId: z.string().transform(Number).pipe(z.int().positive()),
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "delete",

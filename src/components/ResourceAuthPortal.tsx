@@ -335,8 +335,12 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             : t("authenticationRequest", { name: resourceName });
     }
 
-    const logoWidth = isUnlocked() ? env.branding.logo?.authPage?.width || 100 : 100;
-    const logoHeight = isUnlocked() ? env.branding.logo?.authPage?.height || 100 : 100;
+    const logoWidth = isUnlocked()
+        ? env.branding.logo?.authPage?.width || 100
+        : 100;
+    const logoHeight = isUnlocked()
+        ? env.branding.logo?.authPage?.height || 100
+        : 100;
 
     return (
         <div>

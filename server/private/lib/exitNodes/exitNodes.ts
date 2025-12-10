@@ -44,43 +44,53 @@ async function checkExitNodeOnlineStatus(
     const delayBetweenAttempts = 100; // 100ms delay between starting each attempt
 
     // Create promises for all attempts with staggered delays
-    const attemptPromises = Array.from({ length: maxAttempts }, async (_, index) => {
-        const attemptNumber = index + 1;
-        
-        // Add delay before each attempt (except the first)
-        if (index > 0) {
-            await new Promise((resolve) => setTimeout(resolve, delayBetweenAttempts * index));
-        }
+    const attemptPromises = Array.from(
+        { length: maxAttempts },
+        async (_, index) => {
+            const attemptNumber = index + 1;
 
-        try {
-            const response = await axios.get(`http://${endpoint}/ping`, {
-                timeout: timeoutMs,
-                validateStatus: (status) => status === 200
-            });
-
-            if (response.status === 200) {
-                logger.debug(
-                    `Exit node ${endpoint} is online (attempt ${attemptNumber}/${maxAttempts})`
+            // Add delay before each attempt (except the first)
+            if (index > 0) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, delayBetweenAttempts * index)
                 );
-                return { success: true, attemptNumber };
             }
-            return { success: false, attemptNumber, error: 'Non-200 status' };
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "Unknown error";
-            logger.debug(
-                `Exit node ${endpoint} ping failed (attempt ${attemptNumber}/${maxAttempts}): ${errorMessage}`
-            );
-            return { success: false, attemptNumber, error: errorMessage };
+
+            try {
+                const response = await axios.get(`http://${endpoint}/ping`, {
+                    timeout: timeoutMs,
+                    validateStatus: (status) => status === 200
+                });
+
+                if (response.status === 200) {
+                    logger.debug(
+                        `Exit node ${endpoint} is online (attempt ${attemptNumber}/${maxAttempts})`
+                    );
+                    return { success: true, attemptNumber };
+                }
+                return {
+                    success: false,
+                    attemptNumber,
+                    error: "Non-200 status"
+                };
+            } catch (error) {
+                const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error";
+                logger.debug(
+                    `Exit node ${endpoint} ping failed (attempt ${attemptNumber}/${maxAttempts}): ${errorMessage}`
+                );
+                return { success: false, attemptNumber, error: errorMessage };
+            }
         }
-    });
+    );
 
     try {
         // Wait for the first successful response or all to fail
         const results = await Promise.allSettled(attemptPromises);
-        
+
         // Check if any attempt succeeded
         for (const result of results) {
-            if (result.status === 'fulfilled' && result.value.success) {
+            if (result.status === "fulfilled" && result.value.success) {
                 return true;
             }
         }
@@ -137,7 +147,11 @@ export async function verifyExitNodeOrgAccess(
     return { hasAccess: false, exitNode };
 }
 
-export async function listExitNodes(orgId: string, filterOnline = false, noCloud = false) {
+export async function listExitNodes(
+    orgId: string,
+    filterOnline = false,
+    noCloud = false
+) {
     const allExitNodes = await db
         .select({
             exitNodeId: exitNodes.exitNodeId,
@@ -166,7 +180,10 @@ export async function listExitNodes(orgId: string, filterOnline = false, noCloud
                     eq(exitNodes.type, "gerbil"),
                     or(
                         // only choose nodes that are in the same region
-                        eq(exitNodes.region, config.getRawPrivateConfig().app.region),
+                        eq(
+                            exitNodes.region,
+                            config.getRawPrivateConfig().app.region
+                        ),
                         isNull(exitNodes.region) // or for enterprise where region is not set
                     )
                 ),
@@ -191,7 +208,7 @@ export async function listExitNodes(orgId: string, filterOnline = false, noCloud
     //         let online: boolean;
     //         if (filterOnline && node.type == "remoteExitNode") {
     //             try {
-    //                 const isActuallyOnline = await checkExitNodeOnlineStatus( 
+    //                 const isActuallyOnline = await checkExitNodeOnlineStatus(
     //                     node.endpoint
     //                 );
 
@@ -225,7 +242,8 @@ export async function listExitNodes(orgId: string, filterOnline = false, noCloud
             node.type === "remoteExitNode" && (!filterOnline || node.online)
     );
     const gerbilExitNodes = allExitNodes.filter(
-        (node) => node.type === "gerbil" && (!filterOnline || node.online) && !noCloud
+        (node) =>
+            node.type === "gerbil" && (!filterOnline || node.online) && !noCloud
     );
 
     // THIS PROVIDES THE FALL
@@ -334,7 +352,11 @@ export function selectBestExitNode(
     return fallbackNode;
 }
 
-export async function checkExitNodeOrg(exitNodeId: number, orgId: string, trx: Transaction | typeof db = db) {
+export async function checkExitNodeOrg(
+    exitNodeId: number,
+    orgId: string,
+    trx: Transaction | typeof db = db
+) {
     const [exitNodeOrg] = await trx
         .select()
         .from(exitNodeOrgs)

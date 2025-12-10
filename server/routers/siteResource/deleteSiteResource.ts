@@ -106,7 +106,10 @@ export async function deleteSiteResource(
                 );
             }
 
-            await rebuildClientAssociationsFromSiteResource(removedSiteResource, trx);
+            await rebuildClientAssociationsFromSiteResource(
+                removedSiteResource,
+                trx
+            );
         });
 
         logger.info(

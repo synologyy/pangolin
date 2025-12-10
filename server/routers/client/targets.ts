@@ -1,5 +1,5 @@
 import { sendToClient } from "#dynamic/routers/ws";
-import { db, olms } from "@server/db";
+import { db, olms, Transaction } from "@server/db";
 import { Alias, SubnetProxyTarget } from "@server/lib/ip";
 import logger from "@server/logger";
 import { eq } from "drizzle-orm";
@@ -101,14 +101,18 @@ export async function removePeerData(
 export async function updatePeerData(
     clientId: number,
     siteId: number,
-    remoteSubnets: {
-        oldRemoteSubnets: string[];
-        newRemoteSubnets: string[];
-    } | undefined,
-    aliases: {
-        oldAliases: Alias[];
-        newAliases: Alias[];
-    } | undefined,
+    remoteSubnets:
+        | {
+              oldRemoteSubnets: string[];
+              newRemoteSubnets: string[];
+          }
+        | undefined,
+    aliases:
+        | {
+              oldAliases: Alias[];
+              newAliases: Alias[];
+          }
+        | undefined,
     olmId?: string
 ) {
     if (!olmId) {

@@ -11,23 +11,23 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const listDomainsParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listDomainsSchema = z.strictObject({
-        limit: z
-            .string()
-            .optional()
-            .default("1000")
-            .transform(Number)
-            .pipe(z.int().nonnegative()),
-        offset: z
-            .string()
-            .optional()
-            .default("0")
-            .transform(Number)
-            .pipe(z.int().nonnegative())
-    });
+    limit: z
+        .string()
+        .optional()
+        .default("1000")
+        .transform(Number)
+        .pipe(z.int().nonnegative()),
+    offset: z
+        .string()
+        .optional()
+        .default("0")
+        .transform(Number)
+        .pipe(z.int().nonnegative())
+});
 
 async function queryDomains(orgId: string, limit: number, offset: number) {
     const res = await db

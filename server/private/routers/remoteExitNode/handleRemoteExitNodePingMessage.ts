@@ -33,7 +33,9 @@ export const startRemoteExitNodeOfflineChecker = (): void => {
 
     offlineCheckerInterval = setInterval(async () => {
         try {
-            const twoMinutesAgo = Math.floor((Date.now() - OFFLINE_THRESHOLD_MS) / 1000);
+            const twoMinutesAgo = Math.floor(
+                (Date.now() - OFFLINE_THRESHOLD_MS) / 1000
+            );
 
             // Find clients that haven't pinged in the last 2 minutes and mark them as offline
             const newlyOfflineNodes = await db
@@ -48,11 +50,13 @@ export const startRemoteExitNodeOfflineChecker = (): void => {
                             isNull(exitNodes.lastPing)
                         )
                     )
-                ).returning();
-
+                )
+                .returning();
 
             // Update the sites to offline if they have not pinged either
-            const exitNodeIds = newlyOfflineNodes.map(node => node.exitNodeId);
+            const exitNodeIds = newlyOfflineNodes.map(
+                (node) => node.exitNodeId
+            );
 
             const sitesOnNode = await db
                 .select()
@@ -77,7 +81,6 @@ export const startRemoteExitNodeOfflineChecker = (): void => {
                         .where(eq(sites.siteId, site.siteId));
                 }
             }
-
         } catch (error) {
             logger.error("Error in offline checker interval", { error });
         }
@@ -100,7 +103,9 @@ export const stopRemoteExitNodeOfflineChecker = (): void => {
 /**
  * Handles ping messages from clients and responds with pong
  */
-export const handleRemoteExitNodePingMessage: MessageHandler = async (context) => {
+export const handleRemoteExitNodePingMessage: MessageHandler = async (
+    context
+) => {
     const { message, client: c, sendToClient } = context;
     const remoteExitNode = c as RemoteExitNode;
 
@@ -120,7 +125,7 @@ export const handleRemoteExitNodePingMessage: MessageHandler = async (context) =
             .update(exitNodes)
             .set({
                 lastPing: Math.floor(Date.now() / 1000),
-                online: true,
+                online: true
             })
             .where(eq(exitNodes.exitNodeId, remoteExitNode.exitNodeId));
     } catch (error) {
@@ -131,7 +136,7 @@ export const handleRemoteExitNodePingMessage: MessageHandler = async (context) =
         message: {
             type: "pong",
             data: {
-                timestamp: new Date().toISOString(),
+                timestamp: new Date().toISOString()
             }
         },
         broadcast: false,

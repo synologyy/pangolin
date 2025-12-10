@@ -33,6 +33,8 @@ import {
     generateAliasConfig,
     generateRemoteSubnets,
     generateSubnetProxyTargets,
+    parseEndpoint,
+    formatEndpoint
 } from "@server/lib/ip";
 import {
     addPeerData,
@@ -109,21 +111,22 @@ export async function getClientSiteResourceAccess(
     const directClientIds = allClientSiteResources.map((row) => row.clientId);
 
     // Get full client details for directly associated clients
-    const directClients = directClientIds.length > 0
-        ? await trx
-              .select({
-                  clientId: clients.clientId,
-                  pubKey: clients.pubKey,
-                  subnet: clients.subnet
-              })
-              .from(clients)
-              .where(
-                  and(
-                      inArray(clients.clientId, directClientIds),
-                      eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+    const directClients =
+        directClientIds.length > 0
+            ? await trx
+                  .select({
+                      clientId: clients.clientId,
+                      pubKey: clients.pubKey,
+                      subnet: clients.subnet
+                  })
+                  .from(clients)
+                  .where(
+                      and(
+                          inArray(clients.clientId, directClientIds),
+                          eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+                      )
                   )
-              )
-        : [];
+            : [];
 
     // Merge user-based clients with directly associated clients
     const allClientsMap = new Map(
@@ -541,6 +544,13 @@ export async function updateClientSiteDestinations(
             continue;
         }
 
+        // Parse the endpoint properly for both IPv4 and IPv6
+        const parsedEndpoint = parseEndpoint(site.clientSitesAssociationsCache.endpoint);
+        if (!parsedEndpoint) {
+            logger.warn(`Failed to parse endpoint ${site.clientSitesAssociationsCache.endpoint}, skipping`);
+            continue;
+        }
+
         // find the destinations in the array
         let destinations = exitNodeDestinations.find(
             (d) => d.reachableAt === site.exitNodes?.reachableAt
@@ -552,13 +562,8 @@ export async function updateClientSiteDestinations(
                 exitNodeId: site.exitNodes?.exitNodeId || 0,
                 type: site.exitNodes?.type || "",
                 name: site.exitNodes?.name || "",
-                sourceIp:
-                    site.clientSitesAssociationsCache.endpoint.split(":")[0] ||
-                    "",
-                sourcePort:
-                    parseInt(
-                        site.clientSitesAssociationsCache.endpoint.split(":")[1]
-                    ) || 0,
+                sourceIp: parsedEndpoint.ip,
+                sourcePort: parsedEndpoint.port,
                 destinations: [
                     {
                         destinationIP: site.sites.subnet.split("/")[0],
@@ -701,11 +706,46 @@ async function handleSubnetProxyTargetUpdates(
             }
 
             for (const client of removedClients) {
+                // Check if this client still has access to another resource on this site with the same destination
+                const destinationStillInUse = await trx
+                    .select()
+                    .from(siteResources)
+                    .innerJoin(
+                        clientSiteResourcesAssociationsCache,
+                        eq(
+                            clientSiteResourcesAssociationsCache.siteResourceId,
+                            siteResources.siteResourceId
+                        )
+                    )
+                    .where(
+                        and(
+                            eq(
+                                clientSiteResourcesAssociationsCache.clientId,
+                                client.clientId
+                            ),
+                            eq(siteResources.siteId, siteResource.siteId),
+                            eq(
+                                siteResources.destination,
+                                siteResource.destination
+                            ),
+                            ne(
+                                siteResources.siteResourceId,
+                                siteResource.siteResourceId
+                            )
+                        )
+                    );
+
+                // Only remove remote subnet if no other resource uses the same destination
+                const remoteSubnetsToRemove =
+                    destinationStillInUse.length > 0
+                        ? []
+                        : generateRemoteSubnets([siteResource]);
+
                 olmJobs.push(
                     removePeerData(
                         client.clientId,
                         siteResource.siteId,
-                        generateRemoteSubnets([siteResource]),
+                        remoteSubnetsToRemove,
                         generateAliasConfig([siteResource])
                     )
                 );
@@ -783,7 +823,10 @@ export async function rebuildClientAssociationsFromClient(
                 .from(roleSiteResources)
                 .innerJoin(
                     siteResources,
-                    eq(siteResources.siteResourceId, roleSiteResources.siteResourceId)
+                    eq(
+                        siteResources.siteResourceId,
+                        roleSiteResources.siteResourceId
+                    )
                 )
                 .where(
                     and(
@@ -1213,12 +1256,47 @@ async function handleMessagesForClientResources(
                 }
 
                 try {
+                    // Check if this client still has access to another resource on this site with the same destination
+                    const destinationStillInUse = await trx
+                        .select()
+                        .from(siteResources)
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                clientSiteResourcesAssociationsCache.siteResourceId,
+                                siteResources.siteResourceId
+                            )
+                        )
+                        .where(
+                            and(
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clientId
+                                ),
+                                eq(siteResources.siteId, resource.siteId),
+                                eq(
+                                    siteResources.destination,
+                                    resource.destination
+                                ),
+                                ne(
+                                    siteResources.siteResourceId,
+                                    resource.siteResourceId
+                                )
+                            )
+                        );
+
+                    // Only remove remote subnet if no other resource uses the same destination
+                    const remoteSubnetsToRemove =
+                        destinationStillInUse.length > 0
+                            ? []
+                            : generateRemoteSubnets([resource]);
+
                     // Remove peer data from olm
                     olmJobs.push(
                         removePeerData(
                             client.clientId,
                             resource.siteId,
-                            generateRemoteSubnets([resource]),
+                            remoteSubnetsToRemove,
                             generateAliasConfig([resource])
                         )
                     );

@@ -27,7 +27,7 @@ export function ResourceProvider({
 
     const updateResource = (updatedResource: Partial<GetResourceResponse>) => {
         if (!resource) {
-            throw new Error(t('resourceErrorNoUpdate'));
+            throw new Error(t("resourceErrorNoUpdate"));
         }
 
         setResource((prev) => {
@@ -46,7 +46,7 @@ export function ResourceProvider({
         updatedAuthInfo: Partial<GetResourceAuthInfoResponse>
     ) => {
         if (!authInfo) {
-            throw new Error(t('authErrorNoUpdate'));
+            throw new Error(t("authErrorNoUpdate"));
         }
 
         setAuthInfo((prev) => {

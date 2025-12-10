@@ -15,9 +15,9 @@ import { FeatureId } from "@server/lib/billing";
 import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const acceptInviteBodySchema = z.strictObject({
-        token: z.string(),
-        inviteId: z.string()
-    });
+    token: z.string(),
+    inviteId: z.string()
+});
 
 export type AcceptInviteResponse = {
     accepted: boolean;

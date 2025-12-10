@@ -1,5 +1,3 @@
-export function constructShareLink(
-    token: string
-) {
+export function constructShareLink(token: string) {
     return `${window.location.origin}/s/${token!}`;
 }

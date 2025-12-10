@@ -56,13 +56,15 @@ export function SidebarSupportButton({
     const t = useTranslations();
 
     const form = useForm<SupportFormValues>({
-        resolver: zodResolver(z.object({
-            subject: z
-                .string()
-                .min(1, t("supportSubjectRequired"))
-                .max(255, t("supportSubjectMaxLength")),
-            body: z.string().min(1, t("supportMessageRequired"))
-        })),
+        resolver: zodResolver(
+            z.object({
+                subject: z
+                    .string()
+                    .min(1, t("supportSubjectRequired"))
+                    .max(255, t("supportSubjectMaxLength")),
+                body: z.string().min(1, t("supportMessageRequired"))
+            })
+        ),
         defaultValues: {
             subject: "",
             body: ""
@@ -127,7 +129,9 @@ export function SidebarSupportButton({
                                 </PopoverTrigger>
                             </TooltipTrigger>
                             <TooltipContent side="right" sideOffset={8}>
-                                <p>{t("support", { defaultValue: "Support" })}</p>
+                                <p>
+                                    {t("support", { defaultValue: "Support" })}
+                                </p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -195,7 +199,9 @@ export function SidebarSupportButton({
                 {isSuccess ? (
                     <div className="flex flex-col items-center justify-center py-8 space-y-4">
                         <CheckCircle2 className="h-16 w-16 text-green-500" />
-                        <h3 className="text-lg font-semibold">{t("supportMessageSent")}</h3>
+                        <h3 className="text-lg font-semibold">
+                            {t("supportMessageSent")}
+                        </h3>
                         <p className="text-sm text-muted-foreground text-center">
                             {t("supportWillContact")}
                         </p>
@@ -206,68 +212,77 @@ export function SidebarSupportButton({
                             onSubmit={form.handleSubmit(onSubmit)}
                             className="space-y-4"
                         >
-                        <FormItem>
-                            <FormLabel>{t("supportReplyTo")}</FormLabel>
-                            <FormControl>
-                                <Input
-                                    value={user?.email || ""}
-                                    disabled
-                                />
-                            </FormControl>
-                        </FormItem>
+                            <FormItem>
+                                <FormLabel>{t("supportReplyTo")}</FormLabel>
+                                <FormControl>
+                                    <Input value={user?.email || ""} disabled />
+                                </FormControl>
+                            </FormItem>
 
-                        <FormField
-                            control={form.control}
-                            name="subject"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t("supportSubject")}</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder={t("supportSubjectPlaceholder")}
-                                            disabled={isSubmitting}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            <FormField
+                                control={form.control}
+                                name="subject"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {t("supportSubject")}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder={t(
+                                                    "supportSubjectPlaceholder"
+                                                )}
+                                                disabled={isSubmitting}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <FormField
-                            control={form.control}
-                            name="body"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>{t("supportMessage")}</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder={t("supportMessagePlaceholder")}
-                                            rows={5}
-                                            disabled={isSubmitting}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                            <FormField
+                                control={form.control}
+                                name="body"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {t("supportMessage")}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Textarea
+                                                placeholder={t(
+                                                    "supportMessagePlaceholder"
+                                                )}
+                                                rows={5}
+                                                disabled={isSubmitting}
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setIsOpen(false)}
-                                disabled={isSubmitting}
-                            >
-                                {t("cancel")}
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting} loading={isSubmitting}>
-                                {t("supportSend")}
-                            </Button>
-                        </div>
-                    </form>
-                </Form>
+                            <div className="flex justify-end gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => setIsOpen(false)}
+                                    disabled={isSubmitting}
+                                >
+                                    {t("cancel")}
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    loading={isSubmitting}
+                                >
+                                    {t("supportSend")}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
                 )}
             </PopoverContent>
         </Popover>

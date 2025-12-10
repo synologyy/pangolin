@@ -177,7 +177,7 @@ export const targetHealthCheck = pgTable("targetHealthCheck", {
     hcMethod: varchar("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
-    hcTlsServerName: text("hcTlsServerName"),
+    hcTlsServerName: text("hcTlsServerName")
 });
 
 export const exitNodes = pgTable("exitNodes", {
