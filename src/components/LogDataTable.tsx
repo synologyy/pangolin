@@ -31,13 +31,52 @@ import {
     RefreshCw
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger
 } from "./ui/tooltip";
+
+const STORAGE_KEYS = {
+    PAGE_SIZE: "datatable-page-size",
+    getTablePageSize: (tableId?: string) =>
+        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
+};
+
+export const getStoredPageSize = (
+    tableId?: string,
+    defaultSize = 20
+): number => {
+    if (typeof window === "undefined") return defaultSize;
+
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            const parsed = parseInt(stored, 10);
+            // Validate that it's a reasonable page size
+            if (parsed > 0 && parsed <= 1000) {
+                return parsed;
+            }
+        }
+    } catch (error) {
+        console.warn("Failed to read page size from localStorage:", error);
+    }
+    return defaultSize;
+};
+
+export const setStoredPageSize = (pageSize: number, tableId?: string): void => {
+    if (typeof window === "undefined") return;
+
+    try {
+        const key = STORAGE_KEYS.getTablePageSize(tableId);
+        localStorage.setItem(key, pageSize.toString());
+    } catch (error) {
+        console.warn("Failed to save page size to localStorage:", error);
+    }
+};
 
 type TabFilter = {
     id: string;
