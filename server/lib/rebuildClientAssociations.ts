@@ -24,7 +24,7 @@ import {
     deletePeer as newtDeletePeer
 } from "@server/routers/newt/peers";
 import {
-    initPeerAddHandshake as holepunchSiteAdd,
+    initPeerAddHandshake,
     deletePeer as olmDeletePeer
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
@@ -477,7 +477,7 @@ async function handleMessagesForSiteClients(
         }
 
         if (isAdd) {
-            await holepunchSiteAdd(
+            await initPeerAddHandshake(
                 // this will kick off the add peer process for the client
                 client.clientId,
                 {
@@ -545,9 +545,13 @@ export async function updateClientSiteDestinations(
         }
 
         // Parse the endpoint properly for both IPv4 and IPv6
-        const parsedEndpoint = parseEndpoint(site.clientSitesAssociationsCache.endpoint);
+        const parsedEndpoint = parseEndpoint(
+            site.clientSitesAssociationsCache.endpoint
+        );
         if (!parsedEndpoint) {
-            logger.warn(`Failed to parse endpoint ${site.clientSitesAssociationsCache.endpoint}, skipping`);
+            logger.warn(
+                `Failed to parse endpoint ${site.clientSitesAssociationsCache.endpoint}, skipping`
+            );
             continue;
         }
 
