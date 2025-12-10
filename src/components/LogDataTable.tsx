@@ -32,6 +32,12 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "./ui/tooltip";
 
 type TabFilter = {
     id: string;
@@ -351,17 +357,28 @@ export function LogDataTable<TData, TValue>({
                             </Button>
                         )}
                         {onExport && (
-                            <Button
-                                onClick={() => !disabled && onExport()}
-                                disabled={isExporting || disabled}
-                            >
-                                {isExporting ? (
-                                    <Loader className="mr-2 size-4 animate-spin" />
-                                ) : (
-                                    <Download className="mr-2 size-4" />
-                                )}
-                                {t("exportCsv")}
-                            </Button>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            onClick={() =>
+                                                !disabled && onExport()
+                                            }
+                                            disabled={isExporting || disabled}
+                                        >
+                                            {isExporting ? (
+                                                <Loader className="mr-2 size-4 animate-spin" />
+                                            ) : (
+                                                <Download className="mr-2 size-4" />
+                                            )}
+                                            {t("exportCsv")}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {t("exportCsvTooltip")}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         )}
                     </div>
                 </CardHeader>
