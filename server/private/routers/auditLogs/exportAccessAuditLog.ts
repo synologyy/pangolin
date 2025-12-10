@@ -72,7 +72,7 @@ export async function exportAccessAuditLogs(
             return next(
                 createHttpError(
                     HttpCode.BAD_REQUEST,
-                    `Export limit exceeded. Your selection contains ${count} rows, but the maximum is [${MAX_EXPORT_LIMIT}] rows. Please select a shorter time range to reduce the data.`
+                    `Export limit exceeded. Your selection contains ${count} rows, but the maximum is ${MAX_EXPORT_LIMIT} rows. Please select a shorter time range to reduce the data.`
                 )
             );
         }
