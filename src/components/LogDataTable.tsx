@@ -1,17 +1,6 @@
 "use client";
 
 import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-    getPaginationRowModel,
-    SortingState,
-    getSortedRowModel,
-    ColumnFiltersState,
-    getFilteredRowModel
-} from "@tanstack/react-table";
-import {
     Table,
     TableBody,
     TableCell,
@@ -19,75 +8,30 @@ import {
     TableHeader,
     TableRow
 } from "@/components/ui/table";
-import { Button } from "@app/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
-import { Input } from "@app/components/ui/input";
 import { DataTablePagination } from "@app/components/DataTablePagination";
-import {
-    Plus,
-    Search,
-    RefreshCw,
-    Filter,
-    X,
-    Download,
-    ChevronRight,
-    ChevronDown
-} from "lucide-react";
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle
-} from "@app/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
-import { useTranslations } from "next-intl";
 import { DateRangePicker, DateTimeValue } from "@app/components/DateTimePicker";
+import { Button } from "@app/components/ui/button";
+import { Card, CardContent, CardHeader } from "@app/components/ui/card";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "./ui/tooltip";
-
-const STORAGE_KEYS = {
-    PAGE_SIZE: "datatable-page-size",
-    getTablePageSize: (tableId?: string) =>
-        tableId ? `${tableId}-size` : STORAGE_KEYS.PAGE_SIZE
-};
-
-export const getStoredPageSize = (
-    tableId?: string,
-
-    defaultSize = 20
-): number => {
-    if (typeof window === "undefined") return defaultSize;
-
-    try {
-        const key = STORAGE_KEYS.getTablePageSize(tableId);
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            const parsed = parseInt(stored, 10);
-            // Validate that it's a reasonable page size
-            if (parsed > 0 && parsed <= 1000) {
-                return parsed;
-            }
-        }
-    } catch (error) {
-        console.warn("Failed to read page size from localStorage:", error);
-    }
-    return defaultSize;
-};
-
-export const setStoredPageSize = (pageSize: number, tableId?: string): void => {
-    if (typeof window === "undefined") return;
-
-    try {
-        const key = STORAGE_KEYS.getTablePageSize(tableId);
-        localStorage.setItem(key, pageSize.toString());
-    } catch (error) {
-        console.warn("Failed to save page size to localStorage:", error);
-    }
-};
+    ColumnDef,
+    ColumnFiltersState,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable
+} from "@tanstack/react-table";
+import {
+    ChevronDown,
+    ChevronRight,
+    Download,
+    Loader,
+    RefreshCw
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 
 type TabFilter = {
     id: string;
@@ -411,9 +355,11 @@ export function LogDataTable<TData, TValue>({
                                 onClick={() => !disabled && onExport()}
                                 disabled={isExporting || disabled}
                             >
-                                <Download
-                                    className={`mr-2 h-4 w-4 ${isExporting ? "animate-spin" : ""}`}
-                                />
+                                {isExporting ? (
+                                    <Loader className="mr-2 size-4 animate-spin" />
+                                ) : (
+                                    <Download className="mr-2 size-4" />
+                                )}
                                 {t("exportCsv")}
                             </Button>
                         )}

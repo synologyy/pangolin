@@ -1,25 +1,23 @@
 "use client";
 import { ColumnFilter } from "@app/components/ColumnFilter";
 import { DateTimeValue } from "@app/components/DateTimePicker";
-import {
-    getStoredPageSize,
-    LogDataTable,
-    setStoredPageSize
-} from "@app/components/LogDataTable";
+import { LogDataTable } from "@app/components/LogDataTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
+import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient } from "@app/lib/api";
 import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 import { build } from "@server/build";
 import { ColumnDef } from "@tanstack/react-table";
+import axios from "axios";
 import { Key, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 export default function GeneralPage() {
     const router = useRouter();
@@ -32,7 +30,7 @@ export default function GeneralPage() {
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
+    const [isExporting, startTransition] = useTransition();
     const [filterAttributes, setFilterAttributes] = useState<{
         actors: string[];
         actions: string[];
@@ -56,9 +54,7 @@ export default function GeneralPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Initialize page size from storage or default
-    const [pageSize, setPageSize] = useState<number>(() => {
-        return getStoredPageSize("action-audit-logs", 20);
-    });
+    const [pageSize, setPageSize] = useStoredPageSize("action-audit-logs", 20);
 
     // Set default date range to last 24 hours
     const getDefaultDateRange = () => {
@@ -134,7 +130,6 @@ export default function GeneralPage() {
     // Handle page size changes
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
-        setStoredPageSize(newPageSize, "action-audit-logs");
         setCurrentPage(0); // Reset to first page when changing page size
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
@@ -291,8 +286,6 @@ export default function GeneralPage() {
 
     const exportData = async () => {
         try {
-            setIsExporting(true);
-
             // Prepare query params for export
             const params: any = {
                 timeStart: dateRange.startDate?.date
@@ -321,11 +314,21 @@ export default function GeneralPage() {
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-            setIsExporting(false);
         } catch (error) {
+            let apiErrorMessage: string | null = null;
+            if (axios.isAxiosError(error) && error.response) {
+                const data = error.response.data;
+
+                if (data instanceof Blob && data.type === "application/json") {
+                    // Parse the Blob as JSON
+                    const text = await data.text();
+                    const errorData = JSON.parse(text);
+                    apiErrorMessage = errorData.message;
+                }
+            }
             toast({
                 title: t("error"),
-                description: t("exportError"),
+                description: apiErrorMessage ?? t("exportError"),
                 variant: "destructive"
             });
         }
@@ -482,7 +485,7 @@ export default function GeneralPage() {
                 searchColumn="action"
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
-                onExport={exportData}
+                onExport={() => startTransition(exportData)}
                 isExporting={isExporting}
                 onDateRangeChange={handleDateRangeChange}
                 dateRange={{

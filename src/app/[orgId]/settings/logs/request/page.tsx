@@ -1,11 +1,7 @@
 "use client";
 import { ColumnFilter } from "@app/components/ColumnFilter";
 import { DateTimeValue } from "@app/components/DateTimePicker";
-import {
-    getStoredPageSize,
-    LogDataTable,
-    setStoredPageSize
-} from "@app/components/LogDataTable";
+import { LogDataTable } from "@app/components/LogDataTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
 import { Button } from "@app/components/ui/button";
 import { useEnvContext } from "@app/hooks/useEnvContext";
@@ -19,6 +15,7 @@ import { ArrowUpRight, Key, Lock, Unlock, User } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 
 export default function GeneralPage() {
     const router = useRouter();
@@ -37,9 +34,7 @@ export default function GeneralPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Initialize page size from storage or default
-    const [pageSize, setPageSize] = useState<number>(() => {
-        return getStoredPageSize("request-audit-logs", 20);
-    });
+    const [pageSize, setPageSize] = useStoredPageSize("request-audit-logs", 20);
 
     const [filterAttributes, setFilterAttributes] = useState<{
         actors: string[];
@@ -153,7 +148,6 @@ export default function GeneralPage() {
     // Handle page size changes
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
-        setStoredPageSize(newPageSize, "request-audit-logs");
         setCurrentPage(0); // Reset to first page when changing page size
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
