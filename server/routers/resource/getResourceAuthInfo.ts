@@ -16,8 +16,8 @@ import logger from "@server/logger";
 import { build } from "@server/build";
 
 const getResourceAuthInfoSchema = z.strictObject({
-        resourceGuid: z.string()
-    });
+    resourceGuid: z.string()
+});
 
 export type GetResourceAuthInfoResponse = {
     resourceId: number;

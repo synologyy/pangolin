@@ -117,6 +117,68 @@ function bigIntToIp(num: bigint, version: IPVersion): string {
 }
 
 /**
+ * Parses an endpoint string (ip:port) handling both IPv4 and IPv6 addresses.
+ * IPv6 addresses may be bracketed like [::1]:8080 or unbracketed like ::1:8080.
+ * For unbracketed IPv6, the last colon-separated segment is treated as the port.
+ * 
+ * @param endpoint The endpoint string to parse (e.g., "192.168.1.1:8080" or "[::1]:8080" or "2607:fea8::1:8080")
+ * @returns An object with ip and port, or null if parsing fails
+ */
+export function parseEndpoint(endpoint: string): { ip: string; port: number } | null {
+    if (!endpoint) return null;
+
+    // Check for bracketed IPv6 format: [ip]:port
+    const bracketedMatch = endpoint.match(/^\[([^\]]+)\]:(\d+)$/);
+    if (bracketedMatch) {
+        const ip = bracketedMatch[1];
+        const port = parseInt(bracketedMatch[2], 10);
+        if (isNaN(port)) return null;
+        return { ip, port };
+    }
+
+    // Check if this looks like IPv6 (contains multiple colons)
+    const colonCount = (endpoint.match(/:/g) || []).length;
+    
+    if (colonCount > 1) {
+        // This is IPv6 - the port is after the last colon
+        const lastColonIndex = endpoint.lastIndexOf(":");
+        const ip = endpoint.substring(0, lastColonIndex);
+        const portStr = endpoint.substring(lastColonIndex + 1);
+        const port = parseInt(portStr, 10);
+        if (isNaN(port)) return null;
+        return { ip, port };
+    }
+
+    // IPv4 format: ip:port
+    if (colonCount === 1) {
+        const [ip, portStr] = endpoint.split(":");
+        const port = parseInt(portStr, 10);
+        if (isNaN(port)) return null;
+        return { ip, port };
+    }
+
+    return null;
+}
+
+/**
+ * Formats an IP and port into a consistent endpoint string.
+ * IPv6 addresses are wrapped in brackets for proper parsing.
+ * 
+ * @param ip The IP address (IPv4 or IPv6)
+ * @param port The port number
+ * @returns Formatted endpoint string
+ */
+export function formatEndpoint(ip: string, port: number): string {
+    // Check if this is IPv6 (contains colons)
+    if (ip.includes(":")) {
+        // Remove brackets if already present
+        const cleanIp = ip.replace(/^\[|\]$/g, "");
+        return `[${cleanIp}]:${port}`;
+    }
+    return `${ip}:${port}`;
+}
+
+/**
  * Converts CIDR to IP range
  */
 export function cidrToRange(cidr: string): IPRange {
@@ -244,9 +306,13 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
 }
 
 export async function getNextAvailableClientSubnet(
-    orgId: string
+    orgId: string,
+    transaction: Transaction | typeof db = db
 ): Promise<string> {
-    const [org] = await db.select().from(orgs).where(eq(orgs.orgId, orgId));
+    const [org] = await transaction
+        .select()
+        .from(orgs)
+        .where(eq(orgs.orgId, orgId));
 
     if (!org) {
         throw new Error(`Organization with ID ${orgId} not found`);
@@ -256,14 +322,14 @@ export async function getNextAvailableClientSubnet(
         throw new Error(`Organization with ID ${orgId} has no subnet defined`);
     }
 
-    const existingAddressesSites = await db
+    const existingAddressesSites = await transaction
         .select({
             address: sites.address
         })
         .from(sites)
         .where(and(isNotNull(sites.address), eq(sites.orgId, orgId)));
 
-    const existingAddressesClients = await db
+    const existingAddressesClients = await transaction
         .select({
             address: clients.subnet
         })
@@ -359,7 +425,9 @@ export async function getNextAvailableOrgSubnet(): Promise<string> {
     return subnet;
 }
 
-export function generateRemoteSubnets(allSiteResources: SiteResource[]): string[] {
+export function generateRemoteSubnets(
+    allSiteResources: SiteResource[]
+): string[] {
     const remoteSubnets = allSiteResources
         .filter((sr) => {
             if (sr.mode === "cidr") return true;

@@ -6,10 +6,10 @@ export type CreateOrgIdpResponse = {
 };
 
 export type GetOrgIdpResponse = {
-    idp: Idp,
-    idpOidcConfig: IdpOidcConfig | null,
-    redirectUrl: string
-}
+    idp: Idp;
+    idpOidcConfig: IdpOidcConfig | null;
+    redirectUrl: string;
+};
 
 export type ListOrgIdpsResponse = {
     idps: {
@@ -18,7 +18,7 @@ export type ListOrgIdpsResponse = {
         name: string;
         type: string;
         variant: string;
-    }[],
+    }[];
     pagination: {
         total: number;
         limit: number;

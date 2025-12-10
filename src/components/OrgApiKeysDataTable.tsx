@@ -19,7 +19,6 @@ export function OrgApiKeysDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -27,13 +26,13 @@ export function OrgApiKeysDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="Org-apikeys-table"
-            title={t('apiKeys')}
-            searchPlaceholder={t('searchApiKeys')}
+            title={t("apiKeys")}
+            searchPlaceholder={t("searchApiKeys")}
             searchColumn="name"
             onAdd={addApiKey}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
-            addButtonText={t('apiKeysAdd')}
+            addButtonText={t("apiKeysAdd")}
             enableColumnVisibility={true}
             stickyLeftColumn="name"
             stickyRightColumn="actions"

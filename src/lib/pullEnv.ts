@@ -89,11 +89,9 @@ export function pullEnv(): Env {
                 }
             },
             loginPage: {
-                titleText: process.env.LOGIN_PAGE_TITLE_TEXT as string,
                 subtitleText: process.env.LOGIN_PAGE_SUBTITLE_TEXT as string
             },
             signupPage: {
-                titleText: process.env.SIGNUP_PAGE_TITLE_TEXT as string,
                 subtitleText: process.env.SIGNUP_PAGE_SUBTITLE_TEXT as string
             },
             resourceAuthPage: {

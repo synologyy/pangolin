@@ -18,7 +18,7 @@ import * as logs from "#private/routers/auditLogs";
 import {
     verifyApiKeyHasAction,
     verifyApiKeyIsRoot,
-    verifyApiKeyOrgAccess,
+    verifyApiKeyOrgAccess
 } from "@server/middlewares";
 import {
     verifyValidSubscription,
@@ -26,7 +26,10 @@ import {
 } from "#private/middlewares";
 import { ActionsEnum } from "@server/auth/actions";
 
-import { unauthenticated as ua, authenticated as a } from "@server/routers/integration";
+import {
+    unauthenticated as ua,
+    authenticated as a
+} from "@server/routers/integration";
 import { logActionAudit } from "#private/middlewares";
 
 export const unauthenticated = ua;
@@ -37,7 +40,7 @@ authenticated.post(
     verifyApiKeyIsRoot, // We are the only ones who can use root key so its fine
     verifyApiKeyHasAction(ActionsEnum.sendUsageNotification),
     logActionAudit(ActionsEnum.sendUsageNotification),
-    org.sendUsageNotification,
+    org.sendUsageNotification
 );
 
 authenticated.delete(
@@ -45,7 +48,7 @@ authenticated.delete(
     verifyApiKeyIsRoot,
     verifyApiKeyHasAction(ActionsEnum.deleteIdp),
     logActionAudit(ActionsEnum.deleteIdp),
-    orgIdp.deleteOrgIdp,
+    orgIdp.deleteOrgIdp
 );
 
 authenticated.get(

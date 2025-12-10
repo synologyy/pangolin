@@ -32,12 +32,13 @@ export async function billingWebhookHandler(
     next: NextFunction
 ): Promise<any> {
     let event: Stripe.Event = req.body;
-    const endpointSecret = privateConfig.getRawPrivateConfig().stripe?.webhook_secret;
+    const endpointSecret =
+        privateConfig.getRawPrivateConfig().stripe?.webhook_secret;
     if (!endpointSecret) {
-        logger.warn("Stripe webhook secret is not configured. Webhook events will not be priocessed.");
-        return next(
-            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "")
+        logger.warn(
+            "Stripe webhook secret is not configured. Webhook events will not be priocessed."
         );
+        return next(createHttpError(HttpCode.INTERNAL_SERVER_ERROR, ""));
     }
 
     // Only verify the event if you have an endpoint secret defined.
@@ -49,7 +50,10 @@ export async function billingWebhookHandler(
         if (!signature) {
             logger.info("No stripe signature found in headers.");
             return next(
-                createHttpError(HttpCode.BAD_REQUEST, "No stripe signature found in headers")
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "No stripe signature found in headers"
+                )
             );
         }
 
@@ -62,7 +66,10 @@ export async function billingWebhookHandler(
         } catch (err) {
             logger.error(`Webhook signature verification failed.`, err);
             return next(
-                createHttpError(HttpCode.UNAUTHORIZED, "Webhook signature verification failed")
+                createHttpError(
+                    HttpCode.UNAUTHORIZED,
+                    "Webhook signature verification failed"
+                )
             );
         }
     }

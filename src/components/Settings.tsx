@@ -66,7 +66,7 @@ export function SettingsSectionFooter({
     children: React.ReactNode;
 }) {
     return (
-        <div className="flex justify-end space-x-2 mt-auto pt-6">
+        <div className="flex flex-col md:flex-row justify-end space-y-2 md:space-y-0 md:space-x-2 mt-auto pt-6">
             {children}
         </div>
     );

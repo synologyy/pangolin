@@ -1,4 +1,4 @@
-import { cleanup as wsCleanup } from "@server/routers/ws";
+import { cleanup as wsCleanup } from "#dynamic/routers/ws";
 
 async function cleanup() {
     await wsCleanup();

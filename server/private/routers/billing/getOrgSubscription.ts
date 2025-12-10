@@ -34,8 +34,8 @@ import {
 } from "@server/db";
 
 const getOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "get",

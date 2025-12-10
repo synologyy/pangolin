@@ -17,7 +17,7 @@ export function UserProvider({ children, user: u }: UserProviderProps) {
 
     const updateUser = (updatedUser: Partial<GetUserResponse>) => {
         if (!user) {
-            throw new Error(t('userErrorNoUpdate'));
+            throw new Error(t("userErrorNoUpdate"));
         }
         setUser((prev) => {
             if (!prev) {

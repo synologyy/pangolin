@@ -24,8 +24,8 @@ import { fromError } from "zod-validation-error";
 import { ListRemoteExitNodesResponse } from "@server/routers/remoteExitNode/types";
 
 const listRemoteExitNodesParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listRemoteExitNodesSchema = z.object({
     limit: z

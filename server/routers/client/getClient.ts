@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
-import { clients, clientSitesAssociationsCache } from "@server/db";
+import { db, olms } from "@server/db";
+import { clients } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
@@ -12,35 +12,56 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getClientSchema = z.strictObject({
-        clientId: z.string().transform(stoi).pipe(z.int().positive())
-    });
+    clientId: z
+        .string()
+        .optional()
+        .transform(stoi)
+        .pipe(z.int().positive().optional())
+        .optional(),
+    niceId: z.string().optional(),
+    orgId: z.string().optional()
+});
 
-async function query(clientId: number) {
-    // Get the client
-    const [client] = await db
-        .select()
-        .from(clients)
-        .where(and(eq(clients.clientId, clientId)))
-        .limit(1);
-
-    if (!client) {
-        return null;
+async function query(clientId?: number, niceId?: string, orgId?: string) {
+    if (clientId) {
+        const [res] = await db
+            .select()
+            .from(clients)
+            .where(eq(clients.clientId, clientId))
+            .leftJoin(olms, eq(clients.clientId, olms.clientId))
+            .limit(1);
+        return res;
+    } else if (niceId && orgId) {
+        const [res] = await db
+            .select()
+            .from(clients)
+            .where(and(eq(clients.niceId, niceId), eq(clients.orgId, orgId)))
+            .leftJoin(olms, eq(olms.clientId, olms.clientId))
+            .limit(1);
+        return res;
     }
-
-    // Get the siteIds associated with this client
-    const sites = await db
-        .select({ siteId: clientSitesAssociationsCache.siteId })
-        .from(clientSitesAssociationsCache)
-        .where(eq(clientSitesAssociationsCache.clientId, clientId));
-
-    // Add the siteIds to the client object
-    return {
-        ...client,
-        siteIds: sites.map((site) => site.siteId)
-    };
 }
 
-export type GetClientResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
+export type GetClientResponse = NonNullable<
+    Awaited<ReturnType<typeof query>>
+>["clients"] & {
+    olmId: string | null;
+};
+
+registry.registerPath({
+    method: "get",
+    path: "/org/{orgId}/client/{niceId}",
+    description:
+        "Get a client by orgId and niceId. NiceId is a readable ID for the site and unique on a per org basis.",
+    tags: [OpenAPITags.Org, OpenAPITags.Site],
+    request: {
+        params: z.object({
+            orgId: z.string(),
+            niceId: z.string()
+        })
+    },
+    responses: {}
+});
 
 registry.registerPath({
     method: "get",
@@ -48,7 +69,9 @@ registry.registerPath({
     description: "Get a client by its client ID.",
     tags: [OpenAPITags.Client],
     request: {
-        params: getClientSchema
+        params: z.object({
+            clientId: z.number()
+        })
     },
     responses: {}
 });
@@ -72,9 +95,9 @@ export async function getClient(
             );
         }
 
-        const { clientId } = parsedParams.data;
+        const { clientId, niceId, orgId } = parsedParams.data;
 
-        const client = await query(clientId);
+        const client = await query(clientId, niceId, orgId);
 
         if (!client) {
             return next(
@@ -82,8 +105,13 @@ export async function getClient(
             );
         }
 
+        const data: GetClientResponse = {
+            ...client.clients,
+            olmId: client.olms ? client.olms.olmId : null
+        };
+
         return response<GetClientResponse>(res, {
-            data: client,
+            data,
             success: true,
             error: false,
             message: "Client retrieved successfully",

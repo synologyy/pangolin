@@ -19,18 +19,17 @@ export function ExitNodesDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
         <DataTable
             columns={columns}
             data={data}
-            title={t('remoteExitNodes')}
-            searchPlaceholder={t('searchRemoteExitNodes')}
+            title={t("remoteExitNodes")}
+            searchPlaceholder={t("searchRemoteExitNodes")}
             searchColumn="name"
             onAdd={createRemoteExitNode}
-            addButtonText={t('remoteExitNodeAdd')}
+            addButtonText={t("remoteExitNodeAdd")}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             defaultSort={{

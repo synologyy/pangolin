@@ -18,11 +18,11 @@ const setResourceAuthMethodsParamsSchema = z.object({
 });
 
 const setResourceAuthMethodsBodySchema = z.strictObject({
-        pincode: z
-            .string()
-            .regex(/^\d{6}$/)
-            .or(z.null())
-    });
+    pincode: z
+        .string()
+        .regex(/^\d{6}$/)
+        .or(z.null())
+});
 
 registry.registerPath({
     method: "post",

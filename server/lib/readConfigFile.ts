@@ -14,7 +14,8 @@ export const configSchema = z
     .object({
         app: z
             .object({
-                dashboard_url: z.url()
+                dashboard_url: z
+                    .url()
                     .pipe(z.url())
                     .transform((url) => url.toLowerCase())
                     .optional(),
@@ -255,7 +256,10 @@ export const configSchema = z
             .object({
                 block_size: z.number().positive().gt(0).optional().default(24),
                 subnet_group: z.string().optional().default("100.90.128.0/24"),
-                utility_subnet_group: z.string().optional().default("100.96.128.0/24") //just hardcode this for now as well
+                utility_subnet_group: z
+                    .string()
+                    .optional()
+                    .default("100.96.128.0/24") //just hardcode this for now as well
             })
             .optional()
             .default({

@@ -19,6 +19,7 @@ import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
 import { and, eq, lt } from "drizzle-orm";
 import cache from "@server/lib/cache";
+import { calculateCutoffTimestamp } from "@server/lib/cleanupLogs";
 
 async function getActionDays(orgId: string): Promise<number> {
     // check cache first
@@ -40,15 +41,17 @@ async function getActionDays(orgId: string): Promise<number> {
     }
 
     // store the result in cache
-    cache.set(`org_${orgId}_actionDays`, org.settingsLogRetentionDaysAction, 300);
+    cache.set(
+        `org_${orgId}_actionDays`,
+        org.settingsLogRetentionDaysAction,
+        300
+    );
 
     return org.settingsLogRetentionDaysAction;
 }
 
 export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
-    const now = Math.floor(Date.now() / 1000);
-
-    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+    const cutoffTimestamp = calculateCutoffTimestamp(retentionDays);
 
     try {
         await db
@@ -142,4 +145,3 @@ export function logActionAudit(action: ActionsEnum) {
         }
     };
 }
-

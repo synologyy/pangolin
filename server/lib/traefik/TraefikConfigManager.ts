@@ -142,8 +142,24 @@ export class TraefikConfigManager {
                 const wildcardExists = await this.fileExists(wildcardPath);
 
                 let lastModified: Date | null = null;
-                const expiresAt: Date | null = null;
+                let expiresAt: number | null = null;
                 let wildcard = false;
+                const expiresAtPath = path.join(domainDir, ".expires_at");
+                const expiresAtExists = await this.fileExists(expiresAtPath);
+
+                if (expiresAtExists) {
+                    try {
+                        const expiresAtStr = fs
+                            .readFileSync(expiresAtPath, "utf8")
+                            .trim();
+                        expiresAt = parseInt(expiresAtStr, 10);
+                        if (isNaN(expiresAt)) {
+                            expiresAt = null;
+                        }
+                    } catch {
+                        expiresAt = null;
+                    }
+                }
 
                 if (lastUpdateExists) {
                     try {
@@ -179,7 +195,9 @@ export class TraefikConfigManager {
 
                 state.set(domain, {
                     exists: certExists && keyExists,
-                    lastModified,
+                    lastModified: lastModified
+                        ? Math.floor(lastModified.getTime() / 1000)
+                        : null,
                     expiresAt,
                     wildcard
                 });
@@ -259,9 +277,9 @@ export class TraefikConfigManager {
 
             // Check if certificate is expiring soon (within 30 days)
             if (localState.expiresAt) {
-                const daysUntilExpiry =
-                    (localState.expiresAt - Math.floor(Date.now() / 1000)) /
-                    (1000 * 60 * 60 * 24);
+                const nowInSeconds = Math.floor(Date.now() / 1000);
+                const secondsUntilExpiry = localState.expiresAt - nowInSeconds;
+                const daysUntilExpiry = secondsUntilExpiry / (60 * 60 * 24);
                 if (daysUntilExpiry < 30) {
                     logger.info(
                         `Fetching certificates due to upcoming expiry for ${domain} (${Math.round(daysUntilExpiry)} days remaining)`
@@ -448,7 +466,9 @@ export class TraefikConfigManager {
                 config.getRawConfig().traefik.site_types,
                 build == "oss", // filter out the namespace domains in open source
                 build != "oss", // generate the login pages on the cloud and hybrid,
-                build == "saas" ? false : config.getRawConfig().traefik.allow_raw_resources // dont allow raw resources on saas otherwise use config
+                build == "saas"
+                    ? false
+                    : config.getRawConfig().traefik.allow_raw_resources // dont allow raw resources on saas otherwise use config
             );
 
             const domains = new Set<string>();
@@ -773,15 +793,26 @@ export class TraefikConfigManager {
                     logger.info(
                         `Certificate updated for domain: ${cert.domain}${cert.wildcard ? " (wildcard)" : ""}`
                     );
-
-                    // Update local state tracking
-                    this.lastLocalCertificateState.set(cert.domain, {
-                        exists: true,
-                        lastModified: Math.floor(Date.now() / 1000),
-                        expiresAt: cert.expiresAt,
-                        wildcard: cert.wildcard
-                    });
                 }
+
+                // Always update expiry tracking when we fetch a certificate,
+                // even if the cert content didn't change
+                if (cert.expiresAt) {
+                    const expiresAtPath = path.join(domainDir, ".expires_at");
+                    fs.writeFileSync(
+                        expiresAtPath,
+                        cert.expiresAt.toString(),
+                        "utf8"
+                    );
+                }
+
+                // Update local state tracking
+                this.lastLocalCertificateState.set(cert.domain, {
+                    exists: true,
+                    lastModified: Math.floor(Date.now() / 1000),
+                    expiresAt: cert.expiresAt,
+                    wildcard: cert.wildcard
+                });
 
                 // Always ensure the config entry exists and is up to date
                 const certEntry = {

@@ -330,18 +330,17 @@ function ProxyResourceTargetsForm({
                         {row.original.siteType === "newt" ? (
                             <Button
                                 variant="outline"
-                                className="flex items-center justify-between gap-2 p-2 w-full text-left cursor-pointer"
+                                className="flex items-center gap-2 w-full text-left cursor-pointer"
                                 onClick={() =>
                                     openHealthCheckDialog(row.original)
                                 }
                             >
-                                <Badge variant={getStatusColor(status)}>
-                                    <div className="flex items-center gap-1">
-                                        {getStatusIcon(status)}
-                                        {getStatusText(status)}
-                                    </div>
-                                </Badge>
-                                <Settings className="h-4 w-4" />
+                                <div
+                                    className={`flex items-center gap-1 ${status === "healthy" ? "text-green-500" : status === "unhealthy" ? "text-destructive" : ""}`}
+                                >
+                                    <Settings className="h-4 w-4" />
+                                    {getStatusText(status)}
+                                </div>
                             </Button>
                         ) : (
                             <span>-</span>
@@ -558,7 +557,7 @@ function ProxyResourceTargetsForm({
 
                             <Input
                                 defaultValue={row.original.ip}
-                                placeholder="IP / Hostname"
+                                placeholder="Host"
                                 className="flex-1 min-w-[120px] pl-0 border-none placeholder-gray-400"
                                 onBlur={(e) => {
                                     const input = e.target.value.trim();

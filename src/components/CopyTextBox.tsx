@@ -29,7 +29,7 @@ export default function CopyTextBox({
                 setIsCopied(true);
                 setTimeout(() => setIsCopied(false), 2000);
             } catch (err) {
-                console.error(t('copyTextFailed'), err);
+                console.error(t("copyTextFailed"), err);
             }
         }
     };
@@ -54,7 +54,7 @@ export default function CopyTextBox({
                 type="button"
                 className="absolute top-0.5 right-0 z-10 bg-card"
                 onClick={copyToClipboard}
-                aria-label={t('copyTextClipboard')}
+                aria-label={t("copyTextClipboard")}
             >
                 {isCopied ? (
                     <Check className="h-4 w-4 text-green-500" />

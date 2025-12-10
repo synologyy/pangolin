@@ -67,7 +67,8 @@ export default function AutoLoginHandler({
                 console.error("Failed to generate OIDC URL:", e);
                 setError(
                     t("autoLoginErrorGeneratingUrl", {
-                        defaultValue: "An unexpected error occurred. Please try again."
+                        defaultValue:
+                            "An unexpected error occurred. Please try again."
                     })
                 );
             } finally {

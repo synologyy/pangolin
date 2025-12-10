@@ -189,7 +189,7 @@ export async function getTraefikConfig(
             );
 
             if (!validation.isValid) {
-                logger.error(
+                logger.debug(
                     `Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`
                 );
                 return;

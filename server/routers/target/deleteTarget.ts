@@ -14,8 +14,8 @@ import { getAllowedIps } from "./helpers";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const deleteTargetSchema = z.strictObject({
-        targetId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    targetId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "delete",

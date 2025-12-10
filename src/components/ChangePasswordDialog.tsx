@@ -20,7 +20,10 @@ type ChangePasswordDialogProps = {
     setOpen: (val: boolean) => void;
 };
 
-export default function ChangePasswordDialog({ open, setOpen }: ChangePasswordDialogProps) {
+export default function ChangePasswordDialog({
+    open,
+    setOpen
+}: ChangePasswordDialogProps) {
     const t = useTranslations();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -47,18 +50,16 @@ export default function ChangePasswordDialog({ open, setOpen }: ChangePasswordDi
         >
             <CredenzaContent>
                 <CredenzaHeader>
-                    <CredenzaTitle>
-                        {t('changePassword')}
-                    </CredenzaTitle>
+                    <CredenzaTitle>{t("changePassword")}</CredenzaTitle>
                     <CredenzaDescription>
-                        {t('changePasswordDescription')}
+                        {t("changePasswordDescription")}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
                     <ChangePasswordForm
                         ref={formRef}
                         isDialog={true}
-                        submitButtonText={t('submit')}
+                        submitButtonText={t("submit")}
                         cancelButtonText="Close"
                         showCancelButton={false}
                         onComplete={() => setOpen(false)}
@@ -77,7 +78,7 @@ export default function ChangePasswordDialog({ open, setOpen }: ChangePasswordDi
                             disabled={loading}
                             onClick={handleSubmit}
                         >
-                            {t('submit')}
+                            {t("submit")}
                         </Button>
                     )}
                 </CredenzaFooter>

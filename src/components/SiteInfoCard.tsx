@@ -11,10 +11,9 @@ import {
 import { useTranslations } from "next-intl";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 
-
 type SiteInfoCardProps = {};
 
-export default function SiteInfoCard({ }: SiteInfoCardProps) {
+export default function SiteInfoCard({}: SiteInfoCardProps) {
     const { site, updateSite } = useSiteContext();
     const t = useTranslations();
     const { env } = useEnvContext();
@@ -31,18 +30,13 @@ export default function SiteInfoCard({ }: SiteInfoCardProps) {
         }
     };
 
-
     return (
         <Alert>
             <AlertDescription>
                 <InfoSections cols={4}>
                     <InfoSection>
-                        <InfoSectionTitle>
-                            {t("identifier")}
-                        </InfoSectionTitle>
-                        <InfoSectionContent>
-                            {site.niceId}
-                        </InfoSectionContent>
+                        <InfoSectionTitle>{t("identifier")}</InfoSectionTitle>
+                        <InfoSectionContent>{site.niceId}</InfoSectionContent>
                     </InfoSection>
                     {(site.type == "newt" || site.type == "wireguard") && (
                         <>

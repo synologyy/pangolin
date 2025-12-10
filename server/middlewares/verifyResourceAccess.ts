@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "@server/db";
+import { db, Resource } from "@server/db";
 import { resources, userOrgs, userResources, roleResources } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
@@ -12,36 +12,56 @@ export async function verifyResourceAccess(
     next: NextFunction
 ) {
     const userId = req.user!.userId;
-    const resourceId =
-        req.params.resourceId || req.body.resourceId || req.query.resourceId;
-
-    if (!userId) {
-        return next(
-            createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
-        );
-    }
+    const resourceIdStr =
+        req.params?.resourceId || req.body?.resourceId || req.query?.resourceId;
+    const niceId = req.params?.niceId || req.body?.niceId || req.query?.niceId;
+    const orgId = req.params?.orgId || req.body?.orgId || req.query?.orgId;
 
     try {
-        const resource = await db
-            .select()
-            .from(resources)
-            .where(eq(resources.resourceId, resourceId))
-            .limit(1);
+        if (!userId) {
+            return next(
+                createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
+            );
+        }
 
-        if (resource.length === 0) {
+        let resource: Resource | null = null;
+
+        if (orgId && niceId) {
+            const [resourceRes] = await db
+                .select()
+                .from(resources)
+                .where(
+                    and(
+                        eq(resources.niceId, niceId),
+                        eq(resources.orgId, orgId)
+                    )
+                )
+                .limit(1);
+            resource = resourceRes;
+        } else {
+            const resourceId = parseInt(resourceIdStr);
+            const [resourceRes] = await db
+                .select()
+                .from(resources)
+                .where(eq(resources.resourceId, resourceId))
+                .limit(1);
+            resource = resourceRes;
+        }
+
+        if (!resource) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Resource with ID ${resourceId} not found`
+                    `Resource with ID ${resourceIdStr || niceId} not found`
                 )
             );
         }
 
-        if (!resource[0].orgId) {
+        if (!resource.orgId) {
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    `Resource with ID ${resourceId} does not have an organization ID`
+                    `Resource with ID ${resourceIdStr || niceId} does not have an organization ID`
                 )
             );
         }
@@ -53,14 +73,14 @@ export async function verifyResourceAccess(
                 .where(
                     and(
                         eq(userOrgs.userId, userId),
-                        eq(userOrgs.orgId, resource[0].orgId)
+                        eq(userOrgs.orgId, resource.orgId)
                     )
                 )
                 .limit(1);
             req.userOrg = userOrgRole[0];
         }
 
-        if (!req.userOrg) {
+        if (!req.userOrg || req.userOrg?.orgId !== resource.orgId) {
             return next(
                 createHttpError(
                     HttpCode.FORBIDDEN,
@@ -89,14 +109,14 @@ export async function verifyResourceAccess(
 
         const userOrgRoleId = req.userOrg.roleId;
         req.userOrgRoleId = userOrgRoleId;
-        req.userOrgId = resource[0].orgId;
+        req.userOrgId = resource.orgId;
 
         const roleResourceAccess = await db
             .select()
             .from(roleResources)
             .where(
                 and(
-                    eq(roleResources.resourceId, resourceId),
+                    eq(roleResources.resourceId, resource.resourceId),
                     eq(roleResources.roleId, userOrgRoleId)
                 )
             )
@@ -112,7 +132,7 @@ export async function verifyResourceAccess(
             .where(
                 and(
                     eq(userResources.userId, userId),
-                    eq(userResources.resourceId, resourceId)
+                    eq(userResources.resourceId, resource.resourceId)
                 )
             )
             .limit(1);

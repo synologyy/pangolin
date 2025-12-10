@@ -51,8 +51,8 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
     const t = useTranslations();
 
     const disableSchema = z.object({
-        password: z.string().min(1, { message: t('passwordRequired') }),
-        code: z.string().min(1, { message: t('verificationCodeRequired') })
+        password: z.string().min(1, { message: t("passwordRequired") }),
+        code: z.string().min(1, { message: t("verificationCodeRequired") })
     });
 
     const disableForm = useForm<z.infer<typeof disableSchema>>({
@@ -73,10 +73,10 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
             } as Disable2faBody)
             .catch((e) => {
                 toast({
-                    title: t('otpErrorDisable'),
+                    title: t("otpErrorDisable"),
                     description: formatAxiosError(
                         e,
-                        t('otpErrorDisableDescription')
+                        t("otpErrorDisableDescription")
                     ),
                     variant: "destructive"
                 });
@@ -111,11 +111,9 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
         >
             <CredenzaContent>
                 <CredenzaHeader>
-                    <CredenzaTitle>
-                        {t('otpRemove')}
-                    </CredenzaTitle>
+                    <CredenzaTitle>{t("otpRemove")}</CredenzaTitle>
                     <CredenzaDescription>
-                        {t('otpRemoveDescription')}
+                        {t("otpRemoveDescription")}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
@@ -132,7 +130,9 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
                                         name="password"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t('password')}</FormLabel>
+                                                <FormLabel>
+                                                    {t("password")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input
                                                         type="password"
@@ -150,7 +150,7 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>
-                                                    {t('otpSetupSecretCode')}
+                                                    {t("otpSetupSecretCode")}
                                                 </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
@@ -171,17 +171,15 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
                                 size={48}
                             />
                             <p className="font-semibold text-lg">
-                                {t('otpRemoveSuccess')}
+                                {t("otpRemoveSuccess")}
                             </p>
-                            <p>
-                                {t('otpRemoveSuccessMessage')}
-                            </p>
+                            <p>{t("otpRemoveSuccessMessage")}</p>
                         </div>
                     )}
                 </CredenzaBody>
                 <CredenzaFooter>
                     <CredenzaClose asChild>
-                        <Button variant="outline">{t('close')}</Button>
+                        <Button variant="outline">{t("close")}</Button>
                     </CredenzaClose>
                     {step === "password" && (
                         <Button
@@ -190,7 +188,7 @@ export default function Disable2FaForm({ open, setOpen }: Disable2FaProps) {
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('otpRemoveSubmit')}
+                            {t("otpRemoveSubmit")}
                         </Button>
                     )}
                 </CredenzaFooter>

@@ -23,7 +23,6 @@ export function SitesDataTable<TData, TValue>({
     columnVisibility,
     enableColumnVisibility
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -31,11 +30,11 @@ export function SitesDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="sites-table"
-            title={t('sites')}
-            searchPlaceholder={t('searchSitesProgress')}
+            title={t("sites")}
+            searchPlaceholder={t("searchSitesProgress")}
             searchColumn="name"
             onAdd={createSite}
-            addButtonText={t('siteAdd')}
+            addButtonText={t("siteAdd")}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             defaultSort={{

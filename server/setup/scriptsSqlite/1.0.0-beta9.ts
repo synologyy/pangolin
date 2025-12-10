@@ -182,12 +182,15 @@ export default async function migration() {
 
             if (parsedConfig.success) {
                 // delete permanent from redirect-to-https middleware
-                delete traefikConfig.http.middlewares["redirect-to-https"].redirectScheme.permanent;
+                delete traefikConfig.http.middlewares["redirect-to-https"]
+                    .redirectScheme.permanent;
 
                 const updatedTraefikYaml = yaml.dump(traefikConfig);
                 fs.writeFileSync(traefikPath, updatedTraefikYaml, "utf8");
 
-                console.log("Deleted permanent from redirect-to-https middleware.");
+                console.log(
+                    "Deleted permanent from redirect-to-https middleware."
+                );
             } else {
                 console.log(fromZodError(parsedConfig.error));
                 console.log(

@@ -12,7 +12,7 @@ interface OrgUserProviderProps {
 
 export function OrgUserProvider({
     children,
-    orgUser: serverOrgUser,
+    orgUser: serverOrgUser
 }: OrgUserProviderProps) {
     const [orgUser, setOrgUser] = useState<GetOrgUserResponse>(serverOrgUser);
 
@@ -20,7 +20,7 @@ export function OrgUserProvider({
 
     const updateOrgUser = (updateOrgUser: Partial<GetOrgUserResponse>) => {
         if (!orgUser) {
-            throw new Error(t('orgErrorNoUpdate'));
+            throw new Error(t("orgErrorNoUpdate"));
         }
 
         setOrgUser((prev) => {
@@ -30,7 +30,7 @@ export function OrgUserProvider({
 
             return {
                 ...prev,
-                ...updateOrgUser,
+                ...updateOrgUser
             };
         });
     };

@@ -1,8 +1,6 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
 import { useTranslations } from "next-intl";
 
@@ -19,7 +17,6 @@ export function UsersDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -27,8 +24,8 @@ export function UsersDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="userServer-table"
-            title={t('userServer')}
-            searchPlaceholder={t('userSearch')}
+            title={t("userServer")}
+            searchPlaceholder={t("userSearch")}
             searchColumn="email"
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}

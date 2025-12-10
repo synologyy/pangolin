@@ -94,7 +94,8 @@ export default function ValidateOidcToken(props: ValidateOidcTokenParams) {
                 console.error(e);
                 setError(
                     t("idpErrorOidcTokenValidating", {
-                        defaultValue: "An unexpected error occurred. Please try again."
+                        defaultValue:
+                            "An unexpected error occurred. Please try again."
                     })
                 );
             } finally {

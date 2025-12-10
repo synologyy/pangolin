@@ -255,7 +255,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             hcTimeout: targetHealthCheck.hcTimeout,
             hcHeaders: targetHealthCheck.hcHeaders,
             hcMethod: targetHealthCheck.hcMethod,
-            hcTlsServerName: targetHealthCheck.hcTlsServerName,
+            hcTlsServerName: targetHealthCheck.hcTlsServerName
         })
         .from(targets)
         .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
@@ -328,7 +328,7 @@ export const handleNewtRegisterMessage: MessageHandler = async (context) => {
             hcTimeout: target.hcTimeout, // in seconds
             hcHeaders: hcHeadersSend,
             hcMethod: target.hcMethod,
-            hcTlsServerName: target.hcTlsServerName,
+            hcTlsServerName: target.hcTlsServerName
         };
     });
 
@@ -366,7 +366,7 @@ async function getUniqueSubnetForSite(
     trx: Transaction | typeof db = db
 ): Promise<string | null> {
     const lockKey = `subnet-allocation:${exitNode.exitNodeId}`;
-    
+
     return await lockManager.withLock(
         lockKey,
         async () => {
@@ -382,7 +382,8 @@ async function getUniqueSubnetForSite(
                 .map((site) => site.subnet)
                 .filter(
                     (subnet) =>
-                        subnet && /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(subnet)
+                        subnet &&
+                        /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(subnet)
                 )
                 .filter((subnet) => subnet !== null);
             subnets.push(exitNode.address.replace(/\/\d+$/, `/${blockSize}`));

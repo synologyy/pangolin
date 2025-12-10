@@ -48,9 +48,7 @@ export default async function migration() {
         const rawConfig = yaml.load(fileContents) as any;
 
         if (rawConfig.cors?.headers) {
-            const headers = JSON.parse(
-                JSON.stringify(rawConfig.cors.headers)
-            );
+            const headers = JSON.parse(JSON.stringify(rawConfig.cors.headers));
             rawConfig.cors.allowed_headers = headers;
             delete rawConfig.cors.headers;
         }
@@ -61,9 +59,7 @@ export default async function migration() {
 
         console.log(`Migrated CORS headers to allowed_headers`);
     } catch (e) {
-        console.log(
-            `Unable to migrate config file. Error: ${e}`
-        );
+        console.log(`Unable to migrate config file. Error: ${e}`);
     }
 
     console.log(`${version} migration complete`);

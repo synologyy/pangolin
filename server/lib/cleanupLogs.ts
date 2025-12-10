@@ -37,14 +37,14 @@ export function initLogCleanupInterval() {
                 if (settingsLogRetentionDaysAction > 0) {
                     await cleanUpOldActionLogs(
                         orgId,
-                        settingsLogRetentionDaysRequest
+                        settingsLogRetentionDaysAction
                     );
                 }
 
                 if (settingsLogRetentionDaysAccess > 0) {
                     await cleanUpOldAccessLogs(
                         orgId,
-                        settingsLogRetentionDaysRequest
+                        settingsLogRetentionDaysAccess
                     );
                 }
 
@@ -56,7 +56,21 @@ export function initLogCleanupInterval() {
                 }
             }
         },
-        // 3 * 60 * 60 * 1000
-        60 * 1000 // for testing
+        3 * 60 * 60 * 1000
     ); // every 3 hours
+}
+
+export function calculateCutoffTimestamp(retentionDays: number): number {
+    const now = Math.floor(Date.now() / 1000);
+    if (retentionDays === 9001) {
+        // Special case: data is erased at the end of the year following the year it was generated
+        // This means we delete logs from 2 years ago or older (logs from year Y are deleted after Dec 31 of year Y+1)
+        const currentYear = new Date().getFullYear();
+        // Cutoff is the start of the year before last (Jan 1, currentYear - 1 at 00:00:00)
+        // Any logs before this date are from 2+ years ago and should be deleted
+        const cutoffDate = new Date(Date.UTC(currentYear - 1, 0, 1, 0, 0, 0));
+        return Math.floor(cutoffDate.getTime() / 1000);
+    } else {
+        return now - retentionDays * 24 * 60 * 60;
+    }
 }

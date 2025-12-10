@@ -11,8 +11,8 @@ import { db } from "@server/db";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const deleteAccessTokenParamsSchema = z.strictObject({
-        accessTokenId: z.string()
-    });
+    accessTokenId: z.string()
+});
 
 registry.registerPath({
     method: "delete",

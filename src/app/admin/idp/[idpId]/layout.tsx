@@ -30,11 +30,11 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
 
     const navItems: HorizontalTabs = [
         {
-            title: t('general'),
+            title: t("general"),
             href: `/admin/idp/${params.idpId}/general`
         },
         {
-            title: t('orgPolicies'),
+            title: t("orgPolicies"),
             href: `/admin/idp/${params.idpId}/policies`
         }
     ];
@@ -42,8 +42,8 @@ export default async function SettingsLayout(props: SettingsLayoutProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('idpSettings', { idpName: idp.idp.name })}
-                description={t('idpSettingsDescription')}
+                title={t("idpSettings", { idpName: idp.idp.name })}
+                description={t("idpSettingsDescription")}
             />
 
             <div className="space-y-6">

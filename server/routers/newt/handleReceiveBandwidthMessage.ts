@@ -10,7 +10,9 @@ interface PeerBandwidth {
     bytesOut: number;
 }
 
-export const handleReceiveBandwidthMessage: MessageHandler = async (context) => {
+export const handleReceiveBandwidthMessage: MessageHandler = async (
+    context
+) => {
     const { message, client, sendToClient } = context;
 
     if (!message.data.bandwidthData) {
@@ -44,7 +46,7 @@ export const handleReceiveBandwidthMessage: MessageHandler = async (context) => 
                 .set({
                     megabytesOut: (client.megabytesIn || 0) + bytesIn,
                     megabytesIn: (client.megabytesOut || 0) + bytesOut,
-                    lastBandwidthUpdate: new Date().toISOString(),
+                    lastBandwidthUpdate: new Date().toISOString()
                 })
                 .where(eq(clients.clientId, client.clientId));
         }

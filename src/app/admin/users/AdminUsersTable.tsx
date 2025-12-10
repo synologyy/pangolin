@@ -188,7 +188,7 @@ export default function UsersTable({ users }: Props) {
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const r = row.original;
                 return (

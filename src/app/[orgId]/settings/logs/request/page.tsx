@@ -6,7 +6,11 @@ import { createApiClient } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { getStoredPageSize, LogDataTable, setStoredPageSize } from "@app/components/LogDataTable";
+import {
+    getStoredPageSize,
+    LogDataTable,
+    setStoredPageSize
+} from "@app/components/LogDataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { DateTimeValue } from "@app/components/DateTimePicker";
 import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
@@ -757,8 +761,8 @@ export default function GeneralPage() {
     return (
         <>
             <SettingsSectionTitle
-                title={t('requestLogs')}
-                description={t('requestLogsDescription')}
+                title={t("requestLogs")}
+                description={t("requestLogsDescription")}
             />
 
             <LogDataTable

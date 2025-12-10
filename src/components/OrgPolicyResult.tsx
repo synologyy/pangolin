@@ -41,7 +41,8 @@ export default function OrgPolicyResult({
     accessRes
 }: OrgPolicyResultProps) {
     const [show2FaDialog, setShow2FaDialog] = useState(false);
-    const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+    const [showChangePasswordDialog, setShowChangePasswordDialog] =
+        useState(false);
     const t = useTranslations();
     const { user } = useUserContext();
     const router = useRouter();
@@ -77,15 +78,15 @@ export default function OrgPolicyResult({
     if (accessRes.policies?.maxSessionLength) {
         const maxSessionPolicy = accessRes.policies?.maxSessionLength;
         const maxHours = maxSessionPolicy.maxSessionLengthHours;
-        
+
         // Use hours if less than 24, otherwise convert to days
         const useHours = maxHours < 24;
         const maxTime = useHours ? maxHours : Math.round(maxHours / 24);
-        
-        const descriptionKey = useHours 
+
+        const descriptionKey = useHours
             ? "reauthenticationDescriptionHours"
             : "reauthenticationDescription";
-        
+
         const description = useHours
             ? t(descriptionKey, { maxHours })
             : t(descriptionKey, { maxDays: maxTime });

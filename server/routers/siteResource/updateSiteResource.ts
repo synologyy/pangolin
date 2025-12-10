@@ -2,11 +2,13 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import {
     clientSiteResources,
+    clientSiteResourcesAssociationsCache,
     db,
     newts,
     roles,
     roleSiteResources,
     sites,
+    Transaction,
     userSiteResources
 } from "@server/db";
 import { siteResources, SiteResource } from "@server/db";
@@ -295,109 +297,15 @@ export async function updateSiteResource(
                     );
             }
 
-            const { mergedAllClients } =
-                await rebuildClientAssociationsFromSiteResource(
-                    existingSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
-                    trx
-                );
-
-            // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
-            const destinationChanged =
-                existingSiteResource.destination !==
-                updatedSiteResource.destination;
-            const aliasChanged =
-                existingSiteResource.alias !== updatedSiteResource.alias;
-
-            if (destinationChanged || aliasChanged) {
-                const [newt] = await trx
-                    .select()
-                    .from(newts)
-                    .where(eq(newts.siteId, site.siteId))
-                    .limit(1);
-
-                if (!newt) {
-                    return next(
-                        createHttpError(HttpCode.NOT_FOUND, "Newt not found")
-                    );
-                }
-
-                let oldDestinationStillInUseByASite = false;
-                // Only update targets on newt if destination changed
-                if (destinationChanged) {
-                    const oldTargets = generateSubnetProxyTargets(
-                        existingSiteResource,
-                        mergedAllClients
-                    );
-                    const newTargets = generateSubnetProxyTargets(
-                        updatedSiteResource,
-                        mergedAllClients
-                    );
-
-                    await updateTargets(newt.newtId, {
-                        oldTargets: oldTargets,
-                        newTargets: newTargets
-                    });
-
-                    const oldDestinationStillInUseSites = await trx
-                        .select()
-                        .from(siteResources)
-                        .where(
-                            and(
-                                eq(siteResources.siteId, site.siteId),
-                                eq(
-                                    siteResources.destination,
-                                    existingSiteResource.destination
-                                ),
-                                ne(
-                                    siteResources.siteResourceId,
-                                    existingSiteResource.siteResourceId
-                                )
-                            )
-                        );
-
-                    oldDestinationStillInUseByASite =
-                        oldDestinationStillInUseSites.length > 0;
-                }
-
-                const olmJobs: Promise<void>[] = [];
-                for (const client of mergedAllClients) {
-                    // we also need to update the remote subnets on the olms for each client that has access to this site
-                    olmJobs.push(
-                        updatePeerData(
-                            client.clientId,
-                            updatedSiteResource.siteId,
-                            destinationChanged
-                                ? {
-                                      oldRemoteSubnets:
-                                          !oldDestinationStillInUseByASite
-                                              ? generateRemoteSubnets([
-                                                    existingSiteResource
-                                                ])
-                                              : [],
-                                      newRemoteSubnets: generateRemoteSubnets([
-                                          updatedSiteResource
-                                      ])
-                                  }
-                                : undefined,
-                            aliasChanged
-                                ? {
-                                      oldAliases: generateAliasConfig([
-                                          existingSiteResource
-                                      ]),
-                                      newAliases: generateAliasConfig([
-                                          updatedSiteResource
-                                      ])
-                                  }
-                                : undefined
-                        )
-                    );
-                }
-
-                await Promise.all(olmJobs);
-            }
-
             logger.info(
                 `Updated site resource ${siteResourceId} for site ${siteId}`
+            );
+
+            await handleMessagingForUpdatedSiteResource(
+                existingSiteResource,
+                updatedSiteResource!,
+                { siteId: site.siteId, orgId: site.orgId },
+                trx
             );
         });
 
@@ -416,5 +324,127 @@ export async function updateSiteResource(
                 "Failed to update site resource"
             )
         );
+    }
+}
+
+export async function handleMessagingForUpdatedSiteResource(
+    existingSiteResource: SiteResource | undefined,
+    updatedSiteResource: SiteResource,
+    site: { siteId: number; orgId: string },
+    trx: Transaction
+) {
+    const { mergedAllClients } =
+        await rebuildClientAssociationsFromSiteResource(
+            existingSiteResource || updatedSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
+            trx
+        );
+
+    // after everything is rebuilt above we still need to update the targets and remote subnets if the destination changed
+    const destinationChanged =
+        existingSiteResource &&
+        existingSiteResource.destination !== updatedSiteResource.destination;
+    const aliasChanged =
+        existingSiteResource &&
+        existingSiteResource.alias !== updatedSiteResource.alias;
+
+    // if the existingSiteResource is undefined (new resource) we don't need to do anything here, the rebuild above handled it all
+
+    if (destinationChanged || aliasChanged) {
+        const [newt] = await trx
+            .select()
+            .from(newts)
+            .where(eq(newts.siteId, site.siteId))
+            .limit(1);
+
+        if (!newt) {
+            throw new Error(
+                "Newt not found for site during site resource update"
+            );
+        }
+
+        // Only update targets on newt if destination changed
+        if (destinationChanged) {
+            const oldTargets = generateSubnetProxyTargets(
+                existingSiteResource,
+                mergedAllClients
+            );
+            const newTargets = generateSubnetProxyTargets(
+                updatedSiteResource,
+                mergedAllClients
+            );
+
+            await updateTargets(newt.newtId, {
+                oldTargets: oldTargets,
+                newTargets: newTargets
+            });
+        }
+
+        const olmJobs: Promise<void>[] = [];
+        for (const client of mergedAllClients) {
+            // does this client have access to another resource on this site that has the same destination still? if so we dont want to remove it from their olm yet
+            // todo: optimize this query if needed
+            const oldDestinationStillInUseSites = await trx
+                .select()
+                .from(siteResources)
+                .innerJoin(
+                    clientSiteResourcesAssociationsCache,
+                    eq(
+                        clientSiteResourcesAssociationsCache.siteResourceId,
+                        siteResources.siteResourceId
+                    )
+                )
+                .where(
+                    and(
+                        eq(
+                            clientSiteResourcesAssociationsCache.clientId,
+                            client.clientId
+                        ),
+                        eq(siteResources.siteId, site.siteId),
+                        eq(
+                            siteResources.destination,
+                            existingSiteResource.destination
+                        ),
+                        ne(
+                            siteResources.siteResourceId,
+                            existingSiteResource.siteResourceId
+                        )
+                    )
+                );
+
+            const oldDestinationStillInUseByASite =
+                oldDestinationStillInUseSites.length > 0;
+
+            // we also need to update the remote subnets on the olms for each client that has access to this site
+            olmJobs.push(
+                updatePeerData(
+                    client.clientId,
+                    updatedSiteResource.siteId,
+                    destinationChanged
+                        ? {
+                              oldRemoteSubnets: !oldDestinationStillInUseByASite
+                                  ? generateRemoteSubnets([
+                                        existingSiteResource
+                                    ])
+                                  : [],
+                              newRemoteSubnets: generateRemoteSubnets([
+                                  updatedSiteResource
+                              ])
+                          }
+                        : undefined,
+                    aliasChanged
+                        ? {
+                              oldAliases: generateAliasConfig([
+                                  existingSiteResource
+                              ]),
+                              newAliases: generateAliasConfig([
+                                  updatedSiteResource
+                              ])
+                          }
+                        : undefined
+                )
+            );
+        }
+
+        await Promise.all(olmJobs);
     }
 }

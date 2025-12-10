@@ -12,7 +12,14 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { db, exitNodes, exitNodeOrgs, ExitNode, ExitNodeOrg } from "@server/db";
+import {
+    db,
+    exitNodes,
+    exitNodeOrgs,
+    ExitNode,
+    ExitNodeOrg,
+    RemoteExitNode
+} from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
 import { remoteExitNodes } from "@server/db";
@@ -22,35 +29,17 @@ import { fromError } from "zod-validation-error";
 import { hashPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import { and, eq } from "drizzle-orm";
-import { UpdateRemoteExitNodeResponse } from "@server/routers/remoteExitNode/types";
 import { OpenAPITags, registry } from "@server/openApi";
+import { disconnectClient, sendToClient } from "#private/routers/ws";
 
 export const paramsSchema = z.object({
     orgId: z.string()
 });
 
 const bodySchema = z.strictObject({
-        remoteExitNodeId: z.string().length(15),
-        secret: z.string().length(48)
-    });
-
-
-registry.registerPath({
-    method: "post",
-    path: "/re-key/{orgId}/regenerate-secret",
-    description: "Regenerate a exit node credentials by its org ID.",
-    tags: [OpenAPITags.Org],
-    request: {
-        params: paramsSchema,
-        body: {
-            content: {
-                "application/json": {
-                    schema: bodySchema
-                }
-            }
-        }
-    },
-    responses: {}
+    remoteExitNodeId: z.string().length(15),
+    secret: z.string().length(48),
+    disconnect: z.boolean().optional().default(true)
 });
 
 export async function reGenerateExitNodeSecret(
@@ -79,13 +68,7 @@ export async function reGenerateExitNodeSecret(
             );
         }
 
-        const { remoteExitNodeId, secret } = parsedBody.data;
-
-        if (req.user && !req.userOrgRoleId) {
-            return next(
-                createHttpError(HttpCode.FORBIDDEN, "User does not have a role")
-            );
-        }
+        const { remoteExitNodeId, secret, disconnect } = parsedBody.data;
 
         const [existingRemoteExitNode] = await db
             .select()
@@ -94,7 +77,10 @@ export async function reGenerateExitNodeSecret(
 
         if (!existingRemoteExitNode) {
             return next(
-                createHttpError(HttpCode.NOT_FOUND, "Remote Exit Node does not exist")
+                createHttpError(
+                    HttpCode.NOT_FOUND,
+                    "Remote Exit Node does not exist"
+                )
             );
         }
 
@@ -105,15 +91,39 @@ export async function reGenerateExitNodeSecret(
             .set({ secretHash })
             .where(eq(remoteExitNodes.remoteExitNodeId, remoteExitNodeId));
 
-        return response<UpdateRemoteExitNodeResponse>(res, {
-            data: {
-                remoteExitNodeId,
-                secret,
-            },
+        // Only disconnect if explicitly requested
+        if (disconnect) {
+            const payload = {
+                type: `remoteExitNode/terminate`,
+                data: {}
+            };
+            // Don't await this to prevent blocking the response
+            sendToClient(
+                existingRemoteExitNode.remoteExitNodeId,
+                payload
+            ).catch((error) => {
+                logger.error(
+                    "Failed to send termination message to remote exit node:",
+                    error
+                );
+            });
+
+            disconnectClient(existingRemoteExitNode.remoteExitNodeId).catch(
+                (error) => {
+                    logger.error(
+                        "Failed to disconnect remote exit node after re-key:",
+                        error
+                    );
+                }
+            );
+        }
+
+        return response(res, {
+            data: null,
             success: true,
             error: false,
             message: "Remote Exit Node secret updated successfully",
-            status: HttpCode.OK,
+            status: HttpCode.OK
         });
     } catch (e) {
         logger.error("Failed to update remoteExitNode", e);

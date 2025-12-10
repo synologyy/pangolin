@@ -11,7 +11,7 @@ export async function verifyApiKeyApiKeyAccess(
     next: NextFunction
 ) {
     try {
-        const {apiKey: callerApiKey } = req;
+        const { apiKey: callerApiKey } = req;
 
         const apiKeyId =
             req.params.apiKeyId || req.body.apiKeyId || req.query.apiKeyId;
@@ -44,7 +44,10 @@ export async function verifyApiKeyApiKeyAccess(
             .select()
             .from(apiKeyOrg)
             .where(
-                and(eq(apiKeys.apiKeyId, callerApiKey.apiKeyId), eq(apiKeyOrg.orgId, orgId))
+                and(
+                    eq(apiKeys.apiKeyId, callerApiKey.apiKeyId),
+                    eq(apiKeyOrg.orgId, orgId)
+                )
             )
             .limit(1);
 

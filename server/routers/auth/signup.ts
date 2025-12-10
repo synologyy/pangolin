@@ -56,8 +56,14 @@ export async function signup(
         );
     }
 
-    const { email, password, inviteToken, inviteId, termsAcceptedTimestamp, marketingEmailConsent } =
-        parsedBody.data;
+    const {
+        email,
+        password,
+        inviteToken,
+        inviteId,
+        termsAcceptedTimestamp,
+        marketingEmailConsent
+    } = parsedBody.data;
 
     const passwordHash = await hashPassword(password);
     const userId = generateId(15);
@@ -222,7 +228,9 @@ export async function signup(
         );
         res.appendHeader("Set-Cookie", cookie);
         if (build == "saas" && marketingEmailConsent) {
-            logger.debug(`User ${email} opted in to marketing emails during signup.`);
+            logger.debug(
+                `User ${email} opted in to marketing emails during signup.`
+            );
             moveEmailToAudience(email, AudienceIds.SignUps);
         }
 

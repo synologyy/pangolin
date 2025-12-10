@@ -60,13 +60,13 @@ export default function RegenerateInvitationForm({
     const t = useTranslations();
 
     const validForOptions = [
-        { hours: 24, name: t('day', {count: 1}) },
-        { hours: 48, name: t('day', {count: 2}) },
-        { hours: 72, name: t('day', {count: 3}) },
-        { hours: 96, name: t('day', {count: 4}) },
-        { hours: 120, name: t('day', {count: 5}) },
-        { hours: 144, name: t('day', {count: 6}) },
-        { hours: 168, name: t('day', {count: 7}) }
+        { hours: 24, name: t("day", { count: 1 }) },
+        { hours: 48, name: t("day", { count: 2 }) },
+        { hours: 72, name: t("day", { count: 3 }) },
+        { hours: 96, name: t("day", { count: 4 }) },
+        { hours: 120, name: t("day", { count: 5 }) },
+        { hours: 144, name: t("day", { count: 6 }) },
+        { hours: 168, name: t("day", { count: 7 }) }
     ];
 
     useEffect(() => {
@@ -82,8 +82,8 @@ export default function RegenerateInvitationForm({
         if (!org?.org.orgId) {
             toast({
                 variant: "destructive",
-                title: t('orgMissing'),
-                description: t('orgMissingMessage'),
+                title: t("orgMissing"),
+                description: t("orgMissingMessage"),
                 duration: 5000
             });
             return;
@@ -107,15 +107,19 @@ export default function RegenerateInvitationForm({
                 if (sendEmail) {
                     toast({
                         variant: "default",
-                        title: t('inviteRegenerated'),
-                        description: t('inviteSent', {email: invitation.email}),
+                        title: t("inviteRegenerated"),
+                        description: t("inviteSent", {
+                            email: invitation.email
+                        }),
                         duration: 5000
                     });
                 } else {
                     toast({
                         variant: "default",
-                        title: t('inviteRegenerated'),
-                        description: t('inviteGenerate', {email: invitation.email}),
+                        title: t("inviteRegenerated"),
+                        description: t("inviteGenerate", {
+                            email: invitation.email
+                        }),
                         duration: 5000
                     });
                 }
@@ -132,22 +136,22 @@ export default function RegenerateInvitationForm({
             if (error.response?.status === 409) {
                 toast({
                     variant: "destructive",
-                    title: t('inviteDuplicateError'),
-                    description: t('inviteDuplicateErrorDescription'),
+                    title: t("inviteDuplicateError"),
+                    description: t("inviteDuplicateErrorDescription"),
                     duration: 5000
                 });
             } else if (error.response?.status === 429) {
                 toast({
                     variant: "destructive",
-                    title: t('inviteRateLimitError'),
-                    description: t('inviteRateLimitErrorDescription'),
+                    title: t("inviteRateLimitError"),
+                    description: t("inviteRateLimitErrorDescription"),
                     duration: 5000
                 });
             } else {
                 toast({
                     variant: "destructive",
-                    title: t('inviteRegenerateError'),
-                    description: t('inviteRegenerateErrorDescription'),
+                    title: t("inviteRegenerateError"),
+                    description: t("inviteRegenerateErrorDescription"),
                     duration: 5000
                 });
             }
@@ -168,16 +172,18 @@ export default function RegenerateInvitationForm({
         >
             <CredenzaContent>
                 <CredenzaHeader>
-                    <CredenzaTitle>{t('inviteRegenerate')}</CredenzaTitle>
+                    <CredenzaTitle>{t("inviteRegenerate")}</CredenzaTitle>
                     <CredenzaDescription>
-                        {t('inviteRegenerateDescription')}
+                        {t("inviteRegenerateDescription")}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
                     {!inviteLink ? (
                         <div>
                             <p>
-                                {t('inviteQuestionRegenerate', {email: invitation?.email || ""})}
+                                {t("inviteQuestionRegenerate", {
+                                    email: invitation?.email || ""
+                                })}
                             </p>
                             <div className="flex items-center space-x-2 mt-4">
                                 <Checkbox
@@ -188,13 +194,11 @@ export default function RegenerateInvitationForm({
                                     }
                                 />
                                 <label htmlFor="send-email">
-                                    {t('inviteSentEmail')}
+                                    {t("inviteSentEmail")}
                                 </label>
                             </div>
                             <div className="mt-4 space-y-2">
-                                <Label>
-                                    {t('inviteValidityPeriod')}
-                                </Label>
+                                <Label>{t("inviteValidityPeriod")}</Label>
                                 <Select
                                     value={validHours.toString()}
                                     onValueChange={(value) =>
@@ -202,7 +206,11 @@ export default function RegenerateInvitationForm({
                                     }
                                 >
                                     <SelectTrigger className="w-full">
-                                        <SelectValue placeholder={t('inviteValidityPeriodSelect')} />
+                                        <SelectValue
+                                            placeholder={t(
+                                                "inviteValidityPeriodSelect"
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {validForOptions.map((option) => (
@@ -219,9 +227,7 @@ export default function RegenerateInvitationForm({
                         </div>
                     ) : (
                         <div className="space-y-4 max-w-md">
-                            <p>
-                                {t('inviteRegenerateMessage')}
-                            </p>
+                            <p>{t("inviteRegenerateMessage")}</p>
                             <CopyTextBox text={inviteLink} wrapText={false} />
                         </div>
                     )}
@@ -230,18 +236,18 @@ export default function RegenerateInvitationForm({
                     {!inviteLink ? (
                         <>
                             <CredenzaClose asChild>
-                                <Button variant="outline">{t('cancel')}</Button>
+                                <Button variant="outline">{t("cancel")}</Button>
                             </CredenzaClose>
                             <Button
                                 onClick={handleRegenerate}
                                 loading={loading}
                             >
-                                {t('inviteRegenerateButton')}
+                                {t("inviteRegenerateButton")}
                             </Button>
                         </>
                     ) : (
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                     )}
                 </CredenzaFooter>

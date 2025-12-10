@@ -34,7 +34,7 @@ export const ShareableLinksSplash = () => {
             <button
                 onClick={handleDismiss}
                 className="absolute top-2 right-2 p-2"
-                aria-label={t('dismiss')}
+                aria-label={t("dismiss")}
             >
                 <X className="w-5 h-5" />
             </button>
@@ -42,23 +42,21 @@ export const ShareableLinksSplash = () => {
                 <div className="space-y-4">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
                         <Link className="text-blue-500" />
-                        {t('share')}
+                        {t("share")}
                     </h3>
-                    <p className="text-sm">
-                        {t('shareDescription2')}
-                    </p>
+                    <p className="text-sm">{t("shareDescription2")}</p>
                     <ul className="text-sm text-muted-foreground space-y-2">
                         <li className="flex items-center gap-2">
                             <Share className="text-green-500 w-4 h-4" />
-                            {t('shareEasyCreate')}
+                            {t("shareEasyCreate")}
                         </li>
                         <li className="flex items-center gap-2">
                             <Clock className="text-yellow-500 w-4 h-4" />
-                            {t('shareConfigurableExpirationDuration')}
+                            {t("shareConfigurableExpirationDuration")}
                         </li>
                         <li className="flex items-center gap-2">
                             <Lock className="text-red-500 w-4 h-4" />
-                            {t('shareSecureAndRevocable')}
+                            {t("shareSecureAndRevocable")}
                         </li>
                     </ul>
                 </div>

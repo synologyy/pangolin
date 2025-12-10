@@ -40,52 +40,54 @@ export function DataTablePagination<TData>({
     const handlePageSizeChange = (value: string) => {
         const newPageSize = Number(value);
         table.setPageSize(newPageSize);
-        
+
         // Call the callback if provided (for persistence)
         if (onPageSizeChange) {
             onPageSizeChange(newPageSize);
         }
     };
 
-    const handlePageNavigation = (action: 'first' | 'previous' | 'next' | 'last') => {
+    const handlePageNavigation = (
+        action: "first" | "previous" | "next" | "last"
+    ) => {
         if (isServerPagination && onPageChange) {
             const currentPage = table.getState().pagination.pageIndex;
             const pageCount = table.getPageCount();
-            
+
             let newPage: number;
             switch (action) {
-                case 'first':
+                case "first":
                     newPage = 0;
                     break;
-                case 'previous':
+                case "previous":
                     newPage = Math.max(0, currentPage - 1);
                     break;
-                case 'next':
+                case "next":
                     newPage = Math.min(pageCount - 1, currentPage + 1);
                     break;
-                case 'last':
+                case "last":
                     newPage = pageCount - 1;
                     break;
                 default:
                     return;
             }
-            
+
             if (newPage !== currentPage) {
                 onPageChange(newPage);
             }
         } else {
             // Use table's built-in navigation for client-side pagination
             switch (action) {
-                case 'first':
+                case "first":
                     table.setPageIndex(0);
                     break;
-                case 'previous':
+                case "previous":
                     table.previousPage();
                     break;
-                case 'next':
+                case "next":
                     table.nextPage();
                     break;
-                case 'last':
+                case "last":
                     table.setPageIndex(table.getPageCount() - 1);
                     break;
             }
@@ -117,50 +119,66 @@ export function DataTablePagination<TData>({
 
             <div className="flex items-center space-x-3 lg:space-x-8">
                 <div className="flex items-center justify-center text-sm font-medium">
-                    {isServerPagination && totalCount !== undefined ? (
-                        t('paginator', {
-                            current: table.getState().pagination.pageIndex + 1, 
-                            last: Math.ceil(totalCount / table.getState().pagination.pageSize)
-                        })
-                    ) : (
-                        t('paginator', {current: table.getState().pagination.pageIndex + 1, last: table.getPageCount()})
-                    )}
+                    {isServerPagination && totalCount !== undefined
+                        ? t("paginator", {
+                              current:
+                                  table.getState().pagination.pageIndex + 1,
+                              last: Math.ceil(
+                                  totalCount /
+                                      table.getState().pagination.pageSize
+                              )
+                          })
+                        : t("paginator", {
+                              current:
+                                  table.getState().pagination.pageIndex + 1,
+                              last: table.getPageCount()
+                          })}
                 </div>
                 <div className="flex items-center space-x-2">
                     <Button
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
-                        onClick={() => handlePageNavigation('first')}
-                        disabled={!table.getCanPreviousPage() || isLoading || disabled}
+                        onClick={() => handlePageNavigation("first")}
+                        disabled={
+                            !table.getCanPreviousPage() || isLoading || disabled
+                        }
                     >
-                        <span className="sr-only">{t('paginatorToFirst')}</span>
+                        <span className="sr-only">{t("paginatorToFirst")}</span>
                         <DoubleArrowLeftIcon className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => handlePageNavigation('previous')}
-                        disabled={!table.getCanPreviousPage() || isLoading || disabled}
+                        onClick={() => handlePageNavigation("previous")}
+                        disabled={
+                            !table.getCanPreviousPage() || isLoading || disabled
+                        }
                     >
-                        <span className="sr-only">{t('paginatorToPrevious')}</span>
+                        <span className="sr-only">
+                            {t("paginatorToPrevious")}
+                        </span>
                         <ChevronLeftIcon className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="outline"
                         className="h-8 w-8 p-0"
-                        onClick={() => handlePageNavigation('next')}
-                        disabled={!table.getCanNextPage() || isLoading || disabled}
+                        onClick={() => handlePageNavigation("next")}
+                        disabled={
+                            !table.getCanNextPage() || isLoading || disabled
+                        }
                     >
-                        <span className="sr-only">{t('paginatorToNext')}</span>
+                        <span className="sr-only">{t("paginatorToNext")}</span>
                         <ChevronRightIcon className="h-4 w-4" />
                     </Button>
                     <Button
                         variant="outline"
                         className="hidden h-8 w-8 p-0 lg:flex"
-                        onClick={() => handlePageNavigation('last')}
-                        disabled={!table.getCanNextPage() || isLoading || disabled}
+                        onClick={() => handlePageNavigation("last")}
+                        disabled={
+                            !table.getCanNextPage() || isLoading || disabled
+                        }
                     >
-                        <span className="sr-only">{t('paginatorToLast')}</span>
+                        <span className="sr-only">{t("paginatorToLast")}</span>
                         <DoubleArrowRightIcon className="h-4 w-4" />
                     </Button>
                 </div>

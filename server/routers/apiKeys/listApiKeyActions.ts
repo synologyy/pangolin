@@ -47,8 +47,7 @@ export type ListApiKeyActionsResponse = {
 registry.registerPath({
     method: "get",
     path: "/org/{orgId}/api-key/{apiKeyId}/actions",
-    description:
-        "List all actions set for an API key.",
+    description: "List all actions set for an API key.",
     tags: [OpenAPITags.Org, OpenAPITags.ApiKey],
     request: {
         params: paramsSchema,

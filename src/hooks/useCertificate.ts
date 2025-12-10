@@ -34,40 +34,43 @@ export function useCertificate({
     pollingInterval = 5000
 }: UseCertificateProps): UseCertificateReturn {
     const api = createApiClient(useEnvContext());
-    
+
     const [cert, setCert] = useState<GetCertificateResponse | null>(null);
     const [certLoading, setCertLoading] = useState(false);
     const [certError, setCertError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
 
-    const fetchCert = useCallback(async (showLoading = true) => {
-        if (!orgId || !domainId || !fullDomain) return;
-        
-        if (showLoading) {
-            setCertLoading(true);
-        }
-        setCertError(null);
-        try {
-            const res = await api.get<AxiosResponse<GetCertificateResponse>>(
-                `/org/${orgId}/certificate/${domainId}/${fullDomain}`
-            );
-            const certData = res.data.data;
-            if (certData) {
-                setCert(certData);
-            }
-        } catch (error: any) {
-            console.error("Failed to fetch certificate:", error);
-            setCertError("Failed to fetch certificate");
-        } finally {
+    const fetchCert = useCallback(
+        async (showLoading = true) => {
+            if (!orgId || !domainId || !fullDomain) return;
+
             if (showLoading) {
-                setCertLoading(false);
+                setCertLoading(true);
             }
-        }
-    }, [api, orgId, domainId, fullDomain]);
+            setCertError(null);
+            try {
+                const res = await api.get<
+                    AxiosResponse<GetCertificateResponse>
+                >(`/org/${orgId}/certificate/${domainId}/${fullDomain}`);
+                const certData = res.data.data;
+                if (certData) {
+                    setCert(certData);
+                }
+            } catch (error: any) {
+                console.error("Failed to fetch certificate:", error);
+                setCertError("Failed to fetch certificate");
+            } finally {
+                if (showLoading) {
+                    setCertLoading(false);
+                }
+            }
+        },
+        [api, orgId, domainId, fullDomain]
+    );
 
     const refreshCert = useCallback(async () => {
         if (!cert) return;
-        
+
         setRefreshing(true);
         setCertError(null);
         try {

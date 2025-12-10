@@ -62,7 +62,7 @@ export default function DeleteRoleForm({
     const api = createApiClient(useEnvContext());
 
     const formSchema = z.object({
-        newRoleId: z.string({ message: t('accessRoleErrorNewRequired') })
+        newRoleId: z.string({ message: t("accessRoleErrorNewRequired") })
     });
 
     useEffect(() => {
@@ -75,10 +75,10 @@ export default function DeleteRoleForm({
                     console.error(e);
                     toast({
                         variant: "destructive",
-                        title: t('accessRoleErrorFetch'),
+                        title: t("accessRoleErrorFetch"),
                         description: formatAxiosError(
                             e,
-                            t('accessRoleErrorFetchDescription')
+                            t("accessRoleErrorFetchDescription")
                         )
                     });
                 });
@@ -114,10 +114,10 @@ export default function DeleteRoleForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('accessRoleErrorRemove'),
+                    title: t("accessRoleErrorRemove"),
                     description: formatAxiosError(
                         e,
-                        t('accessRoleErrorRemoveDescription')
+                        t("accessRoleErrorRemoveDescription")
                     )
                 });
             });
@@ -125,8 +125,8 @@ export default function DeleteRoleForm({
         if (res && res.status === 200) {
             toast({
                 variant: "default",
-                title: t('accessRoleRemoved'),
-                description: t('accessRoleRemovedDescription')
+                title: t("accessRoleRemoved"),
+                description: t("accessRoleRemovedDescription")
             });
 
             if (open) {
@@ -153,66 +153,66 @@ export default function DeleteRoleForm({
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('accessRoleRemove')}</CredenzaTitle>
+                        <CredenzaTitle>{t("accessRoleRemove")}</CredenzaTitle>
                         <CredenzaDescription>
-                            {t('accessRoleRemoveDescription')}
+                            {t("accessRoleRemoveDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
-                            <div className="space-y-4">
-                                <p>
-                                    {t('accessRoleQuestionRemove', {name: roleToDelete.name})}
-                                </p>
-                                <p>
-                                    {t('accessRoleRequiredRemove')}
-                                </p>
-                            </div>
-                            <Form {...form}>
-                                <form
-                                    onSubmit={form.handleSubmit(onSubmit)}
-                                    className="space-y-4"
-                                    id="remove-role-form"
-                                >
-                                    <FormField
-                                        control={form.control}
-                                        name="newRoleId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>{t('role')}</FormLabel>
-                                                <Select
-                                                    onValueChange={
-                                                        field.onChange
-                                                    }
-                                                    value={field.value}
-                                                >
-                                                    <FormControl>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder={t('accessRoleSelect')} />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {roles.map((role) => (
-                                                            <SelectItem
-                                                                key={
-                                                                    role.roleId
-                                                                }
-                                                                value={role.roleId.toString()}
-                                                            >
-                                                                {role.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
+                        <div className="space-y-4">
+                            <p>
+                                {t("accessRoleQuestionRemove", {
+                                    name: roleToDelete.name
+                                })}
+                            </p>
+                            <p>{t("accessRoleRequiredRemove")}</p>
+                        </div>
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="space-y-4"
+                                id="remove-role-form"
+                            >
+                                <FormField
+                                    control={form.control}
+                                    name="newRoleId"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>{t("role")}</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "accessRoleSelect"
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {roles.map((role) => (
+                                                        <SelectItem
+                                                            key={role.roleId}
+                                                            value={role.roleId.toString()}
+                                                        >
+                                                            {role.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </form>
+                        </Form>
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
                             variant="destructive"
@@ -221,7 +221,7 @@ export default function DeleteRoleForm({
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('accessRoleRemoveSubmit')}
+                            {t("accessRoleRemoveSubmit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>

@@ -6,7 +6,7 @@ let serverIp: string | null = null;
 const services = [
     "https://checkip.amazonaws.com",
     "https://ifconfig.io/ip",
-    "https://api.ipify.org",
+    "https://api.ipify.org"
 ];
 
 export async function fetchServerIp() {
@@ -17,7 +17,9 @@ export async function fetchServerIp() {
             logger.debug("Detected public IP: " + serverIp);
             return;
         } catch (err: any) {
-            console.warn(`Failed to fetch server IP from ${url}: ${err.message || err.code}`);
+            console.warn(
+                `Failed to fetch server IP from ${url}: ${err.message || err.code}`
+            );
         }
     }
 

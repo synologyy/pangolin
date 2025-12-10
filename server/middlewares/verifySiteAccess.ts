@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { db } from "@server/db";
-import { sites, userOrgs, userSites, roleSites, roles } from "@server/db";
+import { sites, Site, userOrgs, userSites, roleSites, roles } from "@server/db";
 import { and, eq, or } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
-import logger from "@server/logger";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 
 export async function verifySiteAccess(
@@ -13,9 +12,10 @@ export async function verifySiteAccess(
     next: NextFunction
 ) {
     const userId = req.user!.userId; // Assuming you have user information in the request
-    const siteId = parseInt(
-        req.params.siteId || req.body.siteId || req.query.siteId
-    );
+    const siteIdStr =
+        req.params?.siteId || req.body?.siteId || req.query?.siteId;
+    const niceId = req.params?.niceId || req.body?.niceId || req.query?.niceId;
+    const orgId = req.params?.orgId || req.body?.orgId || req.query?.orgId;
 
     if (!userId) {
         return next(
@@ -23,32 +23,49 @@ export async function verifySiteAccess(
         );
     }
 
-    if (isNaN(siteId)) {
-        return next(createHttpError(HttpCode.BAD_REQUEST, "Invalid site ID"));
-    }
-
     try {
-        // Get the site
-        const site = await db
-            .select()
-            .from(sites)
-            .where(eq(sites.siteId, siteId))
-            .limit(1);
+        let site: Site | null = null;
 
-        if (site.length === 0) {
+        if (niceId && orgId) {
+            const [siteRes] = await db
+                .select()
+                .from(sites)
+                .where(and(eq(sites.niceId, niceId), eq(sites.orgId, orgId)))
+                .limit(1);
+
+            site = siteRes;
+        } else {
+            const siteId = parseInt(siteIdStr);
+            if (isNaN(siteId)) {
+                return next(
+                    createHttpError(HttpCode.BAD_REQUEST, "Invalid site ID")
+                );
+            }
+
+            // Get the site
+            const [siteRes] = await db
+                .select()
+                .from(sites)
+                .where(eq(sites.siteId, siteId))
+                .limit(1);
+
+            site = siteRes;
+        }
+
+        if (!site) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Site with ID ${siteId} not found`
+                    `Site with ID ${siteIdStr || niceId} not found`
                 )
             );
         }
 
-        if (!site[0].orgId) {
+        if (!site.orgId) {
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    `Site with ID ${siteId} does not have an organization ID`
+                    `Site with ID ${siteIdStr} does not have an organization ID`
                 )
             );
         }
@@ -61,14 +78,14 @@ export async function verifySiteAccess(
                 .where(
                     and(
                         eq(userOrgs.userId, userId),
-                        eq(userOrgs.orgId, site[0].orgId)
+                        eq(userOrgs.orgId, site.orgId)
                     )
                 )
                 .limit(1);
             req.userOrg = userOrgRole[0];
         }
 
-        if (!req.userOrg) {
+        if (!req.userOrg || req.userOrg?.orgId !== site.orgId) {
             return next(
                 createHttpError(
                     HttpCode.FORBIDDEN,
@@ -97,7 +114,7 @@ export async function verifySiteAccess(
 
         const userOrgRoleId = req.userOrg.roleId;
         req.userOrgRoleId = userOrgRoleId;
-        req.userOrgId = site[0].orgId;
+        req.userOrgId = site.orgId;
 
         // Check role-based site access first
         const roleSiteAccess = await db
@@ -105,7 +122,7 @@ export async function verifySiteAccess(
             .from(roleSites)
             .where(
                 and(
-                    eq(roleSites.siteId, siteId),
+                    eq(roleSites.siteId, site.siteId),
                     eq(roleSites.roleId, userOrgRoleId)
                 )
             )
@@ -121,7 +138,10 @@ export async function verifySiteAccess(
             .select()
             .from(userSites)
             .where(
-                and(eq(userSites.userId, userId), eq(userSites.siteId, siteId))
+                and(
+                    eq(userSites.userId, userId),
+                    eq(userSites.siteId, site.siteId)
+                )
             )
             .limit(1);
 

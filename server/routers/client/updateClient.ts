@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { Client, db, exitNodes, olms, sites } from "@server/db";
-import { clients, clientSitesAssociationsCache } from "@server/db";
+import { db } from "@server/db";
+import { clients } from "@server/db";
 import response from "@server/lib/response";
 import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
@@ -15,7 +15,8 @@ const updateClientParamsSchema = z.strictObject({
 });
 
 const updateClientSchema = z.strictObject({
-    name: z.string().min(1).max(255).optional()
+    name: z.string().min(1).max(255).optional(),
+    niceId: z.string().min(1).max(255).optional()
 });
 
 export type UpdateClientBody = z.infer<typeof updateClientSchema>;
@@ -54,7 +55,7 @@ export async function updateClient(
             );
         }
 
-        const { name } = parsedBody.data;
+        const { name, niceId } = parsedBody.data;
 
         const parsedParams = updateClientParamsSchema.safeParse(req.params);
         if (!parsedParams.success) {
@@ -84,9 +85,32 @@ export async function updateClient(
             );
         }
 
+        // if niceId is provided, check if it's already in use by another client
+        if (niceId) {
+            const [existingClient] = await db
+                .select()
+                .from(clients)
+                .where(
+                    and(
+                        eq(clients.niceId, niceId),
+                        eq(clients.orgId, clients.orgId)
+                    )
+                )
+                .limit(1);
+
+            if (existingClient) {
+                return next(
+                    createHttpError(
+                        HttpCode.CONFLICT,
+                        `A client with niceId "${niceId}" already exists`
+                    )
+                );
+            }
+        }
+
         const updatedClient = await db
             .update(clients)
-            .set({ name })
+            .set({ name, niceId })
             .where(eq(clients.clientId, clientId))
             .returning();
 

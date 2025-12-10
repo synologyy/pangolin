@@ -17,8 +17,8 @@ const setResourceAuthMethodsParamsSchema = z.object({
 });
 
 const setResourceAuthMethodsBodySchema = z.strictObject({
-        password: z.string().min(4).max(100).nullable()
-    });
+    password: z.string().min(4).max(100).nullable()
+});
 
 registry.registerPath({
     method: "post",

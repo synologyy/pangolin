@@ -102,7 +102,12 @@ const LOG_RETENTION_OPTIONS = [
     { label: "logRetention14Days", value: 14 },
     { label: "logRetention30Days", value: 30 },
     { label: "logRetention90Days", value: 90 },
-    ...(build != "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
+    ...(build != "saas"
+        ? [
+              { label: "logRetentionForever", value: -1 },
+              { label: "logRetentionEndOfFollowingYear", value: 9001 }
+          ]
+        : [])
 ];
 
 export default function GeneralPage() {

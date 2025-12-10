@@ -232,6 +232,21 @@ export default function CreateInternalResourceDialog({
 
     const mode = form.watch("mode");
 
+    // Helper function to check if destination contains letters (hostname vs IP)
+    const isHostname = (destination: string): boolean => {
+        return /[a-zA-Z]/.test(destination);
+    };
+
+    // Helper function to clean resource name for FQDN format
+    const cleanForFQDN = (name: string): string => {
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9.-]/g, "-") // Replace invalid chars with hyphens
+            .replace(/[-]+/g, "-") // Replace multiple hyphens with single hyphen
+            .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+            .replace(/^\.|\.$/g, ""); // Remove leading/trailing dots
+    };
+
     useEffect(() => {
         if (open && availableSites.length > 0) {
             form.reset({
@@ -253,6 +268,26 @@ export default function CreateInternalResourceDialog({
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
+            // Validate: if mode is "host" and destination is a hostname (contains letters),
+            // an alias is required
+            if (data.mode === "host" && isHostname(data.destination)) {
+                const currentAlias = data.alias?.trim() || "";
+
+                if (!currentAlias) {
+                    // Prefill alias based on destination
+                    let aliasValue = data.destination;
+                    if (data.destination.toLowerCase() === "localhost") {
+                        // Use resource name cleaned for FQDN with .internal suffix
+                        const cleanedName = cleanForFQDN(data.name);
+                        aliasValue = `${cleanedName}.internal`;
+                    }
+
+                    // Update the form with the prefilled alias
+                    form.setValue("alias", aliasValue);
+                    data.alias = aliasValue;
+                }
+            }
+
             const response = await api.put<AxiosResponse<any>>(
                 `/org/${orgId}/site/${data.siteId}/resource`,
                 {

@@ -37,7 +37,7 @@ import Link from "next/link";
 const GeneralFormSchema = z.object({
     name: z.string().nonempty("Name is required"),
     niceId: z.string().min(1).max(255).optional(),
-    dockerSocketEnabled: z.boolean().optional(),
+    dockerSocketEnabled: z.boolean().optional()
 });
 
 type GeneralFormValues = z.infer<typeof GeneralFormSchema>;
@@ -52,14 +52,16 @@ export default function GeneralPage() {
     const { toast } = useToast();
 
     const [loading, setLoading] = useState(false);
-    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(null);
+    const [activeCidrTagIndex, setActiveCidrTagIndex] = useState<number | null>(
+        null
+    );
 
     const form = useForm({
         resolver: zodResolver(GeneralFormSchema),
         defaultValues: {
             name: site?.name,
             niceId: site?.niceId || "",
-            dockerSocketEnabled: site?.dockerSocketEnabled ?? false,
+            dockerSocketEnabled: site?.dockerSocketEnabled ?? false
         },
         mode: "onChange"
     });
@@ -71,17 +73,19 @@ export default function GeneralPage() {
             await api.post(`/site/${site?.siteId}`, {
                 name: data.name,
                 niceId: data.niceId,
-                dockerSocketEnabled: data.dockerSocketEnabled,
+                dockerSocketEnabled: data.dockerSocketEnabled
             });
 
             updateSite({
                 name: data.name,
                 niceId: data.niceId,
-                dockerSocketEnabled: data.dockerSocketEnabled,
+                dockerSocketEnabled: data.dockerSocketEnabled
             });
 
             if (data.niceId && data.niceId !== site?.niceId) {
-                router.replace(`/${site?.orgId}/settings/sites/${data.niceId}/general`);
+                router.replace(
+                    `/${site?.orgId}/settings/sites/${data.niceId}/general`
+                );
             }
 
             toast({
@@ -92,7 +96,10 @@ export default function GeneralPage() {
             toast({
                 variant: "destructive",
                 title: t("siteErrorUpdate"),
-                description: formatAxiosError(e, t("siteErrorUpdateDescription"))
+                description: formatAxiosError(
+                    e,
+                    t("siteErrorUpdateDescription")
+                )
             });
         }
 
@@ -140,11 +147,15 @@ export default function GeneralPage() {
                                     name="niceId"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t("identifier")}</FormLabel>
+                                            <FormLabel>
+                                                {t("identifier")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     {...field}
-                                                    placeholder={t("enterIdentifier")}
+                                                    placeholder={t(
+                                                        "enterIdentifier"
+                                                    )}
                                                     className="flex-1"
                                                 />
                                             </FormControl>

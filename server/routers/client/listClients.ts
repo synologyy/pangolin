@@ -10,7 +10,16 @@ import {
 import logger from "@server/logger";
 import HttpCode from "@server/types/HttpCode";
 import response from "@server/lib/response";
-import { and, count, eq, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import {
+    and,
+    count,
+    eq,
+    inArray,
+    isNotNull,
+    isNull,
+    or,
+    sql
+} from "drizzle-orm";
 import { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -60,13 +69,9 @@ async function getLatestOlmVersion(): Promise<string | null> {
         return latestVersion;
     } catch (error: any) {
         if (error.name === "AbortError") {
-            logger.warn(
-                "Request to fetch latest Olm version timed out (1.5s)"
-            );
+            logger.warn("Request to fetch latest Olm version timed out (1.5s)");
         } else if (error.cause?.code === "UND_ERR_CONNECT_TIMEOUT") {
-            logger.warn(
-                "Connection timeout while fetching latest Olm version"
-            );
+            logger.warn("Connection timeout while fetching latest Olm version");
         } else {
             logger.warn(
                 "Error fetching latest Olm version:",
@@ -77,10 +82,9 @@ async function getLatestOlmVersion(): Promise<string | null> {
     }
 }
 
-
 const listClientsParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listClientsSchema = z.object({
     limit: z
@@ -95,12 +99,14 @@ const listClientsSchema = z.object({
         .default("0")
         .transform(Number)
         .pipe(z.int().nonnegative()),
-    filter: z
-        .enum(["user", "machine"])
-        .optional()
+    filter: z.enum(["user", "machine"]).optional()
 });
 
-function queryClients(orgId: string, accessibleClientIds: number[], filter?: "user" | "machine") {
+function queryClients(
+    orgId: string,
+    accessibleClientIds: number[],
+    filter?: "user" | "machine"
+) {
     const conditions = [
         inArray(clients.clientId, accessibleClientIds),
         eq(clients.orgId, orgId)
@@ -128,7 +134,9 @@ function queryClients(orgId: string, accessibleClientIds: number[], filter?: "us
             olmVersion: olms.version,
             userId: clients.userId,
             username: users.username,
-            userEmail: users.email
+            userEmail: users.email,
+            niceId: clients.niceId,
+            agent: olms.agent
         })
         .from(clients)
         .leftJoin(orgs, eq(clients.orgId, orgs.orgId))
@@ -156,16 +164,17 @@ type OlmWithUpdateAvailable = Awaited<ReturnType<typeof queryClients>>[0] & {
     olmUpdateAvailable?: boolean;
 };
 
-
 export type ListClientsResponse = {
-    clients: Array<Awaited<ReturnType<typeof queryClients>>[0] & {
-        sites: Array<{
-            siteId: number;
-            siteName: string | null;
-            siteNiceId: string | null;
-        }>
-        olmUpdateAvailable?: boolean;
-    }>;
+    clients: Array<
+        Awaited<ReturnType<typeof queryClients>>[0] & {
+            sites: Array<{
+                siteId: number;
+                siteName: string | null;
+                siteNiceId: string | null;
+            }>;
+            olmUpdateAvailable?: boolean;
+        }
+    >;
     pagination: { total: number; limit: number; offset: number };
 };
 
@@ -269,28 +278,34 @@ export async function listClients(
         const totalCount = totalCountResult[0].count;
 
         // Get associated sites for all clients
-        const clientIds = clientsList.map(client => client.clientId);
+        const clientIds = clientsList.map((client) => client.clientId);
         const siteAssociations = await getSiteAssociations(clientIds);
 
         // Group site associations by client ID
-        const sitesByClient = siteAssociations.reduce((acc, association) => {
-            if (!acc[association.clientId]) {
-                acc[association.clientId] = [];
-            }
-            acc[association.clientId].push({
-                siteId: association.siteId,
-                siteName: association.siteName,
-                siteNiceId: association.siteNiceId
-            });
-            return acc;
-        }, {} as Record<number, Array<{
-            siteId: number;
-            siteName: string | null;
-            siteNiceId: string | null;
-        }>>);
+        const sitesByClient = siteAssociations.reduce(
+            (acc, association) => {
+                if (!acc[association.clientId]) {
+                    acc[association.clientId] = [];
+                }
+                acc[association.clientId].push({
+                    siteId: association.siteId,
+                    siteName: association.siteName,
+                    siteNiceId: association.siteNiceId
+                });
+                return acc;
+            },
+            {} as Record<
+                number,
+                Array<{
+                    siteId: number;
+                    siteName: string | null;
+                    siteNiceId: string | null;
+                }>
+            >
+        );
 
         // Merge clients with their site associations
-        const clientsWithSites = clientsList.map(client => ({
+        const clientsWithSites = clientsList.map((client) => ({
             ...client,
             sites: sitesByClient[client.clientId] || []
         }));
@@ -320,7 +335,6 @@ export async function listClients(
                     } catch (error) {
                         client.olmUpdateAvailable = false;
                     }
-
                 });
             }
         } catch (error) {
@@ -330,7 +344,6 @@ export async function listClients(
                 error
             );
         }
-
 
         return response<ListClientsResponse>(res, {
             data: {

@@ -22,6 +22,7 @@ import {
 import { verifyPassword } from "@server/auth/password";
 import logger from "@server/logger";
 import config from "@server/lib/config";
+import { APP_VERSION } from "@server/lib/consts";
 
 export const olmGetTokenBodySchema = z.object({
     olmId: z.string(),
@@ -104,43 +105,13 @@ export async function getOlmToken(
         const resToken = generateSessionToken();
         await createOlmSession(resToken, existingOlm.olmId);
 
-        let orgIdToUse = orgId;
         let clientIdToUse;
-        if (!orgIdToUse) {
-            if (!existingOlm.clientId) {
-                return next(
-                    createHttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Olm is not associated with a client, orgId is required"
-                    )
-                );
-            }
-
-            const [client] = await db
-                .select()
-                .from(clients)
-                .where(eq(clients.clientId, existingOlm.clientId))
-                .limit(1);
-
-            if (!client) {
-                return next(
-                    createHttpError(
-                        HttpCode.BAD_REQUEST,
-                        "Olm's associated client not found, orgId is required"
-                    )
-                );
-            }
-
-            orgIdToUse = client.orgId;
-            clientIdToUse = client.clientId;
-        } else {
+        if (orgId) {
             // we did provide the org
             const [client] = await db
                 .select()
                 .from(clients)
-                .where(
-                    and(eq(clients.orgId, orgIdToUse), eq(clients.olmId, olmId))
-                ) // we want to lock on to the client with this olmId otherwise it can get assigned to a random one
+                .where(and(eq(clients.orgId, orgId), eq(clients.olmId, olmId))) // we want to lock on to the client with this olmId otherwise it can get assigned to a random one
                 .limit(1);
 
             if (!client) {
@@ -165,6 +136,32 @@ export async function getOlmToken(
                         clientId: client.clientId
                     })
                     .where(eq(olms.olmId, existingOlm.olmId));
+            }
+
+            clientIdToUse = client.clientId;
+        } else {
+            if (!existingOlm.clientId) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Olm is not associated with a client, orgId is required"
+                    )
+                );
+            }
+
+            const [client] = await db
+                .select()
+                .from(clients)
+                .where(eq(clients.clientId, existingOlm.clientId))
+                .limit(1);
+
+            if (!client) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Olm's associated client not found, orgId is required"
+                    )
+                );
             }
 
             clientIdToUse = client.clientId;
@@ -209,10 +206,12 @@ export async function getOlmToken(
         return response<{
             token: string;
             exitNodes: { publicKey: string; endpoint: string }[];
+            serverVersion: string;
         }>(res, {
             data: {
                 token: resToken,
-                exitNodes: exitNodesHpData
+                exitNodes: exitNodesHpData,
+                serverVersion: APP_VERSION
             },
             success: true,
             error: false,

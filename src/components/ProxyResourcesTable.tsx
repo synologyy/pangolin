@@ -319,7 +319,7 @@ export default function ProxyResourcesTable({
         {
             id: "niceId",
             accessorKey: "nice",
-            friendlyName: t("niceId"),
+            friendlyName: t("identifier"),
             enableHiding: true,
             header: ({ column }) => {
                 return (
@@ -329,7 +329,7 @@ export default function ProxyResourcesTable({
                             column.toggleSorting(column.getIsSorted() === "asc")
                         }
                     >
-                        {t("niceId")}
+                        {t("identifier")}
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                 );

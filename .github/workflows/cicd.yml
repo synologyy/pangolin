@@ -36,7 +36,7 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
@@ -56,7 +56,7 @@ jobs:
               shell: bash
 
             - name: Install Go
-              uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+              uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
               with:
                   go-version: 1.24
 
@@ -135,6 +135,13 @@ jobs:
                     docker://$DOCKERHUB_IMAGE:$TAG \
                     docker://$GHCR_IMAGE:$TAG
               shell: bash
+  
+            - name: Login to GitHub Container Registry (for cosign)
+              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Install cosign
               # cosign is used to sign and verify container images (key and keyless)

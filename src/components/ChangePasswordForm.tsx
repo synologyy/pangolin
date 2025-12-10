@@ -22,11 +22,7 @@ import {
 import { toast } from "@app/hooks/useToast";
 import { formatAxiosError } from "@app/lib/api";
 import { useTranslations } from "next-intl";
-import {
-    InputOTP,
-    InputOTPGroup,
-    InputOTPSlot
-} from "./ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "./ui/input-otp";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 import { ChangePasswordResponse } from "@server/routers/auth";
 import { cn } from "@app/lib/cn";
@@ -114,14 +110,22 @@ const ChangePasswordForm = forwardRef<
             onLoadingChange?.(loading);
         }, [loading, onLoadingChange]);
 
-        const passwordSchema = z.object({
-            oldPassword: z.string().min(1, { message: t("passwordRequired") }),
-            newPassword: z.string().min(8, { message: t("passwordRequirementsChars") }),
-            confirmPassword: z.string().min(1, { message: t("passwordRequired") })
-        }).refine((data) => data.newPassword === data.confirmPassword, {
-            message: t("passwordsDoNotMatch"),
-            path: ["confirmPassword"],
-        });
+        const passwordSchema = z
+            .object({
+                oldPassword: z
+                    .string()
+                    .min(1, { message: t("passwordRequired") }),
+                newPassword: z
+                    .string()
+                    .min(8, { message: t("passwordRequirementsChars") }),
+                confirmPassword: z
+                    .string()
+                    .min(1, { message: t("passwordRequired") })
+            })
+            .refine((data) => data.newPassword === data.confirmPassword, {
+                message: t("passwordsDoNotMatch"),
+                path: ["confirmPassword"]
+            });
 
         const mfaSchema = z.object({
             code: z.string().length(6, { message: t("pincodeInvalid") })
@@ -143,11 +147,13 @@ const ChangePasswordForm = forwardRef<
             }
         });
 
-        const changePassword = async (values: z.infer<typeof passwordSchema>) => {
+        const changePassword = async (
+            values: z.infer<typeof passwordSchema>
+        ) => {
             setLoading(true);
 
             const endpoint = `/auth/change-password`;
-            const payload = { 
+            const payload = {
                 oldPassword: values.oldPassword,
                 newPassword: values.newPassword
             };
@@ -181,7 +187,7 @@ const ChangePasswordForm = forwardRef<
 
             const endpoint = `/auth/change-password`;
             const passwordValues = passwordForm.getValues();
-            const payload = { 
+            const payload = {
                 oldPassword: passwordValues.oldPassword,
                 newPassword: passwordValues.newPassword,
                 code: values.code
@@ -303,7 +309,9 @@ const ChangePasswordForm = forwardRef<
                                                     <div className="space-y-2">
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-sm font-medium text-foreground">
-                                                                {t("passwordStrength")}
+                                                                {t(
+                                                                    "passwordStrength"
+                                                                )}
                                                             </span>
                                                             <span
                                                                 className={cn(
@@ -335,7 +343,9 @@ const ChangePasswordForm = forwardRef<
                                                     {/* Requirements Checklist */}
                                                     <div className="bg-muted rounded-lg p-3 space-y-2">
                                                         <div className="text-sm font-medium text-foreground mb-2">
-                                                            {t("passwordRequirements")}
+                                                            {t(
+                                                                "passwordRequirements"
+                                                            )}
                                                         </div>
                                                         <div className="grid grid-cols-1 gap-1.5">
                                                             <div className="flex items-center gap-2">
@@ -505,13 +515,14 @@ const ChangePasswordForm = forwardRef<
                                             {confirmPasswordValue.length > 0 &&
                                                 !doPasswordsMatch && (
                                                     <p className="text-sm text-red-600 mt-1">
-                                                        {t("passwordsDoNotMatch")}
+                                                        {t(
+                                                            "passwordsDoNotMatch"
+                                                        )}
                                                     </p>
                                                 )}
                                             {/* Only show FormMessage when field is empty */}
-                                            {confirmPasswordValue.length === 0 && (
-                                                <FormMessage />
-                                            )}
+                                            {confirmPasswordValue.length ===
+                                                0 && <FormMessage />}
                                         </FormItem>
                                     )}
                                 />
@@ -523,7 +534,9 @@ const ChangePasswordForm = forwardRef<
                 {step === 2 && (
                     <div className="space-y-4">
                         <div className="text-center">
-                            <h3 className="text-lg font-medium">{t("otpAuth")}</h3>
+                            <h3 className="text-lg font-medium">
+                                {t("otpAuth")}
+                            </h3>
                             <p className="text-sm text-muted-foreground">
                                 {t("otpAuthDescription")}
                             </p>
@@ -551,9 +564,12 @@ const ChangePasswordForm = forwardRef<
                                                         onChange={(
                                                             value: string
                                                         ) => {
-                                                            field.onChange(value);
+                                                            field.onChange(
+                                                                value
+                                                            );
                                                             if (
-                                                                value.length === 6
+                                                                value.length ===
+                                                                6
                                                             ) {
                                                                 mfaForm.handleSubmit(
                                                                     confirmMfa
@@ -630,10 +646,7 @@ const ChangePasswordForm = forwardRef<
                             </Button>
                         )}
                         {step === 3 && (
-                            <Button
-                                onClick={handleComplete}
-                                className="w-full"
-                            >
+                            <Button onClick={handleComplete} className="w-full">
                                 {t("continueToApplication")}
                             </Button>
                         )}

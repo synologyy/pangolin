@@ -7,6 +7,8 @@ import logger from "@server/logger";
 import { validateSessionToken } from "@server/auth/sessions/app";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
 import { sendTerminateClient } from "../client/terminate";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 // Track if the offline checker interval is running
 let offlineCheckerInterval: NodeJS.Timeout | null = null;
@@ -59,9 +61,12 @@ export const startOlmOfflineChecker = (): void => {
 
                 // Send a disconnect message to the client if connected
                 try {
-                    await sendTerminateClient(offlineClient.clientId, offlineClient.olmId); // terminate first
+                    await sendTerminateClient(
+                        offlineClient.clientId,
+                        offlineClient.olmId
+                    ); // terminate first
                     // wait a moment to ensure the message is sent
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                     await disconnectClient(offlineClient.olmId);
                 } catch (error) {
                     logger.error(
@@ -75,7 +80,7 @@ export const startOlmOfflineChecker = (): void => {
         }
     }, OFFLINE_CHECK_INTERVAL);
 
-    logger.info("Started offline checker interval");
+    logger.debug("Started offline checker interval");
 };
 
 /**
@@ -133,10 +138,14 @@ export const handleOlmPingMessage: MessageHandler = async (context) => {
             return;
         }
 
+        const sessionId = encodeHexLowerCase(
+            sha256(new TextEncoder().encode(userToken))
+        );
+
         const policyCheck = await checkOrgAccessPolicy({
             orgId: client.orgId,
             userId: olm.userId,
-            session: userToken // this is the user token passed in the message
+            sessionId // this is the user token passed in the message
         });
 
         if (!policyCheck.allowed) {

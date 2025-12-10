@@ -11,8 +11,8 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getRoleSchema = z.strictObject({
-        roleId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    roleId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 registry.registerPath({
     method: "get",

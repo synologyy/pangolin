@@ -10,21 +10,20 @@ import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const paramsSchema = z.strictObject({
-        orgId: z.string(),
-        domainId: z.string()
-    });
+    orgId: z.string(),
+    domainId: z.string()
+});
 
 const bodySchema = z.strictObject({
-        certResolver: z.string().optional().nullable(),
-        preferWildcardCert: z.boolean().optional().nullable()
-    });
+    certResolver: z.string().optional().nullable(),
+    preferWildcardCert: z.boolean().optional().nullable()
+});
 
 export type UpdateDomainResponse = {
     domainId: string;
     certResolver: string | null;
     preferWildcardCert: boolean | null;
 };
-
 
 registry.registerPath({
     method: "patch",
@@ -87,7 +86,6 @@ export async function updateOrgDomain(
                 )
             );
         }
-
 
         const [existingDomain] = await db
             .select()

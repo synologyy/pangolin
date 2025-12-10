@@ -64,11 +64,14 @@ export class License {
     private validationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/validate`;
     private activationServerUrl = `${this.serverBaseUrl}/api/v1/license/enterprise/activate`;
 
-    private statusCache = new NodeCache({ stdTTL: this.phoneHomeInterval });
+    private statusCache = new NodeCache();
     private licenseKeyCache = new NodeCache();
 
     private statusKey = "status";
     private serverSecret!: string;
+    private phoneHomeFailureCount = 0;
+    private checkInProgress = false;
+    private doRecheck = false;
 
     private publicKey = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx9RKc8cw+G8r7h/xeozF
@@ -83,9 +86,11 @@ LQIDAQAB
     constructor(private hostMeta: HostMeta) {
         setInterval(
             async () => {
+                this.doRecheck = true;
                 await this.check();
+                this.doRecheck = false;
             },
-            1000 * 60 * 60
+            1000 * this.phoneHomeInterval
         );
     }
 
@@ -103,6 +108,7 @@ LQIDAQAB
     public async forceRecheck() {
         this.statusCache.flushAll();
         this.licenseKeyCache.flushAll();
+        this.phoneHomeFailureCount = 0;
 
         return await this.check();
     }
@@ -118,24 +124,49 @@ LQIDAQAB
     }
 
     public async check(): Promise<LicenseStatus> {
+        // If a check is already in progress, return the last known status
+        if (this.checkInProgress) {
+            logger.debug(
+                "License check already in progress, returning last known status"
+            );
+            const lastStatus = this.statusCache.get(this.statusKey) as
+                | LicenseStatus
+                | undefined;
+            if (lastStatus) {
+                return lastStatus;
+            }
+            // If no cached status exists, return default status
+            return {
+                hostId: this.hostMeta.hostMetaId,
+                isHostLicensed: true,
+                isLicenseValid: false
+            };
+        }
+
         const status: LicenseStatus = {
             hostId: this.hostMeta.hostMetaId,
             isHostLicensed: true,
             isLicenseValid: false
         };
 
+        this.checkInProgress = true;
+
         try {
-            if (this.statusCache.has(this.statusKey)) {
+            if (!this.doRecheck && this.statusCache.has(this.statusKey)) {
                 const res = this.statusCache.get("status") as LicenseStatus;
                 return res;
             }
-            // Invalidate all
-            this.licenseKeyCache.flushAll();
+            logger.debug("Checking license status...");
+            // Build new cache in temporary Map before invalidating old cache
+            const newCache = new Map<string, LicenseKeyCache>();
 
             const allKeysRes = await db.select().from(licenseKey);
 
             if (allKeysRes.length === 0) {
                 status.isHostLicensed = false;
+                // Invalidate all and set new cache (empty)
+                this.licenseKeyCache.flushAll();
+                this.statusCache.set(this.statusKey, status);
                 return status;
             }
 
@@ -158,7 +189,7 @@ LQIDAQAB
                         this.publicKey
                     );
 
-                    this.licenseKeyCache.set<LicenseKeyCache>(decryptedKey, {
+                    newCache.set(decryptedKey, {
                         licenseKey: decryptedKey,
                         licenseKeyEncrypted: key.licenseKeyId,
                         valid: payload.valid,
@@ -177,14 +208,11 @@ LQIDAQAB
                     );
                     logger.error(e);
 
-                    this.licenseKeyCache.set<LicenseKeyCache>(
-                        key.licenseKeyId,
-                        {
-                            licenseKey: key.licenseKeyId,
-                            licenseKeyEncrypted: key.licenseKeyId,
-                            valid: false
-                        }
-                    );
+                    newCache.set(key.licenseKeyId, {
+                        licenseKey: key.licenseKeyId,
+                        licenseKeyEncrypted: key.licenseKeyId,
+                        valid: false
+                    });
                 }
             }
 
@@ -206,17 +234,29 @@ LQIDAQAB
                 if (!apiResponse?.success) {
                     throw new Error(apiResponse?.error);
                 }
+                // Reset failure count on success
+                this.phoneHomeFailureCount = 0;
             } catch (e) {
-                logger.error("Error communicating with license server:");
-                logger.error(e);
+                this.phoneHomeFailureCount++;
+                if (this.phoneHomeFailureCount === 1) {
+                    // First failure: fail silently
+                    logger.error("Error communicating with license server:");
+                    logger.error(e);
+                    logger.error(`Allowing failure. Will retry one more time at next run interval.`);
+                    // return last known good status
+                    return this.statusCache.get(
+                        this.statusKey
+                    ) as LicenseStatus;
+                } else {
+                    // Subsequent failures: fail abruptly
+                    throw e;
+                }
             }
 
             // Check and update all license keys with server response
             for (const key of keys) {
                 try {
-                    const cached = this.licenseKeyCache.get<LicenseKeyCache>(
-                        key.licenseKey
-                    )!;
+                    const cached = newCache.get(key.licenseKey)!;
                     const licenseKeyRes =
                         apiResponse?.data?.licenseKeys[key.licenseKey];
 
@@ -240,10 +280,7 @@ LQIDAQAB
                             `Can't trust license key: ${key.licenseKey}`
                         );
                         cached.valid = false;
-                        this.licenseKeyCache.set<LicenseKeyCache>(
-                            key.licenseKey,
-                            cached
-                        );
+                        newCache.set(key.licenseKey, cached);
                         continue;
                     }
 
@@ -274,10 +311,7 @@ LQIDAQAB
                         })
                         .where(eq(licenseKey.licenseKeyId, encryptedKey));
 
-                    this.licenseKeyCache.set<LicenseKeyCache>(
-                        key.licenseKey,
-                        cached
-                    );
+                    newCache.set(key.licenseKey, cached);
                 } catch (e) {
                     logger.error(`Error validating license key: ${key}`);
                     logger.error(e);
@@ -286,9 +320,7 @@ LQIDAQAB
 
             // Compute host status
             for (const key of keys) {
-                const cached = this.licenseKeyCache.get<LicenseKeyCache>(
-                    key.licenseKey
-                )!;
+                const cached = newCache.get(key.licenseKey)!;
 
                 if (cached.type === "host") {
                     status.isLicenseValid = cached.valid;
@@ -299,9 +331,17 @@ LQIDAQAB
                     continue;
                 }
             }
+
+            // Invalidate old cache and set new cache
+            this.licenseKeyCache.flushAll();
+            for (const [key, value] of newCache.entries()) {
+                this.licenseKeyCache.set<LicenseKeyCache>(key, value);
+            }
         } catch (error) {
             logger.error("Error checking license status:");
             logger.error(error);
+        } finally {
+            this.checkInProgress = false;
         }
 
         this.statusCache.set(this.statusKey, status);
@@ -430,20 +470,58 @@ LQIDAQAB
                     : key.instanceId
         }));
 
-        const response = await fetch(this.validationServerUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                licenseKeys: decryptedKeys,
-                instanceName: this.hostMeta.hostMetaId
-            })
-        });
+        const maxAttempts = 10;
+        const initialRetryDelay = 1 * 1000; // 1 seconds
+        const exponentialFactor = 1.2;
 
-        const data = await response.json();
+        let lastError: Error | undefined;
 
-        return data as ValidateLicenseAPIResponse;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                const response = await fetch(this.validationServerUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        licenseKeys: decryptedKeys,
+                        instanceName: this.hostMeta.hostMetaId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data as ValidateLicenseAPIResponse;
+            } catch (error) {
+                lastError =
+                    error instanceof Error ? error : new Error(String(error));
+
+                if (attempt < maxAttempts) {
+                    // Calculate exponential backoff delay
+                    const retryDelay = Math.floor(
+                        initialRetryDelay *
+                            Math.pow(exponentialFactor, attempt - 1)
+                    );
+
+                    logger.debug(
+                        `License validation request failed (attempt ${attempt}/${maxAttempts}), retrying in ${retryDelay} ms...`
+                    );
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, retryDelay)
+                    );
+                } else {
+                    logger.error(
+                        `License validation request failed after ${maxAttempts} attempts`
+                    );
+                    throw lastError;
+                }
+            }
+        }
+
+        throw lastError || new Error("License validation request failed");
     }
 }
 

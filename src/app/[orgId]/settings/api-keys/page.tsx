@@ -2,9 +2,11 @@ import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { AxiosResponse } from "axios";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import OrgApiKeysTable, { OrgApiKeyRow } from "../../../../components/OrgApiKeysTable";
+import OrgApiKeysTable, {
+    OrgApiKeyRow
+} from "../../../../components/OrgApiKeysTable";
 import { ListOrgApiKeysResponse } from "@server/routers/apiKeys";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type ApiKeyPageProps = {
     params: Promise<{ orgId: string }>;
@@ -37,8 +39,8 @@ export default async function ApiKeysPage(props: ApiKeyPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('apiKeysManage')}
-                description={t('apiKeysDescription')}
+                title={t("apiKeysManage")}
+                description={t("apiKeysDescription")}
             />
 
             <OrgApiKeysTable apiKeys={rows} orgId={params.orgId} />

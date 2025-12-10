@@ -35,10 +35,12 @@ const sendUsageNotificationBodySchema = z.object({
     notificationType: z.enum(["approaching_70", "approaching_90", "reached"]),
     limitName: z.string(),
     currentUsage: z.number(),
-    usageLimit: z.number(),
+    usageLimit: z.number()
 });
 
-type SendUsageNotificationRequest = z.infer<typeof sendUsageNotificationBodySchema>;
+type SendUsageNotificationRequest = z.infer<
+    typeof sendUsageNotificationBodySchema
+>;
 
 export type SendUsageNotificationResponse = {
     success: boolean;
@@ -97,17 +99,13 @@ async function getOrgAdmins(orgId: string) {
         .where(
             and(
                 eq(userOrgs.orgId, orgId),
-                or(
-                    eq(userOrgs.isOwner, true),
-                    eq(roles.isAdmin, true)
-                )
+                or(eq(userOrgs.isOwner, true), eq(roles.isAdmin, true))
             )
         );
 
     // Filter to only include users with verified emails
-    const orgAdmins = admins.filter(admin => 
-        admin.email && 
-        admin.email.length > 0
+    const orgAdmins = admins.filter(
+        (admin) => admin.email && admin.email.length > 0
     );
 
     return orgAdmins;
@@ -119,7 +117,9 @@ export async function sendUsageNotification(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedParams = sendUsageNotificationParamsSchema.safeParse(req.params);
+        const parsedParams = sendUsageNotificationParamsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -140,12 +140,8 @@ export async function sendUsageNotification(
         }
 
         const { orgId } = parsedParams.data;
-        const { 
-            notificationType, 
-            limitName, 
-            currentUsage, 
-            usageLimit, 
-        } = parsedBody.data;
+        const { notificationType, limitName, currentUsage, usageLimit } =
+            parsedBody.data;
 
         // Verify organization exists
         const org = await db
@@ -192,7 +188,10 @@ export async function sendUsageNotification(
                 let template;
                 let subject;
 
-                if (notificationType === "approaching_70" || notificationType === "approaching_90") {
+                if (
+                    notificationType === "approaching_70" ||
+                    notificationType === "approaching_90"
+                ) {
                     template = NotifyUsageLimitApproaching({
                         email: admin.email,
                         limitName,
@@ -220,10 +219,15 @@ export async function sendUsageNotification(
 
                 emailsSent++;
                 adminEmails.push(admin.email);
-                
-                logger.info(`Usage notification sent to admin ${admin.email} for org ${orgId}`);
+
+                logger.info(
+                    `Usage notification sent to admin ${admin.email} for org ${orgId}`
+                );
             } catch (emailError) {
-                logger.error(`Failed to send usage notification to ${admin.email}:`, emailError);
+                logger.error(
+                    `Failed to send usage notification to ${admin.email}:`,
+                    emailError
+                );
                 // Continue with other admins even if one fails
             }
         }
@@ -239,11 +243,13 @@ export async function sendUsageNotification(
             message: `Usage notifications sent to ${emailsSent} administrators`,
             status: HttpCode.OK
         });
-
     } catch (error) {
         logger.error("Error sending usage notifications:", error);
         return next(
-            createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "Failed to send usage notifications")
+            createHttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "Failed to send usage notifications"
+            )
         );
     }
 }

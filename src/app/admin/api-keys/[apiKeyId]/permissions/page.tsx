@@ -45,10 +45,10 @@ export default function Page() {
                 .catch((e) => {
                     toast({
                         variant: "destructive",
-                        title: t('apiKeysPermissionsErrorLoadingActions'),
+                        title: t("apiKeysPermissionsErrorLoadingActions"),
                         description: formatAxiosError(
                             e,
-                            t('apiKeysPermissionsErrorLoadingActions')
+                            t("apiKeysPermissionsErrorLoadingActions")
                         )
                     });
                 });
@@ -79,18 +79,18 @@ export default function Page() {
                 )
             })
             .catch((e) => {
-                console.error(t('apiKeysErrorSetPermission'), e);
+                console.error(t("apiKeysErrorSetPermission"), e);
                 toast({
                     variant: "destructive",
-                    title: t('apiKeysErrorSetPermission'),
+                    title: t("apiKeysErrorSetPermission"),
                     description: formatAxiosError(e)
                 });
             });
 
         if (actionsRes && actionsRes.status === 200) {
             toast({
-                title: t('apiKeysPermissionsUpdated'),
-                description: t('apiKeysPermissionsUpdatedDescription')
+                title: t("apiKeysPermissionsUpdated"),
+                description: t("apiKeysPermissionsUpdatedDescription")
             });
         }
 
@@ -104,10 +104,12 @@ export default function Page() {
                     <SettingsSection>
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
-                                {t('apiKeysPermissionsTitle')}
+                                {t("apiKeysPermissionsTitle")}
                             </SettingsSectionTitle>
                             <SettingsSectionDescription>
-                                {t('apiKeysPermissionsGeneralSettingsDescription')}
+                                {t(
+                                    "apiKeysPermissionsGeneralSettingsDescription"
+                                )}
                             </SettingsSectionDescription>
                         </SettingsSectionHeader>
                         <SettingsSectionBody>
@@ -125,7 +127,7 @@ export default function Page() {
                                     loading={loadingSavePermissions}
                                     disabled={loadingSavePermissions}
                                 >
-                                    {t('apiKeysPermissionsSave')}
+                                    {t("apiKeysPermissionsSave")}
                                 </Button>
                             </SettingsSectionFooter>
                         </SettingsSectionBody>

@@ -1,8 +1,8 @@
 export enum AudienceIds {
-  SignUps = "",
-  Subscribed = "",
-  Churned = "",
-  Newsletter = ""
+    SignUps = "",
+    Subscribed = "",
+    Churned = "",
+    Newsletter = ""
 }
 
 let resend;

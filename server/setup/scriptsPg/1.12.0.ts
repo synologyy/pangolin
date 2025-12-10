@@ -9,7 +9,9 @@ export default async function migration() {
     try {
         await db.execute(sql`BEGIN`);
 
-        await db.execute(sql`UPDATE "resourceRules" SET "match" = 'COUNTRY' WHERE "match" = 'GEOIP'`);
+        await db.execute(
+            sql`UPDATE "resourceRules" SET "match" = 'COUNTRY' WHERE "match" = 'GEOIP'`
+        );
 
         await db.execute(sql`
         CREATE TABLE "accessAuditLog" (
@@ -92,40 +94,97 @@ export default async function migration() {
         );
         `);
 
-        await db.execute(sql`ALTER TABLE "blueprints" ADD CONSTRAINT "blueprints_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
+        await db.execute(
+            sql`ALTER TABLE "blueprints" ADD CONSTRAINT "blueprints_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
 
-        await db.execute(sql`ALTER TABLE "remoteExitNode" ADD COLUMN "secondaryVersion" varchar;`);
-        await db.execute(sql`ALTER TABLE "resources" DROP CONSTRAINT "resources_skipToIdpId_idp_idpId_fk";`);
-        await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "certResolver" varchar;`);
-        await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "customCertResolver" varchar;`);
-        await db.execute(sql`ALTER TABLE "domains" ADD COLUMN "preferWildcardCert" boolean;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "requireTwoFactor" boolean;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "maxSessionLengthHours" integer;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "passwordExpiryDays" integer;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysRequest" integer DEFAULT 7 NOT NULL;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysAccess" integer DEFAULT 0 NOT NULL;`);
-        await db.execute(sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysAction" integer DEFAULT 0 NOT NULL;`);
-        await db.execute(sql`ALTER TABLE "resourceSessions" ADD COLUMN "issuedAt" bigint;`);
-        await db.execute(sql`ALTER TABLE "resources" ADD COLUMN "proxyProtocol" boolean DEFAULT false NOT NULL;`);
-        await db.execute(sql`ALTER TABLE "resources" ADD COLUMN "proxyProtocolVersion" integer DEFAULT 1;`);
-        await db.execute(sql`ALTER TABLE "session" ADD COLUMN "issuedAt" bigint;`);
-        await db.execute(sql`ALTER TABLE "user" ADD COLUMN "lastPasswordChange" bigint;`);
-        await db.execute(sql`ALTER TABLE "accessAuditLog" ADD CONSTRAINT "accessAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "actionAuditLog" ADD CONSTRAINT "actionAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "dnsRecords" ADD CONSTRAINT "dnsRecords_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`ALTER TABLE "requestAuditLog" ADD CONSTRAINT "requestAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`);
-        await db.execute(sql`CREATE INDEX "idx_identityAuditLog_timestamp" ON "accessAuditLog" USING btree ("timestamp");`);
-        await db.execute(sql`CREATE INDEX "idx_identityAuditLog_org_timestamp" ON "accessAuditLog" USING btree ("orgId","timestamp");`);
-        await db.execute(sql`CREATE INDEX "idx_actionAuditLog_timestamp" ON "actionAuditLog" USING btree ("timestamp");`);
-        await db.execute(sql`CREATE INDEX "idx_actionAuditLog_org_timestamp" ON "actionAuditLog" USING btree ("orgId","timestamp");`);
-        await db.execute(sql`CREATE INDEX "idx_requestAuditLog_timestamp" ON "requestAuditLog" USING btree ("timestamp");`);
-        await db.execute(sql`CREATE INDEX "idx_requestAuditLog_org_timestamp" ON "requestAuditLog" USING btree ("orgId","timestamp");`);
-        await db.execute(sql`ALTER TABLE "resources" ADD CONSTRAINT "resources_skipToIdpId_idp_idpId_fk" FOREIGN KEY ("skipToIdpId") REFERENCES "public"."idp"("idpId") ON DELETE set null ON UPDATE no action;`);
+        await db.execute(
+            sql`ALTER TABLE "remoteExitNode" ADD COLUMN "secondaryVersion" varchar;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resources" DROP CONSTRAINT "resources_skipToIdpId_idp_idpId_fk";`
+        );
+        await db.execute(
+            sql`ALTER TABLE "domains" ADD COLUMN "certResolver" varchar;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "domains" ADD COLUMN "customCertResolver" varchar;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "domains" ADD COLUMN "preferWildcardCert" boolean;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "requireTwoFactor" boolean;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "maxSessionLengthHours" integer;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "passwordExpiryDays" integer;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysRequest" integer DEFAULT 7 NOT NULL;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysAccess" integer DEFAULT 0 NOT NULL;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "orgs" ADD COLUMN "settingsLogRetentionDaysAction" integer DEFAULT 0 NOT NULL;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resourceSessions" ADD COLUMN "issuedAt" bigint;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resources" ADD COLUMN "proxyProtocol" boolean DEFAULT false NOT NULL;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resources" ADD COLUMN "proxyProtocolVersion" integer DEFAULT 1;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "session" ADD COLUMN "issuedAt" bigint;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "user" ADD COLUMN "lastPasswordChange" bigint;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "accessAuditLog" ADD CONSTRAINT "accessAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "actionAuditLog" ADD CONSTRAINT "actionAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "dnsRecords" ADD CONSTRAINT "dnsRecords_domainId_domains_domainId_fk" FOREIGN KEY ("domainId") REFERENCES "public"."domains"("domainId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`ALTER TABLE "requestAuditLog" ADD CONSTRAINT "requestAuditLog_orgId_orgs_orgId_fk" FOREIGN KEY ("orgId") REFERENCES "public"."orgs"("orgId") ON DELETE cascade ON UPDATE no action;`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_identityAuditLog_timestamp" ON "accessAuditLog" USING btree ("timestamp");`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_identityAuditLog_org_timestamp" ON "accessAuditLog" USING btree ("orgId","timestamp");`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_actionAuditLog_timestamp" ON "actionAuditLog" USING btree ("timestamp");`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_actionAuditLog_org_timestamp" ON "actionAuditLog" USING btree ("orgId","timestamp");`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_requestAuditLog_timestamp" ON "requestAuditLog" USING btree ("timestamp");`
+        );
+        await db.execute(
+            sql`CREATE INDEX "idx_requestAuditLog_org_timestamp" ON "requestAuditLog" USING btree ("orgId","timestamp");`
+        );
+        await db.execute(
+            sql`ALTER TABLE "resources" ADD CONSTRAINT "resources_skipToIdpId_idp_idpId_fk" FOREIGN KEY ("skipToIdpId") REFERENCES "public"."idp"("idpId") ON DELETE set null ON UPDATE no action;`
+        );
         await db.execute(sql`ALTER TABLE "orgs" DROP COLUMN "settings";`);
 
-
         // get all of the domains
-        const domainsQuery = await db.execute(sql`SELECT "domainId", "baseDomain" FROM "domains"`);
+        const domainsQuery = await db.execute(
+            sql`SELECT "domainId", "baseDomain" FROM "domains"`
+        );
         const domains = domainsQuery.rows as {
             domainId: string;
             baseDomain: string;
@@ -135,11 +194,11 @@ export default async function migration() {
             // insert two records into the dnsRecords table for each domain
             await db.execute(sql`
                 INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")
-                VALUES (${domain.domainId}, 'A', ${`*.${domain.baseDomain}`}, ${'Server IP Address'}, true)
+                VALUES (${domain.domainId}, 'A', ${`*.${domain.baseDomain}`}, ${"Server IP Address"}, true)
             `);
             await db.execute(sql`
                 INSERT INTO "dnsRecords" ("domainId", "recordType", "baseDomain", "value", "verified")
-                VALUES (${domain.domainId}, 'A', ${domain.baseDomain}, ${'Server IP Address'}, true)
+                VALUES (${domain.domainId}, 'A', ${domain.baseDomain}, ${"Server IP Address"}, true)
             `);
         }
 

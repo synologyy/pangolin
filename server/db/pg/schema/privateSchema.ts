@@ -215,42 +215,56 @@ export const sessionTransferToken = pgTable("sessionTransferToken", {
     expiresAt: bigint("expiresAt", { mode: "number" }).notNull()
 });
 
-export const actionAuditLog = pgTable("actionAuditLog", {
-    id: serial("id").primaryKey(),
-    timestamp: bigint("timestamp", { mode: "number" }).notNull(), // this is EPOCH time in seconds
-    orgId: varchar("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: varchar("actorType", { length: 50 }).notNull(),
-    actor: varchar("actor", { length: 255 }).notNull(),
-    actorId: varchar("actorId", { length: 255 }).notNull(),
-    action: varchar("action", { length: 100 }).notNull(),
-    metadata: text("metadata")
-}, (table) => ([
-    index("idx_actionAuditLog_timestamp").on(table.timestamp),
-    index("idx_actionAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const actionAuditLog = pgTable(
+    "actionAuditLog",
+    {
+        id: serial("id").primaryKey(),
+        timestamp: bigint("timestamp", { mode: "number" }).notNull(), // this is EPOCH time in seconds
+        orgId: varchar("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        actorType: varchar("actorType", { length: 50 }).notNull(),
+        actor: varchar("actor", { length: 255 }).notNull(),
+        actorId: varchar("actorId", { length: 255 }).notNull(),
+        action: varchar("action", { length: 100 }).notNull(),
+        metadata: text("metadata")
+    },
+    (table) => [
+        index("idx_actionAuditLog_timestamp").on(table.timestamp),
+        index("idx_actionAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
-export const accessAuditLog = pgTable("accessAuditLog", {
-    id: serial("id").primaryKey(),
-    timestamp: bigint("timestamp", { mode: "number" }).notNull(), // this is EPOCH time in seconds
-    orgId: varchar("orgId")
-        .notNull()
-        .references(() => orgs.orgId, { onDelete: "cascade" }),
-    actorType: varchar("actorType", { length: 50 }),
-    actor: varchar("actor", { length: 255 }),
-    actorId: varchar("actorId", { length: 255 }),
-    resourceId: integer("resourceId"),
-    ip: varchar("ip", { length: 45 }),
-    type: varchar("type", { length: 100 }).notNull(),
-    action: boolean("action").notNull(),
-    location: text("location"),
-    userAgent: text("userAgent"),
-    metadata: text("metadata")
-}, (table) => ([
-    index("idx_identityAuditLog_timestamp").on(table.timestamp),
-    index("idx_identityAuditLog_org_timestamp").on(table.orgId, table.timestamp)
-]));
+export const accessAuditLog = pgTable(
+    "accessAuditLog",
+    {
+        id: serial("id").primaryKey(),
+        timestamp: bigint("timestamp", { mode: "number" }).notNull(), // this is EPOCH time in seconds
+        orgId: varchar("orgId")
+            .notNull()
+            .references(() => orgs.orgId, { onDelete: "cascade" }),
+        actorType: varchar("actorType", { length: 50 }),
+        actor: varchar("actor", { length: 255 }),
+        actorId: varchar("actorId", { length: 255 }),
+        resourceId: integer("resourceId"),
+        ip: varchar("ip", { length: 45 }),
+        type: varchar("type", { length: 100 }).notNull(),
+        action: boolean("action").notNull(),
+        location: text("location"),
+        userAgent: text("userAgent"),
+        metadata: text("metadata")
+    },
+    (table) => [
+        index("idx_identityAuditLog_timestamp").on(table.timestamp),
+        index("idx_identityAuditLog_org_timestamp").on(
+            table.orgId,
+            table.timestamp
+        )
+    ]
+);
 
 export type Limit = InferSelectModel<typeof limits>;
 export type Account = InferSelectModel<typeof account>;

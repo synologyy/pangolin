@@ -40,7 +40,8 @@ interface RateLimitResult {
 
 export class RateLimitService {
     private localRateLimitTracker: Map<string, RateLimitTracker> = new Map();
-    private localMessageTypeRateLimitTracker: Map<string, RateLimitTracker> = new Map();
+    private localMessageTypeRateLimitTracker: Map<string, RateLimitTracker> =
+        new Map();
     private cleanupInterval: NodeJS.Timeout | null = null;
     private forceSyncInterval: NodeJS.Timeout | null = null;
 
@@ -68,12 +69,18 @@ export class RateLimitService {
         return `ratelimit:${clientId}`;
     }
 
-    private getMessageTypeRateLimitKey(clientId: string, messageType: string): string {
+    private getMessageTypeRateLimitKey(
+        clientId: string,
+        messageType: string
+    ): string {
         return `ratelimit:${clientId}:${messageType}`;
     }
 
     // Helper function to clean up old timestamp fields from a Redis hash
-    private async cleanupOldTimestamps(key: string, windowStart: number): Promise<void> {
+    private async cleanupOldTimestamps(
+        key: string,
+        windowStart: number
+    ): Promise<void> {
         if (!redisManager.isRedisEnabled()) return;
 
         try {
@@ -101,10 +108,15 @@ export class RateLimitService {
                     const batch = fieldsToDelete.slice(i, i + batchSize);
                     await client.hdel(key, ...batch);
                 }
-                logger.debug(`Cleaned up ${fieldsToDelete.length} old timestamp fields from ${key}`);
+                logger.debug(
+                    `Cleaned up ${fieldsToDelete.length} old timestamp fields from ${key}`
+                );
             }
         } catch (error) {
-            logger.error(`Failed to cleanup old timestamps for key ${key}:`, error);
+            logger.error(
+                `Failed to cleanup old timestamps for key ${key}:`,
+                error
+            );
             // Don't throw - cleanup failures shouldn't block rate limiting
         }
     }
@@ -114,7 +126,8 @@ export class RateLimitService {
         clientId: string,
         tracker: RateLimitTracker
     ): Promise<void> {
-        if (!redisManager.isRedisEnabled() || tracker.pendingCount === 0) return;
+        if (!redisManager.isRedisEnabled() || tracker.pendingCount === 0)
+            return;
 
         try {
             const currentTime = Math.floor(Date.now() / 1000);
@@ -132,7 +145,11 @@ export class RateLimitService {
             const newValue = (
                 parseInt(currentValue || "0") + tracker.pendingCount
             ).toString();
-            await redisManager.hset(globalKey, currentTime.toString(), newValue);
+            await redisManager.hset(
+                globalKey,
+                currentTime.toString(),
+                newValue
+            );
 
             // Set TTL using the client directly - this prevents the key from persisting forever
             if (redisManager.getClient()) {
@@ -145,7 +162,9 @@ export class RateLimitService {
             tracker.lastSyncedCount = tracker.count;
             tracker.pendingCount = 0;
 
-            logger.debug(`Synced global rate limit to Redis for client ${clientId}`);
+            logger.debug(
+                `Synced global rate limit to Redis for client ${clientId}`
+            );
         } catch (error) {
             logger.error("Failed to sync global rate limit to Redis:", error);
         }
@@ -156,12 +175,16 @@ export class RateLimitService {
         messageType: string,
         tracker: RateLimitTracker
     ): Promise<void> {
-        if (!redisManager.isRedisEnabled() || tracker.pendingCount === 0) return;
+        if (!redisManager.isRedisEnabled() || tracker.pendingCount === 0)
+            return;
 
         try {
             const currentTime = Math.floor(Date.now() / 1000);
             const windowStart = currentTime - RATE_LIMIT_WINDOW;
-            const messageTypeKey = this.getMessageTypeRateLimitKey(clientId, messageType);
+            const messageTypeKey = this.getMessageTypeRateLimitKey(
+                clientId,
+                messageType
+            );
 
             // Clean up old timestamp fields before writing
             await this.cleanupOldTimestamps(messageTypeKey, windowStart);
@@ -195,12 +218,17 @@ export class RateLimitService {
                 `Synced message type rate limit to Redis for client ${clientId}, type ${messageType}`
             );
         } catch (error) {
-            logger.error("Failed to sync message type rate limit to Redis:", error);
+            logger.error(
+                "Failed to sync message type rate limit to Redis:",
+                error
+            );
         }
     }
 
     // Initialize local tracker from Redis data
-    private async initializeLocalTracker(clientId: string): Promise<RateLimitTracker> {
+    private async initializeLocalTracker(
+        clientId: string
+    ): Promise<RateLimitTracker> {
         const currentTime = Math.floor(Date.now() / 1000);
         const windowStart = currentTime - RATE_LIMIT_WINDOW;
 
@@ -215,14 +243,16 @@ export class RateLimitService {
 
         try {
             const globalKey = this.getRateLimitKey(clientId);
-            
+
             // Clean up old timestamp fields before reading
             await this.cleanupOldTimestamps(globalKey, windowStart);
-            
+
             const globalRateLimitData = await redisManager.hgetall(globalKey);
 
             let count = 0;
-            for (const [timestamp, countStr] of Object.entries(globalRateLimitData)) {
+            for (const [timestamp, countStr] of Object.entries(
+                globalRateLimitData
+            )) {
                 const time = parseInt(timestamp);
                 if (time >= windowStart) {
                     count += parseInt(countStr);
@@ -236,7 +266,10 @@ export class RateLimitService {
                 lastSyncedCount: count
             };
         } catch (error) {
-            logger.error("Failed to initialize global tracker from Redis:", error);
+            logger.error(
+                "Failed to initialize global tracker from Redis:",
+                error
+            );
             return {
                 count: 0,
                 windowStart: currentTime,
@@ -263,15 +296,21 @@ export class RateLimitService {
         }
 
         try {
-            const messageTypeKey = this.getMessageTypeRateLimitKey(clientId, messageType);
-            
+            const messageTypeKey = this.getMessageTypeRateLimitKey(
+                clientId,
+                messageType
+            );
+
             // Clean up old timestamp fields before reading
             await this.cleanupOldTimestamps(messageTypeKey, windowStart);
-            
-            const messageTypeRateLimitData = await redisManager.hgetall(messageTypeKey);
+
+            const messageTypeRateLimitData =
+                await redisManager.hgetall(messageTypeKey);
 
             let count = 0;
-            for (const [timestamp, countStr] of Object.entries(messageTypeRateLimitData)) {
+            for (const [timestamp, countStr] of Object.entries(
+                messageTypeRateLimitData
+            )) {
                 const time = parseInt(timestamp);
                 if (time >= windowStart) {
                     count += parseInt(countStr);
@@ -285,7 +324,10 @@ export class RateLimitService {
                 lastSyncedCount: count
             };
         } catch (error) {
-            logger.error("Failed to initialize message type tracker from Redis:", error);
+            logger.error(
+                "Failed to initialize message type tracker from Redis:",
+                error
+            );
             return {
                 count: 0,
                 windowStart: currentTime,
@@ -327,7 +369,10 @@ export class RateLimitService {
                 isLimited: true,
                 reason: "global",
                 totalHits: globalTracker.count,
-                resetTime: new Date((globalTracker.windowStart + Math.floor(windowMs / 1000)) * 1000)
+                resetTime: new Date(
+                    (globalTracker.windowStart + Math.floor(windowMs / 1000)) *
+                        1000
+                )
             };
         }
 
@@ -339,19 +384,32 @@ export class RateLimitService {
         // Check message type specific rate limit if messageType is provided
         if (messageType) {
             const messageTypeKey = `${clientId}:${messageType}`;
-            let messageTypeTracker = this.localMessageTypeRateLimitTracker.get(messageTypeKey);
+            let messageTypeTracker =
+                this.localMessageTypeRateLimitTracker.get(messageTypeKey);
 
-            if (!messageTypeTracker || messageTypeTracker.windowStart < windowStart) {
+            if (
+                !messageTypeTracker ||
+                messageTypeTracker.windowStart < windowStart
+            ) {
                 // New window or first request for this message type - initialize from Redis if available
-                messageTypeTracker = await this.initializeMessageTypeTracker(clientId, messageType);
+                messageTypeTracker = await this.initializeMessageTypeTracker(
+                    clientId,
+                    messageType
+                );
                 messageTypeTracker.windowStart = currentTime;
-                this.localMessageTypeRateLimitTracker.set(messageTypeKey, messageTypeTracker);
+                this.localMessageTypeRateLimitTracker.set(
+                    messageTypeKey,
+                    messageTypeTracker
+                );
             }
 
             // Increment message type counters
             messageTypeTracker.count++;
             messageTypeTracker.pendingCount++;
-            this.localMessageTypeRateLimitTracker.set(messageTypeKey, messageTypeTracker);
+            this.localMessageTypeRateLimitTracker.set(
+                messageTypeKey,
+                messageTypeTracker
+            );
 
             // Check if message type limit would be exceeded
             if (messageTypeTracker.count >= messageTypeLimit) {
@@ -359,25 +417,38 @@ export class RateLimitService {
                     isLimited: true,
                     reason: `message_type:${messageType}`,
                     totalHits: messageTypeTracker.count,
-                    resetTime: new Date((messageTypeTracker.windowStart + Math.floor(windowMs / 1000)) * 1000)
+                    resetTime: new Date(
+                        (messageTypeTracker.windowStart +
+                            Math.floor(windowMs / 1000)) *
+                            1000
+                    )
                 };
             }
 
             // Sync to Redis if threshold reached
             if (messageTypeTracker.pendingCount >= REDIS_SYNC_THRESHOLD) {
-                this.syncMessageTypeRateLimitToRedis(clientId, messageType, messageTypeTracker);
+                this.syncMessageTypeRateLimitToRedis(
+                    clientId,
+                    messageType,
+                    messageTypeTracker
+                );
             }
         }
 
         return {
             isLimited: false,
             totalHits: globalTracker.count,
-            resetTime: new Date((globalTracker.windowStart + Math.floor(windowMs / 1000)) * 1000)
+            resetTime: new Date(
+                (globalTracker.windowStart + Math.floor(windowMs / 1000)) * 1000
+            )
         };
     }
 
     // Decrement function for skipSuccessfulRequests/skipFailedRequests functionality
-    async decrementRateLimit(clientId: string, messageType?: string): Promise<void> {
+    async decrementRateLimit(
+        clientId: string,
+        messageType?: string
+    ): Promise<void> {
         // Decrement global counter
         const globalTracker = this.localRateLimitTracker.get(clientId);
         if (globalTracker && globalTracker.count > 0) {
@@ -389,7 +460,8 @@ export class RateLimitService {
         // Decrement message type counter if provided
         if (messageType) {
             const messageTypeKey = `${clientId}:${messageType}`;
-            const messageTypeTracker = this.localMessageTypeRateLimitTracker.get(messageTypeKey);
+            const messageTypeTracker =
+                this.localMessageTypeRateLimitTracker.get(messageTypeKey);
             if (messageTypeTracker && messageTypeTracker.count > 0) {
                 messageTypeTracker.count--;
                 messageTypeTracker.pendingCount--;
@@ -401,7 +473,7 @@ export class RateLimitService {
     async resetKey(clientId: string): Promise<void> {
         // Remove from local tracking
         this.localRateLimitTracker.delete(clientId);
-        
+
         // Remove all message type entries for this client
         for (const [key] of this.localMessageTypeRateLimitTracker) {
             if (key.startsWith(`${clientId}:`)) {
@@ -417,9 +489,13 @@ export class RateLimitService {
             // Get all message type keys for this client and delete them
             const client = redisManager.getClient();
             if (client) {
-                const messageTypeKeys = await client.keys(`ratelimit:${clientId}:*`);
+                const messageTypeKeys = await client.keys(
+                    `ratelimit:${clientId}:*`
+                );
                 if (messageTypeKeys.length > 0) {
-                    await Promise.all(messageTypeKeys.map(key => redisManager.del(key)));
+                    await Promise.all(
+                        messageTypeKeys.map((key) => redisManager.del(key))
+                    );
                 }
             }
         }
@@ -431,7 +507,10 @@ export class RateLimitService {
         const windowStart = currentTime - RATE_LIMIT_WINDOW;
 
         // Clean up global rate limit tracking and sync pending data
-        for (const [clientId, tracker] of this.localRateLimitTracker.entries()) {
+        for (const [
+            clientId,
+            tracker
+        ] of this.localRateLimitTracker.entries()) {
             if (tracker.windowStart < windowStart) {
                 // Sync any pending data before cleanup
                 if (tracker.pendingCount > 0) {
@@ -442,12 +521,19 @@ export class RateLimitService {
         }
 
         // Clean up message type rate limit tracking and sync pending data
-        for (const [key, tracker] of this.localMessageTypeRateLimitTracker.entries()) {
+        for (const [
+            key,
+            tracker
+        ] of this.localMessageTypeRateLimitTracker.entries()) {
             if (tracker.windowStart < windowStart) {
                 // Sync any pending data before cleanup
                 if (tracker.pendingCount > 0) {
                     const [clientId, messageType] = key.split(":", 2);
-                    await this.syncMessageTypeRateLimitToRedis(clientId, messageType, tracker);
+                    await this.syncMessageTypeRateLimitToRedis(
+                        clientId,
+                        messageType,
+                        tracker
+                    );
                 }
                 this.localMessageTypeRateLimitTracker.delete(key);
             }
@@ -461,17 +547,27 @@ export class RateLimitService {
         logger.debug("Force syncing all pending rate limit data to Redis...");
 
         // Sync all pending global rate limits
-        for (const [clientId, tracker] of this.localRateLimitTracker.entries()) {
+        for (const [
+            clientId,
+            tracker
+        ] of this.localRateLimitTracker.entries()) {
             if (tracker.pendingCount > 0) {
                 await this.syncRateLimitToRedis(clientId, tracker);
             }
         }
 
         // Sync all pending message type rate limits
-        for (const [key, tracker] of this.localMessageTypeRateLimitTracker.entries()) {
+        for (const [
+            key,
+            tracker
+        ] of this.localMessageTypeRateLimitTracker.entries()) {
             if (tracker.pendingCount > 0) {
                 const [clientId, messageType] = key.split(":", 2);
-                await this.syncMessageTypeRateLimitToRedis(clientId, messageType, tracker);
+                await this.syncMessageTypeRateLimitToRedis(
+                    clientId,
+                    messageType,
+                    tracker
+                );
             }
         }
 

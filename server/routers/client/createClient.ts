@@ -25,6 +25,7 @@ import { listExitNodes } from "#dynamic/lib/exitNodes";
 import { generateId } from "@server/auth/sessions/app";
 import { OpenAPITags, registry } from "@server/openApi";
 import { rebuildClientAssociationsFromClient } from "@server/lib/rebuildClientAssociations";
+import { getUniqueClientName } from "@server/db/names";
 
 const createClientParamsSchema = z.strictObject({
     orgId: z.string()
@@ -206,9 +207,12 @@ export async function createClient(
                 );
             }
 
+            const niceId = await getUniqueClientName(orgId);
+
             [newClient] = await trx
                 .insert(clients)
                 .values({
+                    niceId,
                     exitNodeId: randomExitNode.exitNodeId,
                     orgId,
                     name,

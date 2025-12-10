@@ -81,17 +81,17 @@ export default function SetResourcePasswordForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPasswordSetup'),
+                    title: t("resourceErrorPasswordSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPasswordSetupDescription')
+                        t("resourceErrorPasswordSetupDescription")
                     )
                 });
             })
             .then(() => {
                 toast({
-                    title: t('resourcePasswordSetup'),
-                    description: t('resourcePasswordSetupDescription')
+                    title: t("resourcePasswordSetup"),
+                    description: t("resourcePasswordSetupDescription")
                 });
 
                 if (onSetPassword) {
@@ -113,9 +113,11 @@ export default function SetResourcePasswordForm({
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('resourcePasswordSetupTitle')}</CredenzaTitle>
+                        <CredenzaTitle>
+                            {t("resourcePasswordSetupTitle")}
+                        </CredenzaTitle>
                         <CredenzaDescription>
-                            {t('resourcePasswordSetupTitleDescription')}
+                            {t("resourcePasswordSetupTitleDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -130,7 +132,9 @@ export default function SetResourcePasswordForm({
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('password')}</FormLabel>
+                                            <FormLabel>
+                                                {t("password")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     autoComplete="off"
@@ -147,7 +151,7 @@ export default function SetResourcePasswordForm({
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
                             type="submit"
@@ -155,7 +159,7 @@ export default function SetResourcePasswordForm({
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('resourcePasswordSubmit')}
+                            {t("resourcePasswordSubmit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>

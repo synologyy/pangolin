@@ -26,16 +26,17 @@ import { getUniqueResourceName } from "@server/db/names";
 import { validateAndConstructDomain } from "@server/lib/domainUtils";
 
 const createResourceParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
-const createHttpResourceSchema = z.strictObject({
+const createHttpResourceSchema = z
+    .strictObject({
         name: z.string().min(1).max(255),
         subdomain: z.string().nullable().optional(),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
         domainId: z.string(),
-        stickySession: z.boolean().optional(),
+        stickySession: z.boolean().optional()
     })
     .refine(
         (data) => {
@@ -49,7 +50,8 @@ const createHttpResourceSchema = z.strictObject({
         }
     );
 
-const createRawResourceSchema = z.strictObject({
+const createRawResourceSchema = z
+    .strictObject({
         name: z.string().min(1).max(255),
         http: z.boolean(),
         protocol: z.enum(["tcp", "udp"]),
@@ -188,7 +190,7 @@ async function createHttpResource(
 
     const { name, domainId } = parsedBody.data;
     const subdomain = parsedBody.data.subdomain;
-    const stickySession=parsedBody.data.stickySession;
+    const stickySession = parsedBody.data.stickySession;
 
     // Validate domain and construct full domain
     const domainResult = await validateAndConstructDomain(

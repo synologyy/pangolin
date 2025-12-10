@@ -31,11 +31,11 @@ export default async function SitesPage(props: SitesPageProps) {
             return "-"; // because we are not able to track the data use in a local site right now
         }
         if (mb >= 1024 * 1024) {
-            return t('terabytes', {count: (mb / (1024 * 1024)).toFixed(2)});
+            return t("terabytes", { count: (mb / (1024 * 1024)).toFixed(2) });
         } else if (mb >= 1024) {
-            return t('gigabytes', {count: (mb / 1024).toFixed(2)});
+            return t("gigabytes", { count: (mb / 1024).toFixed(2) });
         } else {
-            return t('megabytes', {count: mb.toFixed(2)});
+            return t("megabytes", { count: mb.toFixed(2) });
         }
     }
 
@@ -53,7 +53,7 @@ export default async function SitesPage(props: SitesPageProps) {
             newtVersion: site.newtVersion || undefined,
             newtUpdateAvailable: site.newtUpdateAvailable || false,
             exitNodeName: site.exitNodeName || undefined,
-            exitNodeEndpoint: site.exitNodeEndpoint || undefined,
+            exitNodeEndpoint: site.exitNodeEndpoint || undefined
         };
     });
 
@@ -62,8 +62,8 @@ export default async function SitesPage(props: SitesPageProps) {
             {/* <SitesSplashCard /> */}
 
             <SettingsSectionTitle
-                title={t('siteManageSites')}
-                description={t('siteDescription')}
+                title={t("siteManageSites")}
+                description={t("siteDescription")}
             />
 
             <SitesTable sites={siteRows} orgId={params.orgId} />

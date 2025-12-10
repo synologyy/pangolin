@@ -25,9 +25,9 @@ import { usageService } from "@server/lib/billing/usageService";
 import { FeatureId } from "@server/lib/billing";
 
 const paramsSchema = z.strictObject({
-        orgId: z.string().min(1),
-        remoteExitNodeId: z.string().min(1)
-    });
+    orgId: z.string().min(1),
+    remoteExitNodeId: z.string().min(1)
+});
 
 export async function deleteRemoteExitNode(
     req: Request,

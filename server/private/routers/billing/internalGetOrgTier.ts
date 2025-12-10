@@ -22,8 +22,8 @@ import { getOrgTierData } from "#private/lib/billing";
 import { GetOrgTierResponse } from "@server/routers/billing/types";
 
 const getOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export async function getOrgTier(
     req: Request,

@@ -273,9 +273,44 @@ export default function EditInternalResourceDialog({
 
     const mode = form.watch("mode");
 
+    // Helper function to check if destination contains letters (hostname vs IP)
+    const isHostname = (destination: string): boolean => {
+        return /[a-zA-Z]/.test(destination);
+    };
+
+    // Helper function to clean resource name for FQDN format
+    const cleanForFQDN = (name: string): string => {
+        return name
+            .toLowerCase()
+            .replace(/[^a-z0-9.-]/g, "-") // Replace invalid chars with hyphens
+            .replace(/[-]+/g, "-") // Replace multiple hyphens with single hyphen
+            .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+            .replace(/^\.|\.$/g, ""); // Remove leading/trailing dots
+    };
+
     const handleSubmit = async (data: FormData) => {
         setIsSubmitting(true);
         try {
+            // Validate: if mode is "host" and destination is a hostname (contains letters),
+            // an alias is required
+            if (data.mode === "host" && isHostname(data.destination)) {
+                const currentAlias = data.alias?.trim() || "";
+
+                if (!currentAlias) {
+                    // Prefill alias based on destination
+                    let aliasValue = data.destination;
+                    if (data.destination.toLowerCase() === "localhost") {
+                        // Use resource name cleaned for FQDN with .internal suffix
+                        const cleanedName = cleanForFQDN(data.name);
+                        aliasValue = `${cleanedName}.internal`;
+                    }
+
+                    // Update the form with the prefilled alias
+                    form.setValue("alias", aliasValue);
+                    data.alias = aliasValue;
+                }
+            }
+
             // Update the site resource
             await api.post(
                 `/org/${orgId}/site/${resource.siteId}/resource/${resource.id}`,
@@ -354,7 +389,7 @@ export default function EditInternalResourceDialog({
     useEffect(() => {
         if (open) {
             const resourceChanged = previousResourceId.current !== resource.id;
-            
+
             if (resourceChanged) {
                 form.reset({
                     name: resource.name,
@@ -367,10 +402,18 @@ export default function EditInternalResourceDialog({
                 });
                 previousResourceId.current = resource.id;
             }
-            
+
             hasInitialized.current = false;
         }
-    }, [open, resource.id, resource.name, resource.mode, resource.destination, resource.alias, form]);
+    }, [
+        open,
+        resource.id,
+        resource.name,
+        resource.mode,
+        resource.destination,
+        resource.alias,
+        form
+    ]);
 
     useEffect(() => {
         if (open && !loadingRolesUsers && !hasInitialized.current) {

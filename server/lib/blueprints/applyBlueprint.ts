@@ -14,6 +14,7 @@ import {
 import { BlueprintSource } from "@server/routers/blueprints/types";
 import { stringify as stringifyYaml } from "yaml";
 import { faker } from "@faker-js/faker";
+import { handleMessagingForUpdatedSiteResource } from "@server/routers/siteResource";
 
 type ApplyBlueprintArgs = {
     orgId: string;
@@ -57,22 +58,63 @@ export async function applyBlueprint({
                 trx,
                 siteId
             );
-        });
 
-        logger.debug(
-            `Successfully updated proxy resources for org ${orgId}: ${JSON.stringify(proxyResourcesResults)}`
-        );
+            logger.debug(
+                `Successfully updated proxy resources for org ${orgId}: ${JSON.stringify(proxyResourcesResults)}`
+            );
 
-        // We need to update the targets on the newts from the successfully updated information
-        for (const result of proxyResourcesResults) {
-            for (const target of result.targetsToUpdate) {
-                const [site] = await db
+            // We need to update the targets on the newts from the successfully updated information
+            for (const result of proxyResourcesResults) {
+                for (const target of result.targetsToUpdate) {
+                    const [site] = await trx
+                        .select()
+                        .from(sites)
+                        .innerJoin(newts, eq(sites.siteId, newts.siteId))
+                        .where(
+                            and(
+                                eq(sites.siteId, target.siteId),
+                                eq(sites.orgId, orgId),
+                                eq(sites.type, "newt"),
+                                isNotNull(sites.pubKey)
+                            )
+                        )
+                        .limit(1);
+
+                    if (site) {
+                        logger.debug(
+                            `Updating target ${target.targetId} on site ${site.sites.siteId}`
+                        );
+
+                        // see if you can find a matching target health check from the healthchecksToUpdate array
+                        const matchingHealthcheck =
+                            result.healthchecksToUpdate.find(
+                                (hc) => hc.targetId === target.targetId
+                            );
+
+                        await addProxyTargets(
+                            site.newt.newtId,
+                            [target],
+                            matchingHealthcheck ? [matchingHealthcheck] : [],
+                            result.proxyResource.protocol,
+                            result.proxyResource.proxyPort
+                        );
+                    }
+                }
+            }
+
+            logger.debug(
+                `Successfully updated client resources for org ${orgId}: ${JSON.stringify(clientResourcesResults)}`
+            );
+
+            // We need to update the targets on the newts from the successfully updated information
+            for (const result of clientResourcesResults) {
+                const [site] = await trx
                     .select()
                     .from(sites)
                     .innerJoin(newts, eq(sites.siteId, newts.siteId))
                     .where(
                         and(
-                            eq(sites.siteId, target.siteId),
+                            eq(sites.siteId, result.newSiteResource.siteId),
                             eq(sites.orgId, orgId),
                             eq(sites.type, "newt"),
                             isNotNull(sites.pubKey)
@@ -80,60 +122,33 @@ export async function applyBlueprint({
                     )
                     .limit(1);
 
-                if (site) {
+                if (!site) {
                     logger.debug(
-                        `Updating target ${target.targetId} on site ${site.sites.siteId}`
+                        `No newt site found for client resource ${result.newSiteResource.siteResourceId}, skipping target update`
                     );
-
-                    // see if you can find a matching target health check from the healthchecksToUpdate array
-                    const matchingHealthcheck =
-                        result.healthchecksToUpdate.find(
-                            (hc) => hc.targetId === target.targetId
-                        );
-
-                    await addProxyTargets(
-                        site.newt.newtId,
-                        [target],
-                        matchingHealthcheck ? [matchingHealthcheck] : [],
-                        result.proxyResource.protocol,
-                        result.proxyResource.proxyPort
-                    );
+                    continue;
                 }
+
+                logger.debug(
+                    `Updating client resource ${result.newSiteResource.siteResourceId} on site ${site.sites.siteId}`
+                );
+
+                await handleMessagingForUpdatedSiteResource(
+                    result.oldSiteResource,
+                    result.newSiteResource,
+                    { siteId: site.sites.siteId, orgId: site.sites.orgId },
+                    trx
+                );
+
+                // await addClientTargets(
+                //     site.newt.newtId,
+                //     result.resource.destination,
+                //     result.resource.destinationPort,
+                //     result.resource.protocol,
+                //     result.resource.proxyPort
+                // );
             }
-        }
-
-        logger.debug(
-            `Successfully updated client resources for org ${orgId}: ${JSON.stringify(clientResourcesResults)}`
-        );
-
-        // We need to update the targets on the newts from the successfully updated information
-        for (const result of clientResourcesResults) {
-            const [site] = await db
-                .select()
-                .from(sites)
-                .innerJoin(newts, eq(sites.siteId, newts.siteId))
-                .where(
-                    and(
-                        eq(sites.siteId, result.resource.siteId),
-                        eq(sites.orgId, orgId),
-                        eq(sites.type, "newt"),
-                        isNotNull(sites.pubKey)
-                    )
-                )
-                .limit(1);
-
-            logger.debug(
-                `Updating client resource ${result.resource.siteResourceId} on site ${site.sites.siteId}`
-            );
-
-            // await addClientTargets(
-            //     site.newt.newtId,
-            //     result.resource.destination,
-            //     result.resource.destinationPort,
-            //     result.resource.protocol,
-            //     result.resource.proxyPort
-            // );
-        }
+        });
 
         blueprintSucceeded = true;
         blueprintMessage = "Blueprint applied successfully";
@@ -171,53 +186,3 @@ export async function applyBlueprint({
 
     return blueprint;
 }
-
-// await updateDatabaseFromConfig("org_i21aifypnlyxur2", {
-//     resources: {
-//         "resource-nice-id": {
-//             name: "this is my resource",
-//             protocol: "http",
-//             "full-domain": "level1.test.example.com",
-//             "host-header": "example.com",
-//             "tls-server-name": "example.com",
-//             auth: {
-//                 pincode: 123456,
-//                 password: "sadfasdfadsf",
-//                 "sso-enabled": true,
-//                 "sso-roles": ["Member"],
-//                 "sso-users": ["owen@pangolin.net"],
-//                 "whitelist-users": ["owen@pangolin.net"]
-//             },
-//             targets: [
-//                 {
-//                     site: "glossy-plains-viscacha-rat",
-//                     hostname: "localhost",
-//                     method: "http",
-//                     port: 8000,
-//                     healthcheck: {
-//                         port: 8000,
-//                         hostname: "localhost"
-//                     }
-//                 },
-//                 {
-//                     site: "glossy-plains-viscacha-rat",
-//                     hostname: "localhost",
-//                     method: "http",
-//                     port: 8001
-//                 }
-//             ]
-//         },
-// "resource-nice-id2": {
-//     name: "http server",
-//     protocol: "tcp",
-//     "proxy-port": 3000,
-//     targets: [
-//         {
-//             site: "glossy-plains-viscacha-rat",
-//             hostname: "localhost",
-//             port: 3000,
-//         }
-//     ]
-// }
-//     }
-// });
