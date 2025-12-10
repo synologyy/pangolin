@@ -42,6 +42,12 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@app/components/ui/tabs";
 import { useTranslations } from "next-intl";
 import { DateRangePicker, DateTimeValue } from "@app/components/DateTimePicker";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "./ui/tooltip";
 
 const STORAGE_KEYS = {
     PAGE_SIZE: "datatable-page-size",
@@ -51,6 +57,7 @@ const STORAGE_KEYS = {
 
 export const getStoredPageSize = (
     tableId?: string,
+
     defaultSize = 20
 ): number => {
     if (typeof window === "undefined") return defaultSize;

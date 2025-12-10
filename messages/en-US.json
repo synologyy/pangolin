@@ -2067,6 +2067,8 @@
     "timestamp": "Timestamp",
     "accessLogs": "Access Logs",
     "exportCsv": "Export CSV",
+    "exportError": "Unknown error when exporting CSV",
+    "exportCsvTooltip": "Within Time Range",
     "actorId": "Actor ID",
     "allowedByRule": "Allowed by Rule",
     "allowedNoAuth": "Allowed No Auth",

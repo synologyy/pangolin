@@ -11,14 +11,14 @@ import { Button } from "@app/components/ui/button";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
 import { createApiClient } from "@app/lib/api";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 import { ColumnDef } from "@tanstack/react-table";
+import axios from "axios";
 import { ArrowUpRight, Key, Lock, Unlock, User } from "lucide-react";
 import Link from "next/link";
-
-import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
 export default function GeneralPage() {
     const router = useRouter();
@@ -29,7 +29,7 @@ export default function GeneralPage() {
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
+    const [isExporting, startTransition] = useTransition();
 
     // Pagination state
     const [totalCount, setTotalCount] = useState<number>(0);
@@ -303,8 +303,6 @@ export default function GeneralPage() {
 
     const exportData = async () => {
         try {
-            setIsExporting(true);
-
             // Prepare query params for export
             const params: any = {
                 timeStart: dateRange.startDate?.date
@@ -336,11 +334,21 @@ export default function GeneralPage() {
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-            setIsExporting(false);
         } catch (error) {
+            let apiErrorMessage: string | null = null;
+            if (axios.isAxiosError(error) && error.response) {
+                const data = error.response.data;
+
+                if (data instanceof Blob && data.type === "application/json") {
+                    // Parse the Blob as JSON
+                    const text = await data.text();
+                    const errorData = JSON.parse(text);
+                    apiErrorMessage = errorData.message;
+                }
+            }
             toast({
                 title: t("error"),
-                description: t("exportError"),
+                description: apiErrorMessage ?? t("exportError"),
                 variant: "destructive"
             });
         }
@@ -774,7 +782,7 @@ export default function GeneralPage() {
                 searchColumn="host"
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
-                onExport={exportData}
+                onExport={() => startTransition(exportData)}
                 isExporting={isExporting}
                 onDateRangeChange={handleDateRangeChange}
                 dateRange={{
