@@ -16,6 +16,7 @@ import { remote } from "./api";
 import { durationToMs } from "./durationToMs";
 import type { QueryRequestAnalyticsResponse } from "@server/routers/auditLogs";
 import type { ListResourceNamesResponse } from "@server/routers/resource";
+import type { ListDomainsResponse } from "@server/routers/domain";
 
 export type ProductUpdate = {
     link: string | null;
@@ -138,6 +139,17 @@ export const orgQueries = {
                     AxiosResponse<ListSitesResponse>
                 >(`/org/${orgId}/sites`, { signal });
                 return res.data.data.sites;
+            }
+        }),
+
+    domains: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "DOMAINS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListDomainsResponse>
+                >(`/org/${orgId}/domains`, { signal });
+                return res.data.data.domains;
             }
         })
 };

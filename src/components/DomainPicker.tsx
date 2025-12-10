@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
     Command,
@@ -13,45 +11,40 @@ import {
     CommandList,
     CommandSeparator
 } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger
 } from "@/components/ui/popover";
-import {
-    AlertCircle,
-    CheckCircle2,
-    Building2,
-    Zap,
-    Check,
-    ChevronsUpDown,
-    ArrowUpDown
-} from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { createApiClient, formatAxiosError } from "@/lib/api";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useEnvContext } from "@/hooks/useEnvContext";
 import { toast } from "@/hooks/useToast";
-import { ListDomainsResponse } from "@server/routers/domain/listDomains";
-import { CheckDomainAvailabilityResponse } from "@server/routers/domain/types";
-import { AxiosResponse } from "axios";
+import { createApiClient } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import { useTranslations } from "next-intl";
-import { build } from "@server/build";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-    sanitizeInputRaw,
     finalizeSubdomainSanitize,
-    validateByDomainType,
-    isValidSubdomainStructure
+    isValidSubdomainStructure,
+    sanitizeInputRaw,
+    validateByDomainType
 } from "@/lib/subdomain-utils";
+import { orgQueries } from "@app/lib/queries";
+import { build } from "@server/build";
+import { CheckDomainAvailabilityResponse } from "@server/routers/domain/types";
+import { useQuery } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
+import {
+    AlertCircle,
+    Building2,
+    Check,
+    CheckCircle2,
+    ChevronsUpDown,
+    Zap
+} from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toUnicode } from "punycode";
-
-type OrganizationDomain = {
-    domainId: string;
-    baseDomain: string;
-    verified: boolean;
-    type: "ns" | "cname" | "wildcard";
-};
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type AvailableOption = {
     domainNamespaceId: string;
@@ -69,7 +62,7 @@ type DomainOption = {
     domainNamespaceId?: string;
 };
 
-interface DomainPicker2Props {
+interface DomainPickerProps {
     orgId: string;
     onDomainChange?: (domainInfo: {
         domainId: string;
@@ -81,116 +74,115 @@ interface DomainPicker2Props {
     }) => void;
     cols?: number;
     hideFreeDomain?: boolean;
+    defaultSubdomain?: string;
+    defaultBaseDomain?: string;
 }
 
-export default function DomainPicker2({
+export default function DomainPicker({
     orgId,
     onDomainChange,
     cols = 2,
-    hideFreeDomain = false
-}: DomainPicker2Props) {
+    hideFreeDomain = false,
+    defaultSubdomain,
+    defaultBaseDomain
+}: DomainPickerProps) {
     const { env } = useEnvContext();
     const api = createApiClient({ env });
     const t = useTranslations();
+
+    const { data = [], isLoading: loadingDomains } = useQuery(
+        orgQueries.domains({ orgId })
+    );
+
+    console.log({ defaultSubdomain, defaultBaseDomain });
 
     if (!env.flags.usePangolinDns) {
         hideFreeDomain = true;
     }
 
-    const [subdomainInput, setSubdomainInput] = useState<string>("");
+    const [subdomainInput, setSubdomainInput] = useState(
+        defaultSubdomain ?? ""
+    );
     const [selectedBaseDomain, setSelectedBaseDomain] =
         useState<DomainOption | null>(null);
     const [availableOptions, setAvailableOptions] = useState<AvailableOption[]>(
         []
     );
-    const [organizationDomains, setOrganizationDomains] = useState<
-        OrganizationDomain[]
-    >([]);
-    const [loadingDomains, setLoadingDomains] = useState(false);
+
+    // memoized to prevent reruning the effect that selects the initial domain indefinitely
+    // removing this will break and cause an infinite rerender
+    const organizationDomains = useMemo(() => {
+        return data
+            .filter(
+                (domain) =>
+                    domain.type === "ns" ||
+                    domain.type === "cname" ||
+                    domain.type === "wildcard"
+            )
+            .map((domain) => ({
+                ...domain,
+                baseDomain: toUnicode(domain.baseDomain),
+                type: domain.type as "ns" | "cname" | "wildcard"
+            }));
+    }, [data]);
+
     const [open, setOpen] = useState(false);
 
     // Provided domain search states
     const [userInput, setUserInput] = useState<string>("");
     const [isChecking, setIsChecking] = useState(false);
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
     const [providedDomainsShown, setProvidedDomainsShown] = useState(3);
     const [selectedProvidedDomain, setSelectedProvidedDomain] =
         useState<AvailableOption | null>(null);
 
     useEffect(() => {
-        const loadOrganizationDomains = async () => {
-            setLoadingDomains(true);
-            try {
-                const response = await api.get<
-                    AxiosResponse<ListDomainsResponse>
-                >(`/org/${orgId}/domains`);
-                if (response.status === 200) {
-                    const domains = response.data.data.domains
-                        .filter(
-                            (domain) =>
-                                domain.type === "ns" ||
-                                domain.type === "cname" ||
-                                domain.type === "wildcard"
-                        )
-                        .map((domain) => ({
-                            ...domain,
-                            baseDomain: toUnicode(domain.baseDomain),
-                            type: domain.type as "ns" | "cname" | "wildcard"
-                        }));
-                    setOrganizationDomains(domains);
+        if (!loadingDomains) {
+            if (organizationDomains.length > 0) {
+                // Select the first organization domain or the one provided from props
+                const firstOrgDomain =
+                    organizationDomains.find(
+                        (domain) => domain.baseDomain === defaultBaseDomain
+                    ) ?? organizationDomains[0];
+                const domainOption: DomainOption = {
+                    id: `org-${firstOrgDomain.domainId}`,
+                    domain: firstOrgDomain.baseDomain,
+                    type: "organization",
+                    verified: firstOrgDomain.verified,
+                    domainType: firstOrgDomain.type,
+                    domainId: firstOrgDomain.domainId
+                };
+                setSelectedBaseDomain(domainOption);
 
-                    // Auto-select first available domain
-                    if (domains.length > 0) {
-                        // Select the first organization domain
-                        const firstOrgDomain = domains[0];
-                        const domainOption: DomainOption = {
-                            id: `org-${firstOrgDomain.domainId}`,
-                            domain: firstOrgDomain.baseDomain,
-                            type: "organization",
-                            verified: firstOrgDomain.verified,
-                            domainType: firstOrgDomain.type,
-                            domainId: firstOrgDomain.domainId
-                        };
-                        setSelectedBaseDomain(domainOption);
-
-                        onDomainChange?.({
-                            domainId: firstOrgDomain.domainId,
-                            type: "organization",
-                            subdomain: undefined,
-                            fullDomain: firstOrgDomain.baseDomain,
-                            baseDomain: firstOrgDomain.baseDomain
-                        });
-                    } else if (
-                        (build === "saas" || build === "enterprise") &&
-                        !hideFreeDomain
-                    ) {
-                        // If no organization domains, select the provided domain option
-                        const domainOptionText =
-                            build === "enterprise"
-                                ? t("domainPickerProvidedDomain")
-                                : t("domainPickerFreeProvidedDomain");
-                        const freeDomainOption: DomainOption = {
-                            id: "provided-search",
-                            domain: domainOptionText,
-                            type: "provided-search"
-                        };
-                        setSelectedBaseDomain(freeDomainOption);
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to load organization domains:", error);
-                toast({
-                    variant: "destructive",
-                    title: t("domainPickerError"),
-                    description: t("domainPickerErrorLoadDomains")
+                onDomainChange?.({
+                    domainId: firstOrgDomain.domainId,
+                    type: "organization",
+                    subdomain: undefined,
+                    fullDomain: firstOrgDomain.baseDomain,
+                    baseDomain: firstOrgDomain.baseDomain
                 });
-            } finally {
-                setLoadingDomains(false);
+            } else if (
+                (build === "saas" || build === "enterprise") &&
+                !hideFreeDomain
+            ) {
+                // If no organization domains, select the provided domain option
+                const domainOptionText =
+                    build === "enterprise"
+                        ? t("domainPickerProvidedDomain")
+                        : t("domainPickerFreeProvidedDomain");
+                const freeDomainOption: DomainOption = {
+                    id: "provided-search",
+                    domain: domainOptionText,
+                    type: "provided-search"
+                };
+                setSelectedBaseDomain(freeDomainOption);
             }
-        };
-
-        loadOrganizationDomains();
-    }, [orgId, api, hideFreeDomain]);
+        }
+    }, [
+        hideFreeDomain,
+        loadingDomains,
+        organizationDomains,
+        defaultBaseDomain
+    ]);
 
     const checkAvailability = useCallback(
         async (input: string) => {
@@ -255,37 +247,6 @@ export default function DomainPicker2({
             }
         }
     }, [userInput, debouncedCheckAvailability, selectedBaseDomain]);
-
-    const generateDropdownOptions = (): DomainOption[] => {
-        const options: DomainOption[] = [];
-
-        organizationDomains.forEach((orgDomain) => {
-            options.push({
-                id: `org-${orgDomain.domainId}`,
-                domain: orgDomain.baseDomain,
-                type: "organization",
-                verified: orgDomain.verified,
-                domainType: orgDomain.type,
-                domainId: orgDomain.domainId
-            });
-        });
-
-        if ((build === "saas" || build === "enterprise") && !hideFreeDomain) {
-            const domainOptionText =
-                build === "enterprise"
-                    ? t("domainPickerProvidedDomain")
-                    : t("domainPickerFreeProvidedDomain");
-            options.push({
-                id: "provided-search",
-                domain: domainOptionText,
-                type: "provided-search"
-            });
-        }
-
-        return options;
-    };
-
-    const dropdownOptions = generateDropdownOptions();
 
     const finalizeSubdomain = (sub: string, base: DomainOption): string => {
         const sanitized = finalizeSubdomainSanitize(sub);
@@ -440,8 +401,7 @@ export default function DomainPicker2({
         selectedBaseDomain?.type === "provided-search";
 
     const sortedAvailableOptions = [...availableOptions].sort((a, b) => {
-        const comparison = a.fullDomain.localeCompare(b.fullDomain);
-        return sortOrder === "asc" ? comparison : -comparison;
+        return a.fullDomain.localeCompare(b.fullDomain);
     });
 
     const displayedProvidedOptions = sortedAvailableOptions.slice(
@@ -518,16 +478,16 @@ export default function DomainPicker2({
                                 className="w-full justify-between"
                             >
                                 {selectedBaseDomain ? (
-                                    <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                    <div className="flex items-center gap-x-2 min-w-0 flex-1">
                                         {selectedBaseDomain.type ===
                                         "organization" ? null : (
-                                            <Zap className="h-4 w-4 flex-shrink-0" />
+                                            <Zap className="h-4 w-4 shrink-0" />
                                         )}
                                         <span className="truncate">
                                             {selectedBaseDomain.domain}
                                         </span>
                                         {selectedBaseDomain.verified && (
-                                            <CheckCircle2 className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                            <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" />
                                         )}
                                     </div>
                                 ) : (
