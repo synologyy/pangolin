@@ -94,8 +94,6 @@ export default function DomainPicker({
         orgQueries.domains({ orgId })
     );
 
-    console.log({ defaultSubdomain, defaultBaseDomain });
-
     if (!env.flags.usePangolinDns) {
         hideFreeDomain = true;
     }
