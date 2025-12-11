@@ -131,7 +131,7 @@ const CredenzaHeader = ({ className, children, ...props }: CredenzaProps) => {
     const CredenzaHeader = isDesktop ? DialogHeader : SheetHeader;
 
     return (
-        <CredenzaHeader className={cn("-mx-6 px-6 pb-6 border-b border-border", className)} {...props}>
+        <CredenzaHeader className={cn("-mx-6 px-6", className)} {...props}>
             {children}
         </CredenzaHeader>
     );
