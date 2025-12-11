@@ -2,7 +2,7 @@ import { db, requestAuditLog, driver } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
-import { eq, gt, lt, and, count, sql, desc, not, isNull } from "drizzle-orm";
+import { eq, gte, lte, and, count, sql, desc, not, isNull } from "drizzle-orm";
 import { OpenAPITags } from "@server/openApi";
 import { z } from "zod";
 import createHttpError from "http-errors";
@@ -10,6 +10,7 @@ import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import response from "@server/lib/response";
 import logger from "@server/logger";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 const queryAccessAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
@@ -19,7 +20,8 @@ const queryAccessAuditLogsQuery = z.object({
             error: "timeStart must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
-        .optional(),
+        .optional()
+        .prefault(() => getSevenDaysAgo().toISOString()),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
@@ -55,15 +57,10 @@ type Q = z.infer<typeof queryRequestAuditLogsCombined>;
 async function query(query: Q) {
     let baseConditions = and(
         eq(requestAuditLog.orgId, query.orgId),
-        lt(requestAuditLog.timestamp, query.timeEnd)
+        gte(requestAuditLog.timestamp, query.timeStart),
+        lte(requestAuditLog.timestamp, query.timeEnd)
     );
 
-    if (query.timeStart) {
-        baseConditions = and(
-            baseConditions,
-            gt(requestAuditLog.timestamp, query.timeStart)
-        );
-    }
     if (query.resourceId) {
         baseConditions = and(
             baseConditions,

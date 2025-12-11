@@ -24,6 +24,7 @@ import { fromError } from "zod-validation-error";
 import { QueryActionAuditLogResponse } from "@server/routers/auditLogs/types";
 import response from "@server/lib/response";
 import logger from "@server/logger";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 export const queryActionAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
@@ -32,7 +33,8 @@ export const queryActionAuditLogsQuery = z.object({
         .refine((val) => !isNaN(Date.parse(val)), {
             error: "timeStart must be a valid ISO date string"
         })
-        .transform((val) => Math.floor(new Date(val).getTime() / 1000)),
+        .transform((val) => Math.floor(new Date(val).getTime() / 1000))
+        .prefault(() => getSevenDaysAgo().toISOString()),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
