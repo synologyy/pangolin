@@ -1085,7 +1085,7 @@ async function handleMessagesForClientSites(
                 continue;
             }
 
-            await holepunchSiteAdd(
+            await initPeerAddHandshake(
                 // this will kick off the add peer process for the client
                 client.clientId,
                 {
