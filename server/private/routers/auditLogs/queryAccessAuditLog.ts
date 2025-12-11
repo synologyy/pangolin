@@ -34,7 +34,13 @@ export const queryAccessAuditLogsQuery = z.object({
             error: "timeStart must be a valid ISO date string"
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
-        .prefault(() => getSevenDaysAgo().toISOString()),
+        .prefault(() => getSevenDaysAgo().toISOString())
+        .openapi({
+            type: "string",
+            format: "date-time",
+            description:
+                "Start time as ISO date string (defaults to 7 days ago)"
+        }),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {

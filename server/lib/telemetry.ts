@@ -2,9 +2,9 @@ import { PostHog } from "posthog-node";
 import config from "./config";
 import { getHostMeta } from "./hostMeta";
 import logger from "@server/logger";
-import { apiKeys, db, roles } from "@server/db";
+import { apiKeys, db, roles, siteResources } from "@server/db";
 import { sites, users, orgs, resources, clients, idp } from "@server/db";
-import { eq, count, notInArray, and } from "drizzle-orm";
+import { eq, count, notInArray, and, isNotNull, isNull } from "drizzle-orm";
 import { APP_VERSION } from "./consts";
 import crypto from "crypto";
 import { UserType } from "@server/types/UserTypes";
@@ -25,7 +25,7 @@ class TelemetryClient {
             return;
         }
 
-        if (build !== "oss") {
+        if (build === "saas") {
             return;
         }
 
@@ -41,14 +41,18 @@ class TelemetryClient {
                 this.client?.shutdown();
             });
 
-            this.sendStartupEvents().catch((err) => {
-                logger.error("Failed to send startup telemetry:", err);
-            });
+            this.sendStartupEvents()
+                .catch((err) => {
+                    logger.error("Failed to send startup telemetry:", err);
+                })
+                .then(() => {
+                    logger.debug("Successfully sent startup telemetry data");
+                });
 
             this.startAnalyticsInterval();
 
             logger.info(
-                "Pangolin now gathers anonymous usage data to help us better understand how the software is used and guide future improvements and feature development. You can find more details, including instructions for opting out of this anonymous data collection, at: https://docs.pangolin.net/telemetry"
+                "Pangolin gathers anonymous usage data to help us better understand how the software is used and guide future improvements and feature development. You can find more details, including instructions for opting out of this anonymous data collection, at: https://docs.pangolin.net/telemetry"
             );
         } else if (!this.enabled) {
             logger.info(
@@ -60,9 +64,13 @@ class TelemetryClient {
     private startAnalyticsInterval() {
         this.intervalId = setInterval(
             () => {
-                this.collectAndSendAnalytics().catch((err) => {
-                    logger.error("Failed to collect analytics:", err);
-                });
+                this.collectAndSendAnalytics()
+                    .catch((err) => {
+                        logger.error("Failed to collect analytics:", err);
+                    })
+                    .then(() => {
+                        logger.debug("Successfully sent analytics data");
+                    });
             },
             48 * 60 * 60 * 1000
         );
@@ -99,9 +107,14 @@ class TelemetryClient {
             const [resourcesCount] = await db
                 .select({ count: count() })
                 .from(resources);
-            const [clientsCount] = await db
+            const [userDevicesCount] = await db
                 .select({ count: count() })
-                .from(clients);
+                .from(clients)
+                .where(isNotNull(clients.userId));
+            const [machineClients] = await db
+                .select({ count: count() })
+                .from(clients)
+                .where(isNull(clients.userId));
             const [idpCount] = await db.select({ count: count() }).from(idp);
             const [onlineSitesCount] = await db
                 .select({ count: count() })
@@ -146,6 +159,24 @@ class TelemetryClient {
 
             const supporterKey = config.getSupporterData();
 
+            const allPrivateResources = await db.select().from(siteResources);
+
+            const numPrivResources = allPrivateResources.length;
+            let numPrivResourceAliases = 0;
+            let numPrivResourceHosts = 0;
+            let numPrivResourceCidr = 0;
+            for (const res of allPrivateResources) {
+                if (res.mode === "host") {
+                    numPrivResourceHosts += 1;
+                } else if (res.mode === "cidr") {
+                    numPrivResourceCidr += 1;
+                }
+
+                if (res.alias) {
+                    numPrivResourceAliases += 1;
+                }
+            }
+
             return {
                 numSites: sitesCount.count,
                 numUsers: usersCount.count,
@@ -153,7 +184,11 @@ class TelemetryClient {
                 numUsersOidc: usersOidcCount.count,
                 numOrganizations: orgsCount.count,
                 numResources: resourcesCount.count,
-                numClients: clientsCount.count,
+                numPrivateResources: numPrivResources,
+                numPrivateResourceAliases: numPrivResourceAliases,
+                numPrivateResourceHosts: numPrivResourceHosts,
+                numUserDevices: userDevicesCount.count,
+                numMachineClients: machineClients.count,
                 numIdentityProviders: idpCount.count,
                 numSitesOnline: onlineSitesCount.count,
                 resources: resourceDetails,
@@ -196,7 +231,7 @@ class TelemetryClient {
             logger.debug("Sending enterprise startup telemetry payload:", {
                 payload
             });
-            // this.client.capture(payload);
+            this.client.capture(payload);
         }
 
         if (build === "oss") {
@@ -246,7 +281,12 @@ class TelemetryClient {
                     num_users_oidc: stats.numUsersOidc,
                     num_organizations: stats.numOrganizations,
                     num_resources: stats.numResources,
-                    num_clients: stats.numClients,
+                    num_private_resources: stats.numPrivateResources,
+                    num_private_resource_aliases:
+                        stats.numPrivateResourceAliases,
+                    num_private_resource_hosts: stats.numPrivateResourceHosts,
+                    num_user_devices: stats.numUserDevices,
+                    num_machine_clients: stats.numMachineClients,
                     num_identity_providers: stats.numIdentityProviders,
                     num_sites_online: stats.numSitesOnline,
                     num_resources_sso_enabled: stats.resources.filter(

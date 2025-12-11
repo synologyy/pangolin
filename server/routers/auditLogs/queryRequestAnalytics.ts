@@ -21,7 +21,13 @@ const queryAccessAuditLogsQuery = z.object({
         })
         .transform((val) => Math.floor(new Date(val).getTime() / 1000))
         .optional()
-        .prefault(() => getSevenDaysAgo().toISOString()),
+        .prefault(() => getSevenDaysAgo().toISOString())
+        .openapi({
+            type: "string",
+            format: "date-time",
+            description:
+                "Start time as ISO date string (defaults to 7 days ago)"
+        }),
     timeEnd: z
         .string()
         .refine((val) => !isNaN(Date.parse(val)), {
