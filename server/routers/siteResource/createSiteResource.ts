@@ -53,7 +53,8 @@ const createSiteResourceSchema = z
             if (data.mode === "host") {
                 // Check if it's a valid IP address using zod (v4 or v6)
                 const isValidIP = z
-                    .union([z.ipv4(), z.ipv6()])
+                    // .union([z.ipv4(), z.ipv6()])
+                    .union([z.ipv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
 
                 if (isValidIP) {
@@ -80,7 +81,8 @@ const createSiteResourceSchema = z
             if (data.mode === "cidr") {
                 // Check if it's a valid CIDR (v4 or v6)
                 const isValidCIDR = z
-                    .union([z.cidrv4(), z.cidrv6()])
+                    // .union([z.cidrv4(), z.cidrv6()])
+                    .union([z.cidrv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
                 return isValidCIDR;
             }
