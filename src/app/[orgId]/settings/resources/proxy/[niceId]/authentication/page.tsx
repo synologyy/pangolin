@@ -44,18 +44,9 @@ import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { orgQueries, resourceQueries } from "@app/lib/queries";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { build } from "@server/build";
-import {
-    GetResourceWhitelistResponse,
-    ListResourceRolesResponse,
-    ListResourceUsersResponse
-} from "@server/routers/resource";
-import { ListRolesResponse } from "@server/routers/role";
-import { ListUsersResponse } from "@server/routers/user";
 import { UserType } from "@server/types/UserTypes";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
 import SetResourcePasswordForm from "components/SetResourcePasswordForm";
-import type { text } from "express";
 import { Binary, Bot, InfoIcon, Key } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -191,15 +182,7 @@ export default function ResourceAuthenticationPage() {
         number | null
     >(null);
 
-    const [activeEmailTagIndex, setActiveEmailTagIndex] = useState<
-        number | null
-    >(null);
-
     const [ssoEnabled, setSsoEnabled] = useState(resource.sso);
-    // const [blockAccess, setBlockAccess] = useState(resource.blockAccess);
-    const [whitelistEnabled, setWhitelistEnabled] = useState(
-        resource.emailWhitelistEnabled
-    );
 
     const [autoLoginEnabled, setAutoLoginEnabled] = useState(
         resource.skipToIdpId !== null && resource.skipToIdpId !== undefined
@@ -273,45 +256,6 @@ export default function ResourceAuthenticationPage() {
         selectedIdpId,
         orgIdps
     ]);
-
-    async function saveWhitelist() {
-        try {
-            await api.post(`/resource/${resource.resourceId}`, {
-                emailWhitelistEnabled: whitelistEnabled
-            });
-
-            if (whitelistEnabled) {
-                await api.post(`/resource/${resource.resourceId}/whitelist`, {
-                    emails: whitelistForm.getValues().emails.map((i) => i.text)
-                });
-            }
-
-            updateResource({
-                emailWhitelistEnabled: whitelistEnabled
-            });
-
-            toast({
-                title: t("resourceWhitelistSave"),
-                description: t("resourceWhitelistSaveDescription")
-            });
-            router.refresh();
-            await queryClient.invalidateQueries(
-                resourceQueries.resourceWhitelist({
-                    resourceId: resource.resourceId
-                })
-            );
-        } catch (e) {
-            console.error(e);
-            toast({
-                variant: "destructive",
-                title: t("resourceErrorWhitelistSave"),
-                description: formatAxiosError(
-                    e,
-                    t("resourceErrorWhitelistSaveDescription")
-                )
-            });
-        }
-    }
 
     const [, submitUserRolesForm, loadingSaveUsersRoles] = useActionState(
         onSubmitUsersRoles,
