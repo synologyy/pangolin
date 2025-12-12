@@ -34,6 +34,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
+import type { ResourceContextType } from "@app/contexts/resourceContext";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useOrgContext } from "@app/hooks/useOrgContext";
 import { useResourceContext } from "@app/hooks/useResourceContext";
@@ -58,7 +59,14 @@ import type { text } from "express";
 import { Binary, Bot, InfoIcon, Key } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+    useActionState,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useTransition
+} from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -200,10 +208,6 @@ export default function ResourceAuthenticationPage() {
         resource.skipToIdpId || null
     );
 
-    const [loadingSaveUsersRoles, setLoadingSaveUsersRoles] = useState(false);
-    const [loadingSaveWhitelist, startSaveWhitelistTransition] =
-        useTransition();
-
     const [loadingRemoveResourcePassword, setLoadingRemoveResourcePassword] =
         useState(false);
     const [loadingRemoveResourcePincode, setLoadingRemoveResourcePincode] =
@@ -309,12 +313,18 @@ export default function ResourceAuthenticationPage() {
         }
     }
 
-    async function onSubmitUsersRoles(
-        data: z.infer<typeof UsersRolesFormSchema>
-    ) {
-        try {
-            setLoadingSaveUsersRoles(true);
+    const [, submitUserRolesForm, loadingSaveUsersRoles] = useActionState(
+        onSubmitUsersRoles,
+        null
+    );
 
+    async function onSubmitUsersRoles() {
+        const isValid = usersRolesForm.trigger();
+        if (!isValid) return;
+
+        const data = usersRolesForm.getValues();
+
+        try {
             // Validate that an IDP is selected if auto login is enabled
             if (autoLoginEnabled && !selectedIdpId) {
                 toast({
@@ -364,8 +374,6 @@ export default function ResourceAuthenticationPage() {
                     t("resourceErrorUsersRolesSaveDescription")
                 )
             });
-        } finally {
-            setLoadingSaveUsersRoles(false);
         }
     }
 
@@ -529,9 +537,7 @@ export default function ResourceAuthenticationPage() {
 
                             <Form {...usersRolesForm}>
                                 <form
-                                    onSubmit={usersRolesForm.handleSubmit(
-                                        onSubmitUsersRoles
-                                    )}
+                                    action={submitUserRolesForm}
                                     id="users-roles-form"
                                     className="space-y-4"
                                 >
@@ -859,138 +865,202 @@ export default function ResourceAuthenticationPage() {
                     </SettingsSectionBody>
                 </SettingsSection>
 
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("otpEmailTitle")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("otpEmailTitleDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <SettingsSectionForm>
-                            {!env.email.emailEnabled && (
-                                <Alert variant="neutral" className="mb-4">
-                                    <InfoIcon className="h-4 w-4" />
-                                    <AlertTitle className="font-semibold">
-                                        {t("otpEmailSmtpRequired")}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {t("otpEmailSmtpRequiredDescription")}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-                            <SwitchInput
-                                id="whitelist-toggle"
-                                label={t("otpEmailWhitelist")}
-                                defaultChecked={resource.emailWhitelistEnabled}
-                                onCheckedChange={setWhitelistEnabled}
-                                disabled={!env.email.emailEnabled}
-                            />
-
-                            {whitelistEnabled && env.email.emailEnabled && (
-                                <Form {...whitelistForm}>
-                                    <form id="whitelist-form">
-                                        <FormField
-                                            control={whitelistForm.control}
-                                            name="emails"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        <InfoPopup
-                                                            text={t(
-                                                                "otpEmailWhitelistList"
-                                                            )}
-                                                            info={t(
-                                                                "otpEmailWhitelistListDescription"
-                                                            )}
-                                                        />
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        {/* @ts-ignore */}
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={
-                                                                activeEmailTagIndex
-                                                            }
-                                                            size={"sm"}
-                                                            validateTag={(
-                                                                tag
-                                                            ) => {
-                                                                return z
-                                                                    .email()
-                                                                    .or(
-                                                                        z
-                                                                            .string()
-                                                                            .regex(
-                                                                                /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
-                                                                                {
-                                                                                    message:
-                                                                                        t(
-                                                                                            "otpEmailErrorInvalid"
-                                                                                        )
-                                                                                }
-                                                                            )
-                                                                    )
-                                                                    .safeParse(
-                                                                        tag
-                                                                    ).success;
-                                                            }}
-                                                            setActiveTagIndex={
-                                                                setActiveEmailTagIndex
-                                                            }
-                                                            placeholder={t(
-                                                                "otpEmailEnter"
-                                                            )}
-                                                            tags={
-                                                                whitelistForm.getValues()
-                                                                    .emails
-                                                            }
-                                                            setTags={(
-                                                                newRoles
-                                                            ) => {
-                                                                whitelistForm.setValue(
-                                                                    "emails",
-                                                                    newRoles as [
-                                                                        Tag,
-                                                                        ...Tag[]
-                                                                    ]
-                                                                );
-                                                            }}
-                                                            allowDuplicates={
-                                                                false
-                                                            }
-                                                            sortTags={true}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {t(
-                                                            "otpEmailEnterDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </form>
-                                </Form>
-                            )}
-                        </SettingsSectionForm>
-                    </SettingsSectionBody>
-                    <SettingsSectionFooter>
-                        <Button
-                            onClick={() =>
-                                startSaveWhitelistTransition(saveWhitelist)
-                            }
-                            form="whitelist-form"
-                            loading={loadingSaveWhitelist}
-                            disabled={loadingSaveWhitelist}
-                        >
-                            {t("otpEmailWhitelistSave")}
-                        </Button>
-                    </SettingsSectionFooter>
-                </SettingsSection>
+                <OneTimePasswordFormSection
+                    resource={resource}
+                    updateResource={updateResource}
+                />
             </SettingsContainer>
         </>
+    );
+}
+
+type OneTimePasswordFormSectionProps = Pick<
+    ResourceContextType,
+    "resource" | "updateResource"
+>;
+
+function OneTimePasswordFormSection({
+    resource,
+    updateResource
+}: OneTimePasswordFormSectionProps) {
+    const { env } = useEnvContext();
+    const [whitelistEnabled, setWhitelistEnabled] = useState(
+        resource.emailWhitelistEnabled
+    );
+    const queryClient = useQueryClient();
+
+    const [loadingSaveWhitelist, startTransition] = useTransition();
+    const whitelistForm = useForm({
+        resolver: zodResolver(whitelistSchema),
+        defaultValues: { emails: [] }
+    });
+    const api = createApiClient({ env });
+    const router = useRouter();
+    const t = useTranslations();
+
+    const [activeEmailTagIndex, setActiveEmailTagIndex] = useState<
+        number | null
+    >(null);
+
+    async function saveWhitelist() {
+        try {
+            await api.post(`/resource/${resource.resourceId}`, {
+                emailWhitelistEnabled: whitelistEnabled
+            });
+
+            if (whitelistEnabled) {
+                await api.post(`/resource/${resource.resourceId}/whitelist`, {
+                    emails: whitelistForm.getValues().emails.map((i) => i.text)
+                });
+            }
+
+            updateResource({
+                emailWhitelistEnabled: whitelistEnabled
+            });
+
+            toast({
+                title: t("resourceWhitelistSave"),
+                description: t("resourceWhitelistSaveDescription")
+            });
+            router.refresh();
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceWhitelist({
+                    resourceId: resource.resourceId
+                })
+            );
+        } catch (e) {
+            console.error(e);
+            toast({
+                variant: "destructive",
+                title: t("resourceErrorWhitelistSave"),
+                description: formatAxiosError(
+                    e,
+                    t("resourceErrorWhitelistSaveDescription")
+                )
+            });
+        }
+    }
+
+    return (
+        <SettingsSection>
+            <SettingsSectionHeader>
+                <SettingsSectionTitle>
+                    {t("otpEmailTitle")}
+                </SettingsSectionTitle>
+                <SettingsSectionDescription>
+                    {t("otpEmailTitleDescription")}
+                </SettingsSectionDescription>
+            </SettingsSectionHeader>
+            <SettingsSectionBody>
+                <SettingsSectionForm>
+                    {!env.email.emailEnabled && (
+                        <Alert variant="neutral" className="mb-4">
+                            <InfoIcon className="h-4 w-4" />
+                            <AlertTitle className="font-semibold">
+                                {t("otpEmailSmtpRequired")}
+                            </AlertTitle>
+                            <AlertDescription>
+                                {t("otpEmailSmtpRequiredDescription")}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    <SwitchInput
+                        id="whitelist-toggle"
+                        label={t("otpEmailWhitelist")}
+                        defaultChecked={resource.emailWhitelistEnabled}
+                        onCheckedChange={setWhitelistEnabled}
+                        disabled={!env.email.emailEnabled}
+                    />
+
+                    {whitelistEnabled && env.email.emailEnabled && (
+                        <Form {...whitelistForm}>
+                            <form id="whitelist-form">
+                                <FormField
+                                    control={whitelistForm.control}
+                                    name="emails"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                <InfoPopup
+                                                    text={t(
+                                                        "otpEmailWhitelistList"
+                                                    )}
+                                                    info={t(
+                                                        "otpEmailWhitelistListDescription"
+                                                    )}
+                                                />
+                                            </FormLabel>
+                                            <FormControl>
+                                                {/* @ts-ignore */}
+                                                <TagInput
+                                                    {...field}
+                                                    activeTagIndex={
+                                                        activeEmailTagIndex
+                                                    }
+                                                    size={"sm"}
+                                                    validateTag={(tag) => {
+                                                        return z
+                                                            .email()
+                                                            .or(
+                                                                z
+                                                                    .string()
+                                                                    .regex(
+                                                                        /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
+                                                                        {
+                                                                            message:
+                                                                                t(
+                                                                                    "otpEmailErrorInvalid"
+                                                                                )
+                                                                        }
+                                                                    )
+                                                            )
+                                                            .safeParse(tag)
+                                                            .success;
+                                                    }}
+                                                    setActiveTagIndex={
+                                                        setActiveEmailTagIndex
+                                                    }
+                                                    placeholder={t(
+                                                        "otpEmailEnter"
+                                                    )}
+                                                    tags={
+                                                        whitelistForm.getValues()
+                                                            .emails
+                                                    }
+                                                    setTags={(newRoles) => {
+                                                        whitelistForm.setValue(
+                                                            "emails",
+                                                            newRoles as [
+                                                                Tag,
+                                                                ...Tag[]
+                                                            ]
+                                                        );
+                                                    }}
+                                                    allowDuplicates={false}
+                                                    sortTags={true}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                {t("otpEmailEnterDescription")}
+                                            </FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
+                            </form>
+                        </Form>
+                    )}
+                </SettingsSectionForm>
+            </SettingsSectionBody>
+            <SettingsSectionFooter>
+                <Button
+                    onClick={() => startTransition(saveWhitelist)}
+                    form="whitelist-form"
+                    loading={loadingSaveWhitelist}
+                    disabled={loadingSaveWhitelist}
+                >
+                    {t("otpEmailWhitelistSave")}
+                </Button>
+            </SettingsSectionFooter>
+        </SettingsSection>
     );
 }
