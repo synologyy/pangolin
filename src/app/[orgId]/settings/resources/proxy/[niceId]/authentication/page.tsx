@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ListRolesResponse } from "@server/routers/role";
-import { toast } from "@app/hooks/useToast";
-import { useOrgContext } from "@app/hooks/useOrgContext";
-import { useResourceContext } from "@app/hooks/useResourceContext";
-import { AxiosResponse } from "axios";
-import { formatAxiosError } from "@app/lib/api";
+import SetResourceHeaderAuthForm from "@app/components/SetResourceHeaderAuthForm";
+import SetResourcePincodeForm from "@app/components/SetResourcePincodeForm";
 import {
-    GetResourceWhitelistResponse,
-    ListResourceRolesResponse,
-    ListResourceUsersResponse
-} from "@server/routers/resource";
+    SettingsContainer,
+    SettingsSection,
+    SettingsSectionBody,
+    SettingsSectionDescription,
+    SettingsSectionFooter,
+    SettingsSectionForm,
+    SettingsSectionHeader,
+    SettingsSectionTitle
+} from "@app/components/Settings";
+import { SwitchInput } from "@app/components/SwitchInput";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
+import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckboxWithLabel } from "@app/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -25,32 +26,7 @@ import {
     FormLabel,
     FormMessage
 } from "@app/components/ui/form";
-import { ListUsersResponse } from "@server/routers/user";
-import { Binary, Key, Bot } from "lucide-react";
-import SetResourcePasswordForm from "components/SetResourcePasswordForm";
-import SetResourcePincodeForm from "@app/components/SetResourcePincodeForm";
-import SetResourceHeaderAuthForm from "@app/components/SetResourceHeaderAuthForm";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import {
-    SettingsContainer,
-    SettingsSection,
-    SettingsSectionTitle,
-    SettingsSectionHeader,
-    SettingsSectionDescription,
-    SettingsSectionBody,
-    SettingsSectionFooter,
-    SettingsSectionForm
-} from "@app/components/Settings";
-import { SwitchInput } from "@app/components/SwitchInput";
 import { InfoPopup } from "@app/components/ui/info-popup";
-import { Tag, TagInput } from "@app/components/tags/tag-input";
-import { useRouter } from "next/navigation";
-import { UserType } from "@server/types/UserTypes";
-import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
-import { InfoIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { CheckboxWithLabel } from "@app/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -58,10 +34,33 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
-import { Separator } from "@app/components/ui/separator";
-import { build } from "@server/build";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useOrgContext } from "@app/hooks/useOrgContext";
+import { useResourceContext } from "@app/hooks/useResourceContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { TierId } from "@server/lib/billing/tiers";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
+import { orgQueries, resourceQueries } from "@app/lib/queries";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { build } from "@server/build";
+import {
+    GetResourceWhitelistResponse,
+    ListResourceRolesResponse,
+    ListResourceUsersResponse
+} from "@server/routers/resource";
+import { ListRolesResponse } from "@server/routers/role";
+import { ListUsersResponse } from "@server/routers/user";
+import { UserType } from "@server/types/UserTypes";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosResponse } from "axios";
+import SetResourcePasswordForm from "components/SetResourcePasswordForm";
+import type { text } from "express";
+import { Binary, Bot, InfoIcon, Key } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -100,14 +99,83 @@ export default function ResourceAuthenticationPage() {
 
     const subscription = useSubscriptionStatusContext();
 
-    const [pageLoading, setPageLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const { data: resourceRoles = [], isLoading: isLoadingResourceRoles } =
+        useQuery(
+            resourceQueries.resourceRoles({
+                resourceId: resource.resourceId
+            })
+        );
+    const { data: resourceUsers = [], isLoading: isLoadingResourceUsers } =
+        useQuery(
+            resourceQueries.resourceUsers({
+                resourceId: resource.resourceId
+            })
+        );
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
-        []
+    const { data: whitelist = [], isLoading: isLoadingWhiteList } = useQuery(
+        resourceQueries.resourceWhitelist({
+            resourceId: resource.resourceId
+        })
     );
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
-        []
+
+    const { data: orgRoles = [], isLoading: isLoadingOrgRoles } = useQuery(
+        orgQueries.roles({
+            orgId: org.org.orgId
+        })
     );
+    const { data: orgUsers = [], isLoading: isLoadingOrgUsers } = useQuery(
+        orgQueries.users({
+            orgId: org.org.orgId
+        })
+    );
+    const { data: orgIdps = [], isLoading: isLoadingOrgIdps } = useQuery(
+        orgQueries.identityProviders({
+            orgId: org.org.orgId
+        })
+    );
+
+    const pageLoading =
+        isLoadingOrgRoles ||
+        isLoadingOrgUsers ||
+        isLoadingResourceRoles ||
+        isLoadingResourceUsers ||
+        isLoadingWhiteList ||
+        isLoadingOrgIdps;
+
+    const allRoles = useMemo(() => {
+        return orgRoles
+            .map((role) => ({
+                id: role.roleId.toString(),
+                text: role.name
+            }))
+            .filter((role) => role.text !== "Admin");
+    }, [orgRoles]);
+
+    const allUsers = useMemo(() => {
+        return orgUsers.map((user) => ({
+            id: user.id.toString(),
+            text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+        }));
+    }, [orgUsers]);
+
+    const allIdps = useMemo(() => {
+        if (build === "saas") {
+            if (subscription?.subscribed) {
+                return orgIdps.map((idp) => ({
+                    id: idp.idpId,
+                    text: idp.name
+                }));
+            }
+        } else {
+            return orgIdps.map((idp) => ({
+                id: idp.idpId,
+                text: idp.name
+            }));
+        }
+        return [];
+    }, [orgIdps]);
+
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
     >(null);
@@ -131,10 +199,10 @@ export default function ResourceAuthenticationPage() {
     const [selectedIdpId, setSelectedIdpId] = useState<number | null>(
         resource.skipToIdpId || null
     );
-    const [allIdps, setAllIdps] = useState<{ id: number; text: string }[]>([]);
 
     const [loadingSaveUsersRoles, setLoadingSaveUsersRoles] = useState(false);
-    const [loadingSaveWhitelist, setLoadingSaveWhitelist] = useState(false);
+    const [loadingSaveWhitelist, startSaveWhitelistTransition] =
+        useTransition();
 
     const [loadingRemoveResourcePassword, setLoadingRemoveResourcePassword] =
         useState(false);
@@ -159,126 +227,35 @@ export default function ResourceAuthenticationPage() {
         defaultValues: { emails: [] }
     });
 
+    const hasInitializedRef = useRef(false);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [
-                    rolesResponse,
-                    resourceRolesResponse,
-                    usersResponse,
-                    resourceUsersResponse,
-                    whitelist,
-                    idpsResponse
-                ] = await Promise.all([
-                    api.get<AxiosResponse<ListRolesResponse>>(
-                        `/org/${org?.org.orgId}/roles`
-                    ),
-                    api.get<AxiosResponse<ListResourceRolesResponse>>(
-                        `/resource/${resource.resourceId}/roles`
-                    ),
-                    api.get<AxiosResponse<ListUsersResponse>>(
-                        `/org/${org?.org.orgId}/users`
-                    ),
-                    api.get<AxiosResponse<ListResourceUsersResponse>>(
-                        `/resource/${resource.resourceId}/users`
-                    ),
-                    api.get<AxiosResponse<GetResourceWhitelistResponse>>(
-                        `/resource/${resource.resourceId}/whitelist`
-                    ),
-                    api.get<
-                        AxiosResponse<{
-                            idps: { idpId: number; name: string }[];
-                        }>
-                    >(build === "saas" ? `/org/${org?.org.orgId}/idp` : "/idp")
-                ]);
+        if (!pageLoading || hasInitializedRef.current) return;
 
-                setAllRoles(
-                    rolesResponse.data.data.roles
-                        .map((role) => ({
-                            id: role.roleId.toString(),
-                            text: role.name
-                        }))
-                        .filter((role) => role.text !== "Admin")
-                );
-
-                usersRolesForm.setValue(
-                    "roles",
-                    resourceRolesResponse.data.data.roles
-                        .map((i) => ({
-                            id: i.roleId.toString(),
-                            text: i.name
-                        }))
-                        .filter((role) => role.text !== "Admin")
-                );
-
-                setAllUsers(
-                    usersResponse.data.data.users.map((user) => ({
-                        id: user.id.toString(),
-                        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-                    }))
-                );
-
-                usersRolesForm.setValue(
-                    "users",
-                    resourceUsersResponse.data.data.users.map((i) => ({
-                        id: i.userId.toString(),
-                        text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
-                    }))
-                );
-
-                whitelistForm.setValue(
-                    "emails",
-                    whitelist.data.data.whitelist.map((w) => ({
-                        id: w.email,
-                        text: w.email
-                    }))
-                );
-
-                if (build === "saas") {
-                    if (subscription?.subscribed) {
-                        setAllIdps(
-                            idpsResponse.data.data.idps.map((idp) => ({
-                                id: idp.idpId,
-                                text: idp.name
-                            }))
-                        );
-                    }
-                } else {
-                    setAllIdps(
-                        idpsResponse.data.data.idps.map((idp) => ({
-                            id: idp.idpId,
-                            text: idp.name
-                        }))
-                    );
-                }
-
-                if (
-                    autoLoginEnabled &&
-                    !selectedIdpId &&
-                    idpsResponse.data.data.idps.length > 0
-                ) {
-                    setSelectedIdpId(idpsResponse.data.data.idps[0].idpId);
-                }
-
-                setPageLoading(false);
-            } catch (e) {
-                console.error(e);
-                toast({
-                    variant: "destructive",
-                    title: t("resourceErrorAuthFetch"),
-                    description: formatAxiosError(
-                        e,
-                        t("resourceErrorAuthFetchDescription")
-                    )
-                });
-            }
-        };
-
-        fetchData();
-    }, []);
+        usersRolesForm.setValue("roles", allRoles);
+        usersRolesForm.setValue("users", allUsers);
+        whitelistForm.setValue(
+            "emails",
+            whitelist.map((w) => ({
+                id: w.email,
+                text: w.email
+            }))
+        );
+        if (autoLoginEnabled && !selectedIdpId && orgIdps.length > 0) {
+            setSelectedIdpId(orgIdps[0].idpId);
+        }
+        hasInitializedRef.current = true;
+    }, [
+        pageLoading,
+        allRoles,
+        allUsers,
+        whitelist,
+        autoLoginEnabled,
+        selectedIdpId,
+        orgIdps
+    ]);
 
     async function saveWhitelist() {
-        setLoadingSaveWhitelist(true);
         try {
             await api.post(`/resource/${resource.resourceId}`, {
                 emailWhitelistEnabled: whitelistEnabled
@@ -299,6 +276,11 @@ export default function ResourceAuthenticationPage() {
                 description: t("resourceWhitelistSaveDescription")
             });
             router.refresh();
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceWhitelist({
+                    resourceId: resource.resourceId
+                })
+            );
         } catch (e) {
             console.error(e);
             toast({
@@ -309,8 +291,6 @@ export default function ResourceAuthenticationPage() {
                     t("resourceErrorWhitelistSaveDescription")
                 )
             });
-        } finally {
-            setLoadingSaveWhitelist(false);
         }
     }
 
@@ -984,7 +964,9 @@ export default function ResourceAuthenticationPage() {
                     </SettingsSectionBody>
                     <SettingsSectionFooter>
                         <Button
-                            onClick={saveWhitelist}
+                            onClick={() =>
+                                startSaveWhitelistTransition(saveWhitelist)
+                            }
                             form="whitelist-form"
                             loading={loadingSaveWhitelist}
                             disabled={loadingSaveWhitelist}

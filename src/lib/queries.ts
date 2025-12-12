@@ -15,7 +15,10 @@ import z from "zod";
 import { remote } from "./api";
 import { durationToMs } from "./durationToMs";
 import type { QueryRequestAnalyticsResponse } from "@server/routers/auditLogs";
-import type { ListResourceNamesResponse } from "@server/routers/resource";
+import type {
+    GetResourceWhitelistResponse,
+    ListResourceNamesResponse
+} from "@server/routers/resource";
 import type { ListTargetsResponse } from "@server/routers/target";
 import type { ListDomainsResponse } from "@server/routers/domain";
 
@@ -152,6 +155,18 @@ export const orgQueries = {
                 >(`/org/${orgId}/domains`, { signal });
                 return res.data.data.domains;
             }
+        }),
+    identityProviders: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "IDPS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<{
+                        idps: { idpId: number; name: string }[];
+                    }>
+                >(build === "saas" ? `/org/${orgId}/idp` : "/idp", { signal });
+                return res.data.data.idps;
+            }
         })
 };
 
@@ -248,6 +263,17 @@ export const resourceQueries = {
                 >(`/resource/${resourceId}/targets`, { signal });
 
                 return res.data.data.targets;
+            }
+        }),
+    resourceWhitelist: ({ resourceId }: { resourceId: number }) =>
+        queryOptions({
+            queryKey: ["RESOURCES", resourceId, "WHITELISTS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<GetResourceWhitelistResponse>
+                >(`/resource/${resourceId}/whitelist`, { signal });
+
+                return res.data.data.whitelist;
             }
         }),
     listNamesPerOrg: (orgId: string) =>
