@@ -232,8 +232,91 @@ export default function ResourceAuthenticationPage() {
     useEffect(() => {
         if (!pageLoading || hasInitializedRef.current) return;
 
-        usersRolesForm.setValue("roles", allRoles);
-        usersRolesForm.setValue("users", allUsers);
+        /**
+         
+
+                setAllUsers(
+                    usersResponse.data.data.users.map((user) => ({
+                        id: user.id.toString(),
+                        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+                    }))
+                );
+
+
+                whitelistForm.setValue(
+                    "emails",
+                    whitelist.data.data.whitelist.map((w) => ({
+                        id: w.email,
+                        text: w.email
+                    }))
+                );
+
+                if (build === "saas") {
+                    if (subscription?.subscribed) {
+                        setAllIdps(
+                            idpsResponse.data.data.idps.map((idp) => ({
+                                id: idp.idpId,
+                                text: idp.name
+                            }))
+                        );
+                    }
+                } else {
+                    setAllIdps(
+                        idpsResponse.data.data.idps.map((idp) => ({
+                            id: idp.idpId,
+                            text: idp.name
+                        }))
+                    );
+                }
+
+                if (
+                    autoLoginEnabled &&
+                    !selectedIdpId &&
+                    idpsResponse.data.data.idps.length > 0
+                ) {
+                    setSelectedIdpId(idpsResponse.data.data.idps[0].idpId);
+                }
+ 
+         */
+
+        /**
+                 
+                 usersRolesForm.setValue(
+                    "roles",
+                    resourceRolesResponse.data.data.roles
+                        .map((i) => ({
+                            id: i.roleId.toString(),
+                            text: i.name
+                        }))
+                        .filter((role) => role.text !== "Admin")
+                );
+
+                usersRolesForm.setValue(
+                    "users",
+                    resourceUsersResponse.data.data.users.map((i) => ({
+                        id: i.userId.toString(),
+                        text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+                    }))
+                ); 
+                 */
+
+        usersRolesForm.setValue(
+            "roles",
+            resourceRoles
+                .map((i) => ({
+                    id: i.roleId.toString(),
+                    text: i.name
+                }))
+                .filter((role) => role.text !== "Admin")
+        );
+        usersRolesForm.setValue(
+            "users",
+            resourceUsers.map((i) => ({
+                id: i.userId.toString(),
+                text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+            }))
+        );
+
         whitelistForm.setValue(
             "emails",
             whitelist.map((w) => ({
@@ -247,8 +330,8 @@ export default function ResourceAuthenticationPage() {
         hasInitializedRef.current = true;
     }, [
         pageLoading,
-        allRoles,
-        allUsers,
+        resourceRoles,
+        resourceUsers,
         whitelist,
         autoLoginEnabled,
         selectedIdpId,
