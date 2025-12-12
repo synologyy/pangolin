@@ -1,4 +1,4 @@
-.PHONY: build build-pg build-release build-arm build-x86 test clean
+.PHONY: build build-pg build-release build-release-arm build-release-amd build-arm build-x86 test clean
 
 major_tag := $(shell echo $(tag) | cut -d. -f1)
 minor_tag := $(shell echo $(tag) | cut -d. -f1,2)
@@ -41,6 +41,94 @@ build-release:
 		--tag fosrl/pangolin:ee-postgresql-latest \
 		--tag fosrl/pangolin:ee-postgresql-$(major_tag) \
 		--tag fosrl/pangolin:ee-postgresql-$(minor_tag) \
+		--tag fosrl/pangolin:ee-postgresql-$(tag) \
+		--push .
+
+build-release-arm:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-release-arm tag=<tag>"; \
+		exit 1; \
+	fi
+	@MAJOR_TAG=$$(echo $(tag) | cut -d. -f1); \
+	MINOR_TAG=$$(echo $(tag) | cut -d. -f1,2); \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=sqlite \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:latest \
+		--tag fosrl/pangolin:$$MAJOR_TAG \
+		--tag fosrl/pangolin:$$MINOR_TAG \
+		--tag fosrl/pangolin:$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=pg \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:postgresql-latest \
+		--tag fosrl/pangolin:postgresql-$$MAJOR_TAG \
+		--tag fosrl/pangolin:postgresql-$$MINOR_TAG \
+		--tag fosrl/pangolin:postgresql-$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=sqlite \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:ee-latest \
+		--tag fosrl/pangolin:ee-$$MAJOR_TAG \
+		--tag fosrl/pangolin:ee-$$MINOR_TAG \
+		--tag fosrl/pangolin:ee-$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=pg \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:ee-postgresql-latest \
+		--tag fosrl/pangolin:ee-postgresql-$$MAJOR_TAG \
+		--tag fosrl/pangolin:ee-postgresql-$$MINOR_TAG \
+		--tag fosrl/pangolin:ee-postgresql-$(tag) \
+		--push .
+
+build-release-amd:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-release-amd tag=<tag>"; \
+		exit 1; \
+	fi
+	@MAJOR_TAG=$$(echo $(tag) | cut -d. -f1); \
+	MINOR_TAG=$$(echo $(tag) | cut -d. -f1,2); \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=sqlite \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:latest \
+		--tag fosrl/pangolin:$$MAJOR_TAG \
+		--tag fosrl/pangolin:$$MINOR_TAG \
+		--tag fosrl/pangolin:$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=pg \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:postgresql-latest \
+		--tag fosrl/pangolin:postgresql-$$MAJOR_TAG \
+		--tag fosrl/pangolin:postgresql-$$MINOR_TAG \
+		--tag fosrl/pangolin:postgresql-$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=sqlite \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:ee-latest \
+		--tag fosrl/pangolin:ee-$$MAJOR_TAG \
+		--tag fosrl/pangolin:ee-$$MINOR_TAG \
+		--tag fosrl/pangolin:ee-$(tag) \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=pg \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:ee-postgresql-latest \
+		--tag fosrl/pangolin:ee-postgresql-$$MAJOR_TAG \
+		--tag fosrl/pangolin:ee-postgresql-$$MINOR_TAG \
 		--tag fosrl/pangolin:ee-postgresql-$(tag) \
 		--push .
 
