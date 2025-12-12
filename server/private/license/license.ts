@@ -84,14 +84,11 @@ LQIDAQAB
 -----END PUBLIC KEY-----`;
 
     constructor(private hostMeta: HostMeta) {
-        setInterval(
-            async () => {
-                this.doRecheck = true;
-                await this.check();
-                this.doRecheck = false;
-            },
-            1000 * this.phoneHomeInterval
-        );
+        setInterval(async () => {
+            this.doRecheck = true;
+            await this.check();
+            this.doRecheck = false;
+        }, 1000 * this.phoneHomeInterval);
     }
 
     public listKeys(): LicenseKeyCache[] {
@@ -242,7 +239,9 @@ LQIDAQAB
                     // First failure: fail silently
                     logger.error("Error communicating with license server:");
                     logger.error(e);
-                    logger.error(`Allowing failure. Will retry one more time at next run interval.`);
+                    logger.error(
+                        `Allowing failure. Will retry one more time at next run interval.`
+                    );
                     // return last known good status
                     return this.statusCache.get(
                         this.statusKey
