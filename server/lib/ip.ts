@@ -432,7 +432,12 @@ export function generateRemoteSubnets(
 ): string[] {
     const remoteSubnets = allSiteResources
         .filter((sr) => {
-            if (sr.mode === "cidr") return true;
+            if (sr.mode === "cidr") {
+                // check if its a valid CIDR using zod
+                const cidrSchema = z.union([z.cidrv4(), z.cidrv6()]);
+                const parseResult = cidrSchema.safeParse(sr.destination);
+                return parseResult.success;
+            }
             if (sr.mode === "host") {
                 // check if its a valid IP using zod
                 const ipSchema = z.union([z.ipv4(), z.ipv6()]);
@@ -456,13 +461,12 @@ export function generateRemoteSubnets(
 export type Alias = { alias: string | null; aliasAddress: string | null };
 
 export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
-    let aliasConfigs = allSiteResources
+    return allSiteResources
         .filter((sr) => sr.alias && sr.aliasAddress && sr.mode == "host")
         .map((sr) => ({
             alias: sr.alias,
             aliasAddress: sr.aliasAddress
         }));
-    return aliasConfigs;
 }
 
 export type SubnetProxyTarget = {
