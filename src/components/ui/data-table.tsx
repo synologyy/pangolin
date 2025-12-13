@@ -296,12 +296,16 @@ export function DataTable<TData, TValue>({
     const handleTabChange = (value: string) => {
         setActiveTab(value);
         // Reset to first page when changing tabs
-        setPagination(prev => ({ ...prev, pageIndex: 0 }));
+        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     };
 
     // Enhanced pagination component that updates our local state
     const handlePageSizeChange = (newPageSize: number) => {
-        setPagination(prev => ({ ...prev, pageSize: newPageSize, pageIndex: 0 }));
+        setPagination((prev) => ({
+            ...prev,
+            pageSize: newPageSize,
+            pageIndex: 0
+        }));
         setPageSize(newPageSize);
 
         // Persist immediately when changed

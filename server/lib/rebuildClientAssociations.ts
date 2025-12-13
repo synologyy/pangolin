@@ -956,12 +956,7 @@ export async function rebuildClientAssociationsFromClient(
     /////////// Send messages ///////////
 
     // Handle messages for sites being added
-    await handleMessagesForClientSites(
-        client,
-        sitesToAdd,
-        sitesToRemove,
-        trx
-    );
+    await handleMessagesForClientSites(client, sitesToAdd, sitesToRemove, trx);
 
     // Handle subnet proxy target updates for resources
     await handleMessagesForClientResources(
