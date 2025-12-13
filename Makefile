@@ -2,7 +2,12 @@
 
 major_tag := $(shell echo $(tag) | cut -d. -f1)
 minor_tag := $(shell echo $(tag) | cut -d. -f1,2)
-build-release:
+
+.PHONY: build-release build-sqlite build-postgresql build-ee-sqlite build-ee-postgresql
+
+build-release: build-sqlite build-postgresql build-ee-sqlite build-ee-postgresql
+
+build-sqlite:
 	@if [ -z "$(tag)" ]; then \
 		echo "Error: tag is required. Usage: make build-release tag=<tag>"; \
 		exit 1; \
@@ -16,6 +21,12 @@ build-release:
 		--tag fosrl/pangolin:$(minor_tag) \
 		--tag fosrl/pangolin:$(tag) \
 		--push .
+
+build-postgresql:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-release tag=<tag>"; \
+		exit 1; \
+	fi
 	docker buildx build \
 		--build-arg BUILD=oss \
 		--build-arg DATABASE=pg \
@@ -25,6 +36,12 @@ build-release:
 		--tag fosrl/pangolin:postgresql-$(minor_tag) \
 		--tag fosrl/pangolin:postgresql-$(tag) \
 		--push .
+
+build-ee-sqlite:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-release tag=<tag>"; \
+		exit 1; \
+	fi
 	docker buildx build \
 		--build-arg BUILD=enterprise \
 		--build-arg DATABASE=sqlite \
@@ -34,6 +51,12 @@ build-release:
 		--tag fosrl/pangolin:ee-$(minor_tag) \
 		--tag fosrl/pangolin:ee-$(tag) \
 		--push .
+
+build-ee-postgresql:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-release tag=<tag>"; \
+		exit 1; \
+	fi
 	docker buildx build \
 		--build-arg BUILD=enterprise \
 		--build-arg DATABASE=pg \
