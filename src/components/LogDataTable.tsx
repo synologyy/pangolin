@@ -542,6 +542,8 @@ export function LogDataTable<TData, TValue>({
                             isServerPagination={isServerPagination}
                             isLoading={isLoading}
                             disabled={disabled}
+                            pageSize={pageSize}
+                            pageIndex={currentPage}
                         />
                     </div>
                 </CardContent>

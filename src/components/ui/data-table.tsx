@@ -10,7 +10,8 @@ import {
     getSortedRowModel,
     ColumnFiltersState,
     getFilteredRowModel,
-    VisibilityState
+    VisibilityState,
+    PaginationState
 } from "@tanstack/react-table";
 
 // Extended ColumnDef type that includes optional friendlyName for column visibility dropdown
@@ -227,6 +228,10 @@ export function DataTable<TData, TValue>({
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
         initialColumnVisibility
     );
+    const [pagination, setPagination] = useState<PaginationState>({
+        pageIndex: 0,
+        pageSize: pageSize
+    });
     const [activeTab, setActiveTab] = useState<string>(
         defaultTab || tabs?.[0]?.id || ""
     );
@@ -256,6 +261,7 @@ export function DataTable<TData, TValue>({
         getFilteredRowModel: getFilteredRowModel(),
         onGlobalFilterChange: setGlobalFilter,
         onColumnVisibilityChange: setColumnVisibility,
+        onPaginationChange: setPagination,
         initialState: {
             pagination: {
                 pageSize: pageSize,
@@ -267,21 +273,18 @@ export function DataTable<TData, TValue>({
             sorting,
             columnFilters,
             globalFilter,
-            columnVisibility
+            columnVisibility,
+            pagination
         }
     });
 
+    // Persist pageSize to localStorage when it changes
     useEffect(() => {
-        const currentPageSize = table.getState().pagination.pageSize;
-        if (currentPageSize !== pageSize) {
-            table.setPageSize(pageSize);
-
-            // Persist to localStorage if enabled
-            if (persistPageSize) {
-                setStoredPageSize(pageSize, tableId);
-            }
+        if (persistPageSize && pagination.pageSize !== pageSize) {
+            setStoredPageSize(pagination.pageSize, tableId);
+            setPageSize(pagination.pageSize);
         }
-    }, [pageSize, table, persistPageSize, tableId]);
+    }, [pagination.pageSize, persistPageSize, tableId, pageSize]);
 
     useEffect(() => {
         // Persist column visibility to localStorage when it changes
@@ -293,13 +296,13 @@ export function DataTable<TData, TValue>({
     const handleTabChange = (value: string) => {
         setActiveTab(value);
         // Reset to first page when changing tabs
-        table.setPageIndex(0);
+        setPagination(prev => ({ ...prev, pageIndex: 0 }));
     };
 
     // Enhanced pagination component that updates our local state
     const handlePageSizeChange = (newPageSize: number) => {
+        setPagination(prev => ({ ...prev, pageSize: newPageSize, pageIndex: 0 }));
         setPageSize(newPageSize);
-        table.setPageSize(newPageSize);
 
         // Persist immediately when changed
         if (persistPageSize) {
@@ -614,6 +617,8 @@ export function DataTable<TData, TValue>({
                         <DataTablePagination
                             table={table}
                             onPageSizeChange={handlePageSizeChange}
+                            pageSize={pagination.pageSize}
+                            pageIndex={pagination.pageIndex}
                         />
                     </div>
                 </CardContent>
