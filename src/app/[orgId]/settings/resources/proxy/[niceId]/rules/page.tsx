@@ -449,15 +449,16 @@ export default function ResourceRules(props: {
                     type="number"
                     onClick={(e) => e.currentTarget.focus()}
                     onBlur={(e) => {
-                        const parsed = z
+                        const parsed = z.coerce
+                            .number()
                             .int()
                             .optional()
                             .safeParse(e.target.value);
 
-                        if (!parsed.data) {
+                        if (!parsed.success) {
                             toast({
                                 variant: "destructive",
-                                title: t("rulesErrorInvalidIpAddress"), // correct priority or IP?
+                                title: t("rulesErrorInvalidPriority"), // correct priority or IP?
                                 description: t(
                                     "rulesErrorInvalidPriorityDescription"
                                 )
