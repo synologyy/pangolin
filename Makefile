@@ -1,4 +1,4 @@
-.PHONY: build build-pg build-release build-arm build-x86 test clean
+.PHONY: build dev-build-sqlite dev-build-pg build-release build-arm build-x86 test clean
 
 major_tag := $(shell echo $(tag) | cut -d. -f1)
 minor_tag := $(shell echo $(tag) | cut -d. -f1,2)
@@ -103,10 +103,10 @@ build-arm:
 build-x86:
 	docker buildx build --platform linux/amd64 -t fosrl/pangolin:latest .
 
-build-sqlite:
+dev-build-sqlite:
 	docker build --build-arg DATABASE=sqlite -t fosrl/pangolin:latest .
 
-build-pg:
+dev-build-pg:
 	docker build --build-arg DATABASE=pg -t fosrl/pangolin:postgresql-latest .
 
 test:
