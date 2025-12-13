@@ -535,7 +535,7 @@ export default function ProxyResourcesTable({
                         setSelectedResource(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("resourceQuestionRemove")}</p>
                             <p>{t("resourceMessageRemove")}</p>
                         </div>

@@ -315,7 +315,7 @@ export default function LicensePage() {
                         setSelectedLicenseKey(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("licenseQuestionRemove")}</p>
                             <p>
                                 <b>{t("licenseMessageRemove")}</b>
