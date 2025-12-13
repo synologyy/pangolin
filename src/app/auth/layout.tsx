@@ -23,6 +23,7 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
     const t = await getTranslations();
     let hideFooter = false;
 
+    let licenseStatus: GetLicenseStatusResponse | null = null;
     if (build == "enterprise") {
         const licenseStatusRes = await cache(
             async () =>
@@ -30,10 +31,12 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                     "/license/status"
                 )
         )();
+        licenseStatus = licenseStatusRes.data.data;
         if (
             env.branding.hideAuthLayoutFooter &&
             licenseStatusRes.data.data.isHostLicensed &&
-            licenseStatusRes.data.data.isLicenseValid
+            licenseStatusRes.data.data.isLicenseValid &&
+            licenseStatusRes.data.data.tier !== "personal"
         ) {
             hideFooter = true;
         }
@@ -83,6 +86,23 @@ export default async function AuthLayout({ children }: AuthLayoutProps) {
                                   ? t("enterpriseEdition")
                                   : t("pangolinCloud")}
                         </span>
+                        {build === "enterprise" &&
+                        licenseStatus?.isHostLicensed &&
+                        licenseStatus?.isLicenseValid &&
+                        licenseStatus?.tier === "personal" ? (
+                            <>
+                                <Separator orientation="vertical" />
+                                <span>{t("personalUseOnly")}</span>
+                            </>
+                        ) : null}
+                        {build === "enterprise" &&
+                        (!licenseStatus?.isHostLicensed ||
+                            !licenseStatus?.isLicenseValid) ? (
+                            <>
+                                <Separator orientation="vertical" />
+                                <span>{t("unlicensed")}</span>
+                            </>
+                        ) : null}
                         {build === "saas" && (
                             <>
                                 <Separator orientation="vertical" />

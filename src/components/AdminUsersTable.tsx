@@ -313,7 +313,7 @@ export default function UsersTable({ users }: Props) {
                         setSelected(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>
                                 {t("userQuestionRemove", {
                                     selectedUser:

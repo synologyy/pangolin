@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import SidebarLicenseButton from "./SidebarLicenseButton";
 import { SidebarSupportButton } from "./SidebarSupportButton";
+import { is } from "drizzle-orm";
 
 const ProductUpdates = dynamic(() => import("./ProductUpdates"), {
     ssr: false
@@ -52,7 +53,7 @@ export function LayoutSidebar({
     const pathname = usePathname();
     const isAdminPage = pathname?.startsWith("/admin");
     const { user } = useUserContext();
-    const { isUnlocked } = useLicenseStatusContext();
+    const { isUnlocked, licenseStatus } = useLicenseStatusContext();
     const { env } = useEnvContext();
     const t = useTranslations();
 
@@ -226,6 +227,18 @@ export function LayoutSidebar({
                                         <FaGithub size={12} />
                                     </Link>
                                 </div>
+                                {build === "enterprise" &&
+                                isUnlocked() &&
+                                licenseStatus?.tier === "personal" ? (
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        {t("personalUseOnly")}
+                                    </div>
+                                ) : null}
+                                {build === "enterprise" && !isUnlocked() ? (
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        {t("unlicensed")}
+                                    </div>
+                                ) : null}
                                 {env?.app?.version && (
                                     <div className="text-xs text-muted-foreground text-center">
                                         <Link

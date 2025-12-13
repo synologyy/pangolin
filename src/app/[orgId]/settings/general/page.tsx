@@ -289,7 +289,7 @@ export default function GeneralPage() {
                     setIsDeleteModalOpen(val);
                 }}
                 dialog={
-                    <div>
+                    <div className="space-y-2">
                         <p>{t("orgQuestionRemove")}</p>
                         <p>{t("orgMessageRemove")}</p>
                     </div>
@@ -303,7 +303,7 @@ export default function GeneralPage() {
                 open={isSecurityPolicyConfirmOpen}
                 setOpen={setIsSecurityPolicyConfirmOpen}
                 dialog={
-                    <div>
+                    <div className="space-y-2">
                         <p>{t("securityPolicyChangeDescription")}</p>
                     </div>
                 }

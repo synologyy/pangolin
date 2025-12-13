@@ -196,7 +196,7 @@ export default function IdpTable({ idps }: Props) {
                         setSelectedIdp(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>
                                 {t("idpQuestionRemove", {
                                     name: selectedIdp.name

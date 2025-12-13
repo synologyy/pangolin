@@ -315,7 +315,7 @@ export default function LicensePage() {
                         setSelectedLicenseKey(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("licenseQuestionRemove")}</p>
                             <p>
                                 <b>{t("licenseMessageRemove")}</b>
@@ -360,7 +360,8 @@ export default function LicensePage() {
                                 <div className="space-y-2 text-green-500">
                                     <div className="text-2xl flex items-center gap-2">
                                         <Check />
-                                        {t("licensed")}
+                                        {t("licensed") +
+                                            `${licenseStatus?.tier === "personal" ? ` (${t("personalUseOnly")})` : ""}`}
                                     </div>
                                 </div>
                             ) : (

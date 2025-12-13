@@ -120,11 +120,13 @@ function bigIntToIp(num: bigint, version: IPVersion): string {
  * Parses an endpoint string (ip:port) handling both IPv4 and IPv6 addresses.
  * IPv6 addresses may be bracketed like [::1]:8080 or unbracketed like ::1:8080.
  * For unbracketed IPv6, the last colon-separated segment is treated as the port.
- * 
+ *
  * @param endpoint The endpoint string to parse (e.g., "192.168.1.1:8080" or "[::1]:8080" or "2607:fea8::1:8080")
  * @returns An object with ip and port, or null if parsing fails
  */
-export function parseEndpoint(endpoint: string): { ip: string; port: number } | null {
+export function parseEndpoint(
+    endpoint: string
+): { ip: string; port: number } | null {
     if (!endpoint) return null;
 
     // Check for bracketed IPv6 format: [ip]:port
@@ -138,7 +140,7 @@ export function parseEndpoint(endpoint: string): { ip: string; port: number } | 
 
     // Check if this looks like IPv6 (contains multiple colons)
     const colonCount = (endpoint.match(/:/g) || []).length;
-    
+
     if (colonCount > 1) {
         // This is IPv6 - the port is after the last colon
         const lastColonIndex = endpoint.lastIndexOf(":");
@@ -163,7 +165,7 @@ export function parseEndpoint(endpoint: string): { ip: string; port: number } | 
 /**
  * Formats an IP and port into a consistent endpoint string.
  * IPv6 addresses are wrapped in brackets for proper parsing.
- * 
+ *
  * @param ip The IP address (IPv4 or IPv6)
  * @param port The port number
  * @returns Formatted endpoint string
@@ -430,7 +432,12 @@ export function generateRemoteSubnets(
 ): string[] {
     const remoteSubnets = allSiteResources
         .filter((sr) => {
-            if (sr.mode === "cidr") return true;
+            if (sr.mode === "cidr") {
+                // check if its a valid CIDR using zod
+                const cidrSchema = z.union([z.cidrv4(), z.cidrv6()]);
+                const parseResult = cidrSchema.safeParse(sr.destination);
+                return parseResult.success;
+            }
             if (sr.mode === "host") {
                 // check if its a valid IP using zod
                 const ipSchema = z.union([z.ipv4(), z.ipv6()]);
@@ -454,13 +461,12 @@ export function generateRemoteSubnets(
 export type Alias = { alias: string | null; aliasAddress: string | null };
 
 export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
-    let aliasConfigs = allSiteResources
+    return allSiteResources
         .filter((sr) => sr.alias && sr.aliasAddress && sr.mode == "host")
         .map((sr) => ({
             alias: sr.alias,
             aliasAddress: sr.aliasAddress
         }));
-    return aliasConfigs;
 }
 
 export type SubnetProxyTarget = {
