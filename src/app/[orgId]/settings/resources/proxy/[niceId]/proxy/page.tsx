@@ -1131,7 +1131,7 @@ function ProxyResourceTargetsForm({
                     )}
                 </SettingsSectionBody>
 
-                <form className="self-end" action={formAction}>
+                <form className="self-end mt-4" action={formAction}>
                     <Button
                         disabled={isSubmitting}
                         loading={isSubmitting}
