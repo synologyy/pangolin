@@ -368,9 +368,9 @@ export default function GeneralPage() {
                                 />
                             </SettingsSectionForm>
                         </SettingsSectionBody>
-                    </SettingsSection>
 
-                    <SettingsSection>
+                        <hr className="my-12 max-w-xl" />
+
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
                                 {t("logRetention")}
@@ -587,266 +587,258 @@ export default function GeneralPage() {
                                 )}
                             </SettingsSectionForm>
                         </SettingsSectionBody>
-                    </SettingsSection>
 
-                    {build !== "oss" && (
-                        <SettingsSection>
-                            <SettingsSectionHeader>
-                                <SettingsSectionTitle>
-                                    {t("securitySettings")}
-                                </SettingsSectionTitle>
-                                <SettingsSectionDescription>
-                                    {t("securitySettingsDescription")}
-                                </SettingsSectionDescription>
-                            </SettingsSectionHeader>
-                            <SettingsSectionBody>
-                                <SettingsSectionForm>
-                                    <SecurityFeaturesAlert />
-                                    <FormField
-                                        control={form.control}
-                                        name="requireTwoFactor"
-                                        render={({ field }) => {
-                                            const isDisabled =
-                                                isSecurityFeatureDisabled();
+                        {build !== "oss" && (
+                            <>
+                                <hr className="my-12 max-w-xl" />
+                                <SettingsSectionHeader>
+                                    <SettingsSectionTitle>
+                                        {t("securitySettings")}
+                                    </SettingsSectionTitle>
+                                    <SettingsSectionDescription>
+                                        {t("securitySettingsDescription")}
+                                    </SettingsSectionDescription>
+                                </SettingsSectionHeader>
+                                <SettingsSectionBody>
+                                    <SettingsSectionForm className="mb-4">
+                                        <SecurityFeaturesAlert />
+                                        <FormField
+                                            control={form.control}
+                                            name="requireTwoFactor"
+                                            render={({ field }) => {
+                                                const isDisabled =
+                                                    isSecurityFeatureDisabled();
 
-                                            return (
-                                                <FormItem className="col-span-2">
-                                                    <div className="flex items-center gap-2">
+                                                return (
+                                                    <FormItem className="col-span-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <FormControl>
+                                                                <SwitchInput
+                                                                    id="require-two-factor"
+                                                                    defaultChecked={
+                                                                        field.value ||
+                                                                        false
+                                                                    }
+                                                                    label={t(
+                                                                        "requireTwoFactorForAllUsers"
+                                                                    )}
+                                                                    disabled={
+                                                                        isDisabled
+                                                                    }
+                                                                    onCheckedChange={(
+                                                                        val
+                                                                    ) => {
+                                                                        if (
+                                                                            !isDisabled
+                                                                        ) {
+                                                                            form.setValue(
+                                                                                "requireTwoFactor",
+                                                                                val
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                        </div>
+                                                        <FormMessage />
+                                                        <FormDescription>
+                                                            {t(
+                                                                "requireTwoFactorDescription"
+                                                            )}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="maxSessionLengthHours"
+                                            render={({ field }) => {
+                                                const isDisabled =
+                                                    isSecurityFeatureDisabled();
+
+                                                return (
+                                                    <FormItem className="col-span-2">
+                                                        <FormLabel>
+                                                            {t(
+                                                                "maxSessionLength"
+                                                            )}
+                                                        </FormLabel>
                                                         <FormControl>
-                                                            <SwitchInput
-                                                                id="require-two-factor"
-                                                                defaultChecked={
-                                                                    field.value ||
-                                                                    false
+                                                            <Select
+                                                                value={
+                                                                    field.value?.toString() ||
+                                                                    "null"
                                                                 }
-                                                                label={t(
-                                                                    "requireTwoFactorForAllUsers"
-                                                                )}
-                                                                disabled={
-                                                                    isDisabled
-                                                                }
-                                                                onCheckedChange={(
-                                                                    val
+                                                                onValueChange={(
+                                                                    value
                                                                 ) => {
                                                                     if (
                                                                         !isDisabled
                                                                     ) {
+                                                                        const numValue =
+                                                                            value ===
+                                                                            "null"
+                                                                                ? null
+                                                                                : parseInt(
+                                                                                      value,
+                                                                                      10
+                                                                                  );
                                                                         form.setValue(
-                                                                            "requireTwoFactor",
-                                                                            val
+                                                                            "maxSessionLengthHours",
+                                                                            numValue
                                                                         );
                                                                     }
                                                                 }}
-                                                            />
+                                                                disabled={
+                                                                    isDisabled
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue
+                                                                        placeholder={t(
+                                                                            "selectSessionLength"
+                                                                        )}
+                                                                    />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {SESSION_LENGTH_OPTIONS.map(
+                                                                        (
+                                                                            option
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value ===
+                                                                                    null
+                                                                                        ? "null"
+                                                                                        : option.value.toString()
+                                                                                }
+                                                                                value={
+                                                                                    option.value ===
+                                                                                    null
+                                                                                        ? "null"
+                                                                                        : option.value.toString()
+                                                                                }
+                                                                            >
+                                                                                {t(
+                                                                                    option.labelKey
+                                                                                )}
+                                                                            </SelectItem>
+                                                                        )
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
                                                         </FormControl>
-                                                    </div>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        {t(
-                                                            "requireTwoFactorDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            );
-                                        }}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="maxSessionLengthHours"
-                                        render={({ field }) => {
-                                            const isDisabled =
-                                                isSecurityFeatureDisabled();
-
-                                            return (
-                                                <FormItem className="col-span-2">
-                                                    <FormLabel>
-                                                        {t("maxSessionLength")}
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Select
-                                                            value={
-                                                                field.value?.toString() ||
-                                                                "null"
-                                                            }
-                                                            onValueChange={(
-                                                                value
-                                                            ) => {
-                                                                if (
-                                                                    !isDisabled
-                                                                ) {
-                                                                    const numValue =
-                                                                        value ===
-                                                                        "null"
-                                                                            ? null
-                                                                            : parseInt(
-                                                                                  value,
-                                                                                  10
-                                                                              );
-                                                                    form.setValue(
-                                                                        "maxSessionLengthHours",
-                                                                        numValue
-                                                                    );
-                                                                }
-                                                            }}
-                                                            disabled={
-                                                                isDisabled
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue
-                                                                    placeholder={t(
-                                                                        "selectSessionLength"
-                                                                    )}
-                                                                />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {SESSION_LENGTH_OPTIONS.map(
-                                                                    (
-                                                                        option
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value ===
-                                                                                null
-                                                                                    ? "null"
-                                                                                    : option.value.toString()
-                                                                            }
-                                                                            value={
-                                                                                option.value ===
-                                                                                null
-                                                                                    ? "null"
-                                                                                    : option.value.toString()
-                                                                            }
-                                                                        >
-                                                                            {t(
-                                                                                option.labelKey
-                                                                            )}
-                                                                        </SelectItem>
-                                                                    )
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                    <FormDescription>
-                                                        {t(
-                                                            "maxSessionLengthDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            );
-                                        }}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="passwordExpiryDays"
-                                        render={({ field }) => {
-                                            const isDisabled =
-                                                isSecurityFeatureDisabled();
-
-                                            return (
-                                                <FormItem className="col-span-2">
-                                                    <FormLabel>
-                                                        {t(
-                                                            "passwordExpiryDays"
-                                                        )}
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Select
-                                                            value={
-                                                                field.value?.toString() ||
-                                                                "null"
-                                                            }
-                                                            onValueChange={(
-                                                                value
-                                                            ) => {
-                                                                if (
-                                                                    !isDisabled
-                                                                ) {
-                                                                    const numValue =
-                                                                        value ===
-                                                                        "null"
-                                                                            ? null
-                                                                            : parseInt(
-                                                                                  value,
-                                                                                  10
-                                                                              );
-                                                                    form.setValue(
-                                                                        "passwordExpiryDays",
-                                                                        numValue
-                                                                    );
-                                                                }
-                                                            }}
-                                                            disabled={
-                                                                isDisabled
-                                                            }
-                                                        >
-                                                            <SelectTrigger>
-                                                                <SelectValue
-                                                                    placeholder={t(
-                                                                        "selectPasswordExpiry"
-                                                                    )}
-                                                                />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {PASSWORD_EXPIRY_OPTIONS.map(
-                                                                    (
-                                                                        option
-                                                                    ) => (
-                                                                        <SelectItem
-                                                                            key={
-                                                                                option.value ===
-                                                                                null
-                                                                                    ? "null"
-                                                                                    : option.value.toString()
-                                                                            }
-                                                                            value={
-                                                                                option.value ===
-                                                                                null
-                                                                                    ? "null"
-                                                                                    : option.value.toString()
-                                                                            }
-                                                                        >
-                                                                            {t(
-                                                                                option.labelKey
-                                                                            )}
-                                                                        </SelectItem>
-                                                                    )
-                                                                )}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </FormControl>
-                                                    <FormDescription>
                                                         <FormMessage />
-                                                        {t(
-                                                            "editPasswordExpiryDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            );
-                                        }}
-                                    />
-                                </SettingsSectionForm>
-                            </SettingsSectionBody>
-                        </SettingsSection>
-                    )}
+                                                        <FormDescription>
+                                                            {t(
+                                                                "maxSessionLengthDescription"
+                                                            )}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="passwordExpiryDays"
+                                            render={({ field }) => {
+                                                const isDisabled =
+                                                    isSecurityFeatureDisabled();
+
+                                                return (
+                                                    <FormItem className="col-span-2">
+                                                        <FormLabel>
+                                                            {t(
+                                                                "passwordExpiryDays"
+                                                            )}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Select
+                                                                value={
+                                                                    field.value?.toString() ||
+                                                                    "null"
+                                                                }
+                                                                onValueChange={(
+                                                                    value
+                                                                ) => {
+                                                                    if (
+                                                                        !isDisabled
+                                                                    ) {
+                                                                        const numValue =
+                                                                            value ===
+                                                                            "null"
+                                                                                ? null
+                                                                                : parseInt(
+                                                                                      value,
+                                                                                      10
+                                                                                  );
+                                                                        form.setValue(
+                                                                            "passwordExpiryDays",
+                                                                            numValue
+                                                                        );
+                                                                    }
+                                                                }}
+                                                                disabled={
+                                                                    isDisabled
+                                                                }
+                                                            >
+                                                                <SelectTrigger>
+                                                                    <SelectValue
+                                                                        placeholder={t(
+                                                                            "selectPasswordExpiry"
+                                                                        )}
+                                                                    />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {PASSWORD_EXPIRY_OPTIONS.map(
+                                                                        (
+                                                                            option
+                                                                        ) => (
+                                                                            <SelectItem
+                                                                                key={
+                                                                                    option.value ===
+                                                                                    null
+                                                                                        ? "null"
+                                                                                        : option.value.toString()
+                                                                                }
+                                                                                value={
+                                                                                    option.value ===
+                                                                                    null
+                                                                                        ? "null"
+                                                                                        : option.value.toString()
+                                                                                }
+                                                                            >
+                                                                                {t(
+                                                                                    option.labelKey
+                                                                                )}
+                                                                            </SelectItem>
+                                                                        )
+                                                                    )}
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </FormControl>
+                                                        <FormDescription>
+                                                            <FormMessage />
+                                                            {t(
+                                                                "editPasswordExpiryDescription"
+                                                            )}
+                                                        </FormDescription>
+                                                    </FormItem>
+                                                );
+                                            }}
+                                        />
+                                    </SettingsSectionForm>
+                                </SettingsSectionBody>
+                            </>
+                        )}
+                    </SettingsSection>
                 </form>
             </Form>
 
             {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
 
             <div className="flex justify-end gap-2">
-                {build !== "saas" && (
-                    <Button
-                        variant="destructive"
-                        onClick={() => setIsDeleteModalOpen(true)}
-                        className="flex items-center gap-2"
-                        loading={loadingDelete}
-                        disabled={loadingDelete}
-                    >
-                        {t("orgDelete")}
-                    </Button>
-                )}
                 <Button
                     type="submit"
                     form="org-settings-form"
@@ -856,6 +848,30 @@ export default function GeneralPage() {
                     {t("saveSettings")}
                 </Button>
             </div>
+
+            {build !== "saas" && (
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("dangerSection")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("dangerSectionDescription")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <div className="flex justify-start gap-2">
+                        <Button
+                            variant="destructive"
+                            onClick={() => setIsDeleteModalOpen(true)}
+                            className="flex items-center gap-2"
+                            loading={loadingDelete}
+                            disabled={loadingDelete}
+                        >
+                            {t("orgDelete")}
+                        </Button>
+                    </div>
+                </SettingsSection>
+            )}
         </SettingsContainer>
     );
 }
