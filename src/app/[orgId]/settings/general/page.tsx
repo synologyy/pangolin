@@ -369,7 +369,7 @@ export default function GeneralPage() {
                             </SettingsSectionForm>
                         </SettingsSectionBody>
 
-                        <hr className="my-12 max-w-xl" />
+                        <hr className="my-10 max-w-xl" />
 
                         <SettingsSectionHeader>
                             <SettingsSectionTitle>
@@ -590,7 +590,7 @@ export default function GeneralPage() {
 
                         {build !== "oss" && (
                             <>
-                                <hr className="my-12 max-w-xl" />
+                                <hr className="my-10 max-w-xl" />
                                 <SettingsSectionHeader>
                                     <SettingsSectionTitle>
                                         {t("securitySettings")}
