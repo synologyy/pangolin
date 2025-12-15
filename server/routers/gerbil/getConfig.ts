@@ -51,7 +51,10 @@ export async function getConfig(
             );
         }
 
-        const exitNode = await createExitNode(publicKey, reachableAt);
+        // clean up the public key - keep only valid base64 characters (A-Z, a-z, 0-9, +, /, =)
+        const cleanedPublicKey = publicKey.replace(/[^A-Za-z0-9+/=]/g, '');
+
+        const exitNode = await createExitNode(cleanedPublicKey, reachableAt);
 
         if (!exitNode) {
             return next(

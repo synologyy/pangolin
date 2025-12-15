@@ -107,7 +107,7 @@ jobs:
             - name: Build and push Docker images (Docker Hub)
               run: |
                   TAG=${{ env.TAG }}
-                  make build-release tag=$TAG
+                  make -j4 build-release tag=$TAG
                   echo "Built & pushed to: ${{ env.DOCKERHUB_IMAGE }}:${TAG}"
               shell: bash
 

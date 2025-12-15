@@ -284,7 +284,7 @@ export default function ClientResourcesTable({
                         setSelectedInternalResource(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("resourceQuestionRemove")}</p>
                             <p>{t("resourceMessageRemove")}</p>
                         </div>

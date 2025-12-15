@@ -148,7 +148,7 @@ export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
     }
 }
 
-export function logRequestAudit(
+export async function logRequestAudit(
     data: {
         action: boolean;
         reason: number;
@@ -174,14 +174,13 @@ export function logRequestAudit(
     }
 ) {
     try {
-        // Quick synchronous check - if org has 0 retention, skip immediately
+        // Check retention before buffering any logs
         if (data.orgId) {
-            const cached = cache.get<number>(`org_${data.orgId}_retentionDays`);
-            if (cached === 0) {
+            const retentionDays = await getRetentionDays(data.orgId);
+            if (retentionDays === 0) {
                 // do not log
                 return;
             }
-            // If not cached or > 0, we'll log it (async retention check happens in background)
         }
 
         let actorType: string | undefined;
@@ -260,16 +259,6 @@ export function logRequestAudit(
             );
         } else {
             scheduleFlush();
-        }
-
-        // Async retention check in background (don't await)
-        if (
-            data.orgId &&
-            cache.get<number>(`org_${data.orgId}_retentionDays`) === undefined
-        ) {
-            getRetentionDays(data.orgId).catch((err) =>
-                logger.error("Error checking retention days:", err)
-            );
         }
     } catch (error) {
         logger.error(error);
