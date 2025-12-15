@@ -832,22 +832,22 @@ export default function GeneralPage() {
                                 </SettingsSectionBody>
                             </>
                         )}
+
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button
+                                type="submit"
+                                form="org-settings-form"
+                                loading={loadingSave}
+                                disabled={loadingSave}
+                            >
+                                {t("saveSettings")}
+                            </Button>
+                        </div>
                     </SettingsSection>
                 </form>
             </Form>
 
             {build === "saas" && <AuthPageSettings ref={authPageSettingsRef} />}
-
-            <div className="flex justify-end gap-2">
-                <Button
-                    type="submit"
-                    form="org-settings-form"
-                    loading={loadingSave}
-                    disabled={loadingSave}
-                >
-                    {t("saveSettings")}
-                </Button>
-            </div>
 
             {build !== "saas" && (
                 <SettingsSection>
