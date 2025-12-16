@@ -217,7 +217,7 @@ export default function ResourceAuthenticationPage() {
     const hasInitializedRef = useRef(false);
 
     useEffect(() => {
-        if (!pageLoading || hasInitializedRef.current) return;
+        if (pageLoading || hasInitializedRef.current) return;
 
         usersRolesForm.setValue(
             "roles",
@@ -306,6 +306,17 @@ export default function ResourceAuthenticationPage() {
             toast({
                 title: t("resourceAuthSettingsSave"),
                 description: t("resourceAuthSettingsSaveDescription")
+            });
+            await queryClient.invalidateQueries({
+                predicate(query) {
+                    const resourceKey = resourceQueries.resourceClients({
+                        resourceId: resource.resourceId
+                    }).queryKey;
+                    return (
+                        query.queryKey[0] === resourceKey[0] &&
+                        query.queryKey[1] === resourceKey[1]
+                    );
+                }
             });
             router.refresh();
         } catch (e) {
