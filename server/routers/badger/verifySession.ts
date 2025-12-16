@@ -29,6 +29,7 @@ import createHttpError from "http-errors";
 import { z } from "zod";
 import { fromError } from "zod-validation-error";
 import { getCountryCodeForIp } from "@server/lib/geoip";
+import { getAsnForIp } from "@server/lib/asn";
 import { getOrgTierData } from "#dynamic/lib/billing";
 import { TierId } from "@server/lib/billing/tiers";
 import { verifyPassword } from "@server/auth/password";
@@ -128,6 +129,10 @@ export async function verifyResourceSession(
             ? await getCountryCodeFromIp(clientIp)
             : undefined;
 
+        const ipAsn = clientIp
+            ? await getAsnFromIp(clientIp)
+            : undefined;
+
         let cleanHost = host;
         // if the host ends with :port, strip it
         if (cleanHost.match(/:[0-9]{1,5}$/)) {
@@ -216,7 +221,8 @@ export async function verifyResourceSession(
                 resource.resourceId,
                 clientIp,
                 path,
-                ipCC
+                ipCC,
+                ipAsn
             );
 
             if (action == "ACCEPT") {
@@ -910,7 +916,8 @@ async function checkRules(
     resourceId: number,
     clientIp: string | undefined,
     path: string | undefined,
-    ipCC?: string
+    ipCC?: string,
+    ipAsn?: number
 ): Promise<"ACCEPT" | "DROP" | "PASS" | undefined> {
     const ruleCacheKey = `rules:${resourceId}`;
 
@@ -952,6 +959,12 @@ async function checkRules(
             clientIp &&
             rule.match == "COUNTRY" &&
             (await isIpInGeoIP(ipCC, rule.value))
+        ) {
+            return rule.action as any;
+        } else if (
+            clientIp &&
+            rule.match == "ASN" &&
+            (await isIpInAsn(ipAsn, rule.value))
         ) {
             return rule.action as any;
         }
@@ -1088,6 +1101,52 @@ async function isIpInGeoIP(
     }
 
     return ipCountryCode?.toUpperCase() === checkCountryCode.toUpperCase();
+}
+
+async function isIpInAsn(
+    ipAsn: number | undefined,
+    checkAsn: string
+): Promise<boolean> {
+    // Handle "ALL" special case
+    if (checkAsn === "ALL" || checkAsn === "AS0") {
+        return true;
+    }
+
+    if (!ipAsn) {
+        return false;
+    }
+
+    // Normalize the check ASN - remove "AS" prefix if present and convert to number
+    const normalizedCheckAsn = checkAsn.toUpperCase().replace(/^AS/, "");
+    const checkAsnNumber = parseInt(normalizedCheckAsn, 10);
+
+    if (isNaN(checkAsnNumber)) {
+        logger.warn(`Invalid ASN format in rule: ${checkAsn}`);
+        return false;
+    }
+
+    const match = ipAsn === checkAsnNumber;
+    logger.debug(
+        `ASN check: IP ASN ${ipAsn} ${match ? "matches" : "does not match"} rule ASN ${checkAsnNumber}`
+    );
+
+    return match;
+}
+
+async function getAsnFromIp(ip: string): Promise<number | undefined> {
+    const asnCacheKey = `asn:${ip}`;
+
+    let cachedAsn: number | undefined = cache.get(asnCacheKey);
+
+    if (!cachedAsn) {
+        cachedAsn = await getAsnForIp(ip); // do it locally
+        // Cache for longer since IP ASN doesn't change frequently
+        if (cachedAsn) {
+            cache.set(asnCacheKey, cachedAsn, 300); // 5 minutes
+        }
+    }
+
+    return cachedAsn;
 }
 
 async function getCountryCodeFromIp(ip: string): Promise<string | undefined> {
