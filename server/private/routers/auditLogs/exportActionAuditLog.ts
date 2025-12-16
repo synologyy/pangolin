@@ -22,9 +22,11 @@ import logger from "@server/logger";
 import {
     queryActionAuditLogsParams,
     queryActionAuditLogsQuery,
-    queryAction
+    queryAction,
+    countActionQuery
 } from "./queryActionAuditLog";
 import { generateCSV } from "@server/routers/auditLogs/generateCSV";
+import { MAX_EXPORT_LIMIT } from "@server/routers/auditLogs";
 
 registry.registerPath({
     method: "get",
@@ -65,6 +67,15 @@ export async function exportActionAuditLogs(
         }
 
         const data = { ...parsedQuery.data, ...parsedParams.data };
+        const [{ count }] = await countActionQuery(data);
+        if (count > MAX_EXPORT_LIMIT) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Export limit exceeded. Your selection contains ${count} rows, but the maximum is ${MAX_EXPORT_LIMIT} rows. Please select a shorter time range to reduce the data.`
+                )
+            );
+        }
 
         const baseQuery = queryAction(data);
 

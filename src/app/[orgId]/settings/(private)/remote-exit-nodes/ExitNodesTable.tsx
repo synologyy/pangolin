@@ -304,7 +304,7 @@ export default function ExitNodesTable({
                         setSelectedNode(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("remoteExitNodeQuestionRemove")}</p>
 
                             <p>{t("remoteExitNodeMessageRemove")}</p>

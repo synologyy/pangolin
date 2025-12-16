@@ -97,6 +97,9 @@ export async function listAllSiteResourcesByOrg(
                 destination: siteResources.destination,
                 enabled: siteResources.enabled,
                 alias: siteResources.alias,
+                tcpPortRangeString: siteResources.tcpPortRangeString,
+                udpPortRangeString: siteResources.udpPortRangeString,
+                disableIcmp: siteResources.disableIcmp,
                 siteName: sites.name,
                 siteNiceId: sites.niceId,
                 siteAddress: sites.address

@@ -955,28 +955,8 @@ export async function rebuildClientAssociationsFromClient(
 
     /////////// Send messages ///////////
 
-    // Get the olm for this client
-    const [olm] = await trx
-        .select({ olmId: olms.olmId })
-        .from(olms)
-        .where(eq(olms.clientId, client.clientId))
-        .limit(1);
-
-    if (!olm) {
-        logger.warn(
-            `Olm not found for client ${client.clientId}, skipping peer updates`
-        );
-        return;
-    }
-
     // Handle messages for sites being added
-    await handleMessagesForClientSites(
-        client,
-        olm.olmId,
-        sitesToAdd,
-        sitesToRemove,
-        trx
-    );
+    await handleMessagesForClientSites(client, sitesToAdd, sitesToRemove, trx);
 
     // Handle subnet proxy target updates for resources
     await handleMessagesForClientResources(
@@ -996,11 +976,26 @@ async function handleMessagesForClientSites(
         userId: string | null;
         orgId: string;
     },
-    olmId: string,
     sitesToAdd: number[],
     sitesToRemove: number[],
     trx: Transaction | typeof db = db
 ): Promise<void> {
+    // Get the olm for this client
+    const [olm] = await trx
+        .select({ olmId: olms.olmId })
+        .from(olms)
+        .where(eq(olms.clientId, client.clientId))
+        .limit(1);
+
+    if (!olm) {
+        logger.warn(
+            `Olm not found for client ${client.clientId}, skipping peer updates`
+        );
+        return;
+    }
+
+    const olmId = olm.olmId;
+
     if (!client.subnet || !client.pubKey) {
         logger.warn(
             `Client ${client.clientId} missing subnet or pubKey, skipping peer updates`
@@ -1021,9 +1016,9 @@ async function handleMessagesForClientSites(
         .leftJoin(newts, eq(sites.siteId, newts.siteId))
         .where(inArray(sites.siteId, allSiteIds));
 
-    let newtJobs: Promise<any>[] = [];
-    let olmJobs: Promise<any>[] = [];
-    let exitNodeJobs: Promise<any>[] = [];
+    const newtJobs: Promise<any>[] = [];
+    const olmJobs: Promise<any>[] = [];
+    const exitNodeJobs: Promise<any>[] = [];
 
     for (const siteData of sitesData) {
         const site = siteData.sites;
@@ -1130,18 +1125,8 @@ async function handleMessagesForClientResources(
     resourcesToRemove: number[],
     trx: Transaction | typeof db = db
 ): Promise<void> {
-    // Group resources by site
-    const resourcesBySite = new Map<number, SiteResource[]>();
-
-    for (const resource of allNewResources) {
-        if (!resourcesBySite.has(resource.siteId)) {
-            resourcesBySite.set(resource.siteId, []);
-        }
-        resourcesBySite.get(resource.siteId)!.push(resource);
-    }
-
-    let proxyJobs: Promise<any>[] = [];
-    let olmJobs: Promise<any>[] = [];
+    const proxyJobs: Promise<any>[] = [];
+    const olmJobs: Promise<any>[] = [];
 
     // Handle additions
     if (resourcesToAdd.length > 0) {

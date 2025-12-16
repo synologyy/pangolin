@@ -31,7 +31,12 @@ import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsFor
 const createOrgSchema = z.strictObject({
     orgId: z.string(),
     name: z.string().min(1).max(255),
-    subnet: z.string()
+    subnet: z
+        // .union([z.cidrv4(), z.cidrv6()])
+        .union([z.cidrv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
+        .refine((val) => isValidCIDR(val), {
+            message: "Invalid subnet CIDR"
+        })
 });
 
 registry.registerPath({
@@ -80,15 +85,6 @@ export async function createOrg(
         }
 
         const { orgId, name, subnet } = parsedBody.data;
-
-        if (!isValidCIDR(subnet)) {
-            return next(
-                createHttpError(
-                    HttpCode.BAD_REQUEST,
-                    "Invalid subnet format. Please provide a valid CIDR notation."
-                )
-            );
-        }
 
         // TODO: for now we are making all of the orgs the same subnet
         // make sure the subnet is unique

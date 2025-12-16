@@ -225,7 +225,7 @@ export default function GeneralForm() {
                 name: data.name,
                 niceId: data.niceId,
                 subdomain: data.subdomain,
-                fullDomain: resource.fullDomain,
+                fullDomain: updated.fullDomain,
                 proxyPort: data.proxyPort
                 // ...(!resource.http && {
                 //     enableProxy: data.enableProxy

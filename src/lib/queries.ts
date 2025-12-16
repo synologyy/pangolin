@@ -180,17 +180,15 @@ export type LogAnalyticsFilters = z.TypeOf<typeof logAnalyticsFiltersSchema>;
 export const logQueries = {
     requestAnalytics: ({
         orgId,
-        filters,
-        api
+        filters
     }: {
         orgId: string;
         filters: LogAnalyticsFilters;
-        api: AxiosInstance;
     }) =>
         queryOptions({
             queryKey: ["REQUEST_LOG_ANALYTICS", orgId, filters] as const,
-            queryFn: async ({ signal }) => {
-                const res = await api.get<
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
                     AxiosResponse<QueryRequestAnalyticsResponse>
                 >(`/org/${orgId}/logs/analytics`, {
                     params: filters,
@@ -240,11 +238,11 @@ export const resourceQueries = {
                 return res.data.data.clients;
             }
         }),
-    listNamesPerOrg: (orgId: string, api: AxiosInstance) =>
+    listNamesPerOrg: (orgId: string) =>
         queryOptions({
             queryKey: ["RESOURCES_NAMES", orgId] as const,
-            queryFn: async ({ signal }) => {
-                const res = await api.get<
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
                     AxiosResponse<ListResourceNamesResponse>
                 >(`/org/${orgId}/resource-names`, {
                     signal
