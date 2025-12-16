@@ -352,6 +352,14 @@ authenticated.post(
     user.inviteUser
 );
 
+authenticated.delete(
+    "/org/:orgId/invitations/:inviteId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.removeInvitation),
+    logActionAudit(ActionsEnum.removeInvitation),
+    user.removeInvitation
+);
+
 authenticated.get(
     "/resource/:resourceId/roles",
     verifyApiKeyResourceAccess,
