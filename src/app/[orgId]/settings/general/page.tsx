@@ -53,6 +53,7 @@ import { SwitchInput } from "@app/components/SwitchInput";
 import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
+import { usePaidStatus } from "@app/hooks/usePaidStatus";
 
 // Session length options in hours
 const SESSION_LENGTH_OPTIONS = [
@@ -873,5 +874,522 @@ export default function GeneralPage() {
                 </SettingsSection>
             )}
         </SettingsContainer>
+    );
+}
+
+function GeneralSectionForm() {
+    const { org } = useOrgContext();
+    const form = useForm({
+        resolver: zodResolver(GeneralFormSchema),
+        defaultValues: {
+            name: org?.org.name
+        },
+        mode: "onChange"
+    });
+    const t = useTranslations();
+    const subscription = useSubscriptionStatusContext();
+    const { isUnlocked } = useLicenseStatusContext();
+    const { isPaidUser } = usePaidStatus();
+    return (
+        <>
+            <SettingsSection>
+                <SettingsSectionHeader>
+                    <SettingsSectionTitle>{t("general")}</SettingsSectionTitle>
+                    <SettingsSectionDescription>
+                        {t("orgGeneralSettingsDescription")}
+                    </SettingsSectionDescription>
+                </SettingsSectionHeader>
+                <SettingsSectionBody>
+                    <SettingsSectionForm>
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("name")}</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    <FormDescription>
+                                        {t("orgDisplayName")}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="subnet"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>{t("subnet")}</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} disabled={true} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    <FormDescription>
+                                        {t("subnetDescription")}
+                                    </FormDescription>
+                                </FormItem>
+                            )}
+                        />
+                    </SettingsSectionForm>
+                </SettingsSectionBody>
+
+                <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                        type="submit"
+                        form="org-settings-form"
+                        loading={loadingSave}
+                        disabled={loadingSave}
+                    >
+                        {t("saveSettings")}
+                    </Button>
+                </div>
+            </SettingsSection>
+        </>
+    );
+}
+
+function LogRetentionSectionForm() {
+    const { org } = useOrgContext();
+    const form = useForm({
+        resolver: zodResolver(GeneralFormSchema),
+        defaultValues: {
+            name: org?.org.name
+        },
+        mode: "onChange"
+    });
+    const t = useTranslations();
+    const subscription = useSubscriptionStatusContext();
+    const { isUnlocked } = useLicenseStatusContext();
+    const { isPaidUser } = usePaidStatus();
+
+    return (
+        <SettingsSection>
+            <SettingsSectionHeader>
+                <SettingsSectionTitle>{t("logRetention")}</SettingsSectionTitle>
+                <SettingsSectionDescription>
+                    {t("logRetentionDescription")}
+                </SettingsSectionDescription>
+            </SettingsSectionHeader>
+            <SettingsSectionBody>
+                <SettingsSectionForm>
+                    <FormField
+                        control={form.control}
+                        name="settingsLogRetentionDaysRequest"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>
+                                    {t("logRetentionRequestLabel")}
+                                </FormLabel>
+                                <FormControl>
+                                    <Select
+                                        value={field.value.toString()}
+                                        onValueChange={(value) =>
+                                            field.onChange(parseInt(value, 10))
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue
+                                                placeholder={t(
+                                                    "selectLogRetention"
+                                                )}
+                                            />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {LOG_RETENTION_OPTIONS.filter(
+                                                (option) => {
+                                                    if (
+                                                        build == "saas" &&
+                                                        !subscription?.subscribed &&
+                                                        option.value > 30
+                                                    ) {
+                                                        return false;
+                                                    }
+                                                    return true;
+                                                }
+                                            ).map((option) => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value.toString()}
+                                                >
+                                                    {t(option.label)}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {build != "oss" && (
+                        <>
+                            <SecurityFeaturesAlert />
+
+                            <FormField
+                                control={form.control}
+                                name="settingsLogRetentionDaysAccess"
+                                render={({ field }) => {
+                                    const isDisabled =
+                                        (build == "saas" &&
+                                            !subscription?.subscribed) ||
+                                        (build == "enterprise" &&
+                                            !isUnlocked());
+
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {t("logRetentionAccessLabel")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Select
+                                                    value={field.value.toString()}
+                                                    onValueChange={(value) => {
+                                                        if (!isDisabled) {
+                                                            field.onChange(
+                                                                parseInt(
+                                                                    value,
+                                                                    10
+                                                                )
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={isDisabled}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "selectLogRetention"
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {LOG_RETENTION_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={option.value.toString()}
+                                                                >
+                                                                    {t(
+                                                                        option.label
+                                                                    )}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="settingsLogRetentionDaysAction"
+                                render={({ field }) => {
+                                    const isDisabled =
+                                        (build == "saas" &&
+                                            !subscription?.subscribed) ||
+                                        (build == "enterprise" &&
+                                            !isUnlocked());
+
+                                    return (
+                                        <FormItem>
+                                            <FormLabel>
+                                                {t("logRetentionActionLabel")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Select
+                                                    value={field.value.toString()}
+                                                    onValueChange={(value) => {
+                                                        if (!isDisabled) {
+                                                            field.onChange(
+                                                                parseInt(
+                                                                    value,
+                                                                    10
+                                                                )
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={isDisabled}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "selectLogRetention"
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {LOG_RETENTION_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value
+                                                                    }
+                                                                    value={option.value.toString()}
+                                                                >
+                                                                    {t(
+                                                                        option.label
+                                                                    )}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                        </>
+                    )}
+                </SettingsSectionForm>
+            </SettingsSectionBody>
+        </SettingsSection>
+    );
+}
+
+function SectionForm() {
+    const { org } = useOrgContext();
+    const form = useForm({
+        resolver: zodResolver(GeneralFormSchema),
+        defaultValues: {
+            name: org?.org.name
+        },
+        mode: "onChange"
+    });
+    const t = useTranslations();
+    const subscription = useSubscriptionStatusContext();
+    const { isUnlocked } = useLicenseStatusContext();
+    const { isPaidUser } = usePaidStatus();
+
+    return (
+        <SettingsSection>
+            {build !== "oss" && (
+                <>
+                    <hr className="my-10 max-w-xl" />
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("securitySettings")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("securitySettingsDescription")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <SettingsSectionBody>
+                        <SettingsSectionForm className="mb-4">
+                            <SecurityFeaturesAlert />
+                            <FormField
+                                control={form.control}
+                                name="requireTwoFactor"
+                                render={({ field }) => {
+                                    const isDisabled =
+                                        isSecurityFeatureDisabled();
+
+                                    return (
+                                        <FormItem className="col-span-2">
+                                            <div className="flex items-center gap-2">
+                                                <FormControl>
+                                                    <SwitchInput
+                                                        id="require-two-factor"
+                                                        defaultChecked={
+                                                            field.value || false
+                                                        }
+                                                        label={t(
+                                                            "requireTwoFactorForAllUsers"
+                                                        )}
+                                                        disabled={isDisabled}
+                                                        onCheckedChange={(
+                                                            val
+                                                        ) => {
+                                                            if (!isDisabled) {
+                                                                form.setValue(
+                                                                    "requireTwoFactor",
+                                                                    val
+                                                                );
+                                                            }
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                            </div>
+                                            <FormMessage />
+                                            <FormDescription>
+                                                {t(
+                                                    "requireTwoFactorDescription"
+                                                )}
+                                            </FormDescription>
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="maxSessionLengthHours"
+                                render={({ field }) => {
+                                    const isDisabled =
+                                        isSecurityFeatureDisabled();
+
+                                    return (
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>
+                                                {t("maxSessionLength")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Select
+                                                    value={
+                                                        field.value?.toString() ||
+                                                        "null"
+                                                    }
+                                                    onValueChange={(value) => {
+                                                        if (!isDisabled) {
+                                                            const numValue =
+                                                                value === "null"
+                                                                    ? null
+                                                                    : parseInt(
+                                                                          value,
+                                                                          10
+                                                                      );
+                                                            form.setValue(
+                                                                "maxSessionLengthHours",
+                                                                numValue
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={isDisabled}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "selectSessionLength"
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {SESSION_LENGTH_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value ===
+                                                                        null
+                                                                            ? "null"
+                                                                            : option.value.toString()
+                                                                    }
+                                                                    value={
+                                                                        option.value ===
+                                                                        null
+                                                                            ? "null"
+                                                                            : option.value.toString()
+                                                                    }
+                                                                >
+                                                                    {t(
+                                                                        option.labelKey
+                                                                    )}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormControl>
+                                            <FormMessage />
+                                            <FormDescription>
+                                                {t(
+                                                    "maxSessionLengthDescription"
+                                                )}
+                                            </FormDescription>
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="passwordExpiryDays"
+                                render={({ field }) => {
+                                    const isDisabled =
+                                        isSecurityFeatureDisabled();
+
+                                    return (
+                                        <FormItem className="col-span-2">
+                                            <FormLabel>
+                                                {t("passwordExpiryDays")}
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Select
+                                                    value={
+                                                        field.value?.toString() ||
+                                                        "null"
+                                                    }
+                                                    onValueChange={(value) => {
+                                                        if (!isDisabled) {
+                                                            const numValue =
+                                                                value === "null"
+                                                                    ? null
+                                                                    : parseInt(
+                                                                          value,
+                                                                          10
+                                                                      );
+                                                            form.setValue(
+                                                                "passwordExpiryDays",
+                                                                numValue
+                                                            );
+                                                        }
+                                                    }}
+                                                    disabled={isDisabled}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue
+                                                            placeholder={t(
+                                                                "selectPasswordExpiry"
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {PASSWORD_EXPIRY_OPTIONS.map(
+                                                            (option) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        option.value ===
+                                                                        null
+                                                                            ? "null"
+                                                                            : option.value.toString()
+                                                                    }
+                                                                    value={
+                                                                        option.value ===
+                                                                        null
+                                                                            ? "null"
+                                                                            : option.value.toString()
+                                                                    }
+                                                                >
+                                                                    {t(
+                                                                        option.labelKey
+                                                                    )}
+                                                                </SelectItem>
+                                                            )
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormControl>
+                                            <FormDescription>
+                                                <FormMessage />
+                                                {t(
+                                                    "editPasswordExpiryDescription"
+                                                )}
+                                            </FormDescription>
+                                        </FormItem>
+                                    );
+                                }}
+                            />
+                        </SettingsSectionForm>
+                    </SettingsSectionBody>
+                </>
+            )}
+        </SettingsSection>
     );
 }
