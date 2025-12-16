@@ -91,24 +91,6 @@ export default function GeneralForm() {
         `${resource.ssl ? "https" : "http"}://${toUnicode(resource.fullDomain || "")}`
     );
 
-    const [defaultSubdomain, defaultBaseDomain] = useMemo(() => {
-        const resourceUrl = new URL(resourceFullDomain);
-        const domain = resourceUrl.hostname;
-
-        const allDomainParts = domain.split(".");
-        let sub = undefined;
-        let base = domain;
-
-        if (allDomainParts.length >= 3) {
-            // 3 parts: [subdomain, domain, tld]
-            const [first, ...rest] = allDomainParts;
-            sub = first;
-            base = rest.join(".");
-        }
-
-        return [sub, base];
-    }, [resourceFullDomain]);
-
     const [selectedDomain, setSelectedDomain] = useState<{
         domainId: string;
         subdomain?: string;
@@ -507,8 +489,8 @@ export default function GeneralForm() {
                             <DomainPicker
                                 orgId={orgId as string}
                                 cols={1}
-                                defaultSubdomain={defaultSubdomain}
-                                defaultBaseDomain={defaultBaseDomain}
+                                defaultSubdomain={resource.subdomain}
+                                defaultDomainId={resource.domainId}
                                 onDomainChange={(res) => {
                                     const selected = {
                                         domainId: res.domainId,

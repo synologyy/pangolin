@@ -74,8 +74,9 @@ interface DomainPickerProps {
     }) => void;
     cols?: number;
     hideFreeDomain?: boolean;
-    defaultSubdomain?: string;
-    defaultBaseDomain?: string;
+    defaultFullDomain?: string | null;
+    defaultSubdomain?: string | null;
+    defaultDomainId?: string | null;
 }
 
 export default function DomainPicker({
@@ -84,7 +85,8 @@ export default function DomainPicker({
     cols = 2,
     hideFreeDomain = false,
     defaultSubdomain,
-    defaultBaseDomain
+    defaultFullDomain,
+    defaultDomainId
 }: DomainPickerProps) {
     const { env } = useEnvContext();
     const api = createApiClient({ env });
@@ -139,7 +141,7 @@ export default function DomainPicker({
                 // Select the first organization domain or the one provided from props
                 const firstOrgDomain =
                     organizationDomains.find(
-                        (domain) => domain.baseDomain === defaultBaseDomain
+                        (domain) => domain.domainId === defaultDomainId
                     ) ?? organizationDomains[0];
                 const domainOption: DomainOption = {
                     id: `org-${firstOrgDomain.domainId}`,
@@ -175,12 +177,7 @@ export default function DomainPicker({
                 setSelectedBaseDomain(freeDomainOption);
             }
         }
-    }, [
-        hideFreeDomain,
-        loadingDomains,
-        organizationDomains,
-        defaultBaseDomain
-    ]);
+    }, [hideFreeDomain, loadingDomains, organizationDomains, defaultDomainId]);
 
     const checkAvailability = useCallback(
         async (input: string) => {
