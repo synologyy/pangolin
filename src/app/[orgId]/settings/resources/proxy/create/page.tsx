@@ -1396,6 +1396,8 @@ export default function Page() {
                                         <DomainPicker
                                             orgId={orgId as string}
                                             onDomainChange={(res) => {
+                                                if (!res) return;
+
                                                 httpForm.setValue(
                                                     "subdomain",
                                                     res.subdomain

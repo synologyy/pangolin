@@ -519,12 +519,15 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                     loginPage?.subdomain
                                 }
                                 onDomainChange={(res) => {
-                                    const selected = {
-                                        domainId: res.domainId,
-                                        subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain,
-                                        baseDomain: res.baseDomain
-                                    };
+                                    const selected =
+                                        res === null
+                                            ? null
+                                            : {
+                                                  domainId: res.domainId,
+                                                  subdomain: res.subdomain,
+                                                  fullDomain: res.fullDomain,
+                                                  baseDomain: res.baseDomain
+                                              };
                                     setSelectedDomain(selected);
                                 }}
                             />

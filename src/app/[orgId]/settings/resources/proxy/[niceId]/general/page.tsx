@@ -506,13 +506,17 @@ export default function GeneralForm() {
                                 }
                                 defaultFullDomain={resourceFullDomainName}
                                 onDomainChange={(res) => {
-                                    const selected = {
-                                        domainId: res.domainId,
-                                        subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain,
-                                        baseDomain: res.baseDomain,
-                                        domainNamespaceId: res.domainNamespaceId
-                                    };
+                                    const selected =
+                                        res === null
+                                            ? null
+                                            : {
+                                                  domainId: res.domainId,
+                                                  subdomain: res.subdomain,
+                                                  fullDomain: res.fullDomain,
+                                                  baseDomain: res.baseDomain,
+                                                  domainNamespaceId:
+                                                      res.domainNamespaceId
+                                              };
                                     setSelectedDomain(selected);
                                 }}
                             />

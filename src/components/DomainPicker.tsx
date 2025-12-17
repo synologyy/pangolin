@@ -64,14 +64,16 @@ type DomainOption = {
 
 interface DomainPickerProps {
     orgId: string;
-    onDomainChange?: (domainInfo: {
-        domainId: string;
-        domainNamespaceId?: string;
-        type: "organization" | "provided";
-        subdomain?: string;
-        fullDomain: string;
-        baseDomain: string;
-    }) => void;
+    onDomainChange?: (
+        domainInfo: {
+            domainId: string;
+            domainNamespaceId?: string;
+            type: "organization" | "provided";
+            subdomain?: string;
+            fullDomain: string;
+            baseDomain: string;
+        } | null
+    ) => void;
     cols?: number;
     hideFreeDomain?: boolean;
     defaultFullDomain?: string | null;
@@ -374,16 +376,21 @@ export default function DomainPicker({
 
         const fullDomain = sub ? `${sub}.${option.domain}` : option.domain;
 
-        onDomainChange?.({
-            domainId: option.domainId || "",
-            domainNamespaceId: option.domainNamespaceId,
-            type:
-                option.type === "provided-search" ? "provided" : "organization",
-            subdomain:
-                option.domainType !== "cname" ? sub || undefined : undefined,
-            fullDomain,
-            baseDomain: option.domain
-        });
+        if (option.type === "provided-search") {
+            onDomainChange?.(null); // prevent the modal from closing with `<subdomain>.Free Provided domain`
+        } else {
+            onDomainChange?.({
+                domainId: option.domainId || "",
+                domainNamespaceId: option.domainNamespaceId,
+                type: "organization",
+                subdomain:
+                    option.domainType !== "cname"
+                        ? sub || undefined
+                        : undefined,
+                fullDomain,
+                baseDomain: option.domain
+            });
+        }
     };
 
     const handleProvidedDomainSelect = (option: AvailableOption) => {
