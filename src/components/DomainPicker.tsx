@@ -492,16 +492,6 @@ export default function DomainPicker({
                                 {t("domainPickerInvalidSubdomainStructure")}
                             </p>
                         )}
-                    {showSubdomainInput && !subdomainInput && (
-                        <p className="text-sm text-muted-foreground">
-                            {t("domainPickerEnterSubdomainOrLeaveBlank")}
-                        </p>
-                    )}
-                    {showProvidedDomainSearch && !userInput && (
-                        <p className="text-sm text-muted-foreground">
-                            {t("domainPickerEnterSubdomainToSearch")}
-                        </p>
-                    )}
                 </div>
 
                 <div className="space-y-2">
