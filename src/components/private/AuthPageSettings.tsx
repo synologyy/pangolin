@@ -510,6 +510,14 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                 hideFreeDomain={true}
                                 orgId={org?.org.orgId as string}
                                 cols={1}
+                                defaultDomainId={
+                                    form.getValues("authPageDomainId") ??
+                                    loginPage?.domainId
+                                }
+                                defaultSubdomain={
+                                    form.getValues("authPageSubdomain") ??
+                                    loginPage?.subdomain
+                                }
                                 onDomainChange={(res) => {
                                     const selected = {
                                         domainId: res.domainId,
