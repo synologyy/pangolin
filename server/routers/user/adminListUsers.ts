@@ -10,19 +10,19 @@ import { idp, users } from "@server/db";
 import { fromZodError } from "zod-validation-error";
 
 const listUsersSchema = z.strictObject({
-        limit: z
-            .string()
-            .optional()
-            .default("1000")
-            .transform(Number)
-            .pipe(z.int().nonnegative()),
-        offset: z
-            .string()
-            .optional()
-            .default("0")
-            .transform(Number)
-            .pipe(z.int().nonnegative())
-    });
+    limit: z
+        .string()
+        .optional()
+        .default("1000")
+        .transform(Number)
+        .pipe(z.int().nonnegative()),
+    offset: z
+        .string()
+        .optional()
+        .default("0")
+        .transform(Number)
+        .pipe(z.int().nonnegative())
+});
 
 async function queryUsers(limit: number, offset: number) {
     return await db

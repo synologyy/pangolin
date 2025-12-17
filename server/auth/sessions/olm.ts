@@ -1,6 +1,4 @@
-import {
-    encodeHexLowerCase,
-} from "@oslojs/encoding";
+import { encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { Olm, olms, olmSessions, OlmSession } from "@server/db";
 import { db } from "@server/db";
@@ -10,25 +8,25 @@ export const EXPIRES = 1000 * 60 * 60 * 24 * 30;
 
 export async function createOlmSession(
     token: string,
-    olmId: string,
+    olmId: string
 ): Promise<OlmSession> {
     const sessionId = encodeHexLowerCase(
-        sha256(new TextEncoder().encode(token)),
+        sha256(new TextEncoder().encode(token))
     );
     const session: OlmSession = {
         sessionId: sessionId,
         olmId,
-        expiresAt: new Date(Date.now() + EXPIRES).getTime(),
+        expiresAt: new Date(Date.now() + EXPIRES).getTime()
     };
     await db.insert(olmSessions).values(session);
     return session;
 }
 
 export async function validateOlmSessionToken(
-    token: string,
+    token: string
 ): Promise<SessionValidationResult> {
     const sessionId = encodeHexLowerCase(
-        sha256(new TextEncoder().encode(token)),
+        sha256(new TextEncoder().encode(token))
     );
     const result = await db
         .select({ olm: olms, session: olmSessions })
@@ -45,14 +43,12 @@ export async function validateOlmSessionToken(
             .where(eq(olmSessions.sessionId, session.sessionId));
         return { session: null, olm: null };
     }
-    if (Date.now() >= session.expiresAt - (EXPIRES / 2)) {
-        session.expiresAt = new Date(
-            Date.now() + EXPIRES,
-        ).getTime();
+    if (Date.now() >= session.expiresAt - EXPIRES / 2) {
+        session.expiresAt = new Date(Date.now() + EXPIRES).getTime();
         await db
             .update(olmSessions)
             .set({
-                expiresAt: session.expiresAt,
+                expiresAt: session.expiresAt
             })
             .where(eq(olmSessions.sessionId, session.sessionId));
     }

@@ -22,8 +22,8 @@ import { z } from "zod";
 import { PickRemoteExitNodeDefaultsResponse } from "@server/routers/remoteExitNode/types";
 
 const paramsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export async function pickRemoteExitNodeDefaults(
     req: Request,

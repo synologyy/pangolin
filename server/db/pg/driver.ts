@@ -6,26 +6,26 @@ import { withReplicas } from "drizzle-orm/pg-core";
 function createDb() {
     const config = readConfigFile();
 
-    if (!config.postgres) {
-        // check the environment variables for postgres config
-        if (process.env.POSTGRES_CONNECTION_STRING) {
-            config.postgres = {
-                connection_string: process.env.POSTGRES_CONNECTION_STRING
-            };
-            if (process.env.POSTGRES_REPLICA_CONNECTION_STRINGS) {
-                const replicas =
-                    process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(
-                        ","
-                    ).map((conn) => ({
+    // check the environment variables for postgres config first before the config file
+    if (process.env.POSTGRES_CONNECTION_STRING) {
+        config.postgres = {
+            connection_string: process.env.POSTGRES_CONNECTION_STRING
+        };
+        if (process.env.POSTGRES_REPLICA_CONNECTION_STRINGS) {
+            const replicas =
+                process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(",").map(
+                    (conn) => ({
                         connection_string: conn.trim()
-                    }));
-                config.postgres.replicas = replicas;
-            }
-        } else {
-            throw new Error(
-                "Postgres configuration is missing in the configuration file."
-            );
+                    })
+                );
+            config.postgres.replicas = replicas;
         }
+    }
+
+    if (!config.postgres) {
+        throw new Error(
+            "Postgres configuration is missing in the configuration file."
+        );
     }
 
     const connectionString = config.postgres?.connection_string;
@@ -51,7 +51,7 @@ function createDb() {
     if (!replicaConnections.length) {
         replicas.push(
             DrizzlePostgres(primaryPool, {
-                logger: process.env.NODE_ENV === "development"
+                logger: process.env.QUERY_LOGGING == "true"
             })
         );
     } else {
@@ -65,7 +65,7 @@ function createDb() {
             });
             replicas.push(
                 DrizzlePostgres(replicaPool, {
-                    logger: process.env.NODE_ENV === "development"
+                    logger: process.env.QUERY_LOGGING == "true"
                 })
             );
         }
@@ -73,7 +73,7 @@ function createDb() {
 
     return withReplicas(
         DrizzlePostgres(primaryPool, {
-            logger: process.env.QUERY_LOGGING === "true"
+            logger: process.env.QUERY_LOGGING == "true"
         }),
         replicas as any
     );

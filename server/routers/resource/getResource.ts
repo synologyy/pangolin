@@ -12,15 +12,15 @@ import stoi from "@server/lib/stoi";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getResourceSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .optional()
-            .transform(stoi)
-            .pipe(z.int().positive().optional())
-            .optional(),
-        niceId: z.string().optional(),
-        orgId: z.string().optional()
-    });
+    resourceId: z
+        .string()
+        .optional()
+        .transform(stoi)
+        .pipe(z.int().positive().optional())
+        .optional(),
+    niceId: z.string().optional(),
+    orgId: z.string().optional()
+});
 
 async function query(resourceId?: number, niceId?: string, orgId?: string) {
     if (resourceId) {
@@ -34,13 +34,18 @@ async function query(resourceId?: number, niceId?: string, orgId?: string) {
         const [res] = await db
             .select()
             .from(resources)
-            .where(and(eq(resources.niceId, niceId), eq(resources.orgId, orgId)))
+            .where(
+                and(eq(resources.niceId, niceId), eq(resources.orgId, orgId))
+            )
             .limit(1);
         return res;
     }
 }
 
-export type GetResourceResponse = Omit<NonNullable<Awaited<ReturnType<typeof query>>>, 'headers'> & {
+export type GetResourceResponse = Omit<
+    NonNullable<Awaited<ReturnType<typeof query>>>,
+    "headers"
+> & {
     headers: { name: string; value: string }[] | null;
 };
 
@@ -101,7 +106,9 @@ export async function getResource(
         return response<GetResourceResponse>(res, {
             data: {
                 ...resource,
-                headers: resource.headers ? JSON.parse(resource.headers) : resource.headers
+                headers: resource.headers
+                    ? JSON.parse(resource.headers)
+                    : resource.headers
             },
             success: true,
             error: false,

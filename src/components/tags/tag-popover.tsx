@@ -186,10 +186,10 @@ export const TagPopover: React.FC<TagPopoverProps> = ({
             >
                 <div className="space-y-1">
                     <h4 className="text-sm font-medium leading-none">
-                        {t('tagsEntered')}
+                        {t("tagsEntered")}
                     </h4>
                     <p className="text-sm text-muted-foregrounsd text-left">
-                        {t('tagsEnteredDescription')}
+                        {t("tagsEnteredDescription")}
                     </p>
                 </div>
                 <TagList

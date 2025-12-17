@@ -21,7 +21,10 @@ type Enable2FaDialogProps = {
     setOpen: (val: boolean) => void;
 };
 
-export default function Enable2FaDialog({ open, setOpen }: Enable2FaDialogProps) {
+export default function Enable2FaDialog({
+    open,
+    setOpen
+}: Enable2FaDialogProps) {
     const t = useTranslations();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -49,21 +52,22 @@ export default function Enable2FaDialog({ open, setOpen }: Enable2FaDialogProps)
         >
             <CredenzaContent>
                 <CredenzaHeader>
-                    <CredenzaTitle>
-                        {t('otpSetup')}
-                    </CredenzaTitle>
+                    <CredenzaTitle>{t("otpSetup")}</CredenzaTitle>
                     <CredenzaDescription>
-                        {t('otpSetupDescription')}
+                        {t("otpSetupDescription")}
                     </CredenzaDescription>
                 </CredenzaHeader>
                 <CredenzaBody>
                     <TwoFactorSetupForm
                         ref={formRef}
                         isDialog={true}
-                        submitButtonText={t('submit')}
+                        submitButtonText={t("submit")}
                         cancelButtonText="Close"
                         showCancelButton={false}
-                        onComplete={() => {setOpen(false); updateUser({ twoFactorEnabled: true });}}
+                        onComplete={() => {
+                            setOpen(false);
+                            updateUser({ twoFactorEnabled: true });
+                        }}
                         onStepChange={setCurrentStep}
                         onLoadingChange={setLoading}
                     />
@@ -79,11 +83,11 @@ export default function Enable2FaDialog({ open, setOpen }: Enable2FaDialogProps)
                             disabled={loading}
                             onClick={handleSubmit}
                         >
-                            {t('submit')}
+                            {t("submit")}
                         </Button>
                     )}
                 </CredenzaFooter>
             </CredenzaContent>
         </Credenza>
     );
-} 
+}

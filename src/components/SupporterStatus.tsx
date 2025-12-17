@@ -13,7 +13,7 @@ import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
-    TooltipTrigger,
+    TooltipTrigger
 } from "@app/components/ui/tooltip";
 import { Button } from "./ui/button";
 import {
@@ -60,7 +60,9 @@ interface SupporterStatusProps {
     isCollapsed?: boolean;
 }
 
-export default function SupporterStatus({ isCollapsed = false }: SupporterStatusProps) {
+export default function SupporterStatus({
+    isCollapsed = false
+}: SupporterStatusProps) {
     const { supporterStatus, updateSupporterStatus } =
         useSupporterStatusContext();
     const [supportOpen, setSupportOpen] = useState(false);
@@ -72,11 +74,9 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
     const t = useTranslations();
 
     const formSchema = z.object({
-        githubUsername: z
-            .string()
-            .nonempty({
-                error: "GitHub username is required"
-            }),
+        githubUsername: z.string().nonempty({
+            error: "GitHub username is required"
+        }),
         key: z.string().nonempty({
             error: "Supporter key is required"
         })
@@ -112,8 +112,8 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
             if (!data || !data.valid) {
                 toast({
                     variant: "destructive",
-                    title: t('supportKeyInvalid'),
-                    description: t('supportKeyInvalidDescription')
+                    title: t("supportKeyInvalid"),
+                    description: t("supportKeyInvalidDescription")
                 });
                 return;
             }
@@ -121,8 +121,8 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
             // Trigger the toast
             toast({
                 variant: "default",
-                title: t('supportKeyValid'),
-                description: t('supportKeyValidDescription')
+                title: t("supportKeyValid"),
+                description: t("supportKeyValidDescription")
             });
 
             // Fireworks-style confetti
@@ -178,10 +178,10 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
         } catch (error) {
             toast({
                 variant: "destructive",
-                title: t('error'),
+                title: t("error"),
                 description: formatAxiosError(
                     error,
-                    t('supportKeyErrorValidationDescription')
+                    t("supportKeyErrorValidationDescription")
                 )
             });
             return;
@@ -198,48 +198,44 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
             >
                 <CredenzaContent className="max-w-3xl">
                     <CredenzaHeader>
-                        <CredenzaTitle>
-                            {t('supportKey')}
-                        </CredenzaTitle>
+                        <CredenzaTitle>{t("supportKey")}</CredenzaTitle>
                     </CredenzaHeader>
                     <CredenzaBody>
-                        <p>
-                            {t('supportKeyDescription')}
-                        </p>
+                        <p>{t("supportKeyDescription")}</p>
+
+                        <p>{t("supportKeyPet")}</p>
 
                         <p>
-                            {t('supportKeyPet')}
-                        </p>
-
-                        <p>
-                            {t('supportKeyPurchase')}{" "}
+                            {t("supportKeyPurchase")}{" "}
                             <Link
                                 href="https://supporters.fossorial.io/"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline"
                             >
-                                {t('supportKeyPurchaseLink')}
+                                {t("supportKeyPurchaseLink")}
                             </Link>{" "}
-                            {t('supportKeyPurchase2')}{" "}
+                            {t("supportKeyPurchase2")}{" "}
                             <Link
                                 href="https://docs.pangolin.net/self-host/supporter-program"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline"
                             >
-                                {t('supportKeyLearnMore')}
+                                {t("supportKeyLearnMore")}
                             </Link>
                         </p>
 
                         <div className="py-6">
                             <p className="mb-3 text-center">
-                                {t('supportKeyOptions')}
+                                {t("supportKeyOptions")}
                             </p>
                             <div className="grid md:grid-cols-2 grid-cols-1 gap-8">
                                 <Card>
                                     <CardHeader>
-                                        <CardTitle>{t('supportKetOptionFull')}</CardTitle>
+                                        <CardTitle>
+                                            {t("supportKetOptionFull")}
+                                        </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-4xl mb-6">$95</p>
@@ -247,19 +243,19 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('forWholeServer')}
+                                                    {t("forWholeServer")}
                                                 </span>
                                             </li>
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('lifetimePurchase')}
+                                                    {t("lifetimePurchase")}
                                                 </span>
                                             </li>
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('supporterStatus')}
+                                                    {t("supporterStatus")}
                                                 </span>
                                             </li>
                                         </ul>
@@ -272,7 +268,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                             className="w-full"
                                         >
                                             <Button className="w-full">
-                                                {t('buy')}
+                                                {t("buy")}
                                             </Button>
                                         </Link>
                                     </CardFooter>
@@ -282,7 +278,9 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                     className={`${supporterStatus?.tier === "Limited Supporter" ? "opacity-50" : ""}`}
                                 >
                                     <CardHeader>
-                                        <CardTitle>{t('supportKeyOptionLimited')}</CardTitle>
+                                        <CardTitle>
+                                            {t("supportKeyOptionLimited")}
+                                        </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                         <p className="text-4xl mb-6">$25</p>
@@ -290,19 +288,19 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('forFiveUsers')}
+                                                    {t("forFiveUsers")}
                                                 </span>
                                             </li>
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('lifetimePurchase')}
+                                                    {t("lifetimePurchase")}
                                                 </span>
                                             </li>
                                             <li className="flex items-center gap-2">
                                                 <Check className="h-6 w-6 text-green-500" />
                                                 <span className="text-muted-foreground">
-                                                    {t('supporterStatus')}
+                                                    {t("supporterStatus")}
                                                 </span>
                                             </li>
                                         </ul>
@@ -317,7 +315,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                                 className="w-full"
                                             >
                                                 <Button className="w-full">
-                                                    {t('buy')}
+                                                    {t("buy")}
                                                 </Button>
                                             </Link>
                                         ) : (
@@ -328,7 +326,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                                     "Limited Supporter"
                                                 }
                                             >
-                                                {t('buy')}
+                                                {t("buy")}
                                             </Button>
                                         )}
                                     </CardFooter>
@@ -344,20 +342,20 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                     setKeyOpen(true);
                                 }}
                             >
-                                {t('supportKeyRedeem')}
+                                {t("supportKeyRedeem")}
                             </Button>
                             <Button
                                 variant="ghost"
                                 className="w-full"
                                 onClick={() => hide()}
                             >
-                                {t('supportKeyHideSevenDays')}
+                                {t("supportKeyHideSevenDays")}
                             </Button>
                         </div>
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                     </CredenzaFooter>
                 </CredenzaContent>
@@ -371,9 +369,9 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('supportKeyEnter')}</CredenzaTitle>
+                        <CredenzaTitle>{t("supportKeyEnter")}</CredenzaTitle>
                         <CredenzaDescription>
-                            {t('supportKeyEnterDescription')}
+                            {t("supportKeyEnterDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -389,7 +387,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>
-                                                {t('githubUsername')}
+                                                {t("githubUsername")}
                                             </FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
@@ -403,7 +401,9 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                     name="key"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('supportKeyInput')}</FormLabel>
+                                            <FormLabel>
+                                                {t("supportKeyInput")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
@@ -416,10 +416,10 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button type="submit" form="form">
-                            {t('submit')}
+                            {t("submit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>
@@ -441,7 +441,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                                 </Button>
                             </TooltipTrigger>
                             <TooltipContent side="right" sideOffset={8}>
-                                <p>{t('supportKeyBuy')}</p>
+                                <p>{t("supportKeyBuy")}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -453,7 +453,7 @@ export default function SupporterStatus({ isCollapsed = false }: SupporterStatus
                             setPurchaseOptionsOpen(true);
                         }}
                     >
-                        {t('supportKeyBuy')}
+                        {t("supportKeyBuy")}
                     </Button>
                 )
             ) : null}

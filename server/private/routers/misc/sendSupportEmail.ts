@@ -23,9 +23,9 @@ import SupportEmail from "@server/emails/templates/SupportEmail";
 import config from "@server/lib/config";
 
 const bodySchema = z.strictObject({
-        body: z.string().min(1),
-        subject: z.string().min(1).max(255)
-    });
+    body: z.string().min(1),
+    subject: z.string().min(1).max(255)
+});
 
 export async function sendSupportEmail(
     req: Request,
@@ -66,6 +66,7 @@ export async function sendSupportEmail(
                 {
                     name: req.user?.email || "Support User",
                     to: "support@pangolin.net",
+                    replyTo: req.user?.email || undefined,
                     from: config.getNoReplyEmail(),
                     subject: `Support Request: ${subject}`
                 }

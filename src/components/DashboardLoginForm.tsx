@@ -35,6 +35,9 @@ export default function DashboardLoginForm({
     const { isUnlocked } = useLicenseStatusContext();
 
     function getSubtitle() {
+        if (isUnlocked() && env.branding?.loginPage?.subtitleText) {
+            return env.branding.loginPage.subtitleText;
+        }
         return t("loginStart");
     }
 

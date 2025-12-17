@@ -6,6 +6,7 @@ import {
     SettingsSection,
     SettingsSectionBody,
     SettingsSectionDescription,
+    SettingsSectionFooter,
     SettingsSectionHeader,
     SettingsSectionTitle
 } from "@app/components/Settings";
@@ -21,11 +22,20 @@ import {
     QuickStartRemoteExitNodeResponse
 } from "@server/routers/remoteExitNode/types";
 import { useRemoteExitNodeContext } from "@app/hooks/useRemoteExitNodeContext";
-import RegenerateCredentialsModal from "@app/components/RegenerateCredentialsModal";
+import ConfirmDeleteDialog from "@app/components/ConfirmDeleteDialog";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { build } from "@server/build";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@app/components/ui/tooltip";
+import { SecurityFeaturesAlert } from "@app/components/SecurityFeaturesAlert";
+import {
+    InfoSection,
+    InfoSectionContent,
+    InfoSections,
+    InfoSectionTitle
+} from "@app/components/InfoSection";
+import CopyToClipboard from "@app/components/CopyToClipboard";
+import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
+import { InfoIcon } from "lucide-react";
 
 export default function CredentialsPage() {
     const { env } = useEnvContext();
@@ -36,7 +46,16 @@ export default function CredentialsPage() {
     const { remoteExitNode } = useRemoteExitNodeContext();
 
     const [modalOpen, setModalOpen] = useState(false);
-    const [credentials, setCredentials] = useState<PickRemoteExitNodeDefaultsResponse | null>(null);
+    const [credentials, setCredentials] =
+        useState<PickRemoteExitNodeDefaultsResponse | null>(null);
+    const [currentRemoteExitNodeId, setCurrentRemoteExitNodeId] = useState<
+        string | null
+    >(remoteExitNode.remoteExitNodeId);
+    const [regeneratedSecret, setRegeneratedSecret] = useState<string | null>(
+        null
+    );
+    const [showCredentialsAlert, setShowCredentialsAlert] = useState(false);
+    const [shouldDisconnect, setShouldDisconnect] = useState(true);
 
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const subscription = useSubscriptionStatusContext();
@@ -48,86 +67,213 @@ export default function CredentialsPage() {
         return isEnterpriseNotLicensed || isSaasNotSubscribed;
     };
 
-
     const handleConfirmRegenerate = async () => {
+        try {
+            const response = await api.get<
+                AxiosResponse<PickRemoteExitNodeDefaultsResponse>
+            >(`/org/${orgId}/pick-remote-exit-node-defaults`);
 
-        const response = await api.get<AxiosResponse<PickRemoteExitNodeDefaultsResponse>>(
-            `/org/${orgId}/pick-remote-exit-node-defaults`
-        );
+            const data = response.data.data;
+            setCredentials(data);
 
-        const data = response.data.data;
-        setCredentials(data);
-
-        await api.put<AxiosResponse<QuickStartRemoteExitNodeResponse>>(
-            `/re-key/${orgId}/reGenerate-remote-exit-node-secret`,
-            {
+            const rekeyRes = await api.put<
+                AxiosResponse<QuickStartRemoteExitNodeResponse>
+            >(`/re-key/${orgId}/regenerate-remote-exit-node-secret`, {
                 remoteExitNodeId: remoteExitNode.remoteExitNodeId,
                 secret: data.secret,
+                disconnect: shouldDisconnect
+            });
+
+            if (rekeyRes && rekeyRes.status === 200) {
+                const rekeyData = rekeyRes.data.data;
+                if (rekeyData && rekeyData.remoteExitNodeId) {
+                    setCurrentRemoteExitNodeId(rekeyData.remoteExitNodeId);
+                    setRegeneratedSecret(data.secret);
+                    setCredentials({
+                        ...data,
+                        remoteExitNodeId: rekeyData.remoteExitNodeId
+                    });
+                    setShowCredentialsAlert(true);
+                }
             }
-        );
 
-        toast({
-            title: t("credentialsSaved"),
-            description: t("credentialsSavedDescription")
-        });
-
-        router.refresh();
-    };
-
-    const getCredentials = () => {
-        if (credentials) {
-            return {
-                Id: remoteExitNode.remoteExitNodeId,
-                Secret: credentials.secret
-            };
+            toast({
+                title: t("credentialsSaved"),
+                description: t("credentialsSavedDescription")
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: t("error") || "Error",
+                description:
+                    formatAxiosError(error) ||
+                    t("credentialsRegenerateError") ||
+                    "Failed to regenerate credentials"
+            });
         }
-        return undefined;
     };
+
+    const getConfirmationString = () => {
+        return (
+            remoteExitNode?.name ||
+            remoteExitNode?.remoteExitNodeId ||
+            "My remote exit node"
+        );
+    };
+
+    const displayRemoteExitNodeId =
+        currentRemoteExitNodeId || remoteExitNode?.remoteExitNodeId || null;
+    const displaySecret = regeneratedSecret || null;
 
     return (
-        <SettingsContainer>
-            <SettingsSection>
-                <SettingsSectionHeader>
-                    <SettingsSectionTitle>
-                        {t("generatedcredentials")}
-                    </SettingsSectionTitle>
-                    <SettingsSectionDescription>
-                        {t("regenerateCredentials")}
-                    </SettingsSectionDescription>
-                </SettingsSectionHeader>
+        <>
+            <SettingsContainer>
+                <SettingsSection>
+                    <SettingsSectionHeader>
+                        <SettingsSectionTitle>
+                            {t("generatedcredentials")}
+                        </SettingsSectionTitle>
+                        <SettingsSectionDescription>
+                            {t("regenerateCredentials")}
+                        </SettingsSectionDescription>
+                    </SettingsSectionHeader>
+                    <SettingsSectionBody>
+                        <SecurityFeaturesAlert />
 
-                <SettingsSectionBody>
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="inline-block">
-                                    <Button
-                                        onClick={() => setModalOpen(true)}
-                                        disabled={isSecurityFeatureDisabled()}
-                                    >
-                                        {t("regeneratecredentials")}
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
+                        <InfoSections cols={3}>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("endpoint") || "Endpoint"}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    <CopyToClipboard
+                                        text={env.app.dashboardUrl}
+                                    />
+                                </InfoSectionContent>
+                            </InfoSection>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("remoteExitNodeId") ||
+                                        "Remote Exit Node ID"}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    {displayRemoteExitNodeId ? (
+                                        <CopyToClipboard
+                                            text={displayRemoteExitNodeId}
+                                        />
+                                    ) : (
+                                        <span>{"••••••••••••••••"}</span>
+                                    )}
+                                </InfoSectionContent>
+                            </InfoSection>
+                            <InfoSection>
+                                <InfoSectionTitle>
+                                    {t("secretKey") || "Secret Key"}
+                                </InfoSectionTitle>
+                                <InfoSectionContent>
+                                    {displaySecret ? (
+                                        <CopyToClipboard text={displaySecret} />
+                                    ) : (
+                                        <span>
+                                            {"••••••••••••••••••••••••••••••••"}
+                                        </span>
+                                    )}
+                                </InfoSectionContent>
+                            </InfoSection>
+                        </InfoSections>
 
-                            {isSecurityFeatureDisabled() && (
-                                <TooltipContent side="top">
-                                    {t("featureDisabledTooltip")}
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    </TooltipProvider>
-                </SettingsSectionBody>
-            </SettingsSection>
+                        {showCredentialsAlert && displaySecret && (
+                            <Alert variant="neutral" className="mt-4">
+                                <InfoIcon className="h-4 w-4" />
+                                <AlertTitle className="font-semibold">
+                                    {t("credentialsSave") ||
+                                        "Save the Credentials"}
+                                </AlertTitle>
+                                <AlertDescription>
+                                    {t("credentialsSaveDescription") ||
+                                        "You will only be able to see this once. Make sure to copy it to a secure place."}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                    </SettingsSectionBody>
+                    {build !== "oss" && (
+                        <SettingsSectionFooter>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShouldDisconnect(false);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("regenerateCredentialsButton")}
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShouldDisconnect(true);
+                                    setModalOpen(true);
+                                }}
+                                disabled={isSecurityFeatureDisabled()}
+                            >
+                                {t("remoteExitNodeRegenerateAndDisconnect")}
+                            </Button>
+                        </SettingsSectionFooter>
+                    )}
+                </SettingsSection>
+            </SettingsContainer>
 
-            <RegenerateCredentialsModal
+            <ConfirmDeleteDialog
                 open={modalOpen}
-                onOpenChange={setModalOpen}
-                type="remote-exit-node"
-                onConfirmRegenerate={handleConfirmRegenerate}
-                dashboardUrl={env.app.dashboardUrl}
-                credentials={getCredentials()}
+                setOpen={(val) => {
+                    setModalOpen(val);
+                    // Prevent modal from reopening during refresh
+                    if (!val) {
+                        setTimeout(() => {
+                            router.refresh();
+                        }, 150);
+                    }
+                }}
+                dialog={
+                    <div className="space-y-2">
+                        {shouldDisconnect ? (
+                            <>
+                                <p>
+                                    {t(
+                                        "remoteExitNodeRegenerateAndDisconnectConfirmation"
+                                    )}
+                                </p>
+                                <p>
+                                    {t(
+                                        "remoteExitNodeRegenerateAndDisconnectWarning"
+                                    )}
+                                </p>
+                            </>
+                        ) : (
+                            <>
+                                <p>
+                                    {t(
+                                        "remoteExitNodeRegenerateCredentialsConfirmation"
+                                    )}
+                                </p>
+                                <p>
+                                    {t(
+                                        "remoteExitNodeRegenerateCredentialsWarning"
+                                    )}
+                                </p>
+                            </>
+                        )}
+                    </div>
+                }
+                buttonText={
+                    shouldDisconnect
+                        ? t("remoteExitNodeRegenerateAndDisconnect")
+                        : t("regenerateCredentialsButton")
+                }
+                onConfirm={handleConfirmRegenerate}
+                string={getConfirmationString()}
+                title={t("regenerateCredentials")}
+                warningText={t("cannotbeUndone")}
             />
-        </SettingsContainer>
+        </>
     );
 }

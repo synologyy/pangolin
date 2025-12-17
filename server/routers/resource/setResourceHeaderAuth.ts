@@ -15,9 +15,9 @@ const setResourceAuthMethodsParamsSchema = z.object({
 });
 
 const setResourceAuthMethodsBodySchema = z.strictObject({
-        user: z.string().min(4).max(100).nullable(),
-        password: z.string().min(4).max(100).nullable()
-    });
+    user: z.string().min(4).max(100).nullable(),
+    password: z.string().min(4).max(100).nullable()
+});
 
 registry.registerPath({
     method: "post",
@@ -75,7 +75,9 @@ export async function setResourceHeaderAuth(
                 .where(eq(resourceHeaderAuth.resourceId, resourceId));
 
             if (user && password) {
-                const headerAuthHash = await hashPassword(Buffer.from(`${user}:${password}`).toString("base64"));
+                const headerAuthHash = await hashPassword(
+                    Buffer.from(`${user}:${password}`).toString("base64")
+                );
 
                 await trx
                     .insert(resourceHeaderAuth)

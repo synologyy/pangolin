@@ -71,20 +71,42 @@ function CollapsibleNavItem({
     build,
     isUnlocked
 }: CollapsibleNavItemProps) {
-    const [isOpen, setIsOpen] = React.useState(isChildActive);
+    const storageKey = `pangolin-sidebar-expanded-${item.title}`;
 
-    // Update open state when child active state changes
+    // Get initial state from localStorage or use isChildActive
+    const getInitialState = (): boolean => {
+        if (typeof window === "undefined") {
+            return isChildActive;
+        }
+        const saved = localStorage.getItem(storageKey);
+        if (saved !== null) {
+            return saved === "true";
+        }
+        return isChildActive;
+    };
+
+    const [isOpen, setIsOpen] = React.useState(getInitialState);
+
+    // Update open state when child active state changes (but don't override user preference)
     React.useEffect(() => {
         if (isChildActive) {
             setIsOpen(true);
         }
     }, [isChildActive]);
 
+    // Save state to localStorage when it changes
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (typeof window !== "undefined") {
+            localStorage.setItem(storageKey, String(open));
+        }
+    };
+
     return (
         <Collapsible
             key={item.title}
             open={isOpen}
-            onOpenChange={setIsOpen}
+            onOpenChange={handleOpenChange}
             className="group/collapsible"
         >
             <CollapsibleTrigger asChild>

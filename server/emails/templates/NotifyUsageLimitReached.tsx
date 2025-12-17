@@ -19,7 +19,13 @@ interface Props {
     billingLink: string; // Link to billing page
 }
 
-export const NotifyUsageLimitReached = ({ email, limitName, currentUsage, usageLimit, billingLink }: Props) => {
+export const NotifyUsageLimitReached = ({
+    email,
+    limitName,
+    currentUsage,
+    usageLimit,
+    billingLink
+}: Props) => {
     const previewText = `You've reached your ${limitName} usage limit - Action required`;
     const usagePercentage = Math.round((currentUsage / usageLimit) * 100);
 
@@ -32,30 +38,48 @@ export const NotifyUsageLimitReached = ({ email, limitName, currentUsage, usageL
                     <EmailContainer>
                         <EmailLetterHead />
 
-                        <EmailHeading>Usage Limit Reached - Action Required</EmailHeading>
+                        <EmailHeading>
+                            Usage Limit Reached - Action Required
+                        </EmailHeading>
 
                         <EmailGreeting>Hi there,</EmailGreeting>
 
                         <EmailText>
-                            You have reached your usage limit for <strong>{limitName}</strong>.
+                            You have reached your usage limit for{" "}
+                            <strong>{limitName}</strong>.
                         </EmailText>
 
                         <EmailText>
-                            <strong>Current Usage:</strong> {currentUsage} of {usageLimit} ({usagePercentage}%)
+                            <strong>Current Usage:</strong> {currentUsage} of{" "}
+                            {usageLimit} ({usagePercentage}%)
                         </EmailText>
 
                         <EmailText>
-                            <strong>Important:</strong> Your functionality may now be restricted and your sites may disconnect until you either upgrade your plan or your usage resets. To prevent any service interruption, immediate action is recommended.
+                            <strong>Important:</strong> Your functionality may
+                            now be restricted and your sites may disconnect
+                            until you either upgrade your plan or your usage
+                            resets. To prevent any service interruption,
+                            immediate action is recommended.
                         </EmailText>
 
                         <EmailText>
                             <strong>What you can do:</strong>
-                            <br />• <a href={billingLink} style={{ color: '#2563eb', fontWeight: 'bold' }}>Upgrade your plan immediately</a> to restore full functionality
-                            <br />• Monitor your usage to stay within limits in the future
+                            <br />•{" "}
+                            <a
+                                href={billingLink}
+                                style={{ color: "#2563eb", fontWeight: "bold" }}
+                            >
+                                Upgrade your plan immediately
+                            </a>{" "}
+                            to restore full functionality
+                            <br />• Monitor your usage to stay within limits in
+                            the future
                         </EmailText>
 
                         <EmailText>
-                            If you have any questions or need immediate assistance, please contact our support team right away.
+                            If you have any questions or need immediate
+                            assistance, please contact our support team right
+                            away.
                         </EmailText>
 
                         <EmailFooter>

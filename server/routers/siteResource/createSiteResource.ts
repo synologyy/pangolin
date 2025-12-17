@@ -1,24 +1,26 @@
-import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
 import {
     clientSiteResources,
     db,
     newts,
     roles,
     roleSiteResources,
+    SiteResource,
+    siteResources,
+    sites,
     userSiteResources
 } from "@server/db";
-import { siteResources, sites, SiteResource } from "@server/db";
+import { getUniqueSiteResourceName } from "@server/db/names";
+import { getNextAvailableAliasAddress, portRangeStringSchema } from "@server/lib/ip";
+import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
 import response from "@server/lib/response";
-import HttpCode from "@server/types/HttpCode";
-import createHttpError from "http-errors";
-import { eq, and, is } from "drizzle-orm";
-import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
-import { getUniqueSiteResourceName } from "@server/db/names";
-import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
-import { getNextAvailableAliasAddress } from "@server/lib/ip";
+import HttpCode from "@server/types/HttpCode";
+import { and, eq } from "drizzle-orm";
+import { NextFunction, Request, Response } from "express";
+import createHttpError from "http-errors";
+import { z } from "zod";
+import { fromError } from "zod-validation-error";
 
 const createSiteResourceParamsSchema = z.strictObject({
     siteId: z.string().transform(Number).pipe(z.int().positive()),
@@ -37,13 +39,16 @@ const createSiteResourceSchema = z
         alias: z
             .string()
             .regex(
-                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
-                "Alias must be a fully qualified domain name (e.g., example.com)"
+                /^(?:[a-zA-Z0-9*?](?:[a-zA-Z0-9*?-]{0,61}[a-zA-Z0-9*?])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name with optional wildcards (e.g., example.com, *.example.com, host-0?.example.internal)"
             )
             .optional(),
         userIds: z.array(z.string()),
         roleIds: z.array(z.int()),
-        clientIds: z.array(z.int())
+        clientIds: z.array(z.int()),
+        tcpPortRangeString: portRangeStringSchema,
+        udpPortRangeString: portRangeStringSchema,
+        disableIcmp: z.boolean().optional()
     })
     .strict()
     .refine(
@@ -51,26 +56,27 @@ const createSiteResourceSchema = z
             if (data.mode === "host") {
                 // Check if it's a valid IP address using zod (v4 or v6)
                 const isValidIP = z
-                    .union([z.ipv4(), z.ipv6()])
+                    // .union([z.ipv4(), z.ipv6()])
+                    .union([z.ipv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
 
                 if (isValidIP) {
-                    return true
+                    return true;
                 }
 
                 // Check if it's a valid domain (hostname pattern, TLD not required)
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
-                const isValidAlias = data.alias && domainRegex.test(data.alias);
+                const isValidAlias = data.alias !== undefined && data.alias !== null && data.alias.trim() !== "";
 
-                return isValidDomain && isValidAlias;  // require the alias to be set in the case of domain
+                return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
             return true;
         },
         {
             message:
-                "Destination must be a valid IP address or domain name for host mode"
+                "Destination must be a valid IP address or valid domain AND alias is required"
         }
     )
     .refine(
@@ -78,7 +84,8 @@ const createSiteResourceSchema = z
             if (data.mode === "cidr") {
                 // Check if it's a valid CIDR (v4 or v6)
                 const isValidCIDR = z
-                    .union([z.cidrv4(), z.cidrv6()])
+                    // .union([z.cidrv4(), z.cidrv6()])
+                    .union([z.cidrv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
                 return isValidCIDR;
             }
@@ -150,7 +157,10 @@ export async function createSiteResource(
             alias,
             userIds,
             roleIds,
-            clientIds
+            clientIds,
+            tcpPortRangeString,
+            udpPortRangeString,
+            disableIcmp
         } = parsedBody.data;
 
         // Verify the site exists and belongs to the org
@@ -235,7 +245,10 @@ export async function createSiteResource(
                     destination,
                     enabled,
                     alias,
-                    aliasAddress
+                    aliasAddress,
+                    tcpPortRangeString,
+                    udpPortRangeString,
+                    disableIcmp
                 })
                 .returning();
 

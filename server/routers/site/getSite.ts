@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { db } from "@server/db";
+import { db, newts } from "@server/db";
 import { sites } from "@server/db";
 import { eq, and } from "drizzle-orm";
 import response from "@server/lib/response";
@@ -12,15 +12,15 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getSiteSchema = z.strictObject({
-        siteId: z
-            .string()
-            .optional()
-            .transform(stoi)
-            .pipe(z.int().positive().optional())
-            .optional(),
-        niceId: z.string().optional(),
-        orgId: z.string().optional()
-    });
+    siteId: z
+        .string()
+        .optional()
+        .transform(stoi)
+        .pipe(z.int().positive().optional())
+        .optional(),
+    niceId: z.string().optional(),
+    orgId: z.string().optional()
+});
 
 async function query(siteId?: number, niceId?: string, orgId?: string) {
     if (siteId) {
@@ -28,6 +28,7 @@ async function query(siteId?: number, niceId?: string, orgId?: string) {
             .select()
             .from(sites)
             .where(eq(sites.siteId, siteId))
+            .leftJoin(newts, eq(sites.siteId, newts.siteId))
             .limit(1);
         return res;
     } else if (niceId && orgId) {
@@ -35,12 +36,15 @@ async function query(siteId?: number, niceId?: string, orgId?: string) {
             .select()
             .from(sites)
             .where(and(eq(sites.niceId, niceId), eq(sites.orgId, orgId)))
+            .leftJoin(newts, eq(sites.siteId, newts.siteId))
             .limit(1);
         return res;
     }
 }
 
-export type GetSiteResponse = NonNullable<Awaited<ReturnType<typeof query>>>;
+export type GetSiteResponse = NonNullable<
+    Awaited<ReturnType<typeof query>>
+>["sites"] & { newtId: string | null };
 
 registry.registerPath({
     method: "get",
@@ -94,8 +98,13 @@ export async function getSite(
             return next(createHttpError(HttpCode.NOT_FOUND, "Site not found"));
         }
 
+        const data: GetSiteResponse = {
+            ...site.sites,
+            newtId: site.newt ? site.newt.newtId : null
+        };
+
         return response<GetSiteResponse>(res, {
-            data: site,
+            data,
             success: true,
             error: false,
             message: "Site retrieved successfully",

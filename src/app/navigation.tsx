@@ -60,7 +60,8 @@ export const orgNavSections = (): SidebarNavSection[] => [
                     {
                         title: "sidebarClientResources",
                         href: "/{orgId}/settings/resources/client",
-                        icon: <GlobeLock className="size-4 flex-none" />
+                        icon: <GlobeLock className="size-4 flex-none" />,
+                        isBeta: true
                     }
                 ]
             },
@@ -104,7 +105,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
         ]
     },
     {
-        heading: "accessControls",
+        heading: "access",
         items: [
             {
                 title: "sidebarUsers",

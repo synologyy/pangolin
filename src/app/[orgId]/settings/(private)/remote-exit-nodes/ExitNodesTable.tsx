@@ -231,12 +231,22 @@ export default function ExitNodesTable({
             },
             cell: ({ row }) => {
                 const originalRow = row.original;
-                return originalRow.version || "-";
+                return (
+                    <div className="flex items-center space-x-1">
+                        {originalRow.version && originalRow.version ? (
+                            <Badge variant="secondary">
+                                {"v" + originalRow.version}
+                            </Badge>
+                        ) : (
+                            "-"
+                        )}
+                    </div>
+                );
             }
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const nodeRow = row.original;
                 const remoteExitNodeId = nodeRow.id;
@@ -294,10 +304,8 @@ export default function ExitNodesTable({
                         setSelectedNode(null);
                     }}
                     dialog={
-                        <div>
-                            <p>
-                                {t("remoteExitNodeQuestionRemove")}
-                            </p>
+                        <div className="space-y-2">
+                            <p>{t("remoteExitNodeQuestionRemove")}</p>
 
                             <p>{t("remoteExitNodeMessageRemove")}</p>
                         </div>

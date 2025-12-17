@@ -102,7 +102,12 @@ const LOG_RETENTION_OPTIONS = [
     { label: "logRetention14Days", value: 14 },
     { label: "logRetention30Days", value: 30 },
     { label: "logRetention90Days", value: 90 },
-    ...(build !== "saas" ? [{ label: "logRetentionForever", value: -1 }] : [])
+    ...(build != "saas"
+        ? [
+              { label: "logRetentionForever", value: -1 },
+              { label: "logRetentionEndOfFollowingYear", value: 9001 }
+          ]
+        : [])
 ];
 
 export default function GeneralPage() {
@@ -265,7 +270,7 @@ export default function GeneralPage() {
                     setIsDeleteModalOpen(val);
                 }}
                 dialog={
-                    <div>
+                    <div className="space-y-2">
                         <p>{t("orgQuestionRemove")}</p>
                         <p>{t("orgMessageRemove")}</p>
                     </div>
@@ -279,7 +284,7 @@ export default function GeneralPage() {
                 open={isSecurityPolicyConfirmOpen}
                 setOpen={setIsSecurityPolicyConfirmOpen}
                 dialog={
-                    <div>
+                    <div className="space-y-2">
                         <p>{t("securityPolicyChangeDescription")}</p>
                     </div>
                 }

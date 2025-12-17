@@ -26,8 +26,8 @@ import { CheckDomainAvailabilityResponse } from "@server/routers/domain/types";
 const paramsSchema = z.strictObject({});
 
 const querySchema = z.strictObject({
-        subdomain: z.string()
-    });
+    subdomain: z.string()
+});
 
 registry.registerPath({
     method: "get",

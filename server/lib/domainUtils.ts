@@ -4,18 +4,20 @@ import { eq, and } from "drizzle-orm";
 import { subdomainSchema } from "@server/lib/schemas";
 import { fromError } from "zod-validation-error";
 
-export type DomainValidationResult = {
-    success: true;
-    fullDomain: string;
-    subdomain: string | null;
-} | {
-    success: false;
-    error: string;
-};
+export type DomainValidationResult =
+    | {
+          success: true;
+          fullDomain: string;
+          subdomain: string | null;
+      }
+    | {
+          success: false;
+          error: string;
+      };
 
 /**
  * Validates a domain and constructs the full domain based on domain type and subdomain.
- * 
+ *
  * @param domainId - The ID of the domain to validate
  * @param orgId - The organization ID to check domain access
  * @param subdomain - Optional subdomain to append (for ns and wildcard domains)
@@ -34,7 +36,10 @@ export async function validateAndConstructDomain(
             .where(eq(domains.domainId, domainId))
             .leftJoin(
                 orgDomains,
-                and(eq(orgDomains.orgId, orgId), eq(orgDomains.domainId, domainId))
+                and(
+                    eq(orgDomains.orgId, orgId),
+                    eq(orgDomains.domainId, domainId)
+                )
             );
 
         // Check if domain exists
@@ -106,7 +111,7 @@ export async function validateAndConstructDomain(
     } catch (error) {
         return {
             success: false,
-            error: `An error occurred while validating domain: ${error instanceof Error ? error.message : 'Unknown error'}`
+            error: `An error occurred while validating domain: ${error instanceof Error ? error.message : "Unknown error"}`
         };
     }
 }

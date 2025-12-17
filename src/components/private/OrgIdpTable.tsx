@@ -59,7 +59,6 @@ export default function IdpTable({ idps, orgId }: Props) {
         }
     };
 
-
     const columns: ExtendedColumnDef<IdpRow>[] = [
         {
             accessorKey: "idpId",
@@ -114,14 +113,12 @@ export default function IdpTable({ idps, orgId }: Props) {
             cell: ({ row }) => {
                 const type = row.original.type;
                 const variant = row.original.variant;
-                return (
-                    <IdpTypeBadge type={type} variant={variant} />
-                );
+                return <IdpTypeBadge type={type} variant={variant} />;
             }
         },
         {
             id: "actions",
-            header: () => (<span className="p-3">{t("actions")}</span>),
+            header: () => <span className="p-3">{t("actions")}</span>,
             cell: ({ row }) => {
                 const siteRow = row.original;
                 return (
@@ -156,10 +153,10 @@ export default function IdpTable({ idps, orgId }: Props) {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Link href={`/${orgId}/settings/idp/${siteRow.idpId}/general`}>
-                            <Button
-                                variant={"outline"}
-                            >
+                        <Link
+                            href={`/${orgId}/settings/idp/${siteRow.idpId}/general`}
+                        >
+                            <Button variant={"outline"}>
                                 {t("edit")}
                                 <ArrowRight className="ml-2 w-4 h-4" />
                             </Button>
@@ -180,13 +177,9 @@ export default function IdpTable({ idps, orgId }: Props) {
                         setSelectedIdp(null);
                     }}
                     dialog={
-                        <div>
-                            <p>
-                                {t("idpQuestionRemove")}
-                            </p>
-                            <p>
-                                {t("idpMessageRemove")}
-                            </p>
+                        <div className="space-y-2">
+                            <p>{t("idpQuestionRemove")}</p>
+                            <p>{t("idpMessageRemove")}</p>
                         </div>
                     }
                     buttonText={t("idpConfirmDelete")}

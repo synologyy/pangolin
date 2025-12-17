@@ -18,11 +18,11 @@ import { sendEmail } from "@server/emails";
 import { passwordSchema } from "@server/auth/passwordSchema";
 
 export const resetPasswordBody = z.strictObject({
-        email: z.email().toLowerCase(),
-        token: z.string(), // reset secret code
-        newPassword: passwordSchema,
-        code: z.string().optional() // 2fa code
-    });
+    email: z.email().toLowerCase(),
+    token: z.string(), // reset secret code
+    newPassword: passwordSchema,
+    code: z.string().optional() // 2fa code
+});
 
 export type ResetPasswordBody = z.infer<typeof resetPasswordBody>;
 

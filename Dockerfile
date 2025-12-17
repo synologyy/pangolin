@@ -1,4 +1,4 @@
-FROM node:25-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -43,23 +43,25 @@ RUN test -f dist/server.mjs
 
 RUN npm run build:cli
 
-FROM node:25-alpine AS runner
+# Prune dev dependencies and clean up to prepare for copy to runner
+RUN npm prune --omit=dev && npm cache clean --force
+
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-# Curl used for the health checks
-# Python and build tools needed for better-sqlite3 native compilation
-RUN apk add --no-cache curl tzdata python3 make g++
+# Only curl and tzdata needed at runtime - no build tools!
+RUN apk add --no-cache curl tzdata
 
-# COPY package.json package-lock.json ./
-COPY package*.json ./
-
-RUN npm ci --omit=dev && npm cache clean --force
+# Copy pre-built node_modules from builder (already pruned to production only)
+# This includes the compiled native modules like better-sqlite3
+COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/init ./dist/init
+COPY --from=builder /app/package.json ./package.json
 
 COPY ./cli/wrapper.sh /usr/local/bin/pangctl
 RUN chmod +x /usr/local/bin/pangctl ./dist/cli.mjs

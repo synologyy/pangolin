@@ -12,7 +12,7 @@ const progressVariants = cva(
             variant: {
                 default: "bg-muted",
                 success: "bg-muted",
-                warning: "bg-muted", 
+                warning: "bg-muted",
                 danger: "bg-muted"
             }
         },
@@ -22,32 +22,24 @@ const progressVariants = cva(
     }
 );
 
-const indicatorVariants = cva(
-    "h-full w-full flex-1 transition-all",
-    {
-        variants: {
-            variant: {
-                default: "bg-primary",
-                success: "bg-green-500",
-                warning: "bg-yellow-500",
-                danger: "bg-red-500"
-            }
-        },
-        defaultVariants: {
-            variant: "default"
+const indicatorVariants = cva("h-full w-full flex-1 transition-all", {
+    variants: {
+        variant: {
+            default: "bg-primary",
+            success: "bg-green-500",
+            warning: "bg-yellow-500",
+            danger: "bg-red-500"
         }
+    },
+    defaultVariants: {
+        variant: "default"
     }
-);
+});
 
-type ProgressProps = React.ComponentProps<typeof ProgressPrimitive.Root> & 
+type ProgressProps = React.ComponentProps<typeof ProgressPrimitive.Root> &
     VariantProps<typeof progressVariants>;
 
-function Progress({
-    className,
-    value,
-    variant,
-    ...props
-}: ProgressProps) {
+function Progress({ className, value, variant, ...props }: ProgressProps) {
     return (
         <ProgressPrimitive.Root
             data-slot="progress"

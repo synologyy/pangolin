@@ -40,6 +40,8 @@ export type ClientRow = {
     userId: string | null;
     username: string | null;
     userEmail: string | null;
+    niceId: string;
+    agent: string | null;
 };
 
 type ClientTableProps = {
@@ -64,9 +66,9 @@ export default function MachineClientsTable({
     const [isRefreshing, startTransition] = useTransition();
 
     const defaultMachineColumnVisibility = {
-        client: false,
         subnet: false,
-        userId: false
+        userId: false,
+        niceId: false
     };
 
     const refreshData = () => {
@@ -129,8 +131,8 @@ export default function MachineClientsTable({
                 }
             },
             {
-                accessorKey: "userId",
-                friendlyName: "User",
+                accessorKey: "niceId",
+                friendlyName: "Identifier",
                 header: ({ column }) => {
                     return (
                         <Button
@@ -141,54 +143,12 @@ export default function MachineClientsTable({
                                 )
                             }
                         >
-                            User
+                            {t("identifier")}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
                     );
-                },
-                cell: ({ row }) => {
-                    const r = row.original;
-                    return r.userId ? (
-                        <Link
-                            href={`/${r.orgId}/settings/access/users/${r.userId}`}
-                        >
-                            <Button variant="outline">
-                                {r.userEmail || r.username || r.userId}
-                                <ArrowUpRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </Link>
-                    ) : (
-                        "-"
-                    );
                 }
             },
-            // {
-            //     accessorKey: "siteName",
-            //     header: ({ column }) => {
-            //         return (
-            //             <Button
-            //                 variant="ghost"
-            //                 onClick={() =>
-            //                     column.toggleSorting(column.getIsSorted() === "asc")
-            //                 }
-            //             >
-            //                 Site
-            //                 <ArrowUpDown className="ml-2 h-4 w-4" />
-            //             </Button>
-            //         );
-            //     },
-            //     cell: ({ row }) => {
-            //         const r = row.original;
-            //         return (
-            //             <Link href={`/${r.orgId}/settings/sites/${r.siteId}`}>
-            //                 <Button variant="outline">
-            //                     {r.siteName}
-            //                     <ArrowUpRight className="ml-2 h-4 w-4" />
-            //                 </Button>
-            //             </Link>
-            //         );
-            //     }
-            // },
             {
                 accessorKey: "online",
                 friendlyName: "Connectivity",
@@ -266,7 +226,7 @@ export default function MachineClientsTable({
             },
             {
                 accessorKey: "client",
-                friendlyName: t("client"),
+                friendlyName: t("agent"),
                 header: ({ column }) => {
                     return (
                         <Button
@@ -277,7 +237,7 @@ export default function MachineClientsTable({
                                 )
                             }
                         >
-                            {t("client")}
+                            {t("agent")}
                             <ArrowUpDown className="ml-2 h-4 w-4" />
                         </Button>
                     );
@@ -287,19 +247,18 @@ export default function MachineClientsTable({
 
                     return (
                         <div className="flex items-center space-x-1">
-                            <Badge variant="secondary">
-                                <div className="flex items-center space-x-2">
-                                    <span>Olm</span>
-                                    {originalRow.olmVersion && (
-                                        <span className="text-xs text-gray-500">
-                                            v{originalRow.olmVersion}
-                                        </span>
-                                    )}
-                                </div>
-                            </Badge>
-                            {originalRow.olmUpdateAvailable && (
-                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            {originalRow.agent && originalRow.olmVersion ? (
+                                <Badge variant="secondary">
+                                    {originalRow.agent +
+                                        " v" +
+                                        originalRow.olmVersion}
+                                </Badge>
+                            ) : (
+                                "-"
                             )}
+                            {/*originalRow.olmUpdateAvailable && (
+                                <InfoPopup info={t("olmUpdateAvailableInfo")} />
+                            )*/}
                         </div>
                     );
                 }
@@ -369,7 +328,7 @@ export default function MachineClientsTable({
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             <Link
-                                href={`/${clientRow.orgId}/settings/clients/machine/${clientRow.id}`}
+                                href={`/${clientRow.orgId}/settings/clients/machine/${clientRow.niceId}`}
                             >
                                 <Button variant={"outline"}>
                                     {t("edit")}
@@ -395,7 +354,7 @@ export default function MachineClientsTable({
                         setSelectedClient(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("deleteClientQuestion")}</p>
                             <p>{t("clientMessageRemove")}</p>
                         </div>

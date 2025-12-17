@@ -5,7 +5,10 @@ import { getNextAvailableSubnet } from "@server/lib/exitNodes";
 import logger from "@server/logger";
 import { eq } from "drizzle-orm";
 
-export async function createExitNode(publicKey: string, reachableAt: string | undefined) {
+export async function createExitNode(
+    publicKey: string,
+    reachableAt: string | undefined
+) {
     // Fetch exit node
     const [exitNodeQuery] = await db.select().from(exitNodes).limit(1);
     let exitNode: ExitNode;

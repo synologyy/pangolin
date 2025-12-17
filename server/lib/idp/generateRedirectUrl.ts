@@ -33,7 +33,11 @@ export async function generateOidcRedirectUrl(
             )
             .limit(1);
 
-        if (res?.loginPage && res.loginPage.domainId && res.loginPage.fullDomain) {
+        if (
+            res?.loginPage &&
+            res.loginPage.domainId &&
+            res.loginPage.fullDomain
+        ) {
             baseUrl = `${method}://${res.loginPage.fullDomain}`;
         }
     }

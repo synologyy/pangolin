@@ -10,8 +10,8 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const adminGetUserSchema = z.strictObject({
-        userId: z.string().min(1)
-    });
+    userId: z.string().min(1)
+});
 
 registry.registerPath({
     method: "get",

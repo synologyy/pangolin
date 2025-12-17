@@ -35,10 +35,7 @@ export default async function Page(props: {
 
     return (
         <>
-            <VerifyEmailForm
-                email={user.email!}
-                redirect={redirectUrl}
-            />
+            <VerifyEmailForm email={user.email!} redirect={redirectUrl} />
         </>
     );
 }

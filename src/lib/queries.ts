@@ -16,6 +16,7 @@ import { remote } from "./api";
 import { durationToMs } from "./durationToMs";
 import type { QueryRequestAnalyticsResponse } from "@server/routers/auditLogs";
 import type { ListResourceNamesResponse } from "@server/routers/resource";
+import type { ListDomainsResponse } from "@server/routers/domain";
 
 export type ProductUpdate = {
     link: string | null;
@@ -139,6 +140,17 @@ export const orgQueries = {
                 >(`/org/${orgId}/sites`, { signal });
                 return res.data.data.sites;
             }
+        }),
+
+    domains: ({ orgId }: { orgId: string }) =>
+        queryOptions({
+            queryKey: ["ORG", orgId, "DOMAINS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListDomainsResponse>
+                >(`/org/${orgId}/domains`, { signal });
+                return res.data.data.domains;
+            }
         })
 };
 
@@ -168,17 +180,15 @@ export type LogAnalyticsFilters = z.TypeOf<typeof logAnalyticsFiltersSchema>;
 export const logQueries = {
     requestAnalytics: ({
         orgId,
-        filters,
-        api
+        filters
     }: {
         orgId: string;
         filters: LogAnalyticsFilters;
-        api: AxiosInstance;
     }) =>
         queryOptions({
             queryKey: ["REQUEST_LOG_ANALYTICS", orgId, filters] as const,
-            queryFn: async ({ signal }) => {
-                const res = await api.get<
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
                     AxiosResponse<QueryRequestAnalyticsResponse>
                 >(`/org/${orgId}/logs/analytics`, {
                     params: filters,
@@ -228,11 +238,11 @@ export const resourceQueries = {
                 return res.data.data.clients;
             }
         }),
-    listNamesPerOrg: (orgId: string, api: AxiosInstance) =>
+    listNamesPerOrg: (orgId: string) =>
         queryOptions({
             queryKey: ["RESOURCES_NAMES", orgId] as const,
-            queryFn: async ({ signal }) => {
-                const res = await api.get<
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
                     AxiosResponse<ListResourceNamesResponse>
                 >(`/org/${orgId}/resource-names`, {
                     signal

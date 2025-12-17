@@ -11,11 +11,18 @@
  * This file is not licensed under the AGPLv3.
  */
 
-import { freeLimitSet, limitsService, subscribedLimitSet } from "@server/lib/billing";
+import {
+    freeLimitSet,
+    limitsService,
+    subscribedLimitSet
+} from "@server/lib/billing";
 import { usageService } from "@server/lib/billing/usageService";
 import logger from "@server/logger";
 
-export async function handleSubscriptionLifesycle(orgId: string, status: string) {
+export async function handleSubscriptionLifesycle(
+    orgId: string,
+    status: string
+) {
     switch (status) {
         case "active":
             await limitsService.applyLimitSetToOrg(orgId, subscribedLimitSet);

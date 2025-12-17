@@ -34,7 +34,10 @@ export async function applyNewtDockerBlueprint(
             return;
         }
 
-        if (isEmptyObject(blueprint["proxy-resources"]) && isEmptyObject(blueprint["client-resources"])) {
+        if (
+            isEmptyObject(blueprint["proxy-resources"]) &&
+            isEmptyObject(blueprint["client-resources"])
+        ) {
             return;
         }
 

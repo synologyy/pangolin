@@ -48,7 +48,7 @@ export default function CreateRoleForm({
     const t = useTranslations();
 
     const formSchema = z.object({
-        name: z.string({ message: t('nameRequired') }).max(32),
+        name: z.string({ message: t("nameRequired") }).max(32),
         description: z.string().max(255).optional()
     });
 
@@ -78,10 +78,10 @@ export default function CreateRoleForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('accessRoleErrorCreate'),
+                    title: t("accessRoleErrorCreate"),
                     description: formatAxiosError(
                         e,
-                        t('accessRoleErrorCreateDescription')
+                        t("accessRoleErrorCreateDescription")
                     )
                 });
             });
@@ -89,8 +89,8 @@ export default function CreateRoleForm({
         if (res && res.status === 201) {
             toast({
                 variant: "default",
-                title: t('accessRoleCreated'),
-                description: t('accessRoleCreatedDescription')
+                title: t("accessRoleCreated"),
+                description: t("accessRoleCreatedDescription")
             });
 
             if (open) {
@@ -117,9 +117,9 @@ export default function CreateRoleForm({
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('accessRoleCreate')}</CredenzaTitle>
+                        <CredenzaTitle>{t("accessRoleCreate")}</CredenzaTitle>
                         <CredenzaDescription>
-                            {t('accessRoleCreateDescription')}
+                            {t("accessRoleCreateDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -134,7 +134,9 @@ export default function CreateRoleForm({
                                     name="name"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('accessRoleName')}</FormLabel>
+                                            <FormLabel>
+                                                {t("accessRoleName")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
@@ -147,7 +149,9 @@ export default function CreateRoleForm({
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('description')}</FormLabel>
+                                            <FormLabel>
+                                                {t("description")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
@@ -160,7 +164,7 @@ export default function CreateRoleForm({
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
                             type="submit"
@@ -168,7 +172,7 @@ export default function CreateRoleForm({
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('accessRoleCreateSubmit')}
+                            {t("accessRoleCreateSubmit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>

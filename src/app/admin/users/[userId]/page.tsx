@@ -5,4 +5,4 @@ export default async function UserPage(props: {
 }) {
     const { userId } = await props.params;
     redirect(`/admin/users/${userId}/general`);
-} 
+}

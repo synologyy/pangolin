@@ -30,7 +30,9 @@ interface HealthcheckStatusMessage {
     targets: Record<string, TargetHealthStatus>;
 }
 
-export const handleHealthcheckStatusMessage: MessageHandler = async (context) => {
+export const handleHealthcheckStatusMessage: MessageHandler = async (
+    context
+) => {
     const { message, client: c } = context;
     const newt = c as Newt;
 
@@ -59,7 +61,9 @@ export const handleHealthcheckStatusMessage: MessageHandler = async (context) =>
 
         // Process each target status update
         for (const [targetId, healthStatus] of Object.entries(data.targets)) {
-            logger.debug(`Processing health status for target ${targetId}: ${healthStatus.status}${healthStatus.lastError ? ` (${healthStatus.lastError})` : ''}`);
+            logger.debug(
+                `Processing health status for target ${targetId}: ${healthStatus.status}${healthStatus.lastError ? ` (${healthStatus.lastError})` : ""}`
+            );
 
             // Verify the target belongs to this newt's site before updating
             // This prevents unauthorized updates to targets from other sites
@@ -76,7 +80,10 @@ export const handleHealthcheckStatusMessage: MessageHandler = async (context) =>
                     siteId: targets.siteId
                 })
                 .from(targets)
-                .innerJoin(resources, eq(targets.resourceId, resources.resourceId))
+                .innerJoin(
+                    resources,
+                    eq(targets.resourceId, resources.resourceId)
+                )
                 .innerJoin(sites, eq(targets.siteId, sites.siteId))
                 .where(
                     and(
@@ -87,7 +94,9 @@ export const handleHealthcheckStatusMessage: MessageHandler = async (context) =>
                 .limit(1);
 
             if (!targetCheck) {
-                logger.warn(`Target ${targetId} not found or does not belong to site ${newt.siteId}`);
+                logger.warn(
+                    `Target ${targetId} not found or does not belong to site ${newt.siteId}`
+                );
                 errorCount++;
                 continue;
             }
@@ -101,11 +110,15 @@ export const handleHealthcheckStatusMessage: MessageHandler = async (context) =>
                 .where(eq(targetHealthCheck.targetId, targetIdNum))
                 .execute();
 
-            logger.debug(`Updated health status for target ${targetId} to ${healthStatus.status}`);
+            logger.debug(
+                `Updated health status for target ${targetId} to ${healthStatus.status}`
+            );
             successCount++;
         }
 
-        logger.debug(`Health status update complete: ${successCount} successful, ${errorCount} errors out of ${Object.keys(data.targets).length} targets`);
+        logger.debug(
+            `Health status update complete: ${successCount} successful, ${errorCount} errors out of ${Object.keys(data.targets).length} targets`
+        );
     } catch (error) {
         logger.error("Error processing healthcheck status message:", error);
     }

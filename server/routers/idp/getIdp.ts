@@ -71,14 +71,8 @@ export async function getIdp(
             const clientSecret = idpRes.idpOidcConfig!.clientSecret;
             const clientId = idpRes.idpOidcConfig!.clientId;
 
-            idpRes.idpOidcConfig!.clientSecret = decrypt(
-                clientSecret,
-                key
-            );
-            idpRes.idpOidcConfig!.clientId = decrypt(
-                clientId,
-                key
-            );
+            idpRes.idpOidcConfig!.clientSecret = decrypt(clientSecret, key);
+            idpRes.idpOidcConfig!.clientId = decrypt(clientId, key);
         }
 
         return response<GetIdpResponse>(res, {

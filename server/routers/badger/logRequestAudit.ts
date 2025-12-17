@@ -2,6 +2,7 @@ import { db, orgs, requestAuditLog } from "@server/db";
 import logger from "@server/logger";
 import { and, eq, lt } from "drizzle-orm";
 import cache from "@server/lib/cache";
+import { calculateCutoffTimestamp } from "@server/lib/cleanupLogs";
 
 /**
 
@@ -23,6 +24,78 @@ Reasons:
 299 - No More Auth Methods
 
  */
+
+// In-memory buffer for batching audit logs
+const auditLogBuffer: Array<{
+    timestamp: number;
+    orgId?: string;
+    actorType?: string;
+    actor?: string;
+    actorId?: string;
+    metadata: any;
+    action: boolean;
+    resourceId?: number;
+    reason: number;
+    location?: string;
+    originalRequestURL: string;
+    scheme: string;
+    host: string;
+    path: string;
+    method: string;
+    ip?: string;
+    tls: boolean;
+}> = [];
+
+const BATCH_SIZE = 100; // Write to DB every 100 logs
+const BATCH_INTERVAL_MS = 5000; // Or every 5 seconds, whichever comes first
+let flushTimer: NodeJS.Timeout | null = null;
+
+/**
+ * Flush buffered logs to database
+ */
+async function flushAuditLogs() {
+    if (auditLogBuffer.length === 0) {
+        return;
+    }
+
+    // Take all current logs and clear buffer
+    const logsToWrite = auditLogBuffer.splice(0, auditLogBuffer.length);
+
+    try {
+        // Batch insert all logs at once
+        await db.insert(requestAuditLog).values(logsToWrite);
+        logger.debug(`Flushed ${logsToWrite.length} audit logs to database`);
+    } catch (error) {
+        logger.error("Error flushing audit logs:", error);
+        // On error, we lose these logs - consider a fallback strategy if needed
+        // (e.g., write to file, or put back in buffer with retry limit)
+    }
+}
+
+/**
+ * Schedule a flush if not already scheduled
+ */
+function scheduleFlush() {
+    if (flushTimer === null) {
+        flushTimer = setTimeout(() => {
+            flushTimer = null;
+            flushAuditLogs().catch((err) =>
+                logger.error("Error in scheduled flush:", err)
+            );
+        }, BATCH_INTERVAL_MS);
+    }
+}
+
+/**
+ * Gracefully flush all pending logs (call this on shutdown)
+ */
+export async function shutdownAuditLogger() {
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+    }
+    await flushAuditLogs();
+}
 
 async function getRetentionDays(orgId: string): Promise<number> {
     // check cache first
@@ -55,9 +128,7 @@ async function getRetentionDays(orgId: string): Promise<number> {
 }
 
 export async function cleanUpOldLogs(orgId: string, retentionDays: number) {
-    const now = Math.floor(Date.now() / 1000);
-
-    const cutoffTimestamp = now - retentionDays * 24 * 60 * 60;
+    const cutoffTimestamp = calculateCutoffTimestamp(retentionDays);
 
     try {
         await db
@@ -103,9 +174,10 @@ export async function logRequestAudit(
     }
 ) {
     try {
+        // Check retention before buffering any logs
         if (data.orgId) {
             const retentionDays = await getRetentionDays(data.orgId);
-            if (retentionDays == 0) {
+            if (retentionDays === 0) {
                 // do not log
                 return;
             }
@@ -128,16 +200,11 @@ export async function logRequestAudit(
             actorId = apiKey.apiKeyId;
         }
 
-        // if (!actorType || !actor || !actorId) {
-        //     logger.warn("logRequestAudit: Incomplete actor information");
-        //     return;
-        // }
-
         const timestamp = Math.floor(Date.now() / 1000);
 
         let metadata = null;
-        if (metadata) {
-            metadata = JSON.stringify(metadata);
+        if (data.metadata) {
+            metadata = JSON.stringify(data.metadata);
         }
 
         const clientIp = body.requestIp
@@ -163,7 +230,8 @@ export async function logRequestAudit(
               })()
             : undefined;
 
-        await db.insert(requestAuditLog).values({
+        // Add to buffer instead of writing directly to DB
+        auditLogBuffer.push({
             timestamp,
             orgId: data.orgId,
             actorType,
@@ -174,9 +242,6 @@ export async function logRequestAudit(
             resourceId: data.resourceId,
             reason: data.reason,
             location: data.location,
-            // userAgent: data.userAgent, // TODO: add this
-            // headers: data.body.headers,
-            // query: data.body.query,
             originalRequestURL: body.originalRequestURL,
             scheme: body.scheme,
             host: body.host,
@@ -185,6 +250,16 @@ export async function logRequestAudit(
             ip: clientIp,
             tls: body.tls
         });
+
+        // Flush immediately if buffer is full, otherwise schedule a flush
+        if (auditLogBuffer.length >= BATCH_SIZE) {
+            // Fire and forget - don't block the caller
+            flushAuditLogs().catch((err) =>
+                logger.error("Error flushing audit logs:", err)
+            );
+        } else {
+            scheduleFlush();
+        }
     } catch (error) {
         logger.error(error);
     }

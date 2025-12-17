@@ -22,7 +22,7 @@ export function DomainProvider({
 
     const updateDomain = (updatedDomain: Partial<GetDomainResponse>) => {
         if (!domain) {
-            throw new Error(t('domainErrorNoUpdate'));
+            throw new Error(t("domainErrorNoUpdate"));
         }
         setDomain((prev) => {
             if (!prev) {

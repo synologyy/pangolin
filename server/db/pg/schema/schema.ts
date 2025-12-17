@@ -47,13 +47,13 @@ export const orgs = pgTable("orgs", {
     requireTwoFactor: boolean("requireTwoFactor"),
     maxSessionLengthHours: integer("maxSessionLengthHours"),
     passwordExpiryDays: integer("passwordExpiryDays"),
-    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever
+    settingsLogRetentionDaysRequest: integer("settingsLogRetentionDaysRequest") // where 0 = dont keep logs and -1 = keep forever, and 9001 = end of the following year
         .notNull()
         .default(7),
-    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess")
+    settingsLogRetentionDaysAccess: integer("settingsLogRetentionDaysAccess") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0),
-    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction")
+    settingsLogRetentionDaysAction: integer("settingsLogRetentionDaysAction") // where 0 = dont keep logs and -1 = keep forever and 9001 = end of the following year
         .notNull()
         .default(0)
 });
@@ -178,7 +178,7 @@ export const targetHealthCheck = pgTable("targetHealthCheck", {
     hcMethod: varchar("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
-    hcTlsServerName: text("hcTlsServerName"),
+    hcTlsServerName: text("hcTlsServerName")
 });
 
 export const exitNodes = pgTable("exitNodes", {
@@ -214,7 +214,10 @@ export const siteResources = pgTable("siteResources", {
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
     alias: varchar("alias"),
-    aliasAddress: varchar("aliasAddress")
+    aliasAddress: varchar("aliasAddress"),
+    tcpPortRangeString: varchar("tcpPortRangeString"),
+    udpPortRangeString: varchar("udpPortRangeString"),
+    disableIcmp: boolean("disableIcmp").notNull().default(false)
 });
 
 export const clientSiteResources = pgTable("clientSiteResources", {
@@ -645,6 +648,7 @@ export const clients = pgTable("clients", {
         // optionally tied to a user and in this case delete when the user deletes
         onDelete: "cascade"
     }),
+    niceId: varchar("niceId").notNull(),
     olmId: text("olmId"), // to lock it to a specific olm optionally
     name: varchar("name").notNull(),
     pubKey: varchar("pubKey"),

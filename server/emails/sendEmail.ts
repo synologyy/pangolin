@@ -10,6 +10,7 @@ export async function sendEmail(
         from: string | undefined;
         to: string | undefined;
         subject: string;
+        replyTo?: string;
     }
 ) {
     if (!emailClient) {
@@ -32,6 +33,7 @@ export async function sendEmail(
             address: opts.from
         },
         to: opts.to,
+        replyTo: opts.replyTo,
         subject: opts.subject,
         html: emailHtml
     });

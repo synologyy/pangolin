@@ -10,12 +10,12 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const removeUserSiteParamsSchema = z.strictObject({
-        userId: z.string()
-    });
+    userId: z.string()
+});
 
 const removeUserSiteSchema = z.strictObject({
-        siteId: z.int().positive()
-    });
+    siteId: z.int().positive()
+});
 
 export async function removeUserSite(
     req: Request,

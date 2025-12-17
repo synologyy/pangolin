@@ -84,7 +84,7 @@ export default function UsersTable({ roles: r }: RolesTableProps) {
         {
             accessorKey: "description",
             friendlyName: t("description"),
-            header: () => (<span className="p-3">{t("description")}</span>)
+            header: () => <span className="p-3">{t("description")}</span>
         },
         {
             id: "actions",

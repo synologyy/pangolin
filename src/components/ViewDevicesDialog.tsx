@@ -224,7 +224,7 @@ export default function ViewDevicesDialog({
                         }
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>
                                 {t("deviceQuestionRemove") ||
                                     "Are you sure you want to delete this device?"}

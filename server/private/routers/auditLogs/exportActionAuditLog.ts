@@ -19,8 +19,14 @@ import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { fromError } from "zod-validation-error";
 import logger from "@server/logger";
-import { queryActionAuditLogsParams, queryActionAuditLogsQuery, queryAction } from "./queryActionAuditLog";
+import {
+    queryActionAuditLogsParams,
+    queryActionAuditLogsQuery,
+    queryAction,
+    countActionQuery
+} from "./queryActionAuditLog";
 import { generateCSV } from "@server/routers/auditLogs/generateCSV";
+import { MAX_EXPORT_LIMIT } from "@server/routers/auditLogs";
 
 registry.registerPath({
     method: "get",
@@ -60,17 +66,29 @@ export async function exportActionAuditLogs(
             );
         }
 
-    const data = { ...parsedQuery.data, ...parsedParams.data };
+        const data = { ...parsedQuery.data, ...parsedParams.data };
+        const [{ count }] = await countActionQuery(data);
+        if (count > MAX_EXPORT_LIMIT) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Export limit exceeded. Your selection contains ${count} rows, but the maximum is ${MAX_EXPORT_LIMIT} rows. Please select a shorter time range to reduce the data.`
+                )
+            );
+        }
 
         const baseQuery = queryAction(data);
 
         const log = await baseQuery.limit(data.limit).offset(data.offset);
 
         const csvData = generateCSV(log);
-        
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename="action-audit-logs-${data.orgId}-${Date.now()}.csv"`);
-        
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="action-audit-logs-${data.orgId}-${Date.now()}.csv"`
+        );
+
         return res.send(csvData);
     } catch (error) {
         logger.error(error);

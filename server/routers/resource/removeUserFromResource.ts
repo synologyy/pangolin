@@ -49,9 +49,7 @@ export async function removeUserFromResource(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = removeUserFromResourceBodySchema.safeParse(
-            req.body
-        );
+        const parsedBody = removeUserFromResourceBodySchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -133,4 +131,3 @@ export async function removeUserFromResource(
         );
     }
 }
-

@@ -38,17 +38,12 @@ export async function verifyApiKeySiteResourceAccess(
         const [siteResource] = await db
             .select()
             .from(siteResources)
-            .where(and(
-                eq(siteResources.siteResourceId, siteResourceId)
-            ))
+            .where(and(eq(siteResources.siteResourceId, siteResourceId)))
             .limit(1);
 
         if (!siteResource) {
             return next(
-                createHttpError(
-                    HttpCode.NOT_FOUND,
-                    "Site resource not found"
-                )
+                createHttpError(HttpCode.NOT_FOUND, "Site resource not found")
             );
         }
 

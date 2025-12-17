@@ -10,12 +10,12 @@ import { eq } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 
 const addRoleSiteParamsSchema = z.strictObject({
-        roleId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    roleId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 const addRoleSiteSchema = z.strictObject({
-        siteId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    siteId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export async function addRoleSite(
     req: Request,

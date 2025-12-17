@@ -258,7 +258,7 @@ export default function UsersTable({ users: u }: UsersTableProps) {
                     setSelectedUser(null);
                 }}
                 dialog={
-                    <div>
+                    <div className="space-y-2">
                         <p>{t("userQuestionOrgRemove")}</p>
                         <p>{t("userMessageOrgRemove")}</p>
                     </div>

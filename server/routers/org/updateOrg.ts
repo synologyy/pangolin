@@ -16,10 +16,11 @@ import { TierId } from "@server/lib/billing/tiers";
 import { cache } from "@server/lib/cache";
 
 const updateOrgParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
-const updateOrgBodySchema = z.strictObject({
+const updateOrgBodySchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
         requireTwoFactor: z.boolean().optional(),
         maxSessionLengthHours: z.number().nullable().optional(),

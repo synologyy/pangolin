@@ -44,31 +44,35 @@ export default function AccessTokenSection({
         <>
             <div className="flex items-start space-x-2">
                 <p className="text-sm text-muted-foreground">
-                    {t('shareTokenDescription')}
+                    {t("shareTokenDescription")}
                 </p>
             </div>
 
             <Tabs defaultValue="token" className="w-full mt-4">
                 <TabsList className="grid grid-cols-2">
-                    <TabsTrigger value="token">{t('accessToken')}</TabsTrigger>
-                    <TabsTrigger value="usage">{t('usageExamples')}</TabsTrigger>
+                    <TabsTrigger value="token">{t("accessToken")}</TabsTrigger>
+                    <TabsTrigger value="usage">
+                        {t("usageExamples")}
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="token" className="space-y-4">
                     <div className="space-y-1">
-                        <div className="font-bold">{t('tokenId')}</div>
+                        <div className="font-bold">{t("tokenId")}</div>
                         <CopyToClipboard text={tokenId} isLink={false} />
                     </div>
 
                     <div className="space-y-1">
-                        <div className="font-bold">{t('token')}</div>
+                        <div className="font-bold">{t("token")}</div>
                         <CopyToClipboard text={token} isLink={false} />
                     </div>
                 </TabsContent>
 
                 <TabsContent value="usage" className="space-y-4">
                     <div className="space-y-2">
-                        <h3 className="text-sm font-medium">{t('requestHeades')}</h3>
+                        <h3 className="text-sm font-medium">
+                            {t("requestHeades")}
+                        </h3>
                         <CopyTextBox
                             text={`${env.server.resourceAccessTokenHeadersId}: ${tokenId}
 ${env.server.resourceAccessTokenHeadersToken}: ${token}`}
@@ -76,7 +80,9 @@ ${env.server.resourceAccessTokenHeadersToken}: ${token}`}
                     </div>
 
                     <div className="space-y-2">
-                        <h3 className="text-sm font-medium">{t('queryParameter')}</h3>
+                        <h3 className="text-sm font-medium">
+                            {t("queryParameter")}
+                        </h3>
                         <CopyTextBox
                             text={`${resourceUrl}?${env.server.resourceAccessTokenParam}=${tokenId}.${token}`}
                         />
@@ -85,17 +91,17 @@ ${env.server.resourceAccessTokenHeadersToken}: ${token}`}
                     <Alert variant="neutral">
                         <InfoIcon className="h-4 w-4" />
                         <AlertTitle className="font-semibold">
-                            {t('importantNote')}
+                            {t("importantNote")}
                         </AlertTitle>
                         <AlertDescription>
-                            {t('shareImportantDescription')}
+                            {t("shareImportantDescription")}
                         </AlertDescription>
                     </Alert>
                 </TabsContent>
             </Tabs>
 
             <div className="text-sm text-muted-foreground mt-4">
-                {t('shareTokenSecurety')}
+                {t("shareTokenSecurety")}
             </div>
         </>
     );

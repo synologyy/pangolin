@@ -25,23 +25,23 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { ListOrgIdpsResponse } from "@server/routers/orgIdp/types";
 
 const querySchema = z.strictObject({
-        limit: z
-            .string()
-            .optional()
-            .default("1000")
-            .transform(Number)
-            .pipe(z.int().nonnegative()),
-        offset: z
-            .string()
-            .optional()
-            .default("0")
-            .transform(Number)
-            .pipe(z.int().nonnegative())
-    });
+    limit: z
+        .string()
+        .optional()
+        .default("1000")
+        .transform(Number)
+        .pipe(z.int().nonnegative()),
+    offset: z
+        .string()
+        .optional()
+        .default("0")
+        .transform(Number)
+        .pipe(z.int().nonnegative())
+});
 
 const paramsSchema = z.strictObject({
-        orgId: z.string().nonempty()
-    });
+    orgId: z.string().nonempty()
+});
 
 async function query(orgId: string, limit: number, offset: number) {
     const res = await db

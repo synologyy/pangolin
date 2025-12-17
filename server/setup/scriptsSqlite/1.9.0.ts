@@ -11,26 +11,28 @@ export default async function migration() {
     const db = new Database(location);
 
     const resourceSiteMap = new Map<number, number>();
-	let firstSiteId: number = 1;
+    let firstSiteId: number = 1;
 
-	try {
-		// Get the first siteId to use as default
-		const firstSite = db.prepare("SELECT siteId FROM sites LIMIT 1").get() as { siteId: number } | undefined;
-		if (firstSite) {
-			firstSiteId = firstSite.siteId;
-		}
+    try {
+        // Get the first siteId to use as default
+        const firstSite = db
+            .prepare("SELECT siteId FROM sites LIMIT 1")
+            .get() as { siteId: number } | undefined;
+        if (firstSite) {
+            firstSiteId = firstSite.siteId;
+        }
 
-		const resources = db
-			.prepare(
-				"SELECT resourceId, siteId FROM resources WHERE siteId IS NOT NULL"
-			)
-			.all() as Array<{ resourceId: number; siteId: number }>;
-		for (const resource of resources) {
-			resourceSiteMap.set(resource.resourceId, resource.siteId);
-		}
-	} catch (e) {
-		console.log("Error getting resources:", e);
-	}
+        const resources = db
+            .prepare(
+                "SELECT resourceId, siteId FROM resources WHERE siteId IS NOT NULL"
+            )
+            .all() as Array<{ resourceId: number; siteId: number }>;
+        for (const resource of resources) {
+            resourceSiteMap.set(resource.resourceId, resource.siteId);
+        }
+    } catch (e) {
+        console.log("Error getting resources:", e);
+    }
 
     try {
         db.pragma("foreign_keys = OFF");

@@ -133,7 +133,8 @@ export function LicenseKeysDataTable({
             header: () => <span className="p-3"></span>,
             cell: ({ row }) => (
                 <div className="flex items-center gap-2 justify-end">
-                    <Button variant={"outline"}
+                    <Button
+                        variant={"outline"}
                         onClick={() => onDelete(row.original)}
                     >
                         {t("delete")}

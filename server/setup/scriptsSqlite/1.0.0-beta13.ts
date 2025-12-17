@@ -25,7 +25,9 @@ export default async function migration() {
 
         console.log(`Added new table and column: resourceRules, applyRules`);
     } catch (e) {
-        console.log("Unable to add new table and column: resourceRules, applyRules");
+        console.log(
+            "Unable to add new table and column: resourceRules, applyRules"
+        );
         throw e;
     }
 

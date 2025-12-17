@@ -10,4 +10,4 @@ export type GetCertificateResponse = {
     updatedAt: string;
     errorMessage?: string | null;
     renewalCount: number;
-}
+};

@@ -304,7 +304,7 @@ export default function DomainsTable({ domains, orgId }: Props) {
                         setSelectedDomain(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("domainQuestionRemove")}</p>
                             <p>{t("domainMessageRemove")}</p>
                         </div>

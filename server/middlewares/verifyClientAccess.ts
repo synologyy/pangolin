@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { db } from "@server/db";
+import { Client, db } from "@server/db";
 import { userOrgs, clients, roleClients, userClients } from "@server/db";
 import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
+import logger from "@server/logger";
 
 export async function verifyClientAccess(
     req: Request,
@@ -12,33 +13,51 @@ export async function verifyClientAccess(
     next: NextFunction
 ) {
     const userId = req.user!.userId; // Assuming you have user information in the request
-    const clientId = parseInt(
-        req.params.clientId || req.body.clientId || req.query.clientId
-    );
-
-    if (!userId) {
-        return next(
-            createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
-        );
-    }
-
-    if (isNaN(clientId)) {
-        return next(createHttpError(HttpCode.BAD_REQUEST, "Invalid client ID"));
-    }
+    const clientIdStr =
+        req.params?.clientId || req.body?.clientId || req.query?.clientId;
+    const niceId = req.params?.niceId || req.body?.niceId || req.query?.niceId;
+    const orgId = req.params?.orgId || req.body?.orgId || req.query?.orgId;
 
     try {
-        // Get the client
-        const [client] = await db
-            .select()
-            .from(clients)
-            .where(eq(clients.clientId, clientId))
-            .limit(1);
+        if (!userId) {
+            return next(
+                createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
+            );
+        }
+
+        let client: Client | null = null;
+
+        if (niceId && orgId) {
+            const [clientRes] = await db
+                .select()
+                .from(clients)
+                .where(
+                    and(eq(clients.niceId, niceId), eq(clients.orgId, orgId))
+                )
+                .limit(1);
+            client = clientRes;
+        } else {
+            const clientId = parseInt(clientIdStr);
+            if (isNaN(clientId)) {
+                return next(
+                    createHttpError(HttpCode.BAD_REQUEST, "Invalid client ID")
+                );
+            }
+
+            // Get the client
+            const [clientRes] = await db
+                .select()
+                .from(clients)
+                .where(eq(clients.clientId, clientId))
+                .limit(1);
+            client = clientRes;
+        }
 
         if (!client) {
             return next(
                 createHttpError(
                     HttpCode.NOT_FOUND,
-                    `Client with ID ${clientId} not found`
+                    `Client with ID ${niceId || clientIdStr} not found`
                 )
             );
         }
@@ -47,12 +66,12 @@ export async function verifyClientAccess(
             return next(
                 createHttpError(
                     HttpCode.INTERNAL_SERVER_ERROR,
-                    `Client with ID ${clientId} does not have an organization ID`
+                    `Client with ID ${niceId || clientIdStr} does not have an organization ID`
                 )
             );
         }
 
-        if (!req.userOrg) {
+        if (!req.userOrg || req.userOrg?.orgId !== client.orgId) {
             // Get user's role ID in the organization
             const userOrgRole = await db
                 .select()
@@ -104,7 +123,7 @@ export async function verifyClientAccess(
             .from(roleClients)
             .where(
                 and(
-                    eq(roleClients.clientId, clientId),
+                    eq(roleClients.clientId, client.clientId),
                     eq(roleClients.roleId, userOrgRoleId)
                 )
             )
@@ -122,7 +141,7 @@ export async function verifyClientAccess(
             .where(
                 and(
                     eq(userClients.userId, userId),
-                    eq(userClients.clientId, clientId)
+                    eq(userClients.clientId, client.clientId)
                 )
             )
             .limit(1);
@@ -140,6 +159,7 @@ export async function verifyClientAccess(
             )
         );
     } catch (error) {
+        logger.error("Error verifying client access", error);
         return next(
             createHttpError(
                 HttpCode.INTERNAL_SERVER_ERROR,

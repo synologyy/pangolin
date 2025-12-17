@@ -5,7 +5,6 @@ import { and, eq } from "drizzle-orm";
 import createHttpError from "http-errors";
 import HttpCode from "@server/types/HttpCode";
 import { checkOrgAccessPolicy } from "#dynamic/lib/checkOrgAccessPolicy";
-import logger from "@server/logger";
 
 export async function verifyOrgAccess(
     req: Request,
@@ -68,6 +67,7 @@ export async function verifyOrgAccess(
         // User has access, attach the user's role to the request for potential future use
         req.userOrgRoleId = req.userOrg.roleId;
         req.userOrgId = orgId;
+
         return next();
     } catch (e) {
         return next(

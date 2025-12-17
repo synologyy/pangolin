@@ -14,8 +14,11 @@ export const dynamic = "force-dynamic";
 export default async function Page(props: {
     params: Promise<{ orgId: string; idpId: string }>;
     searchParams: Promise<{
-        code: string;
-        state: string;
+        code?: string;
+        state?: string;
+        error?: string;
+        error_description?: string;
+        error_uri?: string;
     }>;
 }) {
     const params = await props.params;
@@ -25,15 +28,17 @@ export default async function Page(props: {
     const allCookies = await cookies();
     const stateCookie = allCookies.get("p_oidc_state")?.value;
 
-
     const idpRes = await cache(
-        async () => await priv.get<AxiosResponse<GetIdpResponse>>(`/idp/${params.idpId}`)
+        async () =>
+            await priv.get<AxiosResponse<GetIdpResponse>>(
+                `/idp/${params.idpId}`
+            )
     )();
 
     const foundIdp = idpRes.data?.data?.idp;
 
     if (!foundIdp) {
-        return <div>{t('idpErrorNotFound')}</div>;
+        return <div>{t("idpErrorNotFound")}</div>;
     }
 
     const allHeaders = await headers();
@@ -59,6 +64,14 @@ export default async function Page(props: {
         }
     }
 
+    const providerError = searchParams.error
+        ? {
+              error: searchParams.error,
+              description: searchParams.error_description,
+              uri: searchParams.error_uri
+          }
+        : undefined;
+
     return (
         <>
             <ValidateOidcToken
@@ -69,6 +82,7 @@ export default async function Page(props: {
                 expectedState={searchParams.state}
                 stateCookie={stateCookie}
                 idp={{ name: foundIdp.name }}
+                providerError={providerError}
             />
         </>
     );

@@ -11,8 +11,8 @@ import { fromZodError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export type GetOrgResponse = {
     org: Org;

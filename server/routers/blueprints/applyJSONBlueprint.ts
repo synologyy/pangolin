@@ -9,12 +9,12 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { applyBlueprint } from "@server/lib/blueprints/applyBlueprint";
 
 const applyBlueprintSchema = z.strictObject({
-        blueprint: z.string()
-    });
+    blueprint: z.string()
+});
 
 const applyBlueprintParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "put",

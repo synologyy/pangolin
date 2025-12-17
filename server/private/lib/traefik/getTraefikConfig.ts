@@ -189,7 +189,7 @@ export async function getTraefikConfig(
             );
 
             if (!validation.isValid) {
-                logger.error(
+                logger.debug(
                     `Invalid path rewrite configuration for resource ${resourceId}: ${validation.error}`
                 );
                 return;
@@ -823,7 +823,7 @@ export async function getTraefikConfig(
                         (cert) => cert.queriedDomain === lp.fullDomain
                     );
                     if (!matchingCert) {
-                        logger.warn(
+                        logger.debug(
                             `No matching certificate found for login page domain: ${lp.fullDomain}`
                         );
                         continue;

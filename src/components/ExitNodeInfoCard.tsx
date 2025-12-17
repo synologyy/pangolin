@@ -21,24 +21,24 @@ export default function ExitNodeInfoCard({}: ExitNodeInfoCardProps) {
         <Alert>
             <AlertDescription className="mt-4">
                 <InfoSections cols={2}>
-                        <>
-                            <InfoSection>
-                                <InfoSectionTitle>{t("status")}</InfoSectionTitle>
-                                <InfoSectionContent>
-                                    {remoteExitNode.online ? (
-                                        <div className="text-green-500 flex items-center space-x-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                            <span>{t("online")}</span>
-                                        </div>
-                                    ) : (
-                                        <div className="text-neutral-500 flex items-center space-x-2">
-                                            <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                                            <span>{t("offline")}</span>
-                                        </div>
-                                    )}
-                                </InfoSectionContent>
-                            </InfoSection>
-                        </>
+                    <>
+                        <InfoSection>
+                            <InfoSectionTitle>{t("status")}</InfoSectionTitle>
+                            <InfoSectionContent>
+                                {remoteExitNode.online ? (
+                                    <div className="text-green-500 flex items-center space-x-2">
+                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                        <span>{t("online")}</span>
+                                    </div>
+                                ) : (
+                                    <div className="text-neutral-500 flex items-center space-x-2">
+                                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                                        <span>{t("offline")}</span>
+                                    </div>
+                                )}
+                            </InfoSectionContent>
+                        </InfoSection>
+                    </>
                     <InfoSection>
                         <InfoSectionTitle>{t("address")}</InfoSectionTitle>
                         <InfoSectionContent>

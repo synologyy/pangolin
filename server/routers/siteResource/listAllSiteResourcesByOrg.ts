@@ -11,8 +11,8 @@ import logger from "@server/logger";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const listAllSiteResourcesByOrgParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listAllSiteResourcesByOrgQuerySchema = z.object({
     limit: z
@@ -30,7 +30,11 @@ const listAllSiteResourcesByOrgQuerySchema = z.object({
 });
 
 export type ListAllSiteResourcesByOrgResponse = {
-    siteResources: (SiteResource & { siteName: string, siteNiceId: string, siteAddress: string | null })[];
+    siteResources: (SiteResource & {
+        siteName: string;
+        siteNiceId: string;
+        siteAddress: string | null;
+    })[];
 };
 
 registry.registerPath({
@@ -51,7 +55,9 @@ export async function listAllSiteResourcesByOrg(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedParams = listAllSiteResourcesByOrgParamsSchema.safeParse(req.params);
+        const parsedParams = listAllSiteResourcesByOrgParamsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -61,7 +67,9 @@ export async function listAllSiteResourcesByOrg(
             );
         }
 
-        const parsedQuery = listAllSiteResourcesByOrgQuerySchema.safeParse(req.query);
+        const parsedQuery = listAllSiteResourcesByOrgQuerySchema.safeParse(
+            req.query
+        );
         if (!parsedQuery.success) {
             return next(
                 createHttpError(
@@ -89,6 +97,9 @@ export async function listAllSiteResourcesByOrg(
                 destination: siteResources.destination,
                 enabled: siteResources.enabled,
                 alias: siteResources.alias,
+                tcpPortRangeString: siteResources.tcpPortRangeString,
+                udpPortRangeString: siteResources.udpPortRangeString,
+                disableIcmp: siteResources.disableIcmp,
                 siteName: sites.name,
                 siteNiceId: sites.niceId,
                 siteAddress: sites.address
@@ -108,6 +119,11 @@ export async function listAllSiteResourcesByOrg(
         });
     } catch (error) {
         logger.error("Error listing all site resources by org:", error);
-        return next(createHttpError(HttpCode.INTERNAL_SERVER_ERROR, "Failed to list site resources"));
+        return next(
+            createHttpError(
+                HttpCode.INTERNAL_SERVER_ERROR,
+                "Failed to list site resources"
+            )
+        );
     }
 }

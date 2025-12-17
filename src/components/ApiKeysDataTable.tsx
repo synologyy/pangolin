@@ -44,7 +44,6 @@ export function ApiKeysDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -52,11 +51,11 @@ export function ApiKeysDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="apiKeys-table"
-            title={t('apiKeys')}
-            searchPlaceholder={t('searchApiKeys')}
+            title={t("apiKeys")}
+            searchPlaceholder={t("searchApiKeys")}
             searchColumn="name"
             onAdd={addApiKey}
-            addButtonText={t('apiKeysAdd')}
+            addButtonText={t("apiKeysAdd")}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
             enableColumnVisibility={true}

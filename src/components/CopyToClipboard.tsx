@@ -9,7 +9,11 @@ type CopyToClipboardProps = {
     isLink?: boolean;
 };
 
-const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) => {
+const CopyToClipboard = ({
+    text,
+    displayText,
+    isLink
+}: CopyToClipboardProps) => {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = () => {
@@ -60,7 +64,7 @@ const CopyToClipboard = ({ text, displayText, isLink }: CopyToClipboardProps) =>
                 ) : (
                     <Check className="text-green-500 h-4 w-4" />
                 )}
-                <span className="sr-only">{t('copyText')}</span>
+                <span className="sr-only">{t("copyText")}</span>
             </button>
         </div>
     );

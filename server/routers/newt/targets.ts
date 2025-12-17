@@ -26,22 +26,32 @@ export async function addTargets(
 
     // Create a map for quick lookup
     const healthCheckMap = new Map<number, TargetHealthCheck>();
-    healthCheckData.forEach(hc => {
+    healthCheckData.forEach((hc) => {
         healthCheckMap.set(hc.targetId, hc);
     });
 
     const healthCheckTargets = targets.map((target) => {
         const hc = healthCheckMap.get(target.targetId);
-        
+
         // If no health check data found, skip this target
         if (!hc) {
-            logger.warn(`No health check configuration found for target ${target.targetId}`);
+            logger.warn(
+                `No health check configuration found for target ${target.targetId}`
+            );
             return null;
         }
 
         // Ensure all necessary fields are present
-        if (!hc.hcPath || !hc.hcHostname || !hc.hcPort || !hc.hcInterval || !hc.hcMethod) {
-            logger.debug(`Skipping target ${target.targetId} due to missing health check fields`);
+        if (
+            !hc.hcPath ||
+            !hc.hcHostname ||
+            !hc.hcPort ||
+            !hc.hcInterval ||
+            !hc.hcMethod
+        ) {
+            logger.debug(
+                `Skipping target ${target.targetId} due to missing health check fields`
+            );
             return null; // Skip targets with missing health check fields
         }
 
@@ -49,9 +59,20 @@ export async function addTargets(
         const hcHeadersSend: { [key: string]: string } = {};
         if (hcHeadersParse) {
             // transform
-            hcHeadersParse.forEach((header: { name: string; value: string }) => {
-                hcHeadersSend[header.name] = header.value;
-            });
+            hcHeadersParse.forEach(
+                (header: { name: string; value: string }) => {
+                    hcHeadersSend[header.name] = header.value;
+                }
+            );
+        }
+
+        // try to parse the hcStatus into a int and if not possible set to undefined
+        let hcStatus: number | undefined = undefined;
+        if (hc.hcStatus) {
+            const parsedStatus = parseInt(hc.hcStatus.toString());
+            if (!isNaN(parsedStatus)) {
+                hcStatus = parsedStatus;
+            }
         }
 
         return {
@@ -67,12 +88,15 @@ export async function addTargets(
             hcTimeout: hc.hcTimeout, // in seconds
             hcHeaders: hcHeadersSend,
             hcMethod: hc.hcMethod,
-            hcTlsServerName: hc.hcTlsServerName,
+            hcStatus: hcStatus,
+            hcTlsServerName: hc.hcTlsServerName
         };
     });
 
     // Filter out any null values from health check targets
-    const validHealthCheckTargets = healthCheckTargets.filter((target) => target !== null);
+    const validHealthCheckTargets = healthCheckTargets.filter(
+        (target) => target !== null
+    );
 
     await sendToClient(newtId, {
         type: `newt/healthcheck/add`,

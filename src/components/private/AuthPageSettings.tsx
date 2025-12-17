@@ -458,12 +458,15 @@ function AuthPageSettings({
                             orgId={org?.org.orgId as string}
                             cols={1}
                             onDomainChange={(res) => {
-                                const selected = {
-                                    domainId: res.domainId,
-                                    subdomain: res.subdomain,
-                                    fullDomain: res.fullDomain,
-                                    baseDomain: res.baseDomain
-                                };
+                                const selected =
+                                    res === null
+                                        ? null
+                                        : {
+                                              domainId: res.domainId,
+                                              subdomain: res.subdomain,
+                                              fullDomain: res.fullDomain,
+                                              baseDomain: res.baseDomain
+                                          };
                                 setSelectedDomain(selected);
                             }}
                         />

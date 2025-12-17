@@ -58,7 +58,9 @@ export interface HandlerContext {
     connectedClients: Map<string, WebSocket[]>;
 }
 
-export type MessageHandler = (context: HandlerContext) => Promise<HandlerResponse | void>;
+export type MessageHandler = (
+    context: HandlerContext
+) => Promise<HandlerResponse | void>;
 
 // Redis message type for cross-node communication
 export interface RedisMessage {

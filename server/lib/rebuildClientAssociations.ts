@@ -24,7 +24,7 @@ import {
     deletePeer as newtDeletePeer
 } from "@server/routers/newt/peers";
 import {
-    initPeerAddHandshake as holepunchSiteAdd,
+    initPeerAddHandshake,
     deletePeer as olmDeletePeer
 } from "@server/routers/olm/peers";
 import { sendToExitNode } from "#dynamic/lib/exitNodes";
@@ -33,6 +33,8 @@ import {
     generateAliasConfig,
     generateRemoteSubnets,
     generateSubnetProxyTargets,
+    parseEndpoint,
+    formatEndpoint
 } from "@server/lib/ip";
 import {
     addPeerData,
@@ -109,21 +111,22 @@ export async function getClientSiteResourceAccess(
     const directClientIds = allClientSiteResources.map((row) => row.clientId);
 
     // Get full client details for directly associated clients
-    const directClients = directClientIds.length > 0
-        ? await trx
-              .select({
-                  clientId: clients.clientId,
-                  pubKey: clients.pubKey,
-                  subnet: clients.subnet
-              })
-              .from(clients)
-              .where(
-                  and(
-                      inArray(clients.clientId, directClientIds),
-                      eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+    const directClients =
+        directClientIds.length > 0
+            ? await trx
+                  .select({
+                      clientId: clients.clientId,
+                      pubKey: clients.pubKey,
+                      subnet: clients.subnet
+                  })
+                  .from(clients)
+                  .where(
+                      and(
+                          inArray(clients.clientId, directClientIds),
+                          eq(clients.orgId, siteResource.orgId) // filter by org to prevent cross-org associations
+                      )
                   )
-              )
-        : [];
+            : [];
 
     // Merge user-based clients with directly associated clients
     const allClientsMap = new Map(
@@ -474,7 +477,7 @@ async function handleMessagesForSiteClients(
         }
 
         if (isAdd) {
-            await holepunchSiteAdd(
+            await initPeerAddHandshake(
                 // this will kick off the add peer process for the client
                 client.clientId,
                 {
@@ -537,7 +540,18 @@ export async function updateClientSiteDestinations(
         }
 
         if (!site.clientSitesAssociationsCache.endpoint) {
-            logger.warn(`Site ${site.sites.siteId} has no endpoint, skipping`); // if this is a new association the endpoint is not set yet // TODO: FIX THIS
+            // if this is a new association the endpoint is not set yet
+            continue;
+        }
+
+        // Parse the endpoint properly for both IPv4 and IPv6
+        const parsedEndpoint = parseEndpoint(
+            site.clientSitesAssociationsCache.endpoint
+        );
+        if (!parsedEndpoint) {
+            logger.warn(
+                `Failed to parse endpoint ${site.clientSitesAssociationsCache.endpoint}, skipping`
+            );
             continue;
         }
 
@@ -552,13 +566,8 @@ export async function updateClientSiteDestinations(
                 exitNodeId: site.exitNodes?.exitNodeId || 0,
                 type: site.exitNodes?.type || "",
                 name: site.exitNodes?.name || "",
-                sourceIp:
-                    site.clientSitesAssociationsCache.endpoint.split(":")[0] ||
-                    "",
-                sourcePort:
-                    parseInt(
-                        site.clientSitesAssociationsCache.endpoint.split(":")[1]
-                    ) || 0,
+                sourceIp: parsedEndpoint.ip,
+                sourcePort: parsedEndpoint.port,
                 destinations: [
                     {
                         destinationIP: site.sites.subnet.split("/")[0],
@@ -701,11 +710,46 @@ async function handleSubnetProxyTargetUpdates(
             }
 
             for (const client of removedClients) {
+                // Check if this client still has access to another resource on this site with the same destination
+                const destinationStillInUse = await trx
+                    .select()
+                    .from(siteResources)
+                    .innerJoin(
+                        clientSiteResourcesAssociationsCache,
+                        eq(
+                            clientSiteResourcesAssociationsCache.siteResourceId,
+                            siteResources.siteResourceId
+                        )
+                    )
+                    .where(
+                        and(
+                            eq(
+                                clientSiteResourcesAssociationsCache.clientId,
+                                client.clientId
+                            ),
+                            eq(siteResources.siteId, siteResource.siteId),
+                            eq(
+                                siteResources.destination,
+                                siteResource.destination
+                            ),
+                            ne(
+                                siteResources.siteResourceId,
+                                siteResource.siteResourceId
+                            )
+                        )
+                    );
+
+                // Only remove remote subnet if no other resource uses the same destination
+                const remoteSubnetsToRemove =
+                    destinationStillInUse.length > 0
+                        ? []
+                        : generateRemoteSubnets([siteResource]);
+
                 olmJobs.push(
                     removePeerData(
                         client.clientId,
                         siteResource.siteId,
-                        generateRemoteSubnets([siteResource]),
+                        remoteSubnetsToRemove,
                         generateAliasConfig([siteResource])
                     )
                 );
@@ -783,7 +827,10 @@ export async function rebuildClientAssociationsFromClient(
                 .from(roleSiteResources)
                 .innerJoin(
                     siteResources,
-                    eq(siteResources.siteResourceId, roleSiteResources.siteResourceId)
+                    eq(
+                        siteResources.siteResourceId,
+                        roleSiteResources.siteResourceId
+                    )
                 )
                 .where(
                     and(
@@ -908,28 +955,8 @@ export async function rebuildClientAssociationsFromClient(
 
     /////////// Send messages ///////////
 
-    // Get the olm for this client
-    const [olm] = await trx
-        .select({ olmId: olms.olmId })
-        .from(olms)
-        .where(eq(olms.clientId, client.clientId))
-        .limit(1);
-
-    if (!olm) {
-        logger.warn(
-            `Olm not found for client ${client.clientId}, skipping peer updates`
-        );
-        return;
-    }
-
     // Handle messages for sites being added
-    await handleMessagesForClientSites(
-        client,
-        olm.olmId,
-        sitesToAdd,
-        sitesToRemove,
-        trx
-    );
+    await handleMessagesForClientSites(client, sitesToAdd, sitesToRemove, trx);
 
     // Handle subnet proxy target updates for resources
     await handleMessagesForClientResources(
@@ -949,11 +976,26 @@ async function handleMessagesForClientSites(
         userId: string | null;
         orgId: string;
     },
-    olmId: string,
     sitesToAdd: number[],
     sitesToRemove: number[],
     trx: Transaction | typeof db = db
 ): Promise<void> {
+    // Get the olm for this client
+    const [olm] = await trx
+        .select({ olmId: olms.olmId })
+        .from(olms)
+        .where(eq(olms.clientId, client.clientId))
+        .limit(1);
+
+    if (!olm) {
+        logger.warn(
+            `Olm not found for client ${client.clientId}, skipping peer updates`
+        );
+        return;
+    }
+
+    const olmId = olm.olmId;
+
     if (!client.subnet || !client.pubKey) {
         logger.warn(
             `Client ${client.clientId} missing subnet or pubKey, skipping peer updates`
@@ -974,9 +1016,9 @@ async function handleMessagesForClientSites(
         .leftJoin(newts, eq(sites.siteId, newts.siteId))
         .where(inArray(sites.siteId, allSiteIds));
 
-    let newtJobs: Promise<any>[] = [];
-    let olmJobs: Promise<any>[] = [];
-    let exitNodeJobs: Promise<any>[] = [];
+    const newtJobs: Promise<any>[] = [];
+    const olmJobs: Promise<any>[] = [];
+    const exitNodeJobs: Promise<any>[] = [];
 
     for (const siteData of sitesData) {
         const site = siteData.sites;
@@ -1038,7 +1080,7 @@ async function handleMessagesForClientSites(
                 continue;
             }
 
-            await holepunchSiteAdd(
+            await initPeerAddHandshake(
                 // this will kick off the add peer process for the client
                 client.clientId,
                 {
@@ -1083,18 +1125,8 @@ async function handleMessagesForClientResources(
     resourcesToRemove: number[],
     trx: Transaction | typeof db = db
 ): Promise<void> {
-    // Group resources by site
-    const resourcesBySite = new Map<number, SiteResource[]>();
-
-    for (const resource of allNewResources) {
-        if (!resourcesBySite.has(resource.siteId)) {
-            resourcesBySite.set(resource.siteId, []);
-        }
-        resourcesBySite.get(resource.siteId)!.push(resource);
-    }
-
-    let proxyJobs: Promise<any>[] = [];
-    let olmJobs: Promise<any>[] = [];
+    const proxyJobs: Promise<any>[] = [];
+    const olmJobs: Promise<any>[] = [];
 
     // Handle additions
     if (resourcesToAdd.length > 0) {
@@ -1213,12 +1245,47 @@ async function handleMessagesForClientResources(
                 }
 
                 try {
+                    // Check if this client still has access to another resource on this site with the same destination
+                    const destinationStillInUse = await trx
+                        .select()
+                        .from(siteResources)
+                        .innerJoin(
+                            clientSiteResourcesAssociationsCache,
+                            eq(
+                                clientSiteResourcesAssociationsCache.siteResourceId,
+                                siteResources.siteResourceId
+                            )
+                        )
+                        .where(
+                            and(
+                                eq(
+                                    clientSiteResourcesAssociationsCache.clientId,
+                                    client.clientId
+                                ),
+                                eq(siteResources.siteId, resource.siteId),
+                                eq(
+                                    siteResources.destination,
+                                    resource.destination
+                                ),
+                                ne(
+                                    siteResources.siteResourceId,
+                                    resource.siteResourceId
+                                )
+                            )
+                        );
+
+                    // Only remove remote subnet if no other resource uses the same destination
+                    const remoteSubnetsToRemove =
+                        destinationStillInUse.length > 0
+                            ? []
+                            : generateRemoteSubnets([resource]);
+
                     // Remove peer data from olm
                     olmJobs.push(
                         removePeerData(
                             client.clientId,
                             resource.siteId,
-                            generateRemoteSubnets([resource]),
+                            remoteSubnetsToRemove,
                             generateAliasConfig([resource])
                         )
                     );

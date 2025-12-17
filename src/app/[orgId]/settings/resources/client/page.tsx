@@ -66,7 +66,11 @@ export default async function ClientResourcesPage(
                 destination: siteResource.destination,
                 // destinationPort: siteResource.destinationPort,
                 alias: siteResource.alias || null,
-                siteNiceId: siteResource.siteNiceId
+                siteNiceId: siteResource.siteNiceId,
+                niceId: siteResource.niceId,
+                tcpPortRangeString: siteResource.tcpPortRangeString || null,
+                udpPortRangeString: siteResource.udpPortRangeString || null,
+                disableIcmp: siteResource.disableIcmp || false,
             };
         }
     );

@@ -10,8 +10,8 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const getOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export async function checkId(
     req: Request,

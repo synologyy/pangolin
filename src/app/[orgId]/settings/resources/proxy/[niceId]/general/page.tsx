@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useResourceContext } from "@app/hooks/useResourceContext";
 import { ListSitesResponse } from "@server/routers/site";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AxiosResponse } from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -90,8 +90,15 @@ export default function GeneralForm() {
     const [resourceFullDomain, setResourceFullDomain] = useState(
         `${resource.ssl ? "https" : "http"}://${toUnicode(resource.fullDomain || "")}`
     );
+
+    const resourceFullDomainName = useMemo(() => {
+        const url = new URL(resourceFullDomain);
+        return url.hostname;
+    }, [resourceFullDomain]);
+
     const [selectedDomain, setSelectedDomain] = useState<{
         domainId: string;
+        domainNamespaceId?: string;
         subdomain?: string;
         fullDomain: string;
         baseDomain: string;
@@ -104,7 +111,7 @@ export default function GeneralForm() {
             name: z.string().min(1).max(255),
             niceId: z.string().min(1).max(255).optional(),
             domainId: z.string().optional(),
-            proxyPort: z.int().min(1).max(65535).optional(),
+            proxyPort: z.int().min(1).max(65535).optional()
             // enableProxy: z.boolean().optional()
         })
         .refine(
@@ -134,7 +141,7 @@ export default function GeneralForm() {
             niceId: resource.niceId,
             subdomain: resource.subdomain ? resource.subdomain : undefined,
             domainId: resource.domainId || undefined,
-            proxyPort: resource.proxyPort || undefined,
+            proxyPort: resource.proxyPort || undefined
             // enableProxy: resource.enableProxy || false
         },
         mode: "onChange"
@@ -168,7 +175,7 @@ export default function GeneralForm() {
                 const rawDomains = res.data.data.domains as DomainRow[];
                 const domains = rawDomains.map((domain) => ({
                     ...domain,
-                    baseDomain: toUnicode(domain.baseDomain),
+                    baseDomain: toUnicode(domain.baseDomain)
                 }));
                 setBaseDomains(domains);
                 setFormKey((key) => key + 1);
@@ -195,9 +202,11 @@ export default function GeneralForm() {
                     enabled: data.enabled,
                     name: data.name,
                     niceId: data.niceId,
-                    subdomain: data.subdomain ? toASCII(data.subdomain) : undefined,
+                    subdomain: data.subdomain
+                        ? toASCII(data.subdomain)
+                        : undefined,
                     domainId: data.domainId,
-                    proxyPort: data.proxyPort,
+                    proxyPort: data.proxyPort
                     // ...(!resource.http && {
                     //     enableProxy: data.enableProxy
                     // })
@@ -222,8 +231,9 @@ export default function GeneralForm() {
                 name: data.name,
                 niceId: data.niceId,
                 subdomain: data.subdomain,
-                fullDomain: resource.fullDomain,
+                fullDomain: updated.fullDomain,
                 proxyPort: data.proxyPort,
+                domainId: data.domainId
                 // ...(!resource.http && {
                 //     enableProxy: data.enableProxy
                 // })
@@ -235,7 +245,9 @@ export default function GeneralForm() {
             });
 
             if (data.niceId && data.niceId !== resource?.niceId) {
-                router.replace(`/${updated.orgId}/settings/resources/proxy/${data.niceId}/general`);
+                router.replace(
+                    `/${updated.orgId}/settings/resources/proxy/${data.niceId}/general`
+                );
             } else {
                 router.refresh();
             }
@@ -320,11 +332,15 @@ export default function GeneralForm() {
                                             name="niceId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>{t("identifier")}</FormLabel>
+                                                    <FormLabel>
+                                                        {t("identifier")}
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             {...field}
-                                                            placeholder={t("enterIdentifier")}
+                                                            placeholder={t(
+                                                                "enterIdentifier"
+                                                            )}
                                                             className="flex-1"
                                                         />
                                                     </FormControl>
@@ -360,10 +376,10 @@ export default function GeneralForm() {
                                                                                 .target
                                                                                 .value
                                                                                 ? parseInt(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value
-                                                                                )
+                                                                                      e
+                                                                                          .target
+                                                                                          .value
+                                                                                  )
                                                                                 : undefined
                                                                         )
                                                                     }
@@ -480,13 +496,27 @@ export default function GeneralForm() {
                             <DomainPicker
                                 orgId={orgId as string}
                                 cols={1}
+                                defaultSubdomain={
+                                    form.getValues("subdomain") ??
+                                    resource.subdomain
+                                }
+                                defaultDomainId={
+                                    form.getValues("domainId") ??
+                                    resource.domainId
+                                }
+                                defaultFullDomain={resourceFullDomainName}
                                 onDomainChange={(res) => {
-                                    const selected = {
-                                        domainId: res.domainId,
-                                        subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain,
-                                        baseDomain: res.baseDomain
-                                    };
+                                    const selected =
+                                        res === null
+                                            ? null
+                                            : {
+                                                  domainId: res.domainId,
+                                                  subdomain: res.subdomain,
+                                                  fullDomain: res.fullDomain,
+                                                  baseDomain: res.baseDomain,
+                                                  domainNamespaceId:
+                                                      res.domainNamespaceId
+                                              };
                                     setSelectedDomain(selected);
                                 }}
                             />
@@ -498,17 +528,29 @@ export default function GeneralForm() {
                             <Button
                                 onClick={() => {
                                     if (selectedDomain) {
-                                        const sanitizedSubdomain = selectedDomain.subdomain
-                                            ? finalizeSubdomainSanitize(selectedDomain.subdomain)
-                                            : "";
+                                        const sanitizedSubdomain =
+                                            selectedDomain.subdomain
+                                                ? finalizeSubdomainSanitize(
+                                                      selectedDomain.subdomain
+                                                  )
+                                                : "";
 
-                                        const sanitizedFullDomain = sanitizedSubdomain
-                                            ? `${sanitizedSubdomain}.${selectedDomain.baseDomain}`
-                                            : selectedDomain.baseDomain;
+                                        const sanitizedFullDomain =
+                                            sanitizedSubdomain
+                                                ? `${sanitizedSubdomain}.${selectedDomain.baseDomain}`
+                                                : selectedDomain.baseDomain;
 
-                                        setResourceFullDomain(`${resource.ssl ? "https" : "http"}://${sanitizedFullDomain}`);
-                                        form.setValue("domainId", selectedDomain.domainId);
-                                        form.setValue("subdomain", sanitizedSubdomain);
+                                        setResourceFullDomain(
+                                            `${resource.ssl ? "https" : "http"}://${sanitizedFullDomain}`
+                                        );
+                                        form.setValue(
+                                            "domainId",
+                                            selectedDomain.domainId
+                                        );
+                                        form.setValue(
+                                            "subdomain",
+                                            sanitizedSubdomain
+                                        );
 
                                         setEditDomainOpen(false);
                                     }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { Geist, Inter, Manrope } from "next/font/google";
 import { ThemeProvider } from "@app/providers/ThemeProvider";
 import EnvProvider from "@app/providers/EnvProvider";
 import { pullEnv } from "@app/lib/pullEnv";
@@ -25,19 +25,7 @@ import { TailwindIndicator } from "@app/components/TailwindIndicator";
 
 export const metadata: Metadata = {
     title: `Dashboard - ${process.env.BRANDING_APP_NAME || "Pangolin"}`,
-    description: "",
-
-    ...(process.env.BRANDING_FAVICON_PATH
-        ? {
-              icons: {
-                  icon: [
-                      {
-                          url: process.env.BRANDING_FAVICON_PATH as string
-                      }
-                  ]
-              }
-          }
-        : {})
+    description: ""
 };
 
 export const dynamic = "force-dynamic";

@@ -31,11 +31,16 @@ export function validatePathRewriteConfig(
     }
 
     if (rewritePathType !== "stripPrefix") {
-        if ((rewritePath && !rewritePathType) || (!rewritePath && rewritePathType)) {
-            return { isValid: false, error: "Both rewritePath and rewritePathType must be specified together" };
+        if (
+            (rewritePath && !rewritePathType) ||
+            (!rewritePath && rewritePathType)
+        ) {
+            return {
+                isValid: false,
+                error: "Both rewritePath and rewritePathType must be specified together"
+            };
         }
     }
-
 
     if (!rewritePath || !rewritePathType) {
         return { isValid: true };
@@ -68,14 +73,14 @@ export function validatePathRewriteConfig(
         }
     }
 
-
     // Additional validation for stripPrefix
     if (rewritePathType === "stripPrefix") {
         if (pathMatchType !== "prefix") {
-            logger.warn(`stripPrefix rewrite type is most effective with prefix path matching. Current match type: ${pathMatchType}`);
+            logger.warn(
+                `stripPrefix rewrite type is most effective with prefix path matching. Current match type: ${pathMatchType}`
+            );
         }
     }
 
     return { isValid: true };
 }
-

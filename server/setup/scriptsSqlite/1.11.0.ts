@@ -13,25 +13,29 @@ export default async function migration() {
     const db = new Database(location);
 
     db.transaction(() => {
-
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'account' (
             'accountId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'userId' text NOT NULL,
             FOREIGN KEY ('userId') REFERENCES 'user'('id') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'accountDomains' (
             'accountId' integer NOT NULL,
             'domainId' text NOT NULL,
             FOREIGN KEY ('accountId') REFERENCES 'account'('accountId') ON UPDATE no action ON DELETE cascade,
             FOREIGN KEY ('domainId') REFERENCES 'domains'('domainId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'certificates' (
             'certId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'domain' text NOT NULL,
@@ -49,11 +53,15 @@ export default async function migration() {
             'keyFile' text,
             FOREIGN KEY ('domainId') REFERENCES 'domains'('domainId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`CREATE UNIQUE INDEX 'certificates_domain_unique' ON 'certificates' ('domain');`).run();
+        db.prepare(
+            `CREATE UNIQUE INDEX 'certificates_domain_unique' ON 'certificates' ('domain');`
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'customers' (
             'customerId' text PRIMARY KEY NOT NULL,
             'orgId' text NOT NULL,
@@ -65,9 +73,11 @@ export default async function migration() {
             'updatedAt' integer NOT NULL,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'dnsChallenges' (
             'dnsChallengeId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'domain' text NOT NULL,
@@ -77,26 +87,32 @@ export default async function migration() {
             'expiresAt' integer NOT NULL,
             'completed' integer DEFAULT false
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'domainNamespaces' (
             'domainNamespaceId' text PRIMARY KEY NOT NULL,
             'domainId' text NOT NULL,
             FOREIGN KEY ('domainId') REFERENCES 'domains'('domainId') ON UPDATE no action ON DELETE set null
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'exitNodeOrgs' (
             'exitNodeId' integer NOT NULL,
             'orgId' text NOT NULL,
             FOREIGN KEY ('exitNodeId') REFERENCES 'exitNodes'('exitNodeId') ON UPDATE no action ON DELETE cascade,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'loginPage' (
             'loginPageId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'subdomain' text,
@@ -106,27 +122,33 @@ export default async function migration() {
             FOREIGN KEY ('exitNodeId') REFERENCES 'exitNodes'('exitNodeId') ON UPDATE no action ON DELETE set null,
             FOREIGN KEY ('domainId') REFERENCES 'domains'('domainId') ON UPDATE no action ON DELETE set null
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'loginPageOrg' (
             'loginPageId' integer NOT NULL,
             'orgId' text NOT NULL,
             FOREIGN KEY ('loginPageId') REFERENCES 'loginPage'('loginPageId') ON UPDATE no action ON DELETE cascade,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'remoteExitNodeSession' (
             'id' text PRIMARY KEY NOT NULL,
             'remoteExitNodeId' text NOT NULL,
             'expiresAt' integer NOT NULL,
             FOREIGN KEY ('remoteExitNodeId') REFERENCES 'remoteExitNode'('id') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'remoteExitNode' (
             'id' text PRIMARY KEY NOT NULL,
             'secretHash' text NOT NULL,
@@ -135,9 +157,11 @@ export default async function migration() {
             'exitNodeId' integer,
             FOREIGN KEY ('exitNodeId') REFERENCES 'exitNodes'('exitNodeId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'sessionTransferToken' (
             'token' text PRIMARY KEY NOT NULL,
             'sessionId' text NOT NULL,
@@ -145,9 +169,11 @@ export default async function migration() {
             'expiresAt' integer NOT NULL,
             FOREIGN KEY ('sessionId') REFERENCES 'session'('id') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'subscriptionItems' (
             'subscriptionItemId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'subscriptionId' text NOT NULL,
@@ -162,9 +188,11 @@ export default async function migration() {
             'name' text,
             FOREIGN KEY ('subscriptionId') REFERENCES 'subscriptions'('subscriptionId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'subscriptions' (
             'subscriptionId' text PRIMARY KEY NOT NULL,
             'customerId' text NOT NULL,
@@ -175,9 +203,11 @@ export default async function migration() {
             'billingCycleAnchor' integer,
             FOREIGN KEY ('customerId') REFERENCES 'customers'('customerId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'usage' (
             'usageId' text PRIMARY KEY NOT NULL,
             'featureId' text NOT NULL,
@@ -191,9 +221,11 @@ export default async function migration() {
             'nextRolloverAt' integer,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'usageNotifications' (
             'notificationId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'orgId' text NOT NULL,
@@ -203,18 +235,22 @@ export default async function migration() {
             'sentAt' integer NOT NULL,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'resourceHeaderAuth' (
             'headerAuthId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'resourceId' integer NOT NULL,
             'headerAuthHash' text NOT NULL,
             FOREIGN KEY ('resourceId') REFERENCES 'resources'('resourceId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'targetHealthCheck' (
             'targetHealthCheckId' integer PRIMARY KEY AUTOINCREMENT NOT NULL,
             'targetId' integer NOT NULL,
@@ -234,11 +270,13 @@ export default async function migration() {
             'hcHealth' text DEFAULT 'unknown',
             FOREIGN KEY ('targetId') REFERENCES 'targets'('targetId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
         db.prepare(`DROP TABLE 'limits';`).run();
 
-        db.prepare(`
+        db.prepare(
+            `
         CREATE TABLE 'limits' (
             'limitId' text PRIMARY KEY NOT NULL,
             'featureId' text NOT NULL,
@@ -247,12 +285,15 @@ export default async function migration() {
             'description' text,
             FOREIGN KEY ('orgId') REFERENCES 'orgs'('orgId') ON UPDATE no action ON DELETE cascade
         );
-        `).run();
+        `
+        ).run();
 
         db.prepare(`ALTER TABLE 'orgs' ADD 'settings' text;`).run();
         db.prepare(`ALTER TABLE 'targets' ADD 'rewritePath' text;`).run();
         db.prepare(`ALTER TABLE 'targets' ADD 'rewritePathType' text;`).run();
-        db.prepare(`ALTER TABLE 'targets' ADD 'priority' integer DEFAULT 100 NOT NULL;`).run();
+        db.prepare(
+            `ALTER TABLE 'targets' ADD 'priority' integer DEFAULT 100 NOT NULL;`
+        ).run();
 
         const webauthnCredentials = db
             .prepare(
@@ -269,7 +310,7 @@ export default async function migration() {
             dateCreated: string;
         }[];
 
-        db.prepare(`DELETE FROM 'webauthnCredentials';`).run(); 
+        db.prepare(`DELETE FROM 'webauthnCredentials';`).run();
 
         for (const webauthnCredential of webauthnCredentials) {
             const newCredentialId = isoBase64URL.fromBuffer(
@@ -304,7 +345,9 @@ export default async function migration() {
         ).run();
 
         // 2. Select all rows
-        const resources = db.prepare(`SELECT resourceId FROM resources`).all() as {
+        const resources = db
+            .prepare(`SELECT resourceId FROM resources`)
+            .all() as {
             resourceId: number;
         }[];
 

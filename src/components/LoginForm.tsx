@@ -239,10 +239,10 @@ export default function LoginForm({
         try {
             const response = await loginProxy(
                 {
-                email,
-                password,
-                code,
-                resourceGuid: resourceGuid as string
+                    email,
+                    password,
+                    code,
+                    resourceGuid: resourceGuid as string
                 },
                 forceLogin
             );
@@ -364,7 +364,7 @@ export default function LoginForm({
             {forceLogin && (
                 <Alert variant="neutral">
                     <AlertDescription className="flex items-center gap-2">
-                    <LockIcon className="w-4 h-4" />
+                        <LockIcon className="w-4 h-4" />
                         {t("loginRequiredForDevice")}
                     </AlertDescription>
                 </Alert>
@@ -426,7 +426,7 @@ export default function LoginForm({
 
                                 <div className="text-center">
                                     <Link
-                                        href={`${env.app.dashboardUrl}/auth/reset-password${form.getValues().email ? `?email=${form.getValues().email}` : ""}`}
+                                        href={`${env.app.dashboardUrl}/auth/reset-password${form.getValues().email ? `?email=${encodeURIComponent(form.getValues().email)}` : ""}`}
                                         className="text-sm text-muted-foreground"
                                     >
                                         {t("passwordForgot")}

@@ -395,7 +395,8 @@ export async function quickStart(
                 .values({
                     targetId: newTarget[0].targetId,
                     hcEnabled: false
-                }).returning();
+                })
+                .returning();
 
             // add the new target to the targetIps array
             targetIps.push(`${ip}/32`);
@@ -406,7 +407,12 @@ export async function quickStart(
                 .where(eq(newts.siteId, siteId!))
                 .limit(1);
 
-            await addTargets(newt.newtId, newTarget, newHealthcheck, resource.protocol);
+            await addTargets(
+                newt.newtId,
+                newTarget,
+                newHealthcheck,
+                resource.protocol
+            );
 
             // Set resource pincode if provided
             if (pincode) {

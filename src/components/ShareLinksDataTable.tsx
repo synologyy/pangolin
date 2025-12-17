@@ -1,8 +1,6 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
 import { useTranslations } from "next-intl";
 
@@ -21,7 +19,6 @@ export function ShareLinksDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -29,13 +26,13 @@ export function ShareLinksDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="shareLinks-table"
-            title={t('shareLinks')}
-            searchPlaceholder={t('shareSearch')}
+            title={t("shareLinks")}
+            searchPlaceholder={t("shareSearch")}
             searchColumn="name"
             onAdd={createShareLink}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
-            addButtonText={t('shareCreate')}
+            addButtonText={t("shareCreate")}
             enableColumnVisibility={true}
             stickyLeftColumn="resourceName"
             stickyRightColumn="delete"

@@ -5,7 +5,6 @@ import OrgProvider from "@app/providers/OrgProvider";
 import OrgUserProvider from "@app/providers/OrgUserProvider";
 
 import { redirect } from "next/navigation";
-
 import { getTranslations } from "next-intl/server";
 import { getCachedOrg } from "@app/lib/api/getCachedOrg";
 import { getCachedOrgUser } from "@app/lib/api/getCachedOrgUser";

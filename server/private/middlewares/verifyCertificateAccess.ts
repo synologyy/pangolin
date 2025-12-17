@@ -28,7 +28,8 @@ export async function verifyCertificateAccess(
     try {
         // Assume user/org access is already verified
         const orgId = req.params.orgId;
-        const certId = req.params.certId || req.body?.certId || req.query?.certId;
+        const certId =
+            req.params.certId || req.body?.certId || req.query?.certId;
         let domainId =
             req.params.domainId || req.body?.domainId || req.query?.domainId;
 
@@ -39,10 +40,12 @@ export async function verifyCertificateAccess(
         }
 
         if (!domainId) {
-
             if (!certId) {
                 return next(
-                    createHttpError(HttpCode.BAD_REQUEST, "Must provide either certId or domainId")
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        "Must provide either certId or domainId"
+                    )
                 );
             }
 
@@ -75,7 +78,10 @@ export async function verifyCertificateAccess(
 
         if (!domainId) {
             return next(
-                createHttpError(HttpCode.BAD_REQUEST, "Must provide either certId or domainId")
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    "Must provide either certId or domainId"
+                )
             );
         }
 

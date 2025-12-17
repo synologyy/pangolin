@@ -78,24 +78,27 @@ export default function SetResourceHeaderAuthForm({
     async function onSubmit(data: SetHeaderAuthFormValues) {
         setLoading(true);
 
-        api.post<AxiosResponse<Resource>>(`/resource/${resourceId}/header-auth`, {
-            user: data.user,
-            password: data.password
-        })
+        api.post<AxiosResponse<Resource>>(
+            `/resource/${resourceId}/header-auth`,
+            {
+                user: data.user,
+                password: data.password
+            }
+        )
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorHeaderAuthSetup'),
+                    title: t("resourceErrorHeaderAuthSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorHeaderAuthSetupDescription')
+                        t("resourceErrorHeaderAuthSetupDescription")
                     )
                 });
             })
             .then(() => {
                 toast({
-                    title: t('resourceHeaderAuthSetup'),
-                    description: t('resourceHeaderAuthSetupDescription')
+                    title: t("resourceHeaderAuthSetup"),
+                    description: t("resourceHeaderAuthSetupDescription")
                 });
 
                 if (onSetHeaderAuth) {
@@ -117,9 +120,11 @@ export default function SetResourceHeaderAuthForm({
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('resourceHeaderAuthSetupTitle')}</CredenzaTitle>
+                        <CredenzaTitle>
+                            {t("resourceHeaderAuthSetupTitle")}
+                        </CredenzaTitle>
                         <CredenzaDescription>
-                            {t('resourceHeaderAuthSetupTitleDescription')}
+                            {t("resourceHeaderAuthSetupTitleDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -134,7 +139,7 @@ export default function SetResourceHeaderAuthForm({
                                     name="user"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('user')}</FormLabel>
+                                            <FormLabel>{t("user")}</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     autoComplete="off"
@@ -151,7 +156,9 @@ export default function SetResourceHeaderAuthForm({
                                     name="password"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('password')}</FormLabel>
+                                            <FormLabel>
+                                                {t("password")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     autoComplete="off"
@@ -168,7 +175,7 @@ export default function SetResourceHeaderAuthForm({
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
                             type="submit"
@@ -176,7 +183,7 @@ export default function SetResourceHeaderAuthForm({
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('resourceHeaderAuthSubmit')}
+                            {t("resourceHeaderAuthSubmit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>

@@ -1,30 +1,32 @@
 "use client";
-import { Button } from "@app/components/ui/button";
-import { toast } from "@app/hooks/useToast";
-import { useState, useRef, useEffect } from "react";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { getStoredPageSize, LogDataTable, setStoredPageSize } from "@app/components/LogDataTable";
-import { ColumnDef } from "@tanstack/react-table";
-import { DateTimeValue } from "@app/components/DateTimePicker";
-import { Key, RouteOff, User, Lock, Unlock, ArrowUpRight } from "lucide-react";
-import Link from "next/link";
 import { ColumnFilter } from "@app/components/ColumnFilter";
+import { DateTimeValue } from "@app/components/DateTimePicker";
+import { LogDataTable } from "@app/components/LogDataTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
+import { Button } from "@app/components/ui/button";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient } from "@app/lib/api";
+import { useTranslations } from "next-intl";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
+import { ColumnDef } from "@tanstack/react-table";
+import axios from "axios";
+import { ArrowUpRight, Key, Lock, Unlock, User } from "lucide-react";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { useStoredPageSize } from "@app/hooks/useStoredPageSize";
 
 export default function GeneralPage() {
     const router = useRouter();
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
-    const { env } = useEnvContext();
     const { orgId } = useParams();
     const searchParams = useSearchParams();
 
     const [rows, setRows] = useState<any[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isExporting, setIsExporting] = useState(false);
+    const [isExporting, startTransition] = useTransition();
 
     // Pagination state
     const [totalCount, setTotalCount] = useState<number>(0);
@@ -32,9 +34,7 @@ export default function GeneralPage() {
     const [isLoading, setIsLoading] = useState(false);
 
     // Initialize page size from storage or default
-    const [pageSize, setPageSize] = useState<number>(() => {
-        return getStoredPageSize("request-audit-logs", 20);
-    });
+    const [pageSize, setPageSize] = useStoredPageSize("request-audit-logs", 20);
 
     const [filterAttributes, setFilterAttributes] = useState<{
         actors: string[];
@@ -91,11 +91,11 @@ export default function GeneralPage() {
         }
 
         const now = new Date();
-        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastWeek = getSevenDaysAgo();
 
         return {
             startDate: {
-                date: yesterday
+                date: lastWeek
             },
             endDate: {
                 date: now
@@ -148,7 +148,6 @@ export default function GeneralPage() {
     // Handle page size changes
     const handlePageSizeChange = (newPageSize: number) => {
         setPageSize(newPageSize);
-        setStoredPageSize(newPageSize, "request-audit-logs");
         setCurrentPage(0); // Reset to first page when changing page size
         queryDateTime(dateRange.startDate, dateRange.endDate, 0, newPageSize);
     };
@@ -298,8 +297,6 @@ export default function GeneralPage() {
 
     const exportData = async () => {
         try {
-            setIsExporting(true);
-
             // Prepare query params for export
             const params: any = {
                 timeStart: dateRange.startDate?.date
@@ -331,11 +328,21 @@ export default function GeneralPage() {
             document.body.appendChild(link);
             link.click();
             link.parentNode?.removeChild(link);
-            setIsExporting(false);
         } catch (error) {
+            let apiErrorMessage: string | null = null;
+            if (axios.isAxiosError(error) && error.response) {
+                const data = error.response.data;
+
+                if (data instanceof Blob && data.type === "application/json") {
+                    // Parse the Blob as JSON
+                    const text = await data.text();
+                    const errorData = JSON.parse(text);
+                    apiErrorMessage = errorData.message;
+                }
+            }
             toast({
                 title: t("error"),
-                description: t("exportError"),
+                description: apiErrorMessage ?? t("exportError"),
                 variant: "destructive"
             });
         }
@@ -757,8 +764,8 @@ export default function GeneralPage() {
     return (
         <>
             <SettingsSectionTitle
-                title={t('requestLogs')}
-                description={t('requestLogsDescription')}
+                title={t("requestLogs")}
+                description={t("requestLogsDescription")}
             />
 
             <LogDataTable
@@ -769,7 +776,7 @@ export default function GeneralPage() {
                 searchColumn="host"
                 onRefresh={refreshData}
                 isRefreshing={isRefreshing}
-                onExport={exportData}
+                onExport={() => startTransition(exportData)}
                 isExporting={isExporting}
                 onDateRangeChange={handleDateRangeChange}
                 dateRange={{

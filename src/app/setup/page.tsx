@@ -312,7 +312,9 @@ export default function StepperForm() {
                                                 </FormControl>
                                                 <FormMessage />
                                                 <FormDescription>
-                                                    {t("setupSubnetDescription")}
+                                                    {t(
+                                                        "setupSubnetDescription"
+                                                    )}
                                                 </FormDescription>
                                             </FormItem>
                                         )}

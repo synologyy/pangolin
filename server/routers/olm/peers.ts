@@ -1,14 +1,15 @@
-import { db } from "@server/db";
-import { clients, olms, newts, sites } from "@server/db";
-import { eq } from "drizzle-orm";
 import { sendToClient } from "#dynamic/routers/ws";
+import { db, olms } from "@server/db";
+import config from "@server/lib/config";
 import logger from "@server/logger";
+import { eq } from "drizzle-orm";
 import { Alias } from "yaml";
 
 export async function addPeer(
     clientId: number,
     peer: {
         siteId: number;
+        name: string;
         publicKey: string;
         endpoint: string;
         relayEndpoint: string;
@@ -35,6 +36,7 @@ export async function addPeer(
         type: "olm/wg/peer/add",
         data: {
             siteId: peer.siteId,
+            name: peer.name,
             publicKey: peer.publicKey,
             endpoint: peer.endpoint,
             relayEndpoint: peer.relayEndpoint,
@@ -102,7 +104,7 @@ export async function updatePeer(
             .where(eq(olms.clientId, clientId))
             .limit(1);
         if (!olm) {
-            return
+            return;
         }
         olmId = olm.olmId;
     }
@@ -155,6 +157,7 @@ export async function initPeerAddHandshake(
             siteId: peer.siteId,
             exitNode: {
                 publicKey: peer.exitNode.publicKey,
+                relayPort: config.getRawConfig().gerbil.clients_start_port,
                 endpoint: peer.exitNode.endpoint
             }
         }
@@ -162,5 +165,7 @@ export async function initPeerAddHandshake(
         logger.warn(`Error sending message:`, error);
     });
 
-    logger.info(`Initiated peer add handshake for site ${peer.siteId} to olm ${olmId}`);
+    logger.info(
+        `Initiated peer add handshake for site ${peer.siteId} to olm ${olmId}`
+    );
 }

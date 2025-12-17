@@ -14,13 +14,16 @@ export function RemoteExitNodeProvider({
     children,
     remoteExitNode: serverRemoteExitNode
 }: RemoteExitNodeProviderProps) {
-    const [remoteExitNode, setRemoteExitNode] = useState<GetRemoteExitNodeResponse>(serverRemoteExitNode);
+    const [remoteExitNode, setRemoteExitNode] =
+        useState<GetRemoteExitNodeResponse>(serverRemoteExitNode);
 
     const t = useTranslations();
 
-    const updateRemoteExitNode = (updatedRemoteExitNode: Partial<GetRemoteExitNodeResponse>) => {
+    const updateRemoteExitNode = (
+        updatedRemoteExitNode: Partial<GetRemoteExitNodeResponse>
+    ) => {
         if (!remoteExitNode) {
-            throw new Error(t('remoteExitNodeErrorNoUpdate'));
+            throw new Error(t("remoteExitNodeErrorNoUpdate"));
         }
         setRemoteExitNode((prev) => {
             if (!prev) {
@@ -34,7 +37,9 @@ export function RemoteExitNodeProvider({
     };
 
     return (
-        <RemoteExitNodeContext.Provider value={{ remoteExitNode, updateRemoteExitNode }}>
+        <RemoteExitNodeContext.Provider
+            value={{ remoteExitNode, updateRemoteExitNode }}
+        >
             {children}
         </RemoteExitNodeContext.Provider>
     );

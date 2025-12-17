@@ -71,7 +71,9 @@ export function DeviceAuthConfirmation({
                     <BrandingLogo height={logoHeight} width={logoWidth} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
-                    <p className="text-muted-foreground">{t("deviceActivation")}</p>
+                    <p className="text-muted-foreground">
+                        {t("deviceActivation")}
+                    </p>
                 </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
@@ -93,7 +95,9 @@ export function DeviceAuthConfirmation({
                             </p>
                             {metadata.deviceName && (
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {t("deviceLabel", { deviceName: metadata.deviceName })}
+                                    {t("deviceLabel", {
+                                        deviceName: metadata.deviceName
+                                    })}
                                 </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-1">
@@ -103,7 +107,9 @@ export function DeviceAuthConfirmation({
                     </div>
 
                     <div className="space-y-2 pt-2">
-                        <p className="text-sm font-medium">{t("deviceExistingAccess")}</p>
+                        <p className="text-sm font-medium">
+                            {t("deviceExistingAccess")}
+                        </p>
                         <div className="space-y-1 pl-4">
                             <div className="flex items-center gap-2 text-sm">
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -111,9 +117,7 @@ export function DeviceAuthConfirmation({
                             </div>
                             <div className="flex items-center gap-2 text-sm">
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                <span>
-                                    {t("deviceOrganizationsAccess")}
-                                </span>
+                                <span>{t("deviceOrganizationsAccess")}</span>
                             </div>
                         </div>
                     </div>
@@ -136,7 +140,9 @@ export function DeviceAuthConfirmation({
                     disabled={loading}
                     loading={loading}
                 >
-                    {t("deviceAuthorize", { applicationName: metadata.applicationName })}
+                    {t("deviceAuthorize", {
+                        applicationName: metadata.applicationName
+                    })}
                 </Button>
             </CardFooter>
         </Card>

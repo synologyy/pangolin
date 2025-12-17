@@ -63,7 +63,9 @@ export async function setSiteResourceUsers(
 
         const { userIds } = parsedBody.data;
 
-        const parsedParams = setSiteResourceUsersParamsSchema.safeParse(req.params);
+        const parsedParams = setSiteResourceUsersParamsSchema.safeParse(
+            req.params
+        );
         if (!parsedParams.success) {
             return next(
                 createHttpError(
@@ -99,7 +101,9 @@ export async function setSiteResourceUsers(
             if (userIds.length > 0) {
                 await trx
                     .insert(userSiteResources)
-                    .values(userIds.map((userId) => ({ userId, siteResourceId })));
+                    .values(
+                        userIds.map((userId) => ({ userId, siteResourceId }))
+                    );
             }
 
             await rebuildClientAssociationsFromSiteResource(siteResource, trx);
@@ -119,4 +123,3 @@ export async function setSiteResourceUsers(
         );
     }
 }
-

@@ -111,6 +111,7 @@ authenticated.get(
 authenticated.get(
     "/org/:orgId/site/:niceId",
     verifyOrgAccess,
+    verifySiteAccess,
     verifyUserHasAction(ActionsEnum.getSite),
     site.getSite
 );
@@ -144,6 +145,14 @@ authenticated.get(
 
 authenticated.get(
     "/client/:clientId",
+    verifyClientAccess,
+    verifyUserHasAction(ActionsEnum.getClient),
+    client.getClient
+);
+
+authenticated.get(
+    "/org/:orgId/client/:niceId",
+    verifyOrgAccess,
     verifyClientAccess,
     verifyUserHasAction(ActionsEnum.getClient),
     client.getClient
@@ -309,7 +318,7 @@ authenticated.post(
     verifyRoleAccess,
     verifyUserHasAction(ActionsEnum.setResourceRoles),
     logActionAudit(ActionsEnum.setResourceRoles),
-    siteResource.setSiteResourceRoles,
+    siteResource.setSiteResourceRoles
 );
 
 authenticated.post(
@@ -318,7 +327,7 @@ authenticated.post(
     verifySetResourceUsers,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.setSiteResourceUsers,
+    siteResource.setSiteResourceUsers
 );
 
 authenticated.post(
@@ -327,7 +336,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.setSiteResourceClients,
+    siteResource.setSiteResourceClients
 );
 
 authenticated.post(
@@ -336,7 +345,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.addClientToSiteResource,
+    siteResource.addClientToSiteResource
 );
 
 authenticated.post(
@@ -345,7 +354,7 @@ authenticated.post(
     verifySetResourceClients,
     verifyUserHasAction(ActionsEnum.setResourceUsers),
     logActionAudit(ActionsEnum.setResourceUsers),
-    siteResource.removeClientFromSiteResource,
+    siteResource.removeClientFromSiteResource
 );
 
 authenticated.put(
@@ -458,6 +467,7 @@ authenticated.get(
 authenticated.get(
     "/org/:orgId/resource/:niceId",
     verifyOrgAccess,
+    verifyResourceAccess,
     verifyUserHasAction(ActionsEnum.getResource),
     resource.getResource
 );
@@ -802,17 +812,9 @@ authenticated.delete(
 //     createNewt
 // );
 
-authenticated.put(
-    "/user/:userId/olm",
-    verifyIsLoggedInUser,
-    olm.createUserOlm
-);
+authenticated.put("/user/:userId/olm", verifyIsLoggedInUser, olm.createUserOlm);
 
-authenticated.get(
-    "/user/:userId/olms",
-    verifyIsLoggedInUser,
-    olm.listUserOlms
-);
+authenticated.get("/user/:userId/olms", verifyIsLoggedInUser, olm.listUserOlms);
 
 authenticated.delete(
     "/user/:userId/olm/:olmId",

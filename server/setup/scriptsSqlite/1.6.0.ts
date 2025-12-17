@@ -58,7 +58,9 @@ export default async function migration() {
 
         console.log(`Set trust_proxy to 1 in config file`);
     } catch (e) {
-        console.log(`Unable to migrate config file. Please do it manually. Error: ${e}`);
+        console.log(
+            `Unable to migrate config file. Please do it manually. Error: ${e}`
+        );
     }
 
     console.log(`${version} migration complete`);

@@ -20,7 +20,7 @@ export function SiteProvider({
 
     const updateSite = (updatedSite: Partial<GetSiteResponse>) => {
         if (!site) {
-            throw new Error(t('siteErrorNoUpdate'));
+            throw new Error(t("siteErrorNoUpdate"));
         }
         setSite((prev) => {
             if (!prev) {

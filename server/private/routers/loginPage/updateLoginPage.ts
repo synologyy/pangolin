@@ -35,7 +35,8 @@ const paramsSchema = z
     })
     .strict();
 
-const bodySchema = z.strictObject({
+const bodySchema = z
+    .strictObject({
         subdomain: subdomainSchema.nullable().optional(),
         domainId: z.string().optional()
     })
@@ -86,7 +87,7 @@ export async function updateLoginPage(
 
         const { loginPageId, orgId } = parsedParams.data;
 
-        if (build === "saas"){
+        if (build === "saas") {
             const { tier } = await getOrgTierData(orgId);
             const subscribed = tier === TierId.STANDARD;
             if (!subscribed) {
@@ -182,7 +183,10 @@ export async function updateLoginPage(
                 }
 
                 // update the full domain if it has changed
-                if (fullDomain && fullDomain !== existingLoginPage?.fullDomain) {
+                if (
+                    fullDomain &&
+                    fullDomain !== existingLoginPage?.fullDomain
+                ) {
                     await db
                         .update(loginPage)
                         .set({ fullDomain })

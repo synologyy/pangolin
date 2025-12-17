@@ -10,9 +10,9 @@ import { eq } from "drizzle-orm";
 import { fromError } from "zod-validation-error";
 
 const addUserSiteSchema = z.strictObject({
-        userId: z.string(),
-        siteId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    userId: z.string(),
+    siteId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export async function addUserSite(
     req: Request,
@@ -61,7 +61,6 @@ export async function addUserSite(
                 status: HttpCode.CREATED
             });
         });
-
     } catch (error) {
         logger.error(error);
         return next(

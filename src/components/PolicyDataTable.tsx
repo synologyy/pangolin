@@ -15,18 +15,17 @@ export function PolicyDataTable<TData, TValue>({
     data,
     onAdd
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
-    
+
     return (
         <DataTable
             columns={columns}
             data={data}
             persistPageSize="orgPolicies-table"
-            title={t('orgPolicies')}
-            searchPlaceholder={t('orgPoliciesSearch')}
+            title={t("orgPolicies")}
+            searchPlaceholder={t("orgPoliciesSearch")}
             searchColumn="orgId"
-            addButtonText={t('orgPoliciesAdd')}
+            addButtonText={t("orgPoliciesAdd")}
             onAdd={onAdd}
             enableColumnVisibility={true}
             stickyLeftColumn="orgId"
