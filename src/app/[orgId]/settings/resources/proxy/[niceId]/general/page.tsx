@@ -91,8 +91,14 @@ export default function GeneralForm() {
         `${resource.ssl ? "https" : "http"}://${toUnicode(resource.fullDomain || "")}`
     );
 
+    const resourceFullDomainName = useMemo(() => {
+        const url = new URL(resourceFullDomain);
+        return url.hostname;
+    }, [resourceFullDomain]);
+
     const [selectedDomain, setSelectedDomain] = useState<{
         domainId: string;
+        domainNamespaceId?: string;
         subdomain?: string;
         fullDomain: string;
         baseDomain: string;
@@ -491,19 +497,21 @@ export default function GeneralForm() {
                                 orgId={orgId as string}
                                 cols={1}
                                 defaultSubdomain={
-                                    selectedDomain?.subdomain ??
+                                    form.getValues("subdomain") ??
                                     resource.subdomain
                                 }
                                 defaultDomainId={
-                                    selectedDomain?.domainId ??
+                                    form.getValues("domainId") ??
                                     resource.domainId
                                 }
+                                defaultFullDomain={resourceFullDomainName}
                                 onDomainChange={(res) => {
                                     const selected = {
                                         domainId: res.domainId,
                                         subdomain: res.subdomain,
                                         fullDomain: res.fullDomain,
-                                        baseDomain: res.baseDomain
+                                        baseDomain: res.baseDomain,
+                                        domainNamespaceId: res.domainNamespaceId
                                     };
                                     setSelectedDomain(selected);
                                 }}
