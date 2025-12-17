@@ -38,7 +38,9 @@ export async function quickStartRemoteExitNode(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = quickStartRemoteExitNodeBodySchema.safeParse(req.body);
+        const parsedBody = quickStartRemoteExitNodeBodySchema.safeParse(
+            req.body
+        );
         if (!parsedBody.success) {
             return next(
                 createHttpError(

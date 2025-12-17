@@ -80,7 +80,7 @@ export async function reGenerateSiteSecret(
             const secretHash = await hashPassword(secret);
 
             // get the newt to verify it exists
-             const existingNewts = await db
+            const existingNewts = await db
                 .select()
                 .from(newts)
                 .where(eq(newts.siteId, siteId));
@@ -120,15 +120,20 @@ export async function reGenerateSiteSecret(
                     data: {}
                 };
                 // Don't await this to prevent blocking the response
-                sendToClient(existingNewts[0].newtId, payload).catch((error) => {
-                    logger.error(
-                        "Failed to send termination message to newt:",
-                        error
-                    );
-                });
+                sendToClient(existingNewts[0].newtId, payload).catch(
+                    (error) => {
+                        logger.error(
+                            "Failed to send termination message to newt:",
+                            error
+                        );
+                    }
+                );
 
                 disconnectClient(existingNewts[0].newtId).catch((error) => {
-                    logger.error("Failed to disconnect newt after re-key:", error);
+                    logger.error(
+                        "Failed to disconnect newt after re-key:",
+                        error
+                    );
                 });
             }
 

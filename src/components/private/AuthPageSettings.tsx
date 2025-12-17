@@ -459,8 +459,7 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                                 </div>
                                             )}
 
-                                            {env.flags
-                                                .usePangolinDns &&
+                                            {env.flags.usePangolinDns &&
                                                 (build === "enterprise" ||
                                                     (build === "saas" &&
                                                         subscription?.subscribed)) &&
@@ -511,13 +510,24 @@ const AuthPageSettings = forwardRef<AuthPageSettingsRef, AuthPageSettingsProps>(
                                 hideFreeDomain={true}
                                 orgId={org?.org.orgId as string}
                                 cols={1}
+                                defaultDomainId={
+                                    form.getValues("authPageDomainId") ??
+                                    loginPage?.domainId
+                                }
+                                defaultSubdomain={
+                                    form.getValues("authPageSubdomain") ??
+                                    loginPage?.subdomain
+                                }
                                 onDomainChange={(res) => {
-                                    const selected = {
-                                        domainId: res.domainId,
-                                        subdomain: res.subdomain,
-                                        fullDomain: res.fullDomain,
-                                        baseDomain: res.baseDomain
-                                    };
+                                    const selected =
+                                        res === null
+                                            ? null
+                                            : {
+                                                  domainId: res.domainId,
+                                                  subdomain: res.subdomain,
+                                                  fullDomain: res.fullDomain,
+                                                  baseDomain: res.baseDomain
+                                              };
                                     setSelectedDomain(selected);
                                 }}
                             />

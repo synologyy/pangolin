@@ -23,17 +23,18 @@ function getActionsCategories(root: boolean) {
 
     const actionsByCategory: Record<string, Record<string, string>> = {
         Organization: {
-            [t('actionGetOrg')]: "getOrg",
-            [t('actionUpdateOrg')]: "updateOrg",
-            [t('actionGetOrgUser')]: "getOrgUser",
-            [t('actionInviteUser')]: "inviteUser",
-            [t('actionListInvitations')]: "listInvitations",
-            [t('actionRemoveUser')]: "removeUser",
-            [t('actionListUsers')]: "listUsers",
-            [t('actionListOrgDomains')]: "listOrgDomains",
-            [t('updateOrgUser')]: "updateOrgUser",
-            [t('createOrgUser')]: "createOrgUser",
-            [t('actionApplyBlueprint')]: "applyBlueprint",
+            [t("actionGetOrg")]: "getOrg",
+            [t("actionUpdateOrg")]: "updateOrg",
+            [t("actionGetOrgUser")]: "getOrgUser",
+            [t("actionInviteUser")]: "inviteUser",
+            [t("actionRemoveInvitation")]: "removeInvitation",
+            [t("actionListInvitations")]: "listInvitations",
+            [t("actionRemoveUser")]: "removeUser",
+            [t("actionListUsers")]: "listUsers",
+            [t("actionListOrgDomains")]: "listOrgDomains",
+            [t("updateOrgUser")]: "updateOrgUser",
+            [t("createOrgUser")]: "createOrgUser",
+            [t("actionApplyBlueprint")]: "applyBlueprint"
         },
 
         Site: {
@@ -46,25 +47,25 @@ function getActionsCategories(root: boolean) {
         },
 
         Resource: {
-            [t('actionCreateResource')]: "createResource",
-            [t('actionDeleteResource')]: "deleteResource",
-            [t('actionGetResource')]: "getResource",
-            [t('actionListResource')]: "listResources",
-            [t('actionUpdateResource')]: "updateResource",
-            [t('actionListResourceUsers')]: "listResourceUsers",
-            [t('actionSetResourceUsers')]: "setResourceUsers",
-            [t('actionSetAllowedResourceRoles')]: "setResourceRoles",
-            [t('actionListAllowedResourceRoles')]: "listResourceRoles",
-            [t('actionSetResourcePassword')]: "setResourcePassword",
-            [t('actionSetResourcePincode')]: "setResourcePincode",
-            [t('actionSetResourceHeaderAuth')]: "setResourceHeaderAuth",
-            [t('actionSetResourceEmailWhitelist')]: "setResourceWhitelist",
-            [t('actionGetResourceEmailWhitelist')]: "getResourceWhitelist",
-            [t('actionCreateSiteResource')]: "createSiteResource",
-            [t('actionDeleteSiteResource')]: "deleteSiteResource",
-            [t('actionGetSiteResource')]: "getSiteResource",
-            [t('actionListSiteResources')]: "listSiteResources",
-            [t('actionUpdateSiteResource')]: "updateSiteResource"
+            [t("actionCreateResource")]: "createResource",
+            [t("actionDeleteResource")]: "deleteResource",
+            [t("actionGetResource")]: "getResource",
+            [t("actionListResource")]: "listResources",
+            [t("actionUpdateResource")]: "updateResource",
+            [t("actionListResourceUsers")]: "listResourceUsers",
+            [t("actionSetResourceUsers")]: "setResourceUsers",
+            [t("actionSetAllowedResourceRoles")]: "setResourceRoles",
+            [t("actionListAllowedResourceRoles")]: "listResourceRoles",
+            [t("actionSetResourcePassword")]: "setResourcePassword",
+            [t("actionSetResourcePincode")]: "setResourcePincode",
+            [t("actionSetResourceHeaderAuth")]: "setResourceHeaderAuth",
+            [t("actionSetResourceEmailWhitelist")]: "setResourceWhitelist",
+            [t("actionGetResourceEmailWhitelist")]: "getResourceWhitelist",
+            [t("actionCreateSiteResource")]: "createSiteResource",
+            [t("actionDeleteSiteResource")]: "deleteSiteResource",
+            [t("actionGetSiteResource")]: "getSiteResource",
+            [t("actionListSiteResources")]: "listSiteResources",
+            [t("actionUpdateSiteResource")]: "updateSiteResource"
         },
 
         Target: {
@@ -91,23 +92,23 @@ function getActionsCategories(root: boolean) {
         },
 
         "Resource Rule": {
-            [t('actionCreateResourceRule')]: "createResourceRule",
-            [t('actionDeleteResourceRule')]: "deleteResourceRule",
-            [t('actionListResourceRules')]: "listResourceRules",
-            [t('actionUpdateResourceRule')]: "updateResourceRule"
+            [t("actionCreateResourceRule")]: "createResourceRule",
+            [t("actionDeleteResourceRule")]: "deleteResourceRule",
+            [t("actionListResourceRules")]: "listResourceRules",
+            [t("actionUpdateResourceRule")]: "updateResourceRule"
         },
 
-        "Client": {
-            [t('actionCreateClient')]: "createClient",
-            [t('actionDeleteClient')]: "deleteClient",
-            [t('actionUpdateClient')]: "updateClient",
-            [t('actionListClients')]: "listClients",
-            [t('actionGetClient')]: "getClient"
+        Client: {
+            [t("actionCreateClient")]: "createClient",
+            [t("actionDeleteClient")]: "deleteClient",
+            [t("actionUpdateClient")]: "updateClient",
+            [t("actionListClients")]: "listClients",
+            [t("actionGetClient")]: "getClient"
         },
 
-        "Logs": {
-            [t('actionExportLogs')]: "exportLogs",
-            [t('actionViewLogs')]: "viewLogs",
+        Logs: {
+            [t("actionExportLogs")]: "exportLogs",
+            [t("actionViewLogs")]: "viewLogs"
         }
     };
 
@@ -144,7 +145,7 @@ function getActionsCategories(root: boolean) {
 
         if (build == "saas") {
             actionsByCategory["SAAS"] = {
-                ["Send Usage Notification Email"]: "sendUsageNotification",
+                ["Send Usage Notification Email"]: "sendUsageNotification"
             };
         }
     }

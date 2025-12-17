@@ -28,8 +28,8 @@ import { FeatureId } from "@server/lib/billing";
 import { GetOrgUsageResponse } from "@server/routers/billing/types";
 
 const getOrgSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "get",
@@ -78,11 +78,23 @@ export async function getOrgUsage(
         // Get usage for org
         const usageData = [];
 
-        const siteUptime = await usageService.getUsage(orgId, FeatureId.SITE_UPTIME);
+        const siteUptime = await usageService.getUsage(
+            orgId,
+            FeatureId.SITE_UPTIME
+        );
         const users = await usageService.getUsageDaily(orgId, FeatureId.USERS);
-        const domains = await usageService.getUsageDaily(orgId, FeatureId.DOMAINS);
-        const remoteExitNodes = await usageService.getUsageDaily(orgId, FeatureId.REMOTE_EXIT_NODES);
-        const egressData = await usageService.getUsage(orgId, FeatureId.EGRESS_DATA_MB);
+        const domains = await usageService.getUsageDaily(
+            orgId,
+            FeatureId.DOMAINS
+        );
+        const remoteExitNodes = await usageService.getUsageDaily(
+            orgId,
+            FeatureId.REMOTE_EXIT_NODES
+        );
+        const egressData = await usageService.getUsage(
+            orgId,
+            FeatureId.EGRESS_DATA_MB
+        );
 
         if (siteUptime) {
             usageData.push(siteUptime);
@@ -100,7 +112,8 @@ export async function getOrgUsage(
             usageData.push(remoteExitNodes);
         }
 
-        const orgLimits = await db.select()
+        const orgLimits = await db
+            .select()
             .from(limits)
             .where(eq(limits.orgId, orgId));
 

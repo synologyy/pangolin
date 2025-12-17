@@ -26,7 +26,9 @@ export default function DeviceAuthSuccessPage() {
                     <BrandingLogo height={logoHeight} width={logoWidth} />
                 </div>
                 <div className="text-center space-y-1 pt-3">
-                    <p className="text-muted-foreground">{t("deviceActivation")}</p>
+                    <p className="text-muted-foreground">
+                        {t("deviceActivation")}
+                    </p>
                 </div>
             </CardHeader>
             <CardContent className="p-6">

@@ -45,13 +45,13 @@ export default function RegionSelector() {
     return (
         <div className="flex flex-col items-center space-y-2">
             <label className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
-                {t('regionSelectorTitle')}
-                <InfoPopup info={t('regionSelectorInfo')} />
+                {t("regionSelectorTitle")}
+                <InfoPopup info={t("regionSelectorInfo")} />
             </label>
 
             <Select value={selectedRegion} onValueChange={handleRegionChange}>
                 <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder={t('regionSelectorPlaceholder')} />
+                    <SelectValue placeholder={t("regionSelectorPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                     {regions.map((region) => (
@@ -74,7 +74,7 @@ export default function RegionSelector() {
                                     </span>
                                     {region.value === "eu" && (
                                         <span className="text-xs text-muted-foreground">
-                                            {t('regionSelectorComingSoon')}
+                                            {t("regionSelectorComingSoon")}
                                         </span>
                                     )}
                                 </div>

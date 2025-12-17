@@ -10,13 +10,13 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const removeUserActionParamsSchema = z.strictObject({
-        userId: z.string()
-    });
+    userId: z.string()
+});
 
 const removeUserActionSchema = z.strictObject({
-        actionId: z.string(),
-        orgId: z.string()
-    });
+    actionId: z.string(),
+    orgId: z.string()
+});
 
 export async function removeUserAction(
     req: Request,

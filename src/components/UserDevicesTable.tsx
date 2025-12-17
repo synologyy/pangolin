@@ -401,7 +401,7 @@ export default function UserDevicesTable({ userClients }: ClientTableProps) {
                         setSelectedClient(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("deleteClientQuestion")}</p>
                             <p>{t("clientMessageRemove")}</p>
                         </div>

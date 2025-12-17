@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { Button } from "@app/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@app/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@app/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from "@app/components/ui/popover";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList
+} from "@app/components/ui/command";
 import { CheckIcon, ChevronDownIcon, Filter } from "lucide-react";
 import { cn } from "@app/lib/cn";
 
@@ -31,7 +42,9 @@ export function ColumnFilter({
 }: ColumnFilterProps) {
     const [open, setOpen] = useState(false);
 
-    const selectedOption = options.find(option => option.value === selectedValue);
+    const selectedOption = options.find(
+        (option) => option.value === selectedValue
+    );
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -49,7 +62,9 @@ export function ColumnFilter({
                     <div className="flex items-center gap-2">
                         <Filter className="h-4 w-4" />
                         <span className="truncate">
-                            {selectedOption ? selectedOption.label : placeholder}
+                            {selectedOption
+                                ? selectedOption.label
+                                : placeholder}
                         </span>
                     </div>
                     <ChevronDownIcon className="h-4 w-4 shrink-0 opacity-50" />
@@ -79,7 +94,9 @@ export function ColumnFilter({
                                     value={option.label}
                                     onSelect={() => {
                                         onValueChange(
-                                            selectedValue === option.value ? undefined : option.value
+                                            selectedValue === option.value
+                                                ? undefined
+                                                : option.value
                                         );
                                         setOpen(false);
                                     }}

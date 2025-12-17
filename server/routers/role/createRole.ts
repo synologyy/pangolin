@@ -12,13 +12,13 @@ import { eq, and } from "drizzle-orm";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const createRoleParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const createRoleSchema = z.strictObject({
-        name: z.string().min(1).max(255),
-        description: z.string().optional()
-    });
+    name: z.string().min(1).max(255),
+    description: z.string().optional()
+});
 
 export const defaultRoleAllowedActions: ActionsEnum[] = [
     ActionsEnum.getOrg,

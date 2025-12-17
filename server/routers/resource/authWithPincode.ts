@@ -15,15 +15,12 @@ import config from "@server/lib/config";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 export const authWithPincodeBodySchema = z.strictObject({
-        pincode: z.string()
-    });
+    pincode: z.string()
+});
 
 export const authWithPincodeParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export type AuthWithPincodeResponse = {
     session?: string;

@@ -2,9 +2,7 @@ import { APP_PATH } from "@server/lib/consts";
 import { defineConfig } from "drizzle-kit";
 import path from "path";
 
-const schema = [
-    path.join("server", "db", "sqlite", "schema"),
-];
+const schema = [path.join("server", "db", "sqlite", "schema")];
 
 export default defineConfig({
     dialect: "sqlite",

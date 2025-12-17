@@ -8,7 +8,7 @@ const runMigrations = async () => {
     console.log("Running migrations...");
     try {
         migrate(db as any, {
-            migrationsFolder: migrationsFolder,
+            migrationsFolder: migrationsFolder
         });
         console.log("Migrations completed successfully.");
     } catch (error) {

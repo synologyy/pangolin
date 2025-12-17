@@ -20,25 +20,25 @@ import { verifyExitNodeOrgAccess } from "#dynamic/lib/exitNodes";
 import { build } from "@server/build";
 
 const createSiteParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const createSiteSchema = z.strictObject({
-        name: z.string().min(1).max(255),
-        exitNodeId: z.int().positive().optional(),
-        // subdomain: z
-        //     .string()
-        //     .min(1)
-        //     .max(255)
-        //     .transform((val) => val.toLowerCase())
-        //     .optional(),
-        pubKey: z.string().optional(),
-        subnet: z.string().optional(),
-        newtId: z.string().optional(),
-        secret: z.string().optional(),
-        address: z.string().optional(),
-        type: z.enum(["newt", "wireguard", "local"])
-    });
+    name: z.string().min(1).max(255),
+    exitNodeId: z.int().positive().optional(),
+    // subdomain: z
+    //     .string()
+    //     .min(1)
+    //     .max(255)
+    //     .transform((val) => val.toLowerCase())
+    //     .optional(),
+    pubKey: z.string().optional(),
+    subnet: z.string().optional(),
+    newtId: z.string().optional(),
+    secret: z.string().optional(),
+    address: z.string().optional(),
+    type: z.enum(["newt", "wireguard", "local"])
+});
 // .refine((data) => {
 //     if (data.type === "local") {
 //         return !config.getRawConfig().flags?.disable_local_sites;

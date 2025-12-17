@@ -15,17 +15,17 @@ import config from "@server/lib/config";
 const paramsSchema = z.strictObject({});
 
 const bodySchema = z.strictObject({
-        name: z.string().nonempty(),
-        clientId: z.string().nonempty(),
-        clientSecret: z.string().nonempty(),
-        authUrl: z.url(),
-        tokenUrl: z.url(),
-        identifierPath: z.string().nonempty(),
-        emailPath: z.string().optional(),
-        namePath: z.string().optional(),
-        scopes: z.string().nonempty(),
-        autoProvision: z.boolean().optional()
-    });
+    name: z.string().nonempty(),
+    clientId: z.string().nonempty(),
+    clientSecret: z.string().nonempty(),
+    authUrl: z.url(),
+    tokenUrl: z.url(),
+    identifierPath: z.string().nonempty(),
+    emailPath: z.string().optional(),
+    namePath: z.string().optional(),
+    scopes: z.string().nonempty(),
+    autoProvision: z.boolean().optional()
+});
 
 export type CreateIdpResponse = {
     idpId: number;

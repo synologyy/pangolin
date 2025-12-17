@@ -177,7 +177,7 @@ export const targetHealthCheck = pgTable("targetHealthCheck", {
     hcMethod: varchar("hcMethod").default("GET"),
     hcStatus: integer("hcStatus"), // http code
     hcHealth: text("hcHealth").default("unknown"), // "unknown", "healthy", "unhealthy"
-    hcTlsServerName: text("hcTlsServerName"),
+    hcTlsServerName: text("hcTlsServerName")
 });
 
 export const exitNodes = pgTable("exitNodes", {
@@ -213,7 +213,10 @@ export const siteResources = pgTable("siteResources", {
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
     alias: varchar("alias"),
-    aliasAddress: varchar("aliasAddress")
+    aliasAddress: varchar("aliasAddress"),
+    tcpPortRangeString: varchar("tcpPortRangeString"),
+    udpPortRangeString: varchar("udpPortRangeString"),
+    disableIcmp: boolean("disableIcmp").notNull().default(false)
 });
 
 export const clientSiteResources = pgTable("clientSiteResources", {

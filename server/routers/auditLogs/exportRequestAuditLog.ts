@@ -9,9 +9,12 @@ import logger from "@server/logger";
 import {
     queryAccessAuditLogsQuery,
     queryRequestAuditLogsParams,
-    queryRequest
+    queryRequest,
+    countRequestQuery
 } from "./queryRequestAuditLog";
 import { generateCSV } from "./generateCSV";
+
+export const MAX_EXPORT_LIMIT = 50_000;
 
 registry.registerPath({
     method: "get",
@@ -19,7 +22,10 @@ registry.registerPath({
     description: "Query the request audit log for an organization",
     tags: [OpenAPITags.Org],
     request: {
-        query: queryAccessAuditLogsQuery,
+        query: queryAccessAuditLogsQuery.omit({
+            limit: true,
+            offset: true
+        }),
         params: queryRequestAuditLogsParams
     },
     responses: {}
@@ -53,9 +59,19 @@ export async function exportRequestAuditLogs(
 
         const data = { ...parsedQuery.data, ...parsedParams.data };
 
+        const [{ count }] = await countRequestQuery(data);
+        if (count > MAX_EXPORT_LIMIT) {
+            return next(
+                createHttpError(
+                    HttpCode.BAD_REQUEST,
+                    `Export limit exceeded. Your selection contains ${count} rows, but the maximum is ${MAX_EXPORT_LIMIT} rows. Please select a shorter time range to reduce the data.`
+                )
+            );
+        }
+
         const baseQuery = queryRequest(data);
 
-        const log = await baseQuery.limit(data.limit).offset(data.offset);
+        const log = await baseQuery.limit(MAX_EXPORT_LIMIT);
 
         const csvData = generateCSV(log);
 

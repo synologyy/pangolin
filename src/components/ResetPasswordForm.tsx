@@ -342,7 +342,10 @@ export default function ResetPasswordForm({
                                                 <FormControl>
                                                     <Input
                                                         {...field}
-                                                        disabled={env.email.emailEnabled}
+                                                        disabled={
+                                                            env.email
+                                                                .emailEnabled
+                                                        }
                                                     />
                                                 </FormControl>
                                                 <FormMessage />

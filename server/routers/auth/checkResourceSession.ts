@@ -9,7 +9,7 @@ import logger from "@server/logger";
 
 export const params = z.strictObject({
     token: z.string(),
-    resourceId: z.string().transform(Number).pipe(z.int().positive()),
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
 });
 
 export type CheckResourceSessionParams = z.infer<typeof params>;
@@ -21,7 +21,7 @@ export type CheckResourceSessionResponse = {
 export async function checkResourceSession(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ): Promise<any> {
     const parsedParams = params.safeParse(req.params);
 
@@ -29,8 +29,8 @@ export async function checkResourceSession(
         return next(
             createHttpError(
                 HttpCode.BAD_REQUEST,
-                fromError(parsedParams.error).toString(),
-            ),
+                fromError(parsedParams.error).toString()
+            )
         );
     }
 
@@ -39,7 +39,7 @@ export async function checkResourceSession(
     try {
         const { resourceSession } = await validateResourceSessionToken(
             token,
-            resourceId,
+            resourceId
         );
 
         let valid = false;
@@ -52,15 +52,15 @@ export async function checkResourceSession(
             success: true,
             error: false,
             message: "Checked validity",
-            status: HttpCode.OK,
+            status: HttpCode.OK
         });
     } catch (e) {
         logger.error(e);
         return next(
             createHttpError(
                 HttpCode.INTERNAL_SERVER_ERROR,
-                "Failed to reset password",
-            ),
+                "Failed to reset password"
+            )
         );
     }
 }

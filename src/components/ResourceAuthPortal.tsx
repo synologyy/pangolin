@@ -93,7 +93,7 @@ type ResourceAuthPortalProps = {
 export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
     const router = useRouter();
     const t = useTranslations();
-    const { isUnlocked } = useLicenseStatusContext();
+    const { isUnlocked, licenseStatus } = useLicenseStatusContext();
 
     const getNumMethods = () => {
         let colLength = 0;
@@ -335,8 +335,12 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
             : t("authenticationRequest", { name: resourceName });
     }
 
-    const logoWidth = isUnlocked() ? env.branding.logo?.authPage?.width || 100 : 100;
-    const logoHeight = isUnlocked() ? env.branding.logo?.authPage?.height || 100 : 100;
+    const logoWidth = isUnlocked()
+        ? env.branding.logo?.authPage?.width || 100
+        : 100;
+    const logoHeight = isUnlocked()
+        ? env.branding.logo?.authPage?.height || 100
+        : 100;
 
     return (
         <div>
@@ -733,6 +737,22 @@ export default function ResourceAuthPortal(props: ResourceAuthPortalProps) {
                             </span>
                         </div>
                     )}
+                    {build === "enterprise" && !isUnlocked() ? (
+                        <div className="text-center mt-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                {t("instanceIsUnlicensed")}
+                            </span>
+                        </div>
+                    ) : null}
+                    {build === "enterprise" &&
+                    isUnlocked() &&
+                    licenseStatus?.tier === "personal" ? (
+                        <div className="text-center mt-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                {t("loginPageLicenseWatermark")}
+                            </span>
+                        </div>
+                    ) : null}
                 </div>
             ) : (
                 <ResourceAccessDenied />

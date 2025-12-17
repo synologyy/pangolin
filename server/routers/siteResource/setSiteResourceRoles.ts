@@ -136,15 +136,19 @@ export async function setSiteResourceRoles(
                     )
                 );
             } else {
-                await trx.delete(roleSiteResources).where(
-                    eq(roleSiteResources.siteResourceId, siteResourceId)
-                );
+                await trx
+                    .delete(roleSiteResources)
+                    .where(
+                        eq(roleSiteResources.siteResourceId, siteResourceId)
+                    );
             }
 
             if (roleIds.length > 0) {
                 await trx
                     .insert(roleSiteResources)
-                    .values(roleIds.map((roleId) => ({ roleId, siteResourceId })));
+                    .values(
+                        roleIds.map((roleId) => ({ roleId, siteResourceId }))
+                    );
             }
 
             await rebuildClientAssociationsFromSiteResource(siteResource, trx);

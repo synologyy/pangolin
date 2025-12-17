@@ -19,7 +19,7 @@ import { build } from "@server/build";
 class RedisManager {
     public client: Redis | null = null;
     private writeClient: Redis | null = null; // Master for writes
-    private readClient: Redis | null = null;  // Replica for reads
+    private readClient: Redis | null = null; // Replica for reads
     private subscriber: Redis | null = null;
     private publisher: Redis | null = null;
     private isEnabled: boolean = false;
@@ -46,7 +46,8 @@ class RedisManager {
             this.isEnabled = false;
             return;
         }
-        this.isEnabled = privateConfig.getRawPrivateConfig().flags.enable_redis || false;
+        this.isEnabled =
+            privateConfig.getRawPrivateConfig().flags.enable_redis || false;
         if (this.isEnabled) {
             this.initializeClients();
         }
@@ -63,15 +64,19 @@ class RedisManager {
     }
 
     private async triggerReconnectionCallbacks(): Promise<void> {
-        logger.info(`Triggering ${this.reconnectionCallbacks.size} reconnection callbacks`);
-        
-        const promises = Array.from(this.reconnectionCallbacks).map(async (callback) => {
-            try {
-                await callback();
-            } catch (error) {
-                logger.error("Error in reconnection callback:", error);
+        logger.info(
+            `Triggering ${this.reconnectionCallbacks.size} reconnection callbacks`
+        );
+
+        const promises = Array.from(this.reconnectionCallbacks).map(
+            async (callback) => {
+                try {
+                    await callback();
+                } catch (error) {
+                    logger.error("Error in reconnection callback:", error);
+                }
             }
-        });
+        );
 
         await Promise.allSettled(promises);
     }
@@ -79,13 +84,17 @@ class RedisManager {
     private async resubscribeToChannels(): Promise<void> {
         if (!this.subscriber || this.subscribers.size === 0) return;
 
-        logger.info(`Re-subscribing to ${this.subscribers.size} channels after Redis reconnection`);
-        
+        logger.info(
+            `Re-subscribing to ${this.subscribers.size} channels after Redis reconnection`
+        );
+
         try {
             const channels = Array.from(this.subscribers.keys());
             if (channels.length > 0) {
                 await this.subscriber.subscribe(...channels);
-                logger.info(`Successfully re-subscribed to channels: ${channels.join(', ')}`);
+                logger.info(
+                    `Successfully re-subscribed to channels: ${channels.join(", ")}`
+                );
             }
         } catch (error) {
             logger.error("Failed to re-subscribe to channels:", error);
@@ -98,7 +107,7 @@ class RedisManager {
             host: redisConfig.host!,
             port: redisConfig.port!,
             password: redisConfig.password,
-            db: redisConfig.db,
+            db: redisConfig.db
             // tls: {
             //     rejectUnauthorized:
             //         redisConfig.tls?.reject_unauthorized || false
@@ -112,7 +121,7 @@ class RedisManager {
         if (!redisConfig.replicas || redisConfig.replicas.length === 0) {
             return null;
         }
-        
+
         // Use the first replica for simplicity
         // In production, you might want to implement load balancing across replicas
         const replica = redisConfig.replicas[0];
@@ -120,7 +129,7 @@ class RedisManager {
             host: replica.host!,
             port: replica.port!,
             password: replica.password,
-            db: replica.db || redisConfig.db,
+            db: replica.db || redisConfig.db
             // tls: {
             //     rejectUnauthorized:
             //         replica.tls?.reject_unauthorized || false
@@ -133,7 +142,7 @@ class RedisManager {
     private initializeClients(): void {
         const masterConfig = this.getRedisConfig();
         const replicaConfig = this.getReplicaRedisConfig();
-        
+
         this.hasReplicas = replicaConfig !== null;
 
         try {
@@ -144,7 +153,7 @@ class RedisManager {
                 maxRetriesPerRequest: 3,
                 keepAlive: 30000,
                 connectTimeout: this.connectionTimeout,
-                commandTimeout: this.commandTimeout,
+                commandTimeout: this.commandTimeout
             });
 
             // Initialize replica connection for reads (if available)
@@ -155,7 +164,7 @@ class RedisManager {
                     maxRetriesPerRequest: 3,
                     keepAlive: 30000,
                     connectTimeout: this.connectionTimeout,
-                    commandTimeout: this.commandTimeout,
+                    commandTimeout: this.commandTimeout
                 });
             } else {
                 // Fallback to master for reads if no replicas
@@ -172,7 +181,7 @@ class RedisManager {
                 maxRetriesPerRequest: 3,
                 keepAlive: 30000,
                 connectTimeout: this.connectionTimeout,
-                commandTimeout: this.commandTimeout,
+                commandTimeout: this.commandTimeout
             });
 
             // Subscriber uses replica if available (reads)
@@ -182,7 +191,7 @@ class RedisManager {
                 maxRetriesPerRequest: 3,
                 keepAlive: 30000,
                 connectTimeout: this.connectionTimeout,
-                commandTimeout: this.commandTimeout,
+                commandTimeout: this.commandTimeout
             });
 
             // Add reconnection handlers for write client
@@ -202,11 +211,14 @@ class RedisManager {
                 logger.info("Redis write client ready");
                 this.isWriteHealthy = true;
                 this.updateOverallHealth();
-                
+
                 // Trigger reconnection callbacks when Redis comes back online
                 if (this.isHealthy) {
-                    this.triggerReconnectionCallbacks().catch(error => {
-                        logger.error("Error triggering reconnection callbacks:", error);
+                    this.triggerReconnectionCallbacks().catch((error) => {
+                        logger.error(
+                            "Error triggering reconnection callbacks:",
+                            error
+                        );
                     });
                 }
             });
@@ -233,11 +245,14 @@ class RedisManager {
                     logger.info("Redis read client ready");
                     this.isReadHealthy = true;
                     this.updateOverallHealth();
-                    
+
                     // Trigger reconnection callbacks when Redis comes back online
                     if (this.isHealthy) {
-                        this.triggerReconnectionCallbacks().catch(error => {
-                            logger.error("Error triggering reconnection callbacks:", error);
+                        this.triggerReconnectionCallbacks().catch((error) => {
+                            logger.error(
+                                "Error triggering reconnection callbacks:",
+                                error
+                            );
                         });
                     }
                 });
@@ -298,8 +313,8 @@ class RedisManager {
                 }
             );
 
-            const setupMessage = this.hasReplicas 
-                ? "Redis clients initialized successfully with replica support" 
+            const setupMessage = this.hasReplicas
+                ? "Redis clients initialized successfully with replica support"
                 : "Redis clients initialized successfully (single instance)";
             logger.info(setupMessage);
 
@@ -313,7 +328,8 @@ class RedisManager {
 
     private updateOverallHealth(): void {
         // Overall health is true if write is healthy and (read is healthy OR we don't have replicas)
-        this.isHealthy = this.isWriteHealthy && (this.isReadHealthy || !this.hasReplicas);
+        this.isHealthy =
+            this.isWriteHealthy && (this.isReadHealthy || !this.hasReplicas);
     }
 
     private async executeWithRetry<T>(
@@ -322,49 +338,61 @@ class RedisManager {
         fallbackOperation?: () => Promise<T>
     ): Promise<T> {
         let lastError: Error | null = null;
-        
+
         for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
             try {
                 return await operation();
             } catch (error) {
                 lastError = error as Error;
-                
+
                 // If this is the last attempt, try fallback if available
                 if (attempt === this.maxRetries && fallbackOperation) {
                     try {
-                        logger.warn(`${operationName} primary operation failed, trying fallback`);
+                        logger.warn(
+                            `${operationName} primary operation failed, trying fallback`
+                        );
                         return await fallbackOperation();
                     } catch (fallbackError) {
-                        logger.error(`${operationName} fallback also failed:`, fallbackError);
+                        logger.error(
+                            `${operationName} fallback also failed:`,
+                            fallbackError
+                        );
                         throw lastError;
                     }
                 }
-                
+
                 // Don't retry on the last attempt
                 if (attempt === this.maxRetries) {
                     break;
                 }
-                
+
                 // Calculate delay with exponential backoff
                 const delay = Math.min(
-                    this.baseRetryDelay * Math.pow(this.backoffMultiplier, attempt),
+                    this.baseRetryDelay *
+                        Math.pow(this.backoffMultiplier, attempt),
                     this.maxRetryDelay
                 );
-                
-                logger.warn(`${operationName} failed (attempt ${attempt + 1}/${this.maxRetries + 1}), retrying in ${delay}ms:`, error);
-                
+
+                logger.warn(
+                    `${operationName} failed (attempt ${attempt + 1}/${this.maxRetries + 1}), retrying in ${delay}ms:`,
+                    error
+                );
+
                 // Wait before retrying
-                await new Promise(resolve => setTimeout(resolve, delay));
+                await new Promise((resolve) => setTimeout(resolve, delay));
             }
         }
-        
-        logger.error(`${operationName} failed after ${this.maxRetries + 1} attempts:`, lastError);
+
+        logger.error(
+            `${operationName} failed after ${this.maxRetries + 1} attempts:`,
+            lastError
+        );
         throw lastError;
     }
 
     private startHealthMonitoring(): void {
         if (!this.isEnabled) return;
-        
+
         // Check health every 30 seconds
         setInterval(async () => {
             try {
@@ -381,7 +409,7 @@ class RedisManager {
 
     private async checkRedisHealth(): Promise<boolean> {
         const now = Date.now();
-        
+
         // Only check health every 30 seconds
         if (now - this.lastHealthCheck < this.healthCheckInterval) {
             return this.isHealthy;
@@ -400,24 +428,45 @@ class RedisManager {
             // Check write client (master) health
             await Promise.race([
                 this.writeClient.ping(),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Write client health check timeout')), 2000)
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () =>
+                            reject(
+                                new Error("Write client health check timeout")
+                            ),
+                        2000
+                    )
                 )
             ]);
             this.isWriteHealthy = true;
 
             // Check read client health if it's different from write client
-            if (this.hasReplicas && this.readClient && this.readClient !== this.writeClient) {
+            if (
+                this.hasReplicas &&
+                this.readClient &&
+                this.readClient !== this.writeClient
+            ) {
                 try {
                     await Promise.race([
                         this.readClient.ping(),
-                        new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error('Read client health check timeout')), 2000)
+                        new Promise((_, reject) =>
+                            setTimeout(
+                                () =>
+                                    reject(
+                                        new Error(
+                                            "Read client health check timeout"
+                                        )
+                                    ),
+                                2000
+                            )
                         )
                     ]);
                     this.isReadHealthy = true;
                 } catch (error) {
-                    logger.error("Redis read client health check failed:", error);
+                    logger.error(
+                        "Redis read client health check failed:",
+                        error
+                    );
                     this.isReadHealthy = false;
                 }
             } else {
@@ -475,16 +524,13 @@ class RedisManager {
         if (!this.isRedisEnabled() || !this.writeClient) return false;
 
         try {
-            await this.executeWithRetry(
-                async () => {
-                    if (ttl) {
-                        await this.writeClient!.setex(key, ttl, value);
-                    } else {
-                        await this.writeClient!.set(key, value);
-                    }
-                },
-                "Redis SET"
-            );
+            await this.executeWithRetry(async () => {
+                if (ttl) {
+                    await this.writeClient!.setex(key, ttl, value);
+                } else {
+                    await this.writeClient!.set(key, value);
+                }
+            }, "Redis SET");
             return true;
         } catch (error) {
             logger.error("Redis SET error:", error);
@@ -496,9 +542,10 @@ class RedisManager {
         if (!this.isRedisEnabled() || !this.readClient) return null;
 
         try {
-            const fallbackOperation = (this.hasReplicas && this.writeClient && this.isWriteHealthy) 
-                ? () => this.writeClient!.get(key)
-                : undefined;
+            const fallbackOperation =
+                this.hasReplicas && this.writeClient && this.isWriteHealthy
+                    ? () => this.writeClient!.get(key)
+                    : undefined;
 
             return await this.executeWithRetry(
                 () => this.readClient!.get(key),
@@ -560,9 +607,10 @@ class RedisManager {
         if (!this.isRedisEnabled() || !this.readClient) return [];
 
         try {
-            const fallbackOperation = (this.hasReplicas && this.writeClient && this.isWriteHealthy) 
-                ? () => this.writeClient!.smembers(key)
-                : undefined;
+            const fallbackOperation =
+                this.hasReplicas && this.writeClient && this.isWriteHealthy
+                    ? () => this.writeClient!.smembers(key)
+                    : undefined;
 
             return await this.executeWithRetry(
                 () => this.readClient!.smembers(key),
@@ -598,9 +646,10 @@ class RedisManager {
         if (!this.isRedisEnabled() || !this.readClient) return null;
 
         try {
-            const fallbackOperation = (this.hasReplicas && this.writeClient && this.isWriteHealthy) 
-                ? () => this.writeClient!.hget(key, field)
-                : undefined;
+            const fallbackOperation =
+                this.hasReplicas && this.writeClient && this.isWriteHealthy
+                    ? () => this.writeClient!.hget(key, field)
+                    : undefined;
 
             return await this.executeWithRetry(
                 () => this.readClient!.hget(key, field),
@@ -632,9 +681,10 @@ class RedisManager {
         if (!this.isRedisEnabled() || !this.readClient) return {};
 
         try {
-            const fallbackOperation = (this.hasReplicas && this.writeClient && this.isWriteHealthy) 
-                ? () => this.writeClient!.hgetall(key)
-                : undefined;
+            const fallbackOperation =
+                this.hasReplicas && this.writeClient && this.isWriteHealthy
+                    ? () => this.writeClient!.hgetall(key)
+                    : undefined;
 
             return await this.executeWithRetry(
                 () => this.readClient!.hgetall(key),
@@ -658,18 +708,18 @@ class RedisManager {
         }
 
         try {
-            await this.executeWithRetry(
-                async () => {
-                    // Add timeout to prevent hanging
-                    return Promise.race([
-                        this.publisher!.publish(channel, message),
-                        new Promise((_, reject) => 
-                            setTimeout(() => reject(new Error('Redis publish timeout')), 3000)
+            await this.executeWithRetry(async () => {
+                // Add timeout to prevent hanging
+                return Promise.race([
+                    this.publisher!.publish(channel, message),
+                    new Promise((_, reject) =>
+                        setTimeout(
+                            () => reject(new Error("Redis publish timeout")),
+                            3000
                         )
-                    ]);
-                },
-                "Redis PUBLISH"
-            );
+                    )
+                ]);
+            }, "Redis PUBLISH");
             return true;
         } catch (error) {
             logger.error("Redis PUBLISH error:", error);
@@ -689,17 +739,20 @@ class RedisManager {
             if (!this.subscribers.has(channel)) {
                 this.subscribers.set(channel, new Set());
                 // Only subscribe to the channel if it's the first subscriber
-                await this.executeWithRetry(
-                    async () => {
-                        return Promise.race([
-                            this.subscriber!.subscribe(channel),
-                            new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Redis subscribe timeout')), 5000)
+                await this.executeWithRetry(async () => {
+                    return Promise.race([
+                        this.subscriber!.subscribe(channel),
+                        new Promise((_, reject) =>
+                            setTimeout(
+                                () =>
+                                    reject(
+                                        new Error("Redis subscribe timeout")
+                                    ),
+                                5000
                             )
-                        ]);
-                    },
-                    "Redis SUBSCRIBE"
-                );
+                        )
+                    ]);
+                }, "Redis SUBSCRIBE");
             }
 
             this.subscribers.get(channel)!.add(callback);

@@ -43,7 +43,9 @@ export default async function migration() {
         const updatedYaml = yaml.dump(rawConfig);
         fs.writeFileSync(filePath, updatedYaml, "utf8");
     } catch (error) {
-        console.log("We were unable to add CORS to your config file. Please add it manually.");
+        console.log(
+            "We were unable to add CORS to your config file. Please add it manually."
+        );
         console.error(error);
     }
 

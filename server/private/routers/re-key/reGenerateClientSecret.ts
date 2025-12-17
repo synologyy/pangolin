@@ -123,7 +123,10 @@ export async function reGenerateClientSecret(
             };
             // Don't await this to prevent blocking the response
             sendToClient(existingOlms[0].olmId, payload).catch((error) => {
-                logger.error("Failed to send termination message to olm:", error);
+                logger.error(
+                    "Failed to send termination message to olm:",
+                    error
+                );
             });
 
             disconnectClient(existingOlms[0].olmId).catch((error) => {
@@ -133,7 +136,7 @@ export async function reGenerateClientSecret(
 
         return response(res, {
             data: {
-                olmId: existingOlms[0].olmId,
+                olmId: existingOlms[0].olmId
             },
             success: true,
             error: false,

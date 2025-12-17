@@ -6,10 +6,7 @@ import { z } from "zod";
 import { db } from "@server/db";
 import { User, users } from "@server/db";
 import { response } from "@server/lib/response";
-import {
-    hashPassword,
-    verifyPassword
-} from "@server/auth/password";
+import { hashPassword, verifyPassword } from "@server/auth/password";
 import { verifyTotpCode } from "@server/auth/totp";
 import logger from "@server/logger";
 import { unauthorized } from "@server/auth/unauthorizedResponse";
@@ -23,10 +20,10 @@ import ConfirmPasswordReset from "@server/emails/templates/NotifyResetPassword";
 import config from "@server/lib/config";
 
 export const changePasswordBody = z.strictObject({
-        oldPassword: z.string(),
-        newPassword: passwordSchema,
-        code: z.string().optional()
-    });
+    oldPassword: z.string(),
+    newPassword: passwordSchema,
+    code: z.string().optional()
+});
 
 export type ChangePasswordBody = z.infer<typeof changePasswordBody>;
 
@@ -62,12 +59,14 @@ async function invalidateAllSessionsExceptCurrent(
             }
 
             // Delete the user sessions (except current)
-            await trx.delete(sessions).where(
-                and(
-                    eq(sessions.userId, userId),
-                    ne(sessions.sessionId, currentSessionId)
-                )
-            );
+            await trx
+                .delete(sessions)
+                .where(
+                    and(
+                        eq(sessions.userId, userId),
+                        ne(sessions.sessionId, currentSessionId)
+                    )
+                );
         });
     } catch (e) {
         logger.error("Failed to invalidate user sessions except current", e);
@@ -157,7 +156,10 @@ export async function changePassword(
             .where(eq(users.userId, user.userId));
 
         // Invalidate all sessions except the current one
-        await invalidateAllSessionsExceptCurrent(user.userId, req.session.sessionId);
+        await invalidateAllSessionsExceptCurrent(
+            user.userId,
+            req.session.sessionId
+        );
 
         try {
             const email = user.email!;

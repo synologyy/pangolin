@@ -269,7 +269,7 @@ export default function UsersTable({ users }: Props) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {r.type !== "internal" && (
+                                {r.type === "internal" && (
                                     <DropdownMenuItem
                                         onClick={() => {
                                             generatePasswordResetCode(r.id);
@@ -313,7 +313,7 @@ export default function UsersTable({ users }: Props) {
                         setSelected(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>
                                 {t("userQuestionRemove", {
                                     selectedUser:

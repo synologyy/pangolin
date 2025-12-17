@@ -4,5 +4,7 @@ export default async function ApiKeysPage(props: {
     params: Promise<{ orgId: string; apiKeyId: string }>;
 }) {
     const params = await props.params;
-    redirect(`/${params.orgId}/settings/api-keys/${params.apiKeyId}/permissions`);
+    redirect(
+        `/${params.orgId}/settings/api-keys/${params.apiKeyId}/permissions`
+    );
 }

@@ -45,7 +45,9 @@ export default function Setup2FAPage() {
                 <CardHeader>
                     <CardTitle>{t("otpSetup")}</CardTitle>
                     <CardDescription>
-                        {t("adminEnabled2FaOnYourAccount", { email: email || "your account" })}
+                        {t("adminEnabled2FaOnYourAccount", {
+                            email: email || "your account"
+                        })}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

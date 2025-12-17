@@ -4,7 +4,9 @@ import { useContext } from "react";
 export function useDomainContext() {
     const context = useContext(DomainContext);
     if (context === undefined) {
-        throw new Error('useDomainContext must be used within a DomainProvider');
+        throw new Error(
+            "useDomainContext must be used within a DomainProvider"
+        );
     }
     return context;
 }

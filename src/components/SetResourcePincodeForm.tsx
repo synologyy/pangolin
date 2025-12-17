@@ -87,17 +87,17 @@ export default function SetResourcePincodeForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPincodeSetup'),
+                    title: t("resourceErrorPincodeSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPincodeSetupDescription')
+                        t("resourceErrorPincodeSetupDescription")
                     )
                 });
             })
             .then(() => {
                 toast({
-                    title: t('resourcePincodeSetup'),
-                    description: t('resourcePincodeSetupDescription')
+                    title: t("resourcePincodeSetup"),
+                    description: t("resourcePincodeSetupDescription")
                 });
 
                 if (onSetPincode) {
@@ -119,9 +119,11 @@ export default function SetResourcePincodeForm({
             >
                 <CredenzaContent>
                     <CredenzaHeader>
-                        <CredenzaTitle>{t('resourcePincodeSetupTitle')}</CredenzaTitle>
+                        <CredenzaTitle>
+                            {t("resourcePincodeSetupTitle")}
+                        </CredenzaTitle>
                         <CredenzaDescription>
-                            {t('resourcePincodeSetupTitleDescription')}
+                            {t("resourcePincodeSetupTitleDescription")}
                         </CredenzaDescription>
                     </CredenzaHeader>
                     <CredenzaBody>
@@ -136,7 +138,9 @@ export default function SetResourcePincodeForm({
                                     name="pincode"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>{t('resourcePincode')}</FormLabel>
+                                            <FormLabel>
+                                                {t("resourcePincode")}
+                                            </FormLabel>
                                             <FormControl>
                                                 <div className="flex justify-center">
                                                     <InputOTP
@@ -182,7 +186,7 @@ export default function SetResourcePincodeForm({
                     </CredenzaBody>
                     <CredenzaFooter>
                         <CredenzaClose asChild>
-                            <Button variant="outline">{t('close')}</Button>
+                            <Button variant="outline">{t("close")}</Button>
                         </CredenzaClose>
                         <Button
                             type="submit"
@@ -190,7 +194,7 @@ export default function SetResourcePincodeForm({
                             loading={loading}
                             disabled={loading}
                         >
-                            {t('resourcePincodeSubmit')}
+                            {t("resourcePincodeSubmit")}
                         </Button>
                     </CredenzaFooter>
                 </CredenzaContent>

@@ -10,7 +10,7 @@ import UserProvider from "@app/providers/UserProvider";
 import { verifySession } from "@app/lib/auth/verifySession";
 import AccessPageHeaderAndNav from "../../../../../components/AccessPageHeaderAndNav";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type UsersPageProps = {
     params: Promise<{ orgId: string }>;
@@ -79,9 +79,11 @@ export default async function UsersPage(props: UsersPageProps) {
             type: user.type,
             idpVariant: user.idpVariant,
             idpId: user.idpId,
-            idpName: user.idpName || t('idpNameInternal'),
-            status: t('userConfirmed'),
-            role: user.isOwner ? t('accessRoleOwner') : user.roleName || t('accessRoleMember'),
+            idpName: user.idpName || t("idpNameInternal"),
+            status: t("userConfirmed"),
+            role: user.isOwner
+                ? t("accessRoleOwner")
+                : user.roleName || t("accessRoleMember"),
             isOwner: user.isOwner || false
         };
     });
@@ -89,8 +91,8 @@ export default async function UsersPage(props: UsersPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('accessUsersManage')}
-                description={t('accessUsersDescription')}
+                title={t("accessUsersManage")}
+                description={t("accessUsersDescription")}
             />
             <UserProvider user={user!}>
                 <OrgProvider org={org}>

@@ -10,12 +10,9 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const removeUserResourceSchema = z.strictObject({
-        userId: z.string(),
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    userId: z.string(),
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export async function removeUserResource(
     req: Request,

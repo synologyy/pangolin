@@ -13,12 +13,9 @@ import { OpenAPITags, registry } from "@server/openApi";
 import { BlueprintData } from "./types";
 
 const getBlueprintSchema = z.strictObject({
-        blueprintId: z
-            .string()
-            .transform(stoi)
-            .pipe(z.int().positive()),
-        orgId: z.string()
-    });
+    blueprintId: z.string().transform(stoi).pipe(z.int().positive()),
+    orgId: z.string()
+});
 
 async function query(blueprintId: number, orgId: string) {
     // Get the client

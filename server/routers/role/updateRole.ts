@@ -10,10 +10,11 @@ import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
 
 const updateRoleParamsSchema = z.strictObject({
-        roleId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    roleId: z.string().transform(Number).pipe(z.int().positive())
+});
 
-const updateRoleBodySchema = z.strictObject({
+const updateRoleBodySchema = z
+    .strictObject({
         name: z.string().min(1).max(255).optional(),
         description: z.string().optional()
     })

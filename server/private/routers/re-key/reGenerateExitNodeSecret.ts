@@ -12,7 +12,14 @@
  */
 
 import { NextFunction, Request, Response } from "express";
-import { db, exitNodes, exitNodeOrgs, ExitNode, ExitNodeOrg, RemoteExitNode } from "@server/db";
+import {
+    db,
+    exitNodes,
+    exitNodeOrgs,
+    ExitNode,
+    ExitNodeOrg,
+    RemoteExitNode
+} from "@server/db";
 import HttpCode from "@server/types/HttpCode";
 import { z } from "zod";
 import { remoteExitNodes } from "@server/db";
@@ -91,14 +98,15 @@ export async function reGenerateExitNodeSecret(
                 data: {}
             };
             // Don't await this to prevent blocking the response
-            sendToClient(existingRemoteExitNode.remoteExitNodeId, payload).catch(
-                (error) => {
-                    logger.error(
-                        "Failed to send termination message to remote exit node:",
-                        error
-                    );
-                }
-            );
+            sendToClient(
+                existingRemoteExitNode.remoteExitNodeId,
+                payload
+            ).catch((error) => {
+                logger.error(
+                    "Failed to send termination message to remote exit node:",
+                    error
+                );
+            });
 
             disconnectClient(existingRemoteExitNode.remoteExitNodeId).catch(
                 (error) => {

@@ -8,13 +8,13 @@ import HttpCode from "@server/types/HttpCode";
 export async function getUserOrgs(
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) {
     const userId = req.user?.userId; // Assuming you have user information in the request
 
     if (!userId) {
         return next(
-            createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated"),
+            createHttpError(HttpCode.UNAUTHORIZED, "User not authenticated")
         );
     }
 
@@ -22,7 +22,7 @@ export async function getUserOrgs(
         const userOrganizations = await db
             .select({
                 orgId: userOrgs.orgId,
-                roleId: userOrgs.roleId,
+                roleId: userOrgs.roleId
             })
             .from(userOrgs)
             .where(eq(userOrgs.userId, userId));
@@ -38,8 +38,8 @@ export async function getUserOrgs(
         next(
             createHttpError(
                 HttpCode.INTERNAL_SERVER_ERROR,
-                "Error retrieving user organizations",
-            ),
+                "Error retrieving user organizations"
+            )
         );
     }
 }

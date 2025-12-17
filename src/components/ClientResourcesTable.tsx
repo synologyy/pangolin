@@ -41,6 +41,9 @@ export type InternalResourceRow = {
     // destinationPort: number | null;
     alias: string | null;
     niceId: string;
+    tcpPortRangeString: string | null;
+    udpPortRangeString: string | null;
+    disableIcmp: boolean;
 };
 
 type ClientResourcesTableProps = {
@@ -284,7 +287,7 @@ export default function ClientResourcesTable({
                         setSelectedInternalResource(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("resourceQuestionRemove")}</p>
                             <p>{t("resourceMessageRemove")}</p>
                         </div>

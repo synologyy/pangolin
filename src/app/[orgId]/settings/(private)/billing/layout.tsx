@@ -10,7 +10,7 @@ import { GetOrgUserResponse } from "@server/routers/user";
 import { AxiosResponse } from "axios";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type BillingSettingsProps = {
     children: React.ReactNode;
@@ -19,7 +19,7 @@ type BillingSettingsProps = {
 
 export default async function BillingSettingsPage({
     children,
-    params,
+    params
 }: BillingSettingsProps) {
     const { orgId } = await params;
 
@@ -35,8 +35,8 @@ export default async function BillingSettingsPage({
         const getOrgUser = cache(async () =>
             internal.get<AxiosResponse<GetOrgUserResponse>>(
                 `/org/${orgId}/user/${user.userId}`,
-                await authCookieHeader(),
-            ),
+                await authCookieHeader()
+            )
         );
         const res = await getOrgUser();
         orgUser = res.data.data;
@@ -49,8 +49,8 @@ export default async function BillingSettingsPage({
         const getOrg = cache(async () =>
             internal.get<AxiosResponse<GetOrgResponse>>(
                 `/org/${orgId}`,
-                await authCookieHeader(),
-            ),
+                await authCookieHeader()
+            )
         );
         const res = await getOrg();
         org = res.data.data;
@@ -65,11 +65,11 @@ export default async function BillingSettingsPage({
             <OrgProvider org={org}>
                 <OrgUserProvider orgUser={orgUser}>
                     <SettingsSectionTitle
-                        title={t('billing')}
-                        description={t('orgBillingDescription')}
+                        title={t("billing")}
+                        description={t("orgBillingDescription")}
                     />
 
-                        {children}
+                    {children}
                 </OrgUserProvider>
             </OrgProvider>
         </>

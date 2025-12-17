@@ -823,7 +823,7 @@ export async function getTraefikConfig(
                         (cert) => cert.queriedDomain === lp.fullDomain
                     );
                     if (!matchingCert) {
-                        logger.warn(
+                        logger.debug(
                             `No matching certificate found for login page domain: ${lp.fullDomain}`
                         );
                         continue;

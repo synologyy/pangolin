@@ -112,7 +112,6 @@ export default async function migration() {
         `
             ).run();
 
-
             db.prepare(
                 `
         CREATE TABLE 'blueprints' (
@@ -212,10 +211,14 @@ export default async function migration() {
             db.prepare(
                 `ALTER TABLE 'user' ADD 'lastPasswordChange' integer;`
             ).run();
-            db.prepare(`ALTER TABLE 'remoteExitNode' ADD 'secondaryVersion' text;`).run();
+            db.prepare(
+                `ALTER TABLE 'remoteExitNode' ADD 'secondaryVersion' text;`
+            ).run();
 
             // get all of the domains
-            const domains = db.prepare(`SELECT domainId, baseDomain from domains`).all() as {
+            const domains = db
+                .prepare(`SELECT domainId, baseDomain from domains`)
+                .all() as {
                 domainId: number;
                 baseDomain: string;
             }[];

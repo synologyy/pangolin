@@ -25,16 +25,22 @@ export const FeatureMeterIdsSandbox: Record<FeatureId, string> = {
 };
 
 export function getFeatureMeterId(featureId: FeatureId): string {
-    if (process.env.ENVIRONMENT == "prod" && process.env.SANDBOX_MODE !== "true") {
+    if (
+        process.env.ENVIRONMENT == "prod" &&
+        process.env.SANDBOX_MODE !== "true"
+    ) {
         return FeatureMeterIds[featureId];
     } else {
         return FeatureMeterIdsSandbox[featureId];
     }
 }
 
-export function getFeatureIdByMetricId(metricId: string): FeatureId | undefined {
-    return (Object.entries(FeatureMeterIds) as [FeatureId, string][])
-        .find(([_, v]) => v === metricId)?.[0];
+export function getFeatureIdByMetricId(
+    metricId: string
+): FeatureId | undefined {
+    return (Object.entries(FeatureMeterIds) as [FeatureId, string][]).find(
+        ([_, v]) => v === metricId
+    )?.[0];
 }
 
 export type FeaturePriceSet = {
@@ -43,7 +49,8 @@ export type FeaturePriceSet = {
     [FeatureId.DOMAINS]?: string; // Optional since domains are not billed
 };
 
-export const standardFeaturePriceSet: FeaturePriceSet = { // Free tier matches the freeLimitSet
+export const standardFeaturePriceSet: FeaturePriceSet = {
+    // Free tier matches the freeLimitSet
     [FeatureId.SITE_UPTIME]: "price_1RrQc4D3Ee2Ir7WmaJGZ3MtF",
     [FeatureId.USERS]: "price_1RrQeJD3Ee2Ir7WmgveP3xea",
     [FeatureId.EGRESS_DATA_MB]: "price_1RrQXFD3Ee2Ir7WmvGDlgxQk",
@@ -51,7 +58,8 @@ export const standardFeaturePriceSet: FeaturePriceSet = { // Free tier matches t
     [FeatureId.REMOTE_EXIT_NODES]: "price_1S46weD3Ee2Ir7Wm94KEHI4h"
 };
 
-export const standardFeaturePriceSetSandbox: FeaturePriceSet = { // Free tier matches the freeLimitSet
+export const standardFeaturePriceSetSandbox: FeaturePriceSet = {
+    // Free tier matches the freeLimitSet
     [FeatureId.SITE_UPTIME]: "price_1RefFBDCpkOb237BPrKZ8IEU",
     [FeatureId.USERS]: "price_1ReNa4DCpkOb237Bc67G5muF",
     [FeatureId.EGRESS_DATA_MB]: "price_1Rfp9LDCpkOb237BwuN5Oiu0",
@@ -60,15 +68,20 @@ export const standardFeaturePriceSetSandbox: FeaturePriceSet = { // Free tier ma
 };
 
 export function getStandardFeaturePriceSet(): FeaturePriceSet {
-    if (process.env.ENVIRONMENT == "prod" && process.env.SANDBOX_MODE !== "true") {
+    if (
+        process.env.ENVIRONMENT == "prod" &&
+        process.env.SANDBOX_MODE !== "true"
+    ) {
         return standardFeaturePriceSet;
     } else {
         return standardFeaturePriceSetSandbox;
     }
 }
 
-export function getLineItems(featurePriceSet: FeaturePriceSet): Stripe.Checkout.SessionCreateParams.LineItem[] {
+export function getLineItems(
+    featurePriceSet: FeaturePriceSet
+): Stripe.Checkout.SessionCreateParams.LineItem[] {
     return Object.entries(featurePriceSet).map(([featureId, priceId]) => ({
-        price: priceId,
+        price: priceId
     }));
 }

@@ -16,17 +16,17 @@ import stoi from "@server/lib/stoi";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 const authWithAccessTokenBodySchema = z.strictObject({
-        accessToken: z.string(),
-        accessTokenId: z.string().optional()
-    });
+    accessToken: z.string(),
+    accessTokenId: z.string().optional()
+});
 
 const authWithAccessTokenParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .optional()
-            .transform(stoi)
-            .pipe(z.int().positive().optional())
-    });
+    resourceId: z
+        .string()
+        .optional()
+        .transform(stoi)
+        .pipe(z.int().positive().optional())
+});
 
 export type AuthWithAccessTokenResponse = {
     session?: string;

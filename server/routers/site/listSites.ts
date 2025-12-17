@@ -69,8 +69,8 @@ async function getLatestNewtVersion(): Promise<string | null> {
 }
 
 const listSitesParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 const listSitesSchema = z.object({
     limit: z

@@ -48,18 +48,18 @@ export default function Page() {
     const t = useTranslations();
 
     const createIdpFormSchema = z.object({
-        name: z.string().min(2, { message: t('nameMin', {len: 2}) }),
+        name: z.string().min(2, { message: t("nameMin", { len: 2 }) }),
         type: z.enum(["oidc"]),
-        clientId: z.string().min(1, { message: t('idpClientIdRequired') }),
-        clientSecret: z.string().min(1, { message: t('idpClientSecretRequired') }),
-        authUrl: z.url({ message: t('idpErrorAuthUrlInvalid') }),
-        tokenUrl: z.url({ message: t('idpErrorTokenUrlInvalid') }),
-        identifierPath: z
+        clientId: z.string().min(1, { message: t("idpClientIdRequired") }),
+        clientSecret: z
             .string()
-            .min(1, { message: t('idpPathRequired') }),
+            .min(1, { message: t("idpClientSecretRequired") }),
+        authUrl: z.url({ message: t("idpErrorAuthUrlInvalid") }),
+        tokenUrl: z.url({ message: t("idpErrorTokenUrlInvalid") }),
+        identifierPath: z.string().min(1, { message: t("idpPathRequired") }),
         emailPath: z.string().optional(),
         namePath: z.string().optional(),
-        scopes: z.string().min(1, { message: t('idpScopeRequired') }),
+        scopes: z.string().min(1, { message: t("idpScopeRequired") }),
         autoProvision: z.boolean().default(false)
     });
 
@@ -75,7 +75,7 @@ export default function Page() {
         {
             id: "oidc",
             title: "OAuth2/OIDC",
-            description: t('idpOidcDescription')
+            description: t("idpOidcDescription")
         }
     ];
 
@@ -117,14 +117,14 @@ export default function Page() {
 
             if (res.status === 201) {
                 toast({
-                    title: t('success'),
-                    description: t('idpCreatedDescription')
+                    title: t("success"),
+                    description: t("idpCreatedDescription")
                 });
                 router.push(`/admin/idp/${res.data.data.idpId}`);
             }
         } catch (e) {
             toast({
-                title: t('error'),
+                title: t("error"),
                 description: formatAxiosError(e),
                 variant: "destructive"
             });
@@ -137,8 +137,8 @@ export default function Page() {
         <>
             <div className="flex justify-between">
                 <HeaderTitle
-                    title={t('idpCreate')}
-                    description={t('idpCreateDescription')}
+                    title={t("idpCreate")}
+                    description={t("idpCreateDescription")}
                 />
                 <Button
                     variant="outline"
@@ -146,7 +146,7 @@ export default function Page() {
                         router.push("/admin/idp");
                     }}
                 >
-                    {t('idpSeeAll')}
+                    {t("idpSeeAll")}
                 </Button>
             </div>
 
@@ -154,10 +154,10 @@ export default function Page() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t('idpTitle')}
+                            {t("idpTitle")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t('idpCreateSettingsDescription')}
+                            {t("idpCreateSettingsDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
@@ -173,12 +173,14 @@ export default function Page() {
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>{t('name')}</FormLabel>
+                                                <FormLabel>
+                                                    {t("name")}
+                                                </FormLabel>
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
                                                 <FormDescription>
-                                                    {t('idpDisplayName')}
+                                                    {t("idpDisplayName")}
                                                 </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
@@ -188,7 +190,7 @@ export default function Page() {
                                     <div className="flex items-start mb-0">
                                         <SwitchInput
                                             id="auto-provision-toggle"
-                                            label={t('idpAutoProvisionUsers')}
+                                            label={t("idpAutoProvisionUsers")}
                                             defaultChecked={form.getValues(
                                                 "autoProvision"
                                             )}
@@ -201,7 +203,7 @@ export default function Page() {
                                         />
                                     </div>
                                     <span className="text-sm text-muted-foreground">
-                                        {t('idpAutoProvisionUsersDescription')}
+                                        {t("idpAutoProvisionUsersDescription")}
                                     </span>
                                 </form>
                             </Form>
@@ -212,10 +214,10 @@ export default function Page() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t('idpType')}
+                            {t("idpType")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t('idpTypeDescription')}
+                            {t("idpTypeDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
@@ -235,10 +237,10 @@ export default function Page() {
                         <SettingsSection>
                             <SettingsSectionHeader>
                                 <SettingsSectionTitle>
-                                    {t('idpOidcConfigure')}
+                                    {t("idpOidcConfigure")}
                                 </SettingsSectionTitle>
                                 <SettingsSectionDescription>
-                                    {t('idpOidcConfigureDescription')}
+                                    {t("idpOidcConfigureDescription")}
                                 </SettingsSectionDescription>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
@@ -254,13 +256,15 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpClientId')}
+                                                        {t("idpClientId")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpClientIdDescription')}
+                                                        {t(
+                                                            "idpClientIdDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -273,7 +277,7 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpClientSecret')}
+                                                        {t("idpClientSecret")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input
@@ -282,7 +286,9 @@ export default function Page() {
                                                         />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpClientSecretDescription')}
+                                                        {t(
+                                                            "idpClientSecretDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -295,7 +301,7 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpAuthUrl')}
+                                                        {t("idpAuthUrl")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input
@@ -304,7 +310,9 @@ export default function Page() {
                                                         />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpAuthUrlDescription')}
+                                                        {t(
+                                                            "idpAuthUrlDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -317,7 +325,7 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpTokenUrl')}
+                                                        {t("idpTokenUrl")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input
@@ -326,7 +334,9 @@ export default function Page() {
                                                         />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpTokenUrlDescription')}
+                                                        {t(
+                                                            "idpTokenUrlDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -338,10 +348,10 @@ export default function Page() {
                                 <Alert variant="neutral">
                                     <InfoIcon className="h-4 w-4" />
                                     <AlertTitle className="font-semibold">
-                                        {t('idpOidcConfigureAlert')}
+                                        {t("idpOidcConfigureAlert")}
                                     </AlertTitle>
                                     <AlertDescription>
-                                        {t('idpOidcConfigureAlertDescription')}
+                                        {t("idpOidcConfigureAlertDescription")}
                                     </AlertDescription>
                                 </Alert>
                             </SettingsSectionBody>
@@ -350,10 +360,10 @@ export default function Page() {
                         <SettingsSection>
                             <SettingsSectionHeader>
                                 <SettingsSectionTitle>
-                                    {t('idpToken')}
+                                    {t("idpToken")}
                                 </SettingsSectionTitle>
                                 <SettingsSectionDescription>
-                                    {t('idpTokenDescription')}
+                                    {t("idpTokenDescription")}
                                 </SettingsSectionDescription>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
@@ -366,17 +376,21 @@ export default function Page() {
                                         <Alert variant="neutral">
                                             <InfoIcon className="h-4 w-4" />
                                             <AlertTitle className="font-semibold">
-                                                {t('idpJmespathAbout')}
+                                                {t("idpJmespathAbout")}
                                             </AlertTitle>
                                             <AlertDescription>
-                                                {t('idpJmespathAboutDescription')}{" "}
+                                                {t(
+                                                    "idpJmespathAboutDescription"
+                                                )}{" "}
                                                 <a
                                                     href="https://jmespath.org"
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="text-primary hover:underline inline-flex items-center"
                                                 >
-                                                    {t('idpJmespathAboutDescriptionLink')}{" "}
+                                                    {t(
+                                                        "idpJmespathAboutDescriptionLink"
+                                                    )}{" "}
                                                     <ExternalLink className="ml-1 h-4 w-4" />
                                                 </a>
                                             </AlertDescription>
@@ -388,13 +402,15 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpJmespathLabel')}
+                                                        {t("idpJmespathLabel")}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpJmespathLabelDescription')}
+                                                        {t(
+                                                            "idpJmespathLabelDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -407,13 +423,17 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpJmespathEmailPathOptional')}
+                                                        {t(
+                                                            "idpJmespathEmailPathOptional"
+                                                        )}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpJmespathEmailPathOptionalDescription')}
+                                                        {t(
+                                                            "idpJmespathEmailPathOptionalDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -426,13 +446,17 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpJmespathNamePathOptional')}
+                                                        {t(
+                                                            "idpJmespathNamePathOptional"
+                                                        )}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpJmespathNamePathOptionalDescription')}
+                                                        {t(
+                                                            "idpJmespathNamePathOptionalDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -445,13 +469,17 @@ export default function Page() {
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t('idpOidcConfigureScopes')}
+                                                        {t(
+                                                            "idpOidcConfigureScopes"
+                                                        )}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input {...field} />
                                                     </FormControl>
                                                     <FormDescription>
-                                                        {t('idpOidcConfigureScopesDescription')}
+                                                        {t(
+                                                            "idpOidcConfigureScopesDescription"
+                                                        )}
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
@@ -473,7 +501,7 @@ export default function Page() {
                         router.push("/admin/idp");
                     }}
                 >
-                    {t('cancel')}
+                    {t("cancel")}
                 </Button>
                 <Button
                     type="submit"
@@ -481,7 +509,7 @@ export default function Page() {
                     loading={createLoading}
                     onClick={form.handleSubmit(onSubmit)}
                 >
-                    {t('idpSubmit')}
+                    {t("idpSubmit")}
                 </Button>
             </div>
         </>

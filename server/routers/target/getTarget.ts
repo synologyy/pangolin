@@ -11,12 +11,13 @@ import { fromError } from "zod-validation-error";
 import { OpenAPITags, registry } from "@server/openApi";
 
 const getTargetSchema = z.strictObject({
-        targetId: z.string().transform(Number).pipe(z.int().positive())
-    });
+    targetId: z.string().transform(Number).pipe(z.int().positive())
+});
 
-type GetTargetResponse = Target & Omit<TargetHealthCheck, 'hcHeaders'> & {
-    hcHeaders: { name: string; value: string; }[] | null;
-};
+type GetTargetResponse = Target &
+    Omit<TargetHealthCheck, "hcHeaders"> & {
+        hcHeaders: { name: string; value: string }[] | null;
+    };
 
 registry.registerPath({
     method: "get",

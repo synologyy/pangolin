@@ -19,7 +19,7 @@ import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
-    TooltipTrigger,
+    TooltipTrigger
 } from "@app/components/ui/tooltip";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { cn } from "@app/lib/cn";
@@ -36,7 +36,11 @@ interface OrgSelectorProps {
     isCollapsed?: boolean;
 }
 
-export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorProps) {
+export function OrgSelector({
+    orgId,
+    orgs,
+    isCollapsed = false
+}: OrgSelectorProps) {
     const { user } = useUserContext();
     const [open, setOpen] = useState(false);
     const router = useRouter();
@@ -65,10 +69,10 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                                 <Building2 className="h-4 w-4 mr-3 shrink-0" />
                                 <div className="flex flex-col items-start min-w-0 flex-1">
                                     <span className="font-bold text-sm">
-                                        {t('org')}
+                                        {t("org")}
                                     </span>
                                     <span className="text-sm text-muted-foreground truncate w-full text-left">
-                                        {selectedOrg?.name || t('noneSelected')}
+                                        {selectedOrg?.name || t("noneSelected")}
                                     </span>
                                 </div>
                             </div>
@@ -80,17 +84,20 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
             <PopoverContent className="w-[320px] p-0" align="start">
                 <Command className="rounded-lg">
                     <CommandInput
-                        placeholder={t('searchProgress')}
+                        placeholder={t("searchProgress")}
                         className="border-0 focus:ring-0"
                     />
                     <CommandEmpty className="py-6 text-center">
                         <div className="text-muted-foreground text-sm">
-                            {t('orgNotFound2')}
+                            {t("orgNotFound2")}
                         </div>
                     </CommandEmpty>
                     {(!env.flags.disableUserCreateOrg || user.serverAdmin) && (
                         <>
-                            <CommandGroup heading={t('create')} className="py-2">
+                            <CommandGroup
+                                heading={t("create")}
+                                className="py-2"
+                            >
                                 <CommandList>
                                     <CommandItem
                                         onSelect={() => {
@@ -103,8 +110,12 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                                             <Plus className="h-4 w-4 text-primary" />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-medium">{t('setupNewOrg')}</span>
-                                            <span className="text-xs text-muted-foreground">{t('createNewOrgDescription')}</span>
+                                            <span className="font-medium">
+                                                {t("setupNewOrg")}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {t("createNewOrgDescription")}
+                                            </span>
                                         </div>
                                     </CommandItem>
                                 </CommandList>
@@ -112,7 +123,7 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                             <CommandSeparator className="my-2" />
                         </>
                     )}
-                    <CommandGroup heading={t('orgs')} className="py-2">
+                    <CommandGroup heading={t("orgs")} className="py-2">
                         <CommandList>
                             {orgs?.map((org) => (
                                 <CommandItem
@@ -127,13 +138,19 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                                         <Users className="h-4 w-4 text-muted-foreground" />
                                     </div>
                                     <div className="flex flex-col flex-1">
-                                        <span className="font-medium">{org.name}</span>
-                                        <span className="text-xs text-muted-foreground">{t('organization')}</span>
+                                        <span className="font-medium">
+                                            {org.name}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {t("organization")}
+                                        </span>
                                     </div>
                                     <Check
                                         className={cn(
                                             "h-4 w-4 text-primary",
-                                            orgId === org.orgId ? "opacity-100" : "opacity-0"
+                                            orgId === org.orgId
+                                                ? "opacity-100"
+                                                : "opacity-0"
                                         )}
                                     />
                                 </CommandItem>
@@ -154,8 +171,12 @@ export function OrgSelector({ orgId, orgs, isCollapsed = false }: OrgSelectorPro
                     </TooltipTrigger>
                     <TooltipContent side="right" sideOffset={8}>
                         <div className="text-center">
-                            <p className="font-medium">{selectedOrg?.name || t('noneSelected')}</p>
-                            <p className="text-xs text-muted-foreground">{t('org')}</p>
+                            <p className="font-medium">
+                                {selectedOrg?.name || t("noneSelected")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {t("org")}
+                            </p>
                         </div>
                     </TooltipContent>
                 </Tooltip>

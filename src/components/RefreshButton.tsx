@@ -29,11 +29,7 @@ export default function RefreshButton() {
     };
 
     return (
-        <Button
-            variant="outline"
-            onClick={refreshData}
-            disabled={isRefreshing}
-        >
+        <Button variant="outline" onClick={refreshData} disabled={isRefreshing}>
             <RefreshCw
                 className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
             />

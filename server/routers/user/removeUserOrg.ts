@@ -16,9 +16,9 @@ import { UserType } from "@server/types/UserTypes";
 import { calculateUserClientsForOrgs } from "@server/lib/calculateUserClientsForOrgs";
 
 const removeUserSchema = z.strictObject({
-        userId: z.string(),
-        orgId: z.string()
-    });
+    userId: z.string(),
+    orgId: z.string()
+});
 
 registry.registerPath({
     method: "delete",

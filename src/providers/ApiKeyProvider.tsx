@@ -17,7 +17,7 @@ export function ApiKeyProvider({ children, apiKey: ak }: ApiKeyProviderProps) {
 
     const updateApiKey = (updatedApiKey: Partial<GetApiKeyResponse>) => {
         if (!apiKey) {
-            throw new Error(t('apiKeysErrorNoUpdate'));
+            throw new Error(t("apiKeysErrorNoUpdate"));
         }
         setApiKey((prev) => {
             if (!prev) {

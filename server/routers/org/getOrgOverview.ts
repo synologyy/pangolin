@@ -19,8 +19,8 @@ import logger from "@server/logger";
 import { fromZodError } from "zod-validation-error";
 
 const getOrgParamsSchema = z.strictObject({
-        orgId: z.string()
-    });
+    orgId: z.string()
+});
 
 export type GetOrgOverviewResponse = {
     orgName: string;

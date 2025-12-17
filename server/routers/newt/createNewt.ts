@@ -24,9 +24,9 @@ export type CreateNewtResponse = {
 };
 
 const createNewtSchema = z.strictObject({
-        newtId: z.string(),
-        secret: z.string()
-    });
+    newtId: z.string(),
+    secret: z.string()
+});
 
 export async function createNewt(
     req: Request,
@@ -34,7 +34,6 @@ export async function createNewt(
     next: NextFunction
 ): Promise<any> {
     try {
-
         const parsedBody = createNewtSchema.safeParse(req.body);
         if (!parsedBody.success) {
             return next(
@@ -58,7 +57,7 @@ export async function createNewt(
         await db.insert(newts).values({
             newtId: newtId,
             secretHash,
-            dateCreated: moment().toISOString(),
+            dateCreated: moment().toISOString()
         });
 
         // give the newt their default permissions:
@@ -75,12 +74,12 @@ export async function createNewt(
             data: {
                 newtId,
                 secret,
-                token,
+                token
             },
             success: true,
             error: false,
             message: "Newt created successfully",
-            status: HttpCode.OK,
+            status: HttpCode.OK
         });
     } catch (e) {
         if (e instanceof SqliteError && e.code === "SQLITE_CONSTRAINT_UNIQUE") {

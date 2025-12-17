@@ -60,7 +60,10 @@ export function PathMatchModal({
         setOpen(false);
     };
 
-    const getPlaceholder = () => (matchType === "regex" ? t("pathMatchRegexPlaceholder") : t("pathMatchDefaultPlaceholder"));
+    const getPlaceholder = () =>
+        matchType === "regex"
+            ? t("pathMatchRegexPlaceholder")
+            : t("pathMatchDefaultPlaceholder");
 
     const getHelpText = () => {
         switch (matchType) {
@@ -93,14 +96,22 @@ export function PathMatchModal({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="prefix">{t("pathMatchPrefix")}</SelectItem>
-                                <SelectItem value="exact">{t("pathMatchExact")}</SelectItem>
-                                <SelectItem value="regex">{t("pathMatchRegex")}</SelectItem>
+                                <SelectItem value="prefix">
+                                    {t("pathMatchPrefix")}
+                                </SelectItem>
+                                <SelectItem value="exact">
+                                    {t("pathMatchExact")}
+                                </SelectItem>
+                                <SelectItem value="regex">
+                                    {t("pathMatchRegex")}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="path-value">{t("pathMatchValue")}</Label>
+                        <Label htmlFor="path-value">
+                            {t("pathMatchValue")}
+                        </Label>
                         <Input
                             id="path-value"
                             placeholder={getPlaceholder()}
@@ -115,9 +126,9 @@ export function PathMatchModal({
                 <CredenzaFooter className="gap-2">
                     {/* {value?.path && (
                         )} */}
-                        <Button variant="outline" onClick={handleClear}>
-                            {t("clear")}
-                        </Button>
+                    <Button variant="outline" onClick={handleClear}>
+                        {t("clear")}
+                    </Button>
                     <Button onClick={handleSave} disabled={!path.trim()}>
                         {t("saveChanges")}
                     </Button>
@@ -206,7 +217,9 @@ export function PathRewriteModal({
                 </CredenzaHeader>
                 <div className="grid gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="rewrite-type">{t("pathRewriteType")}</Label>
+                        <Label htmlFor="rewrite-type">
+                            {t("pathRewriteType")}
+                        </Label>
                         <Select
                             value={rewriteType}
                             onValueChange={setRewriteType}
@@ -231,7 +244,9 @@ export function PathRewriteModal({
                         </Select>
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="rewrite-value">{t("pathRewriteValue")}</Label>
+                        <Label htmlFor="rewrite-value">
+                            {t("pathRewriteValue")}
+                        </Label>
                         <Input
                             id="rewrite-value"
                             placeholder={getPlaceholder()}
@@ -269,7 +284,7 @@ export function PathMatchDisplay({
     value: { path: string | null; pathMatchType: string | null };
 }) {
     const t = useTranslations();
-    
+
     if (!value?.path) return null;
 
     const getTypeLabel = (type: string | null) => {
@@ -300,7 +315,7 @@ export function PathRewriteDisplay({
     value: { rewritePath: string | null; rewritePathType: string | null };
 }) {
     const t = useTranslations();
-    
+
     if (!value?.rewritePath && value?.rewritePathType !== "stripPrefix")
         return null;
 

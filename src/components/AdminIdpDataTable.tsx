@@ -26,10 +26,10 @@ export function IdpDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="idp-table"
-            title={t('idp')}
-            searchPlaceholder={t('idpSearch')}
+            title={t("idp")}
+            searchPlaceholder={t("idpSearch")}
             searchColumn="name"
-            addButtonText={t('idpAdd')}
+            addButtonText={t("idpAdd")}
             onAdd={() => {
                 router.push("/admin/idp/create");
             }}

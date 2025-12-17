@@ -20,10 +20,7 @@ type AccessTokenProps = {
     resourceId?: number;
 };
 
-export default function AccessToken({
-    token,
-    resourceId
-}: AccessTokenProps) {
+export default function AccessToken({ token, resourceId }: AccessTokenProps) {
     const [loading, setLoading] = useState(true);
     const [isValid, setIsValid] = useState(false);
 
@@ -79,7 +76,7 @@ export default function AccessToken({
                     );
                 }
             } catch (e) {
-                console.error(t('accessTokenError'), e);
+                console.error(t("accessTokenError"), e);
             } finally {
                 setLoading(false);
             }
@@ -102,7 +99,7 @@ export default function AccessToken({
                     );
                 }
             } catch (e) {
-                console.error(t('accessTokenError'), e);
+                console.error(t("accessTokenError"), e);
             } finally {
                 setLoading(false);
             }
@@ -118,26 +115,22 @@ export default function AccessToken({
 
     function renderTitle() {
         if (isValid) {
-            return t('accessGranted');
+            return t("accessGranted");
         } else {
-            return t('accessUrlInvalid');
+            return t("accessUrlInvalid");
         }
     }
 
     function renderContent() {
         if (isValid) {
-            return (
-                <div>
-                    {t('accessGrantedDescription')}
-                </div>
-            );
+            return <div>{t("accessGrantedDescription")}</div>;
         } else {
             return (
                 <div>
-                    {t('accessUrlInvalidDescription')}
+                    {t("accessUrlInvalidDescription")}
                     <div className="text-center mt-4">
                         <Button>
-                            <Link href="/">{t('goHome')}</Link>
+                            <Link href="/">{t("goHome")}</Link>
                         </Button>
                     </div>
                 </div>

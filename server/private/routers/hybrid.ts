@@ -79,86 +79,72 @@ import semver from "semver";
 
 // Zod schemas for request validation
 const getResourceByDomainParamsSchema = z.strictObject({
-        domain: z.string().min(1, "Domain is required")
-    });
+    domain: z.string().min(1, "Domain is required")
+});
 
 const getUserSessionParamsSchema = z.strictObject({
-        userSessionId: z.string().min(1, "User session ID is required")
-    });
+    userSessionId: z.string().min(1, "User session ID is required")
+});
 
 const getUserOrgRoleParamsSchema = z.strictObject({
-        userId: z.string().min(1, "User ID is required"),
-        orgId: z.string().min(1, "Organization ID is required")
-    });
+    userId: z.string().min(1, "User ID is required"),
+    orgId: z.string().min(1, "Organization ID is required")
+});
 
 const getRoleResourceAccessParamsSchema = z.strictObject({
-        roleId: z
-            .string()
-            .transform(Number)
-            .pipe(
-                z.int().positive("Role ID must be a positive integer")
-            ),
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(
-                z.int()
-                    .positive("Resource ID must be a positive integer")
-            )
-    });
+    roleId: z
+        .string()
+        .transform(Number)
+        .pipe(z.int().positive("Role ID must be a positive integer")),
+    resourceId: z
+        .string()
+        .transform(Number)
+        .pipe(z.int().positive("Resource ID must be a positive integer"))
+});
 
 const getUserResourceAccessParamsSchema = z.strictObject({
-        userId: z.string().min(1, "User ID is required"),
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(
-                z.int()
-                    .positive("Resource ID must be a positive integer")
-            )
-    });
+    userId: z.string().min(1, "User ID is required"),
+    resourceId: z
+        .string()
+        .transform(Number)
+        .pipe(z.int().positive("Resource ID must be a positive integer"))
+});
 
 const getResourceRulesParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(
-                z.int()
-                    .positive("Resource ID must be a positive integer")
-            )
-    });
+    resourceId: z
+        .string()
+        .transform(Number)
+        .pipe(z.int().positive("Resource ID must be a positive integer"))
+});
 
 const validateResourceSessionTokenParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(
-                z.int()
-                    .positive("Resource ID must be a positive integer")
-            )
-    });
+    resourceId: z
+        .string()
+        .transform(Number)
+        .pipe(z.int().positive("Resource ID must be a positive integer"))
+});
 
 const validateResourceSessionTokenBodySchema = z.strictObject({
-        token: z.string().min(1, "Token is required")
-    });
+    token: z.string().min(1, "Token is required")
+});
 
 const validateResourceAccessTokenBodySchema = z.strictObject({
-        accessTokenId: z.string().optional(),
-        resourceId: z.number().optional(),
-        accessToken: z.string()
-    });
+    accessTokenId: z.string().optional(),
+    resourceId: z.number().optional(),
+    accessToken: z.string()
+});
 
 // Certificates by domains query validation
 const getCertificatesByDomainsQuerySchema = z.strictObject({
-        // Accept domains as string or array (domains or domains[])
-        domains: z
-            .union([z.array(z.string().min(1)), z.string().min(1)])
-            .optional(),
-        // Handle array format from query parameters (domains[])
-        "domains[]": z
-            .union([z.array(z.string().min(1)), z.string().min(1)])
-            .optional()
-    });
+    // Accept domains as string or array (domains or domains[])
+    domains: z
+        .union([z.array(z.string().min(1)), z.string().min(1)])
+        .optional(),
+    // Handle array format from query parameters (domains[])
+    "domains[]": z
+        .union([z.array(z.string().min(1)), z.string().min(1)])
+        .optional()
+});
 
 // Type exports for request schemas
 export type GetResourceByDomainParams = z.infer<
@@ -566,8 +552,8 @@ hybridRouter.get(
 );
 
 const getOrgLoginPageParamsSchema = z.strictObject({
-        orgId: z.string().min(1)
-    });
+    orgId: z.string().min(1)
+});
 
 hybridRouter.get(
     "/org/:orgId/login-page",
@@ -1408,8 +1394,16 @@ hybridRouter.post(
                 );
             }
 
-            const { olmId, newtId, ip, port, timestamp, token, publicKey, reachableAt } =
-                parsedParams.data;
+            const {
+                olmId,
+                newtId,
+                ip,
+                port,
+                timestamp,
+                token,
+                publicKey,
+                reachableAt
+            } = parsedParams.data;
 
             const destinations = await updateAndGenerateEndpointDestinations(
                 olmId,

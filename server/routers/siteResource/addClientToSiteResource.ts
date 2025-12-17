@@ -28,7 +28,8 @@ const addClientToSiteResourceParamsSchema = z
 registry.registerPath({
     method: "post",
     path: "/site-resource/{siteResourceId}/clients/add",
-    description: "Add a single client to a site resource. Clients with a userId cannot be added.",
+    description:
+        "Add a single client to a site resource. Clients with a userId cannot be added.",
     tags: [OpenAPITags.Resource, OpenAPITags.Client],
     request: {
         params: addClientToSiteResourceParamsSchema,
@@ -49,7 +50,9 @@ export async function addClientToSiteResource(
     next: NextFunction
 ): Promise<any> {
     try {
-        const parsedBody = addClientToSiteResourceBodySchema.safeParse(req.body);
+        const parsedBody = addClientToSiteResourceBodySchema.safeParse(
+            req.body
+        );
         if (!parsedBody.success) {
             return next(
                 createHttpError(
@@ -153,4 +156,3 @@ export async function addClientToSiteResource(
         );
     }
 }
-

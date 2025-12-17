@@ -14,21 +14,21 @@ export default function AccessPageHeaderAndNav({
     hasInvitations
 }: AccessPageHeaderAndNavProps) {
     const t = useTranslations();
-    
+
     const navItems = [
         {
-            title: t('users'),
+            title: t("users"),
             href: `/{orgId}/settings/access/users`
         },
         {
-            title: t('roles'),
+            title: t("roles"),
             href: `/{orgId}/settings/access/roles`
         }
     ];
 
     if (hasInvitations) {
         navItems.push({
-            title: t('invite'),
+            title: t("invite"),
             href: `/{orgId}/settings/access/invitations`
         });
     }
@@ -36,13 +36,11 @@ export default function AccessPageHeaderAndNav({
     return (
         <>
             <SettingsSectionTitle
-                title={t('accessUsersRoles')}
-                description={t('accessUsersRolesDescription')}
+                title={t("accessUsersRoles")}
+                description={t("accessUsersRolesDescription")}
             />
 
-            <HorizontalTabs items={navItems}>
-                {children}
-            </HorizontalTabs>
+            <HorizontalTabs items={navItems}>{children}</HorizontalTabs>
         </>
     );
 }

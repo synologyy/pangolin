@@ -110,7 +110,11 @@ export function DNSRecordsDataTable<TData, TValue>({
                             <h1 className="font-bold">{t("dnsRecord")}</h1>
                             <Badge variant="secondary">{t("required")}</Badge>
                         </div>
-                        <Link href="https://docs.pangolin.net/manage/domains" target="_blank" rel="noopener noreferrer">
+                        <Link
+                            href="https://docs.pangolin.net/manage/domains"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             <Button variant="outline">
                                 <ExternalLink className="h-4 w-4 mr-1" />
                                 {t("howToAddRecords")}
@@ -122,9 +126,7 @@ export function DNSRecordsDataTable<TData, TValue>({
                     <Table>
                         <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <TableRow
-                                    key={headerGroup.id}
-                                >
+                                <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
                                         <TableHead key={header.id}>
                                             {header.isPlaceholder

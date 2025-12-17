@@ -1,22 +1,27 @@
 "use client";
 
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { createApiClient } from "@app/lib/api";
+import { cn } from "@app/lib/cn";
 import {
     logAnalyticsFiltersSchema,
     logQueries,
     resourceQueries
 } from "@app/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "./ui/card";
 import { LoaderIcon, RefreshCw, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { DateRangePicker, type DateTimeValue } from "./DateTimePicker";
 import { Button } from "./ui/button";
-import { cn } from "@app/lib/cn";
-import { useTranslations } from "next-intl";
+import { Card, CardContent, CardHeader } from "./ui/card";
 
+import { countryCodeToFlagEmoji } from "@app/lib/countryCodeToFlagEmoji";
+import {
+    InfoSection,
+    InfoSectionContent,
+    InfoSections,
+    InfoSectionTitle
+} from "./InfoSection";
+import { Label } from "./ui/label";
 import {
     Select,
     SelectContent,
@@ -24,23 +29,10 @@ import {
     SelectTrigger,
     SelectValue
 } from "./ui/select";
-import { Label } from "./ui/label";
 import { Separator } from "./ui/separator";
-import {
-    InfoSection,
-    InfoSectionContent,
-    InfoSections,
-    InfoSectionTitle
-} from "./InfoSection";
 import { WorldMap } from "./WorldMap";
-import { countryCodeToFlagEmoji } from "@app/lib/countryCodeToFlagEmoji";
 
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger
-} from "./ui/tooltip";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import {
     ChartContainer,
     ChartLegend,
@@ -49,7 +41,13 @@ import {
     ChartTooltipContent,
     type ChartConfig
 } from "./ui/chart";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger
+} from "./ui/tooltip";
+import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
 
 export type AnalyticsContentProps = {
     orgId: string;
@@ -67,17 +65,18 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
     const isEmptySearchParams =
         !filters.resourceId && !filters.timeStart && !filters.timeEnd;
 
-    const env = useEnvContext();
-    const [api] = useState(() => createApiClient(env));
     const router = useRouter();
 
+    console.log({ filters });
     const dateRange = {
-        startDate: filters.timeStart ? new Date(filters.timeStart) : undefined,
-        endDate: filters.timeEnd ? new Date(filters.timeEnd) : undefined
+        startDate: filters.timeStart
+            ? new Date(filters.timeStart)
+            : getSevenDaysAgo(),
+        endDate: filters.timeEnd ? new Date(filters.timeEnd) : new Date()
     };
 
     const { data: resources = [], isFetching: isFetchingResources } = useQuery(
-        resourceQueries.listNamesPerOrg(props.orgId, api)
+        resourceQueries.listNamesPerOrg(props.orgId)
     );
 
     const {
@@ -88,7 +87,6 @@ export function LogAnalyticsData(props: AnalyticsContentProps) {
     } = useQuery(
         logQueries.requestAnalytics({
             orgId: props.orgId,
-            api,
             filters
         })
     );

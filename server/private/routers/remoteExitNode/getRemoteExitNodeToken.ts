@@ -55,7 +55,8 @@ export async function getRemoteExitNodeToken(
 
     try {
         if (token) {
-            const { session, remoteExitNode } = await validateRemoteExitNodeSessionToken(token);
+            const { session, remoteExitNode } =
+                await validateRemoteExitNodeSessionToken(token);
             if (session) {
                 if (config.getRawConfig().app.log_failed_attempts) {
                     logger.info(
@@ -103,7 +104,10 @@ export async function getRemoteExitNodeToken(
         }
 
         const resToken = generateSessionToken();
-        await createRemoteExitNodeSession(resToken, existingRemoteExitNode.remoteExitNodeId);
+        await createRemoteExitNodeSession(
+            resToken,
+            existingRemoteExitNode.remoteExitNodeId
+        );
 
         // logger.debug(`Created RemoteExitNode token response: ${JSON.stringify(resToken)}`);
 

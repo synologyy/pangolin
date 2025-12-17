@@ -41,7 +41,11 @@ async function getActionDays(orgId: string): Promise<number> {
     }
 
     // store the result in cache
-    cache.set(`org_${orgId}_actionDays`, org.settingsLogRetentionDaysAction, 300);
+    cache.set(
+        `org_${orgId}_actionDays`,
+        org.settingsLogRetentionDaysAction,
+        300
+    );
 
     return org.settingsLogRetentionDaysAction;
 }
@@ -141,4 +145,3 @@ export function logActionAudit(action: ActionsEnum) {
         }
     };
 }
-

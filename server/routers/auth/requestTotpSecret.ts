@@ -17,9 +17,9 @@ import { verifySession } from "@server/auth/sessions/verifySession";
 import config from "@server/lib/config";
 
 export const requestTotpSecretBody = z.strictObject({
-        password: z.string(),
-        email: z.email().optional()
-    });
+    password: z.string(),
+    email: z.email().optional()
+});
 
 export type RequestTotpSecretBody = z.infer<typeof requestTotpSecretBody>;
 
@@ -46,7 +46,8 @@ export async function requestTotpSecret(
 
     const { password, email } = parsedBody.data;
 
-    const { user: sessionUser, session: existingSession } = await verifySession(req);
+    const { user: sessionUser, session: existingSession } =
+        await verifySession(req);
 
     let user: User | null = sessionUser;
     if (!existingSession) {
@@ -112,11 +113,7 @@ export async function requestTotpSecret(
 
         const hex = crypto.getRandomValues(new Uint8Array(20));
         const secret = encodeHex(hex);
-        const uri = createTOTPKeyURI(
-            appName,
-            user.email!,
-            hex
-        );
+        const uri = createTOTPKeyURI(appName, user.email!, hex);
 
         await db
             .update(users)

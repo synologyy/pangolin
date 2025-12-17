@@ -4,7 +4,10 @@ import { eq } from "drizzle-orm";
 
 const currentBannedPorts: number[] = [];
 
-export async function pickPort(siteId: number, trx: Transaction | typeof db): Promise<{
+export async function pickPort(
+    siteId: number,
+    trx: Transaction | typeof db
+): Promise<{
     internalPort: number;
     targetIps: string[];
 }> {

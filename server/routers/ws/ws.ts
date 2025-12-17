@@ -10,7 +10,13 @@ import { validateOlmSessionToken } from "@server/auth/sessions/olm";
 import { messageHandlers } from "./messageHandlers";
 import logger from "@server/logger";
 import { v4 as uuidv4 } from "uuid";
-import { ClientType, TokenPayload, WebSocketRequest, WSMessage, AuthenticatedWebSocket } from "./types";
+import {
+    ClientType,
+    TokenPayload,
+    WebSocketRequest,
+    WSMessage,
+    AuthenticatedWebSocket
+} from "./types";
 import { validateSessionToken } from "@server/auth/sessions/app";
 
 // Subset of TokenPayload for public ws.ts (newt and olm only)
@@ -32,7 +38,11 @@ const connectedClients: Map<string, AuthenticatedWebSocket[]> = new Map();
 const getClientMapKey = (clientId: string) => clientId;
 
 // Helper functions for client management
-const addClient = async (clientType: ClientType, clientId: string, ws: AuthenticatedWebSocket): Promise<void> => {
+const addClient = async (
+    clientType: ClientType,
+    clientId: string,
+    ws: AuthenticatedWebSocket
+): Promise<void> => {
     // Generate unique connection ID
     const connectionId = uuidv4();
     ws.connectionId = connectionId;
@@ -43,33 +53,46 @@ const addClient = async (clientType: ClientType, clientId: string, ws: Authentic
     existingClients.push(ws);
     connectedClients.set(mapKey, existingClients);
 
-    logger.info(`Client added to tracking - ${clientType.toUpperCase()} ID: ${clientId}, Connection ID: ${connectionId}, Total connections: ${existingClients.length}`);
+    logger.info(
+        `Client added to tracking - ${clientType.toUpperCase()} ID: ${clientId}, Connection ID: ${connectionId}, Total connections: ${existingClients.length}`
+    );
 };
 
-const removeClient = async (clientType: ClientType, clientId: string, ws: AuthenticatedWebSocket): Promise<void> => {
+const removeClient = async (
+    clientType: ClientType,
+    clientId: string,
+    ws: AuthenticatedWebSocket
+): Promise<void> => {
     const mapKey = getClientMapKey(clientId);
     const existingClients = connectedClients.get(mapKey) || [];
-    const updatedClients = existingClients.filter(client => client !== ws);
+    const updatedClients = existingClients.filter((client) => client !== ws);
     if (updatedClients.length === 0) {
         connectedClients.delete(mapKey);
 
-        logger.info(`All connections removed for ${clientType.toUpperCase()} ID: ${clientId}`);
+        logger.info(
+            `All connections removed for ${clientType.toUpperCase()} ID: ${clientId}`
+        );
     } else {
         connectedClients.set(mapKey, updatedClients);
 
-        logger.info(`Connection removed - ${clientType.toUpperCase()} ID: ${clientId}, Remaining connections: ${updatedClients.length}`);
+        logger.info(
+            `Connection removed - ${clientType.toUpperCase()} ID: ${clientId}, Remaining connections: ${updatedClients.length}`
+        );
     }
 };
 
 // Local message sending (within this node)
-const sendToClientLocal = async (clientId: string, message: WSMessage): Promise<boolean> => {
+const sendToClientLocal = async (
+    clientId: string,
+    message: WSMessage
+): Promise<boolean> => {
     const mapKey = getClientMapKey(clientId);
     const clients = connectedClients.get(mapKey);
     if (!clients || clients.length === 0) {
         return false;
     }
     const messageString = JSON.stringify(message);
-    clients.forEach(client => {
+    clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
             client.send(messageString);
         }
@@ -77,11 +100,14 @@ const sendToClientLocal = async (clientId: string, message: WSMessage): Promise<
     return true;
 };
 
-const broadcastToAllExceptLocal = async (message: WSMessage, excludeClientId?: string): Promise<void> => {
+const broadcastToAllExceptLocal = async (
+    message: WSMessage,
+    excludeClientId?: string
+): Promise<void> => {
     connectedClients.forEach((clients, mapKey) => {
         const [type, id] = mapKey.split(":");
         if (!(excludeClientId && id === excludeClientId)) {
-            clients.forEach(client => {
+            clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(JSON.stringify(message));
                 }
@@ -91,39 +117,53 @@ const broadcastToAllExceptLocal = async (message: WSMessage, excludeClientId?: s
 };
 
 // Cross-node message sending
-const sendToClient = async (clientId: string, message: WSMessage): Promise<boolean> => {
+const sendToClient = async (
+    clientId: string,
+    message: WSMessage
+): Promise<boolean> => {
     // Try to send locally first
     const localSent = await sendToClientLocal(clientId, message);
 
-    logger.debug(`sendToClient: Message type ${message.type} sent to clientId ${clientId}`);
+    logger.debug(
+        `sendToClient: Message type ${message.type} sent to clientId ${clientId}`
+    );
 
     return localSent;
 };
 
-const broadcastToAllExcept = async (message: WSMessage, excludeClientId?: string): Promise<void> => {
+const broadcastToAllExcept = async (
+    message: WSMessage,
+    excludeClientId?: string
+): Promise<void> => {
     // Broadcast locally
     await broadcastToAllExceptLocal(message, excludeClientId);
 };
 
 // Check if a client has active connections across all nodes
 const hasActiveConnections = async (clientId: string): Promise<boolean> => {
-        const mapKey = getClientMapKey(clientId);
-        const clients = connectedClients.get(mapKey);
-        return !!(clients && clients.length > 0);
+    const mapKey = getClientMapKey(clientId);
+    const clients = connectedClients.get(mapKey);
+    return !!(clients && clients.length > 0);
 };
 
 // Get all active nodes for a client
-const getActiveNodes = async (clientType: ClientType, clientId: string): Promise<string[]> => {
-        const mapKey = getClientMapKey(clientId);
-        const clients = connectedClients.get(mapKey);
-        return (clients && clients.length > 0) ? [NODE_ID] : [];
+const getActiveNodes = async (
+    clientType: ClientType,
+    clientId: string
+): Promise<string[]> => {
+    const mapKey = getClientMapKey(clientId);
+    const clients = connectedClients.get(mapKey);
+    return clients && clients.length > 0 ? [NODE_ID] : [];
 };
 
 // Token verification middleware
-const verifyToken = async (token: string, clientType: ClientType, userToken: string): Promise<PublicTokenPayload | null> => {
-
-try {
-        if (clientType === 'newt') {
+const verifyToken = async (
+    token: string,
+    clientType: ClientType,
+    userToken: string
+): Promise<PublicTokenPayload | null> => {
+    try {
+        if (clientType === "newt") {
             const { session, newt } = await validateNewtSessionToken(token);
             if (!session || !newt) {
                 return null;
@@ -136,7 +176,7 @@ try {
                 return null;
             }
             return { client: existingNewt[0], session, clientType };
-        } else if (clientType === 'olm') {
+        } else if (clientType === "olm") {
             const { session, olm } = await validateOlmSessionToken(token);
             if (!session || !olm) {
                 return null;
@@ -149,8 +189,10 @@ try {
                 return null;
             }
 
-            if (olm.userId) { // this is a user device and we need to check the user token
-                const { session: userSession, user } = await validateSessionToken(userToken);
+            if (olm.userId) {
+                // this is a user device and we need to check the user token
+                const { session: userSession, user } =
+                    await validateSessionToken(userToken);
                 if (!userSession || !user) {
                     return null;
                 }
@@ -161,7 +203,7 @@ try {
 
             return { client: existingOlm[0], session, clientType };
         }
-        
+
         return null;
     } catch (error) {
         logger.error("Token verification failed:", error);
@@ -169,7 +211,11 @@ try {
     }
 };
 
-const setupConnection = async (ws: AuthenticatedWebSocket, client: Newt | Olm, clientType: "newt" | "olm"): Promise<void> => {
+const setupConnection = async (
+    ws: AuthenticatedWebSocket,
+    client: Newt | Olm,
+    clientType: "newt" | "olm"
+): Promise<void> => {
     logger.info("Establishing websocket connection");
     if (!client) {
         logger.error("Connection attempt without client");
@@ -180,7 +226,8 @@ const setupConnection = async (ws: AuthenticatedWebSocket, client: Newt | Olm, c
     ws.clientType = clientType;
 
     // Add client to tracking
-    const clientId = clientType === 'newt' ? (client as Newt).newtId : (client as Olm).olmId;
+    const clientId =
+        clientType === "newt" ? (client as Newt).newtId : (client as Olm).olmId;
     await addClient(clientType, clientId, ws);
 
     ws.on("message", async (data) => {
@@ -188,7 +235,9 @@ const setupConnection = async (ws: AuthenticatedWebSocket, client: Newt | Olm, c
             const message: WSMessage = JSON.parse(data.toString());
 
             if (!message.type || typeof message.type !== "string") {
-                throw new Error("Invalid message format: missing or invalid type");
+                throw new Error(
+                    "Invalid message format: missing or invalid type"
+                );
             }
 
             const handler = messageHandlers[message.type];
@@ -213,33 +262,48 @@ const setupConnection = async (ws: AuthenticatedWebSocket, client: Newt | Olm, c
                         response.excludeSender ? clientId : undefined
                     );
                 } else if (response.targetClientId) {
-                    await sendToClient(response.targetClientId, response.message);
+                    await sendToClient(
+                        response.targetClientId,
+                        response.message
+                    );
                 } else {
                     ws.send(JSON.stringify(response.message));
                 }
             }
         } catch (error) {
             logger.error("Message handling error:", error);
-            ws.send(JSON.stringify({
-                type: "error",
-                data: {
-                    message: error instanceof Error ? error.message : "Unknown error occurred",
-                    originalMessage: data.toString()
-                }
-            }));
+            ws.send(
+                JSON.stringify({
+                    type: "error",
+                    data: {
+                        message:
+                            error instanceof Error
+                                ? error.message
+                                : "Unknown error occurred",
+                        originalMessage: data.toString()
+                    }
+                })
+            );
         }
     });
 
     ws.on("close", () => {
         removeClient(clientType, clientId, ws);
-        logger.info(`Client disconnected - ${clientType.toUpperCase()} ID: ${clientId}`);
+        logger.info(
+            `Client disconnected - ${clientType.toUpperCase()} ID: ${clientId}`
+        );
     });
 
     ws.on("error", (error: Error) => {
-        logger.error(`WebSocket error for ${clientType.toUpperCase()} ID ${clientId}:`, error);
+        logger.error(
+            `WebSocket error for ${clientType.toUpperCase()} ID ${clientId}:`,
+            error
+        );
     });
 
-    logger.info(`WebSocket connection established - ${clientType.toUpperCase()} ID: ${clientId}`);
+    logger.info(
+        `WebSocket connection established - ${clientType.toUpperCase()} ID: ${clientId}`
+    );
 };
 
 // Router endpoint
@@ -249,55 +313,89 @@ router.get("/ws", (req: Request, res: Response) => {
 
 // WebSocket upgrade handler
 const handleWSUpgrade = (server: HttpServer): void => {
-    server.on("upgrade", async (request: WebSocketRequest, socket: Socket, head: Buffer) => {
-        try {
-            const url = new URL(request.url || '', `http://${request.headers.host}`);
-            const token = url.searchParams.get('token') || request.headers["sec-websocket-protocol"] || '';
-            const userToken = url.searchParams.get('userToken') || '';
-            let clientType = url.searchParams.get('clientType') as ClientType;
+    server.on(
+        "upgrade",
+        async (request: WebSocketRequest, socket: Socket, head: Buffer) => {
+            try {
+                const url = new URL(
+                    request.url || "",
+                    `http://${request.headers.host}`
+                );
+                const token =
+                    url.searchParams.get("token") ||
+                    request.headers["sec-websocket-protocol"] ||
+                    "";
+                const userToken = url.searchParams.get("userToken") || "";
+                let clientType = url.searchParams.get(
+                    "clientType"
+                ) as ClientType;
 
-            if (!clientType) {
-                clientType = "newt";
-            }
+                if (!clientType) {
+                    clientType = "newt";
+                }
 
-            if (!token || !clientType || !['newt', 'olm'].includes(clientType)) {
-                logger.warn("Unauthorized connection attempt: invalid token or client type...");
-                socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+                if (
+                    !token ||
+                    !clientType ||
+                    !["newt", "olm"].includes(clientType)
+                ) {
+                    logger.warn(
+                        "Unauthorized connection attempt: invalid token or client type..."
+                    );
+                    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+                    socket.destroy();
+                    return;
+                }
+
+                const tokenPayload = await verifyToken(
+                    token,
+                    clientType,
+                    userToken
+                );
+                if (!tokenPayload) {
+                    logger.warn(
+                        "Unauthorized connection attempt: invalid token..."
+                    );
+                    socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+                    socket.destroy();
+                    return;
+                }
+
+                wss.handleUpgrade(
+                    request,
+                    socket,
+                    head,
+                    (ws: AuthenticatedWebSocket) => {
+                        setupConnection(
+                            ws,
+                            tokenPayload.client,
+                            tokenPayload.clientType
+                        );
+                    }
+                );
+            } catch (error) {
+                logger.error("WebSocket upgrade error:", error);
+                socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
                 socket.destroy();
-                return;
             }
-
-            const tokenPayload = await verifyToken(token, clientType, userToken);
-            if (!tokenPayload) {
-                logger.warn("Unauthorized connection attempt: invalid token...");
-                socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
-                socket.destroy();
-                return;
-            }
-
-            wss.handleUpgrade(request, socket, head, (ws: AuthenticatedWebSocket) => {
-                setupConnection(ws, tokenPayload.client, tokenPayload.clientType);
-            });
-        } catch (error) {
-            logger.error("WebSocket upgrade error:", error);
-            socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
-            socket.destroy();
         }
-    });
+    );
 };
 
 // Disconnect a specific client and force them to reconnect
 const disconnectClient = async (clientId: string): Promise<boolean> => {
     const mapKey = getClientMapKey(clientId);
     const clients = connectedClients.get(mapKey);
-    
+
     if (!clients || clients.length === 0) {
         logger.debug(`No connections found for client ID: ${clientId}`);
         return false;
     }
 
-    logger.info(`Disconnecting client ID: ${clientId} (${clients.length} connection(s))`);
-    
+    logger.info(
+        `Disconnecting client ID: ${clientId} (${clients.length} connection(s))`
+    );
+
     // Close all connections for this client
     clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
@@ -313,16 +411,16 @@ const cleanup = async (): Promise<void> => {
     try {
         // Close all WebSocket connections
         connectedClients.forEach((clients) => {
-            clients.forEach(client => {
+            clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.terminate();
                 }
             });
         });
 
-        logger.info('WebSocket cleanup completed');
+        logger.info("WebSocket cleanup completed");
     } catch (error) {
-        logger.error('Error during WebSocket cleanup:', error);
+        logger.error("Error during WebSocket cleanup:", error);
     }
 };
 

@@ -6,7 +6,7 @@ import { AdminGetUserResponse } from "@server/routers/user/adminGetUser";
 import { HorizontalTabs } from "@app/components/HorizontalTabs";
 import { cache } from "react";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 interface UserLayoutProps {
     children: React.ReactNode;
@@ -36,7 +36,7 @@ export default async function UserLayoutProps(props: UserLayoutProps) {
 
     const navItems = [
         {
-            title: t('general'),
+            title: t("general"),
             href: "/admin/users/{userId}/general"
         }
     ];
@@ -45,11 +45,9 @@ export default async function UserLayoutProps(props: UserLayoutProps) {
         <>
             <SettingsSectionTitle
                 title={`${user?.email || user?.name || user?.username}`}
-                description={t('userDescription2')}
+                description={t("userDescription2")}
             />
-            <HorizontalTabs items={navItems}>
-                {children}
-            </HorizontalTabs>
+            <HorizontalTabs items={navItems}>{children}</HorizontalTabs>
         </>
     );
-} 
+}

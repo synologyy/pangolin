@@ -17,9 +17,9 @@ import { unauthorized } from "@server/auth/unauthorizedResponse";
 import { UserType } from "@server/types/UserTypes";
 
 export const disable2faBody = z.strictObject({
-        password: z.string(),
-        code: z.string().optional()
-    });
+    password: z.string(),
+    code: z.string().optional()
+});
 
 export type Disable2faBody = z.infer<typeof disable2faBody>;
 
@@ -56,7 +56,10 @@ export async function disable2fa(
     }
 
     try {
-        const validPassword = await verifyPassword(password, user.passwordHash!);
+        const validPassword = await verifyPassword(
+            password,
+            user.passwordHash!
+        );
         if (!validPassword) {
             return next(unauthorized());
         }

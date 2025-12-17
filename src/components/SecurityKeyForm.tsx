@@ -530,10 +530,14 @@ export default function SecurityKeyForm({
                                         <div className="flex flex-col items-center justify-center py-8 text-center">
                                             <Shield className="mb-2 h-12 w-12 text-muted-foreground" />
                                             <p className="text-sm text-muted-foreground">
-                                                {t("securityKeyNoKeysRegistered")}
+                                                {t(
+                                                    "securityKeyNoKeysRegistered"
+                                                )}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {t("securityKeyNoKeysDescription")}
+                                                {t(
+                                                    "securityKeyNoKeysDescription"
+                                                )}
                                             </p>
                                         </div>
                                     )}
@@ -717,7 +721,9 @@ export default function SecurityKeyForm({
                                     {t("securityKeyRemoveTitle")}
                                 </CredenzaTitle>
                                 <CredenzaDescription>
-                                    {t("securityKeyRemoveDescription", { name: selectedSecurityKey!.name! })}
+                                    {t("securityKeyRemoveDescription", {
+                                        name: selectedSecurityKey!.name!
+                                    })}
                                 </CredenzaDescription>
                             </CredenzaHeader>
                             <CredenzaBody>
@@ -805,7 +811,9 @@ export default function SecurityKeyForm({
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel>
-                                                        {t("securityKeyTwoFactorCode")}
+                                                        {t(
+                                                            "securityKeyTwoFactorCode"
+                                                        )}
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input

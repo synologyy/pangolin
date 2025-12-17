@@ -23,7 +23,8 @@ import { updatePeerData, updateTargets } from "@server/routers/client/targets";
 import {
     generateAliasConfig,
     generateRemoteSubnets,
-    generateSubnetProxyTargets
+    generateSubnetProxyTargets,
+    portRangeStringSchema
 } from "@server/lib/ip";
 import {
     getClientSiteResourceAccess,
@@ -49,20 +50,24 @@ const updateSiteResourceSchema = z
         alias: z
             .string()
             .regex(
-                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
-                "Alias must be a fully qualified domain name (e.g., example.internal)"
+                /^(?:[a-zA-Z0-9*?](?:[a-zA-Z0-9*?-]{0,61}[a-zA-Z0-9*?])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name with optional wildcards (e.g., example.internal, *.example.internal, host-0?.example.internal)"
             )
             .nullish(),
         userIds: z.array(z.string()),
         roleIds: z.array(z.int()),
-        clientIds: z.array(z.int())
+        clientIds: z.array(z.int()),
+        tcpPortRangeString: portRangeStringSchema,
+        udpPortRangeString: portRangeStringSchema,
+        disableIcmp: z.boolean().optional()
     })
     .strict()
     .refine(
         (data) => {
             if (data.mode === "host" && data.destination) {
                 const isValidIP = z
-                    .union([z.ipv4(), z.ipv6()])
+                    // .union([z.ipv4(), z.ipv6()])
+                    .union([z.ipv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
 
                 if (isValidIP) {
@@ -73,7 +78,7 @@ const updateSiteResourceSchema = z
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
-                const isValidAlias = data.alias && domainRegex.test(data.alias);
+                const isValidAlias = data.alias !== undefined && data.alias !== null && data.alias.trim() !== "";
 
                 return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
@@ -89,7 +94,8 @@ const updateSiteResourceSchema = z
             if (data.mode === "cidr" && data.destination) {
                 // Check if it's a valid CIDR (v4 or v6)
                 const isValidCIDR = z
-                    .union([z.cidrv4(), z.cidrv6()])
+                    // .union([z.cidrv4(), z.cidrv6()])
+                    .union([z.cidrv4()]) // for now lets just do ipv4 until we verify ipv6 works everywhere
                     .safeParse(data.destination).success;
                 return isValidCIDR;
             }
@@ -158,7 +164,10 @@ export async function updateSiteResource(
             enabled,
             userIds,
             roleIds,
-            clientIds
+            clientIds,
+            tcpPortRangeString,
+            udpPortRangeString,
+            disableIcmp
         } = parsedBody.data;
 
         const [site] = await db
@@ -224,7 +233,10 @@ export async function updateSiteResource(
                     mode: mode,
                     destination: destination,
                     enabled: enabled,
-                    alias: alias && alias.trim() ? alias : null
+                    alias: alias && alias.trim() ? alias : null,
+                    tcpPortRangeString: tcpPortRangeString,
+                    udpPortRangeString: udpPortRangeString,
+                    disableIcmp: disableIcmp
                 })
                 .where(
                     and(
@@ -346,10 +358,18 @@ export async function handleMessagingForUpdatedSiteResource(
     const aliasChanged =
         existingSiteResource &&
         existingSiteResource.alias !== updatedSiteResource.alias;
+    const portRangesChanged =
+        existingSiteResource &&
+        (existingSiteResource.tcpPortRangeString !==
+            updatedSiteResource.tcpPortRangeString ||
+            existingSiteResource.udpPortRangeString !==
+                updatedSiteResource.udpPortRangeString ||
+            existingSiteResource.disableIcmp !==
+                updatedSiteResource.disableIcmp);
 
     // if the existingSiteResource is undefined (new resource) we don't need to do anything here, the rebuild above handled it all
 
-    if (destinationChanged || aliasChanged) {
+    if (destinationChanged || aliasChanged || portRangesChanged) {
         const [newt] = await trx
             .select()
             .from(newts)
@@ -363,7 +383,7 @@ export async function handleMessagingForUpdatedSiteResource(
         }
 
         // Only update targets on newt if destination changed
-        if (destinationChanged) {
+        if (destinationChanged || portRangesChanged) {
             const oldTargets = generateSubnetProxyTargets(
                 existingSiteResource,
                 mergedAllClients

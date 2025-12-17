@@ -312,7 +312,7 @@ export const ConfigSchema = z
             };
             delete (data as any)["public-resources"];
         }
-        
+
         // Merge private-resources into client-resources
         if (data["private-resources"]) {
             data["client-resources"] = {
@@ -321,10 +321,13 @@ export const ConfigSchema = z
             };
             delete (data as any)["private-resources"];
         }
-        
+
         return data as {
             "proxy-resources": Record<string, z.infer<typeof ResourceSchema>>;
-            "client-resources": Record<string, z.infer<typeof ClientResourceSchema>>;
+            "client-resources": Record<
+                string,
+                z.infer<typeof ClientResourceSchema>
+            >;
             sites: Record<string, z.infer<typeof SiteSchema>>;
         };
     })

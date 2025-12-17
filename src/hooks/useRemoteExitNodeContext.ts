@@ -7,14 +7,16 @@ import { useContext } from "react";
 
 export function useRemoteExitNodeContext() {
     if (build == "oss") {
-         return {
+        return {
             remoteExitNode: {} as GetRemoteExitNodeResponse,
-            updateRemoteExitNode: () => {},
+            updateRemoteExitNode: () => {}
         };
     }
     const context = useContext(RemoteExitNodeContext);
     if (context === undefined) {
-        throw new Error("useRemoteExitNodeContext must be used within a RemoteExitNodeProvider");
+        throw new Error(
+            "useRemoteExitNodeContext must be used within a RemoteExitNodeProvider"
+        );
     }
     return context;
 }

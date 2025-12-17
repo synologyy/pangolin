@@ -8,11 +8,23 @@ import HttpCode from "@server/types/HttpCode";
 import createHttpError from "http-errors";
 import logger from "@server/logger";
 import { fromError } from "zod-validation-error";
+import { OpenAPITags, registry } from "@server/openApi";
 
 const removeInvitationParamsSchema = z.strictObject({
-        orgId: z.string(),
-        inviteId: z.string()
-    });
+    orgId: z.string(),
+    inviteId: z.string()
+});
+
+registry.registerPath({
+    method: "delete",
+    path: "/org/{orgId}/invitations/{inviteId}",
+    description: "Remove an open invitation from an organization",
+    tags: [OpenAPITags.Org],
+    request: {
+        params: removeInvitationParamsSchema
+    },
+    responses: {}
+});
 
 export async function removeInvitation(
     req: Request,

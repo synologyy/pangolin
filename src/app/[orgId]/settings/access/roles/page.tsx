@@ -7,7 +7,7 @@ import OrgProvider from "@app/providers/OrgProvider";
 import { ListRolesResponse } from "@server/routers/role";
 import RolesTable, { RoleRow } from "../../../../../components/RolesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
-import { getTranslations } from 'next-intl/server';
+import { getTranslations } from "next-intl/server";
 
 type RolesPageProps = {
     params: Promise<{ orgId: string }>;
@@ -66,8 +66,8 @@ export default async function RolesPage(props: RolesPageProps) {
     return (
         <>
             <SettingsSectionTitle
-                title={t('accessRolesManage')}
-                description={t('accessRolesDescription')}
+                title={t("accessRolesManage")}
+                description={t("accessRolesDescription")}
             />
             <OrgProvider org={org}>
                 <RolesTable roles={roleRows} />

@@ -1,10 +1,8 @@
 "use client";
 
-import {
-    ColumnDef,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@app/components/ui/data-table";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -21,7 +19,6 @@ export function UsersDataTable<TData, TValue>({
     onRefresh,
     isRefreshing
 }: DataTableProps<TData, TValue>) {
-
     const t = useTranslations();
 
     return (
@@ -29,13 +26,13 @@ export function UsersDataTable<TData, TValue>({
             columns={columns}
             data={data}
             persistPageSize="users-table"
-            title={t('users')}
-            searchPlaceholder={t('accessUsersSearch')}
+            title={t("users")}
+            searchPlaceholder={t("accessUsersSearch")}
             searchColumn="email"
             onAdd={inviteUser}
             onRefresh={onRefresh}
             isRefreshing={isRefreshing}
-            addButtonText={t('accessUserCreate')}
+            addButtonText={t("accessUserCreate")}
             enableColumnVisibility={true}
             stickyLeftColumn="displayUsername"
             stickyRightColumn="actions"

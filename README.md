@@ -41,7 +41,7 @@
     </strong>
 </p>
 
-Pangolin is a self-hosted tunneled reverse proxy server with identity and context aware access control, designed to easily expose and protect applications running anywhere. Pangolin acts as a central hub and connects isolated networks — even those behind restrictive firewalls — through encrypted tunnels, enabling easy access to remote services without opening ports or requiring a VPN.
+Pangolin is an open-source, identity-based remote access platform built on WireGuard that enables secure, seamless connectivity to private and public resources. Pangolin combines reverse proxy and VPN capabilities into one platform, providing browser-based access to web applications and client-based access to any private resources, all with zero-trust security and granular access control.
 
 ## Installation
 
@@ -60,14 +60,20 @@ Pangolin is a self-hosted tunneled reverse proxy server with identity and contex
 
 ## Key Features
 
-Pangolin packages everything you need for seamless application access and exposure into one cohesive platform.
-
 | <img width=500 />                                                                                                                                                                                                                                                                                                                                                                | <img width=500 />                                                  |
 |----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
-| **Manage applications in one place**<br /><br /> Pangolin provides a unified dashboard where you can monitor, configure, and secure all of your services regardless of where they are hosted.                                                                                                                                                                                    | <img src="public/screenshots/hero.png" width=500 /><tr></tr> |
-| **Reverse proxy across networks anywhere**<br /><br />Route traffic via tunnels to any private network. Pangolin works like a reverse proxy that spans multiple networks and handles routing, load balancing, health checking, and more to the right services on the other end.                                                                                                  | <img src="public/screenshots/sites.png" width=500 /><tr></tr>          |
-| **Enforce identity and context aware rules**<br /><br />Protect your applications with identity and context aware rules such as SSO, OIDC, PIN, password, temporary share links, geolocation, IP, and more.                                                                                                                                                                                                | <img src="public/auth-diagram1.png" width=500 /><tr></tr>               |
-| **Quickly connect Pangolin sites**<br /><br />Pangolin's lightweight [Newt](https://github.com/fosrl/newt) client runs in userspace and can run anywhere. Use it as a site connector to route traffic to backends across all of your environments.                                                                                                                                                                                   | <img src="public/clip.gif" width=500 /><tr></tr>               |
+| **Connect remote networks with sites**<br /><br />Pangolin's lightweight site connectors create secure tunnels from remote networks without requiring public IP addresses or open ports. Sites make any network anywhere available for authorized access.                                                                                                                                                                                   | <img src="public/screenshots/sites.png" width=500 /><tr></tr>               |
+| **Browser-based reverse proxy access**<br /><br />Expose web applications through identity and context-aware tunneled reverse proxies. Pangolin handles routing, load balancing, health checking, and automatic SSL certificates without exposing your network directly to the internet. Users access applications through any web browser with authentication and granular access control.                                                                                                  | <img src="public/clip.gif" width=500 /><tr></tr>          |
+| **Client-based private resource access**<br /><br />Access private resources like SSH servers, databases, RDP, and entire network ranges through Pangolin clients. Intelligent NAT traversal enables connections even through restrictive firewalls, while DNS aliases provide friendly names and fast connections to resources across all your sites.                                                                                                                                                                                                | <img src="public/screenshots/private-resources.png" width=500 /><tr></tr>               |
+| **Zero-trust granular access**<br /><br />Grant users access to specific resources, not entire networks. Unlike traditional VPNs that expose full network access, Pangolin's zero-trust model ensures users can only reach the applications and services you explicitly define, reducing security risk and attack surface.                                                                                                                                                                                    | <img src="public/screenshots/user-devices.png" width=500 /><tr></tr> |
+
+## Download Clients
+
+Download the Pangolin client for your platform:
+
+- [Mac](https://pangolin.net/downloads/mac)
+- [Windows](https://pangolin.net/downloads/windows)
+- [Linux](https://pangolin.net/downloads/linux)
 
 ## Get Started
 

@@ -16,15 +16,12 @@ import config from "@server/lib/config";
 import { logAccessAudit } from "#dynamic/lib/logAccessAudit";
 
 export const authWithPasswordBodySchema = z.strictObject({
-        password: z.string()
-    });
+    password: z.string()
+});
 
 export const authWithPasswordParamsSchema = z.strictObject({
-        resourceId: z
-            .string()
-            .transform(Number)
-            .pipe(z.int().positive())
-    });
+    resourceId: z.string().transform(Number).pipe(z.int().positive())
+});
 
 export type AuthWithPasswordResponse = {
     session?: string;

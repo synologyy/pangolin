@@ -354,7 +354,7 @@ export default function MachineClientsTable({
                         setSelectedClient(null);
                     }}
                     dialog={
-                        <div>
+                        <div className="space-y-2">
                             <p>{t("deleteClientQuestion")}</p>
                             <p>{t("clientMessageRemove")}</p>
                         </div>
