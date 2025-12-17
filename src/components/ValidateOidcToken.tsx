@@ -178,18 +178,7 @@ export default function ValidateOidcToken(props: ValidateOidcTokenParams) {
         return () => {
             isCancelled = true;
         };
-    }, [
-        env.app.dashboardUrl,
-        isLicenseViolation,
-        props.code,
-        props.expectedState,
-        props.idpId,
-        props.loginPageId,
-        props.providerError,
-        props.stateCookie,
-        router,
-        t
-    ]);
+    }, []);
 
     return (
         <div className="flex items-center justify-center min-h-screen">
