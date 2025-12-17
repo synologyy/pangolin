@@ -143,6 +143,7 @@ export default function DomainPicker({
                     organizationDomains.find(
                         (domain) => domain.domainId === defaultDomainId
                     ) ?? organizationDomains[0];
+
                 const domainOption: DomainOption = {
                     id: `org-${firstOrgDomain.domainId}`,
                     domain: firstOrgDomain.baseDomain,
@@ -156,7 +157,10 @@ export default function DomainPicker({
                 onDomainChange?.({
                     domainId: firstOrgDomain.domainId,
                     type: "organization",
-                    subdomain: undefined,
+                    subdomain:
+                        firstOrgDomain.type !== "cname"
+                            ? defaultSubdomain || undefined
+                            : undefined,
                     fullDomain: firstOrgDomain.baseDomain,
                     baseDomain: firstOrgDomain.baseDomain
                 });
@@ -177,7 +181,13 @@ export default function DomainPicker({
                 setSelectedBaseDomain(freeDomainOption);
             }
         }
-    }, [hideFreeDomain, loadingDomains, organizationDomains, defaultDomainId]);
+    }, [
+        loadingDomains,
+        organizationDomains,
+        defaultSubdomain,
+        hideFreeDomain,
+        defaultDomainId
+    ]);
 
     const checkAvailability = useCallback(
         async (input: string) => {
@@ -354,7 +364,8 @@ export default function DomainPicker({
             domainNamespaceId: option.domainNamespaceId,
             type:
                 option.type === "provided-search" ? "provided" : "organization",
-            subdomain: sub || undefined,
+            subdomain:
+                option.domainType !== "cname" ? sub || undefined : undefined,
             fullDomain,
             baseDomain: option.domain
         });

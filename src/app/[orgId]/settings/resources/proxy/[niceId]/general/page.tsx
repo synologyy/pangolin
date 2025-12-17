@@ -226,7 +226,8 @@ export default function GeneralForm() {
                 niceId: data.niceId,
                 subdomain: data.subdomain,
                 fullDomain: updated.fullDomain,
-                proxyPort: data.proxyPort
+                proxyPort: data.proxyPort,
+                domainId: data.domainId
                 // ...(!resource.http && {
                 //     enableProxy: data.enableProxy
                 // })
@@ -489,8 +490,14 @@ export default function GeneralForm() {
                             <DomainPicker
                                 orgId={orgId as string}
                                 cols={1}
-                                defaultSubdomain={resource.subdomain}
-                                defaultDomainId={resource.domainId}
+                                defaultSubdomain={
+                                    selectedDomain?.subdomain ??
+                                    resource.subdomain
+                                }
+                                defaultDomainId={
+                                    selectedDomain?.domainId ??
+                                    resource.domainId
+                                }
                                 onDomainChange={(res) => {
                                     const selected = {
                                         domainId: res.domainId,
