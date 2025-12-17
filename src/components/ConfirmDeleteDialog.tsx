@@ -116,7 +116,12 @@ export default function ConfirmDeleteDialog({
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
-                                                <Input {...field} />
+                                                <Input
+                                                    {...field}
+                                                    placeholder={t(
+                                                        "enterConfirmation"
+                                                    )}
+                                                />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

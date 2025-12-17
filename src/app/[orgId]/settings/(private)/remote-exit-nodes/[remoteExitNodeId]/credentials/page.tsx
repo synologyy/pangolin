@@ -131,10 +131,10 @@ export default function CredentialsPage() {
                 <SettingsSection>
                     <SettingsSectionHeader>
                         <SettingsSectionTitle>
-                            {t("generatedcredentials")}
+                            {t("credentials")}
                         </SettingsSectionTitle>
                         <SettingsSectionDescription>
-                            {t("regenerateCredentials")}
+                            {t("remoteNodeCredentialsDescription")}
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
@@ -143,7 +143,7 @@ export default function CredentialsPage() {
                         <InfoSections cols={3}>
                             <InfoSection>
                                 <InfoSectionTitle>
-                                    {t("endpoint") || "Endpoint"}
+                                    {t("endpoint")}
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     <CopyToClipboard
@@ -153,8 +153,7 @@ export default function CredentialsPage() {
                             </InfoSection>
                             <InfoSection>
                                 <InfoSectionTitle>
-                                    {t("remoteExitNodeId") ||
-                                        "Remote Exit Node ID"}
+                                    {t("remoteExitNodeId")}
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {displayRemoteExitNodeId ? (
@@ -168,7 +167,7 @@ export default function CredentialsPage() {
                             </InfoSection>
                             <InfoSection>
                                 <InfoSectionTitle>
-                                    {t("secretKey") || "Secret Key"}
+                                    {t("remoteExitNodeSecretKey")}
                                 </InfoSectionTitle>
                                 <InfoSectionContent>
                                     {displaySecret ? (
