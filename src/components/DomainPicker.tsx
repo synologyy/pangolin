@@ -732,7 +732,11 @@ export default function DomainPicker({
                                         handleProvidedDomainSelect(option);
                                     }
                                 }}
-                                className={`grid gap-2 grid-cols-1 sm:grid-cols-${cols}`}
+                                style={{
+                                    // @ts-expect-error CSS variable
+                                    "--cols": `repeat(${cols}, minmax(0, 1fr))`
+                                }}
+                                className="grid gap-2 grid-cols-1 sm:grid-cols-(--cols)"
                             >
                                 {displayedProvidedOptions.map((option) => {
                                     const isSelected =
