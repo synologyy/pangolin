@@ -64,18 +64,21 @@ type DomainOption = {
 
 interface DomainPickerProps {
     orgId: string;
-    onDomainChange?: (domainInfo: {
-        domainId: string;
-        domainNamespaceId?: string;
-        type: "organization" | "provided";
-        subdomain?: string;
-        fullDomain: string;
-        baseDomain: string;
-    }) => void;
+    onDomainChange?: (
+        domainInfo: {
+            domainId: string;
+            domainNamespaceId?: string;
+            type: "organization" | "provided";
+            subdomain?: string;
+            fullDomain: string;
+            baseDomain: string;
+        } | null
+    ) => void;
     cols?: number;
     hideFreeDomain?: boolean;
-    defaultSubdomain?: string;
-    defaultBaseDomain?: string;
+    defaultFullDomain?: string | null;
+    defaultSubdomain?: string | null;
+    defaultDomainId?: string | null;
 }
 
 export default function DomainPicker({
@@ -84,7 +87,8 @@ export default function DomainPicker({
     cols = 2,
     hideFreeDomain = false,
     defaultSubdomain,
-    defaultBaseDomain
+    defaultFullDomain,
+    defaultDomainId
 }: DomainPickerProps) {
     const { env } = useEnvContext();
     const api = createApiClient({ env });
@@ -94,8 +98,6 @@ export default function DomainPicker({
         orgQueries.domains({ orgId })
     );
 
-    console.log({ defaultSubdomain, defaultBaseDomain });
-
     if (!env.flags.usePangolinDns) {
         hideFreeDomain = true;
     }
@@ -103,6 +105,7 @@ export default function DomainPicker({
     const [subdomainInput, setSubdomainInput] = useState(
         defaultSubdomain ?? ""
     );
+
     const [selectedBaseDomain, setSelectedBaseDomain] =
         useState<DomainOption | null>(null);
     const [availableOptions, setAvailableOptions] = useState<AvailableOption[]>(
@@ -129,7 +132,7 @@ export default function DomainPicker({
     const [open, setOpen] = useState(false);
 
     // Provided domain search states
-    const [userInput, setUserInput] = useState<string>("");
+    const [userInput, setUserInput] = useState<string>(defaultSubdomain ?? "");
     const [isChecking, setIsChecking] = useState(false);
     const [providedDomainsShown, setProvidedDomainsShown] = useState(3);
     const [selectedProvidedDomain, setSelectedProvidedDomain] =
@@ -137,51 +140,67 @@ export default function DomainPicker({
 
     useEffect(() => {
         if (!loadingDomains) {
+            let domainOptionToSelect: DomainOption | null = null;
             if (organizationDomains.length > 0) {
                 // Select the first organization domain or the one provided from props
-                const firstOrgDomain =
-                    organizationDomains.find(
-                        (domain) => domain.baseDomain === defaultBaseDomain
-                    ) ?? organizationDomains[0];
-                const domainOption: DomainOption = {
-                    id: `org-${firstOrgDomain.domainId}`,
-                    domain: firstOrgDomain.baseDomain,
-                    type: "organization",
-                    verified: firstOrgDomain.verified,
-                    domainType: firstOrgDomain.type,
-                    domainId: firstOrgDomain.domainId
-                };
-                setSelectedBaseDomain(domainOption);
+                let firstOrExistingDomain = organizationDomains.find(
+                    (domain) => domain.domainId === defaultDomainId
+                );
+                // if no default Domain
+                if (!defaultDomainId) {
+                    firstOrExistingDomain = organizationDomains[0];
+                }
 
-                onDomainChange?.({
-                    domainId: firstOrgDomain.domainId,
-                    type: "organization",
-                    subdomain: undefined,
-                    fullDomain: firstOrgDomain.baseDomain,
-                    baseDomain: firstOrgDomain.baseDomain
-                });
-            } else if (
-                (build === "saas" || build === "enterprise") &&
-                !hideFreeDomain
+                if (firstOrExistingDomain) {
+                    domainOptionToSelect = {
+                        id: `org-${firstOrExistingDomain.domainId}`,
+                        domain: firstOrExistingDomain.baseDomain,
+                        type: "organization",
+                        verified: firstOrExistingDomain.verified,
+                        domainType: firstOrExistingDomain.type,
+                        domainId: firstOrExistingDomain.domainId
+                    };
+
+                    onDomainChange?.({
+                        domainId: firstOrExistingDomain.domainId,
+                        type: "organization",
+                        subdomain:
+                            firstOrExistingDomain.type !== "cname"
+                                ? defaultSubdomain || undefined
+                                : undefined,
+                        fullDomain: firstOrExistingDomain.baseDomain,
+                        baseDomain: firstOrExistingDomain.baseDomain
+                    });
+                }
+            }
+
+            if (
+                !domainOptionToSelect &&
+                build !== "oss" &&
+                !hideFreeDomain &&
+                defaultDomainId !== undefined
             ) {
                 // If no organization domains, select the provided domain option
                 const domainOptionText =
                     build === "enterprise"
                         ? t("domainPickerProvidedDomain")
                         : t("domainPickerFreeProvidedDomain");
-                const freeDomainOption: DomainOption = {
+                // free domain option
+                domainOptionToSelect = {
                     id: "provided-search",
                     domain: domainOptionText,
                     type: "provided-search"
                 };
-                setSelectedBaseDomain(freeDomainOption);
             }
+
+            setSelectedBaseDomain(domainOptionToSelect);
         }
     }, [
-        hideFreeDomain,
         loadingDomains,
         organizationDomains,
-        defaultBaseDomain
+        defaultSubdomain,
+        hideFreeDomain,
+        defaultDomainId
     ]);
 
     const checkAvailability = useCallback(
@@ -344,6 +363,9 @@ export default function DomainPicker({
             setSelectedProvidedDomain(null);
         }
 
+        console.log({
+            setSelectedBaseDomain: option
+        });
         setSelectedBaseDomain(option);
         setOpen(false);
 
@@ -354,15 +376,21 @@ export default function DomainPicker({
 
         const fullDomain = sub ? `${sub}.${option.domain}` : option.domain;
 
-        onDomainChange?.({
-            domainId: option.domainId || "",
-            domainNamespaceId: option.domainNamespaceId,
-            type:
-                option.type === "provided-search" ? "provided" : "organization",
-            subdomain: sub || undefined,
-            fullDomain,
-            baseDomain: option.domain
-        });
+        if (option.type === "provided-search") {
+            onDomainChange?.(null); // prevent the modal from closing with `<subdomain>.Free Provided domain`
+        } else {
+            onDomainChange?.({
+                domainId: option.domainId || "",
+                domainNamespaceId: option.domainNamespaceId,
+                type: "organization",
+                subdomain:
+                    option.domainType !== "cname"
+                        ? sub || undefined
+                        : undefined,
+                fullDomain,
+                baseDomain: option.domain
+            });
+        }
     };
 
     const handleProvidedDomainSelect = (option: AvailableOption) => {
@@ -408,6 +436,15 @@ export default function DomainPicker({
         0,
         providedDomainsShown
     );
+    console.log({
+        displayedProvidedOptions
+    });
+
+    const selectedDomainNamespaceId =
+        selectedProvidedDomain?.domainNamespaceId ??
+        displayedProvidedOptions.find(
+            (opt) => opt.fullDomain === defaultFullDomain
+        )?.domainNamespaceId;
     const hasMoreProvided =
         sortedAvailableOptions.length > providedDomainsShown;
 
@@ -455,16 +492,6 @@ export default function DomainPicker({
                                 {t("domainPickerInvalidSubdomainStructure")}
                             </p>
                         )}
-                    {showSubdomainInput && !subdomainInput && (
-                        <p className="text-sm text-muted-foreground">
-                            {t("domainPickerEnterSubdomainOrLeaveBlank")}
-                        </p>
-                    )}
-                    {showProvidedDomainSearch && !userInput && (
-                        <p className="text-sm text-muted-foreground">
-                            {t("domainPickerEnterSubdomainToSearch")}
-                        </p>
-                    )}
                 </div>
 
                 <div className="space-y-2">
@@ -693,10 +720,8 @@ export default function DomainPicker({
                     {!isChecking && sortedAvailableOptions.length > 0 && (
                         <div className="space-y-3">
                             <RadioGroup
-                                value={
-                                    selectedProvidedDomain?.domainNamespaceId ||
-                                    ""
-                                }
+                                value={selectedDomainNamespaceId || ""}
+                                defaultValue={selectedDomainNamespaceId}
                                 onValueChange={(value) => {
                                     const option =
                                         displayedProvidedOptions.find(
@@ -707,49 +732,56 @@ export default function DomainPicker({
                                         handleProvidedDomainSelect(option);
                                     }
                                 }}
-                                className={`grid gap-2 grid-cols-1 sm:grid-cols-${cols}`}
+                                style={{
+                                    // @ts-expect-error CSS variable
+                                    "--cols": `repeat(${cols}, minmax(0, 1fr))`
+                                }}
+                                className="grid gap-2 grid-cols-1 sm:grid-cols-(--cols)"
                             >
-                                {displayedProvidedOptions.map((option) => (
-                                    <label
-                                        key={option.domainNamespaceId}
-                                        htmlFor={option.domainNamespaceId}
-                                        data-state={
-                                            selectedProvidedDomain?.domainNamespaceId ===
-                                            option.domainNamespaceId
-                                                ? "checked"
-                                                : "unchecked"
-                                        }
-                                        className={cn(
-                                            "relative flex rounded-lg border p-3 transition-colors cursor-pointer",
-                                            selectedProvidedDomain?.domainNamespaceId ===
-                                                option.domainNamespaceId
-                                                ? "border-primary bg-primary/10"
-                                                : "border-input hover:bg-accent"
-                                        )}
-                                    >
-                                        <RadioGroupItem
-                                            value={option.domainNamespaceId}
-                                            id={option.domainNamespaceId}
-                                            className="absolute left-3 top-3 h-4 w-4 border-primary text-primary"
-                                        />
-                                        <div className="flex items-center justify-between pl-7 flex-1">
-                                            <div>
-                                                <p className="font-mono text-sm">
-                                                    {option.fullDomain}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {t(
-                                                        "domainPickerNamespace",
-                                                        {
-                                                            namespace:
-                                                                option.domainNamespaceId
-                                                        }
-                                                    )}
-                                                </p>
+                                {displayedProvidedOptions.map((option) => {
+                                    const isSelected =
+                                        selectedDomainNamespaceId ===
+                                        option.domainNamespaceId;
+                                    return (
+                                        <label
+                                            key={option.domainNamespaceId}
+                                            htmlFor={option.domainNamespaceId}
+                                            data-state={
+                                                isSelected
+                                                    ? "checked"
+                                                    : "unchecked"
+                                            }
+                                            className={cn(
+                                                "relative flex rounded-lg border p-3 transition-colors cursor-pointer",
+                                                isSelected
+                                                    ? "border-primary bg-primary/10"
+                                                    : "border-input hover:bg-accent"
+                                            )}
+                                        >
+                                            <RadioGroupItem
+                                                value={option.domainNamespaceId}
+                                                id={option.domainNamespaceId}
+                                                className="absolute left-3 top-3 h-4 w-4 border-primary text-primary"
+                                            />
+                                            <div className="flex items-center justify-between pl-7 flex-1">
+                                                <div>
+                                                    <p className="font-mono text-sm">
+                                                        {option.fullDomain}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {t(
+                                                            "domainPickerNamespace",
+                                                            {
+                                                                namespace:
+                                                                    option.domainNamespaceId
+                                                            }
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </label>
-                                ))}
+                                        </label>
+                                    );
+                                })}
                             </RadioGroup>
                             {hasMoreProvided && (
                                 <Button
