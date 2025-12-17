@@ -25,25 +25,16 @@ import { useTranslations } from "next-intl";
 
 import type { GetLoginPageBrandingResponse } from "@server/routers/loginPage/types";
 import { Input } from "./ui/input";
-import { Trash2, XIcon } from "lucide-react";
+import { ExternalLink, InfoIcon, XIcon } from "lucide-react";
 import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
 import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { useRouter } from "next/navigation";
 import { toast } from "@app/hooks/useToast";
-import {
-    Credenza,
-    CredenzaBody,
-    CredenzaClose,
-    CredenzaContent,
-    CredenzaFooter,
-    CredenzaHeader,
-    CredenzaTitle
-} from "./Credenza";
 import { usePaidStatus } from "@app/hooks/usePaidStatus";
 import { build } from "@server/build";
 import { PaidFeaturesAlert } from "./PaidFeaturesAlert";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 export type AuthPageCustomizationProps = {
     orgId: string;
@@ -99,7 +90,7 @@ export default function AuthPageBrandingForm({
         deleteBranding,
         null
     );
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [setIsDeleteModalOpen] = useState(false);
 
     const t = useTranslations();
 
@@ -166,7 +157,6 @@ export default function AuthPageBrandingForm({
             if (updateRes.status === 200) {
                 router.refresh();
                 form.reset();
-                setIsDeleteModalOpen(false);
 
                 toast({
                     variant: "default",
@@ -198,15 +188,15 @@ export default function AuthPageBrandingForm({
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
 
-                <PaidFeaturesAlert />
-
                 <SettingsSectionBody>
                     <SettingsSectionForm>
+                        <PaidFeaturesAlert />
+
                         <Form {...form}>
                             <form
                                 action={updateFormAction}
                                 id="auth-page-branding-form"
-                                className="flex flex-col gap-8 items-stretch"
+                                className="flex flex-col space-y-4 items-stretch"
                             >
                                 <FormField
                                     control={form.control}
@@ -301,7 +291,18 @@ export default function AuthPageBrandingForm({
 
                                 {build === "saas" && (
                                     <>
-                                        <Separator />
+                                        <div className="mt-3 mb-6">
+                                            <SettingsSectionTitle>
+                                                {t(
+                                                    "organizationLoginPageTitle"
+                                                )}
+                                            </SettingsSectionTitle>
+                                            <SettingsSectionDescription>
+                                                {t(
+                                                    "organizationLoginPageDescription"
+                                                )}
+                                            </SettingsSectionDescription>
+                                        </div>
 
                                         <div className="flex flex-col gap-5">
                                             <FormField
@@ -318,15 +319,6 @@ export default function AuthPageBrandingForm({
                                                         <FormControl>
                                                             <Input {...field} />
                                                         </FormControl>
-                                                        <FormDescription>
-                                                            {t(
-                                                                "brandingOrgDescription",
-                                                                {
-                                                                    orgName:
-                                                                        "{{orgName}}"
-                                                                }
-                                                            )}
-                                                        </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -345,15 +337,6 @@ export default function AuthPageBrandingForm({
                                                         <FormControl>
                                                             <Input {...field} />
                                                         </FormControl>
-                                                        <FormDescription>
-                                                            {t(
-                                                                "brandingOrgDescription",
-                                                                {
-                                                                    orgName:
-                                                                        "{{orgName}}"
-                                                                }
-                                                            )}
-                                                        </FormDescription>
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
@@ -362,7 +345,14 @@ export default function AuthPageBrandingForm({
                                     </>
                                 )}
 
-                                <Separator />
+                                <div className="mt-3 mb-6">
+                                    <SettingsSectionTitle>
+                                        {t("resourceLoginPageTitle")}
+                                    </SettingsSectionTitle>
+                                    <SettingsSectionDescription>
+                                        {t("resourceLoginPageDescription")}
+                                    </SettingsSectionDescription>
+                                </div>
 
                                 <div className="flex flex-col gap-5">
                                     <FormField
@@ -377,15 +367,6 @@ export default function AuthPageBrandingForm({
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "brandingResourceDescription",
-                                                        {
-                                                            resourceName:
-                                                                "{{resourceName}}"
-                                                        }
-                                                    )}
-                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -403,15 +384,6 @@ export default function AuthPageBrandingForm({
                                                 <FormControl>
                                                     <Input {...field} />
                                                 </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "brandingResourceDescription",
-                                                        {
-                                                            resourceName:
-                                                                "{{resourceName}}"
-                                                        }
-                                                    )}
-                                                </FormDescription>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -421,44 +393,6 @@ export default function AuthPageBrandingForm({
                         </Form>
                     </SettingsSectionForm>
                 </SettingsSectionBody>
-
-                <Credenza
-                    open={isDeleteModalOpen}
-                    onOpenChange={setIsDeleteModalOpen}
-                >
-                    <CredenzaContent>
-                        <CredenzaHeader>
-                            <CredenzaTitle>
-                                {t("authPageBrandingRemoveTitle")}
-                            </CredenzaTitle>
-                        </CredenzaHeader>
-                        <CredenzaBody className="mb-0 space-y-0 flex flex-col gap-1">
-                            <p>{t("authPageBrandingQuestionRemove")}</p>
-                            <div className="font-bold text-destructive">
-                                {t("cannotbeUndone")}
-                            </div>
-                            <form
-                                action={deleteFormAction}
-                                id="confirm-delete-branding-form"
-                                className="sr-only"
-                            ></form>
-                        </CredenzaBody>
-                        <CredenzaFooter>
-                            <CredenzaClose asChild>
-                                <Button variant="outline">{t("close")}</Button>
-                            </CredenzaClose>
-                            <Button
-                                variant={"destructive"}
-                                type="submit"
-                                form="confirm-delete-branding-form"
-                                loading={isDeletingBranding}
-                                disabled={isDeletingBranding || !isPaidUser}
-                            >
-                                {t("authPageBrandingDeleteConfirm")}
-                            </Button>
-                        </CredenzaFooter>
-                    </CredenzaContent>
-                </Credenza>
 
                 <div className="flex justify-end gap-2 mt-6 items-center">
                     {branding && (
@@ -472,12 +406,11 @@ export default function AuthPageBrandingForm({
                                 !isPaidUser
                             }
                             onClick={() => {
-                                setIsDeleteModalOpen(true);
+                                deleteFormAction();
                             }}
                             className="gap-1"
                         >
                             {t("removeAuthPageBranding")}
-                            <Trash2 size="14" />
                         </Button>
                     )}
                     <Button

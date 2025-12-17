@@ -45,6 +45,7 @@ import { InfoPopup } from "@app/components/ui/info-popup";
 import { Alert, AlertDescription } from "@app/components/ui/alert";
 import { build } from "@server/build";
 import { usePaidStatus } from "@app/hooks/usePaidStatus";
+import { PaidFeaturesAlert } from "../PaidFeaturesAlert";
 
 // Auth page form schema
 const AuthPageFormSchema = z.object({
@@ -275,22 +276,16 @@ function AuthPageSettings({
         <>
             <SettingsSection>
                 <SettingsSectionHeader>
-                    <SettingsSectionTitle>{t("authPage")}</SettingsSectionTitle>
+                    <SettingsSectionTitle>{t("customDomain")}</SettingsSectionTitle>
                     <SettingsSectionDescription>
                         {t("authPageDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
                 <SettingsSectionBody>
-                    {!hasSaasSubscription ? (
-                        <Alert variant="info" className="mb-6">
-                            <AlertDescription>
-                                {t("orgAuthPageDisabled")}{" "}
-                                {t("subscriptionRequiredToUse")}
-                            </AlertDescription>
-                        </Alert>
-                    ) : null}
-
                     <SettingsSectionForm>
+
+                        <PaidFeaturesAlert />
+
                         <Form {...form}>
                             <form
                                 action={formAction}
