@@ -23,9 +23,9 @@ export const clearExitNodes: CommandModule<
             // Delete all exit nodes
             const deletedCount = await db
                 .delete(exitNodes)
-                .where(eq(exitNodes.exitNodeId, exitNodes.exitNodeId)); // delete all
+                .where(eq(exitNodes.exitNodeId, exitNodes.exitNodeId))  .returning();; // delete all
 
-            console.log(`Deleted ${deletedCount.changes} exit node(s) from the database`);
+            console.log(`Deleted ${deletedCount.length} exit node(s) from the database`);
 
             process.exit(0);
         } catch (error) {
