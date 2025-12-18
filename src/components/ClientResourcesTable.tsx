@@ -329,8 +329,11 @@ export default function ClientResourcesTable({
                     orgId={orgId}
                     sites={sites}
                     onSuccess={() => {
-                        router.refresh();
-                        setEditingResource(null);
+                        // Delay refresh to allow modal to close smoothly
+                        setTimeout(() => {
+                            router.refresh();
+                            setEditingResource(null);
+                        }, 150);
                     }}
                 />
             )}
@@ -341,7 +344,10 @@ export default function ClientResourcesTable({
                 orgId={orgId}
                 sites={sites}
                 onSuccess={() => {
-                    router.refresh();
+                    // Delay refresh to allow modal to close smoothly
+                    setTimeout(() => {
+                        router.refresh();
+                    }, 150);
                 }}
             />
         </>

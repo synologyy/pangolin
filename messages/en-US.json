@@ -2318,5 +2318,19 @@
     "resourceLoginPageDescription": "Customize the login page for individual resources",
     "enterConfirmation": "Enter confirmation",
     "blueprintViewDetails": "Details",
-    "defaultIdentityProvider": "Default Identity Provider"
+    "defaultIdentityProvider": "Default Identity Provider",
+    "editInternalResourceDialogNetworkSettings": "Network Settings",
+    "editInternalResourceDialogAccessPolicy": "Access Policy",
+    "editInternalResourceDialogAddRoles": "Add Roles",
+    "editInternalResourceDialogAddUsers": "Add Users",
+    "editInternalResourceDialogAddClients": "Add Clients",
+    "editInternalResourceDialogDestinationLabel": "Destination",
+    "editInternalResourceDialogDestinationDescription": "Specify the destination address for the internal resource. This can be a hostname, IP address, or CIDR range depending on the selected mode. Optionally set an internal DNS alias for easier identification.",
+    "editInternalResourceDialogPortRestrictionsDescription": "Restrict access to specific TCP/UDP ports or allow/block all ports.",
+    "editInternalResourceDialogTcp": "TCP",
+    "editInternalResourceDialogUdp": "UDP",
+    "editInternalResourceDialogIcmp": "ICMP",
+    "editInternalResourceDialogAccessControl": "Access Control",
+    "editInternalResourceDialogAccessControlDescription": "Control which roles, users, and machine clients have access to this resource when connected. Admins always have access.",
+    "editInternalResourceDialogPortRangeValidationError": "Port range must be \"*\" for all ports, or a comma-separated list of ports and ranges (e.g., \"80,443,8000-9000\"). Ports must be between 1 and 65535."
 }
