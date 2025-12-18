@@ -96,11 +96,6 @@ export const orgNavSections = (): SidebarNavSection[] => [
                 title: "sidebarDomains",
                 href: "/{orgId}/settings/domains",
                 icon: <Globe className="size-4 flex-none" />
-            },
-            {
-                title: "sidebarBluePrints",
-                href: "/{orgId}/settings/blueprints",
-                icon: <ReceiptText className="size-4 flex-none" />
             }
         ]
     },
@@ -200,6 +195,17 @@ export const orgNavSections = (): SidebarNavSection[] => [
                 href: "/{orgId}/settings/api-keys",
                 icon: <KeyRound className="size-4 flex-none" />
             },
+            {
+                title: "sidebarBluePrints",
+                href: "/{orgId}/settings/blueprints",
+                icon: <ReceiptText className="size-4 flex-none" />
+            },
+            {
+                title: "sidebarSettings",
+                href: "/{orgId}/settings/general",
+                icon: <Settings className="size-4 flex-none" />
+            },
+
             ...(build == "saas"
                 ? [
                       {
@@ -217,12 +223,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
                           icon: <TicketCheck className="size-4 flex-none" />
                       }
                   ]
-                : []),
-            {
-                title: "sidebarSettings",
-                href: "/{orgId}/settings/general",
-                icon: <Settings className="size-4 flex-none" />
-            }
+                : [])
         ]
     }
 ];
