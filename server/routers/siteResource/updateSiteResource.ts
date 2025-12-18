@@ -32,14 +32,13 @@ import {
 } from "@server/lib/rebuildClientAssociations";
 
 const updateSiteResourceParamsSchema = z.strictObject({
-    siteResourceId: z.string().transform(Number).pipe(z.int().positive()),
-    siteId: z.string().transform(Number).pipe(z.int().positive()),
-    orgId: z.string()
+    siteResourceId: z.string().transform(Number).pipe(z.int().positive())
 });
 
 const updateSiteResourceSchema = z
     .strictObject({
         name: z.string().min(1).max(255).optional(),
+        siteId: z.int(),
         // mode: z.enum(["host", "cidr", "port"]).optional(),
         mode: z.enum(["host", "cidr"]).optional(),
         // protocol: z.enum(["tcp", "udp"]).nullish(),
@@ -78,7 +77,10 @@ const updateSiteResourceSchema = z
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
-                const isValidAlias = data.alias !== undefined && data.alias !== null && data.alias.trim() !== "";
+                const isValidAlias =
+                    data.alias !== undefined &&
+                    data.alias !== null &&
+                    data.alias.trim() !== "";
 
                 return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
@@ -111,7 +113,7 @@ export type UpdateSiteResourceResponse = SiteResource;
 
 registry.registerPath({
     method: "post",
-    path: "/org/{orgId}/site/{siteId}/resource/{siteResourceId}",
+    path: "/site-resource/{siteResourceId}",
     description: "Update a site resource.",
     tags: [OpenAPITags.Client, OpenAPITags.Org],
     request: {
@@ -155,9 +157,10 @@ export async function updateSiteResource(
             );
         }
 
-        const { siteResourceId, siteId, orgId } = parsedParams.data;
+        const { siteResourceId } = parsedParams.data;
         const {
             name,
+            siteId, // because it can change
             mode,
             destination,
             alias,
@@ -173,7 +176,7 @@ export async function updateSiteResource(
         const [site] = await db
             .select()
             .from(sites)
-            .where(and(eq(sites.siteId, siteId), eq(sites.orgId, orgId)))
+            .where(eq(sites.siteId, siteId))
             .limit(1);
 
         if (!site) {
@@ -184,19 +187,34 @@ export async function updateSiteResource(
         const [existingSiteResource] = await db
             .select()
             .from(siteResources)
-            .where(
-                and(
-                    eq(siteResources.siteResourceId, siteResourceId),
-                    eq(siteResources.siteId, siteId),
-                    eq(siteResources.orgId, orgId)
-                )
-            )
+            .where(and(eq(siteResources.siteResourceId, siteResourceId)))
             .limit(1);
 
         if (!existingSiteResource) {
             return next(
                 createHttpError(HttpCode.NOT_FOUND, "Site resource not found")
             );
+        }
+
+        let existingSite = site;
+        let siteChanged = false;
+        if (existingSiteResource.siteId !== siteId) {
+            siteChanged = true;
+            // get the existing site
+            [existingSite] = await db
+                .select()
+                .from(sites)
+                .where(eq(sites.siteId, existingSiteResource.siteId))
+                .limit(1);
+
+            if (!existingSite) {
+                return next(
+                    createHttpError(
+                        HttpCode.NOT_FOUND,
+                        "Existing site not found"
+                    )
+                );
+            }
         }
 
         // make sure the alias is unique within the org if provided
@@ -206,7 +224,7 @@ export async function updateSiteResource(
                 .from(siteResources)
                 .where(
                     and(
-                        eq(siteResources.orgId, orgId),
+                        eq(siteResources.orgId, existingSiteResource.orgId),
                         eq(siteResources.alias, alias.trim()),
                         ne(siteResources.siteResourceId, siteResourceId) // exclude self
                     )
@@ -225,100 +243,220 @@ export async function updateSiteResource(
 
         let updatedSiteResource: SiteResource | undefined;
         await db.transaction(async (trx) => {
-            // Update the site resource
-            [updatedSiteResource] = await trx
-                .update(siteResources)
-                .set({
-                    name: name,
-                    mode: mode,
-                    destination: destination,
-                    enabled: enabled,
-                    alias: alias && alias.trim() ? alias : null,
-                    tcpPortRangeString: tcpPortRangeString,
-                    udpPortRangeString: udpPortRangeString,
-                    disableIcmp: disableIcmp
-                })
-                .where(
-                    and(
-                        eq(siteResources.siteResourceId, siteResourceId),
-                        eq(siteResources.siteId, siteId),
-                        eq(siteResources.orgId, orgId)
-                    )
-                )
-                .returning();
-
-            //////////////////// update the associations ////////////////////
-
-            await trx
-                .delete(clientSiteResources)
-                .where(eq(clientSiteResources.siteResourceId, siteResourceId));
-
-            if (clientIds.length > 0) {
-                await trx.insert(clientSiteResources).values(
-                    clientIds.map((clientId) => ({
-                        clientId,
-                        siteResourceId
-                    }))
-                );
-            }
-
-            await trx
-                .delete(userSiteResources)
-                .where(eq(userSiteResources.siteResourceId, siteResourceId));
-
-            if (userIds.length > 0) {
+            // if the site is changed we need to delete and recreate the resource to avoid complications with the rebuild function otherwise we can just update in place
+            if (siteChanged) {
+                // delete the existing site resource
                 await trx
-                    .insert(userSiteResources)
-                    .values(
-                        userIds.map((userId) => ({ userId, siteResourceId }))
+                    .delete(siteResources)
+                    .where(
+                        and(eq(siteResources.siteResourceId, siteResourceId))
                     );
-            }
 
-            // Get all admin role IDs for this org to exclude from deletion
-            const adminRoles = await trx
-                .select()
-                .from(roles)
-                .where(
-                    and(
-                        eq(roles.isAdmin, true),
-                        eq(roles.orgId, updatedSiteResource.orgId)
-                    )
+                await rebuildClientAssociationsFromSiteResource(
+                    existingSiteResource,
+                    trx
                 );
-            const adminRoleIds = adminRoles.map((role) => role.roleId);
 
-            if (adminRoleIds.length > 0) {
-                await trx.delete(roleSiteResources).where(
-                    and(
-                        eq(roleSiteResources.siteResourceId, siteResourceId),
-                        ne(roleSiteResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                // create the new site resource from the removed one - the ID should stay the same
+                const [insertedSiteResource] = await trx
+                    .insert(siteResources)
+                    .values({
+                        ...existingSiteResource,
+                    })
+                    .returning();
+
+                // wait some time to allow for messages to be handled
+                await new Promise((resolve) => setTimeout(resolve, 750));
+
+                [updatedSiteResource] = await trx
+                    .update(siteResources)
+                    .set({
+                        name: name,
+                        siteId: siteId,
+                        mode: mode,
+                        destination: destination,
+                        enabled: enabled,
+                        alias: alias && alias.trim() ? alias : null,
+                        tcpPortRangeString: tcpPortRangeString,
+                        udpPortRangeString: udpPortRangeString,
+                        disableIcmp: disableIcmp
+                    })
+                    .where(
+                        and(
+                            eq(
+                                siteResources.siteResourceId,
+                                insertedSiteResource.siteResourceId
+                            )
+                        )
                     )
+                    .returning();
+
+                if (!updatedSiteResource) {
+                    throw new Error(
+                        "Failed to create updated site resource after site change"
+                    );
+                }
+
+                //////////////////// update the associations ////////////////////
+
+                const [adminRole] = await trx
+                    .select()
+                    .from(roles)
+                    .where(
+                        and(
+                            eq(roles.isAdmin, true),
+                            eq(roles.orgId, updatedSiteResource.orgId)
+                        )
+                    )
+                    .limit(1);
+
+                if (!adminRole) {
+                    return next(
+                        createHttpError(
+                            HttpCode.NOT_FOUND,
+                            `Admin role not found`
+                        )
+                    );
+                }
+
+                await trx.insert(roleSiteResources).values({
+                    roleId: adminRole.roleId,
+                    siteResourceId: updatedSiteResource.siteResourceId
+                });
+
+                if (roleIds.length > 0) {
+                    await trx.insert(roleSiteResources).values(
+                        roleIds.map((roleId) => ({
+                            roleId,
+                            siteResourceId: updatedSiteResource!.siteResourceId
+                        }))
+                    );
+                }
+
+                if (userIds.length > 0) {
+                    await trx.insert(userSiteResources).values(
+                        userIds.map((userId) => ({
+                            userId,
+                            siteResourceId: updatedSiteResource!.siteResourceId
+                        }))
+                    );
+                }
+
+                if (clientIds.length > 0) {
+                    await trx.insert(clientSiteResources).values(
+                        clientIds.map((clientId) => ({
+                            clientId,
+                            siteResourceId: updatedSiteResource!.siteResourceId
+                        }))
+                    );
+                }
+
+                await rebuildClientAssociationsFromSiteResource(
+                    updatedSiteResource,
+                    trx
                 );
             } else {
-                await trx
-                    .delete(roleSiteResources)
+                // Update the site resource
+                [updatedSiteResource] = await trx
+                    .update(siteResources)
+                    .set({
+                        name: name,
+                        siteId: siteId,
+                        mode: mode,
+                        destination: destination,
+                        enabled: enabled,
+                        alias: alias && alias.trim() ? alias : null,
+                        tcpPortRangeString: tcpPortRangeString,
+                        udpPortRangeString: udpPortRangeString,
+                        disableIcmp: disableIcmp
+                    })
                     .where(
-                        eq(roleSiteResources.siteResourceId, siteResourceId)
-                    );
-            }
+                        and(eq(siteResources.siteResourceId, siteResourceId))
+                    )
+                    .returning();
 
-            if (roleIds.length > 0) {
+                //////////////////// update the associations ////////////////////
+
                 await trx
-                    .insert(roleSiteResources)
-                    .values(
-                        roleIds.map((roleId) => ({ roleId, siteResourceId }))
+                    .delete(clientSiteResources)
+                    .where(
+                        eq(clientSiteResources.siteResourceId, siteResourceId)
                     );
+
+                if (clientIds.length > 0) {
+                    await trx.insert(clientSiteResources).values(
+                        clientIds.map((clientId) => ({
+                            clientId,
+                            siteResourceId
+                        }))
+                    );
+                }
+
+                await trx
+                    .delete(userSiteResources)
+                    .where(
+                        eq(userSiteResources.siteResourceId, siteResourceId)
+                    );
+
+                if (userIds.length > 0) {
+                    await trx.insert(userSiteResources).values(
+                        userIds.map((userId) => ({
+                            userId,
+                            siteResourceId
+                        }))
+                    );
+                }
+
+                // Get all admin role IDs for this org to exclude from deletion
+                const adminRoles = await trx
+                    .select()
+                    .from(roles)
+                    .where(
+                        and(
+                            eq(roles.isAdmin, true),
+                            eq(roles.orgId, updatedSiteResource.orgId)
+                        )
+                    );
+                const adminRoleIds = adminRoles.map((role) => role.roleId);
+
+                if (adminRoleIds.length > 0) {
+                    await trx.delete(roleSiteResources).where(
+                        and(
+                            eq(
+                                roleSiteResources.siteResourceId,
+                                siteResourceId
+                            ),
+                            ne(roleSiteResources.roleId, adminRoleIds[0]) // delete all but the admin role
+                        )
+                    );
+                } else {
+                    await trx
+                        .delete(roleSiteResources)
+                        .where(
+                            eq(roleSiteResources.siteResourceId, siteResourceId)
+                        );
+                }
+
+                if (roleIds.length > 0) {
+                    await trx.insert(roleSiteResources).values(
+                        roleIds.map((roleId) => ({
+                            roleId,
+                            siteResourceId
+                        }))
+                    );
+                }
+
+                logger.info(
+                    `Updated site resource ${siteResourceId} for site ${siteId}`
+                );
+
+                await handleMessagingForUpdatedSiteResource(
+                    existingSiteResource,
+                    updatedSiteResource,
+                    { siteId: site.siteId, orgId: site.orgId },
+                    trx
+                );
             }
-
-            logger.info(
-                `Updated site resource ${siteResourceId} for site ${siteId}`
-            );
-
-            await handleMessagingForUpdatedSiteResource(
-                existingSiteResource,
-                updatedSiteResource!,
-                { siteId: site.siteId, orgId: site.orgId },
-                trx
-            );
         });
 
         return response(res, {
@@ -345,6 +483,10 @@ export async function handleMessagingForUpdatedSiteResource(
     site: { siteId: number; orgId: string },
     trx: Transaction
 ) {
+
+    logger.debug("handleMessagingForUpdatedSiteResource: existingSiteResource is: ", existingSiteResource);
+    logger.debug("handleMessagingForUpdatedSiteResource: updatedSiteResource is: ", updatedSiteResource);
+
     const { mergedAllClients } =
         await rebuildClientAssociationsFromSiteResource(
             existingSiteResource || updatedSiteResource, // we want to rebuild based on the existing resource then we will apply the change to the destination below
