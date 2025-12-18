@@ -82,6 +82,11 @@ export const orgNavSections = (): SidebarNavSection[] => [
                     }
                 ]
             },
+            {
+                title: "sidebarDomains",
+                href: "/{orgId}/settings/domains",
+                icon: <Globe className="size-4 flex-none" />
+            },
             ...(build == "saas"
                 ? [
                       {
@@ -91,12 +96,7 @@ export const orgNavSections = (): SidebarNavSection[] => [
                           showEE: true
                       }
                   ]
-                : []),
-            {
-                title: "sidebarDomains",
-                href: "/{orgId}/settings/domains",
-                icon: <Globe className="size-4 flex-none" />
-            }
+                : [])
         ]
     },
     {

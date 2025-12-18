@@ -44,7 +44,7 @@ export function HorizontalTabs({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             <div className="relative">
                 <div className="overflow-x-auto scrollbar-hide">
                     <div className="flex space-x-4 border-b min-w-max">
@@ -66,9 +66,9 @@ export function HorizontalTabs({
                                     key={hydratedHref}
                                     href={isProfessional ? "#" : hydratedHref}
                                     className={cn(
-                                        "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                                        "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap relative",
                                         isActive
-                                            ? "border-b-2 border-primary text-primary"
+                                            ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.75 after:bg-primary after:rounded-full"
                                             : "text-muted-foreground hover:text-foreground",
                                         isDisabled && "cursor-not-allowed"
                                     )}

@@ -105,6 +105,23 @@ export default function ShareLinksTable({
 
     const columns: ExtendedColumnDef<ShareLinkRow>[] = [
         {
+            accessorKey: "title",
+            friendlyName: t("title"),
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() =>
+                            column.toggleSorting(column.getIsSorted() === "asc")
+                        }
+                    >
+                        {t("title")}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                );
+            }
+        },
+        {
             accessorKey: "resourceName",
             enableHiding: false,
             friendlyName: t("resource"),
@@ -132,23 +149,6 @@ export default function ShareLinksTable({
                             <ArrowUpRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Link>
-                );
-            }
-        },
-        {
-            accessorKey: "title",
-            friendlyName: t("title"),
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() =>
-                            column.toggleSorting(column.getIsSorted() === "asc")
-                        }
-                    >
-                        {t("title")}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
                 );
             }
         },
