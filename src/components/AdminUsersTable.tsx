@@ -269,7 +269,7 @@ export default function UsersTable({ users }: Props) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                {r.type !== "internal" && (
+                                {r.type === "internal" && (
                                     <DropdownMenuItem
                                         onClick={() => {
                                             generatePasswordResetCode(r.id);

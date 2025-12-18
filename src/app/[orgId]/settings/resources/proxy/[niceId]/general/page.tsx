@@ -12,10 +12,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useResourceContext } from "@app/hooks/useResourceContext";
-import { formatAxiosError } from "@app/lib/api";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
 import {
     Credenza,
     CredenzaBody,
@@ -41,7 +37,7 @@ import { SwitchInput } from "@app/components/SwitchInput";
 import { Label } from "@app/components/ui/label";
 import { useEnvContext } from "@app/hooks/useEnvContext";
 import { toast } from "@app/hooks/useToast";
-import { createApiClient } from "@app/lib/api";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
 import { finalizeSubdomainSanitize } from "@app/lib/subdomain-utils";
 import { UpdateResourceResponse } from "@server/routers/resource";
 import { AxiosResponse } from "axios";
@@ -51,6 +47,8 @@ import { useParams, useRouter } from "next/navigation";
 import { toASCII, toUnicode } from "punycode";
 import { useActionState, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import z from "zod";
 
 export default function GeneralForm() {
     const params = useParams();
@@ -69,28 +67,14 @@ export default function GeneralForm() {
         `${resource.ssl ? "https" : "http"}://${toUnicode(resource.fullDomain || "")}`
     );
 
-    console.log({ resource });
-
-    const [defaultSubdomain, defaultBaseDomain] = useMemo(() => {
-        const resourceUrl = new URL(resourceFullDomain);
-        const domain = resourceUrl.hostname;
-
-        const allDomainParts = domain.split(".");
-        let sub = undefined;
-        let base = domain;
-
-        if (allDomainParts.length >= 3) {
-            // 3 parts: [subdomain, domain, tld]
-            const [first, ...rest] = allDomainParts;
-            sub = first;
-            base = rest.join(".");
-        }
-
-        return [sub, base];
+    const resourceFullDomainName = useMemo(() => {
+        const url = new URL(resourceFullDomain);
+        return url.hostname;
     }, [resourceFullDomain]);
 
     const [selectedDomain, setSelectedDomain] = useState<{
         domainId: string;
+        domainNamespaceId?: string;
         subdomain?: string;
         fullDomain: string;
         baseDomain: string;
@@ -177,7 +161,11 @@ export default function GeneralForm() {
                 niceId: data.niceId,
                 subdomain: data.subdomain,
                 fullDomain: updated.fullDomain,
-                proxyPort: data.proxyPort
+                proxyPort: data.proxyPort,
+                domainId: data.domainId
+                // ...(!resource.http && {
+                //     enableProxy: data.enableProxy
+                // })
             });
 
             toast({
@@ -359,9 +347,6 @@ export default function GeneralForm() {
                     <SettingsSectionFooter>
                         <Button
                             type="submit"
-                            onClick={() => {
-                                console.log(form.getValues());
-                            }}
                             loading={saveLoading}
                             disabled={saveLoading}
                             form="general-settings-form"
@@ -387,15 +372,26 @@ export default function GeneralForm() {
                         <DomainPicker
                             orgId={orgId as string}
                             cols={1}
-                            defaultSubdomain={defaultSubdomain}
-                            defaultBaseDomain={defaultBaseDomain}
+                            defaultSubdomain={
+                                form.watch("subdomain") ?? resource.subdomain
+                            }
+                            defaultDomainId={
+                                form.watch("domainId") ?? resource.domainId
+                            }
+                            defaultFullDomain={resourceFullDomainName}
                             onDomainChange={(res) => {
-                                const selected = {
-                                    domainId: res.domainId,
-                                    subdomain: res.subdomain,
-                                    fullDomain: res.fullDomain,
-                                    baseDomain: res.baseDomain
-                                };
+                                const selected =
+                                    res === null
+                                        ? null
+                                        : {
+                                              domainId: res.domainId,
+                                              subdomain: res.subdomain,
+                                              fullDomain: res.fullDomain,
+                                              baseDomain: res.baseDomain,
+                                              domainNamespaceId:
+                                                  res.domainNamespaceId
+                                          };
+
                                 setSelectedDomain(selected);
                             }}
                         />

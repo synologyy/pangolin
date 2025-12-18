@@ -94,6 +94,12 @@ export default function DomainPicker({
     const api = createApiClient({ env });
     const t = useTranslations();
 
+    console.log({
+        defaultFullDomain,
+        defaultSubdomain,
+        defaultDomainId
+    });
+
     const { data = [], isLoading: loadingDomains } = useQuery(
         orgQueries.domains({ orgId })
     );

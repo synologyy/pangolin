@@ -79,7 +79,7 @@ export const productUpdatesQueries = {
                 }
                 return false;
             },
-            enabled: enabled && (build === "oss" || build === "enterprise") // disabled in cloud version
+            enabled: enabled && build !== "saas" // disabled in cloud version
             // because we don't need to listen for new versions there
         })
 };

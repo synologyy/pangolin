@@ -6,26 +6,26 @@ import { withReplicas } from "drizzle-orm/pg-core";
 function createDb() {
     const config = readConfigFile();
 
-    if (!config.postgres) {
-        // check the environment variables for postgres config
-        if (process.env.POSTGRES_CONNECTION_STRING) {
-            config.postgres = {
-                connection_string: process.env.POSTGRES_CONNECTION_STRING
-            };
-            if (process.env.POSTGRES_REPLICA_CONNECTION_STRINGS) {
-                const replicas =
-                    process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(
-                        ","
-                    ).map((conn) => ({
+    // check the environment variables for postgres config first before the config file
+    if (process.env.POSTGRES_CONNECTION_STRING) {
+        config.postgres = {
+            connection_string: process.env.POSTGRES_CONNECTION_STRING
+        };
+        if (process.env.POSTGRES_REPLICA_CONNECTION_STRINGS) {
+            const replicas =
+                process.env.POSTGRES_REPLICA_CONNECTION_STRINGS.split(",").map(
+                    (conn) => ({
                         connection_string: conn.trim()
-                    }));
-                config.postgres.replicas = replicas;
-            }
-        } else {
-            throw new Error(
-                "Postgres configuration is missing in the configuration file."
-            );
+                    })
+                );
+            config.postgres.replicas = replicas;
         }
+    }
+
+    if (!config.postgres) {
+        throw new Error(
+            "Postgres configuration is missing in the configuration file."
+        );
     }
 
     const connectionString = config.postgres?.connection_string;

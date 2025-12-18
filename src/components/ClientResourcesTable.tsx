@@ -41,6 +41,9 @@ export type InternalResourceRow = {
     // destinationPort: number | null;
     alias: string | null;
     niceId: string;
+    tcpPortRangeString: string | null;
+    udpPortRangeString: string | null;
+    disableIcmp: boolean;
 };
 
 type ClientResourcesTableProps = {

@@ -10,7 +10,7 @@ import {
     userSiteResources
 } from "@server/db";
 import { getUniqueSiteResourceName } from "@server/db/names";
-import { getNextAvailableAliasAddress } from "@server/lib/ip";
+import { getNextAvailableAliasAddress, portRangeStringSchema } from "@server/lib/ip";
 import { rebuildClientAssociationsFromSiteResource } from "@server/lib/rebuildClientAssociations";
 import response from "@server/lib/response";
 import logger from "@server/logger";
@@ -39,13 +39,16 @@ const createSiteResourceSchema = z
         alias: z
             .string()
             .regex(
-                /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
-                "Alias must be a fully qualified domain name (e.g., example.com)"
+                /^(?:[a-zA-Z0-9*?](?:[a-zA-Z0-9*?-]{0,61}[a-zA-Z0-9*?])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/,
+                "Alias must be a fully qualified domain name with optional wildcards (e.g., example.com, *.example.com, host-0?.example.internal)"
             )
             .optional(),
         userIds: z.array(z.string()),
         roleIds: z.array(z.int()),
-        clientIds: z.array(z.int())
+        clientIds: z.array(z.int()),
+        tcpPortRangeString: portRangeStringSchema,
+        udpPortRangeString: portRangeStringSchema,
+        disableIcmp: z.boolean().optional()
     })
     .strict()
     .refine(
@@ -65,7 +68,7 @@ const createSiteResourceSchema = z
                 const domainRegex =
                     /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
                 const isValidDomain = domainRegex.test(data.destination);
-                const isValidAlias = data.alias && domainRegex.test(data.alias);
+                const isValidAlias = data.alias !== undefined && data.alias !== null && data.alias.trim() !== "";
 
                 return isValidDomain && isValidAlias; // require the alias to be set in the case of domain
             }
@@ -154,7 +157,10 @@ export async function createSiteResource(
             alias,
             userIds,
             roleIds,
-            clientIds
+            clientIds,
+            tcpPortRangeString,
+            udpPortRangeString,
+            disableIcmp
         } = parsedBody.data;
 
         // Verify the site exists and belongs to the org
@@ -239,7 +245,10 @@ export async function createSiteResource(
                     destination,
                     enabled,
                     alias,
-                    aliasAddress
+                    aliasAddress,
+                    tcpPortRangeString,
+                    udpPortRangeString,
+                    disableIcmp
                 })
                 .returning();
 

@@ -7,7 +7,8 @@ import {
     bigint,
     real,
     text,
-    index
+    index,
+    uniqueIndex
 } from "drizzle-orm/pg-core";
 import { InferSelectModel } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -213,7 +214,10 @@ export const siteResources = pgTable("siteResources", {
     destination: varchar("destination").notNull(), // ip, cidr, hostname; validate against the mode
     enabled: boolean("enabled").notNull().default(true),
     alias: varchar("alias"),
-    aliasAddress: varchar("aliasAddress")
+    aliasAddress: varchar("aliasAddress"),
+    tcpPortRangeString: varchar("tcpPortRangeString"),
+    udpPortRangeString: varchar("udpPortRangeString"),
+    disableIcmp: boolean("disableIcmp").notNull().default(false)
 });
 
 export const clientSiteResources = pgTable("clientSiteResources", {

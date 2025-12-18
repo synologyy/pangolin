@@ -1,6 +1,12 @@
 import { randomUUID } from "crypto";
 import { InferSelectModel } from "drizzle-orm";
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import {
+    sqliteTable,
+    text,
+    integer,
+    index,
+    uniqueIndex
+} from "drizzle-orm/sqlite-core";
 import { no } from "zod/v4/locales";
 
 export const domains = sqliteTable("domains", {
@@ -234,7 +240,10 @@ export const siteResources = sqliteTable("siteResources", {
     destination: text("destination").notNull(), // ip, cidr, hostname
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     alias: text("alias"),
-    aliasAddress: text("aliasAddress")
+    aliasAddress: text("aliasAddress"),
+    tcpPortRangeString: text("tcpPortRangeString"),
+    udpPortRangeString: text("udpPortRangeString"),
+    disableIcmp: integer("disableIcmp", { mode: "boolean" })
 });
 
 export const clientSiteResources = sqliteTable("clientSiteResources", {
