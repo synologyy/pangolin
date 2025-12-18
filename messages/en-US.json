@@ -2312,5 +2312,6 @@
     "organizationLoginPageDescription": "Customize the login page for this organization",
     "resourceLoginPageTitle": "Resource Login Page",
     "resourceLoginPageDescription": "Customize the login page for individual resources",
-    "enterConfirmation": "Enter confirmation"
+    "enterConfirmation": "Enter confirmation",
+    "blueprintViewDetails": "Details"
 }
