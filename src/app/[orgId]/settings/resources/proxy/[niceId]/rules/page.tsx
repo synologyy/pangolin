@@ -53,7 +53,8 @@ import {
     SettingsSectionTitle,
     SettingsSectionDescription,
     SettingsSectionBody,
-    SettingsSectionFooter
+    SettingsSectionFooter,
+    SettingsSectionForm
 } from "@app/components/Settings";
 import { ListResourceRulesResponse } from "@server/routers/resource/listResourceRules";
 import { SwitchInput } from "@app/components/SwitchInput";
@@ -1018,17 +1019,16 @@ export default function ResourceRules(props: {
                         </Table>
                     </div>
                 </SettingsSectionBody>
+                <SettingsSectionFooter>
+                    <Button
+                        onClick={saveAllSettings}
+                        loading={loading}
+                        disabled={loading}
+                    >
+                        {t("saveAllSettings")}
+                    </Button>
+                </SettingsSectionFooter>
             </SettingsSection>
-
-            <div className="flex justify-end">
-                <Button
-                    onClick={saveAllSettings}
-                    loading={loading}
-                    disabled={loading}
-                >
-                    {t("saveAllSettings")}
-                </Button>
-            </div>
         </SettingsContainer>
     );
 }

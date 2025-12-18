@@ -336,9 +336,9 @@ function ProxyResourceTargetsForm({
                                 }
                             >
                                 <div
-                                    className={`flex items-center gap-1 ${status === "healthy" ? "text-green-500" : status === "unhealthy" ? "text-destructive" : ""}`}
+                                    className={`flex items-center gap-2 ${status === "healthy" ? "text-green-500" : status === "unhealthy" ? "text-destructive" : ""}`}
                                 >
-                                    <Settings className="h-4 w-4" />
+                                    <Settings className="h-3 w-3" />
                                     {getStatusText(status)}
                                 </div>
                             </Button>

@@ -24,7 +24,8 @@ import {
     SettingsSectionTitle,
     SettingsSectionDescription,
     SettingsSectionBody,
-    SettingsSectionForm
+    SettingsSectionForm,
+    SettingsSectionFooter
 } from "@app/components/Settings";
 import { formatAxiosError } from "@app/lib/api";
 import { createApiClient } from "@app/lib/api";
@@ -210,18 +211,17 @@ export default function GeneralPage() {
                         </Form>
                     </SettingsSectionForm>
                 </SettingsSectionBody>
+                <SettingsSectionFooter>
+                    <Button
+                        type="submit"
+                        form="general-settings-form"
+                        loading={loading}
+                        disabled={loading}
+                    >
+                        Save All Settings
+                    </Button>
+                </SettingsSectionFooter>
             </SettingsSection>
-
-            <div className="flex justify-end mt-6">
-                <Button
-                    type="submit"
-                    form="general-settings-form"
-                    loading={loading}
-                    disabled={loading}
-                >
-                    Save All Settings
-                </Button>
-            </div>
         </SettingsContainer>
     );
 }

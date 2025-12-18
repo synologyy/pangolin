@@ -322,7 +322,7 @@ export default function GeneralForm() {
                                         <div className="space-y-2">
                                             <Label>{t("resourceDomain")}</Label>
                                             <div className="border p-2 rounded-md flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                                                <span className="text-sm flex items-center gap-2">
                                                     <Globe size="14" />
                                                     {resourceFullDomain}
                                                 </span>

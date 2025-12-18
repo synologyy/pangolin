@@ -617,7 +617,7 @@ export default function ResourceAuthenticationPage() {
                                     )}
 
                                     {ssoEnabled && allIdps.length > 0 && (
-                                        <div className="mt-8">
+                                        <>
                                             <div className="space-y-2 mb-3">
                                                 <CheckboxWithLabel
                                                     label={t(
@@ -654,7 +654,7 @@ export default function ResourceAuthenticationPage() {
                                             {autoLoginEnabled && (
                                                 <div className="space-y-2">
                                                     <label className="text-sm font-medium">
-                                                        {t("selectIdp")}
+                                                        {t("defaultIdentityProvider")}
                                                     </label>
                                                     <Select
                                                         onValueChange={(
@@ -670,7 +670,7 @@ export default function ResourceAuthenticationPage() {
                                                                 : undefined
                                                         }
                                                     >
-                                                        <SelectTrigger className="w-full">
+                                                        <SelectTrigger className="w-full mt-1">
                                                             <SelectValue
                                                                 placeholder={t(
                                                                     "selectIdpPlaceholder"
@@ -696,7 +696,7 @@ export default function ResourceAuthenticationPage() {
                                                     </Select>
                                                 </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
                                 </form>
                             </Form>
@@ -728,7 +728,7 @@ export default function ResourceAuthenticationPage() {
                             {/* Password Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2 mb-4">
                                 <div
-                                    className={`flex items-center ${!authInfo.password ? "text-muted-foreground" : "text-green-500"} text-sm space-x-2`}
+                                    className={`flex items-center ${!authInfo.password ? "" : "text-green-500"} text-sm space-x-2`}
                                 >
                                     <Key size="14" />
                                     <span>
@@ -758,7 +758,7 @@ export default function ResourceAuthenticationPage() {
                             {/* PIN Code Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2">
                                 <div
-                                    className={`flex items-center ${!authInfo.pincode ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                    className={`flex items-center ${!authInfo.pincode ? "" : "text-green-500"} space-x-2 text-sm`}
                                 >
                                     <Binary size="14" />
                                     <span>
@@ -788,7 +788,7 @@ export default function ResourceAuthenticationPage() {
                             {/* Header Authentication Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2">
                                 <div
-                                    className={`flex items-center ${!authInfo.headerAuth ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                    className={`flex items-center ${!authInfo.headerAuth ? "" : "text-green-500"} space-x-2 text-sm`}
                                 >
                                     <Bot size="14" />
                                     <span>

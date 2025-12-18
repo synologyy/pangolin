@@ -49,7 +49,8 @@ import {
     SettingsSectionTitle,
     SettingsSectionDescription,
     SettingsSectionBody,
-    SettingsSectionForm
+    SettingsSectionForm,
+    SettingsSectionFooter
 } from "@app/components/Settings";
 import { useUserContext } from "@app/hooks/useUserContext";
 import { useTranslations } from "next-intl";
@@ -122,16 +123,12 @@ export default function GeneralPage() {
     const { org } = useOrgContext();
     return (
         <SettingsContainer>
-            <div className="grid gap-y-8">
-                <GeneralSectionForm org={org.org} />
+            <GeneralSectionForm org={org.org} />
 
-                <LogRetentionSectionForm org={org.org} />
+            <LogRetentionSectionForm org={org.org} />
 
-                {build !== "oss" && (
-                    <SecuritySettingsSectionForm org={org.org} />
-                )}
-                {build !== "saas" && <DeleteForm org={org.org} />}
-            </div>
+            {build !== "oss" && <SecuritySettingsSectionForm org={org.org} />}
+            {build !== "saas" && <DeleteForm org={org.org} />}
         </SettingsContainer>
     );
 }
@@ -222,7 +219,7 @@ function DeleteForm({ org }: SectionFormProps) {
                         {t("dangerSectionDescription")}
                     </SettingsSectionDescription>
                 </SettingsSectionHeader>
-                <div className="flex justify-start gap-2">
+                <SettingsSectionFooter>
                     <Button
                         variant="destructive"
                         onClick={() => setIsDeleteModalOpen(true)}
@@ -232,7 +229,7 @@ function DeleteForm({ org }: SectionFormProps) {
                     >
                         {t("orgDelete")}
                     </Button>
-                </div>
+                </SettingsSectionFooter>
             </SettingsSection>
         </>
     );
@@ -758,6 +755,7 @@ function SecuritySettingsSectionForm({ org }: SectionFormProps) {
                                 action={formAction}
                                 ref={formRef}
                                 id="security-settings-section-form"
+                                className="space-y-4"
                             >
                                 <PaidFeaturesAlert />
                                 <FormField
