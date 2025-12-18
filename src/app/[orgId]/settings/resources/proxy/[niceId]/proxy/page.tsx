@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import HealthCheckDialog from "@/components/HealthCheckDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,11 +11,34 @@ import {
     SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { AxiosResponse } from "axios";
-import { ListTargetsResponse } from "@server/routers/target/listTargets";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { ContainersSelector } from "@app/components/ContainersSelector";
+import { HeadersInput } from "@app/components/HeadersInput";
+import {
+    PathMatchDisplay,
+    PathMatchModal,
+    PathRewriteDisplay,
+    PathRewriteModal
+} from "@app/components/PathMatchRenameModal";
+import {
+    SettingsContainer,
+    SettingsSection,
+    SettingsSectionBody,
+    SettingsSectionDescription,
+    SettingsSectionForm,
+    SettingsSectionHeader,
+    SettingsSectionTitle
+} from "@app/components/Settings";
+import { SwitchInput } from "@app/components/SwitchInput";
+import { Alert, AlertDescription } from "@app/components/ui/alert";
+import { Badge } from "@app/components/ui/badge";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList
+} from "@app/components/ui/command";
 import {
     Form,
     FormControl,
@@ -25,17 +48,11 @@ import {
     FormLabel,
     FormMessage
 } from "@app/components/ui/form";
-import { CreateTargetResponse } from "@server/routers/target";
 import {
-    ColumnDef,
-    getFilteredRowModel,
-    getSortedRowModel,
-    getPaginationRowModel,
-    getCoreRowModel,
-    useReactTable,
-    flexRender,
-    Row
-} from "@tanstack/react-table";
+    Popover,
+    PopoverContent,
+    PopoverTrigger
+} from "@app/components/ui/popover";
 import {
     Table,
     TableBody,
@@ -44,153 +61,55 @@ import {
     TableHeader,
     TableRow
 } from "@app/components/ui/table";
-import { toast } from "@app/hooks/useToast";
-import { useResourceContext } from "@app/hooks/useResourceContext";
-import { ArrayElement } from "@server/types/ArrayElement";
-import { formatAxiosError } from "@app/lib/api/formatAxiosError";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import { createApiClient } from "@app/lib/api";
-import { GetSiteResponse, ListSitesResponse } from "@server/routers/site";
-import {
-    SettingsContainer,
-    SettingsSection,
-    SettingsSectionHeader,
-    SettingsSectionTitle,
-    SettingsSectionDescription,
-    SettingsSectionBody,
-    SettingsSectionForm
-} from "@app/components/Settings";
-import { SwitchInput } from "@app/components/SwitchInput";
-import { useRouter } from "next/navigation";
-import { isTargetValid } from "@server/lib/validators";
-import { tlsNameSchema } from "@server/lib/schemas";
-import {
-    CheckIcon,
-    ChevronsUpDown,
-    Settings,
-    Heart,
-    Check,
-    CircleCheck,
-    CircleX,
-    ArrowRight,
-    Plus,
-    MoveRight,
-    ArrowUp,
-    Info,
-    ArrowDown,
-    AlertTriangle
-} from "lucide-react";
-import { ContainersSelector } from "@app/components/ContainersSelector";
-import { useTranslations } from "next-intl";
-import { build } from "@server/build";
-import HealthCheckDialog from "@/components/HealthCheckDialog";
-import { DockerManager, DockerState } from "@app/lib/docker";
-import { Container } from "@server/routers/site";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger
-} from "@app/components/ui/popover";
-import { cn } from "@app/lib/cn";
-import { CaretSortIcon } from "@radix-ui/react-icons";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList
-} from "@app/components/ui/command";
-import { parseHostTarget } from "@app/lib/parseHostTarget";
-import { HeadersInput } from "@app/components/HeadersInput";
-import {
-    PathMatchDisplay,
-    PathMatchModal,
-    PathRewriteDisplay,
-    PathRewriteModal
-} from "@app/components/PathMatchRenameModal";
-import { Badge } from "@app/components/ui/badge";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger
 } from "@app/components/ui/tooltip";
-import { Alert, AlertDescription } from "@app/components/ui/alert";
-
-const addTargetSchema = z
-    .object({
-        ip: z.string().refine(isTargetValid),
-        method: z.string().nullable(),
-        port: z.coerce.number<number>().int().positive(),
-        siteId: z.int().positive({
-            error: "You must select a site for a target."
-        }),
-        path: z.string().optional().nullable(),
-        pathMatchType: z
-            .enum(["exact", "prefix", "regex"])
-            .optional()
-            .nullable(),
-        rewritePath: z.string().optional().nullable(),
-        rewritePathType: z
-            .enum(["exact", "prefix", "regex", "stripPrefix"])
-            .optional()
-            .nullable(),
-        priority: z.int().min(1).max(1000).optional()
-    })
-    .refine(
-        (data) => {
-            // If path is provided, pathMatchType must be provided
-            if (data.path && !data.pathMatchType) {
-                return false;
-            }
-            // If pathMatchType is provided, path must be provided
-            if (data.pathMatchType && !data.path) {
-                return false;
-            }
-            // Validate path based on pathMatchType
-            if (data.path && data.pathMatchType) {
-                switch (data.pathMatchType) {
-                    case "exact":
-                    case "prefix":
-                        // Path should start with /
-                        return data.path.startsWith("/");
-                    case "regex":
-                        // Validate regex
-                        try {
-                            new RegExp(data.path);
-                            return true;
-                        } catch {
-                            return false;
-                        }
-                }
-            }
-            return true;
-        },
-        {
-            error: "Invalid path configuration"
-        }
-    )
-    .refine(
-        (data) => {
-            // If rewritePath is provided, rewritePathType must be provided
-            if (data.rewritePath && !data.rewritePathType) {
-                return false;
-            }
-            // If rewritePathType is provided, rewritePath must be provided
-            // Exception: stripPrefix can have an empty rewritePath (to just strip the prefix)
-            if (data.rewritePathType && !data.rewritePath) {
-                // Allow empty rewritePath for stripPrefix type
-                if (data.rewritePathType !== "stripPrefix") {
-                    return false;
-                }
-            }
-            return true;
-        },
-        {
-            error: "Invalid rewrite path configuration"
-        }
-    );
+import type { ResourceContextType } from "@app/contexts/resourceContext";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useResourceContext } from "@app/hooks/useResourceContext";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient } from "@app/lib/api";
+import { formatAxiosError } from "@app/lib/api/formatAxiosError";
+import { cn } from "@app/lib/cn";
+import { DockerManager, DockerState } from "@app/lib/docker";
+import { parseHostTarget } from "@app/lib/parseHostTarget";
+import { orgQueries, resourceQueries } from "@app/lib/queries";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CaretSortIcon } from "@radix-ui/react-icons";
+import { tlsNameSchema } from "@server/lib/schemas";
+import { type GetResourceResponse } from "@server/routers/resource";
+import type { ListSitesResponse } from "@server/routers/site";
+import { CreateTargetResponse } from "@server/routers/target";
+import { ListTargetsResponse } from "@server/routers/target/listTargets";
+import { ArrayElement } from "@server/types/ArrayElement";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    ColumnDef,
+    flexRender,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    useReactTable
+} from "@tanstack/react-table";
+import { AxiosResponse } from "axios";
+import {
+    AlertTriangle,
+    CheckIcon,
+    CircleCheck,
+    CircleX,
+    Info,
+    Plus,
+    Settings
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { use, useActionState, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const targetsSettingsSchema = z.object({
     stickySession: z.boolean()
@@ -205,23 +124,72 @@ type LocalTarget = Omit<
     "protocol"
 >;
 
-export default function ReverseProxyTargets(props: {
+export default function ReverseProxyTargetsPage(props: {
     params: Promise<{ resourceId: number; orgId: string }>;
 }) {
     const params = use(props.params);
-    const t = useTranslations();
-    const { env } = useEnvContext();
-
     const { resource, updateResource } = useResourceContext();
 
+    const { data: remoteTargets = [], isLoading: isLoadingTargets } = useQuery(
+        resourceQueries.resourceTargets({
+            resourceId: resource.resourceId
+        })
+    );
+    const { data: sites = [], isLoading: isLoadingSites } = useQuery(
+        orgQueries.sites({
+            orgId: params.orgId
+        })
+    );
+
+    if (isLoadingSites || isLoadingTargets) {
+        return null;
+    }
+
+    return (
+        <SettingsContainer>
+            <ProxyResourceTargetsForm
+                sites={sites}
+                initialTargets={remoteTargets}
+                resource={resource}
+            />
+
+            {resource.http && (
+                <ProxyResourceHttpForm
+                    resource={resource}
+                    updateResource={updateResource}
+                />
+            )}
+
+            {!resource.http && resource.protocol == "tcp" && (
+                <ProxyResourceProtocolForm
+                    resource={resource}
+                    updateResource={updateResource}
+                />
+            )}
+        </SettingsContainer>
+    );
+}
+
+function ProxyResourceTargetsForm({
+    sites,
+    initialTargets,
+    resource
+}: {
+    initialTargets: LocalTarget[];
+    sites: ListSitesResponse["sites"];
+    resource: GetResourceResponse;
+}) {
+    const t = useTranslations();
     const api = createApiClient(useEnvContext());
 
-    const [targets, setTargets] = useState<LocalTarget[]>([]);
+    const [targets, setTargets] = useState<LocalTarget[]>(initialTargets);
     const [targetsToRemove, setTargetsToRemove] = useState<number[]>([]);
-    const [sites, setSites] = useState<ListSitesResponse["sites"]>([]);
     const [dockerStates, setDockerStates] = useState<Map<number, DockerState>>(
         new Map()
     );
+    const [healthCheckDialogOpen, setHealthCheckDialogOpen] = useState(false);
+    const [selectedTargetForHealthCheck, setSelectedTargetForHealthCheck] =
+        useState<LocalTarget | null>(null);
 
     const initializeDockerForSite = async (siteId: number) => {
         if (dockerStates.has(siteId)) {
@@ -258,12 +226,6 @@ export default function ReverseProxyTargets(props: {
         );
     };
 
-    const [httpsTlsLoading, setHttpsTlsLoading] = useState(false);
-    const [targetsLoading, setTargetsLoading] = useState(false);
-    const [proxySettingsLoading, setProxySettingsLoading] = useState(false);
-
-    const [pageLoading, setPageLoading] = useState(true);
-    const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
     const [isAdvancedMode, setIsAdvancedMode] = useState(() => {
         if (typeof window !== "undefined") {
             const saved = localStorage.getItem("proxy-advanced-mode");
@@ -271,572 +233,14 @@ export default function ReverseProxyTargets(props: {
         }
         return false;
     });
-    const [healthCheckDialogOpen, setHealthCheckDialogOpen] = useState(false);
-    const [selectedTargetForHealthCheck, setSelectedTargetForHealthCheck] =
-        useState<LocalTarget | null>(null);
-    const router = useRouter();
-
-    const proxySettingsSchema = z.object({
-        setHostHeader: z
-            .string()
-            .optional()
-            .refine(
-                (data) => {
-                    if (data) {
-                        return tlsNameSchema.safeParse(data).success;
-                    }
-                    return true;
-                },
-                {
-                    message: t("proxyErrorInvalidHeader")
-                }
-            ),
-        headers: z
-            .array(z.object({ name: z.string(), value: z.string() }))
-            .nullable(),
-        proxyProtocol: z.boolean().optional(),
-        proxyProtocolVersion: z.int().min(1).max(2).optional()
-    });
-
-    const tlsSettingsSchema = z.object({
-        ssl: z.boolean(),
-        tlsServerName: z
-            .string()
-            .optional()
-            .refine(
-                (data) => {
-                    if (data) {
-                        return tlsNameSchema.safeParse(data).success;
-                    }
-                    return true;
-                },
-                {
-                    message: t("proxyErrorTls")
-                }
-            )
-    });
-
-    type ProxySettingsValues = z.infer<typeof proxySettingsSchema>;
-    type TlsSettingsValues = z.infer<typeof tlsSettingsSchema>;
-    type TargetsSettingsValues = z.infer<typeof targetsSettingsSchema>;
-
-    const tlsSettingsForm = useForm({
-        resolver: zodResolver(tlsSettingsSchema),
-        defaultValues: {
-            ssl: resource.ssl,
-            tlsServerName: resource.tlsServerName || ""
-        }
-    });
-
-    const proxySettingsForm = useForm({
-        resolver: zodResolver(proxySettingsSchema),
-        defaultValues: {
-            setHostHeader: resource.setHostHeader || "",
-            headers: resource.headers,
-            proxyProtocol: resource.proxyProtocol || false,
-            proxyProtocolVersion: resource.proxyProtocolVersion || 1
-        }
-    });
-
-    const targetsSettingsForm = useForm({
-        resolver: zodResolver(targetsSettingsSchema),
-        defaultValues: {
-            stickySession: resource.stickySession
-        }
-    });
-
-    useEffect(() => {
-        const fetchTargets = async () => {
-            try {
-                const res = await api.get<AxiosResponse<ListTargetsResponse>>(
-                    `/resource/${resource.resourceId}/targets`
-                );
-
-                if (res.status === 200) {
-                    setTargets(res.data.data.targets);
-                }
-            } catch (err) {
-                console.error(err);
-                toast({
-                    variant: "destructive",
-                    title: t("targetErrorFetch"),
-                    description: formatAxiosError(
-                        err,
-                        t("targetErrorFetchDescription")
-                    )
-                });
-            } finally {
-                setPageLoading(false);
-            }
-        };
-        fetchTargets();
-
-        const fetchSites = async () => {
-            const res = await api
-                .get<
-                    AxiosResponse<ListSitesResponse>
-                >(`/org/${params.orgId}/sites`)
-                .catch((e) => {
-                    toast({
-                        variant: "destructive",
-                        title: t("sitesErrorFetch"),
-                        description: formatAxiosError(
-                            e,
-                            t("sitesErrorFetchDescription")
-                        )
-                    });
-                });
-
-            if (res?.status === 200) {
-                setSites(res.data.data.sites);
-
-                // Initialize Docker for newt sites
-                const newtSites = res.data.data.sites.filter(
-                    (site) => site.type === "newt"
-                );
-                for (const site of newtSites) {
-                    initializeDockerForSite(site.siteId);
-                }
-
-                // Sites loaded successfully
-            }
-        };
-        fetchSites();
-
-        // const fetchSite = async () => {
-        //     try {
-        //         const res = await api.get<AxiosResponse<GetSiteResponse>>(
-        //             `/site/${resource.siteId}`
-        //         );
-        //
-        //         if (res.status === 200) {
-        //             setSite(res.data.data);
-        //         }
-        //     } catch (err) {
-        //         console.error(err);
-        //         toast({
-        //             variant: "destructive",
-        //             title: t("siteErrorFetch"),
-        //             description: formatAxiosError(
-        //                 err,
-        //                 t("siteErrorFetchDescription")
-        //             )
-        //         });
-        //     }
-        // };
-        // fetchSite();
-    }, []);
-
-    // Save advanced mode preference to localStorage
-    useEffect(() => {
-        if (typeof window !== "undefined") {
-            localStorage.setItem(
-                "proxy-advanced-mode",
-                isAdvancedMode.toString()
-            );
-        }
-    }, [isAdvancedMode]);
-
-    function addNewTarget() {
-        const isHttp = resource.http;
-
-        const newTarget: LocalTarget = {
-            targetId: -Date.now(), // Use negative timestamp as temporary ID
-            ip: "",
-            method: isHttp ? "http" : null,
-            port: 0,
-            siteId: sites.length > 0 ? sites[0].siteId : 0,
-            path: isHttp ? null : null,
-            pathMatchType: isHttp ? null : null,
-            rewritePath: isHttp ? null : null,
-            rewritePathType: isHttp ? null : null,
-            priority: isHttp ? 100 : 100,
-            enabled: true,
-            resourceId: resource.resourceId,
-            hcEnabled: false,
-            hcPath: null,
-            hcMethod: null,
-            hcInterval: null,
-            hcTimeout: null,
-            hcHeaders: null,
-            hcScheme: null,
-            hcHostname: null,
-            hcPort: null,
-            hcFollowRedirects: null,
-            hcHealth: "unknown",
-            hcStatus: null,
-            hcMode: null,
-            hcUnhealthyInterval: null,
-            hcTlsServerName: null,
-            siteType: sites.length > 0 ? sites[0].type : null,
-            new: true,
-            updated: false
-        };
-
-        setTargets((prev) => [...prev, newTarget]);
-    }
-
-    async function saveNewTarget(target: LocalTarget) {
-        // Validate the target
-        if (!isTargetValid(target.ip)) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorInvalidIp"),
-                description: t("targetErrorInvalidIpDescription")
-            });
-            return;
-        }
-
-        if (!target.port || target.port <= 0) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorInvalidPort"),
-                description: t("targetErrorInvalidPortDescription")
-            });
-            return;
-        }
-
-        if (!target.siteId) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorNoSite"),
-                description: t("targetErrorNoSiteDescription")
-            });
-            return;
-        }
-
-        try {
-            setTargetsLoading(true);
-
-            const data: any = {
-                resourceId: resource.resourceId,
-                siteId: target.siteId,
-                ip: target.ip,
-                method: target.method,
-                port: target.port,
-                enabled: target.enabled,
-                hcEnabled: target.hcEnabled,
-                hcPath: target.hcPath || null,
-                hcScheme: target.hcScheme || null,
-                hcHostname: target.hcHostname || null,
-                hcPort: target.hcPort || null,
-                hcInterval: target.hcInterval || null,
-                hcTimeout: target.hcTimeout || null,
-                hcHeaders: target.hcHeaders || null,
-                hcFollowRedirects: target.hcFollowRedirects || null,
-                hcMethod: target.hcMethod || null,
-                hcStatus: target.hcStatus || null,
-                hcUnhealthyInterval: target.hcUnhealthyInterval || null,
-                hcMode: target.hcMode || null
-            };
-
-            // Only include path-related fields for HTTP resources
-            if (resource.http) {
-                data.path = target.path;
-                data.pathMatchType = target.pathMatchType;
-                data.rewritePath = target.rewritePath;
-                data.rewritePathType = target.rewritePathType;
-                data.priority = target.priority;
-            }
-
-            const response = await api.post<
-                AxiosResponse<CreateTargetResponse>
-            >(`/target`, data);
-
-            if (response.status === 200) {
-                // Update the target with the new ID and remove the new flag
-                setTargets((prev) =>
-                    prev.map((t) =>
-                        t.targetId === target.targetId
-                            ? {
-                                  ...t,
-                                  targetId: response.data.data.targetId,
-                                  new: false,
-                                  updated: false
-                              }
-                            : t
-                    )
-                );
-
-                toast({
-                    title: t("targetCreated"),
-                    description: t("targetCreatedDescription")
-                });
-            }
-        } catch (err) {
-            console.error(err);
-            toast({
-                variant: "destructive",
-                title: t("targetErrorCreate"),
-                description: formatAxiosError(
-                    err,
-                    t("targetErrorCreateDescription")
-                )
-            });
-        } finally {
-            setTargetsLoading(false);
-        }
-    }
-
-    async function addTarget(data: z.infer<typeof addTargetSchema>) {
-        // if (site && site.type == "wireguard" && site.subnet) {
-        //     // make sure that the target IP is within the site subnet
-        //     const targetIp = data.ip;
-        //     const subnet = site.subnet;
-        //     try {
-        //         if (!isIPInSubnet(targetIp, subnet)) {
-        //             toast({
-        //                 variant: "destructive",
-        //                 title: t("targetWireGuardErrorInvalidIp"),
-        //                 description: t(
-        //                     "targetWireGuardErrorInvalidIpDescription"
-        //                 )
-        //             });
-        //             return;
-        //         }
-        //     } catch (error) {
-        //         console.error(error);
-        //         toast({
-        //             variant: "destructive",
-        //             title: t("targetWireGuardErrorInvalidIp"),
-        //             description: t("targetWireGuardErrorInvalidIpDescription")
-        //         });
-        //         return;
-        //     }
-        // }
-
-        const site = sites.find((site) => site.siteId === data.siteId);
-        const isHttp = resource.http;
-
-        const newTarget: LocalTarget = {
-            ...data,
-            path: isHttp ? data.path || null : null,
-            pathMatchType: isHttp ? data.pathMatchType || null : null,
-            rewritePath: isHttp ? data.rewritePath || null : null,
-            rewritePathType: isHttp ? data.rewritePathType || null : null,
-            siteType: site?.type || null,
-            enabled: true,
-            targetId: new Date().getTime(),
-            new: true,
-            resourceId: resource.resourceId,
-            priority: isHttp ? data.priority || 100 : 100,
-            hcEnabled: false,
-            hcPath: null,
-            hcMethod: null,
-            hcInterval: null,
-            hcTimeout: null,
-            hcHeaders: null,
-            hcScheme: null,
-            hcHostname: null,
-            hcPort: null,
-            hcFollowRedirects: null,
-            hcHealth: "unknown",
-            hcStatus: null,
-            hcMode: null,
-            hcUnhealthyInterval: null,
-            hcTlsServerName: null
-        };
-
-        setTargets([...targets, newTarget]);
-    }
-
-    const removeTarget = (targetId: number) => {
-        setTargets([
-            ...targets.filter((target) => target.targetId !== targetId)
-        ]);
-
-        if (!targets.find((target) => target.targetId === targetId)?.new) {
-            setTargetsToRemove([...targetsToRemove, targetId]);
-        }
-    };
-
-    async function updateTarget(targetId: number, data: Partial<LocalTarget>) {
-        const site = sites.find((site) => site.siteId === data.siteId);
-        setTargets(
-            targets.map((target) =>
-                target.targetId === targetId
-                    ? {
-                          ...target,
-                          ...data,
-                          updated: true,
-                          siteType: site ? site.type : target.siteType
-                      }
-                    : target
-            )
-        );
-    }
-
-    function updateTargetHealthCheck(targetId: number, config: any) {
-        setTargets(
-            targets.map((target) =>
-                target.targetId === targetId
-                    ? {
-                          ...target,
-                          ...config,
-                          updated: true
-                      }
-                    : target
-            )
-        );
-    }
-
-    const openHealthCheckDialog = (target: LocalTarget) => {
-        console.log(target);
-        setSelectedTargetForHealthCheck(target);
-        setHealthCheckDialogOpen(true);
-    };
-
-    async function saveAllSettings() {
-        // Validate that no targets have blank IPs or invalid ports
-        const targetsWithInvalidFields = targets.filter(
-            (target) =>
-                !target.ip ||
-                target.ip.trim() === "" ||
-                !target.port ||
-                target.port <= 0 ||
-                isNaN(target.port)
-        );
-        console.log(targetsWithInvalidFields);
-        if (targetsWithInvalidFields.length > 0) {
-            toast({
-                variant: "destructive",
-                title: t("targetErrorInvalidIp"),
-                description: t("targetErrorInvalidIpDescription")
-            });
-            return;
-        }
-
-        try {
-            setTargetsLoading(true);
-            setHttpsTlsLoading(true);
-            setProxySettingsLoading(true);
-
-            for (const targetId of targetsToRemove) {
-                await api.delete(`/target/${targetId}`);
-            }
-
-            // Save targets
-            for (const target of targets) {
-                const data: any = {
-                    ip: target.ip,
-                    port: target.port,
-                    method: target.method,
-                    enabled: target.enabled,
-                    siteId: target.siteId,
-                    hcEnabled: target.hcEnabled,
-                    hcPath: target.hcPath || null,
-                    hcScheme: target.hcScheme || null,
-                    hcHostname: target.hcHostname || null,
-                    hcPort: target.hcPort || null,
-                    hcInterval: target.hcInterval || null,
-                    hcTimeout: target.hcTimeout || null,
-                    hcHeaders: target.hcHeaders || null,
-                    hcFollowRedirects: target.hcFollowRedirects || null,
-                    hcMethod: target.hcMethod || null,
-                    hcStatus: target.hcStatus || null,
-                    hcUnhealthyInterval: target.hcUnhealthyInterval || null,
-                    hcMode: target.hcMode || null,
-                    hcTlsServerName: target.hcTlsServerName
-                };
-
-                // Only include path-related fields for HTTP resources
-                if (resource.http) {
-                    data.path = target.path;
-                    data.pathMatchType = target.pathMatchType;
-                    data.rewritePath = target.rewritePath;
-                    data.rewritePathType = target.rewritePathType;
-                    data.priority = target.priority;
-                }
-
-                if (target.new) {
-                    const res = await api.put<
-                        AxiosResponse<CreateTargetResponse>
-                    >(`/resource/${resource.resourceId}/target`, data);
-                    target.targetId = res.data.data.targetId;
-                    target.new = false;
-                } else if (target.updated) {
-                    await api.post(`/target/${target.targetId}`, data);
-                    target.updated = false;
-                }
-            }
-
-            if (resource.http) {
-                // Gather all settings
-                const stickySessionData = targetsSettingsForm.getValues();
-                const tlsData = tlsSettingsForm.getValues();
-                const proxyData = proxySettingsForm.getValues();
-
-                // Combine into one payload
-                const payload = {
-                    stickySession: stickySessionData.stickySession,
-                    ssl: tlsData.ssl,
-                    tlsServerName: tlsData.tlsServerName || null,
-                    setHostHeader: proxyData.setHostHeader || null,
-                    headers: proxyData.headers || null
-                };
-
-                // Single API call to update all settings
-                await api.post(`/resource/${resource.resourceId}`, payload);
-
-                // Update local resource context
-                updateResource({
-                    ...resource,
-                    stickySession: stickySessionData.stickySession,
-                    ssl: tlsData.ssl,
-                    tlsServerName: tlsData.tlsServerName || null,
-                    setHostHeader: proxyData.setHostHeader || null,
-                    headers: proxyData.headers || null
-                });
-            } else {
-                // For TCP/UDP resources, save proxy protocol settings
-                const proxyData = proxySettingsForm.getValues();
-
-                const payload = {
-                    proxyProtocol: proxyData.proxyProtocol || false,
-                    proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
-                };
-
-                await api.post(`/resource/${resource.resourceId}`, payload);
-
-                updateResource({
-                    ...resource,
-                    proxyProtocol: proxyData.proxyProtocol || false,
-                    proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
-                });
-            }
-
-            toast({
-                title: t("settingsUpdated"),
-                description: t("settingsUpdatedDescription")
-            });
-
-            setTargetsToRemove([]);
-            router.refresh();
-        } catch (err) {
-            console.error(err);
-            toast({
-                variant: "destructive",
-                title: t("settingsErrorUpdate"),
-                description: formatAxiosError(
-                    err,
-                    t("settingsErrorUpdateDescription")
-                )
-            });
-        } finally {
-            setTargetsLoading(false);
-            setHttpsTlsLoading(false);
-            setProxySettingsLoading(false);
-        }
-    }
 
     const getColumns = (): ColumnDef<LocalTarget>[] => {
-        const baseColumns: ColumnDef<LocalTarget>[] = [];
         const isHttp = resource.http;
 
         const priorityColumn: ColumnDef<LocalTarget> = {
             id: "priority",
             header: () => (
-                <div className="flex items-center gap-2 p-3">
+                <div className="flex items-center gap-2">
                     {t("priority")}
                     <TooltipProvider>
                         <Tooltip>
@@ -1363,6 +767,91 @@ export default function ReverseProxyTargets(props: {
         }
     };
 
+    function addNewTarget() {
+        const isHttp = resource.http;
+
+        const newTarget: LocalTarget = {
+            targetId: -Date.now(), // Use negative timestamp as temporary ID
+            ip: "",
+            method: isHttp ? "http" : null,
+            port: 0,
+            siteId: sites.length > 0 ? sites[0].siteId : 0,
+            path: isHttp ? null : null,
+            pathMatchType: isHttp ? null : null,
+            rewritePath: isHttp ? null : null,
+            rewritePathType: isHttp ? null : null,
+            priority: isHttp ? 100 : 100,
+            enabled: true,
+            resourceId: resource.resourceId,
+            hcEnabled: false,
+            hcPath: null,
+            hcMethod: null,
+            hcInterval: null,
+            hcTimeout: null,
+            hcHeaders: null,
+            hcScheme: null,
+            hcHostname: null,
+            hcPort: null,
+            hcFollowRedirects: null,
+            hcHealth: "unknown",
+            hcStatus: null,
+            hcMode: null,
+            hcUnhealthyInterval: null,
+            hcTlsServerName: null,
+            siteType: sites.length > 0 ? sites[0].type : null,
+            new: true,
+            updated: false
+        };
+
+        setTargets((prev) => [...prev, newTarget]);
+    }
+
+    const removeTarget = (targetId: number) => {
+        setTargets([
+            ...targets.filter((target) => target.targetId !== targetId)
+        ]);
+
+        if (!targets.find((target) => target.targetId === targetId)?.new) {
+            setTargetsToRemove([...targetsToRemove, targetId]);
+        }
+    };
+
+    async function updateTarget(targetId: number, data: Partial<LocalTarget>) {
+        const site = sites.find((site) => site.siteId === data.siteId);
+        setTargets(
+            targets.map((target) =>
+                target.targetId === targetId
+                    ? {
+                          ...target,
+                          ...data,
+                          updated: true,
+                          siteType: site ? site.type : target.siteType
+                      }
+                    : target
+            )
+        );
+    }
+
+    function updateTargetHealthCheck(targetId: number, config: any) {
+        setTargets(
+            targets.map((target) =>
+                target.targetId === targetId
+                    ? {
+                          ...target,
+                          ...config,
+                          updated: true
+                      }
+                    : target
+            )
+        );
+    }
+
+    const openHealthCheckDialog = (target: LocalTarget) => {
+        console.log(target);
+        setSelectedTargetForHealthCheck(target);
+        setHealthCheckDialogOpen(true);
+    };
+
     const columns = getColumns();
 
     const table = useReactTable({
@@ -1380,12 +869,128 @@ export default function ReverseProxyTargets(props: {
         }
     });
 
-    if (pageLoading) {
-        return <></>;
+    const router = useRouter();
+
+    const queryClient = useQueryClient();
+
+    useEffect(() => {
+        const newtSites = sites.filter((site) => site.type === "newt");
+        for (const site of newtSites) {
+            initializeDockerForSite(site.siteId);
+        }
+    }, [sites]);
+
+    // Save advanced mode preference to localStorage
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            localStorage.setItem(
+                "proxy-advanced-mode",
+                isAdvancedMode.toString()
+            );
+        }
+    }, [isAdvancedMode]);
+
+    const [, formAction, isSubmitting] = useActionState(saveTargets, null);
+
+    async function saveTargets() {
+        // Validate that no targets have blank IPs or invalid ports
+        const targetsWithInvalidFields = targets.filter(
+            (target) =>
+                !target.ip ||
+                target.ip.trim() === "" ||
+                !target.port ||
+                target.port <= 0 ||
+                isNaN(target.port)
+        );
+        console.log(targetsWithInvalidFields);
+        if (targetsWithInvalidFields.length > 0) {
+            toast({
+                variant: "destructive",
+                title: t("targetErrorInvalidIp"),
+                description: t("targetErrorInvalidIpDescription")
+            });
+            return;
+        }
+
+        try {
+            await Promise.all(
+                targetsToRemove.map((targetId) =>
+                    api.delete(`/target/${targetId}`)
+                )
+            );
+
+            // Save targets
+            for (const target of targets) {
+                const data: any = {
+                    ip: target.ip,
+                    port: target.port,
+                    method: target.method,
+                    enabled: target.enabled,
+                    siteId: target.siteId,
+                    hcEnabled: target.hcEnabled,
+                    hcPath: target.hcPath || null,
+                    hcScheme: target.hcScheme || null,
+                    hcHostname: target.hcHostname || null,
+                    hcPort: target.hcPort || null,
+                    hcInterval: target.hcInterval || null,
+                    hcTimeout: target.hcTimeout || null,
+                    hcHeaders: target.hcHeaders || null,
+                    hcFollowRedirects: target.hcFollowRedirects || null,
+                    hcMethod: target.hcMethod || null,
+                    hcStatus: target.hcStatus || null,
+                    hcUnhealthyInterval: target.hcUnhealthyInterval || null,
+                    hcMode: target.hcMode || null,
+                    hcTlsServerName: target.hcTlsServerName
+                };
+
+                // Only include path-related fields for HTTP resources
+                if (resource.http) {
+                    data.path = target.path;
+                    data.pathMatchType = target.pathMatchType;
+                    data.rewritePath = target.rewritePath;
+                    data.rewritePathType = target.rewritePathType;
+                    data.priority = target.priority;
+                }
+
+                if (target.new) {
+                    const res = await api.put<
+                        AxiosResponse<CreateTargetResponse>
+                    >(`/resource/${resource.resourceId}/target`, data);
+                    target.targetId = res.data.data.targetId;
+                    target.new = false;
+                } else if (target.updated) {
+                    await api.post(`/target/${target.targetId}`, data);
+                    target.updated = false;
+                }
+            }
+
+            toast({
+                title: t("settingsUpdated"),
+                description: t("settingsUpdatedDescription")
+            });
+
+            setTargetsToRemove([]);
+            router.refresh();
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceTargets({
+                    resourceId: resource.resourceId
+                })
+            );
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: "destructive",
+                title: t("settingsErrorUpdate"),
+                description: formatAxiosError(
+                    err,
+                    t("settingsErrorUpdateDescription")
+                )
+            });
+        }
     }
 
     return (
-        <SettingsContainer>
+        <>
             <SettingsSection>
                 <SettingsSectionHeader>
                     <SettingsSectionTitle>{t("targets")}</SettingsSectionTitle>
@@ -1514,7 +1119,7 @@ export default function ReverseProxyTargets(props: {
                             </div>
                         </>
                     ) : (
-                        <div className="text-center p-4">
+                        <div className="text-center py-8 border-2 border-dashed border-muted rounded-lg p-4">
                             <p className="text-muted-foreground mb-4">
                                 {t("targetNoOne")}
                             </p>
@@ -1525,329 +1130,17 @@ export default function ReverseProxyTargets(props: {
                         </div>
                     )}
                 </SettingsSectionBody>
+
+                <form className="self-end mt-4" action={formAction}>
+                    <Button
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        type="submit"
+                    >
+                        {t("saveResourceTargets")}
+                    </Button>
+                </form>
             </SettingsSection>
-
-            {resource.http && (
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("proxyAdditional")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("proxyAdditionalDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <SettingsSectionForm>
-                            <Form {...tlsSettingsForm}>
-                                <form
-                                    onSubmit={tlsSettingsForm.handleSubmit(
-                                        saveAllSettings
-                                    )}
-                                    className="space-y-4"
-                                    id="tls-settings-form"
-                                >
-                                    {!env.flags.usePangolinDns && (
-                                        <FormField
-                                            control={tlsSettingsForm.control}
-                                            name="ssl"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormControl>
-                                                        <SwitchInput
-                                                            id="ssl-toggle"
-                                                            label={t(
-                                                                "proxyEnableSSL"
-                                                            )}
-                                                            description={t(
-                                                                "proxyEnableSSLDescription"
-                                                            )}
-                                                            defaultChecked={
-                                                                field.value
-                                                            }
-                                                            onCheckedChange={(
-                                                                val
-                                                            ) => {
-                                                                field.onChange(
-                                                                    val
-                                                                );
-                                                            }}
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    )}
-                                    <FormField
-                                        control={tlsSettingsForm.control}
-                                        name="tlsServerName"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("targetTlsSni")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "targetTlsSniDescription"
-                                                    )}
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
-                        </SettingsSectionForm>
-
-                        <SettingsSectionForm>
-                            <Form {...targetsSettingsForm}>
-                                <form
-                                    onSubmit={targetsSettingsForm.handleSubmit(
-                                        saveAllSettings
-                                    )}
-                                    className="space-y-4"
-                                    id="targets-settings-form"
-                                >
-                                    <FormField
-                                        control={targetsSettingsForm.control}
-                                        name="stickySession"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <SwitchInput
-                                                        id="sticky-toggle"
-                                                        label={t(
-                                                            "targetStickySessions"
-                                                        )}
-                                                        description={t(
-                                                            "targetStickySessionsDescription"
-                                                        )}
-                                                        defaultChecked={
-                                                            field.value
-                                                        }
-                                                        onCheckedChange={(
-                                                            val
-                                                        ) => {
-                                                            field.onChange(val);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
-                        </SettingsSectionForm>
-
-                        <SettingsSectionForm>
-                            <Form {...proxySettingsForm}>
-                                <form
-                                    onSubmit={proxySettingsForm.handleSubmit(
-                                        saveAllSettings
-                                    )}
-                                    className="space-y-4"
-                                    id="proxy-settings-form"
-                                >
-                                    <FormField
-                                        control={proxySettingsForm.control}
-                                        name="setHostHeader"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("proxyCustomHeader")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "proxyCustomHeaderDescription"
-                                                    )}
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={proxySettingsForm.control}
-                                        name="headers"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>
-                                                    {t("customHeaders")}
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <HeadersInput
-                                                        value={field.value}
-                                                        onChange={(value) => {
-                                                            field.onChange(
-                                                                value
-                                                            );
-                                                        }}
-                                                        rows={4}
-                                                    />
-                                                </FormControl>
-                                                <FormDescription>
-                                                    {t(
-                                                        "customHeadersDescription"
-                                                    )}
-                                                </FormDescription>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </form>
-                            </Form>
-                        </SettingsSectionForm>
-                    </SettingsSectionBody>
-                </SettingsSection>
-            )}
-
-            {!resource.http && resource.protocol == "tcp" && (
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("proxyProtocol")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("proxyProtocolDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <SettingsSectionForm>
-                            <Form {...proxySettingsForm}>
-                                <form
-                                    onSubmit={proxySettingsForm.handleSubmit(
-                                        saveAllSettings
-                                    )}
-                                    className="space-y-4"
-                                    id="proxy-protocol-settings-form"
-                                >
-                                    <FormField
-                                        control={proxySettingsForm.control}
-                                        name="proxyProtocol"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <SwitchInput
-                                                        id="proxy-protocol-toggle"
-                                                        label={t(
-                                                            "enableProxyProtocol"
-                                                        )}
-                                                        description={t(
-                                                            "proxyProtocolInfo"
-                                                        )}
-                                                        defaultChecked={
-                                                            field.value || false
-                                                        }
-                                                        onCheckedChange={(
-                                                            val
-                                                        ) => {
-                                                            field.onChange(val);
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    {proxySettingsForm.watch(
-                                        "proxyProtocol"
-                                    ) && (
-                                        <>
-                                            <FormField
-                                                control={
-                                                    proxySettingsForm.control
-                                                }
-                                                name="proxyProtocolVersion"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel>
-                                                            {t(
-                                                                "proxyProtocolVersion"
-                                                            )}
-                                                        </FormLabel>
-                                                        <FormControl>
-                                                            <Select
-                                                                value={String(
-                                                                    field.value ||
-                                                                        1
-                                                                )}
-                                                                onValueChange={(
-                                                                    value
-                                                                ) =>
-                                                                    field.onChange(
-                                                                        parseInt(
-                                                                            value,
-                                                                            10
-                                                                        )
-                                                                    )
-                                                                }
-                                                            >
-                                                                <SelectTrigger>
-                                                                    <SelectValue placeholder="Select version" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    <SelectItem value="1">
-                                                                        {t(
-                                                                            "version1"
-                                                                        )}
-                                                                    </SelectItem>
-                                                                    <SelectItem value="2">
-                                                                        {t(
-                                                                            "version2"
-                                                                        )}
-                                                                    </SelectItem>
-                                                                </SelectContent>
-                                                            </Select>
-                                                        </FormControl>
-                                                        <FormDescription>
-                                                            {t(
-                                                                "versionDescription"
-                                                            )}
-                                                        </FormDescription>
-                                                    </FormItem>
-                                                )}
-                                            />
-
-                                            <Alert>
-                                                <AlertTriangle className="h-4 w-4" />
-                                                <AlertDescription>
-                                                    <strong>
-                                                        {t("warning")}:
-                                                    </strong>{" "}
-                                                    {t("proxyProtocolWarning")}
-                                                </AlertDescription>
-                                            </Alert>
-                                        </>
-                                    )}
-                                </form>
-                            </Form>
-                        </SettingsSectionForm>
-                    </SettingsSectionBody>
-                </SettingsSection>
-            )}
-
-            <div className="flex justify-end mt-6">
-                <Button
-                    onClick={saveAllSettings}
-                    loading={
-                        targetsLoading ||
-                        httpsTlsLoading ||
-                        proxySettingsLoading
-                    }
-                    disabled={
-                        targetsLoading ||
-                        httpsTlsLoading ||
-                        proxySettingsLoading
-                    }
-                >
-                    {t("saveSettings")}
-                </Button>
-            </div>
 
             {selectedTargetForHealthCheck && (
                 <HealthCheckDialog
@@ -1900,43 +1193,503 @@ export default function ReverseProxyTargets(props: {
                     }}
                 />
             )}
-        </SettingsContainer>
+        </>
     );
 }
 
-function isIPInSubnet(subnet: string, ip: string): boolean {
-    const [subnetIP, maskBits] = subnet.split("/");
-    const mask = parseInt(maskBits);
+function ProxyResourceHttpForm({
+    resource,
+    updateResource
+}: Pick<ResourceContextType, "resource" | "updateResource">) {
+    const t = useTranslations();
 
-    if (mask < 0 || mask > 32) {
-        throw new Error("subnetMaskErrorInvalid");
+    const tlsSettingsSchema = z.object({
+        ssl: z.boolean(),
+        tlsServerName: z
+            .string()
+            .optional()
+            .refine(
+                (data) => {
+                    if (data) {
+                        return tlsNameSchema.safeParse(data).success;
+                    }
+                    return true;
+                },
+                {
+                    message: t("proxyErrorTls")
+                }
+            )
+    });
+
+    const tlsSettingsForm = useForm({
+        resolver: zodResolver(tlsSettingsSchema),
+        defaultValues: {
+            ssl: resource.ssl,
+            tlsServerName: resource.tlsServerName || ""
+        }
+    });
+
+    const proxySettingsSchema = z.object({
+        setHostHeader: z
+            .string()
+            .optional()
+            .refine(
+                (data) => {
+                    if (data) {
+                        return tlsNameSchema.safeParse(data).success;
+                    }
+                    return true;
+                },
+                {
+                    message: t("proxyErrorInvalidHeader")
+                }
+            ),
+        headers: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable(),
+        proxyProtocol: z.boolean().optional(),
+        proxyProtocolVersion: z.int().min(1).max(2).optional()
+    });
+
+    const proxySettingsForm = useForm({
+        resolver: zodResolver(proxySettingsSchema),
+        defaultValues: {
+            setHostHeader: resource.setHostHeader || "",
+            headers: resource.headers,
+            proxyProtocol: resource.proxyProtocol || false,
+            proxyProtocolVersion: resource.proxyProtocolVersion || 1
+        }
+    });
+
+    const { env } = useEnvContext();
+    const api = createApiClient({ env });
+
+    const targetsSettingsForm = useForm({
+        resolver: zodResolver(targetsSettingsSchema),
+        defaultValues: {
+            stickySession: resource.stickySession
+        }
+    });
+
+    const router = useRouter();
+    const [, formAction, isSubmitting] = useActionState(
+        saveResourceHttpSettings,
+        null
+    );
+
+    async function saveResourceHttpSettings() {
+        const isValidTLS = await tlsSettingsForm.trigger();
+        const isValidProxy = await proxySettingsForm.trigger();
+        const targetSettingsForm = await targetsSettingsForm.trigger();
+        if (!isValidTLS || !isValidProxy || !targetSettingsForm) return;
+
+        try {
+            // Gather all settings
+            const stickySessionData = targetsSettingsForm.getValues();
+            const tlsData = tlsSettingsForm.getValues();
+            const proxyData = proxySettingsForm.getValues();
+
+            // Combine into one payload
+            const payload = {
+                stickySession: stickySessionData.stickySession,
+                ssl: tlsData.ssl,
+                tlsServerName: tlsData.tlsServerName || null,
+                setHostHeader: proxyData.setHostHeader || null,
+                headers: proxyData.headers || null
+            };
+
+            // Single API call to update all settings
+            await api.post(`/resource/${resource.resourceId}`, payload);
+
+            // Update local resource context
+            updateResource({
+                ...resource,
+                stickySession: stickySessionData.stickySession,
+                ssl: tlsData.ssl,
+                tlsServerName: tlsData.tlsServerName || null,
+                setHostHeader: proxyData.setHostHeader || null,
+                headers: proxyData.headers || null
+            });
+
+            toast({
+                title: t("settingsUpdated"),
+                description: t("settingsUpdatedDescription")
+            });
+
+            router.refresh();
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: "destructive",
+                title: t("settingsErrorUpdate"),
+                description: formatAxiosError(
+                    err,
+                    t("settingsErrorUpdateDescription")
+                )
+            });
+        }
     }
 
-    // Convert IP addresses to binary numbers
-    const subnetNum = ipToNumber(subnetIP);
-    const ipNum = ipToNumber(ip);
+    return (
+        <SettingsSection>
+            <SettingsSectionHeader>
+                <SettingsSectionTitle>
+                    {t("proxyAdditional")}
+                </SettingsSectionTitle>
+                <SettingsSectionDescription>
+                    {t("proxyAdditionalDescription")}
+                </SettingsSectionDescription>
+            </SettingsSectionHeader>
+            <SettingsSectionBody>
+                <SettingsSectionForm>
+                    <Form {...tlsSettingsForm}>
+                        <form
+                            action={formAction}
+                            className="space-y-4"
+                            id="tls-settings-form"
+                        >
+                            {!env.flags.usePangolinDns && (
+                                <FormField
+                                    control={tlsSettingsForm.control}
+                                    name="ssl"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <SwitchInput
+                                                    id="ssl-toggle"
+                                                    label={t("proxyEnableSSL")}
+                                                    description={t(
+                                                        "proxyEnableSSLDescription"
+                                                    )}
+                                                    defaultChecked={field.value}
+                                                    onCheckedChange={(val) => {
+                                                        field.onChange(val);
+                                                    }}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+                            <FormField
+                                control={tlsSettingsForm.control}
+                                name="tlsServerName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {t("targetTlsSni")}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {t("targetTlsSniDescription")}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </form>
+                    </Form>
+                </SettingsSectionForm>
 
-    // Calculate subnet mask
-    const maskNum = mask === 32 ? -1 : ~((1 << (32 - mask)) - 1);
+                <SettingsSectionForm>
+                    <Form {...targetsSettingsForm}>
+                        <form
+                            action={formAction}
+                            className="space-y-4"
+                            id="targets-settings-form"
+                        >
+                            <FormField
+                                control={targetsSettingsForm.control}
+                                name="stickySession"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <SwitchInput
+                                                id="sticky-toggle"
+                                                label={t(
+                                                    "targetStickySessions"
+                                                )}
+                                                description={t(
+                                                    "targetStickySessionsDescription"
+                                                )}
+                                                defaultChecked={field.value}
+                                                onCheckedChange={(val) => {
+                                                    field.onChange(val);
+                                                }}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </form>
+                    </Form>
+                </SettingsSectionForm>
 
-    // Check if the IP is in the subnet
-    return (subnetNum & maskNum) === (ipNum & maskNum);
+                <SettingsSectionForm>
+                    <Form {...proxySettingsForm}>
+                        <form
+                            action={formAction}
+                            className="space-y-4"
+                            id="proxy-settings-form"
+                        >
+                            <FormField
+                                control={proxySettingsForm.control}
+                                name="setHostHeader"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {t("proxyCustomHeader")}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {t("proxyCustomHeaderDescription")}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={proxySettingsForm.control}
+                                name="headers"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            {t("customHeaders")}
+                                        </FormLabel>
+                                        <FormControl>
+                                            <HeadersInput
+                                                value={field.value}
+                                                onChange={(value) => {
+                                                    field.onChange(value);
+                                                }}
+                                                rows={4}
+                                            />
+                                        </FormControl>
+                                        <FormDescription>
+                                            {t("customHeadersDescription")}
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </form>
+                    </Form>
+                </SettingsSectionForm>
+                <form className="flex justify-end" action={formAction}>
+                    <Button
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        type="submit"
+                    >
+                        {t("saveResourceHttp")}
+                    </Button>
+                </form>
+            </SettingsSectionBody>
+        </SettingsSection>
+    );
 }
 
-function ipToNumber(ip: string): number {
-    // Validate IP address format
-    const parts = ip.split(".");
+function ProxyResourceProtocolForm({
+    resource,
+    updateResource
+}: Pick<ResourceContextType, "resource" | "updateResource">) {
+    const t = useTranslations();
 
-    if (parts.length !== 4) {
-        throw new Error("ipAddressErrorInvalidFormat");
+    const api = createApiClient(useEnvContext());
+
+    const proxySettingsSchema = z.object({
+        setHostHeader: z
+            .string()
+            .optional()
+            .refine(
+                (data) => {
+                    if (data) {
+                        return tlsNameSchema.safeParse(data).success;
+                    }
+                    return true;
+                },
+                {
+                    message: t("proxyErrorInvalidHeader")
+                }
+            ),
+        headers: z
+            .array(z.object({ name: z.string(), value: z.string() }))
+            .nullable(),
+        proxyProtocol: z.boolean().optional(),
+        proxyProtocolVersion: z.int().min(1).max(2).optional()
+    });
+
+    const proxySettingsForm = useForm({
+        resolver: zodResolver(proxySettingsSchema),
+        defaultValues: {
+            setHostHeader: resource.setHostHeader || "",
+            headers: resource.headers,
+            proxyProtocol: resource.proxyProtocol || false,
+            proxyProtocolVersion: resource.proxyProtocolVersion || 1
+        }
+    });
+
+    const router = useRouter();
+
+    const [, formAction, isSubmitting] = useActionState(
+        saveProtocolSettings,
+        null
+    );
+
+    async function saveProtocolSettings() {
+        const isValid = proxySettingsForm.trigger();
+        if (!isValid) return;
+
+        try {
+            // For TCP/UDP resources, save proxy protocol settings
+            const proxyData = proxySettingsForm.getValues();
+
+            const payload = {
+                proxyProtocol: proxyData.proxyProtocol || false,
+                proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
+            };
+
+            await api.post(`/resource/${resource.resourceId}`, payload);
+
+            updateResource({
+                ...resource,
+                proxyProtocol: proxyData.proxyProtocol || false,
+                proxyProtocolVersion: proxyData.proxyProtocolVersion || 1
+            });
+
+            toast({
+                title: t("settingsUpdated"),
+                description: t("settingsUpdatedDescription")
+            });
+
+            router.refresh();
+        } catch (err) {
+            console.error(err);
+            toast({
+                variant: "destructive",
+                title: t("settingsErrorUpdate"),
+                description: formatAxiosError(
+                    err,
+                    t("settingsErrorUpdateDescription")
+                )
+            });
+        }
     }
 
-    // Convert IP octets to 32-bit number
-    return parts.reduce((num, octet) => {
-        const oct = parseInt(octet);
-        if (isNaN(oct) || oct < 0 || oct > 255) {
-            throw new Error("ipAddressErrorInvalidOctet");
-        }
-        return (num << 8) + oct;
-    }, 0);
+    return (
+        <SettingsSection>
+            <SettingsSectionHeader>
+                <SettingsSectionTitle>
+                    {t("proxyProtocol")}
+                </SettingsSectionTitle>
+                <SettingsSectionDescription>
+                    {t("proxyProtocolDescription")}
+                </SettingsSectionDescription>
+            </SettingsSectionHeader>
+            <SettingsSectionBody>
+                <SettingsSectionForm>
+                    <Form {...proxySettingsForm}>
+                        <form
+                            action={formAction}
+                            className="space-y-4"
+                            id="proxy-protocol-settings-form"
+                        >
+                            <FormField
+                                control={proxySettingsForm.control}
+                                name="proxyProtocol"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <SwitchInput
+                                                id="proxy-protocol-toggle"
+                                                label={t("enableProxyProtocol")}
+                                                description={t(
+                                                    "proxyProtocolInfo"
+                                                )}
+                                                defaultChecked={
+                                                    field.value || false
+                                                }
+                                                onCheckedChange={(val) => {
+                                                    field.onChange(val);
+                                                }}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+
+                            {proxySettingsForm.watch("proxyProtocol") && (
+                                <>
+                                    <FormField
+                                        control={proxySettingsForm.control}
+                                        name="proxyProtocolVersion"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("proxyProtocolVersion")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Select
+                                                        value={String(
+                                                            field.value || 1
+                                                        )}
+                                                        onValueChange={(
+                                                            value
+                                                        ) =>
+                                                            field.onChange(
+                                                                parseInt(
+                                                                    value,
+                                                                    10
+                                                                )
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select version" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="1">
+                                                                {t("version1")}
+                                                            </SelectItem>
+                                                            <SelectItem value="2">
+                                                                {t("version2")}
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormControl>
+                                                <FormDescription>
+                                                    {t("versionDescription")}
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <Alert>
+                                        <AlertTriangle className="h-4 w-4" />
+                                        <AlertDescription>
+                                            <strong>{t("warning")}:</strong>{" "}
+                                            {t("proxyProtocolWarning")}
+                                        </AlertDescription>
+                                    </Alert>
+                                </>
+                            )}
+                        </form>
+                    </Form>
+                </SettingsSectionForm>
+                <form action={formAction} className="flex justify-end">
+                    <Button
+                        disabled={isSubmitting}
+                        loading={isSubmitting}
+                        type="submit"
+                    >
+                        {t("saveProxyProtocol")}
+                    </Button>
+                </form>
+            </SettingsSectionBody>
+        </SettingsSection>
+    );
 }
