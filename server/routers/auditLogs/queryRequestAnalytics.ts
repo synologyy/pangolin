@@ -1,4 +1,4 @@
-import { db, requestAuditLog, driver } from "@server/db";
+import { db, requestAuditLog, driver, primaryDb } from "@server/db";
 import { registry } from "@server/openApi";
 import { NextFunction } from "express";
 import { Request, Response } from "express";
@@ -11,11 +11,6 @@ import { fromError } from "zod-validation-error";
 import response from "@server/lib/response";
 import logger from "@server/logger";
 import { getSevenDaysAgo } from "@app/lib/getSevenDaysAgo";
-
-let primaryDb = db;
-if (driver == "pg") {
-    primaryDb = db.$primary as typeof db; // select the primary instance in a replicated setup
-}
 
 const queryAccessAuditLogsQuery = z.object({
     // iso string just validate its a parseable date
