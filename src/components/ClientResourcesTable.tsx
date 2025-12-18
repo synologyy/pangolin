@@ -317,6 +317,9 @@ export default function ClientResourcesTable({
                 defaultSort={defaultSort}
                 enableColumnVisibility={true}
                 persistColumnVisibility="internal-resources"
+                columnVisibility={{
+                    niceId: false
+                }}
                 stickyLeftColumn="name"
                 stickyRightColumn="actions"
             />

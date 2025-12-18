@@ -346,7 +346,7 @@ export function SidebarNav({
                                         <button
                                             className={cn(
                                                 "flex items-center rounded-md transition-colors px-2 py-2 justify-center w-full",
-                                                isActive
+                                                isActive || isChildActive
                                                     ? "bg-secondary text-primary font-medium"
                                                     : "text-muted-foreground hover:bg-secondary/80 dark:hover:bg-secondary/50 hover:text-foreground",
                                                 isDisabled &&
