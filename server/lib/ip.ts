@@ -301,6 +301,29 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
     return ipBigInt >= range.start && ipBigInt <= range.end;
 }
 
+/**
+ * Checks if two CIDR ranges overlap
+ * @param cidr1 First CIDR string
+ * @param cidr2 Second CIDR string
+ * @returns boolean indicating if the two CIDRs overlap
+ */
+export function doCidrsOverlap(cidr1: string, cidr2: string): boolean {
+    const version1 = detectIpVersion(cidr1.split("/")[0]);
+    const version2 = detectIpVersion(cidr2.split("/")[0]);
+    if (version1 !== version2) {
+        // Different IP versions cannot overlap
+        return false;
+    }
+    const range1 = cidrToRange(cidr1);
+    const range2 = cidrToRange(cidr2);
+
+    // Overlap if the ranges intersect
+    return (
+        range1.start <= range2.end &&
+        range2.start <= range1.end
+    );
+}
+
 export async function getNextAvailableClientSubnet(
     orgId: string,
     transaction: Transaction | typeof db = db
