@@ -255,11 +255,11 @@ export const configSchema = z
         orgs: z
             .object({
                 block_size: z.number().positive().gt(0).optional().default(24),
-                subnet_group: z.string().optional().default("100.90.128.0/24"),
+                subnet_group: z.string().optional().default("100.90.128.0/20"),
                 utility_subnet_group: z
                     .string()
                     .optional()
-                    .default("100.96.128.0/24") //just hardcode this for now as well
+                    .default("100.96.128.0/20") //just hardcode this for now as well
             })
             .optional()
             .default({
