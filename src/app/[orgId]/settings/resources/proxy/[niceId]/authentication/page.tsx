@@ -397,7 +397,8 @@ export default function ResourceAuthenticationPage() {
 
         api.post(`/resource/${resource.resourceId}/header-auth`, {
             user: null,
-            password: null
+            password: null,
+            extendedCompatibility: null,
         })
             .then(() => {
                 toast({

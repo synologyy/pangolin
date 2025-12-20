@@ -1,4 +1,6 @@
-import { db, loginPage, LoginPage, loginPageOrg, Org, orgs } from "@server/db";
+import {
+    db, loginPage, LoginPage, loginPageOrg, Org, orgs,
+} from "@server/db";
 import {
     Resource,
     ResourcePassword,
@@ -14,7 +16,9 @@ import {
     sessions,
     userOrgs,
     userResources,
-    users
+    users,
+    ResourceHeaderAuthExtendedCompatibility,
+    resourceHeaderAuthExtendedCompatibility
 } from "@server/db";
 import { and, eq } from "drizzle-orm";
 
@@ -23,6 +27,7 @@ export type ResourceWithAuth = {
     pincode: ResourcePincode | null;
     password: ResourcePassword | null;
     headerAuth: ResourceHeaderAuth | null;
+    headerAuthExtendedCompatibility: ResourceHeaderAuthExtendedCompatibility | null
     org: Org;
 };
 
@@ -52,7 +57,14 @@ export async function getResourceByDomain(
             resourceHeaderAuth,
             eq(resourceHeaderAuth.resourceId, resources.resourceId)
         )
-        .innerJoin(orgs, eq(orgs.orgId, resources.orgId))
+        .leftJoin(
+            resourceHeaderAuthExtendedCompatibility,
+            eq(resourceHeaderAuthExtendedCompatibility.resourceId, resources.resourceId)
+        )
+        .innerJoin(
+            orgs,
+            eq(orgs.orgId, resources.orgId)
+        )
         .where(eq(resources.fullDomain, domain))
         .limit(1);
 
@@ -65,6 +77,7 @@ export async function getResourceByDomain(
         pincode: result.resourcePincode,
         password: result.resourcePassword,
         headerAuth: result.resourceHeaderAuth,
+        headerAuthExtendedCompatibility: result.resourceHeaderAuthExtendedCompatibility,
         org: result.orgs
     };
 }

@@ -2,7 +2,7 @@ import {
     domains,
     orgDomains,
     Resource,
-    resourceHeaderAuth,
+    resourceHeaderAuth, resourceHeaderAuthExtendedCompatibility,
     resourcePincode,
     resourceRules,
     resourceWhitelist,
@@ -16,8 +16,8 @@ import {
     userResources,
     users
 } from "@server/db";
-import { resources, targets, sites } from "@server/db";
-import { eq, and, asc, or, ne, count, isNotNull } from "drizzle-orm";
+import {resources, targets, sites} from "@server/db";
+import {eq, and, asc, or, ne, count, isNotNull} from "drizzle-orm";
 import {
     Config,
     ConfigSchema,
@@ -25,12 +25,12 @@ import {
     TargetData
 } from "./types";
 import logger from "@server/logger";
-import { createCertificate } from "#dynamic/routers/certificates/createCertificate";
-import { pickPort } from "@server/routers/target/helpers";
-import { resourcePassword } from "@server/db";
-import { hashPassword } from "@server/auth/password";
-import { isValidCIDR, isValidIP, isValidUrlGlobPattern } from "../validators";
-import { get } from "http";
+import {createCertificate} from "#dynamic/routers/certificates/createCertificate";
+import {pickPort} from "@server/routers/target/helpers";
+import {resourcePassword} from "@server/db";
+import {hashPassword} from "@server/auth/password";
+import {isValidCIDR, isValidIP, isValidUrlGlobPattern} from "../validators";
+import {get} from "http";
 
 export type ProxyResourcesResults = {
     proxyResource: Resource;
@@ -63,7 +63,7 @@ export async function updateProxyResources(
             if (targetSiteId) {
                 // Look up site by niceId
                 [site] = await trx
-                    .select({ siteId: sites.siteId })
+                    .select({siteId: sites.siteId})
                     .from(sites)
                     .where(
                         and(
@@ -75,7 +75,7 @@ export async function updateProxyResources(
             } else if (siteId) {
                 // Use the provided siteId directly, but verify it belongs to the org
                 [site] = await trx
-                    .select({ siteId: sites.siteId })
+                    .select({siteId: sites.siteId})
                     .from(sites)
                     .where(
                         and(eq(sites.siteId, siteId), eq(sites.orgId, orgId))
@@ -93,7 +93,7 @@ export async function updateProxyResources(
 
             let internalPortToCreate;
             if (!targetData["internal-port"]) {
-                const { internalPort, targetIps } = await pickPort(
+                const {internalPort, targetIps} = await pickPort(
                     site.siteId!,
                     trx
                 );
@@ -228,7 +228,7 @@ export async function updateProxyResources(
                         tlsServerName: resourceData["tls-server-name"] || null,
                         emailWhitelistEnabled: resourceData.auth?.[
                             "whitelist-users"
-                        ]
+                            ]
                             ? resourceData.auth["whitelist-users"].length > 0
                             : false,
                         headers: headers || null,
@@ -287,21 +287,39 @@ export async function updateProxyResources(
                             existingResource.resourceId
                         )
                     );
+
+                await trx
+                    .delete(resourceHeaderAuthExtendedCompatibility)
+                    .where(
+                        eq(
+                            resourceHeaderAuthExtendedCompatibility.resourceId,
+                            existingResource.resourceId
+                        )
+                    );
+
                 if (resourceData.auth?.["basic-auth"]) {
                     const headerAuthUser =
                         resourceData.auth?.["basic-auth"]?.user;
                     const headerAuthPassword =
                         resourceData.auth?.["basic-auth"]?.password;
-                    if (headerAuthUser && headerAuthPassword) {
+                    const headerAuthExtendedCompatibility =
+                        resourceData.auth?.["basic-auth"]?.extendedCompatibility;
+                    if (headerAuthUser && headerAuthPassword && headerAuthExtendedCompatibility !== null) {
                         const headerAuthHash = await hashPassword(
                             Buffer.from(
                                 `${headerAuthUser}:${headerAuthPassword}`
                             ).toString("base64")
                         );
-                        await trx.insert(resourceHeaderAuth).values({
-                            resourceId: existingResource.resourceId,
-                            headerAuthHash
-                        });
+                        await Promise.all([
+                            trx.insert(resourceHeaderAuth).values({
+                                resourceId: existingResource.resourceId,
+                                headerAuthHash
+                            }),
+                            trx.insert(resourceHeaderAuthExtendedCompatibility).values({
+                                resourceId: existingResource.resourceId,
+                                extendedCompatibilityIsActivated: headerAuthExtendedCompatibility
+                            })
+                        ]);
                     }
                 }
 
@@ -362,7 +380,7 @@ export async function updateProxyResources(
                     if (targetSiteId) {
                         // Look up site by niceId
                         [site] = await trx
-                            .select({ siteId: sites.siteId })
+                            .select({siteId: sites.siteId})
                             .from(sites)
                             .where(
                                 and(
@@ -374,7 +392,7 @@ export async function updateProxyResources(
                     } else if (siteId) {
                         // Use the provided siteId directly, but verify it belongs to the org
                         [site] = await trx
-                            .select({ siteId: sites.siteId })
+                            .select({siteId: sites.siteId})
                             .from(sites)
                             .where(
                                 and(
@@ -419,7 +437,7 @@ export async function updateProxyResources(
                     if (checkIfTargetChanged(existingTarget, updatedTarget)) {
                         let internalPortToUpdate;
                         if (!targetData["internal-port"]) {
-                            const { internalPort, targetIps } = await pickPort(
+                            const {internalPort, targetIps} = await pickPort(
                                 site.siteId!,
                                 trx
                             );
@@ -656,18 +674,25 @@ export async function updateProxyResources(
                 const headerAuthUser = resourceData.auth?.["basic-auth"]?.user;
                 const headerAuthPassword =
                     resourceData.auth?.["basic-auth"]?.password;
+                const headerAuthExtendedCompatibility = resourceData.auth?.["basic-auth"]?.extendedCompatibility;
 
-                if (headerAuthUser && headerAuthPassword) {
+                if (headerAuthUser && headerAuthPassword && headerAuthExtendedCompatibility !== null) {
                     const headerAuthHash = await hashPassword(
                         Buffer.from(
                             `${headerAuthUser}:${headerAuthPassword}`
                         ).toString("base64")
                     );
 
-                    await trx.insert(resourceHeaderAuth).values({
-                        resourceId: newResource.resourceId,
-                        headerAuthHash
-                    });
+                    await Promise.all([
+                        trx.insert(resourceHeaderAuth).values({
+                            resourceId: newResource.resourceId,
+                            headerAuthHash
+                        }),
+                        trx.insert(resourceHeaderAuthExtendedCompatibility).values({
+                            resourceId: newResource.resourceId,
+                            extendedCompatibilityIsActivated: headerAuthExtendedCompatibility
+                        }),
+                    ]);
                 }
             }
 
@@ -1018,7 +1043,7 @@ async function getDomain(
     trx: Transaction
 ) {
     const [fullDomainExists] = await trx
-        .select({ resourceId: resources.resourceId })
+        .select({resourceId: resources.resourceId})
         .from(resources)
         .where(
             and(

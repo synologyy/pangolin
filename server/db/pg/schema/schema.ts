@@ -456,6 +456,14 @@ export const resourceHeaderAuth = pgTable("resourceHeaderAuth", {
     headerAuthHash: varchar("headerAuthHash").notNull()
 });
 
+export const resourceHeaderAuthExtendedCompatibility = pgTable("resourceHeaderAuthExtendedCompatibility", {
+    headerAuthExtendedCompatibilityId: serial("headerAuthExtendedCompatibilityId").primaryKey(),
+    resourceId: integer("resourceId")
+        .notNull()
+        .references(() => resources.resourceId, { onDelete: "cascade" }),
+    extendedCompatibilityIsActivated: boolean("extendedCompatibilityIsActivated").notNull().default(false),
+});
+
 export const resourceAccessToken = pgTable("resourceAccessToken", {
     accessTokenId: varchar("accessTokenId").primaryKey(),
     orgId: varchar("orgId")
@@ -856,6 +864,7 @@ export type ResourceSession = InferSelectModel<typeof resourceSessions>;
 export type ResourcePincode = InferSelectModel<typeof resourcePincode>;
 export type ResourcePassword = InferSelectModel<typeof resourcePassword>;
 export type ResourceHeaderAuth = InferSelectModel<typeof resourceHeaderAuth>;
+export type ResourceHeaderAuthExtendedCompatibility = InferSelectModel<typeof resourceHeaderAuthExtendedCompatibility>;
 export type ResourceOtp = InferSelectModel<typeof resourceOtp>;
 export type ResourceAccessToken = InferSelectModel<typeof resourceAccessToken>;
 export type ResourceWhitelist = InferSelectModel<typeof resourceWhitelist>;
