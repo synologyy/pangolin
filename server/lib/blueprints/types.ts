@@ -71,11 +71,71 @@ export const AuthSchema = z.object({
     "auto-login-idp": z.int().positive().optional()
 });
 
-export const RuleSchema = z.object({
-    action: z.enum(["allow", "deny", "pass"]),
-    match: z.enum(["cidr", "path", "ip", "country", "asn"]),
-    value: z.string()
-});
+export const RuleSchema = z
+    .object({
+        action: z.enum(["allow", "deny", "pass"]),
+        match: z.enum(["cidr", "path", "ip", "country", "asn"]),
+        value: z.string()
+    })
+    .refine(
+        (rule) => {
+            if (rule.match === "ip") {
+                // Check if it's a valid IP address (v4 or v6)
+                return z.union([z.ipv4(), z.ipv6()]).safeParse(rule.value)
+                    .success;
+            }
+            return true;
+        },
+        {
+            path: ["value"],
+            message: "Value must be a valid IP address when match is 'ip'"
+        }
+    )
+    .refine(
+        (rule) => {
+            if (rule.match === "cidr") {
+                // Check if it's a valid CIDR (v4 or v6)
+                return z.union([z.cidrv4(), z.cidrv6()]).safeParse(rule.value)
+                    .success;
+            }
+            return true;
+        },
+        {
+            path: ["value"],
+            message: "Value must be a valid CIDR notation when match is 'cidr'"
+        }
+    )
+    .refine(
+        (rule) => {
+            if (rule.match === "country") {
+                // Check if it's a valid 2-letter country code
+                return /^[A-Z]{2}$/.test(rule.value);
+            }
+            return true;
+        },
+        {
+            path: ["value"],
+            message:
+                "Value must be a 2-letter country code when match is 'country'"
+        }
+    )
+    .refine(
+        (rule) => {
+            if (rule.match === "asn") {
+                // Check if it's either AS<number> format or just a number
+                const asNumberPattern = /^AS\d+$/i;
+                const isASFormat = asNumberPattern.test(rule.value);
+                const isNumeric = /^\d+$/.test(rule.value);
+                return isASFormat || isNumeric;
+            }
+            return true;
+        },
+        {
+            path: ["value"],
+            message:
+                "Value must be either 'AS<number>' format or a number when match is 'asn'"
+        }
+    );
 
 export const HeaderSchema = z.object({
     name: z.string().min(1),
