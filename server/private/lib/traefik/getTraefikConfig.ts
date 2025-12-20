@@ -380,8 +380,8 @@ export async function getTraefikConfig(
                         : {})
                 };
 
-                const maintenancePort = config.getRawConfig().traefik?.maintenance_port;
-                const maintenanceHost = config.getRawConfig().traefik?.maintenance_host || 'dev_pangolin';
+                const maintenancePort = config.getRawConfig().server.next_port;
+                const maintenanceHost = config.getRawConfig().server.internal_hostname;
 
                 config_output.http.services[maintenanceServiceName] = {
                     loadBalancer: {
