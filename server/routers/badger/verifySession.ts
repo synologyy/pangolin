@@ -13,7 +13,7 @@ import {
     LoginPage,
     Org,
     Resource,
-    ResourceHeaderAuth,
+    ResourceHeaderAuth, ResourceHeaderAuthExtendedCompatibility,
     ResourcePassword,
     ResourcePincode,
     ResourceRule,
@@ -66,6 +66,7 @@ type BasicUserData = {
 
 export type VerifyUserResponse = {
     valid: boolean;
+    headerAuthChallenged?: boolean;
     redirectUrl?: string;
     userData?: BasicUserData;
 };
@@ -147,6 +148,7 @@ export async function verifyResourceSession(
                   pincode: ResourcePincode | null;
                   password: ResourcePassword | null;
                   headerAuth: ResourceHeaderAuth | null;
+                  headerAuthExtendedCompatibility: ResourceHeaderAuthExtendedCompatibility | null;
                   org: Org;
               }
             | undefined = cache.get(resourceCacheKey);
@@ -176,7 +178,7 @@ export async function verifyResourceSession(
             cache.set(resourceCacheKey, resourceData, 5);
         }
 
-        const { resource, pincode, password, headerAuth } = resourceData;
+        const { resource, pincode, password, headerAuth, headerAuthExtendedCompatibility } = resourceData;
 
         if (!resource) {
             logger.debug(`Resource not found ${cleanHost}`);
@@ -456,7 +458,8 @@ export async function verifyResourceSession(
                 !sso &&
                 !pincode &&
                 !password &&
-                !resource.emailWhitelistEnabled
+                !resource.emailWhitelistEnabled &&
+                !headerAuthExtendedCompatibility?.extendedCompatibilityIsActivated
             ) {
                 logRequestAudit(
                     {
@@ -471,13 +474,15 @@ export async function verifyResourceSession(
 
                 return notAllowed(res);
             }
-        } else if (headerAuth) {
+        }
+        else if (headerAuth) {
             // if there are no other auth methods we need to return unauthorized if nothing is provided
             if (
                 !sso &&
                 !pincode &&
                 !password &&
-                !resource.emailWhitelistEnabled
+                !resource.emailWhitelistEnabled &&
+                !headerAuthExtendedCompatibility?.extendedCompatibilityIsActivated
             ) {
                 logRequestAudit(
                     {
@@ -563,7 +568,7 @@ export async function verifyResourceSession(
             }
 
             if (resourceSession) {
-                // only run this check if not SSO sesion; SSO session length is checked later
+                // only run this check if not SSO session; SSO session length is checked later
                 const accessPolicy = await enforceResourceSessionLength(
                     resourceSession,
                     resourceData.org
@@ -707,6 +712,11 @@ export async function verifyResourceSession(
             }
         }
 
+        // If headerAuthExtendedCompatibility is activated but no clientHeaderAuth provided, force client to challenge
+        if (headerAuthExtendedCompatibility && headerAuthExtendedCompatibility.extendedCompatibilityIsActivated && !clientHeaderAuth){
+            return headerAuthChallenged(res, redirectPath, resource.orgId);
+        }
+
         logger.debug("No more auth to check, resource not allowed");
 
         if (config.getRawConfig().app.log_failed_attempts) {
@@ -836,6 +846,46 @@ function allowed(res: Response, userData?: BasicUserData) {
         message: "Access allowed",
         status: HttpCode.OK
     };
+    return response<VerifyUserResponse>(res, data);
+}
+
+async function headerAuthChallenged(
+    res: Response,
+    redirectPath?: string,
+    orgId?: string
+) {
+    let loginPage: LoginPage | null = null;
+    if (orgId) {
+        const { tier } = await getOrgTierData(orgId); // returns null in oss
+        if (tier === TierId.STANDARD) {
+            loginPage = await getOrgLoginPage(orgId);
+        }
+    }
+
+    let redirectUrl: string | undefined = undefined;
+    if (redirectPath) {
+        let endpoint: string;
+
+        if (loginPage && loginPage.domainId && loginPage.fullDomain) {
+            const secure = config
+                .getRawConfig()
+                .app.dashboard_url?.startsWith("https");
+            const method = secure ? "https" : "http";
+            endpoint = `${method}://${loginPage.fullDomain}`;
+        } else {
+            endpoint = config.getRawConfig().app.dashboard_url!;
+        }
+        redirectUrl = `${endpoint}${redirectPath}`;
+    }
+
+    const data = {
+        data: { headerAuthChallenged: true, valid: false, redirectUrl },
+        success: true,
+        error: false,
+        message: "Access denied",
+        status: HttpCode.OK
+    };
+    logger.debug(JSON.stringify(data));
     return response<VerifyUserResponse>(res, data);
 }
 
