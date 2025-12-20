@@ -88,6 +88,10 @@ export default function ProductUpdates({
         (update) => !productUpdatesRead.includes(update.id)
     );
 
+    if (filteredUpdates.length === 0 && !showNewVersionPopup) {
+        return null;
+    }
+
     return (
         <div
             className={cn(
