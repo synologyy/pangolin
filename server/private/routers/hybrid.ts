@@ -76,6 +76,7 @@ import { checkExitNodeOrg, resolveExitNodes } from "#private/lib/exitNodes";
 import { maxmindLookup } from "@server/db/maxmind";
 import { verifyResourceAccessToken } from "@server/auth/verifyResourceAccessToken";
 import semver from "semver";
+import { maxmindAsnLookup } from "@server/db/maxmindAsn";
 
 // Zod schemas for request validation
 const getResourceByDomainParamsSchema = z.strictObject({
@@ -1221,6 +1222,70 @@ hybridRouter.get(
 
             return response(res, {
                 data: { countryCode: country.iso_code },
+                success: true,
+                error: false,
+                message: "GeoIP lookup successful",
+                status: HttpCode.OK
+            });
+        } catch (error) {
+            logger.error(error);
+            return next(
+                createHttpError(
+                    HttpCode.INTERNAL_SERVER_ERROR,
+                    "Failed to validate resource session token"
+                )
+            );
+        }
+    }
+);
+
+const asnIpLookupParamsSchema = z.object({
+    ip: z.union([z.ipv4(), z.ipv6()])
+});
+hybridRouter.get(
+    "/asnip/:ip",
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const parsedParams = asnIpLookupParamsSchema.safeParse(req.params);
+            if (!parsedParams.success) {
+                return next(
+                    createHttpError(
+                        HttpCode.BAD_REQUEST,
+                        fromError(parsedParams.error).toString()
+                    )
+                );
+            }
+
+            const { ip } = parsedParams.data;
+
+            if (!maxmindAsnLookup) {
+                return next(
+                    createHttpError(
+                        HttpCode.SERVICE_UNAVAILABLE,
+                        "ASNIP service is not available"
+                    )
+                );
+            }
+
+            const result = maxmindAsnLookup.get(ip);
+
+            if (!result || !result.autonomous_system_number) {
+                return next(
+                    createHttpError(
+                        HttpCode.NOT_FOUND,
+                        "ASNIP information not found"
+                    )
+                );
+            }
+
+            const { autonomous_system_number } = result;
+
+            logger.debug(
+                `ASNIP lookup successful for IP ${ip}: ${autonomous_system_number}`
+            );
+
+            return response(res, {
+                data: { asn: autonomous_system_number },
                 success: true,
                 error: false,
                 message: "GeoIP lookup successful",
