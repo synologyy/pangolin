@@ -179,7 +179,7 @@ func main() {
 					fmt.Println("You can try downloading it manually later if needed.")
 				}
 				// Now you need to update your config file accordingly to enable geoblocking
-				fmt.Println("Please remember to update your config/config.yml file to enable geoblocking! \n")
+				fmt.Print("Please remember to update your config/config.yml file to enable geoblocking! \n\n")
 				// add   maxmind_db_path: "./config/GeoLite2-Country.mmdb" under server
 				fmt.Println("Add the following line under the 'server' section:")
 				fmt.Println("  maxmind_db_path: \"./config/GeoLite2-Country.mmdb\"")
@@ -300,7 +300,7 @@ func podmanOrDocker(reader *bufio.Reader) SupportedContainer {
 				// Linux only.
 
 				if err := run("bash", "-c", "echo 'net.ipv4.ip_unprivileged_port_start=80' >> /etc/sysctl.conf && sysctl -p"); err != nil {
-					fmt.Sprintf("failed to configure unprivileged ports: %v.\n", err)
+				    fmt.Printf("Error configuring unprivileged ports: %v\n", err)
 					os.Exit(1)
 				}
 			} else {
