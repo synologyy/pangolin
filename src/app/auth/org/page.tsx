@@ -33,6 +33,10 @@ export default async function OrgAuthPage(props: {
     const forceLoginParam = searchParams.forceLogin;
     const forceLogin = forceLoginParam === "true";
 
+    if (build !== "saas") {
+        redirect("/");
+    }
+
     const env = pullEnv();
 
     const authHeader = await authCookieHeader();

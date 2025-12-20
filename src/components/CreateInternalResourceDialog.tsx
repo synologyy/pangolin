@@ -1149,11 +1149,6 @@ export default function CreateInternalResourceDialog({
                                                         />
                                                     </FormControl>
                                                     <FormMessage />
-                                                    <FormDescription>
-                                                        {t(
-                                                            "resourceRoleDescription"
-                                                        )}
-                                                    </FormDescription>
                                                 </FormItem>
                                             )}
                                         />

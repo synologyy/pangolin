@@ -123,7 +123,7 @@ export function LayoutSidebar({
             <div className="flex-1 overflow-y-auto relative">
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
-                        <div className="pb-4">
+                        <div className="py-2">
                             <Link
                                 href="/admin"
                                 className={cn(
