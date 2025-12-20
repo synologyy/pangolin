@@ -66,6 +66,7 @@ export default async function Page(props: {
     let redirectUrl: string | undefined = undefined;
     if (searchParams.redirect) {
         redirectUrl = cleanRedirect(searchParams.redirect as string);
+        searchParams.redirect = redirectUrl;
     }
 
     let loginIdps: LoginFormIDP[] = [];

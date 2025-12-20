@@ -15,6 +15,7 @@ import {
     useSearchParams
 } from "next/navigation";
 import { useRouter } from "next/navigation";
+import { cleanRedirect } from "@app/lib/cleanRedirect";
 
 export type LoginFormIDP = {
     idpId: number;
@@ -63,9 +64,10 @@ export default function IdpLoginButtons({
                 redirect || "/",
                 orgId
             );
+            const safeRedirect = cleanRedirect(redirect || "/");
             const response = await generateOidcUrlProxy(
                 idpId,
-                redirect || "/",
+                safeRedirect,
                 orgId
             );
 
