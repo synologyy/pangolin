@@ -674,6 +674,26 @@ WantedBy=default.target`
                                 </SettingsSectionTitle>
                             </SettingsSectionHeader>
                             <SettingsSectionBody>
+                                {tunnelTypes.length > 1 && (
+                                    <>
+                                        <div className="mb-2">
+                                            <span className="text-sm font-medium">
+                                                {t("type")}
+                                            </span>
+                                        </div>
+                                        <StrategySelect
+                                            options={tunnelTypes}
+                                            defaultValue={form.getValues(
+                                                "method"
+                                            )}
+                                            onChange={(value) => {
+                                                form.setValue("method", value);
+                                            }}
+                                            cols={3}
+                                        />
+                                    </>
+                                )}
+
                                 <Form {...form}>
                                     <form
                                         onKeyDown={(e) => {
@@ -748,26 +768,6 @@ WantedBy=default.target`
                                         )}
                                     </form>
                                 </Form>
-
-                                {tunnelTypes.length > 1 && (
-                                    <>
-                                        <div className="mb-2">
-                                            <span className="text-sm font-medium">
-                                                {t("type")}
-                                            </span>
-                                        </div>
-                                        <StrategySelect
-                                            options={tunnelTypes}
-                                            defaultValue={form.getValues(
-                                                "method"
-                                            )}
-                                            onChange={(value) => {
-                                                form.setValue("method", value);
-                                            }}
-                                            cols={3}
-                                        />
-                                    </>
-                                )}
                             </SettingsSectionBody>
                         </SettingsSection>
 
@@ -819,18 +819,6 @@ WantedBy=default.target`
                                                 </InfoSectionContent>
                                             </InfoSection>
                                         </InfoSections>
-
-                                        <Alert variant="neutral" className="">
-                                            <InfoIcon className="h-4 w-4" />
-                                            <AlertTitle className="font-semibold">
-                                                {t("siteCredentialsSave")}
-                                            </AlertTitle>
-                                            <AlertDescription>
-                                                {t(
-                                                    "siteCredentialsSaveDescription"
-                                                )}
-                                            </AlertDescription>
-                                        </Alert>
 
                                         {/* <Form {...form}> */}
                                         {/*     <form */}
@@ -1067,17 +1055,6 @@ WantedBy=default.target`
                                             </div>
                                         </div>
                                     </div>
-                                    <Alert variant="neutral">
-                                        <InfoIcon className="h-4 w-4" />
-                                        <AlertTitle className="font-semibold">
-                                            {t("siteCredentialsSave")}
-                                        </AlertTitle>
-                                        <AlertDescription>
-                                            {t(
-                                                "siteCredentialsSaveDescription"
-                                            )}
-                                        </AlertDescription>
-                                    </Alert>
                                 </SettingsSectionBody>
                             </SettingsSection>
                         )}

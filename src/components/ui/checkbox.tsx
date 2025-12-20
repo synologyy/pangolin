@@ -14,13 +14,13 @@ const checkboxVariants = cva(
         variants: {
             variant: {
                 outlinePrimary:
-                    "border rounded-sm border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+                    "border rounded-[5px] border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
                 outline:
-                    "border rounded-sm border-input data-[state=checked]:bg-muted data-[state=checked]:text-accent-foreground",
+                    "border rounded-[5px] border-input data-[state=checked]:bg-muted data-[state=checked]:text-accent-foreground",
                 outlinePrimarySquare:
-                    "border rounded-[20%] border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+                    "border rounded-[5px] border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
                 outlineSquare:
-                    "border rounded-[20%] border-input data-[state=checked]:bg-muted data-[state=checked]:text-accent-foreground"
+                    "border rounded-[5px] border-input data-[state=checked]:bg-muted data-[state=checked]:text-accent-foreground"
             }
         },
         defaultVariants: {

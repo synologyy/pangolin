@@ -1,10 +1,4 @@
-import {
-    clientSitesAssociationsCache,
-    db,
-    SiteResource,
-    siteResources,
-    Transaction
-} from "@server/db";
+import { db, SiteResource, siteResources, Transaction } from "@server/db";
 import { clients, orgs, sites } from "@server/db";
 import { and, eq, isNotNull } from "drizzle-orm";
 import config from "@server/lib/config";
@@ -307,6 +301,29 @@ export function isIpInCidr(ip: string, cidr: string): boolean {
     return ipBigInt >= range.start && ipBigInt <= range.end;
 }
 
+/**
+ * Checks if two CIDR ranges overlap
+ * @param cidr1 First CIDR string
+ * @param cidr2 Second CIDR string
+ * @returns boolean indicating if the two CIDRs overlap
+ */
+export function doCidrsOverlap(cidr1: string, cidr2: string): boolean {
+    const version1 = detectIpVersion(cidr1.split("/")[0]);
+    const version2 = detectIpVersion(cidr2.split("/")[0]);
+    if (version1 !== version2) {
+        // Different IP versions cannot overlap
+        return false;
+    }
+    const range1 = cidrToRange(cidr1);
+    const range2 = cidrToRange(cidr2);
+
+    // Overlap if the ranges intersect
+    return (
+        range1.start <= range2.end &&
+        range2.start <= range1.end
+    );
+}
+
 export async function getNextAvailableClientSubnet(
     orgId: string,
     transaction: Transaction | typeof db = db
@@ -432,7 +449,12 @@ export function generateRemoteSubnets(
 ): string[] {
     const remoteSubnets = allSiteResources
         .filter((sr) => {
-            if (sr.mode === "cidr") return true;
+            if (sr.mode === "cidr") {
+                // check if its a valid CIDR using zod
+                const cidrSchema = z.union([z.cidrv4(), z.cidrv6()]);
+                const parseResult = cidrSchema.safeParse(sr.destination);
+                return parseResult.success;
+            }
             if (sr.mode === "host") {
                 // check if its a valid IP using zod
                 const ipSchema = z.union([z.ipv4(), z.ipv6()]);
@@ -456,22 +478,23 @@ export function generateRemoteSubnets(
 export type Alias = { alias: string | null; aliasAddress: string | null };
 
 export function generateAliasConfig(allSiteResources: SiteResource[]): Alias[] {
-    let aliasConfigs = allSiteResources
+    return allSiteResources
         .filter((sr) => sr.alias && sr.aliasAddress && sr.mode == "host")
         .map((sr) => ({
             alias: sr.alias,
             aliasAddress: sr.aliasAddress
         }));
-    return aliasConfigs;
 }
 
 export type SubnetProxyTarget = {
     sourcePrefix: string; // must be a cidr
     destPrefix: string; // must be a cidr
+    disableIcmp?: boolean;
     rewriteTo?: string; // must be a cidr
     portRange?: {
         min: number;
         max: number;
+        protocol: "tcp" | "udp";
     }[];
 };
 
@@ -501,6 +524,11 @@ export function generateSubnetProxyTargets(
         }
 
         const clientPrefix = `${clientSite.subnet.split("/")[0]}/32`;
+        const portRange = [
+            ...parsePortRangeString(siteResource.tcpPortRangeString, "tcp"),
+            ...parsePortRangeString(siteResource.udpPortRangeString, "udp")
+        ];
+        const disableIcmp = siteResource.disableIcmp ?? false;
 
         if (siteResource.mode == "host") {
             let destination = siteResource.destination;
@@ -511,7 +539,9 @@ export function generateSubnetProxyTargets(
 
                 targets.push({
                     sourcePrefix: clientPrefix,
-                    destPrefix: destination
+                    destPrefix: destination,
+                    portRange,
+                    disableIcmp
                 });
             }
 
@@ -520,13 +550,17 @@ export function generateSubnetProxyTargets(
                 targets.push({
                     sourcePrefix: clientPrefix,
                     destPrefix: `${siteResource.aliasAddress}/32`,
-                    rewriteTo: destination
+                    rewriteTo: destination,
+                    portRange,
+                    disableIcmp
                 });
             }
         } else if (siteResource.mode == "cidr") {
             targets.push({
                 sourcePrefix: clientPrefix,
-                destPrefix: siteResource.destination
+                destPrefix: siteResource.destination,
+                portRange,
+                disableIcmp
             });
         }
     }
@@ -537,4 +571,118 @@ export function generateSubnetProxyTargets(
     // );
 
     return targets;
+}
+
+// Custom schema for validating port range strings
+// Format: "80,443,8000-9000" or "*" for all ports, or empty string
+export const portRangeStringSchema = z
+    .string()
+    .optional()
+    .refine(
+        (val) => {
+            if (!val || val.trim() === "" || val.trim() === "*") {
+                return true;
+            }
+
+            // Split by comma and validate each part
+            const parts = val.split(",").map((p) => p.trim());
+
+            for (const part of parts) {
+                if (part === "") {
+                    return false; // empty parts not allowed
+                }
+
+                // Check if it's a range (contains dash)
+                if (part.includes("-")) {
+                    const [start, end] = part.split("-").map((p) => p.trim());
+
+                    // Both parts must be present
+                    if (!start || !end) {
+                        return false;
+                    }
+
+                    const startPort = parseInt(start, 10);
+                    const endPort = parseInt(end, 10);
+
+                    // Must be valid numbers
+                    if (isNaN(startPort) || isNaN(endPort)) {
+                        return false;
+                    }
+
+                    // Must be valid port range (1-65535)
+                    if (
+                        startPort < 1 ||
+                        startPort > 65535 ||
+                        endPort < 1 ||
+                        endPort > 65535
+                    ) {
+                        return false;
+                    }
+
+                    // Start must be <= end
+                    if (startPort > endPort) {
+                        return false;
+                    }
+                } else {
+                    // Single port
+                    const port = parseInt(part, 10);
+
+                    // Must be a valid number
+                    if (isNaN(port)) {
+                        return false;
+                    }
+
+                    // Must be valid port range (1-65535)
+                    if (port < 1 || port > 65535) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        },
+        {
+            message:
+                'Port range must be "*" for all ports, or a comma-separated list of ports and ranges (e.g., "80,443,8000-9000"). Ports must be between 1 and 65535, and ranges must have start <= end.'
+        }
+    );
+
+/**
+ * Parses a port range string into an array of port range objects
+ * @param portRangeStr - Port range string (e.g., "80,443,8000-9000", "*", or "")
+ * @param protocol - Protocol to use for all ranges (default: "tcp")
+ * @returns Array of port range objects with min, max, and protocol fields
+ */
+export function parsePortRangeString(
+    portRangeStr: string | undefined | null,
+    protocol: "tcp" | "udp" = "tcp"
+): { min: number; max: number; protocol: "tcp" | "udp" }[] {
+    // Handle undefined or empty string - insert dummy value with port 0
+    if (!portRangeStr || portRangeStr.trim() === "") {
+        return [{ min: 0, max: 0, protocol }];
+    }
+
+    // Handle wildcard - return empty array (all ports allowed)
+    if (portRangeStr.trim() === "*") {
+        return [];
+    }
+
+    const result: { min: number; max: number; protocol: "tcp" | "udp" }[] = [];
+    const parts = portRangeStr.split(",").map((p) => p.trim());
+
+    for (const part of parts) {
+        if (part.includes("-")) {
+            // Range
+            const [start, end] = part.split("-").map((p) => p.trim());
+            const startPort = parseInt(start, 10);
+            const endPort = parseInt(end, 10);
+            result.push({ min: startPort, max: endPort, protocol });
+        } else {
+            // Single port
+            const port = parseInt(part, 10);
+            result.push({ min: port, max: port, protocol });
+        }
+    }
+
+    return result;
 }

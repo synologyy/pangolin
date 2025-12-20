@@ -523,18 +523,6 @@ export default function Page() {
                                                 </InfoSectionContent>
                                             </InfoSection>
                                         </InfoSections>
-
-                                        <Alert variant="neutral" className="">
-                                            <InfoIcon className="h-4 w-4" />
-                                            <AlertTitle className="font-semibold">
-                                                {t("clientCredentialsSave")}
-                                            </AlertTitle>
-                                            <AlertDescription>
-                                                {t(
-                                                    "clientCredentialsSaveDescription"
-                                                )}
-                                            </AlertDescription>
-                                        </Alert>
                                     </SettingsSectionBody>
                                 </SettingsSection>
                                 <SettingsSection>

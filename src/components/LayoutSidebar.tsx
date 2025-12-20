@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import SidebarLicenseButton from "./SidebarLicenseButton";
 import { SidebarSupportButton } from "./SidebarSupportButton";
+import { is } from "drizzle-orm";
 
 const ProductUpdates = dynamic(() => import("./ProductUpdates"), {
     ssr: false
@@ -52,7 +53,7 @@ export function LayoutSidebar({
     const pathname = usePathname();
     const isAdminPage = pathname?.startsWith("/admin");
     const { user } = useUserContext();
-    const { isUnlocked } = useLicenseStatusContext();
+    const { isUnlocked, licenseStatus } = useLicenseStatusContext();
     const { env } = useEnvContext();
     const t = useTranslations();
 
@@ -108,21 +109,25 @@ export function LayoutSidebar({
                 isSidebarCollapsed ? "w-16" : "w-64"
             )}
         >
-            <div className="p-4 shrink-0">
+            <div className="shrink-0">
                 <OrgSelector
                     orgId={orgId}
                     orgs={orgs}
                     isCollapsed={isSidebarCollapsed}
                 />
             </div>
-            <div className="flex-1 overflow-y-auto">
+            <div className={cn(
+                "w-full border-b border-border",
+                isSidebarCollapsed && "mb-2"
+            )} />
+            <div className="flex-1 overflow-y-auto relative">
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
                         <div className="pb-4">
                             <Link
                                 href="/admin"
                                 className={cn(
-                                    "flex items-center transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/50 dark:hover:bg-secondary/20 rounded-md",
+                                    "flex items-center transition-colors text-muted-foreground hover:text-foreground text-sm w-full hover:bg-secondary/80 dark:hover:bg-secondary/50 rounded-md",
                                     isSidebarCollapsed
                                         ? "px-2 py-2 justify-center"
                                         : "px-3 py-1.5"
@@ -152,7 +157,11 @@ export function LayoutSidebar({
                         isCollapsed={isSidebarCollapsed}
                     />
                 </div>
+                {/* Fade gradient at bottom to indicate scrollable content */}
+                <div className="sticky bottom-0 left-0 right-0 h-8 pointer-events-none bg-gradient-to-t from-card to-transparent" />
             </div>
+
+            <div className="w-full border-t border-border" />
 
             <div className="p-4 pt-1 flex flex-col shrink-0">
                 {canShowProductUpdates && (
@@ -226,6 +235,18 @@ export function LayoutSidebar({
                                         <FaGithub size={12} />
                                     </Link>
                                 </div>
+                                {build === "enterprise" &&
+                                isUnlocked() &&
+                                licenseStatus?.tier === "personal" ? (
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        {t("personalUseOnly")}
+                                    </div>
+                                ) : null}
+                                {build === "enterprise" && !isUnlocked() ? (
+                                    <div className="text-xs text-muted-foreground text-center">
+                                        {t("unlicensed")}
+                                    </div>
+                                ) : null}
                                 {env?.app?.version && (
                                     <div className="text-xs text-muted-foreground text-center">
                                         <Link

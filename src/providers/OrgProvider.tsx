@@ -11,27 +11,28 @@ interface OrgProviderProps {
 }
 
 export function OrgProvider({ children, org: serverOrg }: OrgProviderProps) {
-    const [org, setOrg] = useState<GetOrgResponse | null>(serverOrg);
-
     const t = useTranslations();
 
-    if (!org) {
+    if (!serverOrg) {
         throw new Error(t("orgErrorNoProvided"));
     }
 
-    const updateOrg = (updatedOrg: Partial<GetOrgResponse>) => {
+    const [org, setOrg] = useState<GetOrgResponse>(serverOrg);
+
+    const updateOrg = (updatedOrg: Partial<GetOrgResponse["org"]>) => {
         if (!org) {
             throw new Error(t("orgErrorNoUpdate"));
         }
-
         setOrg((prev) => {
             if (!prev) {
                 return prev;
             }
-
             return {
                 ...prev,
-                ...updatedOrg
+                org: {
+                    ...prev.org,
+                    ...updatedOrg
+                }
             };
         });
     };

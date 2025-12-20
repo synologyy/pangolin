@@ -41,13 +41,14 @@ export default function StepperForm() {
 
     const [loading, setLoading] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    // Removed error state, now using toast for API errors
     const [orgCreated, setOrgCreated] = useState(false);
 
     const orgSchema = z.object({
         orgName: z.string().min(1, { message: t("orgNameRequired") }),
         orgId: z.string().min(1, { message: t("orgIdRequired") }),
-        subnet: z.string().min(1, { message: t("subnetRequired") })
+        subnet: z.string().min(1, { message: t("subnetRequired") }),
+        utilitySubnet: z.string().min(1, { message: t("subnetRequired") })
     });
 
     const orgForm = useForm({
@@ -55,7 +56,8 @@ export default function StepperForm() {
         defaultValues: {
             orgName: "",
             orgId: "",
-            subnet: ""
+            subnet: "",
+            utilitySubnet: ""
         }
     });
 
@@ -72,6 +74,7 @@ export default function StepperForm() {
             const res = await api.get(`/pick-org-defaults`);
             if (res && res.data && res.data.data) {
                 orgForm.setValue("subnet", res.data.data.subnet);
+                orgForm.setValue("utilitySubnet", res.data.data.utilitySubnet);
             }
         } catch (e) {
             console.error("Failed to fetch default subnet:", e);
@@ -129,7 +132,8 @@ export default function StepperForm() {
             const res = await api.put(`/org`, {
                 orgId: values.orgId,
                 name: values.orgName,
-                subnet: values.subnet
+                subnet: values.subnet,
+                utilitySubnet: values.utilitySubnet
             });
 
             if (res && res.status === 201) {
@@ -138,7 +142,11 @@ export default function StepperForm() {
             }
         } catch (e) {
             console.error(e);
-            setError(formatAxiosError(e, t("orgErrorCreate")));
+            toast({
+                title: t("error"),
+                description: formatAxiosError(e, t("orgErrorCreate")),
+                variant: "destructive"
+            });
         }
 
         setLoading(false);
@@ -320,6 +328,30 @@ export default function StepperForm() {
                                         )}
                                     />
 
+                                    <FormField
+                                        control={orgForm.control}
+                                        name="utilitySubnet"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    {t("setupUtilitySubnet")}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="text"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                                <FormDescription>
+                                                    {t(
+                                                        "setupUtilitySubnetDescription"
+                                                    )}
+                                                </FormDescription>
+                                            </FormItem>
+                                        )}
+                                    />
+
                                     {orgIdTaken && !orgCreated ? (
                                         <Alert variant="destructive">
                                             <AlertDescription>
@@ -328,20 +360,13 @@ export default function StepperForm() {
                                         </Alert>
                                     ) : null}
 
-                                    {error && (
-                                        <Alert variant="destructive">
-                                            <AlertDescription>
-                                                {error}
-                                            </AlertDescription>
-                                        </Alert>
-                                    )}
+                                    {/* Error Alert removed, errors now shown as toast */}
 
                                     <div className="flex justify-end">
                                         <Button
                                             type="submit"
                                             loading={loading}
                                             disabled={
-                                                error !== null ||
                                                 loading ||
                                                 orgIdTaken
                                             }

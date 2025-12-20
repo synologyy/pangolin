@@ -13,8 +13,9 @@ import { GetOrgResponse } from "@server/routers/org";
 import OrgProvider from "@app/providers/OrgProvider";
 import { cache } from "react";
 import ResourceInfoBox from "@app/components/ResourceInfoBox";
-import { GetSiteResponse } from "@server/routers/site";
 import { getTranslations } from "next-intl/server";
+
+export const dynamic = "force-dynamic";
 
 interface ResourceLayoutProps {
     children: React.ReactNode;

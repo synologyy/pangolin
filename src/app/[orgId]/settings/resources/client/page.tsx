@@ -1,6 +1,7 @@
 import type { InternalResourceRow } from "@app/components/ClientResourcesTable";
 import ClientResourcesTable from "@app/components/ClientResourcesTable";
 import SettingsSectionTitle from "@app/components/SettingsSectionTitle";
+import PrivateResourcesBanner from "@app/components/PrivateResourcesBanner";
 import { internal } from "@app/lib/api";
 import { authCookieHeader } from "@app/lib/api/cookies";
 import { getCachedOrg } from "@app/lib/api/getCachedOrg";
@@ -67,7 +68,10 @@ export default async function ClientResourcesPage(
                 // destinationPort: siteResource.destinationPort,
                 alias: siteResource.alias || null,
                 siteNiceId: siteResource.siteNiceId,
-                niceId: siteResource.niceId
+                niceId: siteResource.niceId,
+                tcpPortRangeString: siteResource.tcpPortRangeString || null,
+                udpPortRangeString: siteResource.udpPortRangeString || null,
+                disableIcmp: siteResource.disableIcmp || false,
             };
         }
     );
@@ -77,6 +81,8 @@ export default async function ClientResourcesPage(
                 title={t("clientResourceTitle")}
                 description={t("clientResourceDescription")}
             />
+
+            <PrivateResourcesBanner orgId={params.orgId} />
 
             <OrgProvider org={org}>
                 <ClientResourcesTable

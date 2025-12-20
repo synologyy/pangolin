@@ -194,10 +194,23 @@ export async function getOlmToken(
                 .where(inArray(exitNodes.exitNodeId, exitNodeIds));
         }
 
+        // Map exitNodeId to siteIds
+        const exitNodeIdToSiteIds: Record<number, number[]> = {};
+        for (const { sites: site } of clientSites) {
+            if (site.exitNodeId !== null) {
+                if (!exitNodeIdToSiteIds[site.exitNodeId]) {
+                    exitNodeIdToSiteIds[site.exitNodeId] = [];
+                }
+                exitNodeIdToSiteIds[site.exitNodeId].push(site.siteId);
+            }
+        }
+
         const exitNodesHpData = allExitNodes.map((exitNode: ExitNode) => {
             return {
                 publicKey: exitNode.publicKey,
-                endpoint: exitNode.endpoint
+                relayPort: config.getRawConfig().gerbil.clients_start_port,
+                endpoint: exitNode.endpoint,
+                siteIds: exitNodeIdToSiteIds[exitNode.exitNodeId] ?? []
             };
         });
 

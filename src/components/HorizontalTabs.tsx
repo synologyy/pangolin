@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@app/lib/cn";
@@ -8,28 +8,34 @@ import { Badge } from "@app/components/ui/badge";
 import { useLicenseStatusContext } from "@app/hooks/useLicenseStatusContext";
 import { useTranslations } from "next-intl";
 
-export type HorizontalTabs = Array<{
+export type TabItem = {
     title: string;
     href: string;
     icon?: React.ReactNode;
     showProfessional?: boolean;
-}>;
+    exact?: boolean;
+};
 
 interface HorizontalTabsProps {
     children: React.ReactNode;
-    items: HorizontalTabs;
+    items: TabItem[];
     disabled?: boolean;
+    clientSide?: boolean;
+    defaultTab?: number;
 }
 
 export function HorizontalTabs({
     children,
     items,
-    disabled = false
+    disabled = false,
+    clientSide = false,
+    defaultTab = 0
 }: HorizontalTabsProps) {
     const pathname = usePathname();
     const params = useParams();
     const { licenseStatus, isUnlocked } = useLicenseStatusContext();
     const t = useTranslations();
+    const [activeClientTab, setActiveClientTab] = useState(defaultTab);
 
     function hydrateHref(href: string) {
         return href
@@ -38,19 +44,90 @@ export function HorizontalTabs({
             .replace("{niceId}", params.niceId as string)
             .replace("{userId}", params.userId as string)
             .replace("{clientId}", params.clientId as string)
-            .replace("{apiKeyId}", params.apiKeyId as string);
+            .replace("{apiKeyId}", params.apiKeyId as string)
+            .replace("{remoteExitNodeId}", params.remoteExitNodeId as string);
     }
 
+    // Client-side mode: render tabs as buttons with state management
+    if (clientSide) {
+        const childrenArray = React.Children.toArray(children);
+        const activeChild = childrenArray[activeClientTab] || null;
+
+        return (
+            <div className="space-y-3">
+                <div className="relative">
+                    <div className="overflow-x-auto scrollbar-hide">
+                        <div className="flex space-x-4 border-b min-w-max">
+                            {items.map((item, index) => {
+                                const isActive = activeClientTab === index;
+                                const isProfessional =
+                                    item.showProfessional && !isUnlocked();
+                                const isDisabled =
+                                    disabled ||
+                                    (isProfessional && !isUnlocked());
+
+                                return (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => {
+                                            if (!isDisabled) {
+                                                setActiveClientTab(index);
+                                            }
+                                        }}
+                                        className={cn(
+                                            "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap relative",
+                                            isActive
+                                                ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.75 after:bg-primary after:rounded-full"
+                                                : "text-muted-foreground hover:text-foreground",
+                                            isDisabled && "cursor-not-allowed"
+                                        )}
+                                        disabled={isDisabled}
+                                        tabIndex={isDisabled ? -1 : undefined}
+                                        aria-disabled={isDisabled}
+                                    >
+                                        <div
+                                            className={cn(
+                                                "flex items-center space-x-2",
+                                                isDisabled && "opacity-60"
+                                            )}
+                                        >
+                                            {item.icon && item.icon}
+                                            <span>{item.title}</span>
+                                            {isProfessional && (
+                                                <Badge
+                                                    variant="outlinePrimary"
+                                                    className="ml-2"
+                                                >
+                                                    {t("licenseBadge")}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+                <div className="space-y-6">{activeChild}</div>
+            </div>
+        );
+    }
+
+    // Server-side mode: original behavior with routing
     return (
-        <div className="space-y-6">
+        <div className="space-y-3">
             <div className="relative">
                 <div className="overflow-x-auto scrollbar-hide">
                     <div className="flex space-x-4 border-b min-w-max">
                         {items.map((item) => {
                             const hydratedHref = hydrateHref(item.href);
                             const isActive =
-                                pathname.startsWith(hydratedHref) &&
+                                (item.exact
+                                    ? pathname === hydratedHref
+                                    : pathname.startsWith(hydratedHref)) &&
                                 !pathname.includes("create");
+
                             const isProfessional =
                                 item.showProfessional && !isUnlocked();
                             const isDisabled =
@@ -61,9 +138,9 @@ export function HorizontalTabs({
                                     key={hydratedHref}
                                     href={isProfessional ? "#" : hydratedHref}
                                     className={cn(
-                                        "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                                        "px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap relative",
                                         isActive
-                                            ? "border-b-2 border-primary text-primary"
+                                            ? "text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.75 after:bg-primary after:rounded-full"
                                             : "text-muted-foreground hover:text-foreground",
                                         isDisabled && "cursor-not-allowed"
                                     )}

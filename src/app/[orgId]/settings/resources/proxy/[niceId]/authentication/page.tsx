@@ -1,21 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ListRolesResponse } from "@server/routers/role";
-import { toast } from "@app/hooks/useToast";
-import { useOrgContext } from "@app/hooks/useOrgContext";
-import { useResourceContext } from "@app/hooks/useResourceContext";
-import { AxiosResponse } from "axios";
-import { formatAxiosError } from "@app/lib/api";
+import SetResourceHeaderAuthForm from "@app/components/SetResourceHeaderAuthForm";
+import SetResourcePincodeForm from "@app/components/SetResourcePincodeForm";
 import {
-    GetResourceWhitelistResponse,
-    ListResourceRolesResponse,
-    ListResourceUsersResponse
-} from "@server/routers/resource";
+    SettingsContainer,
+    SettingsSection,
+    SettingsSectionBody,
+    SettingsSectionDescription,
+    SettingsSectionFooter,
+    SettingsSectionForm,
+    SettingsSectionHeader,
+    SettingsSectionTitle
+} from "@app/components/Settings";
+import { SwitchInput } from "@app/components/SwitchInput";
+import { Tag, TagInput } from "@app/components/tags/tag-input";
+import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
 import { Button } from "@app/components/ui/button";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckboxWithLabel } from "@app/components/ui/checkbox";
 import {
     Form,
     FormControl,
@@ -25,32 +26,7 @@ import {
     FormLabel,
     FormMessage
 } from "@app/components/ui/form";
-import { ListUsersResponse } from "@server/routers/user";
-import { Binary, Key, Bot } from "lucide-react";
-import SetResourcePasswordForm from "components/SetResourcePasswordForm";
-import SetResourcePincodeForm from "@app/components/SetResourcePincodeForm";
-import SetResourceHeaderAuthForm from "@app/components/SetResourceHeaderAuthForm";
-import { createApiClient } from "@app/lib/api";
-import { useEnvContext } from "@app/hooks/useEnvContext";
-import {
-    SettingsContainer,
-    SettingsSection,
-    SettingsSectionTitle,
-    SettingsSectionHeader,
-    SettingsSectionDescription,
-    SettingsSectionBody,
-    SettingsSectionFooter,
-    SettingsSectionForm
-} from "@app/components/Settings";
-import { SwitchInput } from "@app/components/SwitchInput";
 import { InfoPopup } from "@app/components/ui/info-popup";
-import { Tag, TagInput } from "@app/components/tags/tag-input";
-import { useRouter } from "next/navigation";
-import { UserType } from "@server/types/UserTypes";
-import { Alert, AlertDescription, AlertTitle } from "@app/components/ui/alert";
-import { InfoIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { CheckboxWithLabel } from "@app/components/ui/checkbox";
 import {
     Select,
     SelectContent,
@@ -58,10 +34,32 @@ import {
     SelectTrigger,
     SelectValue
 } from "@app/components/ui/select";
-import { Separator } from "@app/components/ui/separator";
-import { build } from "@server/build";
+import type { ResourceContextType } from "@app/contexts/resourceContext";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useOrgContext } from "@app/hooks/useOrgContext";
+import { useResourceContext } from "@app/hooks/useResourceContext";
 import { useSubscriptionStatusContext } from "@app/hooks/useSubscriptionStatusContext";
-import { TierId } from "@server/lib/billing/tiers";
+import { toast } from "@app/hooks/useToast";
+import { createApiClient, formatAxiosError } from "@app/lib/api";
+import { orgQueries, resourceQueries } from "@app/lib/queries";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { build } from "@server/build";
+import { UserType } from "@server/types/UserTypes";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import SetResourcePasswordForm from "components/SetResourcePasswordForm";
+import { Binary, Bot, InfoIcon, Key } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import {
+    useActionState,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useTransition
+} from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const UsersRolesFormSchema = z.object({
     roles: z.array(
@@ -100,14 +98,83 @@ export default function ResourceAuthenticationPage() {
 
     const subscription = useSubscriptionStatusContext();
 
-    const [pageLoading, setPageLoading] = useState(true);
+    const queryClient = useQueryClient();
+    const { data: resourceRoles = [], isLoading: isLoadingResourceRoles } =
+        useQuery(
+            resourceQueries.resourceRoles({
+                resourceId: resource.resourceId
+            })
+        );
+    const { data: resourceUsers = [], isLoading: isLoadingResourceUsers } =
+        useQuery(
+            resourceQueries.resourceUsers({
+                resourceId: resource.resourceId
+            })
+        );
 
-    const [allRoles, setAllRoles] = useState<{ id: string; text: string }[]>(
-        []
+    const { data: whitelist = [], isLoading: isLoadingWhiteList } = useQuery(
+        resourceQueries.resourceWhitelist({
+            resourceId: resource.resourceId
+        })
     );
-    const [allUsers, setAllUsers] = useState<{ id: string; text: string }[]>(
-        []
+
+    const { data: orgRoles = [], isLoading: isLoadingOrgRoles } = useQuery(
+        orgQueries.roles({
+            orgId: org.org.orgId
+        })
     );
+    const { data: orgUsers = [], isLoading: isLoadingOrgUsers } = useQuery(
+        orgQueries.users({
+            orgId: org.org.orgId
+        })
+    );
+    const { data: orgIdps = [], isLoading: isLoadingOrgIdps } = useQuery(
+        orgQueries.identityProviders({
+            orgId: org.org.orgId
+        })
+    );
+
+    const pageLoading =
+        isLoadingOrgRoles ||
+        isLoadingOrgUsers ||
+        isLoadingResourceRoles ||
+        isLoadingResourceUsers ||
+        isLoadingWhiteList ||
+        isLoadingOrgIdps;
+
+    const allRoles = useMemo(() => {
+        return orgRoles
+            .map((role) => ({
+                id: role.roleId.toString(),
+                text: role.name
+            }))
+            .filter((role) => role.text !== "Admin");
+    }, [orgRoles]);
+
+    const allUsers = useMemo(() => {
+        return orgUsers.map((user) => ({
+            id: user.id.toString(),
+            text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
+        }));
+    }, [orgUsers]);
+
+    const allIdps = useMemo(() => {
+        if (build === "saas") {
+            if (subscription?.subscribed) {
+                return orgIdps.map((idp) => ({
+                    id: idp.idpId,
+                    text: idp.name
+                }));
+            }
+        } else {
+            return orgIdps.map((idp) => ({
+                id: idp.idpId,
+                text: idp.name
+            }));
+        }
+        return [];
+    }, [orgIdps]);
+
     const [activeRolesTagIndex, setActiveRolesTagIndex] = useState<
         number | null
     >(null);
@@ -115,15 +182,7 @@ export default function ResourceAuthenticationPage() {
         number | null
     >(null);
 
-    const [activeEmailTagIndex, setActiveEmailTagIndex] = useState<
-        number | null
-    >(null);
-
     const [ssoEnabled, setSsoEnabled] = useState(resource.sso);
-    // const [blockAccess, setBlockAccess] = useState(resource.blockAccess);
-    const [whitelistEnabled, setWhitelistEnabled] = useState(
-        resource.emailWhitelistEnabled
-    );
 
     const [autoLoginEnabled, setAutoLoginEnabled] = useState(
         resource.skipToIdpId !== null && resource.skipToIdpId !== undefined
@@ -131,10 +190,6 @@ export default function ResourceAuthenticationPage() {
     const [selectedIdpId, setSelectedIdpId] = useState<number | null>(
         resource.skipToIdpId || null
     );
-    const [allIdps, setAllIdps] = useState<{ id: number; text: string }[]>([]);
-
-    const [loadingSaveUsersRoles, setLoadingSaveUsersRoles] = useState(false);
-    const [loadingSaveWhitelist, setLoadingSaveWhitelist] = useState(false);
 
     const [loadingRemoveResourcePassword, setLoadingRemoveResourcePassword] =
         useState(false);
@@ -159,167 +214,61 @@ export default function ResourceAuthenticationPage() {
         defaultValues: { emails: [] }
     });
 
+    const hasInitializedRef = useRef(false);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [
-                    rolesResponse,
-                    resourceRolesResponse,
-                    usersResponse,
-                    resourceUsersResponse,
-                    whitelist,
-                    idpsResponse
-                ] = await Promise.all([
-                    api.get<AxiosResponse<ListRolesResponse>>(
-                        `/org/${org?.org.orgId}/roles`
-                    ),
-                    api.get<AxiosResponse<ListResourceRolesResponse>>(
-                        `/resource/${resource.resourceId}/roles`
-                    ),
-                    api.get<AxiosResponse<ListUsersResponse>>(
-                        `/org/${org?.org.orgId}/users`
-                    ),
-                    api.get<AxiosResponse<ListResourceUsersResponse>>(
-                        `/resource/${resource.resourceId}/users`
-                    ),
-                    api.get<AxiosResponse<GetResourceWhitelistResponse>>(
-                        `/resource/${resource.resourceId}/whitelist`
-                    ),
-                    api.get<
-                        AxiosResponse<{
-                            idps: { idpId: number; name: string }[];
-                        }>
-                    >(build === "saas" ? `/org/${org?.org.orgId}/idp` : "/idp")
-                ]);
+        if (pageLoading || hasInitializedRef.current) return;
 
-                setAllRoles(
-                    rolesResponse.data.data.roles
-                        .map((role) => ({
-                            id: role.roleId.toString(),
-                            text: role.name
-                        }))
-                        .filter((role) => role.text !== "Admin")
-                );
+        usersRolesForm.setValue(
+            "roles",
+            resourceRoles
+                .map((i) => ({
+                    id: i.roleId.toString(),
+                    text: i.name
+                }))
+                .filter((role) => role.text !== "Admin")
+        );
+        usersRolesForm.setValue(
+            "users",
+            resourceUsers.map((i) => ({
+                id: i.userId.toString(),
+                text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
+            }))
+        );
 
-                usersRolesForm.setValue(
-                    "roles",
-                    resourceRolesResponse.data.data.roles
-                        .map((i) => ({
-                            id: i.roleId.toString(),
-                            text: i.name
-                        }))
-                        .filter((role) => role.text !== "Admin")
-                );
-
-                setAllUsers(
-                    usersResponse.data.data.users.map((user) => ({
-                        id: user.id.toString(),
-                        text: `${user.email || user.username}${user.type !== UserType.Internal ? ` (${user.idpName})` : ""}`
-                    }))
-                );
-
-                usersRolesForm.setValue(
-                    "users",
-                    resourceUsersResponse.data.data.users.map((i) => ({
-                        id: i.userId.toString(),
-                        text: `${i.email || i.username}${i.type !== UserType.Internal ? ` (${i.idpName})` : ""}`
-                    }))
-                );
-
-                whitelistForm.setValue(
-                    "emails",
-                    whitelist.data.data.whitelist.map((w) => ({
-                        id: w.email,
-                        text: w.email
-                    }))
-                );
-
-                if (build === "saas") {
-                    if (subscription?.subscribed) {
-                        setAllIdps(
-                            idpsResponse.data.data.idps.map((idp) => ({
-                                id: idp.idpId,
-                                text: idp.name
-                            }))
-                        );
-                    }
-                } else {
-                    setAllIdps(
-                        idpsResponse.data.data.idps.map((idp) => ({
-                            id: idp.idpId,
-                            text: idp.name
-                        }))
-                    );
-                }
-
-                if (
-                    autoLoginEnabled &&
-                    !selectedIdpId &&
-                    idpsResponse.data.data.idps.length > 0
-                ) {
-                    setSelectedIdpId(idpsResponse.data.data.idps[0].idpId);
-                }
-
-                setPageLoading(false);
-            } catch (e) {
-                console.error(e);
-                toast({
-                    variant: "destructive",
-                    title: t("resourceErrorAuthFetch"),
-                    description: formatAxiosError(
-                        e,
-                        t("resourceErrorAuthFetchDescription")
-                    )
-                });
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    async function saveWhitelist() {
-        setLoadingSaveWhitelist(true);
-        try {
-            await api.post(`/resource/${resource.resourceId}`, {
-                emailWhitelistEnabled: whitelistEnabled
-            });
-
-            if (whitelistEnabled) {
-                await api.post(`/resource/${resource.resourceId}/whitelist`, {
-                    emails: whitelistForm.getValues().emails.map((i) => i.text)
-                });
-            }
-
-            updateResource({
-                emailWhitelistEnabled: whitelistEnabled
-            });
-
-            toast({
-                title: t("resourceWhitelistSave"),
-                description: t("resourceWhitelistSaveDescription")
-            });
-            router.refresh();
-        } catch (e) {
-            console.error(e);
-            toast({
-                variant: "destructive",
-                title: t("resourceErrorWhitelistSave"),
-                description: formatAxiosError(
-                    e,
-                    t("resourceErrorWhitelistSaveDescription")
-                )
-            });
-        } finally {
-            setLoadingSaveWhitelist(false);
+        whitelistForm.setValue(
+            "emails",
+            whitelist.map((w) => ({
+                id: w.email,
+                text: w.email
+            }))
+        );
+        if (autoLoginEnabled && !selectedIdpId && orgIdps.length > 0) {
+            setSelectedIdpId(orgIdps[0].idpId);
         }
-    }
+        hasInitializedRef.current = true;
+    }, [
+        pageLoading,
+        resourceRoles,
+        resourceUsers,
+        whitelist,
+        autoLoginEnabled,
+        selectedIdpId,
+        orgIdps
+    ]);
 
-    async function onSubmitUsersRoles(
-        data: z.infer<typeof UsersRolesFormSchema>
-    ) {
+    const [, submitUserRolesForm, loadingSaveUsersRoles] = useActionState(
+        onSubmitUsersRoles,
+        null
+    );
+
+    async function onSubmitUsersRoles() {
+        const isValid = usersRolesForm.trigger();
+        if (!isValid) return;
+
+        const data = usersRolesForm.getValues();
+
         try {
-            setLoadingSaveUsersRoles(true);
-
             // Validate that an IDP is selected if auto login is enabled
             if (autoLoginEnabled && !selectedIdpId) {
                 toast({
@@ -358,6 +307,17 @@ export default function ResourceAuthenticationPage() {
                 title: t("resourceAuthSettingsSave"),
                 description: t("resourceAuthSettingsSaveDescription")
             });
+            await queryClient.invalidateQueries({
+                predicate(query) {
+                    const resourceKey = resourceQueries.resourceClients({
+                        resourceId: resource.resourceId
+                    }).queryKey;
+                    return (
+                        query.queryKey[0] === resourceKey[0] &&
+                        query.queryKey[1] === resourceKey[1]
+                    );
+                }
+            });
             router.refresh();
         } catch (e) {
             console.error(e);
@@ -369,8 +329,6 @@ export default function ResourceAuthenticationPage() {
                     t("resourceErrorUsersRolesSaveDescription")
                 )
             });
-        } finally {
-            setLoadingSaveUsersRoles(false);
         }
     }
 
@@ -534,9 +492,7 @@ export default function ResourceAuthenticationPage() {
 
                             <Form {...usersRolesForm}>
                                 <form
-                                    onSubmit={usersRolesForm.handleSubmit(
-                                        onSubmitUsersRoles
-                                    )}
+                                    action={submitUserRolesForm}
                                     id="users-roles-form"
                                     className="space-y-4"
                                 >
@@ -661,7 +617,7 @@ export default function ResourceAuthenticationPage() {
                                     )}
 
                                     {ssoEnabled && allIdps.length > 0 && (
-                                        <div className="mt-8">
+                                        <>
                                             <div className="space-y-2 mb-3">
                                                 <CheckboxWithLabel
                                                     label={t(
@@ -698,7 +654,7 @@ export default function ResourceAuthenticationPage() {
                                             {autoLoginEnabled && (
                                                 <div className="space-y-2">
                                                     <label className="text-sm font-medium">
-                                                        {t("selectIdp")}
+                                                        {t("defaultIdentityProvider")}
                                                     </label>
                                                     <Select
                                                         onValueChange={(
@@ -714,7 +670,7 @@ export default function ResourceAuthenticationPage() {
                                                                 : undefined
                                                         }
                                                     >
-                                                        <SelectTrigger className="w-full">
+                                                        <SelectTrigger className="w-full mt-1">
                                                             <SelectValue
                                                                 placeholder={t(
                                                                     "selectIdpPlaceholder"
@@ -740,7 +696,7 @@ export default function ResourceAuthenticationPage() {
                                                     </Select>
                                                 </div>
                                             )}
-                                        </div>
+                                        </>
                                     )}
                                 </form>
                             </Form>
@@ -772,7 +728,7 @@ export default function ResourceAuthenticationPage() {
                             {/* Password Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2 mb-4">
                                 <div
-                                    className={`flex items-center ${!authInfo.password ? "text-muted-foreground" : "text-green-500"} text-sm space-x-2`}
+                                    className={`flex items-center ${!authInfo.password ? "" : "text-green-500"} text-sm space-x-2`}
                                 >
                                     <Key size="14" />
                                     <span>
@@ -802,7 +758,7 @@ export default function ResourceAuthenticationPage() {
                             {/* PIN Code Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2">
                                 <div
-                                    className={`flex items-center ${!authInfo.pincode ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                    className={`flex items-center ${!authInfo.pincode ? "" : "text-green-500"} space-x-2 text-sm`}
                                 >
                                     <Binary size="14" />
                                     <span>
@@ -832,7 +788,7 @@ export default function ResourceAuthenticationPage() {
                             {/* Header Authentication Protection */}
                             <div className="flex items-center justify-between border rounded-md p-2">
                                 <div
-                                    className={`flex items-center ${!authInfo.headerAuth ? "text-muted-foreground" : "text-green-500"} space-x-2 text-sm`}
+                                    className={`flex items-center ${!authInfo.headerAuth ? "" : "text-green-500"} space-x-2 text-sm`}
                                 >
                                     <Bot size="14" />
                                     <span>
@@ -864,136 +820,202 @@ export default function ResourceAuthenticationPage() {
                     </SettingsSectionBody>
                 </SettingsSection>
 
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("otpEmailTitle")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("otpEmailTitleDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <SettingsSectionForm>
-                            {!env.email.emailEnabled && (
-                                <Alert variant="neutral" className="mb-4">
-                                    <InfoIcon className="h-4 w-4" />
-                                    <AlertTitle className="font-semibold">
-                                        {t("otpEmailSmtpRequired")}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {t("otpEmailSmtpRequiredDescription")}
-                                    </AlertDescription>
-                                </Alert>
-                            )}
-                            <SwitchInput
-                                id="whitelist-toggle"
-                                label={t("otpEmailWhitelist")}
-                                defaultChecked={resource.emailWhitelistEnabled}
-                                onCheckedChange={setWhitelistEnabled}
-                                disabled={!env.email.emailEnabled}
-                            />
-
-                            {whitelistEnabled && env.email.emailEnabled && (
-                                <Form {...whitelistForm}>
-                                    <form id="whitelist-form">
-                                        <FormField
-                                            control={whitelistForm.control}
-                                            name="emails"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        <InfoPopup
-                                                            text={t(
-                                                                "otpEmailWhitelistList"
-                                                            )}
-                                                            info={t(
-                                                                "otpEmailWhitelistListDescription"
-                                                            )}
-                                                        />
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        {/* @ts-ignore */}
-                                                        <TagInput
-                                                            {...field}
-                                                            activeTagIndex={
-                                                                activeEmailTagIndex
-                                                            }
-                                                            size={"sm"}
-                                                            validateTag={(
-                                                                tag
-                                                            ) => {
-                                                                return z
-                                                                    .email()
-                                                                    .or(
-                                                                        z
-                                                                            .string()
-                                                                            .regex(
-                                                                                /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
-                                                                                {
-                                                                                    message:
-                                                                                        t(
-                                                                                            "otpEmailErrorInvalid"
-                                                                                        )
-                                                                                }
-                                                                            )
-                                                                    )
-                                                                    .safeParse(
-                                                                        tag
-                                                                    ).success;
-                                                            }}
-                                                            setActiveTagIndex={
-                                                                setActiveEmailTagIndex
-                                                            }
-                                                            placeholder={t(
-                                                                "otpEmailEnter"
-                                                            )}
-                                                            tags={
-                                                                whitelistForm.getValues()
-                                                                    .emails
-                                                            }
-                                                            setTags={(
-                                                                newRoles
-                                                            ) => {
-                                                                whitelistForm.setValue(
-                                                                    "emails",
-                                                                    newRoles as [
-                                                                        Tag,
-                                                                        ...Tag[]
-                                                                    ]
-                                                                );
-                                                            }}
-                                                            allowDuplicates={
-                                                                false
-                                                            }
-                                                            sortTags={true}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        {t(
-                                                            "otpEmailEnterDescription"
-                                                        )}
-                                                    </FormDescription>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </form>
-                                </Form>
-                            )}
-                        </SettingsSectionForm>
-                    </SettingsSectionBody>
-                    <SettingsSectionFooter>
-                        <Button
-                            onClick={saveWhitelist}
-                            form="whitelist-form"
-                            loading={loadingSaveWhitelist}
-                            disabled={loadingSaveWhitelist}
-                        >
-                            {t("otpEmailWhitelistSave")}
-                        </Button>
-                    </SettingsSectionFooter>
-                </SettingsSection>
+                <OneTimePasswordFormSection
+                    resource={resource}
+                    updateResource={updateResource}
+                />
             </SettingsContainer>
         </>
+    );
+}
+
+type OneTimePasswordFormSectionProps = Pick<
+    ResourceContextType,
+    "resource" | "updateResource"
+>;
+
+function OneTimePasswordFormSection({
+    resource,
+    updateResource
+}: OneTimePasswordFormSectionProps) {
+    const { env } = useEnvContext();
+    const [whitelistEnabled, setWhitelistEnabled] = useState(
+        resource.emailWhitelistEnabled
+    );
+    const queryClient = useQueryClient();
+
+    const [loadingSaveWhitelist, startTransition] = useTransition();
+    const whitelistForm = useForm({
+        resolver: zodResolver(whitelistSchema),
+        defaultValues: { emails: [] }
+    });
+    const api = createApiClient({ env });
+    const router = useRouter();
+    const t = useTranslations();
+
+    const [activeEmailTagIndex, setActiveEmailTagIndex] = useState<
+        number | null
+    >(null);
+
+    async function saveWhitelist() {
+        try {
+            await api.post(`/resource/${resource.resourceId}`, {
+                emailWhitelistEnabled: whitelistEnabled
+            });
+
+            if (whitelistEnabled) {
+                await api.post(`/resource/${resource.resourceId}/whitelist`, {
+                    emails: whitelistForm.getValues().emails.map((i) => i.text)
+                });
+            }
+
+            updateResource({
+                emailWhitelistEnabled: whitelistEnabled
+            });
+
+            toast({
+                title: t("resourceWhitelistSave"),
+                description: t("resourceWhitelistSaveDescription")
+            });
+            router.refresh();
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceWhitelist({
+                    resourceId: resource.resourceId
+                })
+            );
+        } catch (e) {
+            console.error(e);
+            toast({
+                variant: "destructive",
+                title: t("resourceErrorWhitelistSave"),
+                description: formatAxiosError(
+                    e,
+                    t("resourceErrorWhitelistSaveDescription")
+                )
+            });
+        }
+    }
+
+    return (
+        <SettingsSection>
+            <SettingsSectionHeader>
+                <SettingsSectionTitle>
+                    {t("otpEmailTitle")}
+                </SettingsSectionTitle>
+                <SettingsSectionDescription>
+                    {t("otpEmailTitleDescription")}
+                </SettingsSectionDescription>
+            </SettingsSectionHeader>
+            <SettingsSectionBody>
+                <SettingsSectionForm>
+                    {!env.email.emailEnabled && (
+                        <Alert variant="neutral" className="mb-4">
+                            <InfoIcon className="h-4 w-4" />
+                            <AlertTitle className="font-semibold">
+                                {t("otpEmailSmtpRequired")}
+                            </AlertTitle>
+                            <AlertDescription>
+                                {t("otpEmailSmtpRequiredDescription")}
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    <SwitchInput
+                        id="whitelist-toggle"
+                        label={t("otpEmailWhitelist")}
+                        defaultChecked={resource.emailWhitelistEnabled}
+                        onCheckedChange={setWhitelistEnabled}
+                        disabled={!env.email.emailEnabled}
+                    />
+
+                    {whitelistEnabled && env.email.emailEnabled && (
+                        <Form {...whitelistForm}>
+                            <form id="whitelist-form">
+                                <FormField
+                                    control={whitelistForm.control}
+                                    name="emails"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                <InfoPopup
+                                                    text={t(
+                                                        "otpEmailWhitelistList"
+                                                    )}
+                                                    info={t(
+                                                        "otpEmailWhitelistListDescription"
+                                                    )}
+                                                />
+                                            </FormLabel>
+                                            <FormControl>
+                                                {/* @ts-ignore */}
+                                                <TagInput
+                                                    {...field}
+                                                    activeTagIndex={
+                                                        activeEmailTagIndex
+                                                    }
+                                                    size={"sm"}
+                                                    validateTag={(tag) => {
+                                                        return z
+                                                            .email()
+                                                            .or(
+                                                                z
+                                                                    .string()
+                                                                    .regex(
+                                                                        /^\*@[\w.-]+\.[a-zA-Z]{2,}$/,
+                                                                        {
+                                                                            message:
+                                                                                t(
+                                                                                    "otpEmailErrorInvalid"
+                                                                                )
+                                                                        }
+                                                                    )
+                                                            )
+                                                            .safeParse(tag)
+                                                            .success;
+                                                    }}
+                                                    setActiveTagIndex={
+                                                        setActiveEmailTagIndex
+                                                    }
+                                                    placeholder={t(
+                                                        "otpEmailEnter"
+                                                    )}
+                                                    tags={
+                                                        whitelistForm.getValues()
+                                                            .emails
+                                                    }
+                                                    setTags={(newRoles) => {
+                                                        whitelistForm.setValue(
+                                                            "emails",
+                                                            newRoles as [
+                                                                Tag,
+                                                                ...Tag[]
+                                                            ]
+                                                        );
+                                                    }}
+                                                    allowDuplicates={false}
+                                                    sortTags={true}
+                                                />
+                                            </FormControl>
+                                            <FormDescription>
+                                                {t("otpEmailEnterDescription")}
+                                            </FormDescription>
+                                        </FormItem>
+                                    )}
+                                />
+                            </form>
+                        </Form>
+                    )}
+                </SettingsSectionForm>
+            </SettingsSectionBody>
+            <SettingsSectionFooter>
+                <Button
+                    onClick={() => startTransition(saveWhitelist)}
+                    form="whitelist-form"
+                    loading={loadingSaveWhitelist}
+                    disabled={loadingSaveWhitelist}
+                >
+                    {t("otpEmailWhitelistSave")}
+                </Button>
+            </SettingsSectionFooter>
+        </SettingsSection>
     );
 }

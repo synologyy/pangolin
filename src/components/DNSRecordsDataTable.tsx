@@ -114,6 +114,7 @@ export function DNSRecordsDataTable<TData, TValue>({
                             href="https://docs.pangolin.net/manage/domains"
                             target="_blank"
                             rel="noopener noreferrer"
+                            className="hidden sm:block"
                         >
                             <Button variant="outline">
                                 <ExternalLink className="h-4 w-4 mr-1" />

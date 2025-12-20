@@ -319,19 +319,6 @@ export default function CreateRemoteExitNodePage() {
   id: "${defaults?.remoteExitNodeId}"
   secret: "${defaults?.secret}"`}
                                 />
-                                <Alert variant="neutral" className="mt-4">
-                                    <InfoIcon className="h-4 w-4" />
-                                    <AlertTitle className="font-semibold">
-                                        {t(
-                                            "remoteExitNodeCreate.generate.saveCredentialsTitle"
-                                        )}
-                                    </AlertTitle>
-                                    <AlertDescription>
-                                        {t(
-                                            "remoteExitNodeCreate.generate.saveCredentialsDescription"
-                                        )}
-                                    </AlertDescription>
-                                </Alert>
                             </SettingsSectionBody>
                         </SettingsSection>
                     )}

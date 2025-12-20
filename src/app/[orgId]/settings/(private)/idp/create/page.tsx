@@ -303,6 +303,24 @@ export default function Page() {
                         </SettingsSectionDescription>
                     </SettingsSectionHeader>
                     <SettingsSectionBody>
+                        <div>
+                            <div className="mb-2">
+                                <span className="text-sm font-medium">
+                                    {t("idpType")}
+                                </span>
+                            </div>
+                            <StrategySelect
+                                options={providerTypes}
+                                defaultValue={form.getValues("type")}
+                                onChange={(value) => {
+                                    handleProviderChange(
+                                        value as "oidc" | "google" | "azure"
+                                    );
+                                }}
+                                cols={3}
+                            />
+                        </div>
+
                         <SettingsSectionForm>
                             <Form {...form}>
                                 <form
@@ -331,29 +349,6 @@ export default function Page() {
                                 </form>
                             </Form>
                         </SettingsSectionForm>
-                    </SettingsSectionBody>
-                </SettingsSection>
-
-                <SettingsSection>
-                    <SettingsSectionHeader>
-                        <SettingsSectionTitle>
-                            {t("idpType")}
-                        </SettingsSectionTitle>
-                        <SettingsSectionDescription>
-                            {t("idpTypeDescription")}
-                        </SettingsSectionDescription>
-                    </SettingsSectionHeader>
-                    <SettingsSectionBody>
-                        <StrategySelect
-                            options={providerTypes}
-                            defaultValue={form.getValues("type")}
-                            onChange={(value) => {
-                                handleProviderChange(
-                                    value as "oidc" | "google" | "azure"
-                                );
-                            }}
-                            cols={3}
-                        />
                     </SettingsSectionBody>
                 </SettingsSection>
 
@@ -705,29 +700,6 @@ export default function Page() {
                                         id="create-idp-form"
                                         onSubmit={form.handleSubmit(onSubmit)}
                                     >
-                                        <Alert variant="neutral">
-                                            <InfoIcon className="h-4 w-4" />
-                                            <AlertTitle className="font-semibold">
-                                                {t("idpJmespathAbout")}
-                                            </AlertTitle>
-                                            <AlertDescription>
-                                                {t(
-                                                    "idpJmespathAboutDescription"
-                                                )}{" "}
-                                                <a
-                                                    href="https://jmespath.org"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-primary hover:underline inline-flex items-center"
-                                                >
-                                                    {t(
-                                                        "idpJmespathAboutDescriptionLink"
-                                                    )}{" "}
-                                                    <ExternalLink className="ml-1 h-4 w-4" />
-                                                </a>
-                                            </AlertDescription>
-                                        </Alert>
-
                                         <FormField
                                             control={form.control}
                                             name="identifierPath"

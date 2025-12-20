@@ -146,9 +146,8 @@ authenticated.get(
 );
 // Site Resource endpoints
 authenticated.put(
-    "/org/:orgId/site/:siteId/resource",
+    "/org/:orgId/private-resource",
     verifyApiKeyOrgAccess,
-    verifyApiKeySiteAccess,
     verifyApiKeyHasAction(ActionsEnum.createSiteResource),
     logActionAudit(ActionsEnum.createSiteResource),
     siteResource.createSiteResource
@@ -170,18 +169,14 @@ authenticated.get(
 );
 
 authenticated.get(
-    "/org/:orgId/site/:siteId/resource/:siteResourceId",
-    verifyApiKeyOrgAccess,
-    verifyApiKeySiteAccess,
+    "/site-resource/:siteResourceId",
     verifyApiKeySiteResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.getSiteResource),
     siteResource.getSiteResource
 );
 
 authenticated.post(
-    "/org/:orgId/site/:siteId/resource/:siteResourceId",
-    verifyApiKeyOrgAccess,
-    verifyApiKeySiteAccess,
+    "/site-resource/:siteResourceId",
     verifyApiKeySiteResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.updateSiteResource),
     logActionAudit(ActionsEnum.updateSiteResource),
@@ -189,9 +184,7 @@ authenticated.post(
 );
 
 authenticated.delete(
-    "/org/:orgId/site/:siteId/resource/:siteResourceId",
-    verifyApiKeyOrgAccess,
-    verifyApiKeySiteAccess,
+    "/site-resource/:siteResourceId",
     verifyApiKeySiteResourceAccess,
     verifyApiKeyHasAction(ActionsEnum.deleteSiteResource),
     logActionAudit(ActionsEnum.deleteSiteResource),
@@ -350,6 +343,14 @@ authenticated.post(
     verifyApiKeyHasAction(ActionsEnum.inviteUser),
     logActionAudit(ActionsEnum.inviteUser),
     user.inviteUser
+);
+
+authenticated.delete(
+    "/org/:orgId/invitations/:inviteId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.removeInvitation),
+    logActionAudit(ActionsEnum.removeInvitation),
+    user.removeInvitation
 );
 
 authenticated.get(
@@ -855,6 +856,22 @@ authenticated.put(
     verifyApiKeyHasAction(ActionsEnum.applyBlueprint),
     logActionAudit(ActionsEnum.applyBlueprint),
     blueprints.applyJSONBlueprint
+);
+
+
+authenticated.get(
+    "/org/:orgId/blueprint/:blueprintId",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.getBlueprint),
+    blueprints.getBlueprint
+);
+
+
+authenticated.get(
+    "/org/:orgId/blueprints",
+    verifyApiKeyOrgAccess,
+    verifyApiKeyHasAction(ActionsEnum.listBlueprints),
+    blueprints.listBlueprints
 );
 
 authenticated.get(
