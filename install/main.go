@@ -49,6 +49,7 @@ type Config struct {
 	DoCrowdsecInstall         bool
 	EnableGeoblocking         bool
 	Secret                    string
+	IsEnterprise              bool
 }
 
 type SupportedContainer string
@@ -338,6 +339,8 @@ func collectUserInput(reader *bufio.Reader) Config {
 
 	// Basic configuration
 	fmt.Println("\n=== Basic Configuration ===")
+
+	config.IsEnterprise = readBoolNoDefault(reader, "Do you want to install the Enterprise version of Pangolin? The EE is free for persoal use or for businesses making less than 100k USD annually.")
 
 	config.BaseDomain = readString(reader, "Enter your base domain (no subdomain e.g. example.com)", "")
 
