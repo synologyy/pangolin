@@ -159,14 +159,48 @@ jobs:
                   echo "Built & pushed AMD64 images to: ${{ env.DOCKERHUB_IMAGE }}:${TAG}"
               shell: bash
 
-    sign-and-package:
-        name: Sign and Package
+    create-manifest:
+        name: Create Multi-Arch Manifests
         runs-on: [self-hosted, linux, x64, us-east-1]
         needs: [release-arm, release-amd]
         if: >-
             ${{
                 needs.release-arm.result == 'success' &&
                 needs.release-amd.result == 'success'
+            }}
+        timeout-minutes: 30
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+            - name: Log in to Docker Hub
+              uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+              with:
+                  registry: docker.io
+                  username: ${{ secrets.DOCKER_HUB_USERNAME }}
+                  password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+            - name: Extract tag name
+              id: get-tag
+              run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+              shell: bash
+
+            - name: Create multi-arch manifests
+              run: |
+                  TAG=${{ env.TAG }}
+                  make create-manifests tag=$TAG
+                  echo "Created multi-arch manifests for tag: ${TAG}"
+              shell: bash
+
+    sign-and-package:
+        name: Sign and Package
+        runs-on: [self-hosted, linux, x64, us-east-1]
+        needs: [release-arm, release-amd, create-manifest]
+        if: >-
+            ${{
+                needs.release-arm.result == 'success' &&
+                needs.release-amd.result == 'success' &&
+                needs.create-manifest.result == 'success'
             }}
         # Job-level timeout to avoid runaway or stuck runs
         timeout-minutes: 120
@@ -312,13 +346,14 @@ jobs:
               shell: bash
 
     post-run:
-        needs: [pre-run, release-arm, release-amd, sign-and-package]
+        needs: [pre-run, release-arm, release-amd, create-manifest, sign-and-package]
         if: >-
             ${{
                 always() &&
                 needs.pre-run.result == 'success' &&
                 (needs.release-arm.result == 'success' || needs.release-arm.result == 'skipped' || needs.release-arm.result == 'failure') &&
                 (needs.release-amd.result == 'success' || needs.release-amd.result == 'skipped' || needs.release-amd.result == 'failure') &&
+                (needs.create-manifest.result == 'success' || needs.create-manifest.result == 'skipped' || needs.create-manifest.result == 'failure') &&
                 (needs.sign-and-package.result == 'success' || needs.sign-and-package.result == 'skipped' || needs.sign-and-package.result == 'failure')
             }}
         runs-on: ubuntu-latest
