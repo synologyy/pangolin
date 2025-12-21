@@ -95,10 +95,25 @@ jobs:
                   cat server/lib/consts.ts
               shell: bash
 
+            - name: Check if release candidate
+              id: check-rc
+              run: |
+                  TAG=${{ env.TAG }}
+                  if [[ "$TAG" == *".rc."* ]]; then
+                      echo "IS_RC=true" >> $GITHUB_ENV
+                  else
+                      echo "IS_RC=false" >> $GITHUB_ENV
+                  fi
+              shell: bash
+
             - name: Build and push Docker images (Docker Hub - ARM64)
               run: |
                   TAG=${{ env.TAG }}
-                  make build-release-arm tag=$TAG
+                  if [ "$IS_RC" = "true" ]; then
+                      make build-rc-arm tag=$TAG
+                  else
+                      make build-release-arm tag=$TAG
+                  fi
                   echo "Built & pushed ARM64 images to: ${{ env.DOCKERHUB_IMAGE }}:${TAG}"
               shell: bash
 
@@ -152,10 +167,25 @@ jobs:
                   cat server/lib/consts.ts
               shell: bash
 
+            - name: Check if release candidate
+              id: check-rc
+              run: |
+                  TAG=${{ env.TAG }}
+                  if [[ "$TAG" == *".rc."* ]]; then
+                      echo "IS_RC=true" >> $GITHUB_ENV
+                  else
+                      echo "IS_RC=false" >> $GITHUB_ENV
+                  fi
+              shell: bash
+
             - name: Build and push Docker images (Docker Hub - AMD64)
               run: |
                   TAG=${{ env.TAG }}
-                  make build-release-amd tag=$TAG
+                  if [ "$IS_RC" = "true" ]; then
+                      make build-rc-amd tag=$TAG
+                  else
+                      make build-release-amd tag=$TAG
+                  fi
                   echo "Built & pushed AMD64 images to: ${{ env.DOCKERHUB_IMAGE }}:${TAG}"
               shell: bash
 
@@ -185,10 +215,25 @@ jobs:
               run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
               shell: bash
 
+            - name: Check if release candidate
+              id: check-rc
+              run: |
+                  TAG=${{ env.TAG }}
+                  if [[ "$TAG" == *".rc."* ]]; then
+                      echo "IS_RC=true" >> $GITHUB_ENV
+                  else
+                      echo "IS_RC=false" >> $GITHUB_ENV
+                  fi
+              shell: bash
+
             - name: Create multi-arch manifests
               run: |
                   TAG=${{ env.TAG }}
-                  make create-manifests tag=$TAG
+                  if [ "$IS_RC" = "true" ]; then
+                      make create-manifests-rc tag=$TAG
+                  else
+                      make create-manifests tag=$TAG
+                  fi
                   echo "Created multi-arch manifests for tag: ${TAG}"
               shell: bash
 

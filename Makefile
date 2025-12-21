@@ -226,6 +226,93 @@ build-rc:
 		--tag fosrl/pangolin:ee-postgresql-$(tag) \
 		--push .
 
+build-rc-arm:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-rc-arm tag=<tag>"; \
+		exit 1; \
+	fi
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=sqlite \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:$(tag)-arm64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=pg \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:postgresql-$(tag)-arm64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=sqlite \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:ee-$(tag)-arm64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=pg \
+		--platform linux/arm64 \
+		--tag fosrl/pangolin:ee-postgresql-$(tag)-arm64 \
+		--push .
+
+build-rc-amd:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make build-rc-amd tag=<tag>"; \
+		exit 1; \
+	fi
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=sqlite \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:$(tag)-amd64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=oss \
+		--build-arg DATABASE=pg \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:postgresql-$(tag)-amd64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=sqlite \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:ee-$(tag)-amd64 \
+		--push . && \
+	docker buildx build \
+		--build-arg BUILD=enterprise \
+		--build-arg DATABASE=pg \
+		--platform linux/amd64 \
+		--tag fosrl/pangolin:ee-postgresql-$(tag)-amd64 \
+		--push .
+
+create-manifests-rc:
+	@if [ -z "$(tag)" ]; then \
+		echo "Error: tag is required. Usage: make create-manifests-rc tag=<tag>"; \
+		exit 1; \
+	fi
+	@echo "Creating multi-arch manifests for RC sqlite (oss)..." && \
+	docker buildx imagetools create \
+		--tag fosrl/pangolin:$(tag) \
+		fosrl/pangolin:$(tag)-arm64 \
+		fosrl/pangolin:$(tag)-amd64 && \
+	echo "Creating multi-arch manifests for RC postgresql (oss)..." && \
+	docker buildx imagetools create \
+		--tag fosrl/pangolin:postgresql-$(tag) \
+		fosrl/pangolin:postgresql-$(tag)-arm64 \
+		fosrl/pangolin:postgresql-$(tag)-amd64 && \
+	echo "Creating multi-arch manifests for RC sqlite (enterprise)..." && \
+	docker buildx imagetools create \
+		--tag fosrl/pangolin:ee-$(tag) \
+		fosrl/pangolin:ee-$(tag)-arm64 \
+		fosrl/pangolin:ee-$(tag)-amd64 && \
+	echo "Creating multi-arch manifests for RC postgresql (enterprise)..." && \
+	docker buildx imagetools create \
+		--tag fosrl/pangolin:ee-postgresql-$(tag) \
+		fosrl/pangolin:ee-postgresql-$(tag)-arm64 \
+		fosrl/pangolin:ee-postgresql-$(tag)-amd64 && \
+	echo "All RC multi-arch manifests created successfully!"
+
 build-arm:
 	docker buildx build --platform linux/arm64 -t fosrl/pangolin:latest .
 
