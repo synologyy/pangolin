@@ -4,8 +4,6 @@ import path from "path";
 
 const version = "1.14.0";
 
-await migration();
-
 export default async function migration() {
     console.log(`Running setup script ${version}...`);
 
