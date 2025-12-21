@@ -45,7 +45,7 @@ type SetHeaderAuthFormValues = z.infer<typeof setHeaderAuthFormSchema>;
 const defaultValues: Partial<SetHeaderAuthFormValues> = {
     user: "",
     password: "",
-    extendedCompatibility: false
+    extendedCompatibility: true
 };
 
 type SetHeaderAuthFormProps = {

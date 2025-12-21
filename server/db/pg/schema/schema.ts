@@ -469,7 +469,7 @@ export const resourceHeaderAuthExtendedCompatibility = pgTable("resourceHeaderAu
     resourceId: integer("resourceId")
         .notNull()
         .references(() => resources.resourceId, { onDelete: "cascade" }),
-    extendedCompatibilityIsActivated: boolean("extendedCompatibilityIsActivated").notNull().default(false),
+    extendedCompatibilityIsActivated: boolean("extendedCompatibilityIsActivated").notNull().default(true),
 });
 
 export const resourceAccessToken = pgTable("resourceAccessToken", {

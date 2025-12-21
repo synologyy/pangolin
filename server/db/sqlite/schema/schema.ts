@@ -644,7 +644,7 @@ export const resourceHeaderAuthExtendedCompatibility = sqliteTable("resourceHead
     resourceId: integer("resourceId")
         .notNull()
         .references(() => resources.resourceId, {onDelete: "cascade"}),
-    extendedCompatibilityIsActivated: integer("extendedCompatibilityIsActivated", {mode: "boolean"}).notNull()
+    extendedCompatibilityIsActivated: integer("extendedCompatibilityIsActivated", {mode: "boolean"}).notNull().default(true)
 });
 
 export const resourceAccessToken = sqliteTable("resourceAccessToken", {
