@@ -170,7 +170,9 @@ export default function CreateInternalResourceDialog({
         mode: z.enum(["host", "cidr"]),
         // protocol: z.enum(["tcp", "udp"]).nullish(),
         // proxyPort: z.int().positive().min(1, t("createInternalResourceDialogProxyPortMin")).max(65535, t("createInternalResourceDialogProxyPortMax")).nullish(),
-        destination: z.string().min(1),
+        destination: z.string().min(1, {
+            message: t("createInternalResourceDialogDestinationRequired")
+        }),
         // destinationPort: z.int().positive().min(1, t("createInternalResourceDialogDestinationPortMin")).max(65535, t("createInternalResourceDialogDestinationPortMax")).nullish(),
         alias: z.string().nullish(),
         tcpPortRangeString: createPortRangeStringSchema(t),
@@ -341,10 +343,10 @@ export default function CreateInternalResourceDialog({
     };
 
     useEffect(() => {
-        if (open && availableSites.length > 0) {
+        if (open) {
             form.reset({
                 name: "",
-                siteId: availableSites[0].siteId,
+                siteId: availableSites[0]?.siteId || 0,
                 mode: "host",
                 // protocol: "tcp",
                 // proxyPort: undefined,
@@ -466,30 +468,6 @@ export default function CreateInternalResourceDialog({
             setIsSubmitting(false);
         }
     };
-
-    if (availableSites.length === 0) {
-        return (
-            <Credenza open={open} onOpenChange={setOpen}>
-                <CredenzaContent className="max-w-md">
-                    <CredenzaHeader>
-                        <CredenzaTitle>
-                            {t("createInternalResourceDialogNoSitesAvailable")}
-                        </CredenzaTitle>
-                        <CredenzaDescription>
-                            {t(
-                                "createInternalResourceDialogNoSitesAvailableDescription"
-                            )}
-                        </CredenzaDescription>
-                    </CredenzaHeader>
-                    <CredenzaFooter>
-                        <Button onClick={() => setOpen(false)}>
-                            {t("createInternalResourceDialogClose")}
-                        </Button>
-                    </CredenzaFooter>
-                </CredenzaContent>
-            </Credenza>
-        );
-    }
 
     return (
         <Credenza open={open} onOpenChange={setOpen}>
