@@ -1524,6 +1524,7 @@
     "addNewTarget": "Add New Target",
     "targetsList": "Targets List",
     "advancedMode": "Advanced Mode",
+    "advancedSettings": "Advanced Settings",
     "targetErrorDuplicateTargetFound": "Duplicate target found",
     "healthCheckHealthy": "Healthy",
     "healthCheckUnhealthy": "Unhealthy",
