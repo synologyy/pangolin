@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { portRangeStringSchema } from "@server/lib/ip";
+import { MaintenanceSchema } from "#dynamic/lib/blueprints/types";
 
 export const SiteSchema = z.object({
     name: z.string().min(1).max(100),
@@ -156,7 +157,8 @@ export const ResourceSchema = z
         "host-header": z.string().optional(),
         "tls-server-name": z.string().optional(),
         headers: z.array(HeaderSchema).optional(),
-        rules: z.array(RuleSchema).optional()
+        rules: z.array(RuleSchema).optional(),
+        maintenance: MaintenanceSchema.optional()
     })
     .refine(
         (resource) => {
