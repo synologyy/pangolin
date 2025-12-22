@@ -322,13 +322,18 @@ jobs:
               shell: bash
 
             - name: Login to GHCR
+              env:
+                  REGISTRY_AUTH_FILE: ${{ runner.temp }}/containers/auth.json
               run: |
+                  mkdir -p "$(dirname "$REGISTRY_AUTH_FILE")"
                   skopeo login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GITHUB_TOKEN }}"
               shell: bash
 
             - name: Copy tag from Docker Hub to GHCR
               # Mirror the already-built image (all architectures) to GHCR so we can sign it
               # Wait a bit for both architectures to be available in Docker Hub manifest
+              env:
+                  REGISTRY_AUTH_FILE: ${{ runner.temp }}/containers/auth.json
               run: |
                   set -euo pipefail
                   TAG=${{ env.TAG }}
