@@ -99,7 +99,7 @@ jobs:
               id: check-rc
               run: |
                   TAG=${{ env.TAG }}
-                  if [[ "$TAG" == *".rc."* ]]; then
+                  if [[ "$TAG" == *"-rc."* ]]; then
                       echo "IS_RC=true" >> $GITHUB_ENV
                   else
                       echo "IS_RC=false" >> $GITHUB_ENV
@@ -171,7 +171,7 @@ jobs:
               id: check-rc
               run: |
                   TAG=${{ env.TAG }}
-                  if [[ "$TAG" == *".rc."* ]]; then
+                  if [[ "$TAG" == *"-rc."* ]]; then
                       echo "IS_RC=true" >> $GITHUB_ENV
                   else
                       echo "IS_RC=false" >> $GITHUB_ENV
@@ -219,7 +219,7 @@ jobs:
               id: check-rc
               run: |
                   TAG=${{ env.TAG }}
-                  if [[ "$TAG" == *".rc."* ]]; then
+                  if [[ "$TAG" == *"-rc."* ]]; then
                       echo "IS_RC=true" >> $GITHUB_ENV
                   else
                       echo "IS_RC=false" >> $GITHUB_ENV
