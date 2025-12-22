@@ -307,17 +307,18 @@ export default function ResourceAuthenticationPage() {
                 title: t("resourceAuthSettingsSave"),
                 description: t("resourceAuthSettingsSaveDescription")
             });
-            await queryClient.invalidateQueries({
-                predicate(query) {
-                    const resourceKey = resourceQueries.resourceClients({
-                        resourceId: resource.resourceId
-                    }).queryKey;
-                    return (
-                        query.queryKey[0] === resourceKey[0] &&
-                        query.queryKey[1] === resourceKey[1]
-                    );
-                }
-            });
+            // invalidate resource queries
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceUsers({
+                    resourceId: resource.resourceId
+                })
+            );
+            await queryClient.invalidateQueries(
+                resourceQueries.resourceRoles({
+                    resourceId: resource.resourceId
+                })
+            );
+
             router.refresh();
         } catch (e) {
             console.error(e);
@@ -398,7 +399,7 @@ export default function ResourceAuthenticationPage() {
         api.post(`/resource/${resource.resourceId}/header-auth`, {
             user: null,
             password: null,
-            extendedCompatibility: null,
+            extendedCompatibility: null
         })
             .then(() => {
                 toast({
@@ -655,7 +656,9 @@ export default function ResourceAuthenticationPage() {
                                             {autoLoginEnabled && (
                                                 <div className="space-y-2">
                                                     <label className="text-sm font-medium">
-                                                        {t("defaultIdentityProvider")}
+                                                        {t(
+                                                            "defaultIdentityProvider"
+                                                        )}
                                                     </label>
                                                     <Select
                                                         onValueChange={(

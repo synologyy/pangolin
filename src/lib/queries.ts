@@ -228,7 +228,7 @@ export const resourceQueries = {
             queryFn: async ({ signal, meta }) => {
                 const res = await meta!.api.get<
                     AxiosResponse<ListSiteResourceUsersResponse>
-                >(`/site-resource/${resourceId}/users`, { signal });
+                >(`/resource/${resourceId}/users`, { signal });
                 return res.data.data.users;
             }
         }),
@@ -238,18 +238,39 @@ export const resourceQueries = {
             queryFn: async ({ signal, meta }) => {
                 const res = await meta!.api.get<
                     AxiosResponse<ListSiteResourceRolesResponse>
-                >(`/site-resource/${resourceId}/roles`, { signal });
+                >(`/resource/${resourceId}/roles`, { signal });
 
                 return res.data.data.roles;
             }
         }),
-    resourceClients: ({ resourceId }: { resourceId: number }) =>
+    siteResourceUsers: ({ siteResourceId }: { siteResourceId: number }) =>
         queryOptions({
-            queryKey: ["RESOURCES", resourceId, "CLIENTS"] as const,
+            queryKey: ["SITE_RESOURCES", siteResourceId, "USERS"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSiteResourceUsersResponse>
+                >(`/site-resource/${siteResourceId}/users`, { signal });
+                return res.data.data.users;
+            }
+        }),
+    siteResourceRoles: ({ siteResourceId }: { siteResourceId: number }) =>
+        queryOptions({
+            queryKey: ["SITE_RESOURCES", siteResourceId, "ROLES"] as const,
+            queryFn: async ({ signal, meta }) => {
+                const res = await meta!.api.get<
+                    AxiosResponse<ListSiteResourceRolesResponse>
+                >(`/site-resource/${siteResourceId}/roles`, { signal });
+
+                return res.data.data.roles;
+            }
+        }),
+    siteResourceClients: ({ siteResourceId }: { siteResourceId: number }) =>
+        queryOptions({
+            queryKey: ["SITE_RESOURCES", siteResourceId, "CLIENTS"] as const,
             queryFn: async ({ signal, meta }) => {
                 const res = await meta!.api.get<
                     AxiosResponse<ListSiteResourceClientsResponse>
-                >(`/site-resource/${resourceId}/clients`, { signal });
+                >(`/site-resource/${siteResourceId}/clients`, { signal });
 
                 return res.data.data.clients;
             }
