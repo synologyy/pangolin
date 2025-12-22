@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { portRangeStringSchema } from "@server/lib/ip";
-import { MaintenanceSchema } from "#dynamic/lib/blueprints/types";
+import { MaintenanceSchema } from "#dynamic/lib/blueprints/MaintenanceSchema";
 
 export const SiteSchema = z.object({
     name: z.string().min(1).max(100),
