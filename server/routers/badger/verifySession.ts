@@ -13,7 +13,8 @@ import {
     LoginPage,
     Org,
     Resource,
-    ResourceHeaderAuth, ResourceHeaderAuthExtendedCompatibility,
+    ResourceHeaderAuth,
+    ResourceHeaderAuthExtendedCompatibility,
     ResourcePassword,
     ResourcePincode,
     ResourceRule,
@@ -39,6 +40,8 @@ import {
 } from "#dynamic/lib/checkOrgAccessPolicy";
 import { logRequestAudit } from "./logRequestAudit";
 import cache from "@server/lib/cache";
+import semver from "semver";
+import { APP_VERSION } from "@server/lib/consts";
 
 const verifyResourceSessionSchema = z.object({
     sessions: z.record(z.string(), z.string()).optional(),
@@ -50,7 +53,8 @@ const verifyResourceSessionSchema = z.object({
     path: z.string(),
     method: z.string(),
     tls: z.boolean(),
-    requestIp: z.string().optional()
+    requestIp: z.string().optional(),
+    badgerVersion: z.string().optional()
 });
 
 export type VerifyResourceSessionSchema = z.infer<
@@ -69,6 +73,7 @@ export type VerifyUserResponse = {
     headerAuthChallenged?: boolean;
     redirectUrl?: string;
     userData?: BasicUserData;
+    pangolinVersion?: string;
 };
 
 export async function verifyResourceSession(
@@ -97,7 +102,8 @@ export async function verifyResourceSession(
             requestIp,
             path,
             headers,
-            query
+            query,
+            badgerVersion
         } = parsedBody.data;
 
         // Extract HTTP Basic Auth credentials if present
@@ -105,7 +111,15 @@ export async function verifyResourceSession(
 
         const clientIp = requestIp
             ? (() => {
-                  logger.debug("Request IP:", { requestIp });
+                  const isNewerBadger =
+                      badgerVersion &&
+                      semver.valid(badgerVersion) &&
+                      semver.gte(badgerVersion, "1.3.1");
+
+                  if (isNewerBadger) {
+                      return requestIp;
+                  }
+
                   if (requestIp.startsWith("[") && requestIp.includes("]")) {
                       // if brackets are found, extract the IPv6 address from between the brackets
                       const ipv6Match = requestIp.match(/\[(.*?)\]/);
@@ -114,12 +128,17 @@ export async function verifyResourceSession(
                       }
                   }
 
-                  // ivp4
-                  // split at last colon
-                  const lastColonIndex = requestIp.lastIndexOf(":");
-                  if (lastColonIndex !== -1) {
-                      return requestIp.substring(0, lastColonIndex);
+                  // Check if it looks like IPv4 (contains dots and matches IPv4 pattern)
+                  // IPv4 format: x.x.x.x where x is 0-255
+                  const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}/;
+                  if (ipv4Pattern.test(requestIp)) {
+                      const lastColonIndex = requestIp.lastIndexOf(":");
+                      if (lastColonIndex !== -1) {
+                          return requestIp.substring(0, lastColonIndex);
+                      }
                   }
+
+                  // Return as is
                   return requestIp;
               })()
             : undefined;
@@ -130,9 +149,7 @@ export async function verifyResourceSession(
             ? await getCountryCodeFromIp(clientIp)
             : undefined;
 
-        const ipAsn = clientIp
-            ? await getAsnFromIp(clientIp)
-            : undefined;
+        const ipAsn = clientIp ? await getAsnFromIp(clientIp) : undefined;
 
         let cleanHost = host;
         // if the host ends with :port, strip it
@@ -178,7 +195,13 @@ export async function verifyResourceSession(
             cache.set(resourceCacheKey, resourceData, 5);
         }
 
-        const { resource, pincode, password, headerAuth, headerAuthExtendedCompatibility } = resourceData;
+        const {
+            resource,
+            pincode,
+            password,
+            headerAuth,
+            headerAuthExtendedCompatibility
+        } = resourceData;
 
         if (!resource) {
             logger.debug(`Resource not found ${cleanHost}`);
@@ -474,8 +497,7 @@ export async function verifyResourceSession(
 
                 return notAllowed(res);
             }
-        }
-        else if (headerAuth) {
+        } else if (headerAuth) {
             // if there are no other auth methods we need to return unauthorized if nothing is provided
             if (
                 !sso &&
@@ -713,7 +735,11 @@ export async function verifyResourceSession(
         }
 
         // If headerAuthExtendedCompatibility is activated but no clientHeaderAuth provided, force client to challenge
-        if (headerAuthExtendedCompatibility && headerAuthExtendedCompatibility.extendedCompatibilityIsActivated && !clientHeaderAuth){
+        if (
+            headerAuthExtendedCompatibility &&
+            headerAuthExtendedCompatibility.extendedCompatibilityIsActivated &&
+            !clientHeaderAuth
+        ) {
             return headerAuthChallenged(res, redirectPath, resource.orgId);
         }
 
@@ -825,7 +851,7 @@ async function notAllowed(
     }
 
     const data = {
-        data: { valid: false, redirectUrl },
+        data: { valid: false, redirectUrl, pangolinVersion: APP_VERSION },
         success: true,
         error: false,
         message: "Access denied",
@@ -839,8 +865,8 @@ function allowed(res: Response, userData?: BasicUserData) {
     const data = {
         data:
             userData !== undefined && userData !== null
-                ? { valid: true, ...userData }
-                : { valid: true },
+                ? { valid: true, ...userData, pangolinVersion: APP_VERSION }
+                : { valid: true, pangolinVersion: APP_VERSION },
         success: true,
         error: false,
         message: "Access allowed",
@@ -879,7 +905,12 @@ async function headerAuthChallenged(
     }
 
     const data = {
-        data: { headerAuthChallenged: true, valid: false, redirectUrl },
+        data: {
+            headerAuthChallenged: true,
+            valid: false,
+            redirectUrl,
+            pangolinVersion: APP_VERSION
+        },
         success: true,
         error: false,
         message: "Access denied",
