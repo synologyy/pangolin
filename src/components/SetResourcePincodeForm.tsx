@@ -97,10 +97,10 @@ export default function SetResourcePincodeForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPincodeSetup'),
+                    title: t("resourceErrorPincodeSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPincodeSetupDescription')
+                        t("resourceErrorPincodeSetupDescription")
                     )
                 });
             })

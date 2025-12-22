@@ -87,7 +87,12 @@ const isValidPortRangeString = (val: string | undefined | null): boolean => {
                 return false;
             }
 
-            if (startPort < 1 || startPort > 65535 || endPort < 1 || endPort > 65535) {
+            if (
+                startPort < 1 ||
+                startPort > 65535 ||
+                endPort < 1 ||
+                endPort > 65535
+            ) {
                 return false;
             }
 
@@ -131,7 +136,10 @@ const getPortModeFromString = (val: string | undefined | null): PortMode => {
 };
 
 // Helper to get the port string for API from mode and custom value
-const getPortStringFromMode = (mode: PortMode, customValue: string): string | undefined => {
+const getPortStringFromMode = (
+    mode: PortMode,
+    customValue: string
+): string | undefined => {
     if (mode === "all") return "*";
     if (mode === "blocked") return "";
     return customValue;
@@ -1097,8 +1105,7 @@ export default function CreateInternalResourceDialog({
                                                             size="sm"
                                                             tags={
                                                                 form.getValues()
-                                                                    .roles ||
-                                                                []
+                                                                    .roles || []
                                                             }
                                                             setTags={(
                                                                 newRoles
@@ -1154,8 +1161,7 @@ export default function CreateInternalResourceDialog({
                                                             )}
                                                             tags={
                                                                 form.getValues()
-                                                                    .users ||
-                                                                []
+                                                                    .users || []
                                                             }
                                                             size="sm"
                                                             setTags={(
@@ -1245,9 +1251,7 @@ export default function CreateInternalResourceDialog({
                                                                 restrictTagsToAutocompleteOptions={
                                                                     true
                                                                 }
-                                                                sortTags={
-                                                                    true
-                                                                }
+                                                                sortTags={true}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />

@@ -7,4 +7,4 @@ export type GetMaintenanceInfoResponse = {
     maintenanceTitle: string | null;
     maintenanceMessage: string | null;
     maintenanceEstimatedTime: string | null;
-}
+};

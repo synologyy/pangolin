@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import {db, resourceHeaderAuth, resourceHeaderAuthExtendedCompatibility} from "@server/db";
+import {
+    db,
+    resourceHeaderAuth,
+    resourceHeaderAuthExtendedCompatibility
+} from "@server/db";
 import {
     resources,
     userResources,
@@ -109,7 +113,8 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
             domainId: resources.domainId,
             niceId: resources.niceId,
             headerAuthId: resourceHeaderAuth.headerAuthId,
-            headerAuthExtendedCompatibilityId: resourceHeaderAuthExtendedCompatibility.headerAuthExtendedCompatibilityId,
+            headerAuthExtendedCompatibilityId:
+                resourceHeaderAuthExtendedCompatibility.headerAuthExtendedCompatibilityId,
             targetId: targets.targetId,
             targetIp: targets.ip,
             targetPort: targets.port,
@@ -133,7 +138,10 @@ function queryResources(accessibleResourceIds: number[], orgId: string) {
         )
         .leftJoin(
             resourceHeaderAuthExtendedCompatibility,
-            eq(resourceHeaderAuthExtendedCompatibility.resourceId, resources.resourceId)
+            eq(
+                resourceHeaderAuthExtendedCompatibility.resourceId,
+                resources.resourceId
+            )
         )
         .leftJoin(targets, eq(targets.resourceId, resources.resourceId))
         .leftJoin(

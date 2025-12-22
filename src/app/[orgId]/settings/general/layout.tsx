@@ -71,7 +71,9 @@ export default async function GeneralSettingsPage({
 
                     <div className="space-y-6">
                         <OrgInfoCard />
-                        <HorizontalTabs items={navItems}>{children}</HorizontalTabs>
+                        <HorizontalTabs items={navItems}>
+                            {children}
+                        </HorizontalTabs>
                     </div>
                 </OrgUserProvider>
             </OrgProvider>

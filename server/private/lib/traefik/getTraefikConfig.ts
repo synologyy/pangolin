@@ -73,7 +73,6 @@ export async function getTraefikConfig(
     generateLoginPageRouters = false,
     allowRawResources = true
 ): Promise<any> {
-
     // Get resources with their targets and sites in a single optimized query
     // Start from sites on this exit node, then join to targets and resources
     const resourcesWithTargetsAndSites = await db
@@ -435,17 +434,15 @@ export async function getTraefikConfig(
                 }
             }
 
-            const availableServers = targets.filter(
-                (target) => {
-                    if (!target.enabled) return false;
+            const availableServers = targets.filter((target) => {
+                if (!target.enabled) return false;
 
-                    if (!target.site.online) return false;
+                if (!target.site.online) return false;
 
-                    if (target.health == "unhealthy") return false;
+                if (target.health == "unhealthy") return false;
 
-                    return true;
-                }
-            );
+                return true;
+            });
 
             const hasHealthyServers = availableServers.length > 0;
 
@@ -794,9 +791,9 @@ export async function getTraefikConfig(
                 loadBalancer: {
                     servers: (() => {
                         // Check if any sites are online
-                        const anySitesOnline = (
-                            targets
-                        ).some((target) => target.site.online);
+                        const anySitesOnline = targets.some(
+                            (target) => target.site.online
+                        );
 
                         return targets
                             .filter((target) => {

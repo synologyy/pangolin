@@ -58,12 +58,7 @@ export default function IdpLoginButtons({
 
         let redirectToUrl: string | undefined;
         try {
-            console.log(
-                "generating",
-                idpId,
-                redirect || "/",
-                orgId
-            );
+            console.log("generating", idpId, redirect || "/", orgId);
             const safeRedirect = cleanRedirect(redirect || "/");
             const response = await generateOidcUrlProxy(
                 idpId,

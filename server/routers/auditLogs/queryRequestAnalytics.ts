@@ -99,7 +99,7 @@ async function query(query: Q) {
         .where(and(baseConditions, not(isNull(requestAuditLog.location))))
         .groupBy(requestAuditLog.location)
         .orderBy(desc(totalQ))
-        .limit(DISTINCT_LIMIT+1);
+        .limit(DISTINCT_LIMIT + 1);
 
     if (requestsPerCountry.length > DISTINCT_LIMIT) {
         // throw an error

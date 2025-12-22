@@ -39,7 +39,7 @@ import {
     resourceHeaderAuthExtendedCompatibility,
     ResourceHeaderAuthExtendedCompatibility,
     orgs,
-    requestAuditLog,
+    requestAuditLog
 } from "@server/db";
 import {
     resources,
@@ -503,7 +503,10 @@ hybridRouter.get(
                 )
                 .leftJoin(
                     resourceHeaderAuthExtendedCompatibility,
-                    eq(resourceHeaderAuthExtendedCompatibility.resourceId, resources.resourceId)
+                    eq(
+                        resourceHeaderAuthExtendedCompatibility.resourceId,
+                        resources.resourceId
+                    )
                 )
                 .where(eq(resources.fullDomain, domain))
                 .limit(1);
@@ -538,7 +541,8 @@ hybridRouter.get(
                 pincode: result.resourcePincode,
                 password: result.resourcePassword,
                 headerAuth: result.resourceHeaderAuth,
-                headerAuthExtendedCompatibility: result.resourceHeaderAuthExtendedCompatibility
+                headerAuthExtendedCompatibility:
+                    result.resourceHeaderAuthExtendedCompatibility
             };
 
             return response<ResourceWithAuth>(res, {

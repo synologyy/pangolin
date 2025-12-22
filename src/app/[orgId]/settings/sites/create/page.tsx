@@ -756,7 +756,9 @@ WantedBy=default.target`
                                                     render={({ field }) => (
                                                         <FormItem className="md:col-start-1 md:col-span-2">
                                                             <FormLabel>
-                                                                {t("siteAddress")}
+                                                                {t(
+                                                                    "siteAddress"
+                                                                )}
                                                             </FormLabel>
                                                             <FormControl>
                                                                 <Input

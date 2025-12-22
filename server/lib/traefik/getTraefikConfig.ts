@@ -294,12 +294,12 @@ export async function getTraefikConfig(
                 certResolver: resolverName,
                 ...(preferWildcard
                     ? {
-                        domains: [
-                            {
-                                main: wildCard
-                            }
-                        ]
-                    }
+                          domains: [
+                              {
+                                  main: wildCard
+                              }
+                          ]
+                      }
                     : {})
             };
 
@@ -475,9 +475,9 @@ export async function getTraefikConfig(
                         // RECEIVE BANDWIDTH ENDPOINT.
 
                         // TODO: HOW TO HANDLE ^^^^^^ BETTER
-                        const anySitesOnline = (
-                            targets
-                        ).some((target) => target.site.online);
+                        const anySitesOnline = targets.some(
+                            (target) => target.site.online
+                        );
 
                         return (
                             targets
@@ -544,14 +544,14 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                cookie: {
-                                    name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
-                                    secure: resource.ssl,
-                                    httpOnly: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  cookie: {
+                                      name: "p_sticky", // TODO: make this configurable via config.yml like other cookies
+                                      secure: resource.ssl,
+                                      httpOnly: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };
@@ -603,9 +603,9 @@ export async function getTraefikConfig(
                 loadBalancer: {
                     servers: (() => {
                         // Check if any sites are online
-                        const anySitesOnline = (
-                            targets
-                        ).some((target) => target.site.online);
+                        const anySitesOnline = targets.some(
+                            (target) => target.site.online
+                        );
 
                         return targets
                             .filter((target) => {
@@ -654,18 +654,18 @@ export async function getTraefikConfig(
                     })(),
                     ...(resource.proxyProtocol && protocol == "tcp"
                         ? {
-                            serversTransport: `${ppPrefix}${resource.proxyProtocolVersion || 1}@file` // TODO: does @file here cause issues?
-                        }
+                              serversTransport: `${ppPrefix}${resource.proxyProtocolVersion || 1}@file` // TODO: does @file here cause issues?
+                          }
                         : {}),
                     ...(resource.stickySession
                         ? {
-                            sticky: {
-                                ipStrategy: {
-                                    depth: 0,
-                                    sourcePort: true
-                                }
-                            }
-                        }
+                              sticky: {
+                                  ipStrategy: {
+                                      depth: 0,
+                                      sourcePort: true
+                                  }
+                              }
+                          }
                         : {})
                 }
             };

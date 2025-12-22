@@ -240,13 +240,7 @@ export default function ResourceAuthenticationPage() {
             }))
         );
         hasInitializedRef.current = true;
-    }, [
-        pageLoading,
-        resourceRoles,
-        resourceUsers,
-        whitelist,
-        orgIdps
-    ]);
+    }, [pageLoading, resourceRoles, resourceUsers, whitelist, orgIdps]);
 
     const [, submitUserRolesForm, loadingSaveUsersRoles] = useActionState(
         onSubmitUsersRoles,
@@ -602,9 +596,7 @@ export default function ResourceAuthenticationPage() {
                                     {ssoEnabled && allIdps.length > 0 && (
                                         <div className="space-y-2">
                                             <label className="text-sm font-medium">
-                                                {t(
-                                                    "defaultIdentityProvider"
-                                                )}
+                                                {t("defaultIdentityProvider")}
                                             </label>
                                             <Select
                                                 onValueChange={(value) => {

@@ -68,7 +68,7 @@ export const MAJOR_ASNS = [
         code: "AS36351",
         asn: 36351
     },
-    
+
     // CDNs
     {
         name: "Cloudflare",
@@ -90,7 +90,7 @@ export const MAJOR_ASNS = [
         code: "AS16625",
         asn: 16625
     },
-    
+
     // Mobile Carriers - US
     {
         name: "T-Mobile USA",
@@ -117,7 +117,7 @@ export const MAJOR_ASNS = [
         code: "AS6430",
         asn: 6430
     },
-    
+
     // Mobile Carriers - Europe
     {
         name: "Vodafone UK",
@@ -144,7 +144,7 @@ export const MAJOR_ASNS = [
         code: "AS12430",
         asn: 12430
     },
-    
+
     // Mobile Carriers - Asia
     {
         name: "NTT DoCoMo (Japan)",
@@ -176,7 +176,7 @@ export const MAJOR_ASNS = [
         code: "AS9808",
         asn: 9808
     },
-    
+
     // Major US ISPs
     {
         name: "AT&T Services",
@@ -208,7 +208,7 @@ export const MAJOR_ASNS = [
         code: "AS209",
         asn: 209
     },
-    
+
     // Major European ISPs
     {
         name: "Deutsche Telekom",
@@ -235,7 +235,7 @@ export const MAJOR_ASNS = [
         code: "AS12956",
         asn: 12956
     },
-    
+
     // Major Asian ISPs
     {
         name: "China Telecom",
@@ -262,7 +262,7 @@ export const MAJOR_ASNS = [
         code: "AS55836",
         asn: 55836
     },
-    
+
     // VPN/Proxy Providers
     {
         name: "Private Internet Access",
@@ -279,7 +279,7 @@ export const MAJOR_ASNS = [
         code: "AS213281",
         asn: 213281
     },
-    
+
     // Social Media / Major Tech
     {
         name: "Facebook/Meta",
@@ -301,7 +301,7 @@ export const MAJOR_ASNS = [
         code: "AS2906",
         asn: 2906
     },
-    
+
     // Academic/Research
     {
         name: "MIT",

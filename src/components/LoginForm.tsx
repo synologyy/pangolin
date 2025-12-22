@@ -120,7 +120,9 @@ export default function LoginForm({
         const focusInput = () => {
             // Try using the ref first
             if (otpContainerRef.current) {
-                const hiddenInput = otpContainerRef.current.querySelector('input') as HTMLInputElement;
+                const hiddenInput = otpContainerRef.current.querySelector(
+                    "input"
+                ) as HTMLInputElement;
                 if (hiddenInput) {
                     hiddenInput.focus();
                     return;
@@ -128,17 +130,23 @@ export default function LoginForm({
             }
 
             // Fallback: query the DOM
-            const otpContainer = document.querySelector('[data-slot="input-otp"]');
+            const otpContainer = document.querySelector(
+                '[data-slot="input-otp"]'
+            );
             if (!otpContainer) return;
 
-            const hiddenInput = otpContainer.querySelector('input') as HTMLInputElement;
+            const hiddenInput = otpContainer.querySelector(
+                "input"
+            ) as HTMLInputElement;
             if (hiddenInput) {
                 hiddenInput.focus();
                 return;
             }
 
             // Last resort: click the first slot
-            const firstSlot = otpContainer.querySelector('[data-slot="input-otp-slot"]') as HTMLElement;
+            const firstSlot = otpContainer.querySelector(
+                '[data-slot="input-otp-slot"]'
+            ) as HTMLElement;
             if (firstSlot) {
                 firstSlot.click();
             }
@@ -508,7 +516,10 @@ export default function LoginForm({
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormControl>
-                                            <div ref={otpContainerRef} className="flex justify-center">
+                                            <div
+                                                ref={otpContainerRef}
+                                                className="flex justify-center"
+                                            >
                                                 <InputOTP
                                                     maxLength={6}
                                                     {...field}

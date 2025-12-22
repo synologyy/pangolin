@@ -91,10 +91,10 @@ export default function SetResourcePasswordForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorPasswordSetup'),
+                    title: t("resourceErrorPasswordSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorPasswordSetupDescription')
+                        t("resourceErrorPasswordSetupDescription")
                     )
                 });
             })

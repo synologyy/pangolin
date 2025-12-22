@@ -1,6 +1,6 @@
 "use client";
 
-import {Button} from "@app/components/ui/button";
+import { Button } from "@app/components/ui/button";
 import {
     Form,
     FormControl,
@@ -9,12 +9,12 @@ import {
     FormLabel,
     FormMessage
 } from "@app/components/ui/form";
-import {Input} from "@app/components/ui/input";
-import {toast} from "@app/hooks/useToast";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useEffect, useState} from "react";
-import {useForm} from "react-hook-form";
-import {z} from "zod";
+import { Input } from "@app/components/ui/input";
+import { toast } from "@app/hooks/useToast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
     Credenza,
     CredenzaBody,
@@ -25,14 +25,14 @@ import {
     CredenzaHeader,
     CredenzaTitle
 } from "@app/components/Credenza";
-import {formatAxiosError} from "@app/lib/api";
-import {AxiosResponse} from "axios";
-import {Resource} from "@server/db";
-import {createApiClient} from "@app/lib/api";
-import {useEnvContext} from "@app/hooks/useEnvContext";
-import {useTranslations} from "next-intl";
-import {SwitchInput} from "@/components/SwitchInput";
-import {InfoPopup} from "@/components/ui/info-popup";
+import { formatAxiosError } from "@app/lib/api";
+import { AxiosResponse } from "axios";
+import { Resource } from "@server/db";
+import { createApiClient } from "@app/lib/api";
+import { useEnvContext } from "@app/hooks/useEnvContext";
+import { useTranslations } from "next-intl";
+import { SwitchInput } from "@/components/SwitchInput";
+import { InfoPopup } from "@/components/ui/info-popup";
 
 const setHeaderAuthFormSchema = z.object({
     user: z.string().min(4).max(100),
@@ -56,11 +56,11 @@ type SetHeaderAuthFormProps = {
 };
 
 export default function SetResourceHeaderAuthForm({
-                                                      open,
-                                                      setOpen,
-                                                      resourceId,
-                                                      onSetHeaderAuth
-                                                  }: SetHeaderAuthFormProps) {
+    open,
+    setOpen,
+    resourceId,
+    onSetHeaderAuth
+}: SetHeaderAuthFormProps) {
     const api = createApiClient(useEnvContext());
     const t = useTranslations();
 
@@ -82,11 +82,14 @@ export default function SetResourceHeaderAuthForm({
     async function onSubmit(data: SetHeaderAuthFormValues) {
         setLoading(true);
 
-        api.post<AxiosResponse<Resource>>(`/resource/${resourceId}/header-auth`, {
-            user: data.user,
-            password: data.password,
-            extendedCompatibility: data.extendedCompatibility
-        })
+        api.post<AxiosResponse<Resource>>(
+            `/resource/${resourceId}/header-auth`,
+            {
+                user: data.user,
+                password: data.password,
+                extendedCompatibility: data.extendedCompatibility
+            }
+        )
             .then(() => {
                 toast({
                     title: t("resourceHeaderAuthSetup"),
@@ -100,10 +103,10 @@ export default function SetResourceHeaderAuthForm({
             .catch((e) => {
                 toast({
                     variant: "destructive",
-                    title: t('resourceErrorHeaderAuthSetup'),
+                    title: t("resourceErrorHeaderAuthSetup"),
                     description: formatAxiosError(
                         e,
-                        t('resourceErrorHeaderAuthSetupDescription')
+                        t("resourceErrorHeaderAuthSetupDescription")
                     )
                 });
             })
@@ -139,7 +142,7 @@ export default function SetResourceHeaderAuthForm({
                                 <FormField
                                     control={form.control}
                                     name="user"
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>{t("user")}</FormLabel>
                                             <FormControl>
@@ -149,14 +152,14 @@ export default function SetResourceHeaderAuthForm({
                                                     {...field}
                                                 />
                                             </FormControl>
-                                            <FormMessage/>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                                 <FormField
                                     control={form.control}
                                     name="password"
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormLabel>
                                                 {t("password")}
@@ -168,25 +171,31 @@ export default function SetResourceHeaderAuthForm({
                                                     {...field}
                                                 />
                                             </FormControl>
-                                            <FormMessage/>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
                                 <FormField
                                     control={form.control}
                                     name="extendedCompatibility"
-                                    render={({field}) => (
+                                    render={({ field }) => (
                                         <FormItem>
                                             <FormControl>
                                                 <SwitchInput
                                                     id="header-auth-compatibility-toggle"
-                                                    label={t("headerAuthCompatibility")}
-                                                    info={t('headerAuthCompatibilityInfo')}
+                                                    label={t(
+                                                        "headerAuthCompatibility"
+                                                    )}
+                                                    info={t(
+                                                        "headerAuthCompatibilityInfo"
+                                                    )}
                                                     checked={field.value}
-                                                    onCheckedChange={field.onChange}
+                                                    onCheckedChange={
+                                                        field.onChange
+                                                    }
                                                 />
                                             </FormControl>
-                                            <FormMessage/>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />

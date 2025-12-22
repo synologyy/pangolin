@@ -118,8 +118,7 @@ export default function ResourceRules(props: {
     const [countrySelectValue, setCountrySelectValue] = useState("");
     const [openAddRuleCountrySelect, setOpenAddRuleCountrySelect] =
         useState(false);
-    const [openAddRuleAsnSelect, setOpenAddRuleAsnSelect] =
-        useState(false);
+    const [openAddRuleAsnSelect, setOpenAddRuleAsnSelect] = useState(false);
     const router = useRouter();
     const t = useTranslations();
     const { env } = useEnvContext();
@@ -181,7 +180,7 @@ export default function ResourceRules(props: {
         // Normalize ASN value
         if (data.match === "ASN") {
             const originalValue = data.value.toUpperCase();
-            
+
             // Handle special "ALL" case
             if (originalValue === "ALL" || originalValue === "AS0") {
                 data.value = "ALL";
@@ -542,7 +541,11 @@ export default function ResourceRules(props: {
                         updateRule(row.original.ruleId, {
                             match: value,
                             value:
-                                value === "COUNTRY" ? "US" : value === "ASN" ? "AS15169" : row.original.value
+                                value === "COUNTRY"
+                                    ? "US"
+                                    : value === "ASN"
+                                      ? "AS15169"
+                                      : row.original.value
                         })
                     }
                 >
@@ -559,9 +562,7 @@ export default function ResourceRules(props: {
                             </SelectItem>
                         )}
                         {isMaxmindAsnAvailable && (
-                            <SelectItem value="ASN">
-                                {RuleMatch.ASN}
-                            </SelectItem>
+                            <SelectItem value="ASN">{RuleMatch.ASN}</SelectItem>
                         )}
                     </SelectContent>
                 </Select>
@@ -654,9 +655,7 @@ export default function ResourceRules(props: {
                         </PopoverTrigger>
                         <PopoverContent className="min-w-[200px] p-0">
                             <Command>
-                                <CommandInput
-                                    placeholder="Search ASNs or enter custom..."
-                                />
+                                <CommandInput placeholder="Search ASNs or enter custom..." />
                                 <CommandList>
                                     <CommandEmpty>
                                         No ASN found. Enter a custom ASN below.
@@ -665,7 +664,9 @@ export default function ResourceRules(props: {
                                         {MAJOR_ASNS.map((asn) => (
                                             <CommandItem
                                                 key={asn.code}
-                                                value={asn.name + " " + asn.code}
+                                                value={
+                                                    asn.name + " " + asn.code
+                                                }
                                                 onSelect={() => {
                                                     updateRule(
                                                         row.original.ruleId,
@@ -1056,8 +1057,8 @@ export default function ResourceRules(props: {
                                                             </PopoverContent>
                                                         </Popover>
                                                     ) : addRuleForm.watch(
-                                                        "match"
-                                                    ) === "ASN" ? (
+                                                          "match"
+                                                      ) === "ASN" ? (
                                                         <Popover
                                                             open={
                                                                 openAddRuleAsnSelect
@@ -1086,21 +1087,27 @@ export default function ResourceRules(props: {
                                                                                   field.value
                                                                           )
                                                                               ?.name +
-                                                                          " (" +
-                                                                          field.value +
-                                                                          ")" || field.value
+                                                                              " (" +
+                                                                              field.value +
+                                                                              ")" ||
+                                                                          field.value
                                                                         : "Select ASN"}
                                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                                 </Button>
                                                             </PopoverTrigger>
                                                             <PopoverContent className="w-full p-0">
                                                                 <Command>
-                                                                    <CommandInput
-                                                                        placeholder="Search ASNs or enter custom..."
-                                                                    />
+                                                                    <CommandInput placeholder="Search ASNs or enter custom..." />
                                                                     <CommandList>
                                                                         <CommandEmpty>
-                                                                            No ASN found. Use the custom input below.
+                                                                            No
+                                                                            ASN
+                                                                            found.
+                                                                            Use
+                                                                            the
+                                                                            custom
+                                                                            input
+                                                                            below.
                                                                         </CommandEmpty>
                                                                         <CommandGroup>
                                                                             {MAJOR_ASNS.map(
@@ -1112,7 +1119,9 @@ export default function ResourceRules(props: {
                                                                                             asn.code
                                                                                         }
                                                                                         value={
-                                                                                            asn.name + " " + asn.code
+                                                                                            asn.name +
+                                                                                            " " +
+                                                                                            asn.code
                                                                                         }
                                                                                         onSelect={() => {
                                                                                             field.onChange(
@@ -1138,6 +1147,7 @@ export default function ResourceRules(props: {
                                                                                         {
                                                                                             asn.code
                                                                                         }
+
                                                                                         )
                                                                                     </CommandItem>
                                                                                 )
@@ -1148,14 +1158,32 @@ export default function ResourceRules(props: {
                                                                 <div className="border-t p-2">
                                                                     <Input
                                                                         placeholder="Enter custom ASN (e.g., AS15169)"
-                                                                        onKeyDown={(e) => {
-                                                                            if (e.key === "Enter") {
-                                                                                const value = e.currentTarget.value
-                                                                                    .toUpperCase()
-                                                                                    .replace(/^AS/, "");
-                                                                                if (/^\d+$/.test(value)) {
-                                                                                    field.onChange("AS" + value);
-                                                                                    setOpenAddRuleAsnSelect(false);
+                                                                        onKeyDown={(
+                                                                            e
+                                                                        ) => {
+                                                                            if (
+                                                                                e.key ===
+                                                                                "Enter"
+                                                                            ) {
+                                                                                const value =
+                                                                                    e.currentTarget.value
+                                                                                        .toUpperCase()
+                                                                                        .replace(
+                                                                                            /^AS/,
+                                                                                            ""
+                                                                                        );
+                                                                                if (
+                                                                                    /^\d+$/.test(
+                                                                                        value
+                                                                                    )
+                                                                                ) {
+                                                                                    field.onChange(
+                                                                                        "AS" +
+                                                                                            value
+                                                                                    );
+                                                                                    setOpenAddRuleAsnSelect(
+                                                                                        false
+                                                                                    );
                                                                                 }
                                                                             }
                                                                         }}

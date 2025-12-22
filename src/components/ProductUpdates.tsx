@@ -81,10 +81,10 @@ export default function ProductUpdates({
 
     const showNewVersionPopup = Boolean(
         latestVersion &&
-            valid(latestVersion) &&
-            valid(currentVersion) &&
-            ignoredVersionUpdate !== latestVersion &&
-            gt(latestVersion, currentVersion)
+        valid(latestVersion) &&
+        valid(currentVersion) &&
+        ignoredVersionUpdate !== latestVersion &&
+        gt(latestVersion, currentVersion)
     );
 
     const filteredUpdates = data.updates.filter(

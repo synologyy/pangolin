@@ -501,13 +501,19 @@ export default function EditInternalResourceDialog({
             // ]);
 
             await queryClient.invalidateQueries(
-                resourceQueries.siteResourceRoles({ siteResourceId: resource.id })
+                resourceQueries.siteResourceRoles({
+                    siteResourceId: resource.id
+                })
             );
             await queryClient.invalidateQueries(
-                resourceQueries.siteResourceUsers({ siteResourceId: resource.id })
+                resourceQueries.siteResourceUsers({
+                    siteResourceId: resource.id
+                })
             );
             await queryClient.invalidateQueries(
-                resourceQueries.siteResourceClients({ siteResourceId: resource.id })
+                resourceQueries.siteResourceClients({
+                    siteResourceId: resource.id
+                })
             );
 
             toast({

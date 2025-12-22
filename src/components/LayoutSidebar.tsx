@@ -116,10 +116,12 @@ export function LayoutSidebar({
                     isCollapsed={isSidebarCollapsed}
                 />
             </div>
-            <div className={cn(
-                "w-full border-b border-border",
-                isSidebarCollapsed && "mb-2"
-            )} />
+            <div
+                className={cn(
+                    "w-full border-b border-border",
+                    isSidebarCollapsed && "mb-2"
+                )}
+            />
             <div className="flex-1 overflow-y-auto relative">
                 <div className="px-2 pt-1">
                     {!isAdminPage && user.serverAdmin && (
