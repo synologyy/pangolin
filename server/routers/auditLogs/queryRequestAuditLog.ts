@@ -219,15 +219,17 @@ async function queryUniqueFilterAttributes(
             .limit(DISTINCT_LIMIT+1)
     ]);
 
-    if (
-        uniqueActors.length > DISTINCT_LIMIT ||
-        uniqueLocations.length > DISTINCT_LIMIT ||
-        uniqueHosts.length > DISTINCT_LIMIT ||
-        uniquePaths.length > DISTINCT_LIMIT ||
-        uniqueResources.length > DISTINCT_LIMIT
-    ) {
-        throw new Error("Too many distinct filter attributes to retrieve. Please refine your time range.");
-    }
+    // TODO: for stuff like the paths this is too restrictive so lets just show some of the paths and the user needs to
+    // refine the time range to see what they need to see
+    // if (
+    //     uniqueActors.length > DISTINCT_LIMIT ||
+    //     uniqueLocations.length > DISTINCT_LIMIT ||
+    //     uniqueHosts.length > DISTINCT_LIMIT ||
+    //     uniquePaths.length > DISTINCT_LIMIT ||
+    //     uniqueResources.length > DISTINCT_LIMIT
+    // ) {
+    //     throw new Error("Too many distinct filter attributes to retrieve. Please refine your time range.");
+    // }
 
     return {
         actors: uniqueActors

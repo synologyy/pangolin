@@ -105,6 +105,7 @@ async function query(query: Q) {
         // throw an error
         throw createHttpError(
             HttpCode.BAD_REQUEST,
+            // todo: is this even possible?
             `Too many distinct countries. Please narrow your query.`
         );
     }
