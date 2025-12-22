@@ -87,8 +87,6 @@ export default async function OrgAuthPage(props: {
             redirect(env.app.dashboardUrl);
         }
 
-        console.log(user, forceLogin);
-
         if (user && !forceLogin) {
             let redirectToken: string | undefined;
             try {
