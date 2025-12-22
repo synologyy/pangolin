@@ -41,12 +41,13 @@ export type LatestVersionResponse = {
 };
 
 export const productUpdatesQueries = {
-    list: (enabled: boolean) =>
+    list: (enabled: boolean, version?: string) =>
         queryOptions({
             queryKey: ["PRODUCT_UPDATES"] as const,
             queryFn: async ({ signal }) => {
                 const sp = new URLSearchParams({
-                    build
+                    build,
+                    ...(version ? { version } : {})
                 });
                 const data = await remote.get<ResponseT<ProductUpdate[]>>(
                     `/product-updates?${sp.toString()}`,

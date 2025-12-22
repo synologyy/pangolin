@@ -41,7 +41,10 @@ export default function ProductUpdates({
 
     const data = useQueries({
         queries: [
-            productUpdatesQueries.list(env.app.notifications.product_updates),
+            productUpdatesQueries.list(
+                env.app.notifications.product_updates,
+                env.app.version
+            ),
             productUpdatesQueries.latestVersion(
                 env.app.notifications.new_releases
             )
@@ -78,10 +81,10 @@ export default function ProductUpdates({
 
     const showNewVersionPopup = Boolean(
         latestVersion &&
-        valid(latestVersion) &&
-        valid(currentVersion) &&
-        ignoredVersionUpdate !== latestVersion &&
-        gt(latestVersion, currentVersion)
+            valid(latestVersion) &&
+            valid(currentVersion) &&
+            ignoredVersionUpdate !== latestVersion &&
+            gt(latestVersion, currentVersion)
     );
 
     const filteredUpdates = data.updates.filter(
