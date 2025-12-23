@@ -225,8 +225,8 @@ export const siteResources = pgTable("siteResources", {
     enabled: boolean("enabled").notNull().default(true),
     alias: varchar("alias"),
     aliasAddress: varchar("aliasAddress"),
-    tcpPortRangeString: varchar("tcpPortRangeString"),
-    udpPortRangeString: varchar("udpPortRangeString"),
+    tcpPortRangeString: varchar("tcpPortRangeString").notNull().default("*"),
+    udpPortRangeString: varchar("udpPortRangeString").notNull().default("*"),
     disableIcmp: boolean("disableIcmp").notNull().default(false)
 });
 
