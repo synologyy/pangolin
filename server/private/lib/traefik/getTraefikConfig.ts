@@ -464,7 +464,7 @@ export async function getTraefikConfig(
                 }
             }
 
-            if (showMaintenancePage) {
+            if (showMaintenancePage && allowMaintenancePage) {
                 const maintenanceServiceName = `${key}-maintenance-service`;
                 const maintenanceRouterName = `${key}-maintenance-router`;
                 const rewriteMiddlewareName = `${key}-maintenance-rewrite`;
