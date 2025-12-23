@@ -253,9 +253,9 @@ export const siteResources = sqliteTable("siteResources", {
     enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
     alias: text("alias"),
     aliasAddress: text("aliasAddress"),
-    tcpPortRangeString: text("tcpPortRangeString"),
-    udpPortRangeString: text("udpPortRangeString"),
-    disableIcmp: integer("disableIcmp", { mode: "boolean" })
+    tcpPortRangeString: text("tcpPortRangeString").notNull().default("*"),
+    udpPortRangeString: text("udpPortRangeString").notNull().default("*"),
+    disableIcmp: integer("disableIcmp", { mode: "boolean" }).notNull().default(false)
 });
 
 export const clientSiteResources = sqliteTable("clientSiteResources", {

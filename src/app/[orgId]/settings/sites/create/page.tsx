@@ -911,7 +911,7 @@ WantedBy=default.target`
                                                                 ? "squareOutlinePrimary"
                                                                 : "squareOutline"
                                                         }
-                                                        className={`flex-1 min-w-[120px] ${platform === os ? "bg-primary/10" : ""} shadow-none`}
+                                                        className={`flex-1 min-w-30 ${platform === os ? "bg-primary/10" : ""} shadow-none`}
                                                         onClick={() => {
                                                             setPlatform(os);
                                                         }}
@@ -942,7 +942,7 @@ WantedBy=default.target`
                                                                     ? "squareOutlinePrimary"
                                                                     : "squareOutline"
                                                             }
-                                                            className={`flex-1 min-w-[120px] ${architecture === arch ? "bg-primary/10" : ""} shadow-none`}
+                                                            className={`flex-1 min-w-30 ${architecture === arch ? "bg-primary/10" : ""} shadow-none`}
                                                             onClick={() =>
                                                                 setArchitecture(
                                                                     arch
