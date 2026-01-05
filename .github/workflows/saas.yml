@@ -75,9 +75,6 @@ jobs:
                   role-duration-seconds: 3600
                   aws-region: ${{ secrets.AWS_REGION }}
 
-            - name: Verify AWS identity
-              run: aws sts get-caller-identity
-
             - name: Extract tag name
               id: get-tag
               run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
