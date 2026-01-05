@@ -76,7 +76,7 @@ build-saas:
 		--build-arg BUILD=saas \
 		--build-arg DATABASE=pg \
 		--platform linux/arm64 \
-		--tag $(AWS_IMAGE):$(tag)
+		--tag $(AWS_IMAGE):$(tag) \
 		--push .
 
 build-release-arm:
